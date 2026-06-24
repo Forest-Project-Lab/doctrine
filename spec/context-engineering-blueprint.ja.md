@@ -698,7 +698,7 @@ if __name__ == "__main__":
 
 ### 8.5 残りのスクリプト（仕様。実装は上記2本に準ずる）
 
-- **`archive-guard.py`**: stdin JSON の `tool_input.file_path` を読み、`/99-archive/` を含むか、`/40-decisions/ADR-` 始まりの既存ファイルへの編集（`tool_name in {Edit, MultiEdit}` かつファイルが存在）なら、第8.1(2)節の deny JSON を出力。それ以外は exit 0。
+- **`archive-guard.py`**: stdin JSON の `tool_input.file_path` を読み、`/99-archive/` を含むか、`/40-decisions/ADR-` 始まりの既存ファイルへの編集（`tool_name in {Edit, MultiEdit}` かつファイルが存在）なら、第7.1(2)節の deny JSON を出力。それ以外は exit 0。
 - **`docs-audit.py`**: リポジトリ全体を走査し、(a) 全 dead link、(b) `review_by < today` の current/accepted 文書、(c) `updated` が N 日以上前の draft、(d) RESEARCH/COMPET/LEGAL に決定混入、(e) Watchlist 行に対応するテスト/監視点の欠落、を一覧化。終了コードは件数>0 で非0（CI で落とせる）。毎ターンでなくコマンド/CI で実行。
 - **`dep-graph.py`**: 全文書の `depends_on`/`impacts` から有向グラフを作り、指定 ID の上流・下流を BFS で列挙。dead link も報告。`change-impact` の影響列挙を支援。
 - **`collect-context.py`**: `llm_context` メタデータでフィルタし、`always` 群（事実・要点）+ 指定タスクの `task` 文書を収集、`never` を除外して Context Pack のひな型を出力。
