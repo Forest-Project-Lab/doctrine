@@ -1,0 +1,7 @@
+# 実行時の生成物（配布しない）
+.cache/
+.claude/.cache/
+
+# Python の生成物
+__pycache__/
+*.pyc

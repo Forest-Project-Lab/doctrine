@@ -1,0 +1,9 @@
+{
+  "name": "context-engineering-blueprint",
+  "version": "0.1.0",
+  "description": "文書を型と登録簿で統治し、ガード・リンタ・投影でLLMへ渡す情報を最小に保つプラグイン。",
+  "author": {
+    "name": "context-engineering-blueprint"
+  },
+  "license": "MIT"
+}
