@@ -156,7 +156,7 @@ class TestPluginInstallShape(unittest.TestCase):
         # /plugin install requires at minimum a name and a version.
         self.assertIn("name", data, "plugin.json must declare a name")
         self.assertIn("version", data, "plugin.json must declare a version")
-        self.assertEqual(data["name"], "context-engineering-blueprint")
+        self.assertEqual(data["name"], "doctrine")
         self.assertTrue(str(data["version"]).strip(), "version must be non-empty")
 
     def test_hooks_manifest_exists_and_valid(self):

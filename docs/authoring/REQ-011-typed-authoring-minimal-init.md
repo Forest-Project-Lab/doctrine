@@ -7,7 +7,7 @@ status: current
 owner: blueprint-maintainers
 created: 2026-06-30
 updated: 2026-06-30
-sources: [spec/context-engineering-blueprint.ja.md §3.7]
+sources: [spec/doctrine.ja.md §3.7]
 ---
 
 # 型付き文書を正しい場所と様式で作り初期化は非破壊・最小に保つ

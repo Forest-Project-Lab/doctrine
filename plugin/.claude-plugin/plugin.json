@@ -1,9 +1,9 @@
 {
-  "name": "context-engineering-blueprint",
+  "name": "doctrine",
   "version": "0.1.0",
-  "description": "文書を型と登録簿で統治し、ガード・リンタ・投影でLLMへ渡す情報を最小に保つプラグイン。",
+  "description": "AIが生成する文書を最小限に保ち、現行・依存・正本という位置づけを構造で示すプラグイン。",
   "author": {
-    "name": "context-engineering-blueprint"
+    "name": "Forest-Project-Lab"
   },
   "license": "MIT"
 }

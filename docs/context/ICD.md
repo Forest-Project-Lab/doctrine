@@ -7,7 +7,7 @@ status: current
 owner: blueprint-maintainers
 created: 2026-06-30
 updated: 2026-06-30
-sources: [spec/context-engineering-blueprint.ja.md §3.9]
+sources: [spec/doctrine.ja.md §3.9]
 canonical_for: [context-injection, context-pack, projection-render]
 llm_context: task
 ---

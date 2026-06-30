@@ -7,7 +7,7 @@ status: current
 owner: blueprint-maintainers
 created: 2026-06-30
 updated: 2026-06-30
-sources: [spec/context-engineering-blueprint.ja.md]
+sources: [spec/doctrine.ja.md]
 canonical_for: [cross-cutting-non-goals]
 llm_context: always
 ---

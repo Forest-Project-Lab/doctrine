@@ -7,7 +7,7 @@ status: current
 owner: blueprint-maintainers
 created: 2026-06-30
 updated: 2026-06-30
-sources: [spec/context-engineering-blueprint.ja.md §4.1]
+sources: [spec/doctrine.ja.md §4.1]
 depends_on: [REQ-012, ICD-001, ICD-004, ICD-006]
 llm_context: task
 ---

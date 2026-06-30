@@ -7,7 +7,7 @@ status: current
 owner: blueprint-maintainers
 created: 2026-06-30
 updated: 2026-06-30
-sources: [BLUEPRINT-001]
+sources: [DOCTRINE-001]
 canonical_for: [type-registry, status-vocabulary, frontmatter-schema, frontmatter-parser, llm-context-policy]
 llm_context: task
 ---

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Shared flat-YAML frontmatter parser for context-engineering-blueprint.
+"""Shared flat-YAML frontmatter parser for doctrine.
 
 保証限界:
 - 予防: 解析は内容で例外を投げない。半端な編集中の内容でも最善解析と構造化エラーを返し、

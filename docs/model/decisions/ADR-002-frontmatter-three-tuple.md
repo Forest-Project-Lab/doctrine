@@ -7,7 +7,7 @@ status: accepted
 owner: blueprint-maintainers
 created: 2026-06-30
 updated: 2026-06-30
-sources: [BLUEPRINT-001]
+sources: [DOCTRINE-001]
 depends_on: [SPEC-002]
 llm_context: task
 ---

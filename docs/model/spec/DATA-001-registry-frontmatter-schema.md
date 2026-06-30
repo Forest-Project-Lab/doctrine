@@ -7,7 +7,7 @@ status: current
 owner: blueprint-maintainers
 created: 2026-06-30
 updated: 2026-06-30
-sources: [BLUEPRINT-001]
+sources: [DOCTRINE-001]
 depends_on: [REQ-001]
 llm_context: task
 ---
