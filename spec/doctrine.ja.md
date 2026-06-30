@@ -1,5 +1,5 @@
 ---
-id: BLUEPRINT-001
+id: DOCTRINE-001
 title: LLM開発のための情報統治設計書
 type: BLUEPRINT
 status: proposed
@@ -349,7 +349,7 @@ for dep in proposed.get("depends_on", []):
 ## 5. パッケージング
 
 ```
-context-engineering-blueprint/
+doctrine/
 ├── .claude-plugin/plugin.json
 ├── hooks/hooks.json                 # §4.2 のHook（SessionStart・PreToolUse・PostToolUse・SessionEnd）
 ├── skills/<7つのSkill>/SKILL.md     # + references/

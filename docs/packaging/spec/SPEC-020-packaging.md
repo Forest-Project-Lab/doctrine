@@ -20,7 +20,7 @@ llm_context: task
 
 入力は `/plugin install` の実行である。結果は、配置されたプラグイン（`plugin.json`・`hooks/`・`scripts/`・`skills/`・`templates/`・`README.md`）である。`plugin.json` の最小キーは次のとおり。
 
-- `name`: `context-engineering-blueprint`
+- `name`: `doctrine`
 - `version`: `0.1.0`
 - `license`: MIT
 - `description`: 非空の一文（日本語）
@@ -40,6 +40,6 @@ llm_context: task
 
 ## 受入基準
 
-`plugin.json` が妥当な JSON で最小キーを満たし、`name` が `context-engineering-blueprint` であること。`scripts/` の全 `.py` が、標準ライブラリと兄弟コアだけを import すること。README（案内ファイル）が存在し、索引項目（install 経路・7 つの技能・4 つの Hook・スクリプト名・段）を含むこと。対応テストは TEST-020。
+`plugin.json` が妥当な JSON で最小キーを満たし、`name` が `doctrine` であること。`scripts/` の全 `.py` が、標準ライブラリと兄弟コアだけを import すること。README（案内ファイル）が存在し、索引項目（install 経路・7 つの技能・4 つの Hook・スクリプト名・段）を含むこと。対応テストは TEST-020。
 
 <!-- 入れない: 廃止、検討、実装コードの写し -->

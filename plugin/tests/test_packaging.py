@@ -54,7 +54,7 @@ class TestPluginJson(unittest.TestCase):
 
     def test_required_fields(self):
         data = _load_json(self.path)
-        self.assertEqual(data["name"], "context-engineering-blueprint")
+        self.assertEqual(data["name"], "doctrine")
         self.assertEqual(data["version"], "0.1.0")
         self.assertEqual(data["license"], "MIT")
         # description: a non-empty one-sentence Japanese string.

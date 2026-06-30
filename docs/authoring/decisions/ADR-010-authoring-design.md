@@ -7,7 +7,7 @@ status: accepted
 owner: blueprint-maintainers
 created: 2026-06-30
 updated: 2026-06-30
-sources: [spec/context-engineering-blueprint.ja.md §4.1]
+sources: [spec/doctrine.ja.md §4.1]
 review_by: 2026-09-30
 depends_on: [SPEC-016]
 llm_context: task

@@ -7,7 +7,7 @@ status: current
 owner: blueprint-maintainers
 created: 2026-06-30
 updated: 2026-06-30
-sources: [spec/context-engineering-blueprint.ja.md#R8]
+sources: [spec/doctrine.ja.md#R8]
 llm_context: task
 ---
 

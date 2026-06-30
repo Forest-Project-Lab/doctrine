@@ -7,7 +7,7 @@ status: current
 owner: blueprint-maintainers
 created: 2026-06-30
 updated: 2026-06-30
-sources: [spec/context-engineering-blueprint.ja.md §4.1]
+sources: [spec/doctrine.ja.md §4.1]
 ---
 
 # 判断の層（技能と候補語抽出）が決定論を補い保証限界を明示する

@@ -1,4 +1,4 @@
-"""Shared test harness for the context-engineering-blueprint plugin.
+"""Shared test harness for the doctrine plugin.
 
 FROZEN public API (BRIEF2 "Test architecture"). All test authors import this
 module; do NOT redefine these names elsewhere.

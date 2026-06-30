@@ -7,7 +7,7 @@ status: current
 owner: blueprint-maintainers
 created: 2026-06-30
 updated: 2026-06-30
-sources: [spec/context-engineering-blueprint.ja.md §4.1]
+sources: [spec/doctrine.ja.md §4.1]
 canonical_for: [scaffolding, term-extraction, skills, templates]
 ---
 

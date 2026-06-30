@@ -1,0 +1,15 @@
+{
+  "name": "forest-project-lab",
+  "owner": {
+    "name": "Forest-Project-Lab"
+  },
+  "description": "AIが生成する文書を最小限に保ち、位置づけ（現行・依存・正本）を構造で示す。人とLLMに渡す情報を絞る。",
+  "plugins": [
+    {
+      "name": "doctrine",
+      "source": "./plugin",
+      "description": "文書を最小限に保つ参照プラグイン。スキル・フック・スクリプト・テンプレートを含む。",
+      "version": "0.1.0"
+    }
+  ]
+}

@@ -18,7 +18,7 @@ llm_context: task
 
 SPEC-020 と REQ-013 の受入基準を確認する。
 
-- `plugin.json` が妥当な JSON で、最小キー（name=`context-engineering-blueprint`・version=`0.1.0`・license=MIT・description・author）を満たす。
+- `plugin.json` が妥当な JSON で、最小キー（name=`doctrine`・version=`0.1.0`・license=MIT・description・author）を満たす。
 - 想定外の最上位キーを持たない。
 - `scripts/` の全 `.py` が、標準ライブラリと兄弟の `_` コアだけを import する `[R9]`。
 - 各エントリスクリプトが、`def main` と `sys.path.insert` のブートストラップを持つ。

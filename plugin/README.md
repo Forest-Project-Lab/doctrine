@@ -1,8 +1,8 @@
-# context-engineering-blueprint
+# doctrine
 
-文書を型と登録簿で統治し、ガード・リンタ・投影で、LLM（大規模言語モデル）へ渡す情報を最小に保つClaude Codeプラグインである。
+文書を型と登録簿で整え、ガード・リンタ・投影で、LLM（大規模言語モデル）へ渡す情報を最小に保つClaude Codeプラグインである。設計書 `doctrine` の参照実装にあたる。
 
-本プラグインは設計書 `spec/context-engineering-blueprint.ja.md`（`BLUEPRINT-001`）の実装である。設計書が要求（`R1`〜`R10`）と登録簿（型・状態・置き場所・必須キー）を定め、本プラグインがそれを再利用できる形（Skill・Hook・スクリプト・テンプレート）で機械的に強制する。設計書がモデルの正本であり、本プラグインは規則をコードに二重定義しない。規則の単一の出所は `scripts/_registry.py` と `templates/glossary.md.tmpl` にある。
+本プラグインは設計書 `spec/doctrine.ja.md`（`DOCTRINE-001`）の実装である。設計書が要求（`R1`〜`R10`）と登録簿（型・状態・置き場所・必須キー）を定め、本プラグインがそれを再利用できる形（Skill・Hook・スクリプト・テンプレート）で機械的に強制する。設計書がモデルの正本であり、本プラグインは規則をコードに二重定義しない。規則の単一の出所は `scripts/_registry.py` と `templates/glossary.md.tmpl` にある。
 
 この案内文書（`README`）は入口である。知識を集めず、各部品への入口だけを示す。詳細は各 `SKILL.md`・各スクリプトの先頭の説明・設計書にある。
 
