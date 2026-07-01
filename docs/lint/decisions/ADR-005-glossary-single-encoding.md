@@ -4,7 +4,7 @@ title: 承認辞書を体系内で一度だけ符号化する
 type: ADR
 domain: lint
 status: accepted
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [plugin/scripts/_termcheck.py]

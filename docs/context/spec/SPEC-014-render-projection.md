@@ -4,7 +4,7 @@ title: 投影の決定論描画
 type: SPEC
 domain: context
 status: current
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [plugin/scripts/render-projection.py]

@@ -4,7 +4,7 @@ title: cross_domain_violation は depends_on 端のみに付ける
 type: ADR
 domain: graph
 status: accepted
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [plugin/scripts/_depgraph.py]

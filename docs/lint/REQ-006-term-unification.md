@@ -4,7 +4,7 @@ title: 用語統一（未承認語・禁止同義語を弾く）
 type: REQ
 domain: lint
 status: current
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [spec/doctrine.ja.md]

@@ -1,0 +1,36 @@
+name: checks
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Unit tests (plugin)
+        run: python3 plugin/run_tests.py
+
+      - name: Docs audit (docs/ corpus)
+        run: CLAUDE_PLUGIN_ROOT="$PWD/plugin" python3 plugin/scripts/docs-audit.py --root docs --fail-on error
+
+      # Bring the reader-facing root docs into the governed term-check pass.
+      # docs-audit only scans docs/, so README.md and CONTRIBUTING.md would
+      # otherwise never be checked for banned synonyms / calques (§1). term-check
+      # always exits 0 (it is advisory in the hook chain), so gate on its output.
+      # spec/doctrine.ja.md is intentionally excluded: it carries the §1
+      # vocabulary tables by definition and would self-flag.
+      - name: Term-check root docs (README, CONTRIBUTING)
+        run: |
+          out=$(CLAUDE_PLUGIN_ROOT="$PWD/plugin" python3 plugin/scripts/term-check.py README.md CONTRIBUTING.md)
+          echo "$out"
+          if echo "$out" | grep -q '\[ERROR\]'; then
+            echo "::error::term-check found banned-synonym/calque ERRORs in root docs"
+            exit 1
+          fi

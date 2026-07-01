@@ -4,7 +4,7 @@ title: 配布・標準ライブラリの受入
 type: TEST
 domain: packaging
 status: current
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [plugin/tests/test_meta.py, plugin/tests/test_packaging.py]

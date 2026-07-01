@@ -4,7 +4,7 @@ title: scaffold/term-extract の実装注記
 type: IMPL
 domain: authoring
 status: current
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [plugin/scripts/scaffold.py, plugin/scripts/term-extract.py]

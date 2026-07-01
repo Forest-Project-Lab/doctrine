@@ -4,7 +4,7 @@ title: 禁止同義語セルの末尾注記の扱い
 type: ADR
 domain: lint
 status: accepted
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [plugin/scripts/_termcheck.py]

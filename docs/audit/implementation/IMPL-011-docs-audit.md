@@ -4,7 +4,7 @@ title: docs-audit.py の実装メモ
 type: IMPL
 domain: audit
 status: current
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [plugin/scripts/docs-audit.py]

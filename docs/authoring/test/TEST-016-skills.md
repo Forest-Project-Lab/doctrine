@@ -4,7 +4,7 @@ title: skills の検証
 type: TEST
 domain: authoring
 status: current
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [plugin/tests/test_skills.py, plugin/tests/test_skills_authoring.py]

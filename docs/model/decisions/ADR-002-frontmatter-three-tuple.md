@@ -4,7 +4,7 @@ title: フロントマター解析の3要素戻り値（C1）
 type: ADR
 domain: model
 status: accepted
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [DOCTRINE-001]

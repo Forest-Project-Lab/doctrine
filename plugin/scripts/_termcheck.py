@@ -454,14 +454,16 @@ def check(body, meta, glossary):
     return findings
 
 
-# Spec-mandated compounds that LITERALLY CONTAIN a banned synonym but are
-# themselves required by the spec, so an occurrence inside them must NOT be
-# flagged (§3.2/付録B SPEC heading『入出力』contains『出力』(banned for 投影);
-# the API guidance『中立・現在形』contains『現在』(banned for 現行)). These are
-# masked length-preservingly BEFORE substring matching, so a standalone『出力』/
-# 『現在』in ordinary prose is still caught. Japanese has no word boundaries, so
-# this approved-compound mask is the only way to avoid the false positive.
-_APPROVED_COMPOUNDS = ("入出力", "現在形")
+# Approved compounds that LITERALLY CONTAIN a banned synonym but are themselves
+# legitimate, so an occurrence inside them must NOT be flagged. Two are spec-
+# mandated (§3.2/付録B SPEC heading『入出力』⊃『出力』(banned for 投影); the API
+# guidance『中立・現在形』⊃『現在』(banned for 現行)). The rest are ordinary words
+# that merely collide with a banned substring (『レビュー』⊃『ビュー』(banned for
+# 投影); 『記述漏れ』⊃『漏れ』(banned for 逆孤児)). These are masked length-
+# preservingly BEFORE substring matching, so a standalone『出力』/『ビュー』/『漏れ』
+# in ordinary prose is still caught. Japanese has no word boundaries, so this
+# approved-compound mask is the only way to avoid the false positive.
+_APPROVED_COMPOUNDS = ("入出力", "現在形", "レビュー", "記述漏れ")
 
 
 def _mask_approved_compounds(masked):

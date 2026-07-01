@@ -4,7 +4,7 @@ title: Hook配線・e2e連鎖の受入
 type: TEST
 domain: packaging
 status: current
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [plugin/tests/test_packaging.py, plugin/tests/test_integration_e2e.py]
@@ -20,14 +20,14 @@ SPEC-019 の受入基準を確認する。
 
 - `hooks.json` が 4 つのイベント（SessionStart・PreToolUse・PostToolUse・SessionEnd）を持つ。
 - 各 `command` が `${CLAUDE_PLUGIN_ROOT}/scripts/` 配下の `.py` を指す。
-- PostToolUse の `Edit|Write|MultiEdit` が `policy-guard.py` → `docs-linter.py` の順である `[R7]`。
+- PostToolUse の `Edit|Write|MultiEdit` が `policy-guard.py` → `docs-linter.py` → `review-nudge.py` の順である `[R7][R10]`。
 - `Bash` matcher が `policy-guard.py` へ配線されている。
-- `hooks.level2.json` が、SessionEnd と PostToolUse の `policy-guard.py` を外した縮小差分である。
+- `hooks.level2.json` が、SessionEnd と、PostToolUse の `policy-guard.py`・`review-nudge.py` を外して `docs-linter.py` だけにした縮小差分である。
 - 実スクリプトを標準入力のエンベロープで起動し、scaffold→ガード→リンタ→監査→注入の連鎖がつながる `[R9]`。
 
 ## 退行観点
 
-- PostToolUse の配列順が、`docs-linter.py` を先にした並びへ戻っていないこと（WATCH と突き合わせる）。
+- PostToolUse の配列順が `policy-guard.py` → `docs-linter.py` → `review-nudge.py` から崩れていないこと（WATCH と突き合わせる）。
 - 縮小構成が、起動後の `policy-guard.py` を取り戻していないこと。
 
 ## 合否基準

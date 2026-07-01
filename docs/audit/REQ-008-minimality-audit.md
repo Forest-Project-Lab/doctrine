@@ -4,7 +4,7 @@ title: 最小性の監査（過剰と不足の両側を全件検出）
 type: REQ
 domain: audit
 status: current
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [spec/doctrine.ja.md#R8]

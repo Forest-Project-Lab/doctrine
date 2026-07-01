@@ -4,7 +4,7 @@ title: SessionStart 最小契約の注入
 type: SPEC
 domain: context
 status: current
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [plugin/scripts/inject-contract.py]

@@ -4,7 +4,7 @@ title: model のインターフェース（登録簿と解析の公開契約）
 type: ICD
 domain: model
 status: current
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [DOCTRINE-001]

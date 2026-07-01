@@ -1,6 +1,6 @@
 ---
 name: doc-author
-description: 'Creates and updates typed governance documents — SPEC, REQ, ADR, DATA, API, IMPL, TEST, DECIDED, NONGOAL, RESEARCH, ARCHIVE, and ICD — placing each in the correct location with correct frontmatter (id matching filename, type, domain, status, owner, dates, sources), and generating the domain folder and its layer subfolders the first time a document of that type is written. Use this skill when the user wants to "write a spec", "add an ADR", "create an ICD", "author a requirement", "add a doc", "document this decision", "record a data model", "start a new domain", or says "I need a SPEC/REQ/ADR/TEST for ...".'
+description: 'Creates and updates typed governance documents — SPEC, REQ, ADR, DATA, API, IMPL, TEST, DECIDED, NONGOAL, WATCH, RESEARCH, ARCHIVE, and ICD — placing each in the correct location with correct frontmatter (id matching filename, type, domain, status, owner, dates, sources), and generating the domain folder and its layer subfolders the first time a document of that type is written. Use this skill when the user wants to "write a spec", "add an ADR", "create an ICD", "author a requirement", "add a doc", "document this decision", "record a data model", "start a new domain", or says "I need a SPEC/REQ/ADR/TEST for ...".'
 ---
 
 # doc-author

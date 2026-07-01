@@ -4,7 +4,7 @@ title: 登録簿契約のテスト計画
 type: TEST
 domain: model
 status: current
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [DOCTRINE-001]

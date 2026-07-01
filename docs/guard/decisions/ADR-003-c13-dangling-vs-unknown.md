@@ -4,7 +4,7 @@ title: C13 の分岐（dangling 許容／分類不能 拒否）
 type: ADR
 domain: guard
 status: accepted
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [plugin/scripts/policy-guard.py]

@@ -4,7 +4,7 @@ title: 構造規則の単一正本化（C2）
 type: ADR
 domain: model
 status: accepted
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [DOCTRINE-001]

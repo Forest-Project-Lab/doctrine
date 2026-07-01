@@ -4,7 +4,7 @@ title: 段階導入とBash matcherの拒否限定
 type: ADR
 domain: packaging
 status: accepted
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [spec/doctrine.ja.md §4.4, §7]

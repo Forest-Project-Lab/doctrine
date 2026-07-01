@@ -4,7 +4,7 @@ title: 三ガードの判定規則（不変・ICD依存・削除安全）
 type: SPEC
 domain: guard
 status: current
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [spec/doctrine.ja.md §4.2]

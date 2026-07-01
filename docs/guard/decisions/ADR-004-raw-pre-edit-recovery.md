@@ -4,7 +4,7 @@ title: PostToolUse の事前状態を raw 全文で復元する
 type: ADR
 domain: guard
 status: accepted
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [plugin/scripts/policy-guard.py]

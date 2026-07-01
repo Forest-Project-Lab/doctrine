@@ -4,7 +4,7 @@ title: 監査の検査群テスト計画
 type: TEST
 domain: audit
 status: current
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [plugin/tests/test_audit.py]

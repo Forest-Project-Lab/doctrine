@@ -4,7 +4,7 @@ title: フロントマター解析の契約
 type: SPEC
 domain: model
 status: current
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [DOCTRINE-001]

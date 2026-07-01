@@ -4,7 +4,7 @@ title: `policy-guard.py` の実装メモ
 type: IMPL
 domain: guard
 status: current
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [plugin/scripts/policy-guard.py]

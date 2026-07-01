@@ -4,7 +4,7 @@ title: 構造語彙を正本で定義済みと認め、doc-reviewを著述時の
 type: ADR
 domain: lint
 status: accepted
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [DOCTRINE-001]

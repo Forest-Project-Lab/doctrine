@@ -4,7 +4,7 @@ title: 注入とパックで二つの別上限を持つ（C10）
 type: ADR
 domain: context
 status: accepted
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [spec/doctrine.ja.md §3.9]

@@ -4,7 +4,7 @@ title: 境界明瞭（越境依存は相手ICD宛のみ許す）
 type: REQ
 domain: guard
 status: current
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [spec/doctrine.ja.md §3.5]

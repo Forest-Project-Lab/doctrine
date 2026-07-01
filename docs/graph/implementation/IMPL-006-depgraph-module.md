@@ -4,7 +4,7 @@ title: `_depgraph.py`＋`dep-graph.py` の実装メモ
 type: IMPL
 domain: graph
 status: current
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [plugin/scripts/_depgraph.py]

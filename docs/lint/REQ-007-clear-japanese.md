@@ -4,7 +4,7 @@ title: 明快な日本語（カルクを照合する）
 type: REQ
 domain: lint
 status: current
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [spec/doctrine.ja.md]

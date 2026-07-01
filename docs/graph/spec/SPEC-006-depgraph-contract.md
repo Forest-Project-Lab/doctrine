@@ -4,7 +4,7 @@ title: 依存グラフの契約（forward/reverse/classify/reverse-orphans）
 type: SPEC
 domain: graph
 status: current
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [plugin/scripts/_depgraph.py]

@@ -4,7 +4,7 @@ title: 変更耐性（影響集合を依存から列挙する）
 type: REQ
 domain: graph
 status: current
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [spec/doctrine.ja.md]

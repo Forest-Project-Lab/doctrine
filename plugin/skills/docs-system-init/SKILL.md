@@ -1,6 +1,6 @@
 ---
 name: docs-system-init
-description: 'Sets up the document governance system in a repository: creates the minimal _system layer (glossary, decided-facts, non-goals, overview projection) and the root entry points (CLAUDE.md, AGENTS.md), and wires up the guards and linter without overwriting anything that already exists. Use this skill when the user wants to "initialize docs", "set up the documentation system", "bootstrap docs governance", "install the blueprint", "scaffold _system", or asks "how do I start using this plugin" / "set up doc governance in this repo".'
+description: 'Sets up the document governance system in a repository: creates the minimal _system layer (glossary, decided-facts, non-goals, overview projection) and the root entry points (CLAUDE.md, AGENTS.md), and wires up the guards and linter without overwriting anything that already exists. Use this skill when the user wants to "initialize docs", "set up the documentation system", "bootstrap docs governance", "set up doctrine", "scaffold _system", or asks "how do I start using this plugin" / "set up doc governance in this repo".'
 ---
 
 # docs-system-init

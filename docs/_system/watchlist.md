@@ -4,7 +4,7 @@ title: 横断の退行監視（4項）
 type: WATCH
 domain: _system
 status: current
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [spec/doctrine.ja.md]

@@ -4,7 +4,7 @@ title: 追跡性（要求→仕様→実装→テスト→決定をたどる）
 type: REQ
 domain: graph
 status: current
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [spec/doctrine.ja.md]

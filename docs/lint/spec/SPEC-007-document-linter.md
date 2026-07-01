@@ -4,7 +4,7 @@ title: 単一文書リンタの全 PostToolUse 点検
 type: SPEC
 domain: lint
 status: current
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [plugin/scripts/docs-linter.py]

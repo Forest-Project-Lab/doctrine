@@ -4,7 +4,7 @@ title: 孤児を三条件の連言で定義する
 type: ADR
 domain: audit
 status: accepted
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [spec/doctrine.ja.md#4.2]

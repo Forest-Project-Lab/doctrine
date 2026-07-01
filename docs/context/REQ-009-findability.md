@@ -4,7 +4,7 @@ title: 見つけやすさ（投影を正本から決定論で描画）
 type: REQ
 domain: context
 status: current
-owner: blueprint-maintainers
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 sources: [spec/doctrine.ja.md §3.9]

@@ -4,7 +4,7 @@ title: 用語辞書の正本
 type: GLOSSARY
 domain: _system
 status: current
-owner: <記入>
+owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-06-30
 canonical_for: [glossary]
