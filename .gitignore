@@ -1,2 +1,6 @@
 # バイナリ成果物は追跡しない（正本は Markdown）
 *.zip
+
+# 個人用ローカル設定（bypassPermissions などを含む）
+.claude/settings.local.json
+.vscode/settings.json

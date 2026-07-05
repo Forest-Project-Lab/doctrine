@@ -25,11 +25,12 @@ llm_context: task
 ## 制約
 
 - 標準ライブラリだけを使う。pip での外部パッケージ取得も、ネットワーク通信もしない。返す値は毎回同じになる（所見を check・doc_id・message の順で整列する）。
-- 9 検査の重大度は固定とする（ICD-005 の表のとおり）。`top_findings` は error を優先し、上限 20 件とする。
+- 10 検査の重大度は固定とする（ICD-005 の表のとおり）。`top_findings` は error を優先し、上限 20 件とする。
 - `generated_at` は `today` から決める（`today.isoformat()+"T00:00:00Z"`）。テストが制御できないシステム時刻は参照しない。`[R1]`
 - 孤児は三条件すべてを満たす文書とする（どの現行文書からも依存されない、かつ陳腐化している、かつ再現可能）。投影・`llm_context`==always・ICD は孤児にしない。`[R8]`
 - 逆孤児は現行文書だけを対象とする（判定は graph の `reverse_orphans` に委ねる）。`[R3]`
 - ドメインをまたぐ `depends_on` の違反だけを icd_dependency_violation として上げる。ドメインをまたぐ impacts は違反としない。`[R4]`
+- 未登録/影文書は、`build_graph` が既に集める `parse_warnings`（frontmatter か id が無い .md）と `dup_ids`（id 衝突で影に隠れた別ファイル）を読むだけで検出する。新たな走査はしない。他の全検査は登録簿ノード上の述語なので、ノードにならないファイルはこの検査だけが拾える。取り除きではなく、型を与えて登録するか archive/ へ退避する候補として error で挙げる。`[R1][R8]`
 
 ## エラー時挙動
 

@@ -682,5 +682,54 @@ class DetectedFallbackTest(AuditBase):
         self.assertIn("identity の内部です", v[0]["message"])
 
 
+# --- registration completeness (unregistered / shadowed, R1/R8) -----------
+
+class UnregisteredTest(AuditBase):
+    def test_frontmatterless_file_is_unregistered(self):
+        """docs/ 内の frontmatter/id 無し .md -> unregistered_document error。
+
+        他の検査は g.nodes 上の述語なので、この検査だけが「亡霊」を拾える。
+        """
+        root = _util.make_repo({
+            "docs/notes/scratch.md": "ただの散文。フロントマターも id も無い。\n",
+        })
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        data, code = self.audit_json(os.path.join(root, "docs"))
+        u = self.checks_for(data, "unregistered_document")
+        self.assertEqual(len(u), 1)
+        self.assertEqual(u[0]["severity"], "error")
+        self.assertEqual(u[0]["path"], "notes/scratch.md")
+        self.assertEqual(u[0]["doc_id"], "")  # 登録簿に id が無い → 空文字（整列安全）
+
+    def test_duplicate_id_shadow_is_flagged(self):
+        """同じ id の別ファイル -> 影のパスだけ shadowed_document error。"""
+        a = _util.fm_block(_fm("DUP-1", "RESEARCH", "a", llm_context="never")) + "A"
+        b = _util.fm_block(_fm("DUP-1", "RESEARCH", "b", llm_context="never")) + "B"
+        root = _util.make_repo({
+            "docs/a/research/DUP-1.md": a,
+            "docs/b/research/DUP-1.md": b,
+        })
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        data, code = self.audit_json(os.path.join(root, "docs"))
+        s = self.checks_for(data, "shadowed_document")
+        self.assertEqual(len(s), 1)  # 2 ファイル中 1 つが影
+        self.assertEqual(s[0]["severity"], "error")
+        self.assertEqual(s[0]["doc_id"], "DUP-1")
+        self.assertEqual(s[0]["path"], "a/research/DUP-1.md")  # 後勝ちで b を採用
+
+    def test_clean_corpus_has_neither(self):
+        """全ファイルが一意 id で登録済み -> unregistered/shadowed ゼロ。"""
+        root = _util.make_repo({
+            "docs/billing/spec/SPEC-1.md":
+                _util.fm_block(_fm("SPEC-1", "SPEC", "billing")) + "x",
+            "docs/billing/REQ-1.md":
+                _util.fm_block(_fm("REQ-1", "REQ", "billing")) + "x",
+        })
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        data, code = self.audit_json(os.path.join(root, "docs"))
+        self.assertEqual(self.checks_for(data, "unregistered_document"), [])
+        self.assertEqual(self.checks_for(data, "shadowed_document"), [])
+
+
 if __name__ == "__main__":
     unittest.main()

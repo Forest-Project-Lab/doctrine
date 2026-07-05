@@ -5,7 +5,8 @@
 - 予防: 何も予防しない。per-turn では走らない。SessionEnd と CI からだけ走る(§4.2)。
 - 検出: dead link・review_by 超過(DECIDED/WATCH 含む)・draft 放置・孤児
   (逆参照ゼロ∧陳腐化∧再現可能)・逆孤児・canonical_for 衝突・語彙的酷似(助言)・
-  ICD依存違反・投影ドリフトを全件で一覧化する。
+  ICD依存違反・投影ドリフト・未登録/影文書(docs/ 内で登録簿ノードにならない .md)を
+  全件で一覧化する。
 - 委ねる: 取り除き(一片ずつ)は docs-curate に、意味的重複の最終判断は人間と
   doc-review に委ねる。ガード(予防)は policy-guard に委ねる。
 
@@ -523,6 +524,35 @@ def _find_projection_node(g, type_code, filename):
     return None
 
 
+def _check_unregistered(g):
+    """10. 未登録/影文書(R1/R8)。docs/ 内の .md が登録簿ノードにならない二経路。
+
+    他の全検査は g.nodes 上の述語なので、ノードにならないファイルはどの検査からも
+    見えない。build_graph が既に埋めている二つのリストを読むだけで、新たな走査は
+    しない(スケール無依存・決定的)。
+    - parse_warnings: frontmatter か id が無く、どのノードにもならなかった .md。
+    - dup_ids: 同じ id を持つ別ファイル。後勝ちで一つだけがノードになり、
+      残りは影に隠れて見えない(_add_node と同じ後勝ち: パス整列の最後を採用)。
+    どちらも取り除きではなく、型を与えて登録するか archive/ へ退避する候補。
+    未登録は登録簿に id が無いので doc_id は空文字にする(整列キーが str のため)。
+    """
+    out = []
+    for relpath in sorted(g.parse_warnings):
+        out.append(_finding(
+            "unregistered_document", SEV_ERROR, "", relpath,
+            "docs/ 内の .md にフロントマターと id が無く、登録されない。"
+            "型を与えて登録するか archive/ へ退避する。"))
+    for doc_id in sorted(g.dup_ids):
+        paths = sorted(g.dup_ids[doc_id])
+        keep = paths[-1]
+        for shadowed in paths[:-1]:
+            out.append(_finding(
+                "shadowed_document", SEV_ERROR, doc_id, shadowed,
+                "id %s が既存文書と衝突し、登録されず影に隠れている(採用 %s)。"
+                "別 id を与えるか archive/ へ退避する。" % (doc_id, keep)))
+    return out
+
+
 # ---------------------------------------------------------------------------
 # 監査本体
 # ---------------------------------------------------------------------------
@@ -543,6 +573,7 @@ def run_audit(root, today, knobs):
     findings += _check_near_duplicate(g, knobs["jaccard"], knobs["near_dup_cap"])
     findings += _check_icd_violation(g)
     findings += _check_projection_drift(g)
+    findings += _check_unregistered(g)
 
     findings.sort(key=lambda f: (f["check"], f["doc_id"], f["message"]))
     return findings
