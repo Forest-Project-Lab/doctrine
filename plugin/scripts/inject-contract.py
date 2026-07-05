@@ -410,6 +410,9 @@ def _render_audit_summary(summary):
     lines.append(head)
     top = summary.get("top_findings")
     if isinstance(top, list) and top:
+        # 同一の要点行は一つにまとめ、件数を添える(重複した所見で上限を食わない)。
+        order = []
+        counts = {}
         for f in top[:5]:
             if not isinstance(f, dict):
                 continue
@@ -422,8 +425,46 @@ def _render_audit_summary(summary):
                 line += " %s" % did
             if msg:
                 line += ": " + _truncate(msg, 120)
-            lines.append(line)
+            if line not in counts:
+                order.append(line)
+            counts[line] = counts.get(line, 0) + 1
+        for line in order:
+            n = counts[line]
+            lines.append(line if n == 1 else "%s（×%d）" % (line, n))
+    remedy = _curate_nudge(totals, summary.get("counts_by_check"))
+    if remedy:
+        lines.append(remedy)
     return lines
+
+
+def _curate_nudge(totals, counts_by_check):
+    """実行可能な一行を返す。未登録/影/孤児が在れば docs-curate を名指しで促す。
+
+    error だけでも curate を促す(受動の「型を与えるか archive/ へ」に留めない)。所見が
+    無ければ空文字列。counts_by_check は docs-audit/1 の検査別件数(SPEC-011)。
+    """
+    cbc = counts_by_check if isinstance(counts_by_check, dict) else {}
+    def _c(k):
+        try:
+            return int(cbc.get(k) or 0)
+        except (TypeError, ValueError):
+            return 0
+    reg = _c("unregistered_document") + _c("shadowed_document")
+    orph = _c("orphan")
+    errs = 0
+    if isinstance(totals, dict):
+        try:
+            errs = int(totals.get("error") or 0)
+        except (TypeError, ValueError):
+            errs = 0
+    if reg > 0:
+        return ("→ docs-curate を起動: 未登録/影文書 %d 件に型を与えて登録するか "
+                "archive/ へ退避すること。" % reg)
+    if orph > 0:
+        return "→ docs-curate を起動: 孤児 %d 件を取り除く候補として整理すること。" % orph
+    if errs > 0:
+        return "→ docs-curate を起動: error %d 件を解消すること。" % errs
+    return ""
 
 
 def _num(v):
@@ -445,6 +486,12 @@ _OVERFLOW_TEMPLATE = (
 _BOOTSTRAP_NOTICE = (
     "文書統治の _system 層がまだ無い。docs-system-init を起動して、"
     "glossary・decided-facts・non-goals・overview の最小構成を用意すること。"
+)
+
+_ONBOARDING_NOTICE = (
+    "docs/ は在るが、登録された文書（frontmatter に id を持つ .md）がまだ無い。"
+    "docs-system-init で _system の最小構成を用意し、散在する未登録ファイルは "
+    "docs-curate で整理・登録すること。"
 )
 
 
@@ -691,6 +738,12 @@ def _assemble(docs, audit_summary, config, cap, chars_per_token, had_docs_root):
     if not had_docs_root:
         # _system が無い → ブートストラップ通知だけ(空文字列にしない、§1.3)。
         return (_BOOTSTRAP_NOTICE, False, estimate_tokens(_BOOTSTRAP_NOTICE, chars_per_token))
+
+    if not docs:
+        # docs/ は在るが登録文書がゼロ → オンボーディング通知だけ(§1.3)。
+        # bootstrap(had_docs_root 無し)とは相互排他: ここは had_docs_root=True の枝。
+        return (_ONBOARDING_NOTICE, False,
+                estimate_tokens(_ONBOARDING_NOTICE, chars_per_token))
 
     sections = _build_sections(docs, audit_summary, config)
     untrimmed = _render_sections(sections)

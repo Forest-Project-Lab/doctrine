@@ -794,6 +794,146 @@ class TestBashOutputGrammar(GuardTestBase):
 # Routing / robustness — W2/W3/W4
 # ---------------------------------------------------------------------------
 
+class TestEarlyOutNonDocs(GuardTestBase):
+    """G1: a target whose RESOLVED realpath is OUTSIDE the docs/ tree and that
+    cannot trip Guard2 or Guard3 is allowed WITHOUT building the dependency
+    graph; anything that CAN trip a guard (doc-shaped Write, id-bearing Edit via
+    a non-'docs' path or a symlink, no-id cross-domain POST) is NOT fast-pathed."""
+
+    def _load_pg(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "pg_g1", os.path.join(_util.SCRIPTS, "policy-guard.py"))
+        pg = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(pg)
+        return pg
+
+    def test_nondoc_py_edit_allows_without_building_graph(self):
+        """A non-docs .py Edit -> allow, and _build_graph is never called; an
+        in-docs edit DOES build it."""
+        pg = self._load_pg()
+        calls = {"n": 0}
+        orig = pg._build_graph
+        def spy(root):
+            calls["n"] += 1
+            return orig(root)
+        pg._build_graph = spy
+        root = self._repo({
+            "docs/billing/spec/SPEC-01.md": _util.fm_block(_doc("billing"))
+            + "本文。\n",
+        })
+        py_path = os.path.join(root, "src", "main.py")
+        os.makedirs(os.path.dirname(py_path), exist_ok=True)
+        with open(py_path, "w", encoding="utf-8") as fh:
+            fh.write("print('x')\n")
+        calls["n"] = 0
+        r = pg._handle_pre_edit_write(
+            "Edit", {"file_path": py_path, "old_string": "x", "new_string": "y"},
+            root)
+        self.assertEqual(r["hookSpecificOutput"]["permissionDecision"], "allow")
+        self.assertEqual(calls["n"], 0)
+        calls["n"] = 0
+        r = pg._handle_pre_edit_write(
+            "Edit",
+            {"file_path": os.path.join(root, "docs/billing/spec/SPEC-01.md"),
+             "old_string": "本文。", "new_string": "改。"},
+            root)
+        self.assertEqual(r["hookSpecificOutput"]["permissionDecision"], "allow")
+        self.assertEqual(calls["n"], 1)
+
+    def test_nondoc_write_with_frontmatter_still_runs_guard2(self):
+        """A non-docs Write whose CONTENT is doc-shaped (frontmatter + cross-domain
+        non-ICD dep) must NOT early-out; Guard2 still denies (content-keyed)."""
+        root = self._repo({
+            "docs/identity/spec/SPEC-22.md": _util.fm_block(_doc(
+                "identity", doc_id="SPEC-22")) + "内部仕様。\n",
+        })
+        outside = os.path.join(root, "notes", "outside.md")
+        content = _util.fm_block(_doc("billing", doc_id="SPEC-95",
+                                      fm_extra={"depends_on": ["SPEC-22"]})) + "本文。\n"
+        out, _ = _util.invoke(
+            "policy-guard",
+            stdin_obj=_util.hook_stdin("PreToolUse", "Write",
+                                       {"file_path": outside, "content": content}))
+        decision, reason = _pre(json.loads(out))
+        self.assertEqual(decision, "deny")
+        self.assertEqual(
+            reason, "SPEC-22 は identity の内部です。identity の ICD 宛にしてください。")
+
+    def test_governed_doc_at_nondocs_path_edit_demote_still_denies(self):
+        """REGRESSION (Guard3): an Edit demoting a GOVERNED doc whose FILE PATH has
+        no 'docs' segment, while a docs/ doc has a current depends_on it, must be
+        DENIED (early-out must not skip Guard3 for id-bearing targets)."""
+        root = self._repo({
+            "external/SPEC-40.md": _util.fm_block(_doc(
+                "billing", doc_id="SPEC-40", status="current")) + "本文。\n",
+            "docs/billing/test/TEST-40.md": _util.fm_block(_doc(
+                "billing", doc_id="TEST-40", status="current",
+                fm_extra={"depends_on": ["SPEC-40"]})) + "本文。\n",
+        })
+        out, _ = _util.invoke(
+            "policy-guard",
+            stdin_obj=_util.hook_stdin(
+                "PreToolUse", "Edit",
+                {"file_path": os.path.join(root, "external", "SPEC-40.md"),
+                 "old_string": "status: current",
+                 "new_string": "status: deprecated"}))
+        decision, reason = _pre(json.loads(out))
+        self.assertEqual(decision, "deny")
+        self.assertIn("TEST-40", reason)
+
+    def test_symlink_into_docs_edit_demote_still_denies(self):
+        """REGRESSION (Guard3, realpath): an Edit reaching a governed docs/ doc
+        THROUGH a symlink whose own path lacks a 'docs' segment must be DENIED."""
+        root = self._repo({
+            "docs/billing/spec/SPEC-41.md": _util.fm_block(_doc(
+                "billing", doc_id="SPEC-41", status="current")) + "本文。\n",
+            "docs/billing/test/TEST-41.md": _util.fm_block(_doc(
+                "billing", doc_id="TEST-41", status="current",
+                fm_extra={"depends_on": ["SPEC-41"]})) + "本文。\n",
+        })
+        gov = os.path.join(root, "docs/billing/spec/SPEC-41.md")
+        link_dir = os.path.join(root, "links")
+        os.makedirs(link_dir, exist_ok=True)
+        link = os.path.join(link_dir, "sneaky.md")
+        os.symlink(gov, link)
+        out, _ = _util.invoke(
+            "policy-guard",
+            stdin_obj=_util.hook_stdin(
+                "PreToolUse", "Edit",
+                {"file_path": link,
+                 "old_string": "status: current",
+                 "new_string": "status: deprecated"}))
+        decision, reason = _pre(json.loads(out))
+        self.assertEqual(decision, "deny")
+        self.assertIn("TEST-41", reason)
+
+    def test_post_noid_doc_shaped_outside_docs_still_blocks(self):
+        """REGRESSION (Guard2 POST): a PostToolUse Edit of a doc-shaped file OUTSIDE
+        docs/ WITH frontmatter (domain + cross-domain non-ICD depends_on) but NO
+        id must still emit decision:block (POST early-out is fence-keyed, not
+        id-keyed)."""
+        root = self._repo({
+            "docs/identity/spec/SPEC-22.md": _util.fm_block(_doc(
+                "identity", doc_id="SPEC-22")) + "内部。\n",
+        })
+        outside = os.path.join(root, "notes", "foo.md")
+        os.makedirs(os.path.dirname(outside), exist_ok=True)
+        fm = {"type": "SPEC", "domain": "billing", "status": "current",
+              "depends_on": ["SPEC-22"]}
+        with open(outside, "w", encoding="utf-8") as fh:
+            fh.write(_util.fm_block(fm) + "改。\n")
+        out, _ = _util.invoke(
+            "policy-guard",
+            stdin_obj=_util.hook_stdin(
+                "PostToolUse", "Edit",
+                {"file_path": outside, "old_string": "本文",
+                 "new_string": "改"}))
+        resp = json.loads(out)
+        self.assertEqual(resp.get("decision"), "block")
+        self.assertIn("SPEC-22", resp.get("reason", ""))
+
+
 class TestRoutingRobustness(GuardTestBase):
     """W2/W3/W4 — self-routing and fail-closed/open."""
 

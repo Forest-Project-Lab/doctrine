@@ -34,7 +34,7 @@ llm_context: task
 
 - 注入応答: SessionStart に対する Hook の応答 JSON `{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":<文字列>}}`。終了コードは常に 0。Hook とは、Claude Code がツール実行やセッションの節目で呼ぶ外部命令をいう。
 - 二つの別々の上限（C10とは凍結した契約の整合を見る判断項目をいい、これはその一つ）: 注入の `injection_token_cap`（既定 12000）と、パックの `task_pack_token_cap`（任意）。どちらも `_system/.context-config.json` の別キーに置く。トークンとは、モデルが文を区切って数える単位をいう。見積もりは文字数からの近似で、多めに見積もる側に倒す。
-- 監査要約の受け渡し: 注入は `${CLAUDE_PLUGIN_ROOT}/.cache/last-audit.json`（スキーマ `docs-audit/1`）を読む。これは audit（ICD-005）が書いた成果物である。
+- 監査要約の受け渡し: 注入は `${CLAUDE_PLUGIN_ROOT}/.cache/last-audit.json`（スキーマ `docs-audit/1`）を読む。これは audit（ICD-005）が書いた成果物である。要約は実行可能にする。`counts_by_check` に未登録/影文書または孤児が在るとき、あるいは error があるとき、注入は `docs-curate` を名指しで起動する一行を要約に加える（上限超過の有無に依らない）。
 - パック様式: `context-pack/1`。`docs`・`uncovered`・`uncovered_reasons`・`boundary_violations`・`trimmed` を含む。
 
 ## 依存してよい入口

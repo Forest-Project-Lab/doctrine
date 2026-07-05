@@ -102,11 +102,15 @@ class TestHooksFullProfile(unittest.TestCase):
     def test_every_command_is_a_plugin_script(self):
         for event, matcher, command in _commands(self.hooks):
             with self.subTest(event=event, matcher=matcher, command=command):
+                # A command may carry arguments after the script path
+                # (e.g. SessionEnd's docs-audit.py --summary-out ...). Validate
+                # the program token: the first whitespace-delimited field.
+                program = command.split()[0]
                 self.assertTrue(
-                    command.startswith("${CLAUDE_PLUGIN_ROOT}/scripts/"),
+                    program.startswith("${CLAUDE_PLUGIN_ROOT}/scripts/"),
                     "command must live under ${CLAUDE_PLUGIN_ROOT}/scripts/: %r" % command,
                 )
-                self.assertTrue(command.endswith(".py"),
+                self.assertTrue(program.endswith(".py"),
                                 "command must be a .py script: %r" % command)
 
     def test_sessionstart_injects_contract(self):
@@ -132,9 +136,18 @@ class TestHooksFullProfile(unittest.TestCase):
             ],
         )
 
-    def test_sessionend_runs_audit(self):
+    def test_sessionend_runs_audit_and_writes_the_inject_cache(self):
+        # G2: SessionEnd must run docs-audit.py AND write the summary to the
+        # exact cache inject-contract reads, else every SessionStart shows
+        # 前回監査なし. The command carries the SessionEnd contract
+        # (--summary-out <plugin-root>/.cache/last-audit.json, --fail-on never).
         cmds = _commands_for(self.hooks, "SessionEnd")
-        self.assertEqual(cmds, ["${CLAUDE_PLUGIN_ROOT}/scripts/docs-audit.py"])
+        self.assertEqual(len(cmds), 1)
+        cmd = cmds[0]
+        self.assertTrue(cmd.split()[0].endswith("/scripts/docs-audit.py"))
+        self.assertIn(
+            "--summary-out ${CLAUDE_PLUGIN_ROOT}/.cache/last-audit.json", cmd)
+        self.assertIn("--fail-on never", cmd)
 
 
 class TestHooksLevel2Profile(unittest.TestCase):

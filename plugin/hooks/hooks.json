@@ -18,7 +18,7 @@
         ] }
     ],
     "SessionEnd": [
-      { "hooks": [ { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/scripts/docs-audit.py" } ] }
+      { "hooks": [ { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/scripts/docs-audit.py --root ${CLAUDE_PROJECT_DIR}/docs --json --summary-out ${CLAUDE_PLUGIN_ROOT}/.cache/last-audit.json --fail-on never" } ] }
     ]
   }
 }

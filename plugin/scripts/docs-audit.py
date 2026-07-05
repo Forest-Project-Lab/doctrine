@@ -40,6 +40,7 @@ DEFAULT_ORPHAN_STALE_DAYS = 180     # 孤児の陳腐化の閾値
 DEFAULT_JACCARD = 0.8               # 語彙的酷似(助言)の閾値
 DEFAULT_TOP_FINDINGS = 20           # top_findings の上限(errors 優先)
 DEFAULT_NEAR_DUP_CAP = 50           # 酷似報告の上限
+DEFAULT_NEAR_DUP_MAX_DOCS = 800     # 酷似の O(n^2) 走査を許す現行文書数の上限(超過なら走査を省き助言一つを出す)
 
 # 重大度。
 SEV_ERROR = "error"
@@ -126,6 +127,7 @@ def _load_config(path):
         "jaccard": DEFAULT_JACCARD,
         "top_findings_cap": DEFAULT_TOP_FINDINGS,
         "near_dup_cap": DEFAULT_NEAR_DUP_CAP,
+        "near_dup_max_docs": DEFAULT_NEAR_DUP_MAX_DOCS,
         "today": None,
     }
     if not path:
@@ -390,11 +392,14 @@ def _check_canonical_conflict(g):
     return out
 
 
-def _check_near_duplicate(g, jaccard_threshold, cap):
+def _check_near_duplicate(g, jaccard_threshold, cap, max_docs):
     """7. 語彙的酷似(助言)。現行文書対の Jaccard が閾値以上。
 
     トークンのシングル集合(unigram)の Jaccard。標準ライブラリのみ。
     決定的: doc_id の組で整列、上限で切る。常に advisory。
+
+    規模ガード: 走査は O(n^2)。現行文書数が max_docs を超えたら対走査を
+    省き、省いた事実を助言一つで正直に告げる(黙って切り詰めない)。
     """
     out = []
     shingles = {}
@@ -409,6 +414,12 @@ def _check_near_duplicate(g, jaccard_threshold, cap):
         if toks:
             shingles[doc_id] = toks
     ids = sorted(shingles)
+    if len(ids) > max_docs:
+        out.append(_finding(
+            "near_duplicate", SEV_ADVISORY, "", "",
+            "現行文書 %d 件が規模上限 %d を超えたため語彙的酷似の走査を省いた。"
+            "near_dup_max_docs を上げるか対象を絞って再実行する" % (len(ids), max_docs)))
+        return out
     pairs = []
     for i in range(len(ids)):
         for j in range(i + 1, len(ids)):
@@ -570,7 +581,7 @@ def run_audit(root, today, knobs):
     findings += _check_orphan(g, today, knobs["orphan_stale_days"])
     findings += _check_reverse_orphan(g)
     findings += _check_canonical_conflict(g)
-    findings += _check_near_duplicate(g, knobs["jaccard"], knobs["near_dup_cap"])
+    findings += _check_near_duplicate(g, knobs["jaccard"], knobs["near_dup_cap"], knobs["near_dup_max_docs"])
     findings += _check_icd_violation(g)
     findings += _check_projection_drift(g)
     findings += _check_unregistered(g)
