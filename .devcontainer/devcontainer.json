@@ -1,0 +1,89 @@
+{
+  // Claude Code プラグイン開発環境。
+  // 形式は devcontainer 仕様（JSONC: コメント可）に従う。
+  "name": "claude-code-plugin-dev",
+
+  // Node 22 LTS のベースイメージ。Claude Code CLI は Node 18 以上を要する。
+  // このイメージは非 root の remoteUser "node" を持ち、Anthropic 参照コンテナと揃う。
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+
+  "features": {
+    // Claude Code を導入する。CLI（claude を PATH へ）と
+    // VS Code 拡張機能 anthropic.claude-code を両方入れる公式 Feature。
+    // タグ :1 は Feature のインストールスクリプトを固定する（CLI 版は固定しない。CLI は自動更新する）。
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1": {},
+
+    // 仕様のフックは Python スクリプトで実装する。python3 を入れる。
+    // 付随ツール（black/flake8 等）は入れない。整形は拡張機能 Ruff に任せる。
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.12",
+      "installTools": false
+    },
+
+    // GitHub CLI。Issue / PR 操作とプラグインの配布（marketplace のホスト）に使う。
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  "customizations": {
+    "vscode": {
+      // 拡張機能版 Claude Code を明示する。Feature でも入るが、二重指定で確実にする。
+      "extensions": [
+        "anthropic.claude-code",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff",
+        "esbenp.prettier-vscode",
+        "yzhang.markdown-all-in-one",
+        "DavidAnson.vscode-markdownlint",
+        "eamodio.gitlens"
+      ],
+      "settings": {
+        // 既定では保存時整形をしない。日本語 Markdown を意図せず再整形しないため。
+        "editor.formatOnSave": false,
+        "files.eol": "\n",
+        "terminal.integrated.defaultProfile.linux": "bash",
+
+        // プラグインの各 JSON（plugin.json / marketplace.json / hooks.json / .mcp.json）は整形する。
+        "[json]": {
+          "editor.formatOnSave": true,
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+        "[jsonc]": {
+          "editor.formatOnSave": true,
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+
+        // Python フックは Ruff で整形・import 整列する。
+        "[python]": {
+          "editor.formatOnSave": true,
+          "editor.defaultFormatter": "charliermarsh.ruff",
+          "editor.codeActionsOnSave": {
+            "source.fixAll.ruff": "explicit",
+            "source.organizeImports.ruff": "explicit"
+          }
+        },
+
+        // 仕様は日本語 Markdown。折り返しを有効にし、保存時整形はしない。
+        "[markdown]": {
+          "editor.wordWrap": "on",
+          "editor.formatOnSave": false
+        }
+      }
+    }
+  },
+
+  // 認証・セッション履歴を再ビルド後も保持する。コンテナの home は再ビルドで破棄される。
+  // ~/.claude を名前付きボリュームに退避する。${devcontainerId} でこのプロジェクト専用に分離する。
+  "mounts": [
+    "source=claude-code-config-${devcontainerId},target=/home/node/.claude,type=volume"
+  ],
+
+  "containerEnv": {
+    "CLAUDE_CONFIG_DIR": "/home/node/.claude"
+  },
+
+  // 新規の名前付きボリュームは root 所有で作られる。remoteUser が書けるよう所有権を移す。
+  "postCreateCommand": "sudo chown -R node:node /home/node/.claude || true",
+
+  "remoteUser": "node"
+}

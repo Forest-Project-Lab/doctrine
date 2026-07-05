@@ -453,6 +453,43 @@ class TestAuditHandshake(InjectBase):
         self.assertIn("error 2", ctx)
         self.assertNotIn("前回監査なし", ctx)
 
+    def test_unregistered_count_names_docs_curate(self):
+        # G3: counts_by_check.unregistered_document=N -> an actionable line that
+        # NAMES docs-curate is injected, regardless of token-cap overflow.
+        obj = self._audit_obj()
+        obj["counts_by_check"] = {"unregistered_document": 3}
+        obj["totals"] = {"error": 3, "warn": 0, "advisory": 0}
+        obj["top_findings"] = [
+            {"check": "unregistered_document", "severity": "error", "doc_id": "",
+             "path": "notes/a.md", "message": "登録されない .md", "refs": []},
+            {"check": "unregistered_document", "severity": "error", "doc_id": "",
+             "path": "notes/a.md", "message": "登録されない .md", "refs": []},
+        ]
+        plugin_root = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, plugin_root, ignore_errors=True)
+        cache_dir = os.path.join(plugin_root, ".cache")
+        os.makedirs(cache_dir, exist_ok=True)
+        with open(os.path.join(cache_dir, "last-audit.json"), "w",
+                  encoding="utf-8") as fh:
+            json.dump(obj, fh, ensure_ascii=False)
+        root = self._repo({"docs/_system/decided-facts.md":
+                           _decided("DECIDED-001", "確定A")})
+        docs_root = os.path.join(root, "docs")
+        old = os.environ.get("CLAUDE_PLUGIN_ROOT")
+        os.environ["CLAUDE_PLUGIN_ROOT"] = plugin_root
+        try:
+            data = self._run_json(docs_root, extra=["--cap", "12000"])
+        finally:
+            if old is None:
+                os.environ.pop("CLAUDE_PLUGIN_ROOT", None)
+            else:
+                os.environ["CLAUDE_PLUGIN_ROOT"] = old
+        ctx = self._ctx(data)
+        self.assertIn("docs-curate を起動", ctx)
+        self.assertIn("3", ctx)
+        # No overflow here: the remedy is not the overflow notice.
+        self.assertNotIn("注入上限", ctx)
+
     def test_missing_audit_says_none(self):
         # No artifact anywhere -> 「前回監査なし」, never an error.
         root = self._repo({"docs/_system/decided-facts.md":
@@ -490,6 +527,18 @@ class TestResilience(InjectBase):
         data = self._run_json(os.path.join(root, "docs"))
         ctx = self._ctx(data)
         self.assertIn("DECIDED-001", ctx)
+
+    def test_docs_present_but_unregistered_onboarding(self):
+        # G5: docs/ EXISTS but zero REGISTERED docs -> onboarding notice naming
+        # docs-system-init + docs-curate, distinct from the docs/-absent bootstrap
+        # and mutually exclusive with it.
+        root = self._repo({"docs/notes/scratch.md": "ただの散文。id 無し。\n"})
+        data = self._run_json(os.path.join(root, "docs"))
+        ctx = self._ctx(data)
+        self.assertIn("docs-system-init", ctx)
+        self.assertIn("docs-curate", ctx)
+        self.assertIn("登録された文書", ctx)
+        self.assertNotIn("_system 層がまだ無い", ctx)  # not the bootstrap notice
 
     def test_no_system_bootstrap_notice(self):
         root = self._repo({"README.md": "no docs here"})

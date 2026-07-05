@@ -17,7 +17,7 @@ llm_context: task
 ## 実装制約
 - 標準ライブラリだけを使う。pip も通信も使わず、同じ入力には常に同じ判定を返す。
 - `_route` が `hook_event_name` と `tool_name` の組で処理を振り分ける。終了コードは常に 0 を返す。
-- `_handle_pre_edit_write` が三ガードを順に当て、最初に拒否したガードで止める。`[R7]`
+- `_handle_pre_edit_write` が三ガードを順に当て、最初に拒否したガードで止める。`[R7]` 不変ガードの後、`_pre_target_is_guard_inert` が真（realpath 解決後 docs/ の外で、フロントマター無し Write か、on-disk に `id` を持たない Edit/MultiEdit）なら、依存グラフを組まずに allow する（レイテンシの早期通過、判定不変）。`id` を持つ対象（リンク経由含む）は早期通過せず Guard3 が当たる。`_handle_post_edit` も同様に、realpath 解決後 docs/ の外で、書き込まれた本文が `---` フェンスで始まらない非文書はグラフを組まずに静かに通す（id ではなくフェンスで判定し、`domain`＋`depends_on` を持つ文書型の POST block を落とさない）。
 - ドメインの解決と逆依存は `_depgraph` に、型と `status` の既定は `_registry` に委ね、ここでは定義し直さない。
 
 ## 注意点

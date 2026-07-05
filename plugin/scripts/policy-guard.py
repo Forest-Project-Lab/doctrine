@@ -765,6 +765,11 @@ def _handle_pre_edit_write(tool, tin, cwd):
     if reason is not None:
         return _pre_deny(reason)
 
+    # docs/ の木の外の、二・三ガードが発火しえない対象は、グラフ構築(全 .md
+    # 走査)を省いて通す(G1: レイテンシ早期通過)。判定は変わらない。
+    if _pre_target_is_guard_inert(file_path, tool, tin):
+        return _pre_allow()
+
     # グラフは Guard2/Guard3 で要る。docs/ を解決して組む。
     docs_root = _find_docs_root(file_path, cwd)
     graph = None
@@ -798,6 +803,36 @@ def _handle_pre_edit_write(tool, tin, cwd):
         return _pre_deny(reason)
 
     return _pre_allow()
+
+
+def _pre_target_is_guard_inert(file_path, tool, tin):
+    """docs/ の木の外にあり、二・三ガードのどちらも発火しえない対象か。
+
+    グラフ構築(全 .md 走査)の前に置く早期通過(early-out)の判定。判定を一切
+    変えない最適化である。inert 判定は「解決後(realpath)の対象」に対して行う:
+    シンボリック/ハードリンク越しに docs/ 内の統治文書へ届く編集を取りこぼさない
+    ため。MECE:
+      - Write: content にフロントマターの開始フェンス '---' が無ければ Guard2 は
+        fail-open(§3.6)、Guard3 は id を持たず発火しない。
+      - Edit/MultiEdit: Guard2 は構造上 None(Write のみ判定)。Guard3 は対象を
+        ディスクから読み id で判じるので、on-disk に id があれば発火しうる。よって
+        id を持たない非文書のときだけ inert とみなす(id 有りは早期通過させない)。
+    Guard1 は本判定より前に当て済み(early-out は allow へしか倒れない)。
+    """
+    if _is_under_docs(file_path) or _is_under_docs(os.path.realpath(file_path)):
+        return False
+    if tool == "Write":
+        head = tin.get("content", "").lstrip()
+        return not head.startswith("---")
+    # Edit/MultiEdit: on-disk に id があれば Guard3 が発火しうる。id 無しなら inert。
+    if os.path.isfile(file_path):
+        try:
+            fm, _b, _e = _frontmatter.parse_file(file_path)
+        except (OSError, UnicodeError):
+            return False  # 読めない対象は早期通過させず Guard3 に委ねる。
+        if _coerce_str(fm.get("id")):
+            return False
+    return True
 
 
 def _guard2_should_fail_open(file_path, tool, tin):
@@ -848,6 +883,16 @@ def _handle_post_edit(tool, tin, cwd):
     except (OSError, UnicodeError):
         return _post_quiet()  # 読めない → 助言できない(リンタ/監査に委ねる)。
     fm, body, _e = _frontmatter.parse(raw_post)
+
+    # docs/ の木の外で、フロントマターの開始フェンス '---' を持たない純粋な非文書
+    # → Guard2(ICD依存, _icd_check_content)は depends_on を読めず、Guard3 は id を
+    # 持たない。どちらも発火しえないので、グラフ構築を省いて静かに通す(G1: 早期通過)。
+    # 判定は id ではなくフェンスで行う: id 無しでも domain+depends_on を持つ文書型の
+    # 編集は Guard2-POST が発火しうるため(CORRECTNESS 指摘)。
+    if (not _is_under_docs(file_path)
+            and not _is_under_docs(os.path.realpath(file_path))
+            and not raw_post.lstrip().startswith("---")):
+        return _post_quiet()
 
     docs_root = _find_docs_root(file_path, cwd)
     try:

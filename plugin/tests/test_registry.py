@@ -2,7 +2,7 @@
 """Unit tests for scripts/_registry.py — the single in-code copy of §3.2/§3.3/§3.4.
 
 Covers the synthesis gap "_registry.py itself has no test cases" (MASTER §10.1):
-registry parity (the 18 types with correct default status & llm_context),
+registry parity (the 19 types with correct default status & llm_context),
 status_allowed per type (ADR exact set, RESEARCH draft carve-out, non-ADR excludes
 'accepted'), type_of prefix parsing, is_projection, effective_llm_context override,
 required_keys gating, is_current. Asserts against the MASTER §2 tables as the
@@ -25,8 +25,8 @@ import _registry as R  # noqa: E402
 # test is a true parity check, not a re-read of the module's own literals.
 EXPECTED_TYPES = (
     "ICD", "OVERVIEW", "GLOSSARY", "CTXMAP", "DECIDED", "NONGOAL", "WATCH",
-    "REQ", "SPEC", "DATA", "API", "ADR", "CHANGE", "IMPACT", "IMPL", "TEST",
-    "RESEARCH", "ARCHIVE",
+    "REQ", "SPEC", "DATA", "API", "ADR", "CHANGE", "IMPACT", "IMPL", "PROC",
+    "TEST", "RESEARCH", "ARCHIVE",
 )
 
 EXPECTED_DEFAULT_STATUS = {
@@ -34,26 +34,26 @@ EXPECTED_DEFAULT_STATUS = {
     "CTXMAP": "current", "DECIDED": "current", "NONGOAL": "current",
     "WATCH": "current", "REQ": "current", "SPEC": "current", "DATA": "current",
     "API": "current", "ADR": "accepted", "CHANGE": "proposed",
-    "IMPACT": "current", "IMPL": "current", "TEST": "current",
-    "RESEARCH": "draft", "ARCHIVE": "archived",
+    "IMPACT": "current", "IMPL": "current", "PROC": "current",
+    "TEST": "current", "RESEARCH": "draft", "ARCHIVE": "archived",
 }
 
 EXPECTED_DEFAULT_LLM_CONTEXT = {
     "ICD": "task", "OVERVIEW": "always", "GLOSSARY": "always", "CTXMAP": "task",
     "DECIDED": "always", "NONGOAL": "always", "WATCH": "always", "REQ": "task",
     "SPEC": "task", "DATA": "task", "API": "task", "ADR": "task",
-    "CHANGE": "task", "IMPACT": "task", "IMPL": "task", "TEST": "task",
-    "RESEARCH": "never", "ARCHIVE": "never",
+    "CHANGE": "task", "IMPACT": "task", "IMPL": "task", "PROC": "task",
+    "TEST": "task", "RESEARCH": "never", "ARCHIVE": "never",
 }
 
 
 class TestTypeRegistryParity(unittest.TestCase):
-    """All 18 types present, in registry order, with correct default tables (MASTER §2.1)."""
+    """All 19 types present, in registry order, with correct default tables (MASTER §2.1 + ADR-013)."""
 
-    def test_18_types_in_order(self):
+    def test_19_types_in_order(self):
         self.assertEqual(R.TYPES, EXPECTED_TYPES)
-        self.assertEqual(len(R.TYPES), 18)
-        self.assertEqual(len(set(R.TYPES)), 18, "no duplicate type codes")
+        self.assertEqual(len(R.TYPES), 19)
+        self.assertEqual(len(set(R.TYPES)), 19, "no duplicate type codes")
 
     def test_default_status_per_type(self):
         self.assertEqual(set(R.TYPE_DEFAULT_STATUS), set(EXPECTED_TYPES))
@@ -99,6 +99,7 @@ class TestTypeLocation(unittest.TestCase):
         self.assertEqual(R.allowed_locations("SPEC"), ["<domain>/spec/"])
         self.assertEqual(R.allowed_locations("ADR"), ["<domain>/decisions/"])
         self.assertEqual(R.allowed_locations("OVERVIEW"), ["_system/"])
+        self.assertEqual(R.allowed_locations("PROC"), ["<domain>/procedures/"])
 
     def test_allowed_locations_returns_fresh_list(self):
         a = R.allowed_locations("SPEC")

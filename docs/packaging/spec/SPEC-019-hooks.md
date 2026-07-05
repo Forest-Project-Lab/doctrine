@@ -24,9 +24,9 @@ llm_context: task
 - **PreToolUse / matcher `Edit|Write|MultiEdit`**: `policy-guard.py` を起動し、三つのガードをかける（guard ドメインの ICD-003）。
 - **PreToolUse / matcher `Bash`**: `policy-guard.py` を起動し、削除の安全だけを deny で見る。
 - **PostToolUse / matcher `Edit|Write|MultiEdit`**: `policy-guard.py`・`docs-linter.py`・`review-nudge.py` をこの順に並べる（lint ドメインの ICD-004）`[R7][R10]`。`review-nudge.py` は型付き文書の編集に doc-review を促す助言である。
-- **SessionEnd**: `docs-audit.py` を起動し、全件を監査する（audit ドメインの ICD-005）。
+- **SessionEnd**: `docs-audit.py` を起動し、全件を監査する（audit ドメインの ICD-005）。要約を次セッションの注入へ渡すため、`--json --summary-out ${CLAUDE_PLUGIN_ROOT}/.cache/last-audit.json --fail-on never` を付け、`--root ${CLAUDE_PROJECT_DIR}/docs` を指す。`--fail-on never` で後始末を妨げない。
 
-`command` は、すべて `${CLAUDE_PLUGIN_ROOT}/scripts/<名>.py` の形で解決する。
+`command` は、すべて `${CLAUDE_PLUGIN_ROOT}/scripts/<名>.py` の形で解決する。引数を付ける場合はスクリプトのパスに続けて書く（SessionEnd の `docs-audit.py` だけが要約出力のため引数を持つ）。
 
 ## 制約
 

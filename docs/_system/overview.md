@@ -5,7 +5,7 @@ type: OVERVIEW
 domain: _system
 status: current
 owner: render-projection
-updated: 2026-06-30
+updated: 2026-07-02
 llm_context: always
 sources: []
 ---
@@ -18,7 +18,7 @@ sources: []
 |---|---|---|---|
 | GLOSSARY-001 | GLOSSARY | _system | 用語辞書の正本 |
 | DECIDED-001 | DECIDED | _system | 横断の確定方針（8事実） |
-| NONGOAL-001 | NONGOAL | _system | 横断のやらないこと（5項） |
+| NONGOAL-001 | NONGOAL | _system | 横断のやらないこと（6項） |
 | WATCH-001 | WATCH | _system | 横断の退行監視（4項） |
 | ICD-005 | ICD | audit | audit のインターフェース（全件監査の境界） |
 | REQ-008 | REQ | audit | 最小性の監査（過剰と不足の両側を全件検出） |
@@ -31,7 +31,7 @@ sources: []
 | REQ-012 | REQ | authoring | 判断の層（技能と候補語抽出）が決定論を補い保証限界を明示する |
 | SPEC-015 | SPEC | authoring | scaffold（_system 非破壊シード） |
 | SPEC-016 | SPEC | authoring | skills（7技能を一仕様で） |
-| SPEC-017 | SPEC | authoring | templates（18型＋icd-index） |
+| SPEC-017 | SPEC | authoring | templates（19型＋icd-index） |
 | SPEC-018 | SPEC | authoring | term-extract（c-TF-IDF 候補語抽出） |
 | ADR-010 | ADR | authoring | 作成・初期化の設計判断（7技能固定・遅延生成・テンプレが語彙符号化） |
 | IMPL-015 | IMPL | authoring | scaffold/term-extract の実装注記 |
@@ -47,6 +47,8 @@ sources: []
 | SPEC-013 | SPEC | context | タスク別最小被覆パック |
 | SPEC-014 | SPEC | context | 投影の決定論描画 |
 | ADR-009 | ADR | context | 注入とパックで二つの別上限を持つ（C10） |
+| ADR-014 | ADR | context | DECIDED へ写すのは横断の確定事実だけとする |
+| ADR-016 | ADR | context | 投影を正本から描画し直せる派生表示に限り、刊行物は投影一覧に含めない |
 | IMPL-012 | IMPL | context | `inject-contract.py` の実装メモ |
 | IMPL-013 | IMPL | context | `collect-context.py` の実装メモ |
 | IMPL-014 | IMPL | context | `render-projection.py` の実装メモ |
@@ -76,6 +78,7 @@ sources: []
 | ADR-005 | ADR | lint | 承認辞書を体系内で一度だけ符号化する |
 | ADR-007 | ADR | lint | 禁止同義語セルの末尾注記の扱い |
 | ADR-012 | ADR | lint | 構造語彙を正本で定義済みと認め、doc-reviewを著述時の閉じた輪にする |
+| ADR-017 | ADR | lint | 外部の公式名を固有名として辞書に登録し照合から外す |
 | IMPL-007 | IMPL | lint | `docs-linter.py` の実装メモ |
 | IMPL-008 | IMPL | lint | `_termcheck.py` の実装メモ |
 | IMPL-009 | IMPL | lint | `term-check.py` の実装メモ |
@@ -88,6 +91,8 @@ sources: []
 | DATA-001 | DATA | model | 登録簿とフロントマターのスキーマ |
 | ADR-001 | ADR | model | 構造規則の単一正本化（C2） |
 | ADR-002 | ADR | model | フロントマター解析の3要素戻り値（C1） |
+| ADR-013 | ADR | model | 手順を運ぶ型 PROC を一つだけ新設する |
+| ADR-015 | ADR | model | 統治の対象を知識と決定の層に限る |
 | IMPL-001 | IMPL | model | `_registry.py` の実装メモ |
 | IMPL-002 | IMPL | model | `_frontmatter.py` の実装メモ |
 | TEST-001 | TEST | model | 登録簿契約のテスト計画 |

@@ -6,7 +6,7 @@ domain: _system
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-06-30
+updated: 2026-07-02
 canonical_for: [glossary]
 llm_context: always
 sources: []
@@ -56,3 +56,5 @@ sources: []
 一語訳の罠（辞書の一番目を疑う）: status→位置づけ・区分、native→標準で・組み込みで、robust→壊れにくい、leverage→活かす。
 
 定着した借用語（データ・リスク・JSON・YAML・CLI・HTML・URL・MIT・CI・LLM・BOM・CRLF・TF・IDF等）と普通の否定文はカルクではない。
+
+外部の規格・法令・他体系の公式名（固有名）に、禁止同義語が埋め込まれることがある。固有名は、承認語の表へ「固有名」と記して一行足し、照合から外す。固有名の登録は語の意味体系を変えないため、ADRは要らない。地の文では承認語を使う。

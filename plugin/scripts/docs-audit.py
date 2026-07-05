@@ -5,7 +5,8 @@
 - 予防: 何も予防しない。per-turn では走らない。SessionEnd と CI からだけ走る(§4.2)。
 - 検出: dead link・review_by 超過(DECIDED/WATCH 含む)・draft 放置・孤児
   (逆参照ゼロ∧陳腐化∧再現可能)・逆孤児・canonical_for 衝突・語彙的酷似(助言)・
-  ICD依存違反・投影ドリフトを全件で一覧化する。
+  ICD依存違反・投影ドリフト・未登録/影文書(docs/ 内で登録簿ノードにならない .md)を
+  全件で一覧化する。
 - 委ねる: 取り除き(一片ずつ)は docs-curate に、意味的重複の最終判断は人間と
   doc-review に委ねる。ガード(予防)は policy-guard に委ねる。
 
@@ -39,6 +40,7 @@ DEFAULT_ORPHAN_STALE_DAYS = 180     # 孤児の陳腐化の閾値
 DEFAULT_JACCARD = 0.8               # 語彙的酷似(助言)の閾値
 DEFAULT_TOP_FINDINGS = 20           # top_findings の上限(errors 優先)
 DEFAULT_NEAR_DUP_CAP = 50           # 酷似報告の上限
+DEFAULT_NEAR_DUP_MAX_DOCS = 800     # 酷似の O(n^2) 走査を許す現行文書数の上限(超過なら走査を省き助言一つを出す)
 
 # 重大度。
 SEV_ERROR = "error"
@@ -125,6 +127,7 @@ def _load_config(path):
         "jaccard": DEFAULT_JACCARD,
         "top_findings_cap": DEFAULT_TOP_FINDINGS,
         "near_dup_cap": DEFAULT_NEAR_DUP_CAP,
+        "near_dup_max_docs": DEFAULT_NEAR_DUP_MAX_DOCS,
         "today": None,
     }
     if not path:
@@ -389,11 +392,14 @@ def _check_canonical_conflict(g):
     return out
 
 
-def _check_near_duplicate(g, jaccard_threshold, cap):
+def _check_near_duplicate(g, jaccard_threshold, cap, max_docs):
     """7. 語彙的酷似(助言)。現行文書対の Jaccard が閾値以上。
 
     トークンのシングル集合(unigram)の Jaccard。標準ライブラリのみ。
     決定的: doc_id の組で整列、上限で切る。常に advisory。
+
+    規模ガード: 走査は O(n^2)。現行文書数が max_docs を超えたら対走査を
+    省き、省いた事実を助言一つで正直に告げる(黙って切り詰めない)。
     """
     out = []
     shingles = {}
@@ -408,6 +414,12 @@ def _check_near_duplicate(g, jaccard_threshold, cap):
         if toks:
             shingles[doc_id] = toks
     ids = sorted(shingles)
+    if len(ids) > max_docs:
+        out.append(_finding(
+            "near_duplicate", SEV_ADVISORY, "", "",
+            "現行文書 %d 件が規模上限 %d を超えたため語彙的酷似の走査を省いた。"
+            "near_dup_max_docs を上げるか対象を絞って再実行する" % (len(ids), max_docs)))
+        return out
     pairs = []
     for i in range(len(ids)):
         for j in range(i + 1, len(ids)):
@@ -523,6 +535,35 @@ def _find_projection_node(g, type_code, filename):
     return None
 
 
+def _check_unregistered(g):
+    """10. 未登録/影文書(R1/R8)。docs/ 内の .md が登録簿ノードにならない二経路。
+
+    他の全検査は g.nodes 上の述語なので、ノードにならないファイルはどの検査からも
+    見えない。build_graph が既に埋めている二つのリストを読むだけで、新たな走査は
+    しない(スケール無依存・決定的)。
+    - parse_warnings: frontmatter か id が無く、どのノードにもならなかった .md。
+    - dup_ids: 同じ id を持つ別ファイル。後勝ちで一つだけがノードになり、
+      残りは影に隠れて見えない(_add_node と同じ後勝ち: パス整列の最後を採用)。
+    どちらも取り除きではなく、型を与えて登録するか archive/ へ退避する候補。
+    未登録は登録簿に id が無いので doc_id は空文字にする(整列キーが str のため)。
+    """
+    out = []
+    for relpath in sorted(g.parse_warnings):
+        out.append(_finding(
+            "unregistered_document", SEV_ERROR, "", relpath,
+            "docs/ 内の .md にフロントマターと id が無く、登録されない。"
+            "型を与えて登録するか archive/ へ退避する。"))
+    for doc_id in sorted(g.dup_ids):
+        paths = sorted(g.dup_ids[doc_id])
+        keep = paths[-1]
+        for shadowed in paths[:-1]:
+            out.append(_finding(
+                "shadowed_document", SEV_ERROR, doc_id, shadowed,
+                "id %s が既存文書と衝突し、登録されず影に隠れている(採用 %s)。"
+                "別 id を与えるか archive/ へ退避する。" % (doc_id, keep)))
+    return out
+
+
 # ---------------------------------------------------------------------------
 # 監査本体
 # ---------------------------------------------------------------------------
@@ -540,9 +581,10 @@ def run_audit(root, today, knobs):
     findings += _check_orphan(g, today, knobs["orphan_stale_days"])
     findings += _check_reverse_orphan(g)
     findings += _check_canonical_conflict(g)
-    findings += _check_near_duplicate(g, knobs["jaccard"], knobs["near_dup_cap"])
+    findings += _check_near_duplicate(g, knobs["jaccard"], knobs["near_dup_cap"], knobs["near_dup_max_docs"])
     findings += _check_icd_violation(g)
     findings += _check_projection_drift(g)
+    findings += _check_unregistered(g)
 
     findings.sort(key=lambda f: (f["check"], f["doc_id"], f["message"]))
     return findings
