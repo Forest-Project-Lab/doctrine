@@ -6,7 +6,7 @@ domain: authoring
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-06-30
+updated: 2026-07-02
 sources: [spec/doctrine.ja.md §4.1]
 depends_on: [SPEC-016, SPEC-017]
 llm_context: task
@@ -14,13 +14,13 @@ llm_context: task
 
 # skills/templates の実装注記
 
-7つの技能と19個のテンプレートを実装するうえでの制約を記す。`[R8]`
+7つの技能と20個のテンプレートを実装するうえでの制約を記す。`[R8]`
 
 ## 実装制約
 
 技能は `skills/<name>/SKILL.md` と `references/*.md` で構成し、本文は500行未満に保つ。`description` は三人称で書く。各技能は `## 保証限界` 節と、予防・検出・委ねるの三層を持つ。機械で割り切れる処理は `scripts/` のスクリプト（点検を機械にやらせる処理）に任せ、技能の本文には登録簿を書き写さない。
 
-テンプレートは、`templates/<型コード>.md.tmpl` の18種と `icd-index.md.tmpl` で計19個。既定の `status`・`llm_context` を登録簿に合わせる。`glossary.md.tmpl` が20個の承認語の表と9行のカルク表を持ち、これが §1 を写した体系内で唯一の場所となる。
+テンプレートは、`templates/<型コード>.md.tmpl` の19種と `icd-index.md.tmpl` で計20個。既定の `status`・`llm_context` を登録簿に合わせる。`glossary.md.tmpl` が20個の承認語の表と9行のカルク表を持ち、これが §1 を写した体系内で唯一の場所となる。
 
 ## 注意点
 
@@ -28,6 +28,6 @@ llm_context: task
 
 ## 対象部品
 
-`plugin/skills/`（7つの技能）・`plugin/templates/`（19個のテンプレート）。
+`plugin/skills/`（7つの技能）・`plugin/templates/`（20個のテンプレート）。
 
 <!-- 入れない: 仕様の正本 -->

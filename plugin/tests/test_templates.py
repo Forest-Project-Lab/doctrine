@@ -1,10 +1,10 @@
 """Template validation suite (slice 09 / MASTER §8).
 
-Validates ALL 19 shipped templates under plugin/templates/:
-the 17 single-type templates (icd, overview, ctxmap, decided, nongoal, watch,
-req, spec, data, api, adr, change, impact, impl, test, research, archive) plus
-the glossary template (owned by the termcore agent, validated here by path) and
-the icd-index projection seed (type OVERVIEW, C8).
+Validates ALL 20 shipped templates under plugin/templates/:
+the 18 single-type templates (icd, overview, ctxmap, decided, nongoal, watch,
+req, spec, data, api, adr, change, impact, impl, proc, test, research, archive)
+plus the glossary template (owned by the termcore agent, validated here by path)
+and the icd-index projection seed (type OVERVIEW, C8).
 
 Every template is parsed through the FROZEN _frontmatter parser and checked
 against the FROZEN _registry tables (no rule is duplicated here — the registry
@@ -13,7 +13,7 @@ is the single source of truth, §3 "コードに規則を二重定義しない")
 TC coverage (design/10-scenarios.md):
 - TC-001/003/005/007/009/011/013/015/017/019/021/023/027/029/031/033/035/037:
   each type's TEMPLATE DEFAULT status is inside status_allowed(type) — the
-  allow side of the 18-type status matrix, asserted at the seed level so a
+  allow side of the 19-type status matrix, asserted at the seed level so a
   scaffolded doc starts legal.
 - TC-035: RESEARCH default `draft` is legal (C5 carve-out) — template seeds it.
 - TC-037: ARCHIVE default `archived` is legal — template seeds it.
@@ -41,7 +41,7 @@ _frontmatter = _util.load_core("_frontmatter")
 
 # --- The shipped template inventory ----------------------------------------
 # Maps template filename -> the type code its frontmatter MUST carry.
-# 17 single-type templates + glossary (sibling-owned) = 18 type templates;
+# 18 single-type templates + glossary (sibling-owned) = 19 type templates;
 # icd-index is the +1 projection seed (type OVERVIEW, C8).
 TYPE_TEMPLATES = {
     "icd.md.tmpl": "ICD",
@@ -59,15 +59,16 @@ TYPE_TEMPLATES = {
     "change.md.tmpl": "CHANGE",
     "impact.md.tmpl": "IMPACT",
     "impl.md.tmpl": "IMPL",
+    "proc.md.tmpl": "PROC",
     "test.md.tmpl": "TEST",
     "research.md.tmpl": "RESEARCH",
     "archive.md.tmpl": "ARCHIVE",
 }
 
-# Projection seed outside the 18 (type OVERVIEW reused, C8).
+# Projection seed outside the 19 (type OVERVIEW reused, C8).
 PROJECTION_SEED = {"icd-index.md.tmpl": "OVERVIEW"}
 
-# All 19 shipped templates (18 type + 1 projection seed).
+# All 20 shipped templates (19 type + 1 projection seed).
 ALL_TEMPLATES = dict(TYPE_TEMPLATES)
 ALL_TEMPLATES.update(PROJECTION_SEED)
 
@@ -88,20 +89,20 @@ def _parse(name):
 
 
 class TemplatesExistTest(unittest.TestCase):
-    """The 19 templates are present on disk (glossary by path, sibling-owned)."""
+    """The 20 templates are present on disk (glossary by path, sibling-owned)."""
 
-    def test_all_nineteen_present(self):
+    def test_all_twenty_present(self):
         missing = [n for n in ALL_TEMPLATES if not os.path.isfile(_path(n))]
         self.assertEqual(missing, [], "missing templates: %s" % missing)
 
-    def test_exactly_nineteen_md_tmpl(self):
-        """No stray *.md.tmpl beyond the 19 documented ones."""
+    def test_exactly_twenty_md_tmpl(self):
+        """No stray *.md.tmpl beyond the 20 documented ones."""
         on_disk = sorted(
             f for f in os.listdir(_util.TEMPLATES) if f.endswith(".md.tmpl")
         )
         self.assertEqual(
             on_disk, sorted(ALL_TEMPLATES.keys()),
-            "templates/ must hold exactly the 19 documented *.md.tmpl files",
+            "templates/ must hold exactly the 20 documented *.md.tmpl files",
         )
 
 
@@ -191,7 +192,7 @@ class DefaultStatusTest(unittest.TestCase):
     """Template default status == registry default AND is in status_allowed.
 
     TC-001/003/005/007/009/011/013/015/017/019/021/023/027/029/031/033/035/037
-    (the ALLOW side of the 18-type status matrix, at the template-seed level):
+    (the ALLOW side of the 19-type status matrix, at the template-seed level):
     a scaffolded doc starts with a legal status for its type.
     TC-023: ADR seed=accepted (the only type where accepted is legal).
     TC-035: RESEARCH seed=draft (C5 carve-out).
@@ -354,6 +355,37 @@ class SpecTemplateTest(unittest.TestCase):
         if current is not None:
             out[current] = "\n".join(buf)
         return out
+
+
+class ProcTemplateTest(unittest.TestCase):
+    """proc.md.tmpl has all 4 mandatory headings non-trivially + depends_on.
+
+    ADR-013 / SPEC-017: 目的と発動条件・前提・手順・切り戻し as headings,
+    each with non-empty guidance text under it (procedural data module,
+    S1000D-style, distinct from the declarative SPEC form).
+    """
+
+    PROC_SECTIONS = ("目的と発動条件", "前提", "手順", "切り戻し")
+
+    def test_proc_has_four_sections_nontrivial(self):
+        _fm, body, _e = _parse("proc.md.tmpl")
+        sections = SpecTemplateTest._sections(body)
+        for heading in self.PROC_SECTIONS:
+            with self.subTest(section=heading):
+                self.assertIn(
+                    heading, sections,
+                    "proc template missing ## %s" % heading,
+                )
+                content = sections[heading].strip()
+                self.assertTrue(
+                    content,
+                    "proc ## %s section is empty (must be non-trivial)"
+                    % heading,
+                )
+
+    def test_proc_has_depends_on(self):
+        fm, _b, _e = _parse("proc.md.tmpl")
+        self.assertIn("depends_on", fm, "proc template lacks depends_on")
 
 
 class ReviewByTest(unittest.TestCase):

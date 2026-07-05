@@ -15,13 +15,13 @@ from __future__ import annotations
 import re
 
 # ---------------------------------------------------------------------------
-# §3.2 型登録簿 — 18 types, registry order (= spec table row order)
+# §3.2 型登録簿 — 19 types, registry order (= spec table row order)
 # ---------------------------------------------------------------------------
 
 TYPES = (
     "ICD", "OVERVIEW", "GLOSSARY", "CTXMAP", "DECIDED", "NONGOAL", "WATCH",
-    "REQ", "SPEC", "DATA", "API", "ADR", "CHANGE", "IMPACT", "IMPL", "TEST",
-    "RESEARCH", "ARCHIVE",
+    "REQ", "SPEC", "DATA", "API", "ADR", "CHANGE", "IMPACT", "IMPL", "PROC",
+    "TEST", "RESEARCH", "ARCHIVE",
 )
 
 # 既定status — one value per type (§3.2 「既定status」 column).
@@ -41,6 +41,7 @@ TYPE_DEFAULT_STATUS = {
     "CHANGE": "proposed",
     "IMPACT": "current",
     "IMPL": "current",
+    "PROC": "current",
     "TEST": "current",
     "RESEARCH": "draft",
     "ARCHIVE": "archived",
@@ -63,6 +64,7 @@ TYPE_DEFAULT_LLM_CONTEXT = {
     "CHANGE": "task",
     "IMPACT": "task",
     "IMPL": "task",
+    "PROC": "task",
     "TEST": "task",
     "RESEARCH": "never",
     "ARCHIVE": "never",
@@ -87,6 +89,7 @@ TYPE_LOCATION = {
     "CHANGE": ["<domain>/decisions/"],
     "IMPACT": ["<domain>/decisions/"],
     "IMPL": ["<domain>/implementation/"],
+    "PROC": ["<domain>/procedures/"],
     "TEST": ["<domain>/test/"],
     "RESEARCH": ["<domain>/research/"],
     "ARCHIVE": ["<domain>/archive/"],
@@ -237,7 +240,7 @@ def type_of(doc_id):
 
 
 def is_known_type(type_code):
-    """True iff `type_code` is one of the 18 registry types."""
+    """True iff `type_code` is one of the 19 registry types."""
     return type_code in TYPE_DEFAULT_STATUS
 
 
