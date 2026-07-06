@@ -17,9 +17,14 @@ CLI:
   docs/_system/glossary.md      GLOSSARY(§1 の承認語表+カルク表を種にする)
   docs/_system/decided-facts.md DECIDED(review_by を created+90日の placeholder で埋める)
   docs/_system/non-goals.md     NONGOAL
-  docs/_system/overview.md      OVERVIEW(投影の stub。「描画される。手で編集しない」)
+  docs/_system/overview.md      OVERVIEW(投影。種蒔き後に render-projection で導出する)
   AGENTS.md / CLAUDE.md         ルートの案内(投影の入口。手で保守しない)
   docs/_system/.docs-level      単一行 'level: N'(C9。能動 Level を他スクリプトへ公開)
+overview はこの実行で新規に置いた場合だけ、種蒔きの直後に render-projection.py を
+呼んで正本から導出した表で置き直す(投影の描画は render-projection に委ねる、の実行)。
+これで初期化直後のコーパスが自分の監査(projection_drift)を素通しで通る。既存の
+overview には決して触れない(非破壊)。導出に失敗しても足場は成立しているので 0 で
+終わり、手動での render-projection 実行を促す一行を出す。
 終了コード: 0 成功(全飛ばしも成功)。2 引数/入出力の誤り。
 
 標準ライブラリのみ。pip も通信も使わない。決定的(実行日は --today で上書き可)。
@@ -312,6 +317,40 @@ def _usage(msg):
 
 
 # ---------------------------------------------------------------------------
+# Overview derivation (delegated to render-projection; §3.9 投影は描画する).
+# ---------------------------------------------------------------------------
+def _derive_overview(root, fallback):
+    """Re-render the just-seeded overview.md from the seeded canonical docs.
+
+    Called ONLY when THIS run created overview.md, so overwriting it keeps the
+    non-destruction guarantee (we replace our own stub, never a pre-existing
+    file). Delegates to render-projection.py (the projection owner) in a
+    subprocess; a failure leaves the stub in place and does not fail the
+    scaffold (the layout itself succeeded).
+    """
+    import subprocess
+    prefix = ".claude/" if fallback else ""
+    docs_root = os.path.join(root, prefix + "docs")
+    out_path = os.path.join(docs_root, "_system", "overview.md")
+    renderer = os.path.join(_SCRIPTS_DIR, "render-projection.py")
+    try:
+        proc = subprocess.run(
+            [sys.executable, renderer, "overview",
+             "--docs-root", docs_root, "--out", out_path],
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            timeout=60, text=True)
+        rc = proc.returncode
+    except (OSError, subprocess.SubprocessError):
+        rc = -1
+    if rc != 0:
+        sys.stdout.write(
+            "scaffold: overview の導出に失敗(雛形のまま)。"
+            "render-projection.py overview を手で実行すること。\n")
+    else:
+        sys.stdout.write("RENDER       %s\n" % (prefix + "docs/_system/overview.md"))
+
+
+# ---------------------------------------------------------------------------
 # Entry point.
 # ---------------------------------------------------------------------------
 def main(argv=None):
@@ -328,6 +367,13 @@ def main(argv=None):
         plan = _build_plan(opts["level"], created, opts["fallback"])
         root = opts["root"]
 
+        if os.path.basename(os.path.normpath(root)) == "docs":
+            # --root は docs/ ではなくプロジェクトの根を取る。docs/ を渡すと
+            # docs/docs/ が生まれる(初見の利用者が最も踏みやすい取り違え)。
+            sys.stdout.write(
+                "注意: --root にはプロジェクトの根を渡す(docs/ 自体を渡すと"
+                " docs/docs/ が生まれる)。\n")
+
         if opts["dry_run"]:
             # Print the plan; write NOTHING (no dirs, no files). Exit 0.
             sys.stdout.write("dry-run: 次を配置する(既存は飛ばす)。書き込みはしない。\n")
@@ -339,15 +385,20 @@ def main(argv=None):
 
         created_n = 0
         skipped_n = 0
+        overview_created = False
         for relpath, content in plan:
             abspath = os.path.join(root, relpath)
             result = _atomic_write_new(abspath, content)
             if result == "created":
                 created_n += 1
+                if relpath.endswith("overview.md"):
+                    overview_created = True
                 sys.stdout.write("CREATE       %s\n" % relpath)
             else:
                 skipped_n += 1
                 sys.stdout.write("SKIP (exists) %s\n" % relpath)
+        if overview_created:
+            _derive_overview(root, opts["fallback"])
         sys.stdout.write("作成 %d, 飛ばし %d。\n" % (created_n, skipped_n))
         return 0
     except OSError as exc:

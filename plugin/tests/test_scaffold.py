@@ -103,6 +103,52 @@ class TestCreatesMinimalSet(ScaffoldBase):
         text = _util.read(self.sysfile("overview.md"))
         self.assertIn("描画される。手で編集しない。", text)
 
+    def test_overview_is_derived_and_fresh_tree_audits_green(self):
+        """初期化直後のコーパスは自分の監査を素通しで通る(green out of the box).
+
+        Regression: scaffold used to leave the overview stub with an empty
+        table, so a brand-new user's very first SessionEnd audit reported
+        projection_drift error×3 and the next SessionStart demanded
+        docs-curate. The seeded overview must list the seeded canonical docs
+        and match render-projection's own derivation exactly."""
+        out, code = self.run_scaffold()
+        self.assertEqual(code, 0, out)
+        text = _util.read(self.sysfile("overview.md"))
+        for doc_id in ("GLOSSARY-001", "DECIDED-001", "NONGOAL-001"):
+            self.assertIn(doc_id, text,
+                          "seeded overview must list %s" % doc_id)
+        docs_root = os.path.join(self.root, "docs")
+        audit_out, audit_code = _util.invoke(
+            "docs-audit", argv=["--root", docs_root, "--today", TODAY,
+                                "--fail-on", "error"])
+        self.assertEqual(audit_code, 0, audit_out)
+        self.assertIn("error=0 warn=0 advisory=0", audit_out)
+        check_out, check_code = _util.invoke(
+            "render-projection",
+            argv=["overview", "--docs-root", docs_root, "--check"])
+        self.assertEqual(check_code, 0,
+                         "scaffolded overview drifts from render-projection: %s"
+                         % check_out)
+
+    def test_pre_existing_overview_is_never_rerendered(self):
+        """非破壊: 既存の overview には導出でも触れない(再実行で保存)."""
+        self.run_scaffold()
+        sentinel = "SENTINEL-OVERVIEW\n"
+        with open(self.sysfile("overview.md"), "w", encoding="utf-8") as fh:
+            fh.write(sentinel)
+        out, code = self.run_scaffold()
+        self.assertEqual(code, 0, out)
+        self.assertEqual(_util.read(self.sysfile("overview.md")), sentinel)
+
+    def test_root_pointing_at_docs_warns(self):
+        """--root に docs/ 自体を渡す取り違えには注意書きを出す(処理は続行)."""
+        docsy = os.path.join(self.root, "docs")
+        os.makedirs(docsy, exist_ok=True)
+        out, code = _util.invoke(
+            "scaffold", argv=["--root", docsy, "--today", TODAY, "--dry-run"])
+        self.assertEqual(code, 0)
+        self.assertIn("プロジェクトの根", out)
+
     def test_root_pointers_point_at_system_and_hold_no_facts(self):
         """A.5: CLAUDE.md/AGENTS.md are projection pointers (entry only)."""
         self.run_scaffold()

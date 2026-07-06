@@ -6,7 +6,7 @@ domain: authoring
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-06-30
+updated: 2026-07-06
 sources: [plugin/tests/test_scaffold.py]
 depends_on: [SPEC-015]
 llm_context: task
@@ -18,7 +18,7 @@ llm_context: task
 
 ## 受入基準への対応
 
-SPEC-015 の受入基準に対応する。次の各点を確認する。最小集合を過不足なくちょうど置くこと。書き出した文書がリンタの必須キーと日付の点検を通ること。DECIDED の `review_by` が空でなく created+90日であること。GLOSSARY が §1 の表を写していること。OVERVIEW が投影の雛形であること。ルートの案内が知識を持たないこと。
+SPEC-015 の受入基準に対応する。次の各点を確認する。最小集合を過不足なくちょうど置くこと。書き出した文書がリンタの必須キーと日付の点検を通ること。DECIDED の `review_by` が空でなく created+90日であること。GLOSSARY が §1 の表を写していること。OVERVIEW が置いた正本を列挙し、初期化直後のコーパスが監査の所見ゼロで通り、`render-projection --check` とずれないこと。既存の overview には導出でも触れないこと。`--root` に `docs/` を渡した取り違えに注意書きが出ること。ルートの案内が知識を持たないこと。
 
 ## 退行観点
 
