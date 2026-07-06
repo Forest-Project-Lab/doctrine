@@ -66,7 +66,14 @@ class TestPluginJson(unittest.TestCase):
     def test_required_fields(self):
         data = _load_json(self.path)
         self.assertEqual(data["name"], "doctrine")
-        self.assertEqual(data["version"], "0.1.0")
+        # Version: three-component, and IDENTICAL in marketplace.json (the
+        # audit found the value duplicated with no sync guarantee).
+        self.assertRegex(data["version"], r"^\d+\.\d+\.\d+$")
+        mkt = _load_json(os.path.join(
+            os.path.dirname(_util.PLUGIN_ROOT), ".claude-plugin",
+            "marketplace.json"))
+        self.assertEqual(mkt["plugins"][0]["version"], data["version"],
+                         "plugin.json と marketplace.json の version が不一致")
         self.assertEqual(data["license"], "MIT")
         # description: a non-empty one-sentence Japanese string.
         self.assertIsInstance(data["description"], str)

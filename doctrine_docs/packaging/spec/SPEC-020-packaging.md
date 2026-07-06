@@ -21,7 +21,7 @@ llm_context: task
 入力は `/plugin install` の実行である。結果は、配置されたプラグイン（`plugin.json`・`hooks/`・`scripts/`・`skills/`・`templates/`・`README.md`）である。`plugin.json` の最小キーは次のとおり。
 
 - `name`: `doctrine`
-- `version`: `0.1.0`
+- `version`: 三成分の版番号。値の正本は `plugin.json` で、`marketplace.json` と一致させる（テストが強制する）
 - `license`: MIT
 - `description`: 非空の一文（日本語）
 - `author`: name を持つオブジェクト
