@@ -211,6 +211,11 @@ SYSTEM_CANONICAL_FILES = frozenset({
     "watchlist.md",
 })
 
+# 根の案内 — spec-fixed projection pointers that LIVE at the project root by
+# design (§3.7/§5: CLAUDE.md/AGENTS.md are 投影・入口 and are NOT docs/ files).
+# stray-document scanning (ADR-021) must not report them as unclassified.
+ROOT_POINTER_FILES = frozenset({"CLAUDE.md", "AGENTS.md"})
+
 # ---------------------------------------------------------------------------
 # Helper API (frozen — consumed by guard, linter, audit, dep-graph, context)
 # ---------------------------------------------------------------------------

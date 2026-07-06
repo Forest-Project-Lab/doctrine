@@ -586,6 +586,78 @@ class CtxmapDriftTest(AuditBase):
                             f["severity"] == "error" for f in pd), pd)
 
 
+class StrayDocumentTest(AuditBase):
+    """体系外 .md(stray_document, ADR-021): docs/ の外の .md を分類の記録
+    (docs/_system/.md-intake)と突き合わせる。"""
+
+    def _proj(self, ledger=None):
+        root = self.build([(_fm("SPEC-1", "SPEC", "billing"), "x")])
+        proj = os.path.dirname(root)
+        if ledger is not None:
+            os.makedirs(os.path.join(root, "_system"), exist_ok=True)
+            with open(os.path.join(root, "_system", ".md-intake"), "w",
+                      encoding="utf-8") as fh:
+                fh.write(ledger)
+        return root, proj
+
+    def _write(self, proj, rel, text):
+        path = os.path.join(proj, rel)
+        os.makedirs(os.path.dirname(path) or proj, exist_ok=True)
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(text)
+
+    def test_typed_stray_is_warn(self):
+        root, proj = self._proj()
+        self._write(proj, "notes/SPEC-9-draft.md",
+                    _util.fm_block(_fm("SPEC-9", "SPEC", "billing")) + "x")
+        data, _ = self.audit_json(root)
+        sd = self.checks_for(data, "stray_document")
+        self.assertTrue(any(f["severity"] == "warn" and
+                            "SPEC" in f["message"] for f in sd), sd)
+
+    def test_unledgered_untyped_is_advisory(self):
+        root, proj = self._proj()
+        self._write(proj, "MEMO.md", "# メモ\n")
+        data, _ = self.audit_json(root)
+        sd = self.checks_for(data, "stray_document")
+        self.assertTrue(any(f["severity"] == "advisory" and
+                            f["path"] == "MEMO.md" for f in sd), sd)
+
+    def test_ledgered_files_are_silent(self):
+        """記録された非文書(完全一致)と配下指定(末尾 /)は挙がらない。"""
+        root, proj = self._proj(
+            ledger="README.md: 非文書\nvendor/: 非文書\n")
+        self._write(proj, "README.md", "# r\n")
+        self._write(proj, "vendor/a/b.md", "# b\n")
+        data, _ = self.audit_json(root)
+        self.assertEqual(self.checks_for(data, "stray_document"), [])
+
+    def test_hold_expiry(self):
+        """保留は期限まで沈黙し、期限を過ぎると warn で再浮上する。"""
+        root, proj = self._proj(
+            ledger="old.md: 保留 2026-01-01\nnew.md: 保留 2027-01-01\n")
+        self._write(proj, "old.md", "# o\n")
+        self._write(proj, "new.md", "# n\n")
+        data, _ = self.audit_json(root)
+        sd = self.checks_for(data, "stray_document")
+        self.assertTrue(any(f["severity"] == "warn" and f["path"] == "old.md"
+                            for f in sd), sd)
+        self.assertFalse(any(f["path"] == "new.md" for f in sd), sd)
+
+    def test_dead_ledger_entry_is_advisory(self):
+        root, _proj = self._proj(ledger="gone.md: 非文書\n")
+        data, _ = self.audit_json(root)
+        sd = self.checks_for(data, "stray_document")
+        self.assertTrue(any("gone.md" in f["message"] and
+                            f["severity"] == "advisory" for f in sd), sd)
+
+    def test_dot_dirs_not_scanned(self):
+        root, proj = self._proj()
+        self._write(proj, ".hidden/x.md", "# x\n")
+        data, _ = self.audit_json(root)
+        self.assertEqual(self.checks_for(data, "stray_document"), [])
+
+
 # --- near_duplicate advisory (TC-126, R8) ---------------------------------
 
 class NearDuplicateTest(AuditBase):

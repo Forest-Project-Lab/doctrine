@@ -31,6 +31,8 @@ sources: []
 
 ## ドメイン越えの依存(ICD境界)
 
+- ADR-021 --depends_on--> ICD-004
+- ADR-021 --depends_on--> ICD-006
 - ICD-004 --depends_on--> ICD-001
 - ICD-004 --depends_on--> ICD-002
 - SPEC-003 --depends_on--> ICD-001

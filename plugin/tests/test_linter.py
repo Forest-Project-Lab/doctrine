@@ -801,6 +801,32 @@ class RobustnessTest(_Base):
         self.assertEqual(code, 0)
         self.assertIn("BAD_STATUS", out)
 
+    def test_typed_doc_outside_docs_tree_flagged_stray(self):
+        """ADR-021: 登録簿の型を持つ .md が docs/ の木の外 -> STRAY_DOCUMENT。"""
+        path = os.path.join(self.root, "notes", "SPEC-014-x.md")
+        os.makedirs(os.path.dirname(path))
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(_util.fm_block(_valid_spec_fm()) + _SPEC_BODY_4)
+        codes, _ = self._codes(path)
+        self.assertIn("STRAY_DOCUMENT", codes)
+
+    def test_typed_doc_inside_docs_tree_not_stray(self):
+        """docs/ の中の型付き文書には STRAY_DOCUMENT を出さない。"""
+        self._write("docs/billing/REQ-2-refunds.md", _req_fm(), "本文。\n")
+        p = self._write("docs/billing/spec/SPEC-014-refund-policy.md",
+                        _valid_spec_fm(), _SPEC_BODY_4)
+        codes, _ = self._codes(p)
+        self.assertNotIn("STRAY_DOCUMENT", codes)
+
+    def test_untyped_md_outside_docs_not_stray(self):
+        """docs/ の外の型なし .md は STRAY_DOCUMENT の対象でない(intake に委ねる)。"""
+        path = os.path.join(self.root, "MEMO.md")
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write("# メモ\n本文。\n")
+        codes, _ = self._codes(path)
+        self.assertNotIn("STRAY_DOCUMENT", codes)
+        self.assertIn("MISSING_FRONTMATTER", codes)
+
     def test_unknown_string_type_flagged(self):
         """§3.2: 登録簿に無い文字列型 -> UNKNOWN_TYPE(ミューテーション監査の穴埋め)。"""
         self._write("docs/billing/REQ-2-refunds.md", _req_fm(), "本文。\n")

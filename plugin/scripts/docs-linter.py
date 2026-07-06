@@ -306,6 +306,24 @@ def _check_id_filename(meta, path, rel_parts, findings):
         % (doc_id, stem), "§3.4/§3.7"))
 
 
+def _check_stray_location(meta, rel_parts, findings):
+    """STRAY_DOCUMENT (ERROR) — ADR-021: 登録簿の型を持つ文書が docs/ の外。
+
+    体系の文書を名乗る(既知の型を持つ) .md が docs/ の木の外に書かれたら、
+    その場で置き場所を正させる。型なしの .md は対象にしない(README 等の
+    非文書は external-md-intake の分類に委ねる)。
+    """
+    if rel_parts is not None:
+        return  # docs/ の木の中 → 置き場所は _check_type_location が見る。
+    type_code = meta.get("type")
+    if isinstance(type_code, str) and _registry.is_known_type(type_code):
+        findings.append(Finding(
+            "STRAY_DOCUMENT", ERROR,
+            "登録簿の型 %s を持つ文書が docs/ の外に在る。doc-author で "
+            "docs/<domain>/ の置き場所へ移すか、型を外す。" % type_code,
+            "ADR-021"))
+
+
 def _check_type_location(meta, path, rel_parts, findings):
     """§3.4 TYPE_LOCATION_MISMATCH + DOMAIN_PATH_MISMATCH (ERROR)."""
     type_code = meta.get("type")
@@ -586,6 +604,7 @@ def lint_text(text, path):
     _check_type_known(meta, findings)
     _check_status(meta, findings)
     _check_id_filename(meta, path, rel_parts, findings)
+    _check_stray_location(meta, rel_parts, findings)
     _check_type_location(meta, path, rel_parts, findings)
     _check_llm_context(meta, findings)
     _check_research_decision(meta, body, findings)

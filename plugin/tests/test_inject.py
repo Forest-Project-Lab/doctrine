@@ -754,6 +754,35 @@ class TestAuditHandshake(InjectBase):
         # No overflow here: the remedy is not the overflow notice.
         self.assertNotIn("注入上限", ctx)
 
+    def test_stray_count_names_intake(self):
+        """counts_by_check.stray_document=N -> external-md-intake を名指しで促す
+        一行が注入される(ADR-021)。"""
+        root = self._repo({"docs/_system/decided-facts.md":
+                           _decided("DECIDED-001", "確定A")})
+        docs_root = os.path.join(root, "docs")
+        obj = self._audit_obj(root=docs_root)
+        obj["counts_by_check"] = {"stray_document": 4}
+        obj["totals"] = {"error": 0, "warn": 1, "advisory": 3}
+        obj["top_findings"] = []
+        plugin_root = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, plugin_root, ignore_errors=True)
+        cache_dir = os.path.join(plugin_root, ".cache")
+        os.makedirs(cache_dir, exist_ok=True)
+        with open(os.path.join(cache_dir, "last-audit.json"), "w",
+                  encoding="utf-8") as fh:
+            json.dump(obj, fh, ensure_ascii=False)
+        old = os.environ.get("CLAUDE_PLUGIN_ROOT")
+        os.environ["CLAUDE_PLUGIN_ROOT"] = plugin_root
+        try:
+            ctx = self._ctx(self._run_json(docs_root))
+        finally:
+            if old is None:
+                os.environ.pop("CLAUDE_PLUGIN_ROOT", None)
+            else:
+                os.environ["CLAUDE_PLUGIN_ROOT"] = old
+        self.assertIn("external-md-intake", ctx)
+        self.assertIn("4", ctx)
+
     def test_missing_audit_says_none(self):
         # No artifact anywhere -> 「前回監査なし」, never an error.
         root = self._repo({"docs/_system/decided-facts.md":

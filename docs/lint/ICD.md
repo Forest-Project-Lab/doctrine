@@ -6,7 +6,7 @@ domain: lint
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-06-30
+updated: 2026-07-06
 sources: [plugin/scripts/docs-linter.py]
 depends_on: [ICD-001, ICD-002]
 canonical_for: [document-lint, term-check]
@@ -31,7 +31,7 @@ llm_context: task
 
 - リンタの助言: `docs-linter.py` は、PostToolUse の Hook（編集などのイベントで起動するスクリプト）が渡す JSON を標準入力で受け取る。何か見つかれば、`hookSpecificOutput.additionalContext` に `[severity] CODE: message` の行を並べた助言 JSON を返す。`decision` も `permissionDecision` も返さず、終了コードは常に 0 にする。
 - 用語チェッカー: 関数は `check(body, meta, glossary) -> Finding[]`。`Finding` は `(code, severity, message, line)` の四つ組である。
-- 検出コードの一覧は次のとおり。フロントマターと登録簿に関わる `MISSING_FRONTMATTER`・`MISSING_KEY`・`EMPTY_KEY`・`BAD_STATUS`・`UNKNOWN_TYPE`・`ID_FILENAME_MISMATCH`・`BAD_FILENAME`・`TYPE_LOCATION_MISMATCH`・`DOMAIN_PATH_MISMATCH`・`BAD_LLM_CONTEXT`・`RESEARCH_HAS_DECISION`・`SPEC_MISSING_SECTION`・`SPEC_EMPTY_SECTION`・`MISSING_TRACE`・`ICD_DEP_VIOLATION`・`ICD_DEP_UNVERIFIED`、用語側の `BANNED_SYNONYM`・`CALQUE`・`CALQUE_WORDTRAP`・`UNDEFINED_TERM`・`GLOSSARY_PARSE_ERROR`。
+- 検出コードの一覧は次のとおり。フロントマターと登録簿に関わる `MISSING_FRONTMATTER`・`MISSING_KEY`・`EMPTY_KEY`・`BAD_STATUS`・`UNKNOWN_TYPE`・`ID_FILENAME_MISMATCH`・`BAD_FILENAME`・`TYPE_LOCATION_MISMATCH`・`DOMAIN_PATH_MISMATCH`・`BAD_LLM_CONTEXT`・`RESEARCH_HAS_DECISION`・`SPEC_MISSING_SECTION`・`SPEC_EMPTY_SECTION`・`MISSING_TRACE`・`STRAY_DOCUMENT`・`ICD_DEP_VIOLATION`・`ICD_DEP_UNVERIFIED`、用語側の `BANNED_SYNONYM`・`CALQUE`・`CALQUE_WORDTRAP`・`UNDEFINED_TERM`・`GLOSSARY_PARSE_ERROR`。
 
 ## 依存してよい入口
 

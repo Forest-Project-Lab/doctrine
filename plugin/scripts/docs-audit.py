@@ -684,9 +684,164 @@ def run_audit(root, today, knobs):
     findings += _check_icd_violation(g)
     findings += _check_projection_drift(g)
     findings += _check_unregistered(g)
+    findings += _check_stray_documents(root, today)
 
     findings.sort(key=lambda f: (f["check"], f["doc_id"], f["message"]))
     return findings
+
+
+# ---------------------------------------------------------------------------
+# 11. 体系外 .md(ADR-021)。docs/ の外の .md を分類の記録と突き合わせる。
+# ---------------------------------------------------------------------------
+
+_INTAKE_LEDGER = ".md-intake"
+_INTAKE_LINE_RE = re.compile(
+    r"^(?P<path>[^:#][^:]*?)\s*[:：]\s*(?P<kind>非文書|投影|保留)"
+    r"(?:\s+(?P<due>\d{4}-\d{2}-\d{2}))?\s*$")
+_STRAY_SKIP_DIRS = ("node_modules", "__pycache__")
+_STRAY_LIST_CAP = 50
+
+
+def _load_intake_ledger(root):
+    """docs/_system/.md-intake を読む。(entries, bad_lines) を返す。
+
+    entries: list[(path, kind, due_or_None)]。パスはプロジェクト根からの
+    相対(末尾 / は配下全体)。無ければ空。決して例外を投げない。
+    """
+    path = os.path.join(root, "_system", _INTAKE_LEDGER)
+    entries = []
+    bad = []
+    try:
+        with open(path, "r", encoding="utf-8-sig") as fh:
+            lines = fh.read().splitlines()
+    except (OSError, UnicodeError):
+        return entries, bad
+    for i, raw in enumerate(lines, 1):
+        line = raw.strip()
+        if line == "" or line.startswith("#"):
+            continue
+        m = _INTAKE_LINE_RE.match(line)
+        if m is None or (m.group("kind") == "保留" and not m.group("due")):
+            bad.append((i, line))
+            continue
+        entries.append((m.group("path").strip().replace("\\", "/"),
+                        m.group("kind"), m.group("due")))
+    return entries, bad
+
+
+def _ledger_entry_for(relpath, entries):
+    """relpath(プロジェクト根からの相対、/ 区切り)に効く記録の項目を返す。"""
+    for path, kind, due in entries:
+        if path.endswith("/"):
+            if relpath.startswith(path):
+                return (path, kind, due)
+        elif relpath == path:
+            return (path, kind, due)
+    return None
+
+
+def _check_stray_documents(root, today):
+    """11. 体系外 .md(ADR-021, R1/R8)。
+
+    docs ルートの親(=プロジェクト根)から .md を走査し、次だけを挙げる。
+    ①登録簿の型を持つ .md → warn(置き場所の誤り)
+    ②分類の記録に無い .md → advisory(未分類。external-md-intake へ)
+    ③期限を過ぎた「保留」 → warn(再浮上)
+    ④実在しないパスを指す記録の項目 → advisory(掃除の合図)
+    dot ディレクトリ・node_modules・__pycache__ と、監査対象の docs ルート
+    自身は走査しない。決定的(整列走査)。一覧は上限で正直に切り詰める。
+    """
+    out = []
+    docs_root = os.path.abspath(root)
+    proj = os.path.dirname(docs_root)
+    if not proj or proj == docs_root or not os.path.isdir(proj):
+        return out
+    entries, bad_lines = _load_intake_ledger(root)
+    for lineno, line in bad_lines:
+        out.append(_finding(
+            "stray_document", SEV_ADVISORY, "", "_system/" + _INTAKE_LEDGER,
+            "分類の記録の %d 行目が読めない(『パス: 非文書|投影|保留 日付』の形): %s"
+            % (lineno, line[:80])))
+
+    strays = []
+    for dirpath, dirnames, filenames in os.walk(proj):
+        dirnames[:] = sorted(
+            d for d in dirnames
+            if not d.startswith(".")
+            and d not in _STRAY_SKIP_DIRS
+            and os.path.abspath(os.path.join(dirpath, d)) != docs_root)
+        for name in sorted(filenames):
+            if not name.endswith(".md"):
+                continue
+            abspath = os.path.join(dirpath, name)
+            rel = os.path.relpath(abspath, proj).replace(os.sep, "/")
+            strays.append((rel, abspath))
+    strays.sort()
+
+    seen_rel = set()
+    listed = 0
+    for rel, abspath in strays:
+        seen_rel.add(rel)
+        if rel in _registry.ROOT_POINTER_FILES:
+            # 根の案内(CLAUDE.md/AGENTS.md)は仕様がプロジェクト根に置くと
+            # 定める投影(§3.7/§5)。未分類として挙げない。
+            continue
+        try:
+            fm, _body, _errs = _frontmatter.parse_file(abspath)
+        except (OSError, UnicodeError):
+            continue
+        type_code = fm.get("type")
+        typed = isinstance(type_code, str) and _registry.is_known_type(type_code)
+        entry = _ledger_entry_for(rel, entries)
+        if typed:
+            out.append(_finding(
+                "stray_document", SEV_WARN, _coerce_id(fm), rel,
+                "登録簿の型 %s を持つ文書が docs/ の外に在る。doc-author で "
+                "docs/<domain>/ の置き場所へ移すか、型を外す" % type_code))
+            continue
+        if entry is None:
+            if listed < _STRAY_LIST_CAP:
+                out.append(_finding(
+                    "stray_document", SEV_ADVISORY, "", rel,
+                    "docs/ の外の .md が未分類。docs-curate(external-md-intake)"
+                    "で三分類し docs/_system/%s へ記録する" % _INTAKE_LEDGER))
+                listed += 1
+            continue
+        _epath, kind, due = entry
+        if kind == "保留" and due is not None and _parse_date(due) is not None \
+                and _parse_date(due) < today:
+            out.append(_finding(
+                "stray_document", SEV_WARN, "", rel,
+                "保留の期限(%s)を過ぎた。取り込むか、非文書と決めて記録を更新する"
+                % due))
+    if listed >= _STRAY_LIST_CAP:
+        over = sum(1 for rel, _a in strays
+                   if _ledger_entry_for(rel, entries) is None) - listed
+        if over > 0:
+            out.append(_finding(
+                "stray_document", SEV_ADVISORY, "", "_system/" + _INTAKE_LEDGER,
+                "未分類の一覧を %d 件で切り詰めた(残り %d 件。黙って隠さない)"
+                % (_STRAY_LIST_CAP, over)))
+
+    for path, kind, _due in entries:
+        if path.endswith("/"):
+            if not os.path.isdir(os.path.join(proj, path.rstrip("/"))):
+                out.append(_finding(
+                    "stray_document", SEV_ADVISORY, "",
+                    "_system/" + _INTAKE_LEDGER,
+                    "分類の記録が実在しない場所 %s を指している(記録を掃除する)"
+                    % path))
+        elif path not in seen_rel and not os.path.isfile(os.path.join(proj, path)):
+            out.append(_finding(
+                "stray_document", SEV_ADVISORY, "", "_system/" + _INTAKE_LEDGER,
+                "分類の記録が実在しないファイル %s を指している(記録を掃除する)"
+                % path))
+    return out
+
+
+def _coerce_id(fm):
+    v = fm.get("id")
+    return v if isinstance(v, str) else ""
 
 
 def _attach_bodies(g):

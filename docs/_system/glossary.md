@@ -6,7 +6,7 @@ domain: _system
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-02
+updated: 2026-07-06
 canonical_for: [glossary]
 llm_context: always
 sources: []
@@ -18,6 +18,7 @@ sources: []
 
 | 承認語 | 唯一の意味 | 禁止する同義語 |
 |---|---|---|
+| README | 固有名 | |
 | 文書 | 管理対象の最小単位（S1000Dのデータモジュールに当たる） | ドキュメント、資料、ページ |
 | ファイル | ディスク上の実体。「文書」の意味では使わない | （文書の意味でのファイルを禁止） |
 | ドメイン | 交換できる区画（LRU／ARINC 653パーティションに当たる） | 領域、サブシステム、コンテキスト |

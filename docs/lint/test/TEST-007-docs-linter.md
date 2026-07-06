@@ -6,7 +6,7 @@ domain: lint
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-06-30
+updated: 2026-07-06
 sources: [plugin/tests/test_linter.py]
 depends_on: [SPEC-007]
 llm_context: task
@@ -23,6 +23,10 @@ llm_context: task
 
 - リンタは決して `decision` を出さず、助言だけを出す[R7]。WATCH に挙げた懸念事項と突き合わせて確かめる。
 - 例外が起きても終了コードは 0 で、後続の Hook の連鎖を壊さない。
+
+## 追加の観点（ADR-021）
+
+- `STRAY_DOCUMENT`: 登録簿の型を持つ .md が docs/ の木の外に在れば `ERROR` で出ること。docs/ の中の型付き文書と、docs/ の外の型なし .md には出ないこと。
 
 ## 合否基準
 

@@ -6,7 +6,7 @@ domain: audit
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-06-30
+updated: 2026-07-06
 sources: [spec/doctrine.ja.md#4.2]
 canonical_for: [corpus-audit, audit-summary-schema]
 llm_context: task
@@ -28,10 +28,10 @@ ICD・正本・投影・現行・依存・参照は用語辞書（`_system/gloss
 
 このドメインだけが正本となる事実を挙げる（frontmatter の `canonical_for` と一致する）。
 
-- `corpus-audit`: 全件監査の検査群（10 検査）と、各検査の重大度。
+- `corpus-audit`: 全件監査の検査群（11 検査）と、各検査の重大度。
 - `audit-summary-schema`: 監査の要約スキーマ `docs-audit/1` の形。
 
-10 検査と重大度（固定）:
+11 検査と重大度（固定）:
 
 | 検査名 | 重大度 |
 |---|---|
@@ -45,6 +45,7 @@ ICD・正本・投影・現行・依存・参照は用語辞書（`_system/gloss
 | icd_dependency_violation | error |
 | projection_drift | error（Context Map のラベル差のみ warn） |
 | unregistered_document / shadowed_document（docs/ 内で登録簿ノードにならない .md） | error |
+| stray_document（docs/ の外の .md。ADR-021） | warn（型付き・期限切れ保留）／advisory（未分類・記録の掃除） |
 
 ## データ契約
 
