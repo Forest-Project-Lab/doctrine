@@ -12,6 +12,7 @@
 """
 from __future__ import annotations
 
+import os
 import re
 
 # ---------------------------------------------------------------------------
@@ -305,6 +306,37 @@ def is_projection(type_code):
     if not isinstance(type_code, str):
         return False
     return type_code in PROJECTION_TYPES
+
+
+# ---------------------------------------------------------------------------
+# §4.4 段階導入 — the active level marker (C9 / ICD-008 level-staging)
+# ---------------------------------------------------------------------------
+
+_DOCS_LEVEL_RE = re.compile(r"^\s*level\s*[:：]\s*([234])\s*$")
+
+
+def docs_level(docs_root):
+    """Read the active Level from <docs_root>/_system/.docs-level (ADR-019).
+
+    The marker is a single line 'level: N' with N in {2,3,4}, written by
+    scaffold.py. Hook scripts read it to self-gate the parts a trimmed Level
+    excludes (SessionEnd audit, post-apply guard, review nudge below 3).
+    Missing / unreadable / malformed -> 4: dropping a stage is a lightening,
+    not a protection, so uncertainty falls toward FULL governance. Never
+    raises.
+    """
+    if not docs_root:
+        return 4
+    path = os.path.join(docs_root, "_system", ".docs-level")
+    try:
+        with open(path, "r", encoding="utf-8-sig") as fh:
+            for line in fh:
+                m = _DOCS_LEVEL_RE.match(line)
+                if m:
+                    return int(m.group(1))
+    except (OSError, UnicodeError, ValueError):
+        return 4
+    return 4
 
 
 # domain_of is intentionally NOT defined here: an id alone does not encode a

@@ -25,6 +25,7 @@ llm_context: task
 ## 注意点
 
 - 縮小構成にするか `.claude/` へ退避するかは、`scaffold.py` が決める。`_build_plan` が `--level` と `--fallback` を受け取り、`.claude/` の接頭辞と `.docs-level` マーカーを決める。著述者が Hook を手で並べ替えてはならない。
+- 段差ゲート（ADR-019）の読み取りは登録簿の `docs_level(docs_root)` に一度だけ実装する。読者は `docs-audit.py`（`--respect-docs-level` のとき）・`policy-guard.py` の PostToolUse・`review-nudge.py` の三つ。ここに読者を増やすときは ICD-008 の段マーカー契約も更新する。
 - PostToolUse の並び順を取り違えると、起動後に見つけた境界違反がブロックされず、助言だけで終わる。この配列順は退行監視の対象とする（WATCH を参照）。
 - Hook 設定はセッション開始時にスナップショットして固定するので、配線を変えたら、新しいセッションで検証する。
 

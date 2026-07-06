@@ -102,6 +102,7 @@ sources: []
 | SPEC-019 | SPEC | packaging | Hook配線（4イベント／matcher／解決／縮小構成／スナップショット） |
 | SPEC-020 | SPEC | packaging | パッケージ配布（plugin.json／install／.claude フォールバック／標準ライブラリ） |
 | ADR-011 | ADR | packaging | 段階導入とBash matcherの拒否限定 |
+| ADR-019 | ADR | packaging | 段差は .docs-level をスクリプト自身が読んで自主停止で実現する |
 | IMPL-017 | IMPL | packaging | パッケージ・Hook配線の実装注記 |
 | TEST-019 | TEST | packaging | Hook配線・e2e連鎖の受入 |
 | TEST-020 | TEST | packaging | 配布・標準ライブラリの受入 |

@@ -73,6 +73,7 @@ def _parse_args(argv):
         "fail_on": "never",     # 既定は SessionEnd 想定(非ブロッキング)
         "config": None,
         "today": None,
+        "respect_docs_level": False,
     }
     i = 0
     n = len(argv)
@@ -86,6 +87,12 @@ def _parse_args(argv):
             continue
         if a == "--json":
             opts["json"] = True
+            i += 1
+            continue
+        if a == "--respect-docs-level":
+            # 段差ゲート(ADR-019)。SessionEnd の配線だけが付ける。CI は付けず、
+            # Level に依らず全件監査する。
+            opts["respect_docs_level"] = True
             i += 1
             continue
         if a == "--summary-out":
@@ -694,7 +701,8 @@ def main(argv=None):
         sys.stdout.write("usage error: %s\n" % err)
         sys.stdout.write(
             "docs-audit.py [--root docs/] [--json] [--summary-out PATH] "
-            "[--fail-on error|never] [--config PATH] [--today YYYY-MM-DD]\n")
+            "[--fail-on error|never] [--config PATH] [--today YYYY-MM-DD] "
+            "[--respect-docs-level]\n")
         return 2
 
     root = opts["root"]
@@ -703,6 +711,12 @@ def main(argv=None):
         # 監査が走れないのは利用者の誤り(usage に近い)。CI も SessionEnd も
         # ここで止めない方が安全側: ルート不在は所見ゼロと同義に扱い 0 を返す。
         # ただし fail-on error でも誤検知を増やさないため、明示的に 3 ではなく 0。
+        return 0
+
+    if opts["respect_docs_level"] and _registry.docs_level(root) < 3:
+        # 段差ゲート(ADR-019): Level 2 に全件監査は無い(Level 3 から)。要約も
+        # 書かない(前回要約を古いまま残すより、無い方が正直)。
+        sys.stdout.write("docs-level 2: 全件監査は Level 3 から。飛ばした。\n")
         return 0
 
     knobs = _load_config(opts["config"])
@@ -714,7 +728,8 @@ def main(argv=None):
         sys.stdout.write("usage error: %s\n" % exc)
         sys.stdout.write(
             "docs-audit.py [--root docs/] [--json] [--summary-out PATH] "
-            "[--fail-on error|never] [--config PATH] [--today YYYY-MM-DD]\n")
+            "[--fail-on error|never] [--config PATH] [--today YYYY-MM-DD] "
+            "[--respect-docs-level]\n")
         return 2
 
     try:

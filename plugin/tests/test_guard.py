@@ -837,6 +837,40 @@ class TestPostDeleteSafetyTransition(GuardTestBase):
         self.assertIn("TEST-20", resp.get("reason"))
         self.assertIn("SPEC-14", resp.get("reason"))
 
+    def test_level2_marker_disables_post_block_keeps_pre_deny(self):
+        """ADR-019 段差ゲート: level: 2 の体系では PostToolUse の block は出ない
+        (縮小構成に起動後ガードは無い)。PreToolUse の deny は Level 2 でも残る。"""
+        root = self._depended(spec_status="deprecated")  # ディスクは POST 状態
+        sysdir = os.path.join(root, "docs", "_system")
+        os.makedirs(sysdir, exist_ok=True)
+        with open(os.path.join(sysdir, ".docs-level"), "w",
+                  encoding="utf-8") as fh:
+            fh.write("level: 2\n")
+        path = os.path.join(root, "docs/billing/spec/SPEC-14.md")
+        tin = {"file_path": path,
+               "edits": [{"old_string": "status: current",
+                          "new_string": "status: deprecated"}]}
+        out, code = _util.invoke(
+            "policy-guard",
+            stdin_obj=_util.hook_stdin("PostToolUse", "MultiEdit", tin))
+        self.assertEqual(code, 0)
+        resp = json.loads(out)
+        self.assertNotEqual(resp.get("decision"), "block")
+        # PreToolUse(予防)は Level 2 でも従来どおり deny する(現行の被依存文書)。
+        root2 = self._depended(spec_status="current")
+        sysdir2 = os.path.join(root2, "docs", "_system")
+        os.makedirs(sysdir2, exist_ok=True)
+        with open(os.path.join(sysdir2, ".docs-level"), "w",
+                  encoding="utf-8") as fh:
+            fh.write("level: 2\n")
+        tin_pre = {"command": "rm %s"
+                   % os.path.join(root2, "docs/billing/spec/SPEC-14.md")}
+        out_pre, _ = _util.invoke(
+            "policy-guard",
+            stdin_obj=_util.hook_stdin("PreToolUse", "Bash", tin_pre))
+        decision, _ = _pre(json.loads(out_pre))
+        self.assertEqual(decision, "deny")
+
     def test_post_multiedit_demote_transition_blocks(self):
         """MultiEdit で current->deprecated に降格(POST 状態)+逆依存あり ->
         decision:block。Regression(ミューテーション監査): _invert_edits の

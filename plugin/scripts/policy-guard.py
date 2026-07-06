@@ -883,6 +883,12 @@ def _handle_post_edit(tool, tin, cwd):
     if not file_path or not os.path.isfile(file_path):
         return _post_quiet()
 
+    # 段差ゲート(ADR-019): Level 2 は起動後ガード(block)を持たない縮小構成。
+    # .docs-level を読んで自主的に静かに通す。PreToolUse の予防は残る。
+    _lvl_root = _find_docs_root(file_path, cwd)
+    if _lvl_root is not None and _registry.docs_level(_lvl_root) < 3:
+        return _post_quiet()
+
     try:
         with open(file_path, encoding="utf-8-sig", newline="") as _fh:
             raw_post = _fh.read()

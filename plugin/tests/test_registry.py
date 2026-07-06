@@ -385,5 +385,38 @@ class TestConstants(unittest.TestCase):
         self.assertFalse(hasattr(R, "domain_of"))
 
 
+class TestDocsLevel(unittest.TestCase):
+    """ADR-019: docs_level() reads docs/_system/.docs-level; uncertainty -> 4."""
+
+    def _root_with_marker(self, content):
+        import shutil
+        import tempfile
+        root = tempfile.mkdtemp(prefix="dlvl-")
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        sysdir = os.path.join(root, "_system")
+        os.makedirs(sysdir)
+        if content is not None:
+            with open(os.path.join(sysdir, ".docs-level"), "w",
+                      encoding="utf-8") as fh:
+                fh.write(content)
+        return root
+
+    def test_valid_levels(self):
+        for n in (2, 3, 4):
+            root = self._root_with_marker("level: %d\n" % n)
+            self.assertEqual(R.docs_level(root), n)
+
+    def test_missing_marker_defaults_to_full(self):
+        self.assertEqual(R.docs_level(self._root_with_marker(None)), 4)
+        self.assertEqual(R.docs_level(None), 4)
+        self.assertEqual(R.docs_level("/no/such/dir"), 4)
+
+    def test_malformed_marker_defaults_to_full(self):
+        """不明時は統治を全て効かせる側(4)へ倒す(軽量化であって保護でないため)。"""
+        for bad in ("level: 9\n", "lev: 2\n", "garbage\n", "level: two\n", ""):
+            root = self._root_with_marker(bad)
+            self.assertEqual(R.docs_level(root), 4, repr(bad))
+
+
 if __name__ == "__main__":
     unittest.main()

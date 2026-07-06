@@ -65,6 +65,24 @@ def _is_typed_doc(path):
     return isinstance(type_code, str) and _registry.is_known_type(type_code)
 
 
+def _docs_root_for(path):
+    """path から上にたどって docs/ を探す(policy-guard と同じ規約)。無ければ None。"""
+    cur = os.path.dirname(os.path.abspath(path)) if path else None
+    seen = set()
+    while cur and cur not in seen:
+        seen.add(cur)
+        if os.path.basename(cur) == "docs":
+            return cur
+        cand = os.path.join(cur, "docs")
+        if os.path.isdir(cand):
+            return cand
+        parent = os.path.dirname(cur)
+        if parent == cur:
+            break
+        cur = parent
+    return None
+
+
 def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
@@ -73,6 +91,10 @@ def main(argv=None):
         path = _doc_path(data, argv)
         if not _is_typed_doc(path):
             return 0  # 文書でなければ静かに通す。
+        # 段差ゲート(ADR-019): Level 2 の縮小構成にナッジは無い。
+        root = _docs_root_for(path)
+        if root is not None and _registry.docs_level(root) < 3:
+            return 0
         out = {
             "hookSpecificOutput": {
                 "hookEventName": "PostToolUse",

@@ -352,11 +352,11 @@ for dep in proposed.get("depends_on", []):
 
 体系の重さを規模に合わせる。全部を最初から置かない。痛みが出た所だけ足す。これは体系自身の最小性である。`[R8]`
 
-- **小規模（Level 2・縮小構成）**: 必須キー（§3.4）だけ。型は ICD・REQ・SPEC・ADR・DECIDED・OVERVIEW(投影) に絞る（DECIDED は `review_by` を持つ）。スクリプトは `_frontmatter.py`・`docs-linter.py`・`policy-guard.py`・`inject-contract.py` だけ。`scaffold.py` は `_system` の最小配置と `.docs-level` の目印を置く（Hook は事前生成しない）。縮小構成の Hook（`hooks.level2.json`）は同梱の別ファイルで、ホストが配線する。
+- **小規模（Level 2・縮小構成）**: 必須キー（§3.4）だけ。型は ICD・REQ・SPEC・ADR・DECIDED・OVERVIEW(投影) に絞る（DECIDED は `review_by` を持つ）。動くスクリプトは `docs-linter.py`・`policy-guard.py`（予防のみ）・`inject-contract.py` と、それらが引く共有コア（`_frontmatter.py`・`_registry.py`・`_termcheck.py`・`_depgraph.py`）である。`scaffold.py` は `_system` の最小配置と `.docs-level` の目印を置く（Hook は事前生成しない）。縮小は配線の差し替えではなく自主停止で実現する: 全構成の Hook のまま、SessionEnd の監査・起動後ガード・レビューのナッジが `.docs-level` を読んで Level 2 では静かに済ませる（ADR-019）。縮小構成の Hook（`hooks.level2.json`）は、プラグインを使わず手で配線する場合の代替として同梱する。
 - **中規模（Level 3）**: `depends_on`・`impacts` を加える。`dep-graph.py`・`change-impact`・`docs-audit.py` を足す（`review_by` 超過の点検はここから）。
 - **大規模（Level 4）**: `canonical_for` と全件監査・投影一式・ドメイン連携を加える。
 
-現に選んでいる Level は、文書のフロントマターではなく `docs/_system/.docs-level`（`level: N` の一行）に記録し、他のスクリプトがそこから読む。上位へ上げるのは、その情報が要るとわかってからにする。
+現に選んでいる Level は、文書のフロントマターではなく `docs/_system/.docs-level`（`level: N` の一行）に記録し、他のスクリプト（SessionEnd の監査・起動後ガード・レビューのナッジ）がそこから読んで自主停止に使う。目印が無い・読めないときは全構成（Level 4）として扱う。段差で外れるのは軽量化であって保護ではないため、不明時は統治を全て効かせる側に倒す。上位へ上げるのは、その情報が要るとわかってからにする。
 
 ---
 

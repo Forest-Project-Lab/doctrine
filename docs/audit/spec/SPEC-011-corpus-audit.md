@@ -6,7 +6,7 @@ domain: audit
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-06-30
+updated: 2026-07-06
 sources: [spec/doctrine.ja.md#4.2]
 depends_on: [REQ-008, ICD-001, ICD-002]
 llm_context: task
@@ -18,7 +18,7 @@ llm_context: task
 
 ## 入出力
 
-- 入力: コマンドライン引数 `[--root docs/] [--json] [--summary-out PATH] [--fail-on error|never] [--config PATH] [--today YYYY-MM-DD]`。標準入力は読まない。入力内容に結果が左右されないからであり、対話端末から起動しても入力待ちで止まらない。
+- 入力: コマンドライン引数 `[--root docs/] [--json] [--summary-out PATH] [--fail-on error|never] [--config PATH] [--today YYYY-MM-DD] [--respect-docs-level]`。標準入力は読まない。入力内容に結果が左右されないからであり、対話端末から起動しても入力待ちで止まらない。
 - 処理: docs ルート配下のすべての .md について、graph（ICD-002）が依存グラフを組み、登録簿（ICD-001）が各文書の型・`status`・`llm_context` を解決する。本文は一度だけ読んでノードに付ける。
 - 返す値: 要約スキーマ `docs-audit/1`。形は `{schema, generated_at, today, root, totals:{error,warn,advisory}, counts_by_check, top_findings, findings}`。`--json` を付けると機械向けの JSON を、付けなければ人間向けの平文を出す。`--summary-out` を指定すると、要約を一時ファイルに書いてから改名して差し替え、途中状態を残さない。
 
@@ -36,6 +36,7 @@ llm_context: task
 ## エラー時挙動
 
 - ルートが見つからない場合: 所見ゼロと同じ扱いにして終了コード 0 を返す。CI も SessionEnd もここで止めない。
+- `--respect-docs-level` 付きで、対象の `docs/_system/.docs-level` が `level: 2` の場合: 監査を飛ばした旨を出して終了コード 0 を返し、要約は書かない（ADR-019。全件監査は Level 3 から）。この旗は SessionEnd の配線だけが付ける。CI は付けず、Level に依らず監査する。
 - 与えられた `--today` または config.today を日付として解釈できない場合: 使い方の誤りとして終了コード 2 を返す。黙ってシステム時刻に切り替えることはしない。
 - 監査本体がクラッシュした場合: stderr に記録して終了コード 0 を返し、Hook の連鎖を妨げない。要約の書き込みに失敗した場合も 0 を保つ。
 

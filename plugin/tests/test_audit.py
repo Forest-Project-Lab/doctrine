@@ -588,6 +588,47 @@ class SummaryHandshakeTest(AuditBase):
             (_fm("SPEC-1", "SPEC", "billing", depends_on=["SPEC-99"]), "x"),
         ]
 
+    def test_respect_docs_level_skips_at_level2_without_summary(self):
+        """ADR-019: --respect-docs-level 付きで level: 2 の体系 -> 監査を飛ばし
+        exit 0、要約も書かない。フラグ無し(CI)なら Level に依らず監査する。"""
+        root = self.build(self._docs())
+        sysdir = os.path.join(root, "_system")
+        os.makedirs(sysdir, exist_ok=True)
+        with open(os.path.join(sysdir, ".docs-level"), "w",
+                  encoding="utf-8") as fh:
+            fh.write("level: 2\n")
+        cache_dir = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, cache_dir, ignore_errors=True)
+        out_path = os.path.join(cache_dir, "last-audit.json")
+        out, code = _util.invoke(
+            "docs-audit",
+            ["--root", root, "--json", "--summary-out", out_path,
+             "--fail-on", "never", "--today", TODAY, "--respect-docs-level"])
+        self.assertEqual(code, 0)
+        self.assertIn("Level 3", out)
+        self.assertFalse(os.path.exists(out_path),
+                         "level-2 skip must not write a summary")
+        # フラグ無し(CI 経路)は Level 2 でも全件監査する。
+        data, code2 = self.audit_json(root)
+        self.assertEqual(code2, 0)
+        self.assertIn("findings", data)
+
+    def test_respect_docs_level_runs_at_level4(self):
+        """level: 4(または marker 無し)なら --respect-docs-level 付きでも監査する。"""
+        root = self.build(self._docs())
+        sysdir = os.path.join(root, "_system")
+        os.makedirs(sysdir, exist_ok=True)
+        with open(os.path.join(sysdir, ".docs-level"), "w",
+                  encoding="utf-8") as fh:
+            fh.write("level: 4\n")
+        out, code = _util.invoke(
+            "docs-audit",
+            ["--root", root, "--json", "--today", TODAY,
+             "--respect-docs-level"])
+        self.assertEqual(code, 0)
+        data = json.loads(out.strip().splitlines()[-1])
+        self.assertEqual(data["schema"], "docs-audit/1")
+
     def test_summary_out_into_existing_dir_and_overwrite(self):
         """出力先ディレクトリ・ファイルが既存でも summary は書かれる。
 

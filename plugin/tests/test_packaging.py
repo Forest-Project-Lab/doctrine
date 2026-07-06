@@ -180,6 +180,8 @@ class TestHooksFullProfile(unittest.TestCase):
                          "${CLAUDE_PROJECT_DIR}/docs")
         self.assertIn("--fail-on", argv)
         self.assertEqual(argv[argv.index("--fail-on") + 1], "never")
+        # ADR-019: SessionEnd audit self-gates on docs/_system/.docs-level.
+        self.assertIn("--respect-docs-level", argv)
 
 
 class TestHooksLevel2Profile(unittest.TestCase):

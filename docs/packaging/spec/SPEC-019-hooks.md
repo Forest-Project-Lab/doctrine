@@ -24,7 +24,7 @@ llm_context: task
 - **PreToolUse / matcher `Edit|Write|MultiEdit`**: `policy-guard.py` を起動し、三つのガードをかける（guard ドメインの ICD-003）。
 - **PreToolUse / matcher `Bash`**: `policy-guard.py` を起動し、削除の安全だけを deny で見る。
 - **PostToolUse / matcher `Edit|Write|MultiEdit`**: `policy-guard.py`・`docs-linter.py`・`review-nudge.py` をこの順に並べる（lint ドメインの ICD-004）`[R7][R10]`。`review-nudge.py` は型付き文書の編集に doc-review を促す助言である。
-- **SessionEnd**: `docs-audit.py` を起動し、全件を監査する（audit ドメインの ICD-005）。要約を次セッションの注入へ渡すため、`--json --summary-out "${CLAUDE_PLUGIN_ROOT}/.cache/last-audit.json" --fail-on never` を付け、`--root "${CLAUDE_PROJECT_DIR}/docs"` を指す。`--fail-on never` で後始末を妨げない。
+- **SessionEnd**: `docs-audit.py` を起動し、全件を監査する（audit ドメインの ICD-005）。要約を次セッションの注入へ渡すため、`--json --summary-out "${CLAUDE_PLUGIN_ROOT}/.cache/last-audit.json" --fail-on never --respect-docs-level` を付け、`--root "${CLAUDE_PROJECT_DIR}/docs"` を指す。`--fail-on never` で後始末を妨げず、`--respect-docs-level` で Level 2 の体系では監査を飛ばす（ADR-019。CI はこの旗を付けない）。
 
 `command` は、すべて `"${CLAUDE_PLUGIN_ROOT}/scripts/<名>.py"` の形で解決する。`command` はシェル経由で走るため、`${CLAUDE_PLUGIN_ROOT}`・`${CLAUDE_PROJECT_DIR}` を含むパスは必ず二重引用符で囲む。囲まないと、空白を含むパスで語が割れ、フックが起動しないか誤った場所を指す。引数を付ける場合はスクリプトのパスに続けて書く（SessionEnd の `docs-audit.py` だけが、要約の成果物を書くため引数を持つ）。
 
@@ -36,6 +36,7 @@ llm_context: task
 - matcher は、`Edit|Write|MultiEdit` と `Bash` の二系統だけにする。
 - PostToolUse は `policy-guard.py` → `docs-linter.py` → `review-nudge.py` の順を守る `[R7]`。先に走る `policy-guard.py` は起動後の違反を拒否しうる。これを、助言だけを返す `docs-linter.py`・`review-nudge.py` より前に判定する。
 - 縮小構成 `hooks/hooks.level2.json` は、全構成から SessionEnd の `docs-audit.py` と、PostToolUse の `policy-guard.py`・`review-nudge.py` を外し、PostToolUse を `docs-linter.py` だけにしたものである。監査と依存グラフは Level 3 以降に置く。起動後のブロックには依存グラフが要るからである `[R5]`。
+- 段差の実現は配線の差し替えではなく自主停止である（ADR-019）: 配線は常に全構成 `hooks.json` とし、SessionEnd の監査・PostToolUse の `policy-guard.py`・`review-nudge.py` が `docs/_system/.docs-level` を読み、Level 2 では静かに済ませる。`hooks.level2.json` は、プラグインを使わず手で配線する場合の代替として同梱を続ける。
 - Hook 設定はセッション開始時にスナップショットして固定する。配線を変えても、そのセッションには反映されず、新しいセッションから反映する。
 
 ## エラー時挙動
