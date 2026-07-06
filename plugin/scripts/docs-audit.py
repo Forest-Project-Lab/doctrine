@@ -527,6 +527,98 @@ def _check_projection_drift(g):
                 icd_index_node["path"],
                 "ICD-index に現行でない/不在の ICD %s が載っている(投影ドリフト)" % x,
                 refs=[x]))
+
+    ctx_node = _find_projection_node(g, "CTXMAP", "context-map.md")
+    if ctx_node is not None:
+        out += _ctxmap_drift(g, ctx_node)
+    return out
+
+
+_CTX_BEGIN = "<!-- BEGIN PROJECTION:context-map-skeleton -->"
+_CTX_END = "<!-- END PROJECTION:context-map-skeleton -->"
+_CTX_DOMAIN_RE = re.compile(r"^- (\S+): (.+)$")
+_CTX_EDGE_RE = re.compile(r"^- (\S+) --depends_on--> (\S+?)( \(境界違反\))?$")
+
+
+def _ctxmap_drift(g, node):
+    """Context Map の印内骨格を再導出と突き合わせる(ICD-005)。
+
+    構造の差(ドメインの過不足・ドメイン越え依存端の過不足)→ error。
+    ラベルの差(ドメイン行の ICD 列挙、端の境界違反マーク)→ warn。
+    導出は render-projection の骨格描画と同じ規則(ドメイン集合、
+    ドメイン越え depends_on の ICD 端と違反端)を内部で再現する。
+    """
+    out = []
+    body = _read_body(os.path.join(g.root, node["path"]))
+    if _CTX_BEGIN not in body:
+        out.append(_finding(
+            "projection_drift", SEV_ERROR, node["id"], node["path"],
+            "Context Map に描画の印の区間が無い(未描画。render-projection で描く)"))
+        return out
+    region = body.split(_CTX_BEGIN, 1)[1]
+    if _CTX_END in region:
+        region = region.split(_CTX_END, 1)[0]
+
+    # 期待: ドメイン → ICD 列挙、ドメイン越え depends_on 端(違反マーク付き)。
+    expected_domains = {}
+    for doc_id in sorted(g.nodes):
+        n = g.nodes[doc_id]
+        dom = n["domain"] or _depgraph.UNKNOWN
+        expected_domains.setdefault(dom, [])
+        if n["type"] == "ICD":
+            expected_domains[dom].append(doc_id)
+    expected_edges = {}
+    for e in g.classify_edges():
+        if e["field"] != "depends_on":
+            continue
+        if e["kind"] == _depgraph.KIND_CROSS_ICD:
+            expected_edges[(e["src"], e["dst"])] = False
+        elif e["kind"] == _depgraph.KIND_CROSS_VIOLATION:
+            expected_edges[(e["src"], e["dst"])] = True
+
+    have_domains = {}
+    have_edges = {}
+    for raw in region.splitlines():
+        line = raw.strip()
+        m = _CTX_EDGE_RE.match(line)
+        if m:
+            have_edges[(m.group(1), m.group(2))] = bool(m.group(3))
+            continue
+        m = _CTX_DOMAIN_RE.match(line)
+        if m:
+            have_domains[m.group(1)] = m.group(2).strip()
+
+    for dom in sorted(set(expected_domains) - set(have_domains)):
+        out.append(_finding(
+            "projection_drift", SEV_ERROR, node["id"], node["path"],
+            "Context Map にドメイン %s の項目が無い(投影ドリフト)" % dom))
+    for dom in sorted(set(have_domains) - set(expected_domains)):
+        out.append(_finding(
+            "projection_drift", SEV_ERROR, node["id"], node["path"],
+            "Context Map に存在しないドメイン %s が載っている(投影ドリフト)" % dom))
+    for dom in sorted(set(expected_domains) & set(have_domains)):
+        icds = sorted(expected_domains[dom])
+        want = ", ".join(icds) if icds else "(ICD 未公開)"
+        if have_domains[dom] != want:
+            out.append(_finding(
+                "projection_drift", SEV_WARN, node["id"], node["path"],
+                "Context Map のドメイン %s の ICD 列挙がずれている(ラベル差)" % dom))
+    for src, dst in sorted(set(expected_edges) - set(have_edges)):
+        out.append(_finding(
+            "projection_drift", SEV_ERROR, node["id"], node["path"],
+            "Context Map にドメイン越えの依存 %s→%s が無い(投影ドリフト)" % (src, dst),
+            refs=[src, dst]))
+    for src, dst in sorted(set(have_edges) - set(expected_edges)):
+        out.append(_finding(
+            "projection_drift", SEV_ERROR, node["id"], node["path"],
+            "Context Map に存在しない依存 %s→%s が載っている(投影ドリフト)" % (src, dst),
+            refs=[src, dst]))
+    for key in sorted(set(expected_edges) & set(have_edges)):
+        if expected_edges[key] != have_edges[key]:
+            out.append(_finding(
+                "projection_drift", SEV_WARN, node["id"], node["path"],
+                "Context Map の依存 %s→%s の境界違反マークがずれている(ラベル差)"
+                % key))
     return out
 
 

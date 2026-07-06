@@ -24,6 +24,7 @@ sources: []
 | REQ-008 | REQ | audit | 最小性の監査（過剰と不足の両側を全件検出） |
 | SPEC-011 | SPEC | audit | 全件監査の検査群・要約スキーマ・決定性 |
 | ADR-008 | ADR | audit | 孤児を三条件の連言で定義する |
+| ADR-020 | ADR | audit | テスト不能記述の判定は監査でなく doc-review が担う |
 | IMPL-011 | IMPL | audit | docs-audit.py の実装メモ |
 | TEST-011 | TEST | audit | 監査の検査群テスト計画 |
 | ICD-007 | ICD | authoring | authoring のインターフェース（作成・初期化・支援） |

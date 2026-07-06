@@ -511,6 +511,81 @@ class IcdIndexDriftTest(AuditBase):
         self.assertTrue(all(f["severity"] == "error" for f in pd))
 
 
+class CtxmapDriftTest(AuditBase):
+    """Context Map の投影ドリフト(ICD-005: 構造差 error / ラベル差 warn)。
+
+    Regression: 監査は overview / icd-index しか見ておらず、docstring と
+    ICD-005 が約束する Context Map 被覆が未実装だった(全体監査の major 所見)。"""
+
+    _B = "<!-- BEGIN PROJECTION:context-map-skeleton -->"
+    _E = "<!-- END PROJECTION:context-map-skeleton -->"
+
+    def _repo(self, region):
+        files = {
+            "docs/billing/ICD.md":
+                _util.fm_block(_fm("ICD-1", "ICD", "billing")) + "x",
+            "docs/shipping/spec/SPEC-2.md":
+                _util.fm_block(_fm("SPEC-2", "SPEC", "shipping",
+                                   depends_on=["ICD-1"])) + "x",
+            "docs/_system/context-map.md": _util.fm_block(
+                _fm("CTXMAP-1", "CTXMAP", "_system"))
+                + "描画される。手で編集しない。\n\n%s\n%s\n%s\n" % (self._B, region, self._E),
+        }
+        root = _util.make_repo(files)
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        return os.path.join(root, "docs")
+
+    def _matching_region(self):
+        return ("## ドメインとICD\n\n"
+                "- _system: (ICD 未公開)\n"
+                "- billing: ICD-1\n"
+                "- shipping: (ICD 未公開)\n\n"
+                "## ドメイン越えの依存(ICD境界)\n\n"
+                "- SPEC-2 --depends_on--> ICD-1\n")
+
+    def test_matching_ctxmap_no_drift(self):
+        data, _ = self.audit_json(self._repo(self._matching_region()))
+        self.assertEqual(self.checks_for(data, "projection_drift"), [])
+
+    def test_missing_domain_is_error(self):
+        region = self._matching_region().replace("- shipping: (ICD 未公開)\n", "")
+        data, _ = self.audit_json(self._repo(region))
+        pd = self.checks_for(data, "projection_drift")
+        self.assertTrue(any("shipping" in f["message"] and
+                            f["severity"] == "error" for f in pd), pd)
+
+    def test_missing_cross_edge_is_error(self):
+        region = self._matching_region().replace(
+            "- SPEC-2 --depends_on--> ICD-1\n", "")
+        data, _ = self.audit_json(self._repo(region))
+        pd = self.checks_for(data, "projection_drift")
+        self.assertTrue(any(sorted(f["refs"]) == ["ICD-1", "SPEC-2"] and
+                            f["severity"] == "error" for f in pd), pd)
+
+    def test_icd_label_difference_is_warn(self):
+        region = self._matching_region().replace("- billing: ICD-1",
+                                                 "- billing: (ICD 未公開)")
+        data, _ = self.audit_json(self._repo(region))
+        pd = self.checks_for(data, "projection_drift")
+        self.assertTrue(any("ラベル差" in f["message"] and
+                            f["severity"] == "warn" for f in pd), pd)
+        self.assertFalse(any(f["severity"] == "error" for f in pd), pd)
+
+    def test_unrendered_region_is_error(self):
+        files = {
+            "docs/billing/ICD.md":
+                _util.fm_block(_fm("ICD-1", "ICD", "billing")) + "x",
+            "docs/_system/context-map.md": _util.fm_block(
+                _fm("CTXMAP-1", "CTXMAP", "_system")) + "印なし本文。\n",
+        }
+        root = _util.make_repo(files)
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        data, _ = self.audit_json(os.path.join(root, "docs"))
+        pd = self.checks_for(data, "projection_drift")
+        self.assertTrue(any("未描画" in f["message"] and
+                            f["severity"] == "error" for f in pd), pd)
+
+
 # --- near_duplicate advisory (TC-126, R8) ---------------------------------
 
 class NearDuplicateTest(AuditBase):

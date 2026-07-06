@@ -32,6 +32,8 @@ llm_context: task
 - 逆孤児は現行文書だけを対象とする（判定は graph の `reverse_orphans` に委ねる）。`[R3]`
 - ドメインをまたぐ `depends_on` の違反だけを icd_dependency_violation として上げる。ドメインをまたぐ impacts は違反としない。`[R4]`
 - 未登録/影文書は、`build_graph` が既に集める `parse_warnings`（frontmatter か id が無い .md）と `dup_ids`（id 衝突で影に隠れた別ファイル）を読むだけで検出する。新たな走査はしない。他の全検査は登録簿ノード上の述語なので、ノードにならないファイルはこの検査だけが拾える。取り除きではなく、型を与えて登録するか archive/ へ退避する候補として error で挙げる。`[R1][R8]`
+- 投影ドリフトは三つの投影を対象とする。Overview と ICD-index は id 集合の差（error）。Context Map は印の区間の骨格を内部で再導出して突き合わせ、構造の差（ドメインの過不足・ドメイン越え依存端の過不足・印の区間が無い）を error、ラベルの差（ドメイン行の ICD 列挙・境界違反マーク）を warn とする（ICD-005 の表のとおり）。`[R1][R8]`
+- テスト不能記述は検査しない。意味の判断であり、doc-review が担う（ADR-020）。
 
 ## エラー時挙動
 
