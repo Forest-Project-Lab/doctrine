@@ -711,8 +711,13 @@ def _trim_to_fit(sections, budget, chars_per_token):
     def total():
         return estimate_tokens(_render_sections(work), chars_per_token)
 
-    if budget is None or budget <= 0:
+    if budget is None:
         return work
+    if budget < 0:
+        budget = 0
+    # budget == 0 でも早期リターンしない: total() <= 0 は満たされないまま
+    # 二段の切り詰めが最後まで走り、全節が骨格(見出し+保護先頭行)まで縮む。
+    # これが「極小の上限でも天井を守る」の実装(以前は無切り詰めで返す欠陥)。
 
     # 第1段: 保護されない節を tier 降順(同 tier は key)で削る。
     order = sorted(

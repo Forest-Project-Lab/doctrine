@@ -322,6 +322,28 @@ class TestCapEnforcement(InjectBase):
         # The overflow notice itself is always kept.
         self.assertIn("docs-curate", ctx)
 
+    def test_zero_effective_budget_still_trims_to_skeleton(self):
+        """cap が超過通知コスト以下(実効予算 0)でも本文は骨格まで縮む。
+
+        Regression(ミューテーション監査で発見): 旧実装は budget <= 0 で
+        無切り詰めのまま返し、「極小の上限でも天井を守る」に反して
+        全文が注入されていた。骨格の床があるので cap そのものには収まら
+        ないが、無切り詰め(全文)と同じ大きさであってはならない。"""
+        root = self._repo(self._many_decided())
+        docs_root = os.path.join(root, "docs")
+        mod = _util.load_script("inject-contract")
+        full = mod.estimate_tokens(
+            self._ctx(self._run_json(docs_root, extra=["--cap", "100000"])))
+        tiny = mod.estimate_tokens(
+            self._ctx(self._run_json(docs_root, extra=["--cap", "10"])))
+        self.assertLess(tiny, full / 2,
+                        "budget=0 で切り詰めが走っていない(%d vs 全文 %d)"
+                        % (tiny, full))
+        # 超過通知と curate 促しは骨格でも必ず残る。
+        ctx = self._ctx(self._run_json(docs_root, extra=["--cap", "10"]))
+        self.assertIn("注入上限", ctx)
+        self.assertIn("docs-curate", ctx)
+
     def test_cap_from_config(self):
         # injection_token_cap in .context-config.json drives the cap (C10).
         cfg = json.dumps({"injection_token_cap": 40})

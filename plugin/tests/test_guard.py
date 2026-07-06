@@ -527,6 +527,38 @@ class TestDeleteSafety(GuardTestBase):
         decision, _ = _pre(json.loads(out))
         self.assertEqual(decision, "deny")
 
+    def test_bash_mv_overwriting_depended_doc_denied(self):
+        """mv の宛先が既存の被依存文書 -> deny(上書き=内容の破壊)。
+
+        Regression(ミューテーション監査で発見): 旧実装は mv の末尾引数(宛先)を
+        検査対象から常に外していたため、`mv new.md <被依存文書>` による上書き
+        破壊が allow で素通りしていた。"""
+        root = self._depended_repo()
+        src = os.path.join(root, "new.md")
+        with open(src, "w", encoding="utf-8") as fh:
+            fh.write("x\n")
+        dst = os.path.join(root, "docs/billing/spec/SPEC-14.md")  # depended on
+        tin = {"command": "mv %s %s" % (src, dst)}
+        out, _ = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Bash", tin))
+        decision, reason = _pre(json.loads(out))
+        self.assertEqual(decision, "deny")
+        self.assertIn("TEST-20", reason)
+
+    def test_bash_mv_rename_to_new_path_allowed(self):
+        """mv の宛先が存在しない新パス(改名)や既存ディレクトリは破壊でない -> src だけで判定。"""
+        root = self._repo({
+            "docs/billing/spec/SPEC-16.md": _util.fm_block(_doc(
+                "billing", doc_id="SPEC-16", status="current")) + "本文。\n",
+        })
+        src = os.path.join(root, "docs/billing/spec/SPEC-16.md")
+        dst = os.path.join(root, "docs/billing/spec/SPEC-16-renamed.md")
+        tin = {"command": "mv %s %s" % (src, dst)}
+        out, _ = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Bash", tin))
+        decision, _ = _pre(json.loads(out))
+        self.assertEqual(decision, "allow")
+
     def test_bash_rm_no_dependents_allowed(self):
         """D2: Bash rm of a doc with ZERO dependents -> allow."""
         root = self._repo({

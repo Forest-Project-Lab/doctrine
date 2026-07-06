@@ -517,13 +517,19 @@ def _extract_remove_targets(segment, cwd):
 
     arg_tokens = _strip_redirections(tokens[arg_start:])
     raw_args = [t for t in arg_tokens if not t.startswith("-")]
-    # mv は最後の引数が宛先。対象は src 群(末尾を除く)。
+    base = os.path.abspath(cwd) if cwd else os.getcwd()
+    # mv は最後の引数が宛先。対象は src 群(末尾を除く)。ただし宛先が既存
+    # ファイルなら上書き=その内容の破壊なので、宛先も対象に含める(rm と
+    # 同等に扱う)。既存ディレクトリへの移動や新しい名前への改名は破壊で
+    # ないので含めない。
     if verb == "mv" and len(raw_args) >= 2:
+        dst = raw_args[-1]
         raw_args = raw_args[:-1]
+        if not _has_glob(dst) and os.path.isfile(_resolve_arg(dst, base)):
+            raw_args = raw_args + [dst]
 
     targets = []
     had_unexpandable = False
-    base = os.path.abspath(cwd) if cwd else os.getcwd()
     for arg in raw_args:
         if _has_glob(arg):
             expanded = _expand_glob(arg, base)

@@ -6,7 +6,7 @@ domain: guard
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-06-30
+updated: 2026-07-06
 sources: [spec/doctrine.ja.md §4.2]
 depends_on: [REQ-004, ICD-001, ICD-002]
 llm_context: task
@@ -34,7 +34,7 @@ llm_context: task
 - ICD依存ガードは `status` を見ない（C12）。構造、すなわちドメインと、型が ICD かどうかだけを見る。
 - R7 の拒否文は spec §4.2 を一字一句なぞる: `<dep> は <相手ドメイン> の内部です。<相手ドメイン> の ICD 宛にしてください。`
 - C13（整合判断id）の分岐: 構文は正しく索引に無い dep（dangling）は許す（死リンクは監査が見つける）。登録簿が接頭辞から型を読めない dep（UNKNOWN（不明））は、安全側に倒して拒否する。
-- Bash 経路は deny だけを使い、文脈の注入（additionalContext）も block も使わない。コマンドを `; && || | 改行` で分割し、各 `rm`・`git rm`・`mv` の対象を取り出す。
+- Bash 経路は deny だけを使い、文脈の注入（additionalContext）も block も使わない。コマンドを `; && || | 改行` で分割し、各 `rm`・`git rm`・`mv` の対象を取り出す。`mv` の対象は src 群に加え、宛先が既存ファイルの場合はその宛先も含める（上書きは宛先の内容の破壊であり、`rm` と同等に扱う）。宛先が既存ディレクトリへの移動や新しい名前への改名は破壊でないので含めない。
 - PostToolUse の削除安全は PRE（書き込み前）から POST（書き込み後）への遷移で判じる。POST の全文に編集を逆向きに当てて PRE を復元し、本当に降格・本文消しが起きた組だけを咎める。
 
 ## エラー時挙動
@@ -44,6 +44,6 @@ llm_context: task
 - Hook 事象では main から例外を投げない。判定は JSON に載せ、終了コードは常に 0 を返す。
 
 ## 受入基準
-TEST-003 が次を確認する: 受入シナリオ TC（番号は次のとおり）。TC-070..072（越境ICD許可・非ICD拒否・同ドメイン許可）、TC-117（相手 `status` 無関係）、TC-123（分類不能=拒否）、dangling 連れ合い（=許可）、TC-075..077（不変）、TC-078..081（削除安全）、TC-118（block→張り替え→許可）、TC-119（Write deny と Edit block が同一違反）、TC-132（Bash deny に additionalContext も block も無い）。
+TEST-003 が次を確認する: 受入シナリオ TC（番号は次のとおり）。TC-070..072（越境ICD許可・非ICD拒否・同ドメイン許可）、TC-117（相手 `status` 無関係）、TC-123（分類不能=拒否）、dangling 連れ合い（=許可）、TC-075..077（不変）、TC-078..081（削除安全）、TC-118（block→張り替え→許可）、TC-119（Write deny と Edit block が同一違反）、TC-132（Bash deny に additionalContext も block も無い）。加えて、`mv` の宛先が既存の被依存文書なら deny、新パスへの改名なら allow。
 
 <!-- 入れない: 廃止、検討、実装コードの写し -->
