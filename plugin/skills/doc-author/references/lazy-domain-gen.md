@@ -4,7 +4,7 @@
 
 ## 生成の手順
 
-1. その型の文書を書く直前に、`docs/<domain>/` が無ければ作る。
+1. その型の文書を書く直前に、`doctrine_docs/<domain>/` が無ければ作る。
 2. その型が要る層のフォルダだけを作る。
    - `SPEC`・`DATA`・`API` → `<domain>/spec/`
    - `ADR`・`CHANGE`・`IMPACT` → `<domain>/decisions/`

@@ -1,24 +1,24 @@
 {
   "hooks": {
     "SessionStart": [
-      { "hooks": [ { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/scripts/inject-contract.py" } ] }
+      { "hooks": [ { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/inject-contract.py\"" } ] }
     ],
     "PreToolUse": [
       { "matcher": "Edit|Write|MultiEdit",
-        "hooks": [ { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/scripts/policy-guard.py" } ] },
+        "hooks": [ { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/policy-guard.py\"" } ] },
       { "matcher": "Bash",
-        "hooks": [ { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/scripts/policy-guard.py" } ] }
+        "hooks": [ { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/policy-guard.py\"" } ] }
     ],
     "PostToolUse": [
       { "matcher": "Edit|Write|MultiEdit",
         "hooks": [
-          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/scripts/policy-guard.py" },
-          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/scripts/docs-linter.py" },
-          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/scripts/review-nudge.py" }
+          { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/policy-guard.py\"" },
+          { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/docs-linter.py\"" },
+          { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/review-nudge.py\"" }
         ] }
     ],
     "SessionEnd": [
-      { "hooks": [ { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/scripts/docs-audit.py --root ${CLAUDE_PROJECT_DIR}/docs --json --summary-out ${CLAUDE_PLUGIN_ROOT}/.cache/last-audit.json --fail-on never" } ] }
+      { "hooks": [ { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/docs-audit.py\" --root-from \"${CLAUDE_PROJECT_DIR}\" --json --summary-out \"${CLAUDE_PLUGIN_ROOT}/.cache/last-audit.json\" --fail-on never --respect-docs-level" } ] }
     ]
   }
 }

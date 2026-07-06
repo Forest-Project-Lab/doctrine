@@ -47,14 +47,8 @@ SEV_ERROR = "error"
 SEV_WARN = "warn"
 SEV_ADVISORY = "advisory"
 
-# 投影(描画)/正本のファイル名(§3.7)。孤児・参照解決の特例に使う。
-_PROJECTION_FILES = _registry.PROJECTION_FILES
-_SYSTEM_CANONICAL_FILES = _registry.SYSTEM_CANONICAL_FILES
-
 # 本文中の id 参照トークン(<TYPE>-<NNN>)。dead link の本文走査に使う。
 _ID_TOKEN_RE = re.compile(r"\b([A-Z]+-\d+)\b")
-# 本文中の相対 .md リンク。
-_MD_LINK_RE = re.compile(r"\]\(([^)]+\.md)[^)]*\)")
 # 単語シングル化(語彙的酷似)。英数字連なり + 連続する非ASCII。
 _TOKEN_RE = re.compile(r"[A-Za-z0-9_]+|[^\x00-\x7f]+")
 _DATE_RE = re.compile(r"^(\d{4})-(\d{2})-(\d{2})$")
@@ -67,12 +61,14 @@ _DATE_RE = re.compile(r"^(\d{4})-(\d{2})-(\d{2})$")
 def _parse_args(argv):
     """argv を (opts, error_message) に解く。"""
     opts = {
-        "root": "docs",
+        "root": None,           # 明示指定。無ければ --root-from か cwd から解決。
+        "root_from": None,      # プロジェクト根。locate_docs_root で統治木を解決。
         "json": False,
         "summary_out": None,
         "fail_on": "never",     # 既定は SessionEnd 想定(非ブロッキング)
         "config": None,
         "today": None,
+        "respect_docs_level": False,
     }
     i = 0
     n = len(argv)
@@ -84,8 +80,21 @@ def _parse_args(argv):
             opts["root"] = argv[i + 1]
             i += 2
             continue
+        if a == "--root-from":
+            # プロジェクト根から統治木を解決する(ADR-022)。SessionEnd の配線用。
+            if i + 1 >= n:
+                return None, "--root-from にはパスが必要"
+            opts["root_from"] = argv[i + 1]
+            i += 2
+            continue
         if a == "--json":
             opts["json"] = True
+            i += 1
+            continue
+        if a == "--respect-docs-level":
+            # 段差ゲート(ADR-019)。SessionEnd の配線だけが付ける。CI は付けず、
+            # Level に依らず全件監査する。
+            opts["respect_docs_level"] = True
             i += 1
             continue
         if a == "--summary-out":
@@ -202,7 +211,7 @@ def _finding(check, severity, doc_id, path, message, refs=None):
 # ---------------------------------------------------------------------------
 
 def _check_dead_link(g):
-    """1. dead link(R4)。frontmatter の id 参照 + 本文の id/相対リンクが解決するか。"""
+    """1. dead link(R4)。frontmatter の id 参照 + 本文の id トークンが解決するか。"""
     out = []
     for doc_id in sorted(g.nodes):
         node = g.nodes[doc_id]
@@ -520,6 +529,98 @@ def _check_projection_drift(g):
                 icd_index_node["path"],
                 "ICD-index に現行でない/不在の ICD %s が載っている(投影ドリフト)" % x,
                 refs=[x]))
+
+    ctx_node = _find_projection_node(g, "CTXMAP", "context-map.md")
+    if ctx_node is not None:
+        out += _ctxmap_drift(g, ctx_node)
+    return out
+
+
+_CTX_BEGIN = "<!-- BEGIN PROJECTION:context-map-skeleton -->"
+_CTX_END = "<!-- END PROJECTION:context-map-skeleton -->"
+_CTX_DOMAIN_RE = re.compile(r"^- (\S+): (.+)$")
+_CTX_EDGE_RE = re.compile(r"^- (\S+) --depends_on--> (\S+?)( \(境界違反\))?$")
+
+
+def _ctxmap_drift(g, node):
+    """Context Map の印内骨格を再導出と突き合わせる(ICD-005)。
+
+    構造の差(ドメインの過不足・ドメイン越え依存端の過不足)→ error。
+    ラベルの差(ドメイン行の ICD 列挙、端の境界違反マーク)→ warn。
+    導出は render-projection の骨格描画と同じ規則(ドメイン集合、
+    ドメイン越え depends_on の ICD 端と違反端)を内部で再現する。
+    """
+    out = []
+    body = _read_body(os.path.join(g.root, node["path"]))
+    if _CTX_BEGIN not in body:
+        out.append(_finding(
+            "projection_drift", SEV_ERROR, node["id"], node["path"],
+            "Context Map に描画の印の区間が無い(未描画。render-projection で描く)"))
+        return out
+    region = body.split(_CTX_BEGIN, 1)[1]
+    if _CTX_END in region:
+        region = region.split(_CTX_END, 1)[0]
+
+    # 期待: ドメイン → ICD 列挙、ドメイン越え depends_on 端(違反マーク付き)。
+    expected_domains = {}
+    for doc_id in sorted(g.nodes):
+        n = g.nodes[doc_id]
+        dom = n["domain"] or _depgraph.UNKNOWN
+        expected_domains.setdefault(dom, [])
+        if n["type"] == "ICD":
+            expected_domains[dom].append(doc_id)
+    expected_edges = {}
+    for e in g.classify_edges():
+        if e["field"] != "depends_on":
+            continue
+        if e["kind"] == _depgraph.KIND_CROSS_ICD:
+            expected_edges[(e["src"], e["dst"])] = False
+        elif e["kind"] == _depgraph.KIND_CROSS_VIOLATION:
+            expected_edges[(e["src"], e["dst"])] = True
+
+    have_domains = {}
+    have_edges = {}
+    for raw in region.splitlines():
+        line = raw.strip()
+        m = _CTX_EDGE_RE.match(line)
+        if m:
+            have_edges[(m.group(1), m.group(2))] = bool(m.group(3))
+            continue
+        m = _CTX_DOMAIN_RE.match(line)
+        if m:
+            have_domains[m.group(1)] = m.group(2).strip()
+
+    for dom in sorted(set(expected_domains) - set(have_domains)):
+        out.append(_finding(
+            "projection_drift", SEV_ERROR, node["id"], node["path"],
+            "Context Map にドメイン %s の項目が無い(投影ドリフト)" % dom))
+    for dom in sorted(set(have_domains) - set(expected_domains)):
+        out.append(_finding(
+            "projection_drift", SEV_ERROR, node["id"], node["path"],
+            "Context Map に存在しないドメイン %s が載っている(投影ドリフト)" % dom))
+    for dom in sorted(set(expected_domains) & set(have_domains)):
+        icds = sorted(expected_domains[dom])
+        want = ", ".join(icds) if icds else "(ICD 未公開)"
+        if have_domains[dom] != want:
+            out.append(_finding(
+                "projection_drift", SEV_WARN, node["id"], node["path"],
+                "Context Map のドメイン %s の ICD 列挙がずれている(ラベル差)" % dom))
+    for src, dst in sorted(set(expected_edges) - set(have_edges)):
+        out.append(_finding(
+            "projection_drift", SEV_ERROR, node["id"], node["path"],
+            "Context Map にドメイン越えの依存 %s→%s が無い(投影ドリフト)" % (src, dst),
+            refs=[src, dst]))
+    for src, dst in sorted(set(have_edges) - set(expected_edges)):
+        out.append(_finding(
+            "projection_drift", SEV_ERROR, node["id"], node["path"],
+            "Context Map に存在しない依存 %s→%s が載っている(投影ドリフト)" % (src, dst),
+            refs=[src, dst]))
+    for key in sorted(set(expected_edges) & set(have_edges)):
+        if expected_edges[key] != have_edges[key]:
+            out.append(_finding(
+                "projection_drift", SEV_WARN, node["id"], node["path"],
+                "Context Map の依存 %s→%s の境界違反マークがずれている(ラベル差)"
+                % key))
     return out
 
 
@@ -585,9 +686,165 @@ def run_audit(root, today, knobs):
     findings += _check_icd_violation(g)
     findings += _check_projection_drift(g)
     findings += _check_unregistered(g)
+    findings += _check_stray_documents(root, today)
 
     findings.sort(key=lambda f: (f["check"], f["doc_id"], f["message"]))
     return findings
+
+
+# ---------------------------------------------------------------------------
+# 11. 体系外 .md(ADR-021)。docs/ の外の .md を分類の記録と突き合わせる。
+# ---------------------------------------------------------------------------
+
+_INTAKE_LEDGER = ".md-intake"
+_INTAKE_LINE_RE = re.compile(
+    r"^(?P<path>[^:#][^:]*?)\s*[:：]\s*(?P<kind>非文書|投影|保留)"
+    r"(?:\s+(?P<due>\d{4}-\d{2}-\d{2}))?\s*$")
+_STRAY_SKIP_DIRS = ("node_modules", "__pycache__")
+_STRAY_LIST_CAP = 50
+
+
+def _load_intake_ledger(root):
+    """docs/_system/.md-intake を読む。(entries, bad_lines) を返す。
+
+    entries: list[(path, kind, due_or_None)]。パスはプロジェクト根からの
+    相対(末尾 / は配下全体)。無ければ空。決して例外を投げない。
+    """
+    path = os.path.join(root, "_system", _INTAKE_LEDGER)
+    entries = []
+    bad = []
+    try:
+        with open(path, "r", encoding="utf-8-sig") as fh:
+            lines = fh.read().splitlines()
+    except (OSError, UnicodeError):
+        return entries, bad
+    for i, raw in enumerate(lines, 1):
+        line = raw.strip()
+        if line == "" or line.startswith("#"):
+            continue
+        m = _INTAKE_LINE_RE.match(line)
+        if m is None or (m.group("kind") == "保留" and not m.group("due")):
+            bad.append((i, line))
+            continue
+        entries.append((m.group("path").strip().replace("\\", "/"),
+                        m.group("kind"), m.group("due")))
+    return entries, bad
+
+
+def _ledger_entry_for(relpath, entries):
+    """relpath(プロジェクト根からの相対、/ 区切り)に効く記録の項目を返す。"""
+    for path, kind, due in entries:
+        if path.endswith("/"):
+            if relpath.startswith(path):
+                return (path, kind, due)
+        elif relpath == path:
+            return (path, kind, due)
+    return None
+
+
+def _check_stray_documents(root, today):
+    """11. 体系外 .md(ADR-021, R1/R8)。
+
+    docs ルートの親(=プロジェクト根)から .md を走査し、次だけを挙げる。
+    ①登録簿の型を持つ .md → warn(置き場所の誤り)
+    ②分類の記録に無い .md → advisory(未分類。external-md-intake へ)
+    ③期限を過ぎた「保留」 → warn(再浮上)
+    ④実在しないパスを指す記録の項目 → advisory(掃除の合図)
+    dot ディレクトリ・node_modules・__pycache__ と、監査対象の docs ルート
+    自身は走査しない。決定的(整列走査)。一覧は上限で正直に切り詰める。
+    """
+    out = []
+    docs_root = os.path.abspath(root)
+    proj = os.path.dirname(docs_root)
+    if not proj or proj == docs_root or not os.path.isdir(proj):
+        return out
+    entries, bad_lines = _load_intake_ledger(root)
+    for lineno, line in bad_lines:
+        out.append(_finding(
+            "stray_document", SEV_ADVISORY, "", "_system/" + _INTAKE_LEDGER,
+            "分類の記録の %d 行目が読めない(『パス: 非文書|投影|保留 日付』の形): %s"
+            % (lineno, line[:80])))
+
+    strays = []
+    for dirpath, dirnames, filenames in os.walk(proj):
+        dirnames[:] = sorted(
+            d for d in dirnames
+            if not d.startswith(".")
+            and d not in _STRAY_SKIP_DIRS
+            and os.path.abspath(os.path.join(dirpath, d)) != docs_root)
+        for name in sorted(filenames):
+            if not name.endswith(".md"):
+                continue
+            abspath = os.path.join(dirpath, name)
+            rel = os.path.relpath(abspath, proj).replace(os.sep, "/")
+            strays.append((rel, abspath))
+    strays.sort()
+
+    seen_rel = set()
+    listed = 0
+    for rel, abspath in strays:
+        seen_rel.add(rel)
+        if rel in _registry.ROOT_POINTER_FILES:
+            # 根の案内(CLAUDE.md/AGENTS.md)は仕様がプロジェクト根に置くと
+            # 定める投影(§3.7/§5)。未分類として挙げない。
+            continue
+        try:
+            fm, _body, _errs = _frontmatter.parse_file(abspath)
+        except (OSError, UnicodeError):
+            continue
+        type_code = fm.get("type")
+        typed = isinstance(type_code, str) and _registry.is_known_type(type_code)
+        entry = _ledger_entry_for(rel, entries)
+        if typed:
+            out.append(_finding(
+                "stray_document", SEV_WARN, _coerce_id(fm), rel,
+                "登録簿の型 %s を持つ文書が docs/ の外に在る。doc-author で "
+                "docs/<domain>/ の置き場所へ移すか、型を外す" % type_code))
+            continue
+        if entry is None:
+            if listed < _STRAY_LIST_CAP:
+                out.append(_finding(
+                    "stray_document", SEV_ADVISORY, "", rel,
+                    "統治木の外の .md が未分類。docs-curate(external-md-intake)"
+                    "で三分類し %s/_system/%s へ記録する"
+                    % (os.path.basename(docs_root), _INTAKE_LEDGER)))
+                listed += 1
+            continue
+        _epath, kind, due = entry
+        if kind == "保留" and due is not None and _parse_date(due) is not None \
+                and _parse_date(due) < today:
+            out.append(_finding(
+                "stray_document", SEV_WARN, "", rel,
+                "保留の期限(%s)を過ぎた。取り込むか、非文書と決めて記録を更新する"
+                % due))
+    if listed >= _STRAY_LIST_CAP:
+        over = sum(1 for rel, _a in strays
+                   if _ledger_entry_for(rel, entries) is None) - listed
+        if over > 0:
+            out.append(_finding(
+                "stray_document", SEV_ADVISORY, "", "_system/" + _INTAKE_LEDGER,
+                "未分類の一覧を %d 件で切り詰めた(残り %d 件。黙って隠さない)"
+                % (_STRAY_LIST_CAP, over)))
+
+    for path, kind, _due in entries:
+        if path.endswith("/"):
+            if not os.path.isdir(os.path.join(proj, path.rstrip("/"))):
+                out.append(_finding(
+                    "stray_document", SEV_ADVISORY, "",
+                    "_system/" + _INTAKE_LEDGER,
+                    "分類の記録が実在しない場所 %s を指している(記録を掃除する)"
+                    % path))
+        elif path not in seen_rel and not os.path.isfile(os.path.join(proj, path)):
+            out.append(_finding(
+                "stray_document", SEV_ADVISORY, "", "_system/" + _INTAKE_LEDGER,
+                "分類の記録が実在しないファイル %s を指している(記録を掃除する)"
+                % path))
+    return out
+
+
+def _coerce_id(fm):
+    v = fm.get("id")
+    return v if isinstance(v, str) else ""
 
 
 def _attach_bodies(g):
@@ -616,7 +873,10 @@ def build_summary(root, findings, today, knobs, generated_at=None):
         "schema": SCHEMA,
         "generated_at": generated_at,
         "today": today.isoformat(),
-        "root": root,
+        # root は絶対パスに正規化して書く。読む側(inject-contract)は相対 root を
+        # 照合不能として捨てるため(越境注入の防止)、相対のまま書くと正当な
+        # 要約まで「前回監査なし」に劣化する。
+        "root": os.path.abspath(root),
         "totals": totals,
         "counts_by_check": counts_by_check,
         "top_findings": top,
@@ -693,16 +953,34 @@ def main(argv=None):
     if err is not None:
         sys.stdout.write("usage error: %s\n" % err)
         sys.stdout.write(
-            "docs-audit.py [--root docs/] [--json] [--summary-out PATH] "
-            "[--fail-on error|never] [--config PATH] [--today YYYY-MM-DD]\n")
+            "docs-audit.py [--root PATH | --root-from PROJ] [--json] "
+            "[--summary-out PATH] [--fail-on error|never] [--config PATH] "
+            "[--today YYYY-MM-DD] [--respect-docs-level]\n")
         return 2
 
     root = opts["root"]
+    if root is None and opts["root_from"]:
+        # プロジェクト根から統治木を解決(ADR-022): doctrine_docs 優先、docs は
+        # _system を持つ場合だけ。素の docs は他所の土地なので監査しない。
+        root = _registry.locate_docs_root(opts["root_from"])
+        if root is None:
+            sys.stdout.write(
+                "統治木なし: %s(doctrine_docs も docs/_system も無い)。飛ばした。\n"
+                % opts["root_from"])
+            return 0
+    if root is None:
+        root = _registry.locate_docs_root(os.getcwd()) or _registry.DOCS_DIR_NAMES[0]
     if not os.path.isdir(root):
         sys.stdout.write("root not found: %s\n" % root)
         # 監査が走れないのは利用者の誤り(usage に近い)。CI も SessionEnd も
         # ここで止めない方が安全側: ルート不在は所見ゼロと同義に扱い 0 を返す。
         # ただし fail-on error でも誤検知を増やさないため、明示的に 3 ではなく 0。
+        return 0
+
+    if opts["respect_docs_level"] and _registry.docs_level(root) < 3:
+        # 段差ゲート(ADR-019): Level 2 に全件監査は無い(Level 3 から)。要約も
+        # 書かない(前回要約を古いまま残すより、無い方が正直)。
+        sys.stdout.write("docs-level 2: 全件監査は Level 3 から。飛ばした。\n")
         return 0
 
     knobs = _load_config(opts["config"])
@@ -713,8 +991,9 @@ def main(argv=None):
     except _TodayError as exc:
         sys.stdout.write("usage error: %s\n" % exc)
         sys.stdout.write(
-            "docs-audit.py [--root docs/] [--json] [--summary-out PATH] "
-            "[--fail-on error|never] [--config PATH] [--today YYYY-MM-DD]\n")
+            "docs-audit.py [--root PATH | --root-from PROJ] [--json] "
+            "[--summary-out PATH] [--fail-on error|never] [--config PATH] "
+            "[--today YYYY-MM-DD] [--respect-docs-level]\n")
         return 2
 
     try:

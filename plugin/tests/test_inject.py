@@ -192,6 +192,24 @@ class TestNeverGroupExcluded(InjectBase):
         # The title/headline is present.
         self.assertIn("返金は当日のみ", ctx)
 
+    def test_fact_line_suffixed_to_title(self):
+        """title と異なる本文の事実一行は「title — 事実」の形で注入される。
+
+        ミューテーション監査(L399 NotEq->Eq)で発見: 既存テストは本文2行目
+        以降の不在と title の存在しか見ておらず、事実一行そのものの注入を
+        検証していなかった。比較が == に反転すると事実一行が契約から消える。"""
+        body = ("# 見出し\n"
+                "本文の一行目は事実。\n"
+                "BODY_LINE_TWO_MUST_NOT_APPEAR\n")
+        root = self._repo({
+            "docs/_system/decided-facts.md":
+                _decided("DECIDED-001", "返金は当日のみ", body=body),
+        })
+        ctx = self._ctx(self._run_json(os.path.join(root, "docs")))
+        # title と事実一行が「 — 」で結合されて一行になる(本文全量ではない)。
+        self.assertIn("返金は当日のみ — 本文の一行目は事実。", ctx)
+        self.assertNotIn("BODY_LINE_TWO_MUST_NOT_APPEAR", ctx)
+
 
 class TestDeprecatedFacts(InjectBase):
     """TC-043 / TC-124 (R5): a deprecated doc's body is excluded; its paired
@@ -235,6 +253,33 @@ class TestDeprecatedFacts(InjectBase):
                            "superseded DECIDED must render under 廃止事実 only")
         # The non-superseded DECIDED still shows in the plain DECIDED section.
         self.assertIn("DECIDED-002", ctx)
+
+
+class TestDecidedOrdering(InjectBase):
+    """DECIDED は新しい順(updated 降順)に並ぶ(§3.9)。
+
+    ミューテーション監査(L342 True->False)で発見: reverse=True が反転すると
+    復唱の decided[:3] も確定事実節も最古の文書を先頭に指すが、順序を検証する
+    テストが無かった。"""
+
+    def test_decided_sorted_newest_first(self):
+        root = self._repo({
+            "docs/_system/d1.md": _decided("DECIDED-001", "古い確定",
+                                           updated="2025-01-01"),
+            "docs/_system/d2.md": _decided("DECIDED-002", "新しい確定",
+                                           updated="2026-06-01"),
+        })
+        ctx = self._ctx(self._run_json(os.path.join(root, "docs")))
+        # 復唱ブロック: 最新の確定が先に復唱される。
+        self.assertLess(ctx.index("- 確定: 新しい確定"),
+                        ctx.index("- 確定: 古い確定"),
+                        "recap must recite the newest DECIDED first")
+        # 確定事実節の中でも新しい順。
+        start = ctx.index("## 確定事実（現行 DECIDED）")
+        end = ctx.index("\n##", start + 1)
+        sec = ctx[start:end]
+        self.assertLess(sec.index("〔DECIDED-002〕"), sec.index("〔DECIDED-001〕"),
+                        "DECIDED section must list newest (updated desc) first")
 
 
 class TestRecapPresence(InjectBase):
@@ -322,6 +367,28 @@ class TestCapEnforcement(InjectBase):
         # The overflow notice itself is always kept.
         self.assertIn("docs-curate", ctx)
 
+    def test_zero_effective_budget_still_trims_to_skeleton(self):
+        """cap が超過通知コスト以下(実効予算 0)でも本文は骨格まで縮む。
+
+        Regression(ミューテーション監査で発見): 旧実装は budget <= 0 で
+        無切り詰めのまま返し、「極小の上限でも天井を守る」に反して
+        全文が注入されていた。骨格の床があるので cap そのものには収まら
+        ないが、無切り詰め(全文)と同じ大きさであってはならない。"""
+        root = self._repo(self._many_decided())
+        docs_root = os.path.join(root, "docs")
+        mod = _util.load_script("inject-contract")
+        full = mod.estimate_tokens(
+            self._ctx(self._run_json(docs_root, extra=["--cap", "100000"])))
+        tiny = mod.estimate_tokens(
+            self._ctx(self._run_json(docs_root, extra=["--cap", "10"])))
+        self.assertLess(tiny, full / 2,
+                        "budget=0 で切り詰めが走っていない(%d vs 全文 %d)"
+                        % (tiny, full))
+        # 超過通知と curate 促しは骨格でも必ず残る。
+        ctx = self._ctx(self._run_json(docs_root, extra=["--cap", "10"]))
+        self.assertIn("注入上限", ctx)
+        self.assertIn("docs-curate", ctx)
+
     def test_cap_from_config(self):
         # injection_token_cap in .context-config.json drives the cap (C10).
         cfg = json.dumps({"injection_token_cap": 40})
@@ -331,6 +398,64 @@ class TestCapEnforcement(InjectBase):
         ctx = self._ctx(self._run_json(os.path.join(root, "docs")))
         self.assertIn("docs-curate", ctx)
         self.assertIn("40", ctx)
+
+    def test_unknown_arg_does_not_swallow_following_flag(self):
+        """未知の引数は 1 個だけ読み飛ばし、後続のフラグを飲み込まない。
+
+        ミューテーション監査(L84 And->Or)で発見: --format の条件が or に
+        反転すると、未知の引数が「--format+値」として 2 個消費され、直後の
+        --cap 50 が飲み込まれて上限が既定 12000 のままになる。"""
+        root = self._repo(self._many_decided())
+        ctx = self._ctx(self._run_json(os.path.join(root, "docs"),
+                                       extra=["--bogus", "--cap", "50"]))
+        # --bogus の直後の --cap 50 が生きて超過検出が働く。
+        self.assertIn("注入上限", ctx,
+                      "--cap after an unknown arg must still be honored")
+        self.assertIn("50", ctx)
+
+    def test_model_chars_per_token_from_config(self):
+        """config の model_chars_per_token がトークン推定の較正に使われる。
+
+        ミューテーション監査(L826 IsNot->Is)で発見: 判定が is None に反転
+        すると設定値が無視されて常に既定 4.0 が使われ、上限超過検出(保証b)
+        の較正が死ぬ。0.5 文字/トークンなら小コーパスでも推定が 300 を超える。"""
+        cfg = json.dumps({"model_chars_per_token": 0.5,
+                          "injection_token_cap": 300})
+        root = self._repo({
+            "docs/_system/.context-config.json": cfg,
+            "docs/_system/decided-facts.md": _decided("DECIDED-001", "確定A"),
+        })
+        ctx = self._ctx(self._run_json(os.path.join(root, "docs")))
+        self.assertIn("注入上限", ctx,
+                      "model_chars_per_token=0.5 must inflate the estimate")
+        self.assertIn("300", ctx)
+
+    def test_trim_drops_decided_details_before_protected(self):
+        """トリム第1段は decided 詳細(tier4)を先に削り、保護節と低 tier の
+        節の詳細を残す。
+
+        ミューテーション監査(L625 False->True)で発見: decided 節の protected
+        が True に反転すると第1段が decided を飛ばして head/tail を先に削り、
+        §3.9 の保護設計が overflow 時に反転する。decided 詳細を落とせば収まる
+        中間 cap では、現行実装なら HEAD の重要文書見出しが残る。"""
+        files = self._many_decided()
+        files["docs/_system/non-goals.md"] = _nongoal(
+            "NONGOAL-001", "スコープ外の機能拡張")
+        root = self._repo(files)
+        ctx = self._ctx(self._run_json(os.path.join(root, "docs"),
+                                       extra=["--cap", "400"]))
+        # 超過は検出される(未トリム推定 > 400)。
+        self.assertIn("注入上限", ctx)
+        # decided 詳細を削れば収まるので、HEAD 節の見出し(NONGOAL ピン)は
+        # 削られずに残る。decided が保護扱いだと HEAD が先に骨格化して消える。
+        start = ctx.index("## 重要文書（冒頭）")
+        end = ctx.index("\n##", start + 1)
+        head = ctx[start:end]
+        self.assertIn("NONGOAL-001", head,
+                      "HEAD pins must survive when dropping DECIDED details "
+                      "is enough to fit the budget")
+        # 保護節(復唱)の詳細も残る。
+        self.assertIn("- 確定:", ctx)
 
     def test_cli_cap_overrides_config(self):
         # --cap overrides config injection_token_cap.
@@ -362,17 +487,57 @@ class TestTokenEstimator(unittest.TestCase):
         self.assertEqual(f("同じ入力"), f("同じ入力"))
 
 
+class TestGlossaryHeadings(InjectBase):
+    """GLOSSARY 見出しの注入(R5): 通常の GLOSSARY は見出し+一行だけ注入し、
+    llm_context:never の GLOSSARY は本文どころか id も注入しない。
+    ミューテーション監査で never 判定の反転が無検出だった穴を塞ぐ。"""
+
+    def test_glossary_heading_injected_never_glossary_excluded(self):
+        never_fm = {
+            "id": "GLOSSARY-009", "title": "封印用語集", "type": "GLOSSARY",
+            "domain": "_system", "status": "current", "owner": "team",
+            "updated": "2026-01-01", "sources": [], "llm_context": "never",
+        }
+        root = self._repo({
+            "docs/_system/glossary.md": _glossary(),
+            "docs/_system/g9.md":
+                _util.fm_block(never_fm) + "NEVER_GLOSSARY_MEANING",
+            "docs/_system/decided-facts.md": _decided("DECIDED-001", "確定A"),
+        })
+        ctx = self._ctx(self._run_json(os.path.join(root, "docs")))
+        self.assertIn("用語集", ctx)
+        self.assertIn("承認語の意味の一行。", ctx)
+        self.assertNotIn("GLOSSARY-009", ctx)
+        self.assertNotIn("NEVER_GLOSSARY_MEANING", ctx)
+
+    def test_glossary_line_couples_term_and_meaning(self):
+        """用語行は「〔id〕承認語 — 一行の意味」を一行に結合して注入する。
+
+        ミューテーション監査(L606/L607 Or->And)で発見: 既存テストは承認語と
+        意味を別々に assertIn しており、`d.headline or d.title` /
+        `d.title or d.id` が and に反転して行の形が壊れて(意味が消える・
+        承認語が id に化ける)も検出できなかった。完全な行形で検証する。"""
+        root = self._repo({
+            "docs/_system/glossary.md": _glossary(),
+            "docs/_system/decided-facts.md": _decided("DECIDED-001", "確定A"),
+        })
+        ctx = self._ctx(self._run_json(os.path.join(root, "docs")))
+        self.assertIn("〔GLOSSARY-001〕用語集 — 承認語の意味の一行。", ctx,
+                      "glossary line must couple the approved term with its "
+                      "one-line meaning (§1.8/§3.9)")
+
+
 class TestAuditHandshake(InjectBase):
     """MASTER §10.5 / C3 gap: inject-contract reads the previous-audit summary at
     ${CLAUDE_PLUGIN_ROOT}/.cache/last-audit.json (docs-audit/1) and summarizes it;
     missing -> 「前回監査なし」. Round-trip with a docs-audit/1 artifact."""
 
-    def _audit_obj(self):
+    def _audit_obj(self, root="docs"):
         return {
             "schema": "docs-audit/1",
             "generated_at": "2026-06-28T00:00:00Z",
             "today": "2026-06-28",
-            "root": "docs",
+            "root": root,
             "totals": {"error": 2, "warn": 3, "advisory": 1},
             "counts_by_check": {"dead_link": 2, "stale_draft": 3},
             "top_findings": [
@@ -393,13 +558,13 @@ class TestAuditHandshake(InjectBase):
         self.addCleanup(shutil.rmtree, plugin_root, ignore_errors=True)
         cache_dir = os.path.join(plugin_root, ".cache")
         os.makedirs(cache_dir, exist_ok=True)
-        with open(os.path.join(cache_dir, "last-audit.json"), "w",
-                  encoding="utf-8") as fh:
-            json.dump(self._audit_obj(), fh, ensure_ascii=False)
 
         root = self._repo({"docs/_system/decided-facts.md":
                            _decided("DECIDED-001", "確定A")})
         docs_root = os.path.join(root, "docs")
+        with open(os.path.join(cache_dir, "last-audit.json"), "w",
+                  encoding="utf-8") as fh:
+            json.dump(self._audit_obj(root=docs_root), fh, ensure_ascii=False)
 
         old = os.environ.get("CLAUDE_PLUGIN_ROOT")
         os.environ["CLAUDE_PLUGIN_ROOT"] = plugin_root
@@ -420,21 +585,120 @@ class TestAuditHandshake(InjectBase):
         self.assertIn("SPEC-014", ctx)
         self.assertNotIn("前回監査なし", ctx)
 
+    def test_foreign_project_summary_is_not_injected(self):
+        """C3 越境汚染ガード: ${CLAUDE_PLUGIN_ROOT}/.cache は同じプラグインを
+        使う全プロジェクトで共有される。要約の root が現在の docs ルートと
+        一致しないなら、別プロジェクトの所見・是正指示を注入してはならない
+        (「前回監査なし」へ劣化する)。"""
+        plugin_root = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, plugin_root, ignore_errors=True)
+        cache_dir = os.path.join(plugin_root, ".cache")
+        os.makedirs(cache_dir, exist_ok=True)
+        with open(os.path.join(cache_dir, "last-audit.json"), "w",
+                  encoding="utf-8") as fh:
+            json.dump(self._audit_obj(root="/somewhere/else/docs"), fh,
+                      ensure_ascii=False)
+
+        root = self._repo({"docs/_system/decided-facts.md":
+                           _decided("DECIDED-001", "確定A")})
+        docs_root = os.path.join(root, "docs")
+
+        old = os.environ.get("CLAUDE_PLUGIN_ROOT")
+        os.environ["CLAUDE_PLUGIN_ROOT"] = plugin_root
+        try:
+            data = self._run_json(docs_root)
+        finally:
+            if old is None:
+                os.environ.pop("CLAUDE_PLUGIN_ROOT", None)
+            else:
+                os.environ["CLAUDE_PLUGIN_ROOT"] = old
+
+        ctx = self._ctx(data)
+        self.assertIn("前回監査なし", ctx)
+        # The foreign project's findings must not leak into this session.
+        self.assertNotIn("SPEC-014", ctx)
+        self.assertNotIn("dead_link", ctx)
+
+    def test_summary_without_root_discarded_not_crash(self):
+        """root キーの無い要約は静かに捨てる(「前回監査なし」)。落ちない。
+
+        ミューテーション監査(L188 Or->And)で発見: _same_docs_root の短絡が
+        and に反転すると root 欠落(None)で None.strip() の AttributeError が
+        main まで突き抜け、契約全体がフォールバック文言に置き換わる。docstring
+        の「root キーが無い要約は捨てる」を実際に検証するテストが無かった。"""
+        plugin_root = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, plugin_root, ignore_errors=True)
+        cache_dir = os.path.join(plugin_root, ".cache")
+        os.makedirs(cache_dir, exist_ok=True)
+
+        root = self._repo({"docs/_system/decided-facts.md":
+                           _decided("DECIDED-001", "確定A")})
+        docs_root = os.path.join(root, "docs")
+        obj = self._audit_obj(root=docs_root)
+        del obj["root"]  # 照合不能な要約 → 捨てる(誤注入より無注入)。
+        with open(os.path.join(cache_dir, "last-audit.json"), "w",
+                  encoding="utf-8") as fh:
+            json.dump(obj, fh, ensure_ascii=False)
+
+        old = os.environ.get("CLAUDE_PLUGIN_ROOT")
+        os.environ["CLAUDE_PLUGIN_ROOT"] = plugin_root
+        try:
+            data = self._run_json(docs_root)
+        finally:
+            if old is None:
+                os.environ.pop("CLAUDE_PLUGIN_ROOT", None)
+            else:
+                os.environ["CLAUDE_PLUGIN_ROOT"] = old
+
+        ctx = self._ctx(data)
+        self.assertIn("前回監査なし", ctx)
+        self.assertNotIn("描画に失敗", ctx,
+                         "root-less summary must be discarded, not crash into "
+                         "the fallback contract")
+        # 捨てたので所見は注入されない。
+        self.assertNotIn("SPEC-014", ctx)
+
+    def test_relative_root_summary_discarded(self):
+        """要約の root が相対パス -> 照合不能として捨てる(cwd 次第でどの体系
+        とも一致し得るため。同梱の SessionEnd 配線は常に絶対パスを書く)。"""
+        plugin_root = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, plugin_root, ignore_errors=True)
+        cache_dir = os.path.join(plugin_root, ".cache")
+        os.makedirs(cache_dir, exist_ok=True)
+        with open(os.path.join(cache_dir, "last-audit.json"), "w",
+                  encoding="utf-8") as fh:
+            json.dump(self._audit_obj(root="docs"), fh, ensure_ascii=False)
+        root = self._repo({"docs/_system/decided-facts.md":
+                           _decided("DECIDED-001", "確定A")})
+        docs_root = os.path.join(root, "docs")
+        old = os.environ.get("CLAUDE_PLUGIN_ROOT")
+        os.environ["CLAUDE_PLUGIN_ROOT"] = plugin_root
+        try:
+            data = self._run_json(docs_root)
+        finally:
+            if old is None:
+                os.environ.pop("CLAUDE_PLUGIN_ROOT", None)
+            else:
+                os.environ["CLAUDE_PLUGIN_ROOT"] = old
+        ctx = self._ctx(data)
+        self.assertIn("前回監査なし", ctx)
+        self.assertNotIn("dead_link", ctx)
+
     def test_summary_fallback_claude_cache(self):
         # No CLAUDE_PLUGIN_ROOT -> fallback to <proj>/.claude/.cache/last-audit.json.
         proj = _util.mkdtemp()
         self.addCleanup(shutil.rmtree, proj, ignore_errors=True)
         cache_dir = os.path.join(proj, ".claude", ".cache")
         os.makedirs(cache_dir, exist_ok=True)
+        docs_root = os.path.join(proj, "docs")
         with open(os.path.join(cache_dir, "last-audit.json"), "w",
                   encoding="utf-8") as fh:
-            json.dump(self._audit_obj(), fh, ensure_ascii=False)
+            json.dump(self._audit_obj(root=docs_root), fh, ensure_ascii=False)
 
         os.makedirs(os.path.join(proj, "docs", "_system"), exist_ok=True)
         with open(os.path.join(proj, "docs", "_system", "decided-facts.md"), "w",
                   encoding="utf-8") as fh:
             fh.write(_decided("DECIDED-001", "確定A"))
-        docs_root = os.path.join(proj, "docs")
 
         old_pr = os.environ.pop("CLAUDE_PLUGIN_ROOT", None)
         old_pd = os.environ.get("CLAUDE_PROJECT_DIR")
@@ -456,7 +720,10 @@ class TestAuditHandshake(InjectBase):
     def test_unregistered_count_names_docs_curate(self):
         # G3: counts_by_check.unregistered_document=N -> an actionable line that
         # NAMES docs-curate is injected, regardless of token-cap overflow.
-        obj = self._audit_obj()
+        root = self._repo({"docs/_system/decided-facts.md":
+                           _decided("DECIDED-001", "確定A")})
+        docs_root = os.path.join(root, "docs")
+        obj = self._audit_obj(root=docs_root)
         obj["counts_by_check"] = {"unregistered_document": 3}
         obj["totals"] = {"error": 3, "warn": 0, "advisory": 0}
         obj["top_findings"] = [
@@ -472,9 +739,6 @@ class TestAuditHandshake(InjectBase):
         with open(os.path.join(cache_dir, "last-audit.json"), "w",
                   encoding="utf-8") as fh:
             json.dump(obj, fh, ensure_ascii=False)
-        root = self._repo({"docs/_system/decided-facts.md":
-                           _decided("DECIDED-001", "確定A")})
-        docs_root = os.path.join(root, "docs")
         old = os.environ.get("CLAUDE_PLUGIN_ROOT")
         os.environ["CLAUDE_PLUGIN_ROOT"] = plugin_root
         try:
@@ -489,6 +753,35 @@ class TestAuditHandshake(InjectBase):
         self.assertIn("3", ctx)
         # No overflow here: the remedy is not the overflow notice.
         self.assertNotIn("注入上限", ctx)
+
+    def test_stray_count_names_intake(self):
+        """counts_by_check.stray_document=N -> external-md-intake を名指しで促す
+        一行が注入される(ADR-021)。"""
+        root = self._repo({"docs/_system/decided-facts.md":
+                           _decided("DECIDED-001", "確定A")})
+        docs_root = os.path.join(root, "docs")
+        obj = self._audit_obj(root=docs_root)
+        obj["counts_by_check"] = {"stray_document": 4}
+        obj["totals"] = {"error": 0, "warn": 1, "advisory": 3}
+        obj["top_findings"] = []
+        plugin_root = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, plugin_root, ignore_errors=True)
+        cache_dir = os.path.join(plugin_root, ".cache")
+        os.makedirs(cache_dir, exist_ok=True)
+        with open(os.path.join(cache_dir, "last-audit.json"), "w",
+                  encoding="utf-8") as fh:
+            json.dump(obj, fh, ensure_ascii=False)
+        old = os.environ.get("CLAUDE_PLUGIN_ROOT")
+        os.environ["CLAUDE_PLUGIN_ROOT"] = plugin_root
+        try:
+            ctx = self._ctx(self._run_json(docs_root))
+        finally:
+            if old is None:
+                os.environ.pop("CLAUDE_PLUGIN_ROOT", None)
+            else:
+                os.environ["CLAUDE_PLUGIN_ROOT"] = old
+        self.assertIn("external-md-intake", ctx)
+        self.assertIn("4", ctx)
 
     def test_missing_audit_says_none(self):
         # No artifact anywhere -> 「前回監査なし」, never an error.

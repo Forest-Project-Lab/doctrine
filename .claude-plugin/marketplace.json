@@ -9,7 +9,7 @@
       "name": "doctrine",
       "source": "./plugin",
       "description": "文書を最小限に保つ参照プラグイン。スキル・フック・スクリプト・テンプレートを含む。",
-      "version": "0.1.0"
+      "version": "0.2.0"
     }
   ]
 }

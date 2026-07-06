@@ -1,0 +1,8 @@
+# 体系外 .md の分類の記録(ADR-021)。external-md-intake の三分類の結果を書く。
+# 形式: パス: 非文書|投影|保留 [YYYY-MM-DD](保留は期限必須。末尾 / は配下全体)
+# 根の案内(CLAUDE.md/AGENTS.md)は仕様が投影と定める固定名のため記録不要。
+README.md: 非文書
+CONTRIBUTING.md: 非文書
+spec/doctrine.ja.md: 非文書
+plugin/: 非文書
+doctrine-robustness-matrix.ja.md: 保留 2026-09-30

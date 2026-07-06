@@ -23,6 +23,10 @@
 - Pull Request は、一つの主題に絞る。
 - 仕様の規則を変える Pull Request は、その規則に依存する記述（付録のテンプレートなど）の更新を同じ Pull Request に含める。
 
+## プラグインの自己適用
+
+本リポジトリは doctrine プラグインを自分に適用する（`.claude/settings.json`。ガード・リンタ・注入・監査のフックが各セッションで動く）。marketplace の場所は絶対パスで書く必要があるため、devcontainer の `/workspaces/llm-docs-governance` を前提とする。devcontainer の外で作業する場合は、`.claude/settings.local.json` で自分の絶対パスに上書きする。
+
 ## ライセンス
 
 寄稿は MIT ライセンスの下で受け入れる。Pull Request を出すことで、寄稿を MIT ライセンスで配布することに同意したものとする。

@@ -93,38 +93,22 @@ def _split_parts(path):
 
 
 def in_scope(path):
-    """True iff the linter should examine this path.
+    """True iff the linter should examine this path: every .md, anywhere.
 
-    Skip non-.md. Skip files not under a docs/ tree AND not under a .claude/
-    docs tree, UNLESS the layout is undecidable (then lint anyway — fail-open
-    toward checking, §1.3). A deleted file (absent on disk) is handled by the
-    caller (emit nothing).
+    統治木の外でも点検する(fail-open toward checking, §1.3): 型付きなら
+    STRAY_DOCUMENT で置き場所を正させ、型なしでも用語の助言は価値がある。
+    A deleted file (absent on disk) is handled by the caller (emit nothing).
     """
-    if not path.endswith(".md"):
-        return False
-    parts = _split_parts(path)
-    # A docs tree is signalled by a 'docs' ancestor or a '_system' segment.
-    if "docs" in parts or "_system" in parts:
-        return True
-    if ".claude" in parts:
-        return True
-    # Undecidable: lint anyway (a typed doc outside docs/ is likely a doc).
-    return True
+    return path.endswith(".md")
 
 
 def _docs_root_of(path):
-    """Nearest ancestor 'docs' directory of `path` (for glossary lookup), or None."""
-    cur = os.path.dirname(os.path.abspath(path))
-    while True:
-        if os.path.basename(cur) == "docs":
-            return cur
-        cand = os.path.join(cur, "docs")
-        if os.path.isdir(cand):
-            return cand
-        parent = os.path.dirname(cur)
-        if parent == cur:
-            return None
-        cur = parent
+    """Nearest governed docs root of `path` (for glossary lookup), or None.
+
+    ADR-022: doctrine_docs 優先。docs は _system を持つ場合だけ統治木と認める
+    (見つからなければ None → 同梱テンプレートの辞書へ退避)。
+    """
+    return _registry.walkup_docs_root(path)
 
 
 def _rel_under_docs(path):
@@ -136,14 +120,15 @@ def _rel_under_docs(path):
     For '.../docs/_system/glossary.md' -> ['_system', 'glossary.md'].
     """
     parts = _split_parts(path)
-    # Prefer the last 'docs' segment as the root.
-    idx = None
-    for i, p in enumerate(parts):
-        if p == "docs":
-            idx = i
-    if idx is not None:
-        return parts[idx + 1:]
-    # No literal 'docs' ancestor: anchor on '_system' if present.
+    # Prefer the last docs-root segment (doctrine_docs first, ADR-022).
+    for name in _registry.DOCS_DIR_NAMES:
+        idx = None
+        for i, p in enumerate(parts):
+            if p == name:
+                idx = i
+        if idx is not None:
+            return parts[idx + 1:]
+    # No literal docs-root ancestor: anchor on '_system' if present.
     if "_system" in parts:
         j = parts.index("_system")
         return parts[j:]
@@ -226,6 +211,14 @@ def _check_status(meta, findings):
     if not _registry.is_known_type(type_code):
         # type itself unknown -> reported by _check_type; skip status here.
         return
+    if status is not None and not isinstance(status, str) \
+            and not _is_empty_value(status):
+        # Non-string, non-empty status (e.g. `status: [current]`): not
+        # covered by EMPTY_KEY, so it must be flagged here.
+        findings.append(Finding(
+            "BAD_STATUS", ERROR,
+            "status は統制語彙の文字列で書く(%r は不正)。" % (status,), "§3.3"))
+        return
     if not isinstance(status, str) or status.strip() == "":
         return  # empty status already flagged as EMPTY_KEY
     status = status.strip()
@@ -245,6 +238,13 @@ def _check_status(meta, findings):
 def _check_type_known(meta, findings):
     """UNKNOWN_TYPE (ERROR) — the 'type' value must be a registry type."""
     type_code = meta.get("type")
+    if type_code is not None and not isinstance(type_code, str):
+        # e.g. the YAML-list typo `type: [SPEC]`: present, non-empty, but
+        # not a string. Say so explicitly instead of passing silently.
+        findings.append(Finding(
+            "UNKNOWN_TYPE", ERROR,
+            "型は文字列で書く(%r は登録簿の型コードでない)。" % (type_code,), "§3.2"))
+        return
     if not isinstance(type_code, str) or type_code.strip() == "":
         return  # missing/empty handled by required-key check
     if not _registry.is_known_type(type_code):
@@ -289,6 +289,24 @@ def _check_id_filename(meta, path, rel_parts, findings):
         "ID_FILENAME_MISMATCH", ERROR,
         "id『%s』はファイル名語幹『%s』と一致しない(語幹は id で始める)。"
         % (doc_id, stem), "§3.4/§3.7"))
+
+
+def _check_stray_location(meta, rel_parts, findings):
+    """STRAY_DOCUMENT (ERROR) — ADR-021: 登録簿の型を持つ文書が docs/ の外。
+
+    体系の文書を名乗る(既知の型を持つ) .md が docs/ の木の外に書かれたら、
+    その場で置き場所を正させる。型なしの .md は対象にしない(README 等の
+    非文書は external-md-intake の分類に委ねる)。
+    """
+    if rel_parts is not None:
+        return  # docs/ の木の中 → 置き場所は _check_type_location が見る。
+    type_code = meta.get("type")
+    if isinstance(type_code, str) and _registry.is_known_type(type_code):
+        findings.append(Finding(
+            "STRAY_DOCUMENT", ERROR,
+            "登録簿の型 %s を持つ文書が統治木の外に在る。doc-author で "
+            "統治木の <domain>/ 配下へ移すか、型を外す。" % type_code,
+            "ADR-021"))
 
 
 def _check_type_location(meta, path, rel_parts, findings):
@@ -571,6 +589,7 @@ def lint_text(text, path):
     _check_type_known(meta, findings)
     _check_status(meta, findings)
     _check_id_filename(meta, path, rel_parts, findings)
+    _check_stray_location(meta, rel_parts, findings)
     _check_type_location(meta, path, rel_parts, findings)
     _check_llm_context(meta, findings)
     _check_research_decision(meta, body, findings)

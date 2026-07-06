@@ -73,17 +73,21 @@ class Glossary(object):
     - calque_table:     list[(surface, fix, en)]
     - wordtrap:         dict[en_word -> jp_fix]   一語訳の罠
     - loanwords:        tuple[str]          定着した借用語(擬陽性回避)
+    - proper_nouns:     list[str]           固有名(表Aで意味欄が「固有名」の行。
+                                            禁止同義語の照合から外す — ADR-017/018)
     - source:           'operational' | 'template' | 'seed'
     - parse_error:      bool  (True -> caller should surface GLOSSARY_PARSE_ERROR)
     """
 
     def __init__(self, approved_terms, banned_synonyms, calque_table,
-                 wordtrap, loanwords, source, parse_error=False):
+                 wordtrap, loanwords, source, parse_error=False,
+                 proper_nouns=()):
         self.approved_terms = approved_terms
         self.banned_synonyms = banned_synonyms
         self.calque_table = calque_table
         self.wordtrap = wordtrap
         self.loanwords = loanwords
+        self.proper_nouns = list(proper_nouns)
         self.source = source
         self.parse_error = parse_error
 
@@ -151,6 +155,7 @@ def parse_glossary(text):
     calque_table = []           # list[(surface, fix, en)]
     wordtrap = {}
     loanwords = []
+    proper_nouns = []           # 固有名(意味欄が「固有名」の表A行)
 
     mode = None                 # 'A' (approved) | 'B' (calque) | None
     found_table_a = False
@@ -175,6 +180,12 @@ def parse_glossary(text):
                 if approved == "":
                     continue
                 approved_terms.add(approved)
+                # 固有名の行(意味欄が「固有名」): 外部規格・法令の公式名。
+                # 禁止同義語の照合から外すため proper_nouns に集める(§1 /
+                # ADR-017・ADR-018)。同義語欄は登録しない(公式名に同義語は無い)。
+                if "固有名" in cells[1]:
+                    proper_nouns.append(approved)
+                    continue
                 syn_cell = cells[2].strip()
                 if syn_cell == "" or _PARENS_ONLY_RE.match(syn_cell):
                     # Parenthetical-only / blank cell -> context-only, no literal.
@@ -231,6 +242,7 @@ def parse_glossary(text):
         wordtrap=wordtrap,
         loanwords=tuple(loanwords),
         source="parsed",
+        proper_nouns=proper_nouns,
     )
 
 
@@ -466,11 +478,29 @@ def check(body, meta, glossary):
 _APPROVED_COMPOUNDS = ("入出力", "現在形", "レビュー", "記述漏れ")
 
 
-def _mask_approved_compounds(masked):
-    """Blank the exact spec-mandated compounds (length-preserving) so a banned
-    synonym that is only a substring of an approved compound is not flagged,
-    while a standalone synonym in prose still matches. (#03/#09)"""
-    for compound in _APPROVED_COMPOUNDS:
+def _mask_approved_compounds(masked, glossary=None):
+    """Blank approved compounds and dictionary-registered exceptions
+    (length-preserving) so a banned synonym that is only a substring of a
+    legitimate longer token is not flagged, while a standalone synonym in
+    prose still matches. (#03/#09)
+
+    Three sources, longest-first so overlapping tokens mask cleanly:
+    - _APPROVED_COMPOUNDS: spec-mandated compounds (§3.2/付録B).
+    - glossary.proper_nouns: 固有名 rows (§1 / ADR-017・ADR-018) — official
+      external names registered to be EXCLUDED from banned-synonym matching.
+    - glossary.approved_terms that strictly contain a banned synonym: the
+      dictionary is the single source (ADR-005), so registering a longer
+      approved word (e.g. 承認語『マスタープラン』 vs 禁止『マスター』) must
+      exempt it without touching this code.
+    """
+    tokens = set(_APPROVED_COMPOUNDS)
+    if glossary is not None:
+        tokens.update(t for t in glossary.proper_nouns if t)
+        banned = [syn for syn, _a in glossary.banned_synonyms]
+        for term in glossary.approved_terms:
+            if any(syn in term and syn != term for syn in banned):
+                tokens.add(term)
+    for compound in sorted(tokens, key=len, reverse=True):
         if compound in masked:
             masked = masked.replace(compound, _blank(compound))
     return masked
@@ -486,7 +516,7 @@ def _check_banned_synonyms(masked, glossary):
     while a standalone synonym in ordinary prose is still caught.
     Ordered by (synonym order in glossary, first occurrence).
     """
-    masked = _mask_approved_compounds(masked)
+    masked = _mask_approved_compounds(masked, glossary)
     out = []
     for syn, approved in glossary.banned_synonyms:
         idx = masked.find(syn)

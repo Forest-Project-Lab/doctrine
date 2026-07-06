@@ -12,6 +12,7 @@
 """
 from __future__ import annotations
 
+import os
 import re
 
 # ---------------------------------------------------------------------------
@@ -136,7 +137,7 @@ def status_allowed(type_code):
     """
     if type_code == "ADR":
         return {"proposed", "accepted", "superseded", "deprecated"}
-    if type_code not in TYPE_DEFAULT_STATUS:
+    if not isinstance(type_code, str) or type_code not in TYPE_DEFAULT_STATUS:
         return set()
     base = {"proposed", "current", "deprecated", "superseded", "archived", "open"}
     if type_code == "RESEARCH":
@@ -210,6 +211,71 @@ SYSTEM_CANONICAL_FILES = frozenset({
     "watchlist.md",
 })
 
+# 根の案内 — spec-fixed projection pointers that LIVE at the project root by
+# design (§3.7/§5: CLAUDE.md/AGENTS.md are 投影・入口 and are NOT docs/ files).
+# stray-document scanning (ADR-021) must not report them as unclassified.
+ROOT_POINTER_FILES = frozenset({"CLAUDE.md", "AGENTS.md"})
+
+# 統治木のディレクトリ名 — 優先順(ADR-022)。既定は doctrine_docs。docs は
+# doctrine が初期化した印(_system)を持つ場合だけ統治木と認める(後方互換)。
+# _system を持たない素の docs/ は他所の土地であり、決して統治木として扱わない。
+DOCS_DIR_NAMES = ("doctrine_docs", "docs")
+
+
+def is_doctrine_tree(path, name=None):
+    """`path` を統治木として扱ってよいか(ADR-022)。決して例外を投げない。
+
+    doctrine_docs は存在すれば統治木(初期化前のブートストラップ先を含む)。
+    docs は `_system` を持つ場合だけ統治木(素の docs は他所の土地)。
+    """
+    if not path or not os.path.isdir(path):
+        return False
+    base = name or os.path.basename(os.path.normpath(path))
+    if base == "doctrine_docs":
+        return True
+    if base == "docs":
+        return os.path.isdir(os.path.join(path, "_system"))
+    return False
+
+
+def locate_docs_root(project_dir):
+    """プロジェクト根から統治木を解決する(ADR-022)。無ければ None。"""
+    if not project_dir:
+        return None
+    for name in DOCS_DIR_NAMES:
+        cand = os.path.join(project_dir, name)
+        if is_doctrine_tree(cand, name):
+            return cand
+    return None
+
+
+def walkup_docs_root(start_path, cwd=None):
+    """start_path(ファイルでもよい)から上へたどって統治木を探す(ADR-022)。
+
+    各階層で、自身が統治木か、直下に統治木を持つかを DOCS_DIR_NAMES の
+    優先順で見る。見つからなければ cwd 側も同様に試し、無ければ None。
+    """
+    candidates = []
+    if start_path:
+        p = os.path.abspath(start_path)
+        candidates.append(p if os.path.isdir(p) else os.path.dirname(p))
+    if cwd:
+        candidates.append(os.path.abspath(cwd))
+    for cur in candidates:
+        seen = set()
+        while cur and cur not in seen:
+            seen.add(cur)
+            if is_doctrine_tree(cur):
+                return cur
+            found = locate_docs_root(cur)
+            if found is not None:
+                return found
+            parent = os.path.dirname(cur)
+            if parent == cur:
+                break
+            cur = parent
+    return None
+
 # ---------------------------------------------------------------------------
 # Helper API (frozen — consumed by guard, linter, audit, dep-graph, context)
 # ---------------------------------------------------------------------------
@@ -240,18 +306,29 @@ def type_of(doc_id):
 
 
 def is_known_type(type_code):
-    """True iff `type_code` is one of the 19 registry types."""
+    """True iff `type_code` is one of the 19 registry types.
+
+    Non-string values (e.g. a YAML-list typo `type: [SPEC]`) are simply
+    unknown — they must not raise, or a single malformed frontmatter key
+    would take down every check that runs after this one.
+    """
+    if not isinstance(type_code, str):
+        return False
     return type_code in TYPE_DEFAULT_STATUS
 
 
 def default_status(type_code):
-    """Default status for a type (§3.2). None for an unknown type."""
+    """Default status for a type (§3.2). None for an unknown/non-string type."""
+    if not isinstance(type_code, str):
+        return None
     return TYPE_DEFAULT_STATUS.get(type_code)
 
 
 def default_llm_context(type_code):
     """Default llm_context ('always'|'task'|'never') for a type (§3.2).
-    None for an unknown type."""
+    None for an unknown/non-string type."""
+    if not isinstance(type_code, str):
+        return None
     return TYPE_DEFAULT_LLM_CONTEXT.get(type_code)
 
 
@@ -272,6 +349,8 @@ def effective_llm_context(meta):
         type_code = meta.get("type")
     else:
         type_code = None
+    if not isinstance(type_code, str):
+        return None
     return TYPE_DEFAULT_LLM_CONTEXT.get(type_code)
 
 
@@ -280,14 +359,49 @@ def allowed_locations(type_code):
 
     Returns a fresh list (callers may not mutate the registry). Patterns use the
     literal '<domain>' and '_system/' tokens. WATCH returns two patterns; every
-    other type returns one. Unknown type -> empty list.
+    other type returns one. Unknown/non-string type -> empty list.
     """
+    if not isinstance(type_code, str):
+        return []
     return list(TYPE_LOCATION.get(type_code, []))
 
 
 def is_projection(type_code):
     """True iff `type_code` is a projection type (OVERVIEW or CTXMAP, §1.5/C8)."""
+    if not isinstance(type_code, str):
+        return False
     return type_code in PROJECTION_TYPES
+
+
+# ---------------------------------------------------------------------------
+# §4.4 段階導入 — the active level marker (C9 / ICD-008 level-staging)
+# ---------------------------------------------------------------------------
+
+_DOCS_LEVEL_RE = re.compile(r"^\s*level\s*[:：]\s*([234])\s*$")
+
+
+def docs_level(docs_root):
+    """Read the active Level from <docs_root>/_system/.docs-level (ADR-019).
+
+    The marker is a single line 'level: N' with N in {2,3,4}, written by
+    scaffold.py. Hook scripts read it to self-gate the parts a trimmed Level
+    excludes (SessionEnd audit, post-apply guard, review nudge below 3).
+    Missing / unreadable / malformed -> 4: dropping a stage is a lightening,
+    not a protection, so uncertainty falls toward FULL governance. Never
+    raises.
+    """
+    if not docs_root:
+        return 4
+    path = os.path.join(docs_root, "_system", ".docs-level")
+    try:
+        with open(path, "r", encoding="utf-8-sig") as fh:
+            for line in fh:
+                m = _DOCS_LEVEL_RE.match(line)
+                if m:
+                    return int(m.group(1))
+    except (OSError, UnicodeError, ValueError):
+        return 4
+    return 4
 
 
 # domain_of is intentionally NOT defined here: an id alone does not encode a

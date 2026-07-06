@@ -11,6 +11,7 @@ import ast
 import glob
 import json
 import os
+import shlex
 import sys
 import unittest
 
@@ -42,6 +43,16 @@ def _commands_for(hooks_obj, event, matcher=None):
     return out
 
 
+def _argv(command):
+    """Shell-token view of a hook command (quotes resolved, ${VAR} kept)."""
+    return shlex.split(command)
+
+
+def _programs_for(hooks_obj, event, matcher=None):
+    """Ordered list of program paths (first shell token) for an event."""
+    return [_argv(c)[0] for c in _commands_for(hooks_obj, event, matcher)]
+
+
 class TestPluginJson(unittest.TestCase):
     """plugin.json is a valid, minimal Claude Code plugin manifest (MASTER §9)."""
 
@@ -55,7 +66,14 @@ class TestPluginJson(unittest.TestCase):
     def test_required_fields(self):
         data = _load_json(self.path)
         self.assertEqual(data["name"], "doctrine")
-        self.assertEqual(data["version"], "0.1.0")
+        # Version: three-component, and IDENTICAL in marketplace.json (the
+        # audit found the value duplicated with no sync guarantee).
+        self.assertRegex(data["version"], r"^\d+\.\d+\.\d+$")
+        mkt = _load_json(os.path.join(
+            os.path.dirname(_util.PLUGIN_ROOT), ".claude-plugin",
+            "marketplace.json"))
+        self.assertEqual(mkt["plugins"][0]["version"], data["version"],
+                         "plugin.json と marketplace.json の version が不一致")
         self.assertEqual(data["license"], "MIT")
         # description: a non-empty one-sentence Japanese string.
         self.assertIsInstance(data["description"], str)
@@ -104,8 +122,8 @@ class TestHooksFullProfile(unittest.TestCase):
             with self.subTest(event=event, matcher=matcher, command=command):
                 # A command may carry arguments after the script path
                 # (e.g. SessionEnd's docs-audit.py --summary-out ...). Validate
-                # the program token: the first whitespace-delimited field.
-                program = command.split()[0]
+                # the program token: the first shell token, quotes resolved.
+                program = _argv(command)[0]
                 self.assertTrue(
                     program.startswith("${CLAUDE_PLUGIN_ROOT}/scripts/"),
                     "command must live under ${CLAUDE_PLUGIN_ROOT}/scripts/: %r" % command,
@@ -113,22 +131,38 @@ class TestHooksFullProfile(unittest.TestCase):
                 self.assertTrue(program.endswith(".py"),
                                 "command must be a .py script: %r" % command)
 
+    def test_commands_survive_paths_with_spaces(self):
+        """Every ${VAR} in a command must sit inside double quotes: hook
+        commands run through the shell, and an unquoted expansion word-splits
+        on paths with spaces (breaking every hook, or silently mis-pointing
+        docs-audit's --root). Substituting a spacey path must not change the
+        token count."""
+        for event, matcher, command in _commands(self.hooks):
+            with self.subTest(event=event, matcher=matcher, command=command):
+                spacey = command.replace(
+                    "${CLAUDE_PLUGIN_ROOT}", "/tmp/pa th/plugin"
+                ).replace("${CLAUDE_PROJECT_DIR}", "/tmp/pa th/proj")
+                self.assertEqual(
+                    len(_argv(spacey)), len(_argv(command)),
+                    "unquoted ${VAR} word-splits on spacey paths: %r" % command,
+                )
+
     def test_sessionstart_injects_contract(self):
-        cmds = _commands_for(self.hooks, "SessionStart")
-        self.assertEqual(cmds, ["${CLAUDE_PLUGIN_ROOT}/scripts/inject-contract.py"])
+        progs = _programs_for(self.hooks, "SessionStart")
+        self.assertEqual(progs, ["${CLAUDE_PLUGIN_ROOT}/scripts/inject-contract.py"])
 
     def test_pretooluse_edit_and_bash_route_to_guard(self):
-        edit = _commands_for(self.hooks, "PreToolUse", "Edit|Write|MultiEdit")
-        bash = _commands_for(self.hooks, "PreToolUse", "Bash")
+        edit = _programs_for(self.hooks, "PreToolUse", "Edit|Write|MultiEdit")
+        bash = _programs_for(self.hooks, "PreToolUse", "Bash")
         self.assertEqual(edit, ["${CLAUDE_PLUGIN_ROOT}/scripts/policy-guard.py"])
         self.assertEqual(bash, ["${CLAUDE_PLUGIN_ROOT}/scripts/policy-guard.py"])
 
     def test_posttooluse_guard_then_linter_in_order(self):
         """C4: PostToolUse runs policy-guard FIRST, then docs-linter, then the
         advisory doc-review nudge (review-nudge.py) last."""
-        cmds = _commands_for(self.hooks, "PostToolUse", "Edit|Write|MultiEdit")
+        progs = _programs_for(self.hooks, "PostToolUse", "Edit|Write|MultiEdit")
         self.assertEqual(
-            cmds,
+            progs,
             [
                 "${CLAUDE_PLUGIN_ROOT}/scripts/policy-guard.py",
                 "${CLAUDE_PLUGIN_ROOT}/scripts/docs-linter.py",
@@ -143,11 +177,18 @@ class TestHooksFullProfile(unittest.TestCase):
         # (--summary-out <plugin-root>/.cache/last-audit.json, --fail-on never).
         cmds = _commands_for(self.hooks, "SessionEnd")
         self.assertEqual(len(cmds), 1)
-        cmd = cmds[0]
-        self.assertTrue(cmd.split()[0].endswith("/scripts/docs-audit.py"))
-        self.assertIn(
-            "--summary-out ${CLAUDE_PLUGIN_ROOT}/.cache/last-audit.json", cmd)
-        self.assertIn("--fail-on never", cmd)
+        argv = _argv(cmds[0])
+        self.assertTrue(argv[0].endswith("/scripts/docs-audit.py"))
+        self.assertIn("--summary-out", argv)
+        self.assertEqual(argv[argv.index("--summary-out") + 1],
+                         "${CLAUDE_PLUGIN_ROOT}/.cache/last-audit.json")
+        self.assertIn("--root-from", argv)
+        self.assertEqual(argv[argv.index("--root-from") + 1],
+                         "${CLAUDE_PROJECT_DIR}")
+        self.assertIn("--fail-on", argv)
+        self.assertEqual(argv[argv.index("--fail-on") + 1], "never")
+        # ADR-019: SessionEnd audit self-gates on docs/_system/.docs-level.
+        self.assertIn("--respect-docs-level", argv)
 
 
 class TestHooksLevel2Profile(unittest.TestCase):
@@ -160,31 +201,75 @@ class TestHooksLevel2Profile(unittest.TestCase):
     def test_valid_json_and_paths(self):
         for event, matcher, command in _commands(self.hooks):
             with self.subTest(event=event, command=command):
-                self.assertTrue(command.startswith("${CLAUDE_PLUGIN_ROOT}/scripts/"))
-                self.assertTrue(command.endswith(".py"))
+                program = _argv(command)[0]
+                self.assertTrue(program.startswith("${CLAUDE_PLUGIN_ROOT}/scripts/"))
+                self.assertTrue(program.endswith(".py"))
+
+    def test_commands_survive_paths_with_spaces(self):
+        """Same quoting invariant as the full profile (see TestHooksFullProfile)."""
+        for event, matcher, command in _commands(self.hooks):
+            with self.subTest(event=event, command=command):
+                spacey = command.replace(
+                    "${CLAUDE_PLUGIN_ROOT}", "/tmp/pa th/plugin"
+                ).replace("${CLAUDE_PROJECT_DIR}", "/tmp/pa th/proj")
+                self.assertEqual(len(_argv(spacey)), len(_argv(command)))
 
     def test_omits_sessionend_audit(self):
         self.assertNotIn("SessionEnd", self.hooks.get("hooks", {}))
 
     def test_omits_posttooluse_policy_guard(self):
         """Level-2 PostToolUse keeps only the advisory linter (no post-apply guard)."""
-        cmds = _commands_for(self.hooks, "PostToolUse", "Edit|Write|MultiEdit")
-        self.assertEqual(cmds, ["${CLAUDE_PLUGIN_ROOT}/scripts/docs-linter.py"])
-        self.assertNotIn("${CLAUDE_PLUGIN_ROOT}/scripts/policy-guard.py", cmds)
+        progs = _programs_for(self.hooks, "PostToolUse", "Edit|Write|MultiEdit")
+        self.assertEqual(progs, ["${CLAUDE_PLUGIN_ROOT}/scripts/docs-linter.py"])
+        self.assertNotIn("${CLAUDE_PLUGIN_ROOT}/scripts/policy-guard.py", progs)
 
     def test_keeps_sessionstart_and_pretooluse(self):
         self.assertEqual(
-            _commands_for(self.hooks, "SessionStart"),
+            _programs_for(self.hooks, "SessionStart"),
             ["${CLAUDE_PLUGIN_ROOT}/scripts/inject-contract.py"],
         )
         self.assertEqual(
-            _commands_for(self.hooks, "PreToolUse", "Edit|Write|MultiEdit"),
+            _programs_for(self.hooks, "PreToolUse", "Edit|Write|MultiEdit"),
             ["${CLAUDE_PLUGIN_ROOT}/scripts/policy-guard.py"],
         )
         self.assertEqual(
-            _commands_for(self.hooks, "PreToolUse", "Bash"),
+            _programs_for(self.hooks, "PreToolUse", "Bash"),
             ["${CLAUDE_PLUGIN_ROOT}/scripts/policy-guard.py"],
         )
+
+
+class TestScriptsExecutable(unittest.TestCase):
+    """Every plugin/scripts/*.py carries the executable bit.
+
+    hooks.json runs the scripts directly (no `python3` prefix), so a fresh
+    checkout/install must receive mode 100755 from the git index. With
+    core.filemode=false a working-tree chmod is never recorded, which is
+    exactly the failure this guards against: all hooks dying with exit 126
+    (fail-open, silent) on a new install.
+    """
+
+    def test_all_scripts_have_exec_bit(self):
+        py_files = sorted(glob.glob(os.path.join(_util.SCRIPTS, "*.py")))
+        self.assertTrue(py_files, "expected .py files under plugin/scripts/")
+        for path in py_files:
+            with self.subTest(path=path):
+                self.assertTrue(
+                    os.access(path, os.X_OK),
+                    "%s is not executable; run: git update-index --chmod=+x %s"
+                    % (path, path),
+                )
+
+    def test_all_scripts_have_python3_shebang(self):
+        """The exec bit is useless without a shebang line."""
+        py_files = sorted(glob.glob(os.path.join(_util.SCRIPTS, "*.py")))
+        for path in py_files:
+            with self.subTest(path=path):
+                with open(path, "r", encoding="utf-8") as fh:
+                    first = fh.readline()
+                self.assertTrue(
+                    first.startswith("#!") and "python3" in first,
+                    "%s must start with a python3 shebang" % path,
+                )
 
 
 class TestScriptsStdlibOnly(unittest.TestCase):

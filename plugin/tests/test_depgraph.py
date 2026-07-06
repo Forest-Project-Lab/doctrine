@@ -70,6 +70,26 @@ class DepGraphCoreTest(unittest.TestCase):
         self.addCleanup(shutil.rmtree, root, ignore_errors=True)
         return _depgraph.build_graph(os.path.join(root, "docs")), root
 
+    def test_reverse_dependents_default_is_direct_not_transitive(self):
+        """既定は直接依存のみ: 廃止済み中間ノード越しにしか届かない current 文書は
+        逆参照に数えない(削除安全ガード/孤児判定 R8 の前提)。"""
+        g, _ = self._build([
+            _node("SPEC-01", "SPEC", "billing"),
+            _node("IMPL-01", "IMPL", "billing", status="deprecated",
+                  depends_on=["SPEC-01"]),
+            _node("TEST-01", "TEST", "billing", depends_on=["IMPL-01"]),
+        ])
+        self.assertEqual(g.reverse_dependents("SPEC-01"), {"IMPL-01"})
+        self.assertEqual(g.reverse_current_dependents("SPEC-01"), set())
+
+    def test_status_of_convenience(self):
+        """status_of: 既知 id は frontmatter の status、未知 id は UNKNOWN(例外なし)。"""
+        g, _ = self._build([
+            _node("SPEC-01", "SPEC", "billing", status="current"),
+        ])
+        self.assertEqual(g.status_of("SPEC-01"), "current")
+        self.assertEqual(g.status_of("NOPE-99"), "UNKNOWN")
+
     # -- forward impacts (R4) --------------------------------------------
 
     def test_forward_impacts_transitive_TC115(self):
@@ -387,6 +407,26 @@ class DepGraphCoreTest(unittest.TestCase):
         # JSON round-trip must not raise.
         import json
         json.loads(json.dumps(j, ensure_ascii=False))
+
+    def test_duplicate_id_path_sorted_last_wins(self):
+        """同じ id の別ファイルはパス整列の最後が後勝ちでノードになる。
+
+        docs-audit の shadowed_document が『採用 paths[-1]』と報告する事実と
+        resolve() の答え(guard/linter が読む domain/type/status)が一致しな
+        ければならない(slice 05 A.3.2 の決定的後勝ち)。"""
+        _depgraph = _util.load_core("_depgraph")
+        fa = _node("DUP-1", "RESEARCH", "alpha")
+        fz = _node("DUP-1", "RESEARCH", "zulu")
+        root = _util.make_repo({
+            "docs/alpha/research/DUP-1.md": _util.fm_block(fa),
+            "docs/zulu/research/DUP-1.md": _util.fm_block(fz),
+        })
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        g = _depgraph.build_graph(os.path.join(root, "docs"))
+        self.assertEqual(g.nodes["DUP-1"]["path"], "zulu/research/DUP-1.md")
+        self.assertEqual(g.resolve("DUP-1")["domain"], "zulu")
+        self.assertEqual(sorted(g.dup_ids["DUP-1"]),
+                         ["alpha/research/DUP-1.md", "zulu/research/DUP-1.md"])
 
     def test_no_frontmatter_file_not_a_node(self):
         """A .md without frontmatter is a parse_warning, never a graph node."""

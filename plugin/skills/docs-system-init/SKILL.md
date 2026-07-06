@@ -18,7 +18,7 @@ description: 'Sets up the document governance system in a repository: creates th
 
 ## 手順
 
-1. 既存の状態を調べる。`docs/_system/` はあるか。プラグイン配置か `.claude/` 退避配置か。どの Level か（§4.4）。
+1. 既存の状態を調べる。`doctrine_docs/_system/` はあるか。プラグイン配置か `.claude/` 退避配置か。どの Level か（§4.4）。
 2. 構成を選ぶ。既定は縮小構成の Level 2 とする。利用者が Level 3 か 4 を求めたときだけ上げる。縮小構成は `_frontmatter.py`・`docs-linter.py`・`policy-guard.py`・`inject-contract.py` だけを使い、型を `ICD`・`REQ`・`SPEC`・`ADR`・`DECIDED`・`OVERVIEW` に絞る（型コードは§3.2の登録簿で定める）。
 3. `scaffold.py` を非破壊で実行する。欠けたものだけを作る。既存の文書は上書きも改変もしない（受入条件「既存を壊さない」）。
 4. `_system` の最小を置く。`glossary.md`（用語辞書の正本）・`decided-facts.md`（`DECIDED` の正本）・`non-goals.md`（`NONGOAL` の正本）・`overview.md`（`OVERVIEW` の投影）。Context Map と ICD 一覧は Level 4 まで先に作らない。

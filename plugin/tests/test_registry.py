@@ -194,6 +194,19 @@ class TestIsKnownType(unittest.TestCase):
         for bad in ("XYZ", "spec", "ICDINDEX", "", None):
             self.assertFalse(R.is_known_type(bad))
 
+    def test_unhashable_and_nonstring_do_not_raise(self):
+        """Frontmatter typos hand lists/dicts to the registry (`type: [SPEC]`).
+        Every type_code helper must degrade to its 'unknown' result instead of
+        raising TypeError (which would abort a whole lint/audit pass)."""
+        for bad in (["SPEC"], {"t": "SPEC"}, 7, True):
+            self.assertFalse(R.is_known_type(bad))
+            self.assertIsNone(R.default_status(bad))
+            self.assertIsNone(R.default_llm_context(bad))
+            self.assertEqual(R.status_allowed(bad), set())
+            self.assertEqual(R.allowed_locations(bad), [])
+            self.assertFalse(R.is_projection(bad))
+        self.assertIsNone(R.effective_llm_context({"type": ["SPEC"]}))
+
 
 class TestIsProjection(unittest.TestCase):
     """is_projection True for exactly {OVERVIEW, CTXMAP} (C8 / invariant 8)."""
@@ -370,6 +383,93 @@ class TestConstants(unittest.TestCase):
     def test_domain_of_not_present(self):
         # domain_of lives in _depgraph.resolve, NOT in the registry (MASTER §2.5).
         self.assertFalse(hasattr(R, "domain_of"))
+
+
+class TestDocsRootResolution(unittest.TestCase):
+    """ADR-022: doctrine_docs 優先。docs は _system を持つ場合だけ統治木。"""
+
+    def _tmp(self):
+        import shutil
+        import tempfile
+        root = tempfile.mkdtemp(prefix="droot-")
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        return root
+
+    def test_locate_prefers_doctrine_docs(self):
+        proj = self._tmp()
+        os.makedirs(os.path.join(proj, "doctrine_docs"))
+        os.makedirs(os.path.join(proj, "docs", "_system"))
+        self.assertEqual(R.locate_docs_root(proj),
+                         os.path.join(proj, "doctrine_docs"))
+
+    def test_locate_rejects_plain_docs(self):
+        """素の docs/(_system なし)は他所の土地 — 統治木にしない。"""
+        proj = self._tmp()
+        os.makedirs(os.path.join(proj, "docs", "guides"))
+        self.assertIsNone(R.locate_docs_root(proj))
+
+    def test_locate_accepts_legacy_docs_with_system(self):
+        proj = self._tmp()
+        os.makedirs(os.path.join(proj, "docs", "_system"))
+        self.assertEqual(R.locate_docs_root(proj), os.path.join(proj, "docs"))
+
+    def test_walkup_from_file_inside_tree(self):
+        proj = self._tmp()
+        deep = os.path.join(proj, "doctrine_docs", "billing", "spec")
+        os.makedirs(deep)
+        self.assertEqual(R.walkup_docs_root(os.path.join(deep, "S.md")),
+                         os.path.join(proj, "doctrine_docs"))
+
+    def test_walkup_ignores_foreign_docs(self):
+        proj = self._tmp()
+        deep = os.path.join(proj, "docs", "guides")
+        os.makedirs(deep)
+        self.assertIsNone(R.walkup_docs_root(os.path.join(deep, "x.md")))
+
+    def test_is_doctrine_tree(self):
+        proj = self._tmp()
+        dd = os.path.join(proj, "doctrine_docs")
+        os.makedirs(dd)
+        self.assertTrue(R.is_doctrine_tree(dd))
+        plain = os.path.join(proj, "docs")
+        os.makedirs(plain)
+        self.assertFalse(R.is_doctrine_tree(plain))
+        os.makedirs(os.path.join(plain, "_system"))
+        self.assertTrue(R.is_doctrine_tree(plain))
+        self.assertFalse(R.is_doctrine_tree(os.path.join(proj, "other")))
+
+
+class TestDocsLevel(unittest.TestCase):
+    """ADR-019: docs_level() reads docs/_system/.docs-level; uncertainty -> 4."""
+
+    def _root_with_marker(self, content):
+        import shutil
+        import tempfile
+        root = tempfile.mkdtemp(prefix="dlvl-")
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        sysdir = os.path.join(root, "_system")
+        os.makedirs(sysdir)
+        if content is not None:
+            with open(os.path.join(sysdir, ".docs-level"), "w",
+                      encoding="utf-8") as fh:
+                fh.write(content)
+        return root
+
+    def test_valid_levels(self):
+        for n in (2, 3, 4):
+            root = self._root_with_marker("level: %d\n" % n)
+            self.assertEqual(R.docs_level(root), n)
+
+    def test_missing_marker_defaults_to_full(self):
+        self.assertEqual(R.docs_level(self._root_with_marker(None)), 4)
+        self.assertEqual(R.docs_level(None), 4)
+        self.assertEqual(R.docs_level("/no/such/dir"), 4)
+
+    def test_malformed_marker_defaults_to_full(self):
+        """不明時は統治を全て効かせる側(4)へ倒す(軽量化であって保護でないため)。"""
+        for bad in ("level: 9\n", "lev: 2\n", "garbage\n", "level: two\n", ""):
+            root = self._root_with_marker(bad)
+            self.assertEqual(R.docs_level(root), 4, repr(bad))
 
 
 if __name__ == "__main__":

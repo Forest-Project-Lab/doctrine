@@ -53,17 +53,17 @@ def estimate_tokens(text, chars_per_token=DEFAULT_CHARS_PER_TOKEN):
 # 引数解析
 # ---------------------------------------------------------------------------
 def _parse_args(argv):
-    """[--docs-root R] [--cap N] [--config PATH] [--format json|text] [--today YMD]。
+    """[--docs-root R] [--cap N] [--config PATH] [--format json|text]。
 
     返り値は opts dict。未知の引数は無視する(セッション開始を落とさない)。--cap の値が
-    整数でなければ None のまま(=config/既定にゆだねる)。
+    整数でなければ None のまま(=config/既定にゆだねる)。日付は使わない(古び検出は
+    監査の仕事で、本スクリプトは監査の要約を読むだけ)。
     """
     opts = {
         "docs_root": None,
         "cap": None,
         "config": None,
         "format": "json",
-        "today": None,
     }
     i = 0
     n = len(argv)
@@ -85,10 +85,6 @@ def _parse_args(argv):
             opts["format"] = argv[i + 1]; i += 2; continue
         if a.startswith("--format="):
             opts["format"] = a.split("=", 1)[1]; i += 1; continue
-        if a == "--today" and i + 1 < n:
-            opts["today"] = argv[i + 1]; i += 2; continue
-        if a.startswith("--today="):
-            opts["today"] = a.split("=", 1)[1]; i += 1; continue
         i += 1
     if opts["format"] not in ("json", "text"):
         opts["format"] = "json"
@@ -106,21 +102,20 @@ def _to_int(s):
 # docs ルート / 設定 / 監査キャッシュの解決
 # ---------------------------------------------------------------------------
 def _resolve_docs_root(explicit):
-    """docs/ ルートを解決する。--docs-root → $CLAUDE_PROJECT_DIR/docs → ./docs。
+    """統治木を解決する。--docs-root → $CLAUDE_PROJECT_DIR → cwd(ADR-022)。
 
-    どれも存在しなければ None(呼び側はブートストラップ通知だけを出す)。
+    自動解決は登録簿の locate_docs_root に一本化: doctrine_docs 優先、docs は
+    _system を持つ場合だけ統治木と認める(素の docs は他所の土地)。どれも
+    無ければ None(呼び側はブートストラップ通知だけを出す)。
     """
     if explicit:
         return explicit if os.path.isdir(explicit) else explicit  # 明示は存在チェックを呼び側に任せる
     proj = os.environ.get("CLAUDE_PROJECT_DIR")
     if proj:
-        cand = os.path.join(proj, "docs")
-        if os.path.isdir(cand):
-            return cand
-    cand = os.path.join(os.getcwd(), "docs")
-    if os.path.isdir(cand):
-        return cand
-    return None
+        found = _registry.locate_docs_root(proj)
+        if found is not None:
+            return found
+    return _registry.locate_docs_root(os.getcwd())
 
 
 def _load_config(docs_root, config_path):
@@ -162,8 +157,15 @@ def _plugin_root_cache_candidates():
     return cands
 
 
-def _load_audit_summary():
-    """前回監査の要約(docs-audit/1)を読む。無ければ None。決して例外を投げない。"""
+def _load_audit_summary(docs_root=None):
+    """前回監査の要約(docs-audit/1)を読む。無ければ None。決して例外を投げない。
+
+    要約の root(docs-audit が監査した docs のパス)が現在の docs_root と一致
+    しない候補は捨てる。第一候補の ${CLAUDE_PLUGIN_ROOT}/.cache は同じプラグ
+    インを使う全プロジェクトで共有されるため、照合しないと別プロジェクトの
+    監査所見と是正指示を注入してしまう(越境汚染)。root キーが無い要約は
+    照合できないので、これも捨てる(誤注入より無注入が安全側)。
+    """
     for path in _plugin_root_cache_candidates():
         if not os.path.isfile(path):
             continue
@@ -172,9 +174,30 @@ def _load_audit_summary():
                 data = json.load(fh)
         except (OSError, ValueError, UnicodeError):
             continue
-        if isinstance(data, dict):
-            return data
+        if not isinstance(data, dict):
+            continue
+        if docs_root and not _same_docs_root(data.get("root"), docs_root):
+            continue
+        return data
     return None
+
+
+def _same_docs_root(summary_root, docs_root):
+    """要約の root と現在の docs_root が同じ場所を指すか。決して例外を投げない。
+
+    相対パスの root は照合できない(読み手の cwd 基準でどのプロジェクトとも
+    一致し得る)ため、不一致として捨てる。同梱の SessionEnd 配線は常に絶対
+    パスを書くので、正当な要約はここで落ちない。
+    """
+    if not isinstance(summary_root, str) or not summary_root.strip():
+        return False
+    if not os.path.isabs(summary_root):
+        return False
+    try:
+        return (os.path.realpath(summary_root)
+                == os.path.realpath(os.path.abspath(docs_root)))
+    except (OSError, ValueError):
+        return False
 
 
 # ---------------------------------------------------------------------------
@@ -451,6 +474,7 @@ def _curate_nudge(totals, counts_by_check):
             return 0
     reg = _c("unregistered_document") + _c("shadowed_document")
     orph = _c("orphan")
+    stray = _c("stray_document")
     errs = 0
     if isinstance(totals, dict):
         try:
@@ -460,6 +484,9 @@ def _curate_nudge(totals, counts_by_check):
     if reg > 0:
         return ("→ docs-curate を起動: 未登録/影文書 %d 件に型を与えて登録するか "
                 "archive/ へ退避すること。" % reg)
+    if stray > 0:
+        return ("→ docs-curate を起動: 統治木の外の .md %d 件を external-md-intake "
+                "で三分類し、_system/.md-intake へ記録すること(ADR-021)。" % stray)
     if orph > 0:
         return "→ docs-curate を起動: 孤児 %d 件を取り除く候補として整理すること。" % orph
     if errs > 0:
@@ -694,8 +721,13 @@ def _trim_to_fit(sections, budget, chars_per_token):
     def total():
         return estimate_tokens(_render_sections(work), chars_per_token)
 
-    if budget is None or budget <= 0:
+    if budget is None:
         return work
+    if budget < 0:
+        budget = 0
+    # budget == 0 でも早期リターンしない: total() <= 0 は満たされないまま
+    # 二段の切り詰めが最後まで走り、全節が骨格(見出し+保護先頭行)まで縮む。
+    # これが「極小の上限でも天井を守る」の実装(以前は無切り詰めで返す欠陥)。
 
     # 第1段: 保護されない節を tier 降順(同 tier は key)で削る。
     order = sorted(
@@ -813,7 +845,7 @@ def main(argv=None):
 
         warnings = []
         docs = _load_corpus(docs_root, warnings.append) if had_docs_root else []
-        audit_summary = _load_audit_summary()
+        audit_summary = _load_audit_summary(docs_root if had_docs_root else None)
 
         context, _overflow, _est = _assemble(
             docs, audit_summary, config, cap, cpt, had_docs_root)

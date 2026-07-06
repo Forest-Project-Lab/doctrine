@@ -1,0 +1,48 @@
+---
+id: ICD-008
+title: packaging のインターフェース（配布物の形・Hook配線・段差）
+type: ICD
+domain: packaging
+status: current
+owner: doctrine-maintainers
+created: 2026-06-30
+updated: 2026-07-06
+sources: [spec/doctrine.ja.md §4.3]
+canonical_for: [plugin-packaging, hook-wiring, level-staging]
+llm_context: task
+---
+
+# packaging ICD
+
+packaging ドメインは、配布物の形（`plugin.json`）、Hook の配線（`hooks/hooks.json`）、段階導入の各段（Level 2/3/4）を所有する。この ICD は、他ドメインが依存してよい唯一の入口である。
+
+## 公開する用語
+
+- **Hook**: イベントが起きたときに Claude Code が起動する外部スクリプト。
+- **`${CLAUDE_PLUGIN_ROOT}`**: プラグインの配置先を指す環境変数。Hook は、起動するスクリプトのパスをこの変数から組み立てる。
+- **段（Level 2/3/4）**: 体系の重さを利用者の規模に合わせる段階。段ごとに、使える型・スクリプト・Hook が変わる。
+- **縮小構成**: Level 2 向けに Hook を減らした配線。正本は `hooks/hooks.level2.json`。
+- **スナップショット**: セッション開始時に Hook 設定を読み取って固定し、そのセッションの間は変えないこと。
+
+## 正本である事実
+
+このドメインだけが正本である事実は、次の三つである（canonical_for と一致する）。
+
+- **plugin-packaging**: 配布は `/plugin install` で行う。プラグインを配置できないときは `.claude/` へ退避する。スクリプトは標準ライブラリだけで動く。`plugin.json` の最小キーは、name=`doctrine`、version、license=MIT の三つである。version の値の正本は `plugin.json` と `marketplace.json`（同値をテストが強制する）。
+- **hook-wiring**: 4 つのイベント（SessionStart・PreToolUse・PostToolUse・SessionEnd）を各スクリプトへ対応づける。統治木の解決は登録簿（ADR-022: doctrine_docs 優先、docs は `_system` を持つ場合だけ。素の docs は触れない）に一本化する。matcher は `Edit|Write|MultiEdit` と `Bash` の二系統に分ける。PostToolUse では `policy-guard.py`・`docs-linter.py`・`review-nudge.py` をこの順に起動する。
+- **level-staging**: 段差は `.docs-level` を読んだ自主停止で実現する（ADR-019）。Level 2 では SessionEnd の監査・起動後ガード・レビューのナッジが静かに済ませ、Level 3 で監査と依存グラフを、Level 4 で投影の一式を足す。縮小構成 `hooks/hooks.level2.json` は手配線用の代替として同梱する。Hook 設定は、セッション開始時にスナップショットして固定する。
+
+## データ契約
+
+他ドメインが依存してよい事実は、次のとおりである。
+
+- **配置規約**: Hook の `command` は、すべて `"${CLAUDE_PLUGIN_ROOT}/scripts/<名>.py"` の形で書く。変数を含むパスは二重引用符で囲む（空白を含むパスで語が割れないため）。スクリプトは直接起動するので、全スクリプトは実行ビット（git 登録簿に 100755）と `python3` のシバンを持つ。
+- **PostToolUse の起動順**: matcher `Edit|Write|MultiEdit` では、拒否しうる `policy-guard.py` を先に、助言だけを返す `docs-linter.py`・`review-nudge.py` を後に、この順で並べる。
+- **縮小差分**: `hooks.level2.json` は、全構成から SessionEnd の `docs-audit.py` と、PostToolUse の `policy-guard.py`・`review-nudge.py` を外し、PostToolUse を `docs-linter.py` だけにしたものである。
+- **段マーカー**: 現に選んでいる Level は、`doctrine_docs/_system/.docs-level`（`level: N` の一行）に書き、他のスクリプトが登録簿の `docs_level(docs_root)` でここから読む。読者は SessionEnd の監査（`--respect-docs-level` 付きのとき）・起動後ガード・レビューのナッジで、Level 2 では自主停止する（ADR-019）。目印が無い・不正なときは 4（全構成）として扱う。
+
+## 依存してよい入口
+
+他ドメインは、この ICD（ICD-008）だけを depends_on に書ける。packaging 内部の SPEC・IMPL・TEST を直接 depends_on に書いてはならない。
+
+<!-- 入れない: 内部実装、内部の検討 -->

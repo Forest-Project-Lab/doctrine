@@ -59,6 +59,38 @@ class TestNudgesTypedDoc(ReviewNudgeBase):
             self.assertTrue(out.strip(), tc)
 
 
+class TestLevelGate(ReviewNudgeBase):
+    """ADR-019 段差ゲート: Level 2 の体系ではナッジを出さない(縮小構成)。"""
+
+    def _typed_doc_in_docs_tree(self, marker):
+        p = _util.write_doc(self.root, "docs/billing/spec/SPEC-001-x.md", {
+            "id": "SPEC-001", "title": "x", "type": "SPEC", "domain": "billing",
+            "status": "current", "owner": "a", "updated": "2026-06-30",
+            "sources": [],
+        }, "## 入出力\n本文。\n")
+        if marker is not None:
+            sysdir = os.path.join(self.root, "docs", "_system")
+            os.makedirs(sysdir, exist_ok=True)
+            with open(os.path.join(sysdir, ".docs-level"), "w",
+                      encoding="utf-8") as fh:
+                fh.write(marker)
+        return p
+
+    def test_level2_no_nudge(self):
+        p = self._typed_doc_in_docs_tree("level: 2\n")
+        out, code = self._nudge(p)
+        self.assertEqual(code, 0)
+        self.assertEqual(out, "")
+
+    def test_level4_and_missing_marker_nudge(self):
+        p = self._typed_doc_in_docs_tree("level: 4\n")
+        out, _ = self._nudge(p)
+        self.assertIn("doc-review", out)
+        p2 = self._typed_doc_in_docs_tree(None)
+        out2, _ = self._nudge(p2)
+        self.assertIn("doc-review", out2)
+
+
 class TestSilentForNonDocs(ReviewNudgeBase):
     def test_non_md_file_no_nudge(self):
         """A non-.md path (e.g. a script) -> empty stdout."""

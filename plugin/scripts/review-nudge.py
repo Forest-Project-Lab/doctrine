@@ -65,6 +65,11 @@ def _is_typed_doc(path):
     return isinstance(type_code, str) and _registry.is_known_type(type_code)
 
 
+def _docs_root_for(path):
+    """path から上にたどって統治木を探す(ADR-022、登録簿に一本化)。無ければ None。"""
+    return _registry.walkup_docs_root(path)
+
+
 def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
@@ -73,6 +78,10 @@ def main(argv=None):
         path = _doc_path(data, argv)
         if not _is_typed_doc(path):
             return 0  # 文書でなければ静かに通す。
+        # 段差ゲート(ADR-019): Level 2 の縮小構成にナッジは無い。
+        root = _docs_root_for(path)
+        if root is not None and _registry.docs_level(root) < 3:
+            return 0
         out = {
             "hookSpecificOutput": {
                 "hookEventName": "PostToolUse",

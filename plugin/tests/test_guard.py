@@ -173,6 +173,30 @@ class TestR7IcdDependency(GuardTestBase):
         decision, _ = _pre(json.loads(out))
         self.assertEqual(decision, "allow")
 
+    def test_cross_domain_icd_dep_without_type_key_allowed(self):
+        """type: キーの無い ICD 文書(id 接頭辞 ICD-)への越境依存 -> 接頭辞
+        フォールバックで allow。
+
+        Regression(ミューテーション監査 Or->And): dep_type は
+        `info.get("type") or graph.type_of(dep)` で引く。frontmatter に type: が
+        無いノードは info["type"] が空なので、graph.type_of(id 接頭辞→登録簿)へ
+        倒れて ICD と判る。or が and に化けると dep_type が偽値になり、R7 の
+        正当な ICD 経路が誤って deny される。"""
+        fm_no_type = {"id": "ICD-09", "title": "t", "domain": "identity",
+                      "status": "current", "owner": "o", "updated": "2026-06-01",
+                      "sources": []}
+        root = self._repo({
+            "docs/identity/ICD.md": _util.fm_block(fm_no_type) + "ICD本文。\n",
+        })
+        new = _util.fm_block(_doc("billing", doc_id="SPEC-30",
+                                  fm_extra={"depends_on": ["ICD-09"]}))
+        tin = {"file_path": os.path.join(root, "docs/billing/spec/SPEC-30-x.md"),
+               "content": new + "本文。\n"}
+        out, _ = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Write", tin))
+        decision, reason = _pre(json.loads(out))
+        self.assertEqual(decision, "allow", reason)
+
     def test_status_blind_current_icd_irrelevant(self):
         """C12 restated: even a non-ICD cross-domain dep that is itself `current`
         is denied — status of the dep never saves a non-ICD cross-domain link."""
@@ -342,8 +366,12 @@ class TestImmutability(GuardTestBase):
         self.assertEqual(decision, "allow")
 
     def test_tc076_write_under_archive_denied(self):
-        """TC-076: any Write/Edit under <domain>/archive/** -> deny (immutable)."""
+        """TC-076: any Write/Edit under <domain>/archive/** -> deny (immutable).
+
+        ADR-022: 不変ガードは統治木の中でだけ効くので、木の印(_system)を
+        明示して統治木にしてから検証する。"""
         root = self._repo({})
+        os.makedirs(os.path.join(root, "docs", "_system"), exist_ok=True)
         path = os.path.join(root, "docs/billing/archive/ARCHIVE-03-old.md")
         tin = {"file_path": path,
                "content": _util.fm_block(_doc("billing", doc_id="ARCHIVE-03",
@@ -506,6 +534,18 @@ class TestDeleteSafety(GuardTestBase):
         self.assertEqual(decision, "deny")
         self.assertIn("TEST-20", reason)
 
+    def test_bash_git_mv_depended_doc_denied(self):
+        """`git mv` も mv と同じ移動の意味論で削除安全の対象(SPEC-003)。"""
+        root = self._depended_repo()
+        target = os.path.join(root, "docs/billing/spec/SPEC-14.md")
+        dst = os.path.join(root, "docs/billing/spec/renamed.md")
+        tin = {"command": "git mv %s %s" % (target, dst)}
+        out, _ = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Bash", tin))
+        decision, reason = _pre(json.loads(out))
+        self.assertEqual(decision, "deny")
+        self.assertIn("TEST-20", reason)
+
     def test_bash_git_rm_denied(self):
         """D3: Bash `git rm` of a current doc with dependents -> deny."""
         root = self._depended_repo()
@@ -527,6 +567,84 @@ class TestDeleteSafety(GuardTestBase):
         decision, _ = _pre(json.loads(out))
         self.assertEqual(decision, "deny")
 
+    def test_bash_mv_overwriting_depended_doc_denied(self):
+        """mv の宛先が既存の被依存文書 -> deny(上書き=内容の破壊)。
+
+        Regression(ミューテーション監査で発見): 旧実装は mv の末尾引数(宛先)を
+        検査対象から常に外していたため、`mv new.md <被依存文書>` による上書き
+        破壊が allow で素通りしていた。"""
+        root = self._depended_repo()
+        src = os.path.join(root, "new.md")
+        with open(src, "w", encoding="utf-8") as fh:
+            fh.write("x\n")
+        dst = os.path.join(root, "docs/billing/spec/SPEC-14.md")  # depended on
+        tin = {"command": "mv %s %s" % (src, dst)}
+        out, _ = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Bash", tin))
+        decision, reason = _pre(json.loads(out))
+        self.assertEqual(decision, "deny")
+        self.assertIn("TEST-20", reason)
+
+    def test_bash_mv_into_dir_overwriting_same_name_depended_doc_denied(self):
+        """mv <src> <dir>/ で dir 内の同名既存文書(被依存)を上書きする形 -> deny。"""
+        root = self._depended_repo()
+        srcdir = os.path.join(root, "incoming")
+        os.makedirs(srcdir, exist_ok=True)
+        src = os.path.join(srcdir, "SPEC-14.md")  # 同名の新ファイル
+        with open(src, "w", encoding="utf-8") as fh:
+            fh.write("x\n")
+        dstdir = os.path.join(root, "docs/billing/spec")
+        tin = {"command": "mv %s %s" % (src, dstdir)}
+        out, _ = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Bash", tin))
+        decision, reason = _pre(json.loads(out))
+        self.assertEqual(decision, "deny")
+        self.assertIn("TEST-20", reason)
+
+    def test_bash_mv_glob_dst_matching_depended_doc_denied(self):
+        """mv <src> <glob展開で被依存文書に一致する宛先> -> deny。"""
+        root = self._depended_repo()
+        src = os.path.join(root, "new.md")
+        with open(src, "w", encoding="utf-8") as fh:
+            fh.write("x\n")
+        dst_glob = os.path.join(root, "docs/billing/spec/SPEC-1*.md")
+        tin = {"command": "mv %s %s" % (src, dst_glob)}
+        out, _ = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Bash", tin))
+        decision, _ = _pre(json.loads(out))
+        self.assertEqual(decision, "deny")
+
+    def test_bash_mv_rename_to_new_path_allowed(self):
+        """mv の宛先が存在しない新パス(改名)や既存ディレクトリは破壊でない -> src だけで判定。"""
+        root = self._repo({
+            "docs/billing/spec/SPEC-16.md": _util.fm_block(_doc(
+                "billing", doc_id="SPEC-16", status="current")) + "本文。\n",
+        })
+        src = os.path.join(root, "docs/billing/spec/SPEC-16.md")
+        dst = os.path.join(root, "docs/billing/spec/SPEC-16-renamed.md")
+        tin = {"command": "mv %s %s" % (src, dst)}
+        out, _ = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Bash", tin))
+        decision, _ = _pre(json.loads(out))
+        self.assertEqual(decision, "allow")
+
+    def test_foreign_plain_docs_archive_not_guarded(self):
+        """ADR-022: _system を持たない素の docs/ は他所の土地。相手の
+        docs/*/archive/ への Write を不変ガードが誤って拒否してはならない。"""
+        import tempfile
+        proj = tempfile.mkdtemp(prefix="foreign-")
+        self.addCleanup(shutil.rmtree, proj, ignore_errors=True)
+        target_dir = os.path.join(proj, "docs", "guides", "archive")
+        os.makedirs(target_dir)
+        tin = {"file_path": os.path.join(target_dir, "old-note.md"),
+               "content": "# 彼らの資料\n自由に編集できるべき。\n"}
+        out, code = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Write", tin))
+        self.assertEqual(code, 0)
+        decision, _ = _pre(json.loads(out))
+        self.assertEqual(decision, "allow",
+                         "素の docs/ の archive/ を deny してはならない(ADR-022)")
+
     def test_bash_rm_no_dependents_allowed(self):
         """D2: Bash rm of a doc with ZERO dependents -> allow."""
         root = self._repo({
@@ -539,6 +657,85 @@ class TestDeleteSafety(GuardTestBase):
             "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Bash", tin))
         decision, _ = _pre(json.loads(out))
         self.assertEqual(decision, "allow")
+
+    def test_bash_rm_glob_no_violation_allowed(self):
+        """被依存ゼロの文書にだけ一致する glob rm -> allow(展開経路)。
+
+        Regression(ミューテーション監査 Is->IsNot): `if expanded is None:` が
+        反転すると、glob が正常に展開できたときに had_unexpandable が立ち、
+        無害な glob rm まで「glob を展開できません」で常時 deny になる。"""
+        root = self._repo({
+            "docs/billing/spec/SPEC-16.md": _util.fm_block(_doc(
+                "billing", doc_id="SPEC-16", status="current")) + "本文。\n",
+        })
+        tin = {"command": "rm %s" % os.path.join(
+            root, "docs/billing/spec/SPEC-1*.md")}
+        out, _ = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Bash", tin))
+        decision, reason = _pre(json.loads(out))
+        self.assertEqual(decision, "allow", reason)
+
+    def test_bash_rm_glob_matching_depended_doc_denied_with_dependents(self):
+        """被依存文書に一致する glob rm -> 依存名入りの deny(glob 文言でなく)。
+
+        glob 展開が実ターゲットへ届き、削除安全の違反文(逆依存の列挙)で拒否
+        されることを固定する。Is->IsNot 変異では展開成功が「展開不能」扱いに
+        なり、理由が glob 文言に化けて TEST-20 が消える。"""
+        root = self._depended_repo()
+        tin = {"command": "rm %s" % os.path.join(
+            root, "docs/billing/spec/SPEC-1*.md")}
+        out, _ = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Bash", tin))
+        decision, reason = _pre(json.loads(out))
+        self.assertEqual(decision, "deny")
+        self.assertIn("TEST-20", reason)
+        self.assertIn("SPEC-14", reason)
+
+    def test_bash_rm_multiple_targets_last_violates_denied(self):
+        """rm <harmless> <depended> — 複数ターゲットの末尾が違反 -> deny。"""
+        root = self._depended_repo()
+        harmless = os.path.join(root, "docs/billing/spec/NO-SUCH.md")
+        target = os.path.join(root, "docs/billing/spec/SPEC-14.md")
+        tin = {"command": "rm %s %s" % (harmless, target)}
+        out, _ = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Bash", tin))
+        decision, reason = _pre(json.loads(out))
+        self.assertEqual(decision, "deny")
+        self.assertIn("TEST-20", reason)
+
+    def test_bash_rm_after_non_remove_command_denied(self):
+        """`echo done && rm <depended>` — rm が後続セグメントでも deny。"""
+        root = self._depended_repo()
+        target = os.path.join(root, "docs/billing/spec/SPEC-14.md")
+        tin = {"command": "echo done && rm %s" % target}
+        out, _ = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Bash", tin))
+        decision, reason = _pre(json.loads(out))
+        self.assertEqual(decision, "deny")
+        self.assertIn("TEST-20", reason)
+
+    def test_bash_quoted_separator_then_rm_denied(self):
+        """二重引用符内の `;` はセパレータでない。後続の rm <depended> は deny。"""
+        root = self._depended_repo()
+        target = os.path.join(root, "docs/billing/spec/SPEC-14.md")
+        tin = {"command": 'echo "a; b" && rm %s' % target}
+        out, _ = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Bash", tin))
+        decision, reason = _pre(json.loads(out))
+        self.assertEqual(decision, "deny")
+        self.assertIn("TEST-20", reason)
+
+    def test_bash_rm_quoted_arg_then_depended_target_denied(self):
+        """`rm "<harmless>" <depended>` — 引用符付き引数の後続ターゲットも検査され deny。"""
+        root = self._depended_repo()
+        harmless = os.path.join(root, "docs/billing/spec/NO-SUCH.md")
+        target = os.path.join(root, "docs/billing/spec/SPEC-14.md")
+        tin = {"command": 'rm "%s" %s' % (harmless, target)}
+        out, _ = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Bash", tin))
+        decision, reason = _pre(json.loads(out))
+        self.assertEqual(decision, "deny")
+        self.assertIn("TEST-20", reason)
 
     def test_bash_chained_command_one_violates_denies_all(self):
         """D5: `rm a && rm b` where b has dependents -> deny the WHOLE command (D0.6)."""
@@ -701,6 +898,57 @@ class TestPostDeleteSafetyTransition(GuardTestBase):
         self.assertEqual(resp.get("decision"), "block")
         self.assertIn("TEST-20", resp.get("reason"))
         self.assertIn("SPEC-14", resp.get("reason"))
+
+    def test_level2_marker_disables_post_block_keeps_pre_deny(self):
+        """ADR-019 段差ゲート: level: 2 の体系では PostToolUse の block は出ない
+        (縮小構成に起動後ガードは無い)。PreToolUse の deny は Level 2 でも残る。"""
+        root = self._depended(spec_status="deprecated")  # ディスクは POST 状態
+        sysdir = os.path.join(root, "docs", "_system")
+        os.makedirs(sysdir, exist_ok=True)
+        with open(os.path.join(sysdir, ".docs-level"), "w",
+                  encoding="utf-8") as fh:
+            fh.write("level: 2\n")
+        path = os.path.join(root, "docs/billing/spec/SPEC-14.md")
+        tin = {"file_path": path,
+               "edits": [{"old_string": "status: current",
+                          "new_string": "status: deprecated"}]}
+        out, code = _util.invoke(
+            "policy-guard",
+            stdin_obj=_util.hook_stdin("PostToolUse", "MultiEdit", tin))
+        self.assertEqual(code, 0)
+        resp = json.loads(out)
+        self.assertNotEqual(resp.get("decision"), "block")
+        # PreToolUse(予防)は Level 2 でも従来どおり deny する(現行の被依存文書)。
+        root2 = self._depended(spec_status="current")
+        sysdir2 = os.path.join(root2, "docs", "_system")
+        os.makedirs(sysdir2, exist_ok=True)
+        with open(os.path.join(sysdir2, ".docs-level"), "w",
+                  encoding="utf-8") as fh:
+            fh.write("level: 2\n")
+        tin_pre = {"command": "rm %s"
+                   % os.path.join(root2, "docs/billing/spec/SPEC-14.md")}
+        out_pre, _ = _util.invoke(
+            "policy-guard",
+            stdin_obj=_util.hook_stdin("PreToolUse", "Bash", tin_pre))
+        decision, _ = _pre(json.loads(out_pre))
+        self.assertEqual(decision, "deny")
+
+    def test_post_multiedit_demote_transition_blocks(self):
+        """MultiEdit で current->deprecated に降格(POST 状態)+逆依存あり ->
+        decision:block。Regression(ミューテーション監査): _invert_edits の
+        edits 反転が空回りすると MultiEdit 経由の降格が一切 block されない。"""
+        root = self._depended(spec_status="deprecated")  # ディスクは POST 状態
+        path = os.path.join(root, "docs/billing/spec/SPEC-14.md")
+        tin = {"file_path": path,
+               "edits": [{"old_string": "status: current",
+                          "new_string": "status: deprecated"}]}
+        out, code = _util.invoke(
+            "policy-guard",
+            stdin_obj=_util.hook_stdin("PostToolUse", "MultiEdit", tin))
+        self.assertEqual(code, 0)
+        resp = json.loads(out)
+        self.assertEqual(resp.get("decision"), "block")
+        self.assertIn("TEST-20", resp.get("reason"))
 
     def test_frontmatter_region_edit_already_deprecated_no_block(self):
         """#00 hardening (raw-text inversion): a frontmatter-region Edit of an

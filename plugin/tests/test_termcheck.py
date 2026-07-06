@@ -258,6 +258,15 @@ class MaskingTest(unittest.TestCase):
         self.assertTrue(bs)
         self.assertEqual(bs[0].line, 2)
 
+    def test_line_number_preserved_after_actual_mask(self):
+        """1行目にマスク対象(インラインコード)が実在しても2行目の所見は行2。
+        _blank が改行だけを残す長さ保存の不変条件を固定する。"""
+        body = "一行目に `code` を書く。\n二行目はドキュメント。\n"
+        fs = tc.check(body, {"type": "SPEC"}, self.g)
+        bs = [f for f in fs if f.code == "BANNED_SYNONYM"]
+        self.assertTrue(bs)
+        self.assertEqual(bs[0].line, 2)
+
 
 class SuppressionTest(unittest.TestCase):
     """Skip the GLOSSARY正本 body and projection docs (MASTER §6)."""
@@ -310,6 +319,27 @@ class GlossaryResolutionTest(unittest.TestCase):
         fs = tc.check("本文。", {"type": "SPEC"}, g)
         self.assertIn("GLOSSARY_PARSE_ERROR", [f.code for f in fs])
 
+    def test_partial_table_a_header_rejected(self):
+        """第3列が『禁止する同義語』でない表は表Aと認めない(ヘッダは連言)。"""
+        body = ("| 承認語 | 意味 | 備考 |\n"
+                "|---|---|---|\n"
+                "| 文書 | まとまり | メモにすぎない |\n")
+        self.assertIsNone(tc.parse_glossary(body))
+
+    def test_header_only_table_a_is_parse_error(self):
+        """表Aのヘッダだけでデータ行が無い正本 -> 解析失敗としてテンプレへ退避。
+
+        Regression: 空の承認語辞書を operational として受け入れると、全チェックが
+        警告なしに沈黙する(検出の全面喪失)。"""
+        body = "| 承認語 | 唯一の意味 | 禁止する同義語 |\n|---|---|---|\n"
+        self.assertIsNone(tc.parse_glossary(body))
+        root = _util.make_repo({"docs/_system/glossary.md": body})
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        g = tc.load_glossary(os.path.join(root, "docs"))
+        self.assertEqual(g.source, "template")
+        self.assertTrue(g.parse_error)
+        self.assertTrue(g.approved_terms)  # テンプレの辞書で検出は継続する
+
     def test_operational_extends_seed(self):
         """An operational glossary may add an approved term beyond the seed."""
         tmpl = _util.read(os.path.join(_util.TEMPLATES, "glossary.md.tmpl"))
@@ -323,6 +353,44 @@ class GlossaryResolutionTest(unittest.TestCase):
         fs = tc.check("流れを定める。", {"type": "SPEC"}, g)
         self.assertTrue(any(f.code == "BANNED_SYNONYM" and "ワークフロー" in f.message
                             for f in fs))
+
+
+class ProperNounExceptionTest(unittest.TestCase):
+    """§1 固有名の例外(ADR-017/ADR-018): 意味欄が「固有名」の表A行は
+    禁止同義語の照合から外れる。辞書登録だけで実装に触れない(ADR-005)。"""
+
+    def _g_with(self, extra_row):
+        tmpl = _util.read(os.path.join(_util.TEMPLATES, "glossary.md.tmpl"))
+        extended = tmpl.replace(
+            "| 文書 | 管理対象の最小単位",
+            extra_row + "\n| 文書 | 管理対象の最小単位")
+        root = _util.make_repo({"docs/_system/glossary.md": extended})
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        return tc.load_glossary(os.path.join(root, "docs"))
+
+    def test_proper_noun_row_parsed(self):
+        g = self._g_with("| 情報マスター管理基準 | 固有名 | |")
+        self.assertIn("情報マスター管理基準", g.proper_nouns)
+        self.assertIn("情報マスター管理基準", g.approved_terms)
+
+    def test_banned_synonym_inside_proper_noun_not_flagged(self):
+        """固有名『情報マスター管理基準』の中の『マスター』(正本の禁止同義語)は
+        照合から外れる。地の文の『マスター』単独は従来どおり検出する。"""
+        g = self._g_with("| 情報マスター管理基準 | 固有名 | |")
+        fs = tc.check("情報マスター管理基準に従い記載する。", {"type": "SPEC"}, g)
+        self.assertEqual([f for f in fs if f.code == "BANNED_SYNONYM"], [])
+        fs2 = tc.check("マスターを更新する。", {"type": "SPEC"}, g)
+        self.assertTrue(any(f.code == "BANNED_SYNONYM" and "マスター" in f.message
+                            for f in fs2))
+
+    def test_registered_approved_compound_masked_dynamically(self):
+        """禁止同義語を包含する承認語を辞書に登録すれば、コードに触れず
+        照合から外れる(ADR-017 の前提を実装で成立させる)。"""
+        g = self._g_with("| マスタープラン | 都市計画の公式の上位計画 | |")
+        fs = tc.check("マスタープランを参照する。", {"type": "SPEC"}, g)
+        self.assertEqual([f for f in fs if f.code == "BANNED_SYNONYM"], [])
+        fs2 = tc.check("マスターを参照する。", {"type": "SPEC"}, g)
+        self.assertTrue(any(f.code == "BANNED_SYNONYM" for f in fs2))
 
 
 class NoDoubleDefinitionTest(unittest.TestCase):

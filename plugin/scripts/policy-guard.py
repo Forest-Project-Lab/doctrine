@@ -83,30 +83,13 @@ def _post_quiet():
 # ---------------------------------------------------------------------------
 
 def _find_docs_root(start_path, cwd=None):
-    """start_path から上にたどって docs/ ディレクトリを探す。見つからなければ None。
+    """start_path から上にたどって統治木を探す。見つからなければ None。
 
-    term-check.py と同じ規約。グラフ構築(ドメイン解決・逆依存)に使う。cwd は
-    start_path から見つからなかったときの控え。
+    解決は登録簿の walkup_docs_root に一本化(ADR-022): doctrine_docs 優先、
+    docs は _system を持つ場合だけ統治木と認める。素の docs/ は他所の土地で
+    あり、グラフ構築(ドメイン解決・逆依存)にも不変ガードにも使わない。
     """
-    candidates = []
-    if start_path:
-        candidates.append(os.path.dirname(os.path.abspath(start_path)))
-    if cwd:
-        candidates.append(os.path.abspath(cwd))
-    for cur in candidates:
-        seen = set()
-        while cur and cur not in seen:
-            seen.add(cur)
-            if os.path.basename(cur) == "docs":
-                return cur
-            cand = os.path.join(cur, "docs")
-            if os.path.isdir(cand):
-                return cand
-            parent = os.path.dirname(cur)
-            if parent == cur:
-                break
-            cur = parent
-    return None
+    return _registry.walkup_docs_root(start_path, cwd)
 
 
 def _build_graph(docs_root):
@@ -121,20 +104,39 @@ def _build_graph(docs_root):
 # ---------------------------------------------------------------------------
 
 def _is_under_archive(file_path):
-    """file_path が <domain>/archive/ の下なら True。アーカイブ木の不変判定(§3.8)。"""
+    """file_path が統治木の中の <domain>/archive/ の下なら True(§3.8)。
+
+    ADR-022: 不変ガードは統治木(doctrine_docs、または _system を持つ docs)の
+    中の archive/ にだけ効く。木の外の archive という名前のディレクトリは
+    他所の土地であり、拒否しない。
+    """
     if not file_path:
         return False
-    norm = file_path.replace("\\", "/")
-    parts = norm.split("/")
-    return "archive" in parts
+    root = _registry.walkup_docs_root(file_path)
+    if root is None:
+        return False
+    norm = os.path.abspath(file_path).replace("\\", "/")
+    rootn = os.path.abspath(root).replace("\\", "/")
+    if not norm.startswith(rootn + "/"):
+        return False
+    return "archive" in norm[len(rootn) + 1:].split("/")
 
 
 def _is_under_docs(file_path):
-    """file_path が docs/ の木の中なら True(Guard2 の fail-open 判定に使う)。"""
+    """file_path が統治木の中なら True(Guard2 の fail-open 判定に使う)。
+
+    ADR-022: 木の発見は walkup_docs_root に一本化し、さらに「その木の中に
+    在る」ことを包含で確かめる(木がプロジェクトに在るだけでは足りない)。
+    素の docs/ は統治木でない。
+    """
     if not file_path:
         return False
-    norm = file_path.replace("\\", "/")
-    return "docs" in norm.split("/")
+    root = _registry.walkup_docs_root(file_path)
+    if root is None:
+        return False
+    norm = os.path.abspath(file_path).replace("\\", "/")
+    rootn = os.path.abspath(root).replace("\\", "/")
+    return norm.startswith(rootn + "/")
 
 
 # ---------------------------------------------------------------------------
@@ -359,11 +361,6 @@ def _proposed_text(cur_fm, cur_body, tool, tin):
 # Guard 3 — Bash 経路(deny-only, §3.5)
 # ---------------------------------------------------------------------------
 
-# コマンドを区切るトークン(D0.6)。
-_CMD_SEPARATORS = (";", "&&", "||", "|", "\n")
-# 文書を取り除く動詞。
-_REMOVE_VERBS = ("rm", "git rm", "mv")
-
 
 def guard_delete_safety_bash(command, cwd, graph_cache):
     """Bash 経路の削除安全。拒否理由 or None。deny-only(additionalContext も block も無い)。
@@ -509,6 +506,10 @@ def _extract_remove_targets(segment, cwd):
     elif tokens[0] == "git" and len(tokens) >= 2 and tokens[1] == "rm":
         verb = "git rm"
         arg_start = 2
+    elif tokens[0] == "git" and len(tokens) >= 2 and tokens[1] == "mv":
+        # git mv も mv と同じ移動/上書きの意味論で扱う(SPEC-003)。
+        verb = "mv"
+        arg_start = 2
     elif tokens[0] == "mv":
         verb = "mv"
         arg_start = 1
@@ -517,13 +518,41 @@ def _extract_remove_targets(segment, cwd):
 
     arg_tokens = _strip_redirections(tokens[arg_start:])
     raw_args = [t for t in arg_tokens if not t.startswith("-")]
-    # mv は最後の引数が宛先。対象は src 群(末尾を除く)。
+    base = os.path.abspath(cwd) if cwd else os.getcwd()
+    # mv は最後の引数が宛先。対象は src 群(末尾を除く)。ただし上書きは宛先
+    # 内容の破壊なので、rm と同等に宛先側も対象へ含める:
+    # - 宛先が既存ファイル → その宛先。
+    # - 宛先が glob → 展開して同様(展開不能は安全側の拒否へ倒す)。
+    # - 宛先が既存ディレクトリ → 中の同名(= src の basename)既存ファイル。
+    # 新しい名前への改名だけが破壊でないので含めない。
+    extra_targets = []
+    had_unexpandable = False
     if verb == "mv" and len(raw_args) >= 2:
-        raw_args = raw_args[:-1]
+        dst = raw_args[-1]
+        srcs = raw_args[:-1]
+        raw_args = srcs
+        if _has_glob(dst):
+            dst_paths = _expand_glob(dst, base)
+            if dst_paths is None:
+                had_unexpandable = True
+                dst_paths = []
+        else:
+            dst_paths = [_resolve_arg(dst, base)]
+        for d in dst_paths:
+            if os.path.isfile(d):
+                extra_targets.append(d)
+            elif os.path.isdir(d):
+                for src in srcs:
+                    if _has_glob(src):
+                        src_paths = _expand_glob(src, base) or []
+                    else:
+                        src_paths = [_resolve_arg(src, base)]
+                    for s in src_paths:
+                        cand = os.path.join(d, os.path.basename(s))
+                        if os.path.isfile(cand):
+                            extra_targets.append(cand)
 
     targets = []
-    had_unexpandable = False
-    base = os.path.abspath(cwd) if cwd else os.getcwd()
     for arg in raw_args:
         if _has_glob(arg):
             expanded = _expand_glob(arg, base)
@@ -533,6 +562,7 @@ def _extract_remove_targets(segment, cwd):
                 targets.extend(expanded)
         else:
             targets.append(_resolve_arg(arg, base))
+    targets.extend(extra_targets)
     return targets, verb, had_unexpandable
 
 
@@ -875,6 +905,12 @@ def _handle_post_edit(tool, tin, cwd):
         return _post_quiet()
     file_path = tin.get("file_path") or tin.get("path") or ""
     if not file_path or not os.path.isfile(file_path):
+        return _post_quiet()
+
+    # 段差ゲート(ADR-019): Level 2 は起動後ガード(block)を持たない縮小構成。
+    # .docs-level を読んで自主的に静かに通す。PreToolUse の予防は残る。
+    _lvl_root = _find_docs_root(file_path, cwd)
+    if _lvl_root is not None and _registry.docs_level(_lvl_root) < 3:
         return _post_quiet()
 
     try:

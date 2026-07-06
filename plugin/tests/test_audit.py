@@ -153,6 +153,14 @@ class ReviewByTest(AuditBase):
         self.assertEqual(len(rb), 1)
         self.assertEqual(rb[0]["severity"], "error")
 
+    def test_review_by_due_today_not_overrun(self):
+        """review_by == today(期限当日)はまだ超過ではない(< の境界)。"""
+        root = self.build([
+            (_fm("DECIDED-1", "DECIDED", "billing", review_by=TODAY), "x"),
+        ])
+        data, _ = self.audit_json(root)
+        self.assertEqual(self.checks_for(data, "review_by_overrun"), [])
+
 
 # --- stale_draft (TC-088/089, R8/R2) --------------------------------------
 
@@ -171,6 +179,17 @@ class StaleDraftTest(AuditBase):
         root = self.build([
             (_fm("RESEARCH-1", "RESEARCH", "billing", status="draft",
                  updated="2025-01-01", llm_context="never"), "x"),
+        ])
+        data, _ = self.audit_json(root)
+        sd = self.checks_for(data, "stale_draft")
+        self.assertEqual(len(sd), 1)
+        self.assertEqual(sd[0]["severity"], "warn")
+
+    def test_draft_with_broken_updated_is_stale(self):
+        """updated が解せない draft は古び扱い(不明は安全側 = stale)。"""
+        root = self.build([
+            (_fm("RESEARCH-1", "RESEARCH", "billing", status="draft",
+                 updated="not-a-date", llm_context="never"), "x"),
         ])
         data, _ = self.audit_json(root)
         sd = self.checks_for(data, "stale_draft")
@@ -292,6 +311,31 @@ class OrphanTest(AuditBase):
         ])
         data, _ = self.audit_json(root)
         self.assertEqual(self.checks_for(data, "orphan"), [])
+
+    def test_orphan_review_by_boundary(self):
+        """review_by 超過は陳腐化(orphan 成立)、当日はまだ非陳腐化(< の境界)。
+
+        updated は最近(180 日閾値未満)にして updated 経由の陳腐化を切り、
+        review_by 経由の陳腐化分岐だけを検証する。
+        """
+        # 過去の review_by + 最近の updated -> review_by 経由で orphan。
+        root = self.build([
+            (_fm("RESEARCH-1", "RESEARCH", "billing", status="draft",
+                 updated="2026-06-20", review_by="2026-06-28",
+                 llm_context="never"), "x"),
+        ])
+        data, _ = self.audit_json(root)
+        orph = self.checks_for(data, "orphan")
+        self.assertEqual(len(orph), 1)
+        self.assertEqual(orph[0]["doc_id"], "RESEARCH-1")
+        # review_by == today -> まだ陳腐化ではない -> not orphan。
+        root2 = self.build([
+            (_fm("RESEARCH-1", "RESEARCH", "billing", status="draft",
+                 updated="2026-06-20", review_by=TODAY,
+                 llm_context="never"), "x"),
+        ])
+        data2, _ = self.audit_json(root2)
+        self.assertEqual(self.checks_for(data2, "orphan"), [])
 
 
 # --- reverse_orphan (TC-093/094/095, R3/R8) -------------------------------
@@ -433,6 +477,187 @@ class ProjectionDriftTest(AuditBase):
         self.assertTrue(any(f["refs"] == ["SPEC-9"] for f in pd))
 
 
+class IcdIndexDriftTest(AuditBase):
+    """icd-index.md の投影ドリフト検査(ICD-005)。overview とは別経路。
+
+    Regression: 既存の ProjectionDriftTest は overview.md のみで、icd-index の
+    検査ブロックが丸ごと未実行だった(ミューテーション監査で発見)。"""
+
+    def _repo(self, index_body):
+        files = {
+            "docs/billing/ICD.md":
+                _util.fm_block(_fm("ICD-1", "ICD", "billing")) + "x",
+            "docs/shipping/ICD.md":
+                _util.fm_block(_fm("ICD-2", "ICD", "shipping")) + "x",
+            "docs/_system/icd-index.md": _util.fm_block(
+                _fm("OVERVIEW-2", "OVERVIEW", "_system"))
+                + "描画される。手で編集しない。\n\n" + index_body,
+        }
+        root = _util.make_repo(files)
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        return os.path.join(root, "docs")
+
+    def test_complete_icd_index_no_drift(self):
+        """現行 ICD を全て列挙した icd-index はドリフト無し。"""
+        data, _ = self.audit_json(self._repo("- ICD-1\n- ICD-2\n"))
+        self.assertEqual(self.checks_for(data, "projection_drift"), [])
+
+    def test_missing_icd_in_index_is_drift_error(self):
+        """icd-index に現行 ICD が欠けている -> projection_drift error。"""
+        data, _ = self.audit_json(self._repo("- ICD-1\n"))
+        pd = self.checks_for(data, "projection_drift")
+        self.assertTrue(any("ICD-2" in (f.get("refs") or []) for f in pd),
+                        "missing ICD-2 must be reported: %r" % pd)
+        self.assertTrue(all(f["severity"] == "error" for f in pd))
+
+
+class CtxmapDriftTest(AuditBase):
+    """Context Map の投影ドリフト(ICD-005: 構造差 error / ラベル差 warn)。
+
+    Regression: 監査は overview / icd-index しか見ておらず、docstring と
+    ICD-005 が約束する Context Map 被覆が未実装だった(全体監査の major 所見)。"""
+
+    _B = "<!-- BEGIN PROJECTION:context-map-skeleton -->"
+    _E = "<!-- END PROJECTION:context-map-skeleton -->"
+
+    def _repo(self, region):
+        files = {
+            "docs/billing/ICD.md":
+                _util.fm_block(_fm("ICD-1", "ICD", "billing")) + "x",
+            "docs/shipping/spec/SPEC-2.md":
+                _util.fm_block(_fm("SPEC-2", "SPEC", "shipping",
+                                   depends_on=["ICD-1"])) + "x",
+            "docs/_system/context-map.md": _util.fm_block(
+                _fm("CTXMAP-1", "CTXMAP", "_system"))
+                + "描画される。手で編集しない。\n\n%s\n%s\n%s\n" % (self._B, region, self._E),
+        }
+        root = _util.make_repo(files)
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        return os.path.join(root, "docs")
+
+    def _matching_region(self):
+        return ("## ドメインとICD\n\n"
+                "- _system: (ICD 未公開)\n"
+                "- billing: ICD-1\n"
+                "- shipping: (ICD 未公開)\n\n"
+                "## ドメイン越えの依存(ICD境界)\n\n"
+                "- SPEC-2 --depends_on--> ICD-1\n")
+
+    def test_matching_ctxmap_no_drift(self):
+        data, _ = self.audit_json(self._repo(self._matching_region()))
+        self.assertEqual(self.checks_for(data, "projection_drift"), [])
+
+    def test_missing_domain_is_error(self):
+        region = self._matching_region().replace("- shipping: (ICD 未公開)\n", "")
+        data, _ = self.audit_json(self._repo(region))
+        pd = self.checks_for(data, "projection_drift")
+        self.assertTrue(any("shipping" in f["message"] and
+                            f["severity"] == "error" for f in pd), pd)
+
+    def test_missing_cross_edge_is_error(self):
+        region = self._matching_region().replace(
+            "- SPEC-2 --depends_on--> ICD-1\n", "")
+        data, _ = self.audit_json(self._repo(region))
+        pd = self.checks_for(data, "projection_drift")
+        self.assertTrue(any(sorted(f["refs"]) == ["ICD-1", "SPEC-2"] and
+                            f["severity"] == "error" for f in pd), pd)
+
+    def test_icd_label_difference_is_warn(self):
+        region = self._matching_region().replace("- billing: ICD-1",
+                                                 "- billing: (ICD 未公開)")
+        data, _ = self.audit_json(self._repo(region))
+        pd = self.checks_for(data, "projection_drift")
+        self.assertTrue(any("ラベル差" in f["message"] and
+                            f["severity"] == "warn" for f in pd), pd)
+        self.assertFalse(any(f["severity"] == "error" for f in pd), pd)
+
+    def test_unrendered_region_is_error(self):
+        files = {
+            "docs/billing/ICD.md":
+                _util.fm_block(_fm("ICD-1", "ICD", "billing")) + "x",
+            "docs/_system/context-map.md": _util.fm_block(
+                _fm("CTXMAP-1", "CTXMAP", "_system")) + "印なし本文。\n",
+        }
+        root = _util.make_repo(files)
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        data, _ = self.audit_json(os.path.join(root, "docs"))
+        pd = self.checks_for(data, "projection_drift")
+        self.assertTrue(any("未描画" in f["message"] and
+                            f["severity"] == "error" for f in pd), pd)
+
+
+class StrayDocumentTest(AuditBase):
+    """体系外 .md(stray_document, ADR-021): docs/ の外の .md を分類の記録
+    (docs/_system/.md-intake)と突き合わせる。"""
+
+    def _proj(self, ledger=None):
+        root = self.build([(_fm("SPEC-1", "SPEC", "billing"), "x")])
+        proj = os.path.dirname(root)
+        if ledger is not None:
+            os.makedirs(os.path.join(root, "_system"), exist_ok=True)
+            with open(os.path.join(root, "_system", ".md-intake"), "w",
+                      encoding="utf-8") as fh:
+                fh.write(ledger)
+        return root, proj
+
+    def _write(self, proj, rel, text):
+        path = os.path.join(proj, rel)
+        os.makedirs(os.path.dirname(path) or proj, exist_ok=True)
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(text)
+
+    def test_typed_stray_is_warn(self):
+        root, proj = self._proj()
+        self._write(proj, "notes/SPEC-9-draft.md",
+                    _util.fm_block(_fm("SPEC-9", "SPEC", "billing")) + "x")
+        data, _ = self.audit_json(root)
+        sd = self.checks_for(data, "stray_document")
+        self.assertTrue(any(f["severity"] == "warn" and
+                            "SPEC" in f["message"] for f in sd), sd)
+
+    def test_unledgered_untyped_is_advisory(self):
+        root, proj = self._proj()
+        self._write(proj, "MEMO.md", "# メモ\n")
+        data, _ = self.audit_json(root)
+        sd = self.checks_for(data, "stray_document")
+        self.assertTrue(any(f["severity"] == "advisory" and
+                            f["path"] == "MEMO.md" for f in sd), sd)
+
+    def test_ledgered_files_are_silent(self):
+        """記録された非文書(完全一致)と配下指定(末尾 /)は挙がらない。"""
+        root, proj = self._proj(
+            ledger="README.md: 非文書\nvendor/: 非文書\n")
+        self._write(proj, "README.md", "# r\n")
+        self._write(proj, "vendor/a/b.md", "# b\n")
+        data, _ = self.audit_json(root)
+        self.assertEqual(self.checks_for(data, "stray_document"), [])
+
+    def test_hold_expiry(self):
+        """保留は期限まで沈黙し、期限を過ぎると warn で再浮上する。"""
+        root, proj = self._proj(
+            ledger="old.md: 保留 2026-01-01\nnew.md: 保留 2027-01-01\n")
+        self._write(proj, "old.md", "# o\n")
+        self._write(proj, "new.md", "# n\n")
+        data, _ = self.audit_json(root)
+        sd = self.checks_for(data, "stray_document")
+        self.assertTrue(any(f["severity"] == "warn" and f["path"] == "old.md"
+                            for f in sd), sd)
+        self.assertFalse(any(f["path"] == "new.md" for f in sd), sd)
+
+    def test_dead_ledger_entry_is_advisory(self):
+        root, _proj = self._proj(ledger="gone.md: 非文書\n")
+        data, _ = self.audit_json(root)
+        sd = self.checks_for(data, "stray_document")
+        self.assertTrue(any("gone.md" in f["message"] and
+                            f["severity"] == "advisory" for f in sd), sd)
+
+    def test_dot_dirs_not_scanned(self):
+        root, proj = self._proj()
+        self._write(proj, ".hidden/x.md", "# x\n")
+        data, _ = self.audit_json(root)
+        self.assertEqual(self.checks_for(data, "stray_document"), [])
+
+
 # --- near_duplicate advisory (TC-126, R8) ---------------------------------
 
 class NearDuplicateTest(AuditBase):
@@ -509,6 +734,65 @@ class SummaryHandshakeTest(AuditBase):
         return [
             (_fm("SPEC-1", "SPEC", "billing", depends_on=["SPEC-99"]), "x"),
         ]
+
+    def test_respect_docs_level_skips_at_level2_without_summary(self):
+        """ADR-019: --respect-docs-level 付きで level: 2 の体系 -> 監査を飛ばし
+        exit 0、要約も書かない。フラグ無し(CI)なら Level に依らず監査する。"""
+        root = self.build(self._docs())
+        sysdir = os.path.join(root, "_system")
+        os.makedirs(sysdir, exist_ok=True)
+        with open(os.path.join(sysdir, ".docs-level"), "w",
+                  encoding="utf-8") as fh:
+            fh.write("level: 2\n")
+        cache_dir = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, cache_dir, ignore_errors=True)
+        out_path = os.path.join(cache_dir, "last-audit.json")
+        out, code = _util.invoke(
+            "docs-audit",
+            ["--root", root, "--json", "--summary-out", out_path,
+             "--fail-on", "never", "--today", TODAY, "--respect-docs-level"])
+        self.assertEqual(code, 0)
+        self.assertIn("Level 3", out)
+        self.assertFalse(os.path.exists(out_path),
+                         "level-2 skip must not write a summary")
+        # フラグ無し(CI 経路)は Level 2 でも全件監査する。
+        data, code2 = self.audit_json(root)
+        self.assertEqual(code2, 0)
+        self.assertIn("findings", data)
+
+    def test_respect_docs_level_runs_at_level4(self):
+        """level: 4(または marker 無し)なら --respect-docs-level 付きでも監査する。"""
+        root = self.build(self._docs())
+        sysdir = os.path.join(root, "_system")
+        os.makedirs(sysdir, exist_ok=True)
+        with open(os.path.join(sysdir, ".docs-level"), "w",
+                  encoding="utf-8") as fh:
+            fh.write("level: 4\n")
+        out, code = _util.invoke(
+            "docs-audit",
+            ["--root", root, "--json", "--today", TODAY,
+             "--respect-docs-level"])
+        self.assertEqual(code, 0)
+        data = json.loads(out.strip().splitlines()[-1])
+        self.assertEqual(data["schema"], "docs-audit/1")
+
+    def test_summary_out_into_existing_dir_and_overwrite(self):
+        """出力先ディレクトリ・ファイルが既存でも summary は書かれる。
+
+        Regression guard: SessionEnd は毎回同じ .cache/last-audit.json に書く
+        ので、「2回目以降(既存)で書けない」退行は握手を恒久停止させる。"""
+        root = self.build(self._docs())
+        cache_dir = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, cache_dir, ignore_errors=True)
+        out_path = os.path.join(cache_dir, "last-audit.json")
+        argv = ["--root", root, "--json", "--summary-out", out_path,
+                "--fail-on", "never", "--today", TODAY]
+        _util.invoke("docs-audit", argv)
+        out, code = _util.invoke("docs-audit", argv)  # 2回目: 全部既存
+        self.assertEqual(code, 0)
+        self.assertTrue(os.path.isfile(out_path))
+        with open(out_path, "r", encoding="utf-8") as fh:
+            self.assertEqual(json.load(fh)["schema"], "docs-audit/1")
 
     def test_schema_shape_and_json_valid(self):
         """docs-audit/1 schema has exactly the frozen keys and round-trips as JSON."""

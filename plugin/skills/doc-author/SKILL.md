@@ -22,7 +22,7 @@ ICD もこのスキルが書く（ICD 専用スキルは作らない）。ドメ
 ## 手順
 
 1. 文書の型を決める（§3.2）。既存の型で表せるなら、新しい型を作らない（「空の型を先に作らない」）。
-2. ドメインを決める。フォルダが無ければ、ここで遅延生成する（§3.7）。`docs/<domain>/` と、この型が要る層のフォルダ（`spec/`・`decisions/`・`implementation/`・`test/`・`research/`・`archive/`）だけを作る。空の層を先に作らない。
+2. ドメインを決める。フォルダが無ければ、ここで遅延生成する（§3.7）。`doctrine_docs/<domain>/` と、この型が要る層のフォルダ（`spec/`・`decisions/`・`implementation/`・`test/`・`research/`・`archive/`）だけを作る。空の層を先に作らない。
 3. ファイル名を `<型コード>-<連番>-<短い主題>.md` で決める（日付は `ISO 8601`、日本語ファイル名・空白・版番号の埋め込みは禁止、§3.7）。`id` をファイル名と一致させる。
 4. フロントマターを §3.4 で埋める。Level 2 以降の必須は `id・title・type・domain・status・owner・updated・sources`。既定の `status` と `llm_context` は §3.2 から引く。`DECIDED`・`WATCH` には必須の `review_by` を足す。`depends_on`・`impacts` は Level 3 以降、`canonical_for` は Level 4 以降。
 5. ICD を書く経路（§3.5／付録A）。一ドメインに `<domain>/ICD.md` 一つ、型は `ICD`。宣言するのは三つだけ。公開する用語（用語辞書への参照）・正本である事実（`canonical_for` のトピック）・データ契約。ICD に内部実装は書かない。ICD を変えるときは、依存する全ドメインの合意が要ると利用者に伝える。

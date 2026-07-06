@@ -152,11 +152,11 @@ class TestScaffoldLifecycle(unittest.TestCase):
     """scaffold.py --root TMP --level 2 — exact output set + idempotent re-run."""
 
     EXPECTED = {
-        "docs/_system/glossary.md",
-        "docs/_system/decided-facts.md",
-        "docs/_system/non-goals.md",
-        "docs/_system/overview.md",
-        "docs/_system/.docs-level",
+        "doctrine_docs/_system/glossary.md",
+        "doctrine_docs/_system/decided-facts.md",
+        "doctrine_docs/_system/non-goals.md",
+        "doctrine_docs/_system/overview.md",
+        "doctrine_docs/_system/.docs-level",
         "AGENTS.md",
         "CLAUDE.md",
     }
@@ -193,13 +193,13 @@ class TestScaffoldLifecycle(unittest.TestCase):
             cwd=self.root,
         )
         # No domain folders (only _system lives under docs/).
-        docs_children = set(os.listdir(os.path.join(self.root, "docs")))
+        docs_children = set(os.listdir(os.path.join(self.root, "doctrine_docs")))
         self.assertEqual(docs_children, {"_system"},
                          "scaffold created non-_system entries under docs/")
         # None of the deferred artifacts (§5.8: NOT created by scaffold).
-        for forbidden in ("docs/_system/watchlist.md",
-                          "docs/_system/context-map.md",
-                          "docs/_system/icd-index.md",
+        for forbidden in ("doctrine_docs/_system/watchlist.md",
+                          "doctrine_docs/_system/context-map.md",
+                          "doctrine_docs/_system/icd-index.md",
                           "hooks/hooks.json"):
             self.assertFalse(
                 os.path.exists(os.path.join(self.root, forbidden)),
@@ -211,7 +211,7 @@ class TestScaffoldLifecycle(unittest.TestCase):
             ["--root", self.root, "--level", "2", "--today", TODAY],
             cwd=self.root,
         )
-        marker = _util.read(os.path.join(self.root, "docs/_system/.docs-level"))
+        marker = _util.read(os.path.join(self.root, "doctrine_docs/_system/.docs-level"))
         self.assertEqual(marker.strip(), "level: 2")
 
     def test_rerun_is_all_skip_and_nondestructive(self):
@@ -222,7 +222,7 @@ class TestScaffoldLifecycle(unittest.TestCase):
             cwd=self.root,
         )
         # Tamper with one seeded file to prove it is NOT overwritten.
-        glossary = os.path.join(self.root, "docs/_system/glossary.md")
+        glossary = os.path.join(self.root, "doctrine_docs/_system/glossary.md")
         sentinel = "SENTINEL-DO-NOT-OVERWRITE\n"
         with open(glossary, "w", encoding="utf-8") as fh:
             fh.write(sentinel)
