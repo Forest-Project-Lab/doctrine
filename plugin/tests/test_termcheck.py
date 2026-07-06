@@ -310,6 +310,20 @@ class GlossaryResolutionTest(unittest.TestCase):
         fs = tc.check("本文。", {"type": "SPEC"}, g)
         self.assertIn("GLOSSARY_PARSE_ERROR", [f.code for f in fs])
 
+    def test_header_only_table_a_is_parse_error(self):
+        """表Aのヘッダだけでデータ行が無い正本 -> 解析失敗としてテンプレへ退避。
+
+        Regression: 空の承認語辞書を operational として受け入れると、全チェックが
+        警告なしに沈黙する(検出の全面喪失)。"""
+        body = "| 承認語 | 唯一の意味 | 禁止する同義語 |\n|---|---|---|\n"
+        self.assertIsNone(tc.parse_glossary(body))
+        root = _util.make_repo({"docs/_system/glossary.md": body})
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        g = tc.load_glossary(os.path.join(root, "docs"))
+        self.assertEqual(g.source, "template")
+        self.assertTrue(g.parse_error)
+        self.assertTrue(g.approved_terms)  # テンプレの辞書で検出は継続する
+
     def test_operational_extends_seed(self):
         """An operational glossary may add an approved term beyond the seed."""
         tmpl = _util.read(os.path.join(_util.TEMPLATES, "glossary.md.tmpl"))

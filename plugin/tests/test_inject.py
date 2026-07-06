@@ -384,6 +384,30 @@ class TestTokenEstimator(unittest.TestCase):
         self.assertEqual(f("同じ入力"), f("同じ入力"))
 
 
+class TestGlossaryHeadings(InjectBase):
+    """GLOSSARY 見出しの注入(R5): 通常の GLOSSARY は見出し+一行だけ注入し、
+    llm_context:never の GLOSSARY は本文どころか id も注入しない。
+    ミューテーション監査で never 判定の反転が無検出だった穴を塞ぐ。"""
+
+    def test_glossary_heading_injected_never_glossary_excluded(self):
+        never_fm = {
+            "id": "GLOSSARY-009", "title": "封印用語集", "type": "GLOSSARY",
+            "domain": "_system", "status": "current", "owner": "team",
+            "updated": "2026-01-01", "sources": [], "llm_context": "never",
+        }
+        root = self._repo({
+            "docs/_system/glossary.md": _glossary(),
+            "docs/_system/g9.md":
+                _util.fm_block(never_fm) + "NEVER_GLOSSARY_MEANING",
+            "docs/_system/decided-facts.md": _decided("DECIDED-001", "確定A"),
+        })
+        ctx = self._ctx(self._run_json(os.path.join(root, "docs")))
+        self.assertIn("用語集", ctx)
+        self.assertIn("承認語の意味の一行。", ctx)
+        self.assertNotIn("GLOSSARY-009", ctx)
+        self.assertNotIn("NEVER_GLOSSARY_MEANING", ctx)
+
+
 class TestAuditHandshake(InjectBase):
     """MASTER §10.5 / C3 gap: inject-contract reads the previous-audit summary at
     ${CLAUDE_PLUGIN_ROOT}/.cache/last-audit.json (docs-audit/1) and summarizes it;

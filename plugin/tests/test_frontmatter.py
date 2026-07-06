@@ -130,6 +130,26 @@ class TestMatrix(unittest.TestCase):
         self.assertEqual(fm, {"title": "C# notes"})
         self.assertEqual(errs, [])
 
+    def test_T14b_inline_comment_after_closing_double_quote(self):
+        """T14b — ' # comment' AFTER the closing double quote is stripped.
+
+        Regression guard for the in-double escape scan: policy-guard reads
+        `status` through this parser, so a mis-parsed
+        `status: "approved" # note` weakens the demote deny."""
+        fm, body, errs = _frontmatter.parse('---\ntitle: "v" # note\n---\n')
+        self.assertEqual(fm, {"title": "v"})
+        self.assertEqual(errs, [])
+        fm2, _b, errs2 = _frontmatter.parse(
+            '---\nstatus: "current" # reviewed\n---\n')
+        self.assertEqual(fm2, {"status": "current"})
+        self.assertEqual(errs2, [])
+
+    def test_T14c_hash_inside_single_quotes_literal(self):
+        """T14c — '#' (space-preceded) inside single quotes is literal."""
+        fm, body, errs = _frontmatter.parse("---\ntitle: 'a # b'\n---\n")
+        self.assertEqual(fm, {"title": "a # b"})
+        self.assertEqual(errs, [])
+
     def test_T15_double_quoted_escape(self):
         """T15 — double-quoted with \" escape."""
         fm, body, errs = _frontmatter.parse('---\ntitle: "a \\"b\\" c"\n---\n')

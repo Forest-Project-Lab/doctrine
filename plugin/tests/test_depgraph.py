@@ -70,6 +70,26 @@ class DepGraphCoreTest(unittest.TestCase):
         self.addCleanup(shutil.rmtree, root, ignore_errors=True)
         return _depgraph.build_graph(os.path.join(root, "docs")), root
 
+    def test_reverse_dependents_default_is_direct_not_transitive(self):
+        """既定は直接依存のみ: 廃止済み中間ノード越しにしか届かない current 文書は
+        逆参照に数えない(削除安全ガード/孤児判定 R8 の前提)。"""
+        g, _ = self._build([
+            _node("SPEC-01", "SPEC", "billing"),
+            _node("IMPL-01", "IMPL", "billing", status="deprecated",
+                  depends_on=["SPEC-01"]),
+            _node("TEST-01", "TEST", "billing", depends_on=["IMPL-01"]),
+        ])
+        self.assertEqual(g.reverse_dependents("SPEC-01"), {"IMPL-01"})
+        self.assertEqual(g.reverse_current_dependents("SPEC-01"), set())
+
+    def test_status_of_convenience(self):
+        """status_of: 既知 id は frontmatter の status、未知 id は UNKNOWN(例外なし)。"""
+        g, _ = self._build([
+            _node("SPEC-01", "SPEC", "billing", status="current"),
+        ])
+        self.assertEqual(g.status_of("SPEC-01"), "current")
+        self.assertEqual(g.status_of("NOPE-99"), "UNKNOWN")
+
     # -- forward impacts (R4) --------------------------------------------
 
     def test_forward_impacts_transitive_TC115(self):

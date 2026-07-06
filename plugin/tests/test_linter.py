@@ -755,6 +755,14 @@ class RobustnessTest(_Base):
         self.assertEqual(code, 0)
         self.assertIn("BAD_STATUS", out)
 
+    def test_unknown_string_type_flagged(self):
+        """§3.2: 登録簿に無い文字列型 -> UNKNOWN_TYPE(ミューテーション監査の穴埋め)。"""
+        self._write("docs/billing/REQ-2-refunds.md", _req_fm(), "本文。\n")
+        p = self._write("docs/billing/spec/SPEC-014-x.md",
+                        _valid_spec_fm(type="BOGUS"), _SPEC_BODY_4)
+        codes, _ = self._codes(p)
+        self.assertIn("UNKNOWN_TYPE", codes)
+
     def test_list_valued_type_flagged_not_crashed(self):
         """§8.C: `type: [SPEC]` (one-char YAML typo) must NOT abort the lint.
 

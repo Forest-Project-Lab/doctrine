@@ -572,6 +572,52 @@ class TestDeleteSafety(GuardTestBase):
         decision, _ = _pre(json.loads(out))
         self.assertEqual(decision, "allow")
 
+    def test_bash_rm_multiple_targets_last_violates_denied(self):
+        """rm <harmless> <depended> — 複数ターゲットの末尾が違反 -> deny。"""
+        root = self._depended_repo()
+        harmless = os.path.join(root, "docs/billing/spec/NO-SUCH.md")
+        target = os.path.join(root, "docs/billing/spec/SPEC-14.md")
+        tin = {"command": "rm %s %s" % (harmless, target)}
+        out, _ = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Bash", tin))
+        decision, reason = _pre(json.loads(out))
+        self.assertEqual(decision, "deny")
+        self.assertIn("TEST-20", reason)
+
+    def test_bash_rm_after_non_remove_command_denied(self):
+        """`echo done && rm <depended>` — rm が後続セグメントでも deny。"""
+        root = self._depended_repo()
+        target = os.path.join(root, "docs/billing/spec/SPEC-14.md")
+        tin = {"command": "echo done && rm %s" % target}
+        out, _ = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Bash", tin))
+        decision, reason = _pre(json.loads(out))
+        self.assertEqual(decision, "deny")
+        self.assertIn("TEST-20", reason)
+
+    def test_bash_quoted_separator_then_rm_denied(self):
+        """二重引用符内の `;` はセパレータでない。後続の rm <depended> は deny。"""
+        root = self._depended_repo()
+        target = os.path.join(root, "docs/billing/spec/SPEC-14.md")
+        tin = {"command": 'echo "a; b" && rm %s' % target}
+        out, _ = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Bash", tin))
+        decision, reason = _pre(json.loads(out))
+        self.assertEqual(decision, "deny")
+        self.assertIn("TEST-20", reason)
+
+    def test_bash_rm_quoted_arg_then_depended_target_denied(self):
+        """`rm "<harmless>" <depended>` — 引用符付き引数の後続ターゲットも検査され deny。"""
+        root = self._depended_repo()
+        harmless = os.path.join(root, "docs/billing/spec/NO-SUCH.md")
+        target = os.path.join(root, "docs/billing/spec/SPEC-14.md")
+        tin = {"command": 'rm "%s" %s' % (harmless, target)}
+        out, _ = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Bash", tin))
+        decision, reason = _pre(json.loads(out))
+        self.assertEqual(decision, "deny")
+        self.assertIn("TEST-20", reason)
+
     def test_bash_chained_command_one_violates_denies_all(self):
         """D5: `rm a && rm b` where b has dependents -> deny the WHOLE command (D0.6)."""
         root = self._depended_repo()
@@ -733,6 +779,23 @@ class TestPostDeleteSafetyTransition(GuardTestBase):
         self.assertEqual(resp.get("decision"), "block")
         self.assertIn("TEST-20", resp.get("reason"))
         self.assertIn("SPEC-14", resp.get("reason"))
+
+    def test_post_multiedit_demote_transition_blocks(self):
+        """MultiEdit で current->deprecated に降格(POST 状態)+逆依存あり ->
+        decision:block。Regression(ミューテーション監査): _invert_edits の
+        edits 反転が空回りすると MultiEdit 経由の降格が一切 block されない。"""
+        root = self._depended(spec_status="deprecated")  # ディスクは POST 状態
+        path = os.path.join(root, "docs/billing/spec/SPEC-14.md")
+        tin = {"file_path": path,
+               "edits": [{"old_string": "status: current",
+                          "new_string": "status: deprecated"}]}
+        out, code = _util.invoke(
+            "policy-guard",
+            stdin_obj=_util.hook_stdin("PostToolUse", "MultiEdit", tin))
+        self.assertEqual(code, 0)
+        resp = json.loads(out)
+        self.assertEqual(resp.get("decision"), "block")
+        self.assertIn("TEST-20", resp.get("reason"))
 
     def test_frontmatter_region_edit_already_deprecated_no_block(self):
         """#00 hardening (raw-text inversion): a frontmatter-region Edit of an

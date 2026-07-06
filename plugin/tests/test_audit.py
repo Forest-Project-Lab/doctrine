@@ -177,6 +177,17 @@ class StaleDraftTest(AuditBase):
         self.assertEqual(len(sd), 1)
         self.assertEqual(sd[0]["severity"], "warn")
 
+    def test_draft_with_broken_updated_is_stale(self):
+        """updated が解せない draft は古び扱い(不明は安全側 = stale)。"""
+        root = self.build([
+            (_fm("RESEARCH-1", "RESEARCH", "billing", status="draft",
+                 updated="not-a-date", llm_context="never"), "x"),
+        ])
+        data, _ = self.audit_json(root)
+        sd = self.checks_for(data, "stale_draft")
+        self.assertEqual(len(sd), 1)
+        self.assertEqual(sd[0]["severity"], "warn")
+
 
 # --- orphan conjunction (TC-090/091/092/121, R1/R8) -----------------------
 
@@ -433,6 +444,40 @@ class ProjectionDriftTest(AuditBase):
         self.assertTrue(any(f["refs"] == ["SPEC-9"] for f in pd))
 
 
+class IcdIndexDriftTest(AuditBase):
+    """icd-index.md の投影ドリフト検査(ICD-005)。overview とは別経路。
+
+    Regression: 既存の ProjectionDriftTest は overview.md のみで、icd-index の
+    検査ブロックが丸ごと未実行だった(ミューテーション監査で発見)。"""
+
+    def _repo(self, index_body):
+        files = {
+            "docs/billing/ICD.md":
+                _util.fm_block(_fm("ICD-1", "ICD", "billing")) + "x",
+            "docs/shipping/ICD.md":
+                _util.fm_block(_fm("ICD-2", "ICD", "shipping")) + "x",
+            "docs/_system/icd-index.md": _util.fm_block(
+                _fm("OVERVIEW-2", "OVERVIEW", "_system"))
+                + "描画される。手で編集しない。\n\n" + index_body,
+        }
+        root = _util.make_repo(files)
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        return os.path.join(root, "docs")
+
+    def test_complete_icd_index_no_drift(self):
+        """現行 ICD を全て列挙した icd-index はドリフト無し。"""
+        data, _ = self.audit_json(self._repo("- ICD-1\n- ICD-2\n"))
+        self.assertEqual(self.checks_for(data, "projection_drift"), [])
+
+    def test_missing_icd_in_index_is_drift_error(self):
+        """icd-index に現行 ICD が欠けている -> projection_drift error。"""
+        data, _ = self.audit_json(self._repo("- ICD-1\n"))
+        pd = self.checks_for(data, "projection_drift")
+        self.assertTrue(any("ICD-2" in (f.get("refs") or []) for f in pd),
+                        "missing ICD-2 must be reported: %r" % pd)
+        self.assertTrue(all(f["severity"] == "error" for f in pd))
+
+
 # --- near_duplicate advisory (TC-126, R8) ---------------------------------
 
 class NearDuplicateTest(AuditBase):
@@ -509,6 +554,24 @@ class SummaryHandshakeTest(AuditBase):
         return [
             (_fm("SPEC-1", "SPEC", "billing", depends_on=["SPEC-99"]), "x"),
         ]
+
+    def test_summary_out_into_existing_dir_and_overwrite(self):
+        """出力先ディレクトリ・ファイルが既存でも summary は書かれる。
+
+        Regression guard: SessionEnd は毎回同じ .cache/last-audit.json に書く
+        ので、「2回目以降(既存)で書けない」退行は握手を恒久停止させる。"""
+        root = self.build(self._docs())
+        cache_dir = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, cache_dir, ignore_errors=True)
+        out_path = os.path.join(cache_dir, "last-audit.json")
+        argv = ["--root", root, "--json", "--summary-out", out_path,
+                "--fail-on", "never", "--today", TODAY]
+        _util.invoke("docs-audit", argv)
+        out, code = _util.invoke("docs-audit", argv)  # 2回目: 全部既存
+        self.assertEqual(code, 0)
+        self.assertTrue(os.path.isfile(out_path))
+        with open(out_path, "r", encoding="utf-8") as fh:
+            self.assertEqual(json.load(fh)["schema"], "docs-audit/1")
 
     def test_schema_shape_and_json_valid(self):
         """docs-audit/1 schema has exactly the frozen keys and round-trips as JSON."""
