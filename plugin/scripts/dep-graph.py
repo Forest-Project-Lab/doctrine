@@ -24,12 +24,13 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import _depgraph
+import _registry
 
 
 def _parse_args(argv):
     """argv を (opts, error_message) に解く。error があれば usage 終了に回す。"""
     opts = {
-        "root": "docs",
+        "root": None,   # 無指定なら cwd から統治木を解決(ADR-022)
         "mode": None,
         "id": None,
         "json": False,
@@ -106,6 +107,9 @@ def main(argv=None):
         return _usage(err)
 
     root = opts["root"]
+    if root is None:
+        # 無指定なら cwd から統治木を解決(ADR-022: doctrine_docs 優先)。
+        root = _registry.locate_docs_root(os.getcwd()) or "doctrine_docs"
     if not os.path.isdir(root):
         sys.stdout.write("root not found: %s\n" % root)
         return 3

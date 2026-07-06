@@ -156,15 +156,15 @@ def _usage(msg):
 # --- docs ルートの解決 ------------------------------------------------------
 
 def resolve_docs_root(explicit):
-    """docs ルートを解く。--docs-root → $CLAUDE_PROJECT_DIR/docs → ./docs。"""
+    """統治木を解く。--docs-root → $CLAUDE_PROJECT_DIR → cwd(ADR-022)。"""
     if explicit:
         return explicit
     proj = os.environ.get("CLAUDE_PROJECT_DIR")
     if proj:
-        cand = os.path.join(proj, "docs")
-        if os.path.isdir(cand):
-            return cand
-    return "docs"
+        found = _registry.locate_docs_root(proj)
+        if found is not None:
+            return found
+    return _registry.locate_docs_root(os.getcwd()) or "doctrine_docs"
 
 
 def read_task_text(taskspec):

@@ -67,7 +67,8 @@ _DATE_RE = re.compile(r"^(\d{4})-(\d{2})-(\d{2})$")
 def _parse_args(argv):
     """argv を (opts, error_message) に解く。"""
     opts = {
-        "root": "docs",
+        "root": None,           # 明示指定。無ければ --root-from か cwd から解決。
+        "root_from": None,      # プロジェクト根。locate_docs_root で統治木を解決。
         "json": False,
         "summary_out": None,
         "fail_on": "never",     # 既定は SessionEnd 想定(非ブロッキング)
@@ -83,6 +84,13 @@ def _parse_args(argv):
             if i + 1 >= n:
                 return None, "--root にはパスが必要"
             opts["root"] = argv[i + 1]
+            i += 2
+            continue
+        if a == "--root-from":
+            # プロジェクト根から統治木を解決する(ADR-022)。SessionEnd の配線用。
+            if i + 1 >= n:
+                return None, "--root-from にはパスが必要"
+            opts["root_from"] = argv[i + 1]
             i += 2
             continue
         if a == "--json":
@@ -950,12 +958,23 @@ def main(argv=None):
     if err is not None:
         sys.stdout.write("usage error: %s\n" % err)
         sys.stdout.write(
-            "docs-audit.py [--root docs/] [--json] [--summary-out PATH] "
-            "[--fail-on error|never] [--config PATH] [--today YYYY-MM-DD] "
-            "[--respect-docs-level]\n")
+            "docs-audit.py [--root PATH | --root-from PROJ] [--json] "
+            "[--summary-out PATH] [--fail-on error|never] [--config PATH] "
+            "[--today YYYY-MM-DD] [--respect-docs-level]\n")
         return 2
 
     root = opts["root"]
+    if root is None and opts["root_from"]:
+        # プロジェクト根から統治木を解決(ADR-022): doctrine_docs 優先、docs は
+        # _system を持つ場合だけ。素の docs は他所の土地なので監査しない。
+        root = _registry.locate_docs_root(opts["root_from"])
+        if root is None:
+            sys.stdout.write(
+                "統治木なし: %s(doctrine_docs も docs/_system も無い)。飛ばした。\n"
+                % opts["root_from"])
+            return 0
+    if root is None:
+        root = _registry.locate_docs_root(os.getcwd()) or "doctrine_docs"
     if not os.path.isdir(root):
         sys.stdout.write("root not found: %s\n" % root)
         # 監査が走れないのは利用者の誤り(usage に近い)。CI も SessionEnd も
@@ -977,9 +996,9 @@ def main(argv=None):
     except _TodayError as exc:
         sys.stdout.write("usage error: %s\n" % exc)
         sys.stdout.write(
-            "docs-audit.py [--root docs/] [--json] [--summary-out PATH] "
-            "[--fail-on error|never] [--config PATH] [--today YYYY-MM-DD] "
-            "[--respect-docs-level]\n")
+            "docs-audit.py [--root PATH | --root-from PROJ] [--json] "
+            "[--summary-out PATH] [--fail-on error|never] [--config PATH] "
+            "[--today YYYY-MM-DD] [--respect-docs-level]\n")
         return 2
 
     try:

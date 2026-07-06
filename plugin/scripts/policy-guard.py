@@ -83,30 +83,13 @@ def _post_quiet():
 # ---------------------------------------------------------------------------
 
 def _find_docs_root(start_path, cwd=None):
-    """start_path から上にたどって docs/ ディレクトリを探す。見つからなければ None。
+    """start_path から上にたどって統治木を探す。見つからなければ None。
 
-    term-check.py と同じ規約。グラフ構築(ドメイン解決・逆依存)に使う。cwd は
-    start_path から見つからなかったときの控え。
+    解決は登録簿の walkup_docs_root に一本化(ADR-022): doctrine_docs 優先、
+    docs は _system を持つ場合だけ統治木と認める。素の docs/ は他所の土地で
+    あり、グラフ構築(ドメイン解決・逆依存)にも不変ガードにも使わない。
     """
-    candidates = []
-    if start_path:
-        candidates.append(os.path.dirname(os.path.abspath(start_path)))
-    if cwd:
-        candidates.append(os.path.abspath(cwd))
-    for cur in candidates:
-        seen = set()
-        while cur and cur not in seen:
-            seen.add(cur)
-            if os.path.basename(cur) == "docs":
-                return cur
-            cand = os.path.join(cur, "docs")
-            if os.path.isdir(cand):
-                return cand
-            parent = os.path.dirname(cur)
-            if parent == cur:
-                break
-            cur = parent
-    return None
+    return _registry.walkup_docs_root(start_path, cwd)
 
 
 def _build_graph(docs_root):
@@ -121,20 +104,39 @@ def _build_graph(docs_root):
 # ---------------------------------------------------------------------------
 
 def _is_under_archive(file_path):
-    """file_path が <domain>/archive/ の下なら True。アーカイブ木の不変判定(§3.8)。"""
+    """file_path が統治木の中の <domain>/archive/ の下なら True(§3.8)。
+
+    ADR-022: 不変ガードは統治木(doctrine_docs、または _system を持つ docs)の
+    中の archive/ にだけ効く。木の外の archive という名前のディレクトリは
+    他所の土地であり、拒否しない。
+    """
     if not file_path:
         return False
-    norm = file_path.replace("\\", "/")
-    parts = norm.split("/")
-    return "archive" in parts
+    root = _registry.walkup_docs_root(file_path)
+    if root is None:
+        return False
+    norm = os.path.abspath(file_path).replace("\\", "/")
+    rootn = os.path.abspath(root).replace("\\", "/")
+    if not norm.startswith(rootn + "/"):
+        return False
+    return "archive" in norm[len(rootn) + 1:].split("/")
 
 
 def _is_under_docs(file_path):
-    """file_path が docs/ の木の中なら True(Guard2 の fail-open 判定に使う)。"""
+    """file_path が統治木の中なら True(Guard2 の fail-open 判定に使う)。
+
+    ADR-022: 木の発見は walkup_docs_root に一本化し、さらに「その木の中に
+    在る」ことを包含で確かめる(木がプロジェクトに在るだけでは足りない)。
+    素の docs/ は統治木でない。
+    """
     if not file_path:
         return False
-    norm = file_path.replace("\\", "/")
-    return "docs" in norm.split("/")
+    root = _registry.walkup_docs_root(file_path)
+    if root is None:
+        return False
+    norm = os.path.abspath(file_path).replace("\\", "/")
+    rootn = os.path.abspath(root).replace("\\", "/")
+    return norm.startswith(rootn + "/")
 
 
 # ---------------------------------------------------------------------------

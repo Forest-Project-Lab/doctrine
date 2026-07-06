@@ -47,7 +47,7 @@ MODES = ("overview", "icd-index", "context-map-skeleton", "all")
 # ---------------------------------------------------------------------------
 def _parse_args(argv):
     """argv を (opts, error_message) に解く。error は usage 終了(2)に回す。"""
-    opts = {"mode": None, "docs_root": "docs", "out": None, "check": False}
+    opts = {"mode": None, "docs_root": None, "out": None, "check": False}
     i = 0
     n = len(argv)
     while i < n:
@@ -536,6 +536,9 @@ def main(argv=None):
         return _usage(err)
 
     docs_root = opts["docs_root"]
+    if docs_root is None:
+        # 無指定なら cwd から統治木を解決(ADR-022: doctrine_docs 優先)。
+        docs_root = _registry.locate_docs_root(os.getcwd()) or "doctrine_docs"
     if not os.path.isdir(docs_root):
         sys.stdout.write("docs-root not found: %s\n" % docs_root)
         return 3

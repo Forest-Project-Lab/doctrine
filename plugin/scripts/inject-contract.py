@@ -102,21 +102,20 @@ def _to_int(s):
 # docs ルート / 設定 / 監査キャッシュの解決
 # ---------------------------------------------------------------------------
 def _resolve_docs_root(explicit):
-    """docs/ ルートを解決する。--docs-root → $CLAUDE_PROJECT_DIR/docs → ./docs。
+    """統治木を解決する。--docs-root → $CLAUDE_PROJECT_DIR → cwd(ADR-022)。
 
-    どれも存在しなければ None(呼び側はブートストラップ通知だけを出す)。
+    自動解決は登録簿の locate_docs_root に一本化: doctrine_docs 優先、docs は
+    _system を持つ場合だけ統治木と認める(素の docs は他所の土地)。どれも
+    無ければ None(呼び側はブートストラップ通知だけを出す)。
     """
     if explicit:
         return explicit if os.path.isdir(explicit) else explicit  # 明示は存在チェックを呼び側に任せる
     proj = os.environ.get("CLAUDE_PROJECT_DIR")
     if proj:
-        cand = os.path.join(proj, "docs")
-        if os.path.isdir(cand):
-            return cand
-    cand = os.path.join(os.getcwd(), "docs")
-    if os.path.isdir(cand):
-        return cand
-    return None
+        found = _registry.locate_docs_root(proj)
+        if found is not None:
+            return found
+    return _registry.locate_docs_root(os.getcwd())
 
 
 def _load_config(docs_root, config_path):

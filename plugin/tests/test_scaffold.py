@@ -35,7 +35,7 @@ class ScaffoldBase(unittest.TestCase):
         return _util.invoke("scaffold", argv=argv)
 
     def sysfile(self, name, prefix=""):
-        return os.path.join(self.root, prefix, "docs", "_system", name)
+        return os.path.join(self.root, prefix, "doctrine_docs", "_system", name)
 
     def listing(self):
         out = []
@@ -52,11 +52,11 @@ class TestCreatesMinimalSet(ScaffoldBase):
         out, code = self.run_scaffold()
         self.assertEqual(code, 0, out)
         expected = sorted([
-            os.path.join("docs", "_system", "glossary.md"),
-            os.path.join("docs", "_system", "decided-facts.md"),
-            os.path.join("docs", "_system", "non-goals.md"),
-            os.path.join("docs", "_system", "overview.md"),
-            os.path.join("docs", "_system", ".docs-level"),
+            os.path.join("doctrine_docs", "_system", "glossary.md"),
+            os.path.join("doctrine_docs", "_system", "decided-facts.md"),
+            os.path.join("doctrine_docs", "_system", "non-goals.md"),
+            os.path.join("doctrine_docs", "_system", "overview.md"),
+            os.path.join("doctrine_docs", "_system", ".docs-level"),
             "AGENTS.md",
             "CLAUDE.md",
         ])
@@ -117,7 +117,7 @@ class TestCreatesMinimalSet(ScaffoldBase):
         for doc_id in ("GLOSSARY-001", "DECIDED-001", "NONGOAL-001"):
             self.assertIn(doc_id, text,
                           "seeded overview must list %s" % doc_id)
-        docs_root = os.path.join(self.root, "docs")
+        docs_root = os.path.join(self.root, "doctrine_docs")
         audit_out, audit_code = _util.invoke(
             "docs-audit", argv=["--root", docs_root, "--today", TODAY,
                                 "--fail-on", "error"])
@@ -155,8 +155,8 @@ class TestCreatesMinimalSet(ScaffoldBase):
         for name in ("AGENTS.md", "CLAUDE.md"):
             text = _util.read(os.path.join(self.root, name))
             self.assertIn("投影", text)
-            self.assertIn("docs/_system/overview.md", text)
-            self.assertIn("docs/_system/glossary.md", text)
+            self.assertIn("doctrine_docs/_system/overview.md", text)
+            self.assertIn("doctrine_docs/_system/glossary.md", text)
 
 
 class TestNoFullTree(ScaffoldBase):
@@ -174,7 +174,7 @@ class TestNoFullTree(ScaffoldBase):
         # No deferred _system projections / indices.
         for deferred in ("watchlist.md", "context-map.md", "icd-index.md"):
             self.assertNotIn(
-                os.path.join("docs", "_system", deferred), files,
+                os.path.join("doctrine_docs", "_system", deferred), files,
                 "scaffold must not create %s" % deferred)
         # No hooks/ or skills/ written into the target repo.
         self.assertFalse(any(f.startswith("hooks" + os.sep) for f in files))
@@ -182,7 +182,7 @@ class TestNoFullTree(ScaffoldBase):
 
     def test_only_system_subdir_exists_under_docs(self):
         self.run_scaffold()
-        docs_dir = os.path.join(self.root, "docs")
+        docs_dir = os.path.join(self.root, "doctrine_docs")
         subdirs = sorted(d for d in os.listdir(docs_dir)
                          if os.path.isdir(os.path.join(docs_dir, d)))
         self.assertEqual(subdirs, ["_system"])
@@ -226,7 +226,7 @@ class TestExistingFilesUntouched(ScaffoldBase):
         self.assertEqual(code, 0, out)
         # Sentinel untouched (既存を壊さない).
         self.assertEqual(_util.read(gpath), sentinel)
-        self.assertIn("SKIP (exists) docs/_system/glossary.md", out)
+        self.assertIn("SKIP (exists) doctrine_docs/_system/glossary.md", out)
         # Missing siblings still created.
         self.assertTrue(os.path.isfile(self.sysfile("non-goals.md")))
         self.assertTrue(os.path.isfile(os.path.join(self.root, "AGENTS.md")))
@@ -252,7 +252,7 @@ class TestDryRun(ScaffoldBase):
         out, code = self.run_scaffold("--dry-run")
         self.assertEqual(code, 0)
         self.assertIn("dry-run", out)
-        self.assertIn("docs/_system/glossary.md", out)
+        self.assertIn("doctrine_docs/_system/glossary.md", out)
         # Nothing on disk.
         self.assertEqual(self.listing(), [])
         self.assertFalse(os.path.isdir(os.path.join(self.root, "docs")))
@@ -315,11 +315,35 @@ class TestFallback(ScaffoldBase):
         self.assertIn(os.path.join(".claude", "AGENTS.md"), files)
         self.assertIn(os.path.join(".claude", "CLAUDE.md"), files)
         self.assertIn(
-            os.path.join(".claude", "docs", "_system", "glossary.md"), files)
+            os.path.join(".claude", "doctrine_docs", "_system", "glossary.md"),
+            files)
         # Nothing leaked to the repo root.
         self.assertFalse(os.path.isfile(os.path.join(self.root, "AGENTS.md")))
         self.assertFalse(
-            os.path.isdir(os.path.join(self.root, "docs")))
+            os.path.isdir(os.path.join(self.root, "doctrine_docs")))
+
+
+class TestTreeChoice(ScaffoldBase):
+    """ADR-022: 既定は doctrine_docs。docs/_system が在れば docs を使い続ける。
+    素の docs/ には入植しない。"""
+
+    def test_legacy_docs_system_continues_in_docs(self):
+        os.makedirs(os.path.join(self.root, "docs", "_system"), exist_ok=True)
+        out, code = self.run_scaffold()
+        self.assertEqual(code, 0, out)
+        self.assertFalse(os.path.isdir(os.path.join(self.root, "doctrine_docs")),
+                         "既存の docs/_system があるのに doctrine_docs を新設した")
+        self.assertTrue(os.path.isfile(os.path.join(
+            self.root, "docs", "_system", "glossary.md")))
+
+    def test_plain_foreign_docs_not_colonized(self):
+        os.makedirs(os.path.join(self.root, "docs", "guides"), exist_ok=True)
+        out, code = self.run_scaffold()
+        self.assertEqual(code, 0, out)
+        self.assertFalse(
+            os.path.exists(os.path.join(self.root, "docs", "_system")),
+            "素の docs/ に _system を入植してはならない(ADR-022)")
+        self.assertTrue(os.path.isdir(os.path.join(self.root, "doctrine_docs")))
 
 
 class TestArgErrors(ScaffoldBase):

@@ -103,28 +103,23 @@ def in_scope(path):
     if not path.endswith(".md"):
         return False
     parts = _split_parts(path)
-    # A docs tree is signalled by a 'docs' ancestor or a '_system' segment.
-    if "docs" in parts or "_system" in parts:
+    # A docs tree is signalled by a docs-root ancestor or a '_system' segment.
+    if any(name in parts for name in _registry.DOCS_DIR_NAMES) \
+            or "_system" in parts:
         return True
     if ".claude" in parts:
         return True
-    # Undecidable: lint anyway (a typed doc outside docs/ is likely a doc).
+    # Undecidable: lint anyway (a typed doc outside the tree is likely a doc).
     return True
 
 
 def _docs_root_of(path):
-    """Nearest ancestor 'docs' directory of `path` (for glossary lookup), or None."""
-    cur = os.path.dirname(os.path.abspath(path))
-    while True:
-        if os.path.basename(cur) == "docs":
-            return cur
-        cand = os.path.join(cur, "docs")
-        if os.path.isdir(cand):
-            return cand
-        parent = os.path.dirname(cur)
-        if parent == cur:
-            return None
-        cur = parent
+    """Nearest governed docs root of `path` (for glossary lookup), or None.
+
+    ADR-022: doctrine_docs 優先。docs は _system を持つ場合だけ統治木と認める
+    (見つからなければ None → 同梱テンプレートの辞書へ退避)。
+    """
+    return _registry.walkup_docs_root(path)
 
 
 def _rel_under_docs(path):
@@ -136,14 +131,15 @@ def _rel_under_docs(path):
     For '.../docs/_system/glossary.md' -> ['_system', 'glossary.md'].
     """
     parts = _split_parts(path)
-    # Prefer the last 'docs' segment as the root.
-    idx = None
-    for i, p in enumerate(parts):
-        if p == "docs":
-            idx = i
-    if idx is not None:
-        return parts[idx + 1:]
-    # No literal 'docs' ancestor: anchor on '_system' if present.
+    # Prefer the last docs-root segment (doctrine_docs first, ADR-022).
+    for name in _registry.DOCS_DIR_NAMES:
+        idx = None
+        for i, p in enumerate(parts):
+            if p == name:
+                idx = i
+        if idx is not None:
+            return parts[idx + 1:]
+    # No literal docs-root ancestor: anchor on '_system' if present.
     if "_system" in parts:
         j = parts.index("_system")
         return parts[j:]

@@ -16,33 +16,22 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import _frontmatter
+import _registry
 import _termcheck
 
 
 def _resolve_docs_root(file_path, explicit):
-    """Resolve the target repo docs/ root for glossary lookup.
+    """Resolve the governed docs root for glossary lookup (ADR-022).
 
-    Uses --docs-root when given; otherwise walks up from the file looking for a
-    'docs' directory (the tree that holds _system/glossary.md). Returns the docs
-    dir path or None (None -> _termcheck falls back to the template seed).
+    Uses --docs-root when given; otherwise delegates to the registry's
+    walkup_docs_root (doctrine_docs first; docs only with _system). Returns
+    the root path or None (None -> _termcheck falls back to the template seed).
     """
     if explicit:
         return explicit
     if not file_path:
         return None
-    cur = os.path.dirname(os.path.abspath(file_path))
-    # Walk up; stop at filesystem root.
-    while True:
-        base = os.path.basename(cur)
-        if base == "docs":
-            return cur
-        cand = os.path.join(cur, "docs")
-        if os.path.isdir(cand):
-            return cand
-        parent = os.path.dirname(cur)
-        if parent == cur:
-            return None
-        cur = parent
+    return _registry.walkup_docs_root(file_path)
 
 
 def _parse_args(argv):

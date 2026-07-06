@@ -17,9 +17,9 @@ description: "Curates the document set one item at a time: inspects, then merges
 - DECIDED・WATCH 正本 — 期限切れ・置換した事実を一本化するため。`inject-contract.py` の上限と対になる。
 - `docs-audit.py` の結果（孤児・逆孤児・`canonical_for` 衝突・語彙の酷似・投影ドリフト・`review_by` 超過）を作業一覧として使う。
 
-## docs/ の外の .md ファイル（手順の前に）
+## doctrine_docs/ の外の .md ファイル（手順の前に）
 
-手順に入る前に、docs/ の外の .md ファイルを一度だけ見る。`git ls-files '*.md' ':!:docs/**'` で追跡下の .md を出す（git は .gitignore を尊ぶ。git が無い・使えない、または git 管理でないときは非 git の代替を使う）。各ファイルを投影・出所・非文書の三つに分け、出所は doc-author で取り込む。docs/ の外のファイルは自動で消さない。退避・取り込み・そのまま残すの三つだけを行う。要否は各ファイルごとに人間が判断する。詳細は `references/external-md-intake.md`。
+手順に入る前に、doctrine_docs/ の外の .md ファイルを一度だけ見る。`git ls-files '*.md' ':!:doctrine_docs/**'` で追跡下の .md を出す（git は .gitignore を尊ぶ。git が無い・使えない、または git 管理でないときは非 git の代替を使う）。各ファイルを投影・出所・非文書の三つに分け、出所は doc-author で取り込む。doctrine_docs/ の外のファイルは自動で消さない。退避・取り込み・そのまま残すの三つだけを行う。要否は各ファイルごとに人間が判断する。詳細は `references/external-md-intake.md`。
 
 ## 手順（一片ずつ）
 
@@ -43,7 +43,7 @@ Level 2 の縮小設定では `dep-graph.py` と `docs-audit.py` が無い。逆
 - `references/reverse-ref-check.md` — `dep-graph.py` 逆方向の使い方、依存元の付け替え。
 - `references/projections.md` — §3.9 の決定論の投影と意味の投影、ドリフトの検出。
 - `references/shrink-always-set.md` — §3.9 の上限との対、一本化と期限切れの片づけ、何を残すかは人間に委ねること。
-- `references/external-md-intake.md` — docs/ の外の .md の検出・分類・取り込み、doc-author との連携、投影／出所／非文書の判断。
+- `references/external-md-intake.md` — doctrine_docs/ の外の .md の検出・分類・取り込み、doc-author との連携、投影／出所／非文書の判断。
 
 ## 保証限界
 

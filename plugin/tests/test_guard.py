@@ -366,8 +366,12 @@ class TestImmutability(GuardTestBase):
         self.assertEqual(decision, "allow")
 
     def test_tc076_write_under_archive_denied(self):
-        """TC-076: any Write/Edit under <domain>/archive/** -> deny (immutable)."""
+        """TC-076: any Write/Edit under <domain>/archive/** -> deny (immutable).
+
+        ADR-022: 不変ガードは統治木の中でだけ効くので、木の印(_system)を
+        明示して統治木にしてから検証する。"""
         root = self._repo({})
+        os.makedirs(os.path.join(root, "docs", "_system"), exist_ok=True)
         path = os.path.join(root, "docs/billing/archive/ARCHIVE-03-old.md")
         tin = {"file_path": path,
                "content": _util.fm_block(_doc("billing", doc_id="ARCHIVE-03",
@@ -611,6 +615,23 @@ class TestDeleteSafety(GuardTestBase):
             "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Bash", tin))
         decision, _ = _pre(json.loads(out))
         self.assertEqual(decision, "allow")
+
+    def test_foreign_plain_docs_archive_not_guarded(self):
+        """ADR-022: _system を持たない素の docs/ は他所の土地。相手の
+        docs/*/archive/ への Write を不変ガードが誤って拒否してはならない。"""
+        import tempfile
+        proj = tempfile.mkdtemp(prefix="foreign-")
+        self.addCleanup(shutil.rmtree, proj, ignore_errors=True)
+        target_dir = os.path.join(proj, "docs", "guides", "archive")
+        os.makedirs(target_dir)
+        tin = {"file_path": os.path.join(target_dir, "old-note.md"),
+               "content": "# 彼らの資料\n自由に編集できるべき。\n"}
+        out, code = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Write", tin))
+        self.assertEqual(code, 0)
+        decision, _ = _pre(json.loads(out))
+        self.assertEqual(decision, "allow",
+                         "素の docs/ の archive/ を deny してはならない(ADR-022)")
 
     def test_bash_rm_no_dependents_allowed(self):
         """D2: Bash rm of a doc with ZERO dependents -> allow."""

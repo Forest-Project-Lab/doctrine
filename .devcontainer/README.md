@@ -49,4 +49,4 @@ CLI と拡張機能は同じ `~/.claude` を共有する。会話履歴と設定
 
 ## ネットワーク制限（任意）
 
-Anthropic は送信先を制限する参照 firewall（`init-firewall.sh` と `NET_ADMIN`/`NET_RAW`）を公開する。本コンテナは既定で導入しない。信頼できないリポジトリを無人で扱う場合にのみ検討する。手順は公式ドキュメント（<https://code.claude.com/docs/en/devcontainer>）を参照する。
+Anthropic は送信先を制限する参照 firewall（`init-firewall.sh` と `NET_ADMIN`/`NET_RAW`）を公開する。本コンテナは既定で導入しない。信頼できないリポジトリを無人で扱う場合にのみ検討する。手順は公式ドキュメント（<https://code.claude.com/doctrine_docs/en/devcontainer>）を参照する。

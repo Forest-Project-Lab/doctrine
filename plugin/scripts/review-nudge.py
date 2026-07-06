@@ -66,21 +66,8 @@ def _is_typed_doc(path):
 
 
 def _docs_root_for(path):
-    """path から上にたどって docs/ を探す(policy-guard と同じ規約)。無ければ None。"""
-    cur = os.path.dirname(os.path.abspath(path)) if path else None
-    seen = set()
-    while cur and cur not in seen:
-        seen.add(cur)
-        if os.path.basename(cur) == "docs":
-            return cur
-        cand = os.path.join(cur, "docs")
-        if os.path.isdir(cand):
-            return cand
-        parent = os.path.dirname(cur)
-        if parent == cur:
-            break
-        cur = parent
-    return None
+    """path から上にたどって統治木を探す(ADR-022、登録簿に一本化)。無ければ None。"""
+    return _registry.walkup_docs_root(path)
 
 
 def main(argv=None):

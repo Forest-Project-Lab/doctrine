@@ -175,9 +175,9 @@ class TestHooksFullProfile(unittest.TestCase):
         self.assertIn("--summary-out", argv)
         self.assertEqual(argv[argv.index("--summary-out") + 1],
                          "${CLAUDE_PLUGIN_ROOT}/.cache/last-audit.json")
-        self.assertIn("--root", argv)
-        self.assertEqual(argv[argv.index("--root") + 1],
-                         "${CLAUDE_PROJECT_DIR}/docs")
+        self.assertIn("--root-from", argv)
+        self.assertEqual(argv[argv.index("--root-from") + 1],
+                         "${CLAUDE_PROJECT_DIR}")
         self.assertIn("--fail-on", argv)
         self.assertEqual(argv[argv.index("--fail-on") + 1], "never")
         # ADR-019: SessionEnd audit self-gates on docs/_system/.docs-level.

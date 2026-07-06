@@ -13,13 +13,14 @@
 
 CLI:
   scaffold.py [--level {2,3,4}] [--root PATH] [--dry-run] [--fallback]
-作る対象(これだけ。存在すれば飛ばす。原子的・冪等):
-  docs/_system/glossary.md      GLOSSARY(§1 の承認語表+カルク表を種にする)
-  docs/_system/decided-facts.md DECIDED(review_by を created+90日の placeholder で埋める)
-  docs/_system/non-goals.md     NONGOAL
-  docs/_system/overview.md      OVERVIEW(投影。種蒔き後に render-projection で導出する)
-  AGENTS.md / CLAUDE.md         ルートの案内(投影の入口。手で保守しない)
-  docs/_system/.docs-level      単一行 'level: N'(C9。能動 Level を他スクリプトへ公開)
+作る対象(これだけ。存在すれば飛ばす。原子的・冪等)。統治木は既定で
+doctrine_docs/(ADR-022。既に docs/_system が在るなら docs/ を使い続ける):
+  <統治木>/_system/glossary.md      GLOSSARY(§1 の承認語表+カルク表を種にする)
+  <統治木>/_system/decided-facts.md DECIDED(review_by を created+90日で埋める)
+  <統治木>/_system/non-goals.md     NONGOAL
+  <統治木>/_system/overview.md      OVERVIEW(投影。種蒔き後に render-projection で導出)
+  AGENTS.md / CLAUDE.md             ルートの案内(投影の入口。手で保守しない)
+  <統治木>/_system/.docs-level      単一行 'level: N'(C9。能動 Level を公開)
 overview はこの実行で新規に置いた場合だけ、種蒔きの直後に render-projection.py を
 呼んで正本から導出した表で置き直す(投影の描画は render-projection に委ねる、の実行)。
 これで初期化直後のコーパスが自分の監査(projection_drift)を素通しで通る。既存の
@@ -140,17 +141,17 @@ def _overview_seed(created):
     return _fill_common(text, created)
 
 
-def _agents_pointer(created):
+def _agents_pointer(created, tree="doctrine_docs"):
     """Root AGENTS.md — a minimal projection pointer (§5). Collects no knowledge."""
-    return _root_pointer("AGENTS.md")
+    return _root_pointer("AGENTS.md", tree)
 
 
-def _claude_pointer(created):
+def _claude_pointer(created, tree="doctrine_docs"):
     """Root CLAUDE.md — a minimal projection pointer (§5). Collects no knowledge."""
-    return _root_pointer("CLAUDE.md")
+    return _root_pointer("CLAUDE.md", tree)
 
 
-def _root_pointer(name):
+def _root_pointer(name, tree):
     """Render a root entry pointer (CLAUDE.md / AGENTS.md).
 
     These are 投影: the minimal entry, hand-maintained を避ける。They only point
@@ -160,11 +161,11 @@ def _root_pointer(name):
         "<!-- これは投影。最小の案内。手で保守しない。 -->\n"
         "# %s\n\n"
         "これは投影であり、最小の案内である。知識を集めない。入口だけを示す。\n\n"
-        "- 用語辞書の正本: `docs/_system/glossary.md`\n"
-        "- 現行文書の一覧(投影): `docs/_system/overview.md`\n"
-        "- 確定した事実: `docs/_system/decided-facts.md`\n"
-        "- やらないこと: `docs/_system/non-goals.md`\n"
-    ) % name
+        "- 用語辞書の正本: `%s/_system/glossary.md`\n"
+        "- 現行文書の一覧(投影): `%s/_system/overview.md`\n"
+        "- 確定した事実: `%s/_system/decided-facts.md`\n"
+        "- やらないこと: `%s/_system/non-goals.md`\n"
+    ) % (name, tree, tree, tree, tree)
 
 
 def _docs_level_marker(level):
@@ -175,25 +176,40 @@ def _docs_level_marker(level):
 # ---------------------------------------------------------------------------
 # Plan: the EXACT set of paths scaffold may write (relative to root).
 # ---------------------------------------------------------------------------
-def _build_plan(level, created, fallback):
+def _choose_tree(root, fallback):
+    """統治木のディレクトリ名を選ぶ(ADR-022)。
+
+    既定は doctrine_docs。ただし既に docs/_system が在る(=doctrine が過去に
+    初期化した)なら docs を使い続ける(統治木を二つにしない)。_system を
+    持たない素の docs/ は他所の土地なので選ばない。
+    """
+    prefix = ".claude/" if fallback else ""
+    legacy = os.path.join(root, prefix + "docs", "_system")
+    if os.path.isdir(legacy):
+        return "docs"
+    return "doctrine_docs"
+
+
+def _build_plan(level, created, fallback, tree="doctrine_docs"):
     """Return an ordered list of (relpath, content) for the minimal layout.
 
     With --fallback the _system docs + pointers move under '.claude/' (§5 /
     MASTER §9 plugin-not-installed mode). Without it they live at the repo root.
     The set is EXACTLY: 4 _system docs + .docs-level marker + 2 root pointers.
     NOTHING else (no domain folders, no watchlist/context-map/icd-index, no
-    hooks, no skills — §3.7, A.2).
+    hooks, no skills — §3.7, A.2). `tree` is the governed root dir name
+    (ADR-022: doctrine_docs, or docs for a pre-existing legacy tree).
     """
     prefix = ".claude/" if fallback else ""
-    sysdir = prefix + "docs/_system/"
+    sysdir = prefix + tree + "/_system/"
     return [
         (sysdir + "glossary.md", _glossary_seed(created)),
         (sysdir + "decided-facts.md", _decided_seed(created)),
         (sysdir + "non-goals.md", _nongoal_seed(created)),
         (sysdir + "overview.md", _overview_seed(created)),
         (sysdir + ".docs-level", _docs_level_marker(level)),
-        (prefix + "AGENTS.md", _agents_pointer(created)),
-        (prefix + "CLAUDE.md", _claude_pointer(created)),
+        (prefix + "AGENTS.md", _agents_pointer(created, tree)),
+        (prefix + "CLAUDE.md", _claude_pointer(created, tree)),
     ]
 
 
@@ -330,7 +346,8 @@ def _derive_overview(root, fallback):
     """
     import subprocess
     prefix = ".claude/" if fallback else ""
-    docs_root = os.path.join(root, prefix + "docs")
+    tree = _choose_tree(root, fallback)
+    docs_root = os.path.join(root, prefix + tree)
     out_path = os.path.join(docs_root, "_system", "overview.md")
     renderer = os.path.join(_SCRIPTS_DIR, "render-projection.py")
     try:
@@ -347,7 +364,8 @@ def _derive_overview(root, fallback):
             "scaffold: overview の導出に失敗(雛形のまま)。"
             "render-projection.py overview を手で実行すること。\n")
     else:
-        sys.stdout.write("RENDER       %s\n" % (prefix + "docs/_system/overview.md"))
+        sys.stdout.write("RENDER       %s\n"
+                         % (prefix + tree + "/_system/overview.md"))
 
 
 # ---------------------------------------------------------------------------
@@ -364,15 +382,16 @@ def main(argv=None):
 
     try:
         created = _today_iso(opts["today"])
-        plan = _build_plan(opts["level"], created, opts["fallback"])
+        tree = _choose_tree(opts["root"], opts["fallback"])
+        plan = _build_plan(opts["level"], created, opts["fallback"], tree)
         root = opts["root"]
 
-        if os.path.basename(os.path.normpath(root)) == "docs":
-            # --root は docs/ ではなくプロジェクトの根を取る。docs/ を渡すと
-            # docs/docs/ が生まれる(初見の利用者が最も踏みやすい取り違え)。
+        if os.path.basename(os.path.normpath(root)) in ("docs", "doctrine_docs"):
+            # --root は統治木ではなくプロジェクトの根を取る。統治木自体を渡すと
+            # 入れ子の木が生まれる(初見の利用者が最も踏みやすい取り違え)。
             sys.stdout.write(
-                "注意: --root にはプロジェクトの根を渡す(docs/ 自体を渡すと"
-                " docs/docs/ が生まれる)。\n")
+                "注意: --root にはプロジェクトの根を渡す(統治木のディレクトリ"
+                "自体を渡すと入れ子の木が生まれる)。\n")
 
         if opts["dry_run"]:
             # Print the plan; write NOTHING (no dirs, no files). Exit 0.

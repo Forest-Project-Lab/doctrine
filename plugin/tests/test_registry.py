@@ -385,6 +385,60 @@ class TestConstants(unittest.TestCase):
         self.assertFalse(hasattr(R, "domain_of"))
 
 
+class TestDocsRootResolution(unittest.TestCase):
+    """ADR-022: doctrine_docs 優先。docs は _system を持つ場合だけ統治木。"""
+
+    def _tmp(self):
+        import shutil
+        import tempfile
+        root = tempfile.mkdtemp(prefix="droot-")
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        return root
+
+    def test_locate_prefers_doctrine_docs(self):
+        proj = self._tmp()
+        os.makedirs(os.path.join(proj, "doctrine_docs"))
+        os.makedirs(os.path.join(proj, "docs", "_system"))
+        self.assertEqual(R.locate_docs_root(proj),
+                         os.path.join(proj, "doctrine_docs"))
+
+    def test_locate_rejects_plain_docs(self):
+        """素の docs/(_system なし)は他所の土地 — 統治木にしない。"""
+        proj = self._tmp()
+        os.makedirs(os.path.join(proj, "docs", "guides"))
+        self.assertIsNone(R.locate_docs_root(proj))
+
+    def test_locate_accepts_legacy_docs_with_system(self):
+        proj = self._tmp()
+        os.makedirs(os.path.join(proj, "docs", "_system"))
+        self.assertEqual(R.locate_docs_root(proj), os.path.join(proj, "docs"))
+
+    def test_walkup_from_file_inside_tree(self):
+        proj = self._tmp()
+        deep = os.path.join(proj, "doctrine_docs", "billing", "spec")
+        os.makedirs(deep)
+        self.assertEqual(R.walkup_docs_root(os.path.join(deep, "S.md")),
+                         os.path.join(proj, "doctrine_docs"))
+
+    def test_walkup_ignores_foreign_docs(self):
+        proj = self._tmp()
+        deep = os.path.join(proj, "docs", "guides")
+        os.makedirs(deep)
+        self.assertIsNone(R.walkup_docs_root(os.path.join(deep, "x.md")))
+
+    def test_is_doctrine_tree(self):
+        proj = self._tmp()
+        dd = os.path.join(proj, "doctrine_docs")
+        os.makedirs(dd)
+        self.assertTrue(R.is_doctrine_tree(dd))
+        plain = os.path.join(proj, "docs")
+        os.makedirs(plain)
+        self.assertFalse(R.is_doctrine_tree(plain))
+        os.makedirs(os.path.join(plain, "_system"))
+        self.assertTrue(R.is_doctrine_tree(plain))
+        self.assertFalse(R.is_doctrine_tree(os.path.join(proj, "other")))
+
+
 class TestDocsLevel(unittest.TestCase):
     """ADR-019: docs_level() reads docs/_system/.docs-level; uncertainty -> 4."""
 

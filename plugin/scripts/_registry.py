@@ -216,6 +216,66 @@ SYSTEM_CANONICAL_FILES = frozenset({
 # stray-document scanning (ADR-021) must not report them as unclassified.
 ROOT_POINTER_FILES = frozenset({"CLAUDE.md", "AGENTS.md"})
 
+# 統治木のディレクトリ名 — 優先順(ADR-022)。既定は doctrine_docs。docs は
+# doctrine が初期化した印(_system)を持つ場合だけ統治木と認める(後方互換)。
+# _system を持たない素の docs/ は他所の土地であり、決して統治木として扱わない。
+DOCS_DIR_NAMES = ("doctrine_docs", "docs")
+
+
+def is_doctrine_tree(path, name=None):
+    """`path` を統治木として扱ってよいか(ADR-022)。決して例外を投げない。
+
+    doctrine_docs は存在すれば統治木(初期化前のブートストラップ先を含む)。
+    docs は `_system` を持つ場合だけ統治木(素の docs は他所の土地)。
+    """
+    if not path or not os.path.isdir(path):
+        return False
+    base = name or os.path.basename(os.path.normpath(path))
+    if base == "doctrine_docs":
+        return True
+    if base == "docs":
+        return os.path.isdir(os.path.join(path, "_system"))
+    return False
+
+
+def locate_docs_root(project_dir):
+    """プロジェクト根から統治木を解決する(ADR-022)。無ければ None。"""
+    if not project_dir:
+        return None
+    for name in DOCS_DIR_NAMES:
+        cand = os.path.join(project_dir, name)
+        if is_doctrine_tree(cand, name):
+            return cand
+    return None
+
+
+def walkup_docs_root(start_path, cwd=None):
+    """start_path(ファイルでもよい)から上へたどって統治木を探す(ADR-022)。
+
+    各階層で、自身が統治木か、直下に統治木を持つかを DOCS_DIR_NAMES の
+    優先順で見る。見つからなければ cwd 側も同様に試し、無ければ None。
+    """
+    candidates = []
+    if start_path:
+        p = os.path.abspath(start_path)
+        candidates.append(p if os.path.isdir(p) else os.path.dirname(p))
+    if cwd:
+        candidates.append(os.path.abspath(cwd))
+    for cur in candidates:
+        seen = set()
+        while cur and cur not in seen:
+            seen.add(cur)
+            if is_doctrine_tree(cur):
+                return cur
+            found = locate_docs_root(cur)
+            if found is not None:
+                return found
+            parent = os.path.dirname(cur)
+            if parent == cur:
+                break
+            cur = parent
+    return None
+
 # ---------------------------------------------------------------------------
 # Helper API (frozen — consumed by guard, linter, audit, dep-graph, context)
 # ---------------------------------------------------------------------------

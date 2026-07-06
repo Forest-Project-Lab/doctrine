@@ -161,6 +161,13 @@ def make_repo(files):
 
     Parent directories are created as needed. Returns the repo root path. The
     caller is responsible for cleanup (see module docstring).
+
+    ADR-022: fixtures that lay out a 'docs/' tree mean a GOVERNED (legacy)
+    tree, so the doctrine marker dir docs/_system is ensured — without it the
+    resolver would treat the fixture as a foreign plain docs/ and every
+    guard/linter/graph lookup would see no governed tree. Fixtures testing
+    the foreign-docs protection itself must build their tree without this
+    helper (plain mkdtemp + os.makedirs).
     """
     root = mkdtemp()
     for relpath, content in (files or {}).items():
@@ -168,6 +175,9 @@ def make_repo(files):
         os.makedirs(os.path.dirname(abspath) or root, exist_ok=True)
         with open(abspath, "w", encoding="utf-8", newline="") as fh:
             fh.write(content)
+    docs = os.path.join(root, "docs")
+    if os.path.isdir(docs):
+        os.makedirs(os.path.join(docs, "_system"), exist_ok=True)
     return root
 
 
@@ -219,7 +229,11 @@ def fm_block(fm):
 
 
 def write_doc(root, relpath, fm, body=""):
-    """Render frontmatter+body, write under `root/relpath`, return abspath."""
+    """Render frontmatter+body, write under `root/relpath`, return abspath.
+
+    ADR-022: a fixture path under 'docs/' means a governed (legacy) tree —
+    ensure the docs/_system marker so the resolver accepts it (see make_repo).
+    """
     abspath = os.path.join(root, relpath)
     os.makedirs(os.path.dirname(abspath) or root, exist_ok=True)
     text = fm_block(fm)
@@ -227,6 +241,10 @@ def write_doc(root, relpath, fm, body=""):
         text = text + body
     with open(abspath, "w", encoding="utf-8", newline="") as fh:
         fh.write(text)
+    parts = relpath.replace("\\", "/").split("/")
+    if "docs" in parts:
+        docs_abs = os.path.join(root, *parts[:parts.index("docs") + 1])
+        os.makedirs(os.path.join(docs_abs, "_system"), exist_ok=True)
     return abspath
 
 
