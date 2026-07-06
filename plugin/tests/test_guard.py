@@ -569,6 +569,35 @@ class TestDeleteSafety(GuardTestBase):
         self.assertEqual(decision, "deny")
         self.assertIn("TEST-20", reason)
 
+    def test_bash_mv_into_dir_overwriting_same_name_depended_doc_denied(self):
+        """mv <src> <dir>/ で dir 内の同名既存文書(被依存)を上書きする形 -> deny。"""
+        root = self._depended_repo()
+        srcdir = os.path.join(root, "incoming")
+        os.makedirs(srcdir, exist_ok=True)
+        src = os.path.join(srcdir, "SPEC-14.md")  # 同名の新ファイル
+        with open(src, "w", encoding="utf-8") as fh:
+            fh.write("x\n")
+        dstdir = os.path.join(root, "docs/billing/spec")
+        tin = {"command": "mv %s %s" % (src, dstdir)}
+        out, _ = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Bash", tin))
+        decision, reason = _pre(json.loads(out))
+        self.assertEqual(decision, "deny")
+        self.assertIn("TEST-20", reason)
+
+    def test_bash_mv_glob_dst_matching_depended_doc_denied(self):
+        """mv <src> <glob展開で被依存文書に一致する宛先> -> deny。"""
+        root = self._depended_repo()
+        src = os.path.join(root, "new.md")
+        with open(src, "w", encoding="utf-8") as fh:
+            fh.write("x\n")
+        dst_glob = os.path.join(root, "docs/billing/spec/SPEC-1*.md")
+        tin = {"command": "mv %s %s" % (src, dst_glob)}
+        out, _ = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Bash", tin))
+        decision, _ = _pre(json.loads(out))
+        self.assertEqual(decision, "deny")
+
     def test_bash_mv_rename_to_new_path_allowed(self):
         """mv の宛先が存在しない新パス(改名)や既存ディレクトリは破壊でない -> src だけで判定。"""
         root = self._repo({

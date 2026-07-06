@@ -20,7 +20,7 @@ llm_context: task
 
 - 入力: コマンドライン引数 `[--root docs/] [--json] [--summary-out PATH] [--fail-on error|never] [--config PATH] [--today YYYY-MM-DD] [--respect-docs-level]`。標準入力は読まない。入力内容に結果が左右されないからであり、対話端末から起動しても入力待ちで止まらない。
 - 処理: docs ルート配下のすべての .md について、graph（ICD-002）が依存グラフを組み、登録簿（ICD-001）が各文書の型・`status`・`llm_context` を解決する。本文は一度だけ読んでノードに付ける。
-- 返す値: 要約スキーマ `docs-audit/1`。形は `{schema, generated_at, today, root, totals:{error,warn,advisory}, counts_by_check, top_findings, findings}`。`--json` を付けると機械向けの JSON を、付けなければ人間向けの平文を出す。`--summary-out` を指定すると、要約を一時ファイルに書いてから改名して差し替え、途中状態を残さない。
+- 返す値: 要約スキーマ `docs-audit/1`。形は `{schema, generated_at, today, root, totals:{error,warn,advisory}, counts_by_check, top_findings, findings}`。`root` は絶対パスに正規化して書く（注入側が相対 root を照合不能として捨てるため。SPEC-012）。`--json` を付けると機械向けの JSON を、付けなければ人間向けの平文を出す。`--summary-out` を指定すると、要約を一時ファイルに書いてから改名して差し替え、途中状態を残さない。
 
 ## 制約
 

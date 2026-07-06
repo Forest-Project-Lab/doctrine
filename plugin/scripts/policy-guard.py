@@ -518,18 +518,40 @@ def _extract_remove_targets(segment, cwd):
     arg_tokens = _strip_redirections(tokens[arg_start:])
     raw_args = [t for t in arg_tokens if not t.startswith("-")]
     base = os.path.abspath(cwd) if cwd else os.getcwd()
-    # mv は最後の引数が宛先。対象は src 群(末尾を除く)。ただし宛先が既存
-    # ファイルなら上書き=その内容の破壊なので、宛先も対象に含める(rm と
-    # 同等に扱う)。既存ディレクトリへの移動や新しい名前への改名は破壊で
-    # ないので含めない。
+    # mv は最後の引数が宛先。対象は src 群(末尾を除く)。ただし上書きは宛先
+    # 内容の破壊なので、rm と同等に宛先側も対象へ含める:
+    # - 宛先が既存ファイル → その宛先。
+    # - 宛先が glob → 展開して同様(展開不能は安全側の拒否へ倒す)。
+    # - 宛先が既存ディレクトリ → 中の同名(= src の basename)既存ファイル。
+    # 新しい名前への改名だけが破壊でないので含めない。
+    extra_targets = []
+    had_unexpandable = False
     if verb == "mv" and len(raw_args) >= 2:
         dst = raw_args[-1]
-        raw_args = raw_args[:-1]
-        if not _has_glob(dst) and os.path.isfile(_resolve_arg(dst, base)):
-            raw_args = raw_args + [dst]
+        srcs = raw_args[:-1]
+        raw_args = srcs
+        if _has_glob(dst):
+            dst_paths = _expand_glob(dst, base)
+            if dst_paths is None:
+                had_unexpandable = True
+                dst_paths = []
+        else:
+            dst_paths = [_resolve_arg(dst, base)]
+        for d in dst_paths:
+            if os.path.isfile(d):
+                extra_targets.append(d)
+            elif os.path.isdir(d):
+                for src in srcs:
+                    if _has_glob(src):
+                        src_paths = _expand_glob(src, base) or []
+                    else:
+                        src_paths = [_resolve_arg(src, base)]
+                    for s in src_paths:
+                        cand = os.path.join(d, os.path.basename(s))
+                        if os.path.isfile(cand):
+                            extra_targets.append(cand)
 
     targets = []
-    had_unexpandable = False
     for arg in raw_args:
         if _has_glob(arg):
             expanded = _expand_glob(arg, base)
@@ -539,6 +561,7 @@ def _extract_remove_targets(segment, cwd):
                 targets.extend(expanded)
         else:
             targets.append(_resolve_arg(arg, base))
+    targets.extend(extra_targets)
     return targets, verb, had_unexpandable
 
 

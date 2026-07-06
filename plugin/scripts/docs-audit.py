@@ -715,7 +715,10 @@ def build_summary(root, findings, today, knobs, generated_at=None):
         "schema": SCHEMA,
         "generated_at": generated_at,
         "today": today.isoformat(),
-        "root": root,
+        # root は絶対パスに正規化して書く。読む側(inject-contract)は相対 root を
+        # 照合不能として捨てるため(越境注入の防止)、相対のまま書くと正当な
+        # 要約まで「前回監査なし」に劣化する。
+        "root": os.path.abspath(root),
         "totals": totals,
         "counts_by_check": counts_by_check,
         "top_findings": top,

@@ -658,6 +658,32 @@ class TestAuditHandshake(InjectBase):
         # 捨てたので所見は注入されない。
         self.assertNotIn("SPEC-014", ctx)
 
+    def test_relative_root_summary_discarded(self):
+        """要約の root が相対パス -> 照合不能として捨てる(cwd 次第でどの体系
+        とも一致し得るため。同梱の SessionEnd 配線は常に絶対パスを書く)。"""
+        plugin_root = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, plugin_root, ignore_errors=True)
+        cache_dir = os.path.join(plugin_root, ".cache")
+        os.makedirs(cache_dir, exist_ok=True)
+        with open(os.path.join(cache_dir, "last-audit.json"), "w",
+                  encoding="utf-8") as fh:
+            json.dump(self._audit_obj(root="docs"), fh, ensure_ascii=False)
+        root = self._repo({"docs/_system/decided-facts.md":
+                           _decided("DECIDED-001", "確定A")})
+        docs_root = os.path.join(root, "docs")
+        old = os.environ.get("CLAUDE_PLUGIN_ROOT")
+        os.environ["CLAUDE_PLUGIN_ROOT"] = plugin_root
+        try:
+            data = self._run_json(docs_root)
+        finally:
+            if old is None:
+                os.environ.pop("CLAUDE_PLUGIN_ROOT", None)
+            else:
+                os.environ["CLAUDE_PLUGIN_ROOT"] = old
+        ctx = self._ctx(data)
+        self.assertIn("前回監査なし", ctx)
+        self.assertNotIn("dead_link", ctx)
+
     def test_summary_fallback_claude_cache(self):
         # No CLAUDE_PLUGIN_ROOT -> fallback to <proj>/.claude/.cache/last-audit.json.
         proj = _util.mkdtemp()

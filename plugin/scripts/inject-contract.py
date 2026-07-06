@@ -184,11 +184,18 @@ def _load_audit_summary(docs_root=None):
 
 
 def _same_docs_root(summary_root, docs_root):
-    """要約の root と現在の docs_root が同じ場所を指すか。決して例外を投げない。"""
+    """要約の root と現在の docs_root が同じ場所を指すか。決して例外を投げない。
+
+    相対パスの root は照合できない(読み手の cwd 基準でどのプロジェクトとも
+    一致し得る)ため、不一致として捨てる。同梱の SessionEnd 配線は常に絶対
+    パスを書くので、正当な要約はここで落ちない。
+    """
     if not isinstance(summary_root, str) or not summary_root.strip():
         return False
+    if not os.path.isabs(summary_root):
+        return False
     try:
-        return (os.path.realpath(os.path.abspath(summary_root))
+        return (os.path.realpath(summary_root)
                 == os.path.realpath(os.path.abspath(docs_root)))
     except (OSError, ValueError):
         return False
