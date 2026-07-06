@@ -361,11 +361,6 @@ def _proposed_text(cur_fm, cur_body, tool, tin):
 # Guard 3 — Bash 経路(deny-only, §3.5)
 # ---------------------------------------------------------------------------
 
-# コマンドを区切るトークン(D0.6)。
-_CMD_SEPARATORS = (";", "&&", "||", "|", "\n")
-# 文書を取り除く動詞。
-_REMOVE_VERBS = ("rm", "git rm", "mv")
-
 
 def guard_delete_safety_bash(command, cwd, graph_cache):
     """Bash 経路の削除安全。拒否理由 or None。deny-only(additionalContext も block も無い)。
@@ -510,6 +505,10 @@ def _extract_remove_targets(segment, cwd):
         arg_start = 1
     elif tokens[0] == "git" and len(tokens) >= 2 and tokens[1] == "rm":
         verb = "git rm"
+        arg_start = 2
+    elif tokens[0] == "git" and len(tokens) >= 2 and tokens[1] == "mv":
+        # git mv も mv と同じ移動/上書きの意味論で扱う(SPEC-003)。
+        verb = "mv"
         arg_start = 2
     elif tokens[0] == "mv":
         verb = "mv"

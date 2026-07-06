@@ -93,24 +93,13 @@ def _split_parts(path):
 
 
 def in_scope(path):
-    """True iff the linter should examine this path.
+    """True iff the linter should examine this path: every .md, anywhere.
 
-    Skip non-.md. Skip files not under a docs/ tree AND not under a .claude/
-    docs tree, UNLESS the layout is undecidable (then lint anyway — fail-open
-    toward checking, §1.3). A deleted file (absent on disk) is handled by the
-    caller (emit nothing).
+    統治木の外でも点検する(fail-open toward checking, §1.3): 型付きなら
+    STRAY_DOCUMENT で置き場所を正させ、型なしでも用語の助言は価値がある。
+    A deleted file (absent on disk) is handled by the caller (emit nothing).
     """
-    if not path.endswith(".md"):
-        return False
-    parts = _split_parts(path)
-    # A docs tree is signalled by a docs-root ancestor or a '_system' segment.
-    if any(name in parts for name in _registry.DOCS_DIR_NAMES) \
-            or "_system" in parts:
-        return True
-    if ".claude" in parts:
-        return True
-    # Undecidable: lint anyway (a typed doc outside the tree is likely a doc).
-    return True
+    return path.endswith(".md")
 
 
 def _docs_root_of(path):
@@ -315,8 +304,8 @@ def _check_stray_location(meta, rel_parts, findings):
     if isinstance(type_code, str) and _registry.is_known_type(type_code):
         findings.append(Finding(
             "STRAY_DOCUMENT", ERROR,
-            "登録簿の型 %s を持つ文書が docs/ の外に在る。doc-author で "
-            "docs/<domain>/ の置き場所へ移すか、型を外す。" % type_code,
+            "登録簿の型 %s を持つ文書が統治木の外に在る。doc-author で "
+            "統治木の <domain>/ 配下へ移すか、型を外す。" % type_code,
             "ADR-021"))
 
 

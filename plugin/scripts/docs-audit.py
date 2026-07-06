@@ -47,14 +47,8 @@ SEV_ERROR = "error"
 SEV_WARN = "warn"
 SEV_ADVISORY = "advisory"
 
-# 投影(描画)/正本のファイル名(§3.7)。孤児・参照解決の特例に使う。
-_PROJECTION_FILES = _registry.PROJECTION_FILES
-_SYSTEM_CANONICAL_FILES = _registry.SYSTEM_CANONICAL_FILES
-
 # 本文中の id 参照トークン(<TYPE>-<NNN>)。dead link の本文走査に使う。
 _ID_TOKEN_RE = re.compile(r"\b([A-Z]+-\d+)\b")
-# 本文中の相対 .md リンク。
-_MD_LINK_RE = re.compile(r"\]\(([^)]+\.md)[^)]*\)")
 # 単語シングル化(語彙的酷似)。英数字連なり + 連続する非ASCII。
 _TOKEN_RE = re.compile(r"[A-Za-z0-9_]+|[^\x00-\x7f]+")
 _DATE_RE = re.compile(r"^(\d{4})-(\d{2})-(\d{2})$")
@@ -217,7 +211,7 @@ def _finding(check, severity, doc_id, path, message, refs=None):
 # ---------------------------------------------------------------------------
 
 def _check_dead_link(g):
-    """1. dead link(R4)。frontmatter の id 参照 + 本文の id/相対リンクが解決するか。"""
+    """1. dead link(R4)。frontmatter の id 参照 + 本文の id トークンが解決するか。"""
     out = []
     for doc_id in sorted(g.nodes):
         node = g.nodes[doc_id]
@@ -811,8 +805,9 @@ def _check_stray_documents(root, today):
             if listed < _STRAY_LIST_CAP:
                 out.append(_finding(
                     "stray_document", SEV_ADVISORY, "", rel,
-                    "docs/ の外の .md が未分類。docs-curate(external-md-intake)"
-                    "で三分類し docs/_system/%s へ記録する" % _INTAKE_LEDGER))
+                    "統治木の外の .md が未分類。docs-curate(external-md-intake)"
+                    "で三分類し %s/_system/%s へ記録する"
+                    % (os.path.basename(docs_root), _INTAKE_LEDGER)))
                 listed += 1
             continue
         _epath, kind, due = entry
@@ -974,7 +969,7 @@ def main(argv=None):
                 % opts["root_from"])
             return 0
     if root is None:
-        root = _registry.locate_docs_root(os.getcwd()) or "doctrine_docs"
+        root = _registry.locate_docs_root(os.getcwd()) or _registry.DOCS_DIR_NAMES[0]
     if not os.path.isdir(root):
         sys.stdout.write("root not found: %s\n" % root)
         # 監査が走れないのは利用者の誤り(usage に近い)。CI も SessionEnd も

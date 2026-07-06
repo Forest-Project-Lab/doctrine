@@ -534,6 +534,18 @@ class TestDeleteSafety(GuardTestBase):
         self.assertEqual(decision, "deny")
         self.assertIn("TEST-20", reason)
 
+    def test_bash_git_mv_depended_doc_denied(self):
+        """`git mv` も mv と同じ移動の意味論で削除安全の対象(SPEC-003)。"""
+        root = self._depended_repo()
+        target = os.path.join(root, "docs/billing/spec/SPEC-14.md")
+        dst = os.path.join(root, "docs/billing/spec/renamed.md")
+        tin = {"command": "git mv %s %s" % (target, dst)}
+        out, _ = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Bash", tin))
+        decision, reason = _pre(json.loads(out))
+        self.assertEqual(decision, "deny")
+        self.assertIn("TEST-20", reason)
+
     def test_bash_git_rm_denied(self):
         """D3: Bash `git rm` of a current doc with dependents -> deny."""
         root = self._depended_repo()

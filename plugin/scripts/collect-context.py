@@ -164,7 +164,7 @@ def resolve_docs_root(explicit):
         found = _registry.locate_docs_root(proj)
         if found is not None:
             return found
-    return _registry.locate_docs_root(os.getcwd()) or "doctrine_docs"
+    return _registry.locate_docs_root(os.getcwd()) or _registry.DOCS_DIR_NAMES[0]
 
 
 def read_task_text(taskspec):

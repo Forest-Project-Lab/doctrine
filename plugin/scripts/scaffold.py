@@ -35,6 +35,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import _registry
+
 # Templates ship alongside scripts/ under plugin/templates/. Resolve relative to
 # this file so the script works from any cwd and under ${CLAUDE_PLUGIN_ROOT}.
 _SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -141,12 +143,12 @@ def _overview_seed(created):
     return _fill_common(text, created)
 
 
-def _agents_pointer(created, tree="doctrine_docs"):
+def _agents_pointer(created, tree=_registry.DOCS_DIR_NAMES[0]):
     """Root AGENTS.md — a minimal projection pointer (§5). Collects no knowledge."""
     return _root_pointer("AGENTS.md", tree)
 
 
-def _claude_pointer(created, tree="doctrine_docs"):
+def _claude_pointer(created, tree=_registry.DOCS_DIR_NAMES[0]):
     """Root CLAUDE.md — a minimal projection pointer (§5). Collects no knowledge."""
     return _root_pointer("CLAUDE.md", tree)
 
@@ -177,20 +179,20 @@ def _docs_level_marker(level):
 # Plan: the EXACT set of paths scaffold may write (relative to root).
 # ---------------------------------------------------------------------------
 def _choose_tree(root, fallback):
-    """統治木のディレクトリ名を選ぶ(ADR-022)。
+    """統治木のディレクトリ名を選ぶ(ADR-022。判定は登録簿に一本化)。
 
-    既定は doctrine_docs。ただし既に docs/_system が在る(=doctrine が過去に
-    初期化した)なら docs を使い続ける(統治木を二つにしない)。_system を
+    既定は DOCS_DIR_NAMES[0](doctrine_docs)。ただし既に docs が統治木の印
+    (_system)を持つなら docs を使い続ける(統治木を二つにしない)。印を
     持たない素の docs/ は他所の土地なので選ばない。
     """
     prefix = ".claude/" if fallback else ""
-    legacy = os.path.join(root, prefix + "docs", "_system")
-    if os.path.isdir(legacy):
+    legacy = os.path.join(root, prefix + "docs")
+    if _registry.is_doctrine_tree(legacy, "docs"):
         return "docs"
-    return "doctrine_docs"
+    return _registry.DOCS_DIR_NAMES[0]
 
 
-def _build_plan(level, created, fallback, tree="doctrine_docs"):
+def _build_plan(level, created, fallback, tree=_registry.DOCS_DIR_NAMES[0]):
     """Return an ordered list of (relpath, content) for the minimal layout.
 
     With --fallback the _system docs + pointers move under '.claude/' (§5 /

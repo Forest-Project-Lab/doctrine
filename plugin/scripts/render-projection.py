@@ -538,7 +538,7 @@ def main(argv=None):
     docs_root = opts["docs_root"]
     if docs_root is None:
         # 無指定なら cwd から統治木を解決(ADR-022: doctrine_docs 優先)。
-        docs_root = _registry.locate_docs_root(os.getcwd()) or "doctrine_docs"
+        docs_root = _registry.locate_docs_root(os.getcwd()) or _registry.DOCS_DIR_NAMES[0]
     if not os.path.isdir(docs_root):
         sys.stdout.write("docs-root not found: %s\n" % docs_root)
         return 3

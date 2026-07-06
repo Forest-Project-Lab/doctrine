@@ -485,8 +485,8 @@ def _curate_nudge(totals, counts_by_check):
         return ("→ docs-curate を起動: 未登録/影文書 %d 件に型を与えて登録するか "
                 "archive/ へ退避すること。" % reg)
     if stray > 0:
-        return ("→ docs-curate を起動: docs/ の外の .md %d 件を external-md-intake "
-                "で三分類し、docs/_system/.md-intake へ記録すること(ADR-021)。" % stray)
+        return ("→ docs-curate を起動: 統治木の外の .md %d 件を external-md-intake "
+                "で三分類し、_system/.md-intake へ記録すること(ADR-021)。" % stray)
     if orph > 0:
         return "→ docs-curate を起動: 孤児 %d 件を取り除く候補として整理すること。" % orph
     if errs > 0:
