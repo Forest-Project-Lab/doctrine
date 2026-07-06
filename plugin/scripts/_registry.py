@@ -136,7 +136,7 @@ def status_allowed(type_code):
     """
     if type_code == "ADR":
         return {"proposed", "accepted", "superseded", "deprecated"}
-    if type_code not in TYPE_DEFAULT_STATUS:
+    if not isinstance(type_code, str) or type_code not in TYPE_DEFAULT_STATUS:
         return set()
     base = {"proposed", "current", "deprecated", "superseded", "archived", "open"}
     if type_code == "RESEARCH":
@@ -240,18 +240,29 @@ def type_of(doc_id):
 
 
 def is_known_type(type_code):
-    """True iff `type_code` is one of the 19 registry types."""
+    """True iff `type_code` is one of the 19 registry types.
+
+    Non-string values (e.g. a YAML-list typo `type: [SPEC]`) are simply
+    unknown — they must not raise, or a single malformed frontmatter key
+    would take down every check that runs after this one.
+    """
+    if not isinstance(type_code, str):
+        return False
     return type_code in TYPE_DEFAULT_STATUS
 
 
 def default_status(type_code):
-    """Default status for a type (§3.2). None for an unknown type."""
+    """Default status for a type (§3.2). None for an unknown/non-string type."""
+    if not isinstance(type_code, str):
+        return None
     return TYPE_DEFAULT_STATUS.get(type_code)
 
 
 def default_llm_context(type_code):
     """Default llm_context ('always'|'task'|'never') for a type (§3.2).
-    None for an unknown type."""
+    None for an unknown/non-string type."""
+    if not isinstance(type_code, str):
+        return None
     return TYPE_DEFAULT_LLM_CONTEXT.get(type_code)
 
 
@@ -272,6 +283,8 @@ def effective_llm_context(meta):
         type_code = meta.get("type")
     else:
         type_code = None
+    if not isinstance(type_code, str):
+        return None
     return TYPE_DEFAULT_LLM_CONTEXT.get(type_code)
 
 
@@ -280,13 +293,17 @@ def allowed_locations(type_code):
 
     Returns a fresh list (callers may not mutate the registry). Patterns use the
     literal '<domain>' and '_system/' tokens. WATCH returns two patterns; every
-    other type returns one. Unknown type -> empty list.
+    other type returns one. Unknown/non-string type -> empty list.
     """
+    if not isinstance(type_code, str):
+        return []
     return list(TYPE_LOCATION.get(type_code, []))
 
 
 def is_projection(type_code):
     """True iff `type_code` is a projection type (OVERVIEW or CTXMAP, §1.5/C8)."""
+    if not isinstance(type_code, str):
+        return False
     return type_code in PROJECTION_TYPES
 
 

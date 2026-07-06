@@ -53,17 +53,17 @@ def estimate_tokens(text, chars_per_token=DEFAULT_CHARS_PER_TOKEN):
 # 引数解析
 # ---------------------------------------------------------------------------
 def _parse_args(argv):
-    """[--docs-root R] [--cap N] [--config PATH] [--format json|text] [--today YMD]。
+    """[--docs-root R] [--cap N] [--config PATH] [--format json|text]。
 
     返り値は opts dict。未知の引数は無視する(セッション開始を落とさない)。--cap の値が
-    整数でなければ None のまま(=config/既定にゆだねる)。
+    整数でなければ None のまま(=config/既定にゆだねる)。日付は使わない(古び検出は
+    監査の仕事で、本スクリプトは監査の要約を読むだけ)。
     """
     opts = {
         "docs_root": None,
         "cap": None,
         "config": None,
         "format": "json",
-        "today": None,
     }
     i = 0
     n = len(argv)
@@ -85,10 +85,6 @@ def _parse_args(argv):
             opts["format"] = argv[i + 1]; i += 2; continue
         if a.startswith("--format="):
             opts["format"] = a.split("=", 1)[1]; i += 1; continue
-        if a == "--today" and i + 1 < n:
-            opts["today"] = argv[i + 1]; i += 2; continue
-        if a.startswith("--today="):
-            opts["today"] = a.split("=", 1)[1]; i += 1; continue
         i += 1
     if opts["format"] not in ("json", "text"):
         opts["format"] = "json"
@@ -162,8 +158,15 @@ def _plugin_root_cache_candidates():
     return cands
 
 
-def _load_audit_summary():
-    """前回監査の要約(docs-audit/1)を読む。無ければ None。決して例外を投げない。"""
+def _load_audit_summary(docs_root=None):
+    """前回監査の要約(docs-audit/1)を読む。無ければ None。決して例外を投げない。
+
+    要約の root(docs-audit が監査した docs のパス)が現在の docs_root と一致
+    しない候補は捨てる。第一候補の ${CLAUDE_PLUGIN_ROOT}/.cache は同じプラグ
+    インを使う全プロジェクトで共有されるため、照合しないと別プロジェクトの
+    監査所見と是正指示を注入してしまう(越境汚染)。root キーが無い要約は
+    照合できないので、これも捨てる(誤注入より無注入が安全側)。
+    """
     for path in _plugin_root_cache_candidates():
         if not os.path.isfile(path):
             continue
@@ -172,9 +175,23 @@ def _load_audit_summary():
                 data = json.load(fh)
         except (OSError, ValueError, UnicodeError):
             continue
-        if isinstance(data, dict):
-            return data
+        if not isinstance(data, dict):
+            continue
+        if docs_root and not _same_docs_root(data.get("root"), docs_root):
+            continue
+        return data
     return None
+
+
+def _same_docs_root(summary_root, docs_root):
+    """要約の root と現在の docs_root が同じ場所を指すか。決して例外を投げない。"""
+    if not isinstance(summary_root, str) or not summary_root.strip():
+        return False
+    try:
+        return (os.path.realpath(os.path.abspath(summary_root))
+                == os.path.realpath(os.path.abspath(docs_root)))
+    except (OSError, ValueError):
+        return False
 
 
 # ---------------------------------------------------------------------------
@@ -813,7 +830,7 @@ def main(argv=None):
 
         warnings = []
         docs = _load_corpus(docs_root, warnings.append) if had_docs_root else []
-        audit_summary = _load_audit_summary()
+        audit_summary = _load_audit_summary(docs_root if had_docs_root else None)
 
         context, _overflow, _est = _assemble(
             docs, audit_summary, config, cap, cpt, had_docs_root)

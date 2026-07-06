@@ -6,7 +6,7 @@ domain: context
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-06-30
+updated: 2026-07-06
 sources: [plugin/scripts/inject-contract.py]
 depends_on: [REQ-010, ICD-001, ICD-005]
 llm_context: task
@@ -18,7 +18,7 @@ llm_context: task
 
 ## 入出力
 
-- 入力: SessionStart の Hook JSON を標準入力で受け取るが、内容は読み捨てる。引数は `[--docs-root R] [--cap N] [--config PATH] [--format json|text] [--today YMD]`。
+- 入力: SessionStart の Hook JSON を標準入力で受け取るが、内容は読み捨てる。引数は `[--docs-root R] [--cap N] [--config PATH] [--format json|text]`。日付は受け取らない（古び検出は監査の仕事で、本スクリプトは監査の要約を読むだけ）。未知の引数は無視する。
 - 応答: `{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":<契約文字列>}}`。
 - 契約文字列は次の順に並べる。要点復唱 → 重要文書（冒頭）→ GLOSSARY 見出し → 確定事実（現行の DECIDED）→ NONGOAL → 廃止事実 → WATCH の要点 → 前回監査の要約 → 重要文書（末尾に再掲）→ 超過通知（条件を満たすときだけ）。
 - 前回監査の要約は実行可能にする。`top_findings` の同一行は一つにまとめて件数を添える。`counts_by_check` に未登録/影文書（`unregistered_document`・`shadowed_document`）または孤児（`orphan`）が在るとき、あるいは error があるときは、`docs-curate` を名指しで起動する一行を要約に加える（受動の案内に留めない）。この一行は上限超過の有無に依らず出す。
@@ -35,6 +35,7 @@ llm_context: task
 
 - 内容に由来する例外は main の外へ出さない。常に終了コード 0 を返し、セッションを落とさない。何が起きても、空でない妥当な JSON を返す。
 - 監査要約が無い、またはスキーマが合わないときは「前回監査なし」と書く。
+- 監査要約の `root` が注入先セッションの docs ルートと一致しない要約は捨て、「前回監査なし」へ劣化する。`${CLAUDE_PLUGIN_ROOT}/.cache` は同じプラグインを使う全プロジェクトで共有されるため、照合しないと別プロジェクトの所見と是正指示を注入してしまう。`root` の無い要約も捨てる（誤注入より無注入が安全側）。
 - `_system` が無いときは、ブートストラップの通知だけを返す（空文字列は返さない）。
 - `docs/` は在るが登録文書（frontmatter に `id` を持つ `.md`）が一つも無いときは、オンボーディングの通知だけを返す。docs-system-init での最小構成の用意と、散在する未登録ファイルの docs-curate での整理・登録を促す（空文字列は返さない）。ブートストラップ（`docs/` 自体が無い）とは相互排他である。
 

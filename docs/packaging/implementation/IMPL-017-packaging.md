@@ -6,7 +6,7 @@ domain: packaging
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-06-30
+updated: 2026-07-06
 sources: [plugin/hooks/hooks.json, plugin/scripts/scaffold.py]
 depends_on: [SPEC-019, SPEC-020]
 llm_context: task
@@ -18,7 +18,8 @@ llm_context: task
 
 - `hooks/hooks.json` の PostToolUse は三つのスクリプトを配列で並べ、その順で起動する。`policy-guard.py`・`docs-linter.py`・`review-nudge.py` の順に書く `[R7][R10]`。配列の並びが起動順を決める。
 - `hooks/hooks.level2.json` は縮小差分である。SessionEnd を持たず、PostToolUse は `docs-linter.py` だけにする。
-- 配線先の `command` は、すべて `${CLAUDE_PLUGIN_ROOT}/scripts/<名>.py` で書く。
+- 配線先の `command` は、すべて `"${CLAUDE_PLUGIN_ROOT}/scripts/<名>.py"` で書く。変数を含むパスは二重引用符で囲む。
+- スクリプトの実行ビットは `git update-index --chmod=+x` で git の登録簿に記録する。`core.filemode=false` の環境では作業ツリーの `chmod` は記録されず、登録簿の 100755 だけが配布物に効く。
 - `plugin.json` は最小キーだけを持つ。スクリプトは、標準ライブラリと、兄弟の `_` コアだけを import する `[R5]`。
 
 ## 注意点

@@ -755,6 +755,41 @@ class RobustnessTest(_Base):
         self.assertEqual(code, 0)
         self.assertIn("BAD_STATUS", out)
 
+    def test_list_valued_type_flagged_not_crashed(self):
+        """§8.C: `type: [SPEC]` (one-char YAML typo) must NOT abort the lint.
+
+        Regression: this used to raise TypeError (unhashable list) inside the
+        registry lookup, and the catch-all swallowed every other finding as
+        'internal error'. It must now flag UNKNOWN_TYPE and keep the remaining
+        checks alive (the doc below also lacks the SPEC 4 sections)."""
+        path = os.path.join(self.root, "docs", "billing", "spec",
+                            "SPEC-014-x.md")
+        os.makedirs(os.path.dirname(path))
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write("---\n"
+                     "id: SPEC-014\ntitle: t\ntype: [SPEC]\ndomain: billing\n"
+                     "status: current\nowner: a\nupdated: 2026-01-01\n"
+                     "sources: []\n---\n本文。\n")
+        out, code = self._lint(path)
+        self.assertEqual(code, 0)
+        self.assertIn("UNKNOWN_TYPE", out)
+        self.assertNotIn("internal error", out)
+
+    def test_list_valued_status_flagged_not_crashed(self):
+        """§8.C: `status: [current]` -> BAD_STATUS, no internal error."""
+        path = os.path.join(self.root, "docs", "billing", "spec",
+                            "SPEC-014-x.md")
+        os.makedirs(os.path.dirname(path))
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write("---\n"
+                     "id: SPEC-014\ntitle: t\ntype: SPEC\ndomain: billing\n"
+                     "status: [current]\nowner: a\nupdated: 2026-01-01\n"
+                     "sources: []\n---\n" + _SPEC_BODY_4)
+        out, code = self._lint(path)
+        self.assertEqual(code, 0)
+        self.assertIn("BAD_STATUS", out)
+        self.assertNotIn("internal error", out)
+
 
 if __name__ == "__main__":
     unittest.main()

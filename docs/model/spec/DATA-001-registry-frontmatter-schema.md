@@ -6,7 +6,7 @@ domain: model
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-06-30
+updated: 2026-07-06
 sources: [DOCTRINE-001]
 depends_on: [REQ-001]
 llm_context: task
@@ -18,12 +18,12 @@ llm_context: task
 
 ## エンティティ
 
-型登録簿は 18 型ぶんの行を持つ。各行は次の属性を持つ。
+型登録簿は 19 型ぶんの行を持つ（ADR-013 で PROC を追加）。各行は次の属性を持つ。
 
-- 型コード: ICD, OVERVIEW, GLOSSARY, CTXMAP, DECIDED, NONGOAL, WATCH, REQ, SPEC, DATA, API, ADR, CHANGE, IMPACT, IMPL, TEST, RESEARCH, ARCHIVE（登録簿の順）。
+- 型コード: ICD, OVERVIEW, GLOSSARY, CTXMAP, DECIDED, NONGOAL, WATCH, REQ, SPEC, DATA, API, ADR, CHANGE, IMPACT, IMPL, PROC, TEST, RESEARCH, ARCHIVE（登録簿の順）。
 - 既定 `status`: 多くは current。ADR は accepted、CHANGE は proposed、RESEARCH は draft、ARCHIVE は archived。
 - 既定 `llm_context`: OVERVIEW・GLOSSARY・DECIDED・NONGOAL・WATCH は always、RESEARCH・ARCHIVE は never、ほかは task。
-- 置き場所: 型ごとに許可するディレクトリ。WATCH だけは二箇所（`_system/` と `<domain>/test/`）を許す。
+- 置き場所: 型ごとに許可するディレクトリ。WATCH だけは二箇所（`_system/` と `<domain>/test/`）を許す。PROC は `<domain>/procedures/` に置く。
 
 `status` 統制語彙は 8 値（proposed, accepted, current, deprecated, superseded, archived, open, draft）。CURRENT_STATUSES は {current, accepted}。型ごとの許可表は次のとおり。ADR は {proposed, accepted, superseded, deprecated}。ほかの型は accepted を除く 6 値とし、RESEARCH だけはこれに draft を加える。
 

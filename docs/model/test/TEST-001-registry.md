@@ -6,7 +6,7 @@ domain: model
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-06-30
+updated: 2026-07-06
 sources: [DOCTRINE-001]
 depends_on: [SPEC-001]
 llm_context: task
@@ -18,7 +18,7 @@ SPEC-001 の登録簿契約を検証する。実装テストは `plugin/tests/te
 
 ## 受入基準への対応
 
-- 18 型の登録簿（順序・既定 `status`・既定 `llm_context`・置き場所）が、DATA-001 と一致する。
+- 19 型の登録簿（順序・既定 `status`・既定 `llm_context`・置き場所）が、DATA-001 と一致する。
 - `status_allowed` の許可表が型ごとに正しい。accepted は ADR だけ、draft は RESEARCH だけが許される。
 - `type_of` が接頭辞を正しく読み取り、接頭辞が未知のとき、`id` が不正のとき、文字列でないときに None を返す。
 - `effective_llm_context` が上書きを優先して解決し、型が不明のときや辞書でないときに None を返す。

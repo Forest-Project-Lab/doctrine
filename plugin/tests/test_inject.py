@@ -367,12 +367,12 @@ class TestAuditHandshake(InjectBase):
     ${CLAUDE_PLUGIN_ROOT}/.cache/last-audit.json (docs-audit/1) and summarizes it;
     missing -> 「前回監査なし」. Round-trip with a docs-audit/1 artifact."""
 
-    def _audit_obj(self):
+    def _audit_obj(self, root="docs"):
         return {
             "schema": "docs-audit/1",
             "generated_at": "2026-06-28T00:00:00Z",
             "today": "2026-06-28",
-            "root": "docs",
+            "root": root,
             "totals": {"error": 2, "warn": 3, "advisory": 1},
             "counts_by_check": {"dead_link": 2, "stale_draft": 3},
             "top_findings": [
@@ -393,13 +393,13 @@ class TestAuditHandshake(InjectBase):
         self.addCleanup(shutil.rmtree, plugin_root, ignore_errors=True)
         cache_dir = os.path.join(plugin_root, ".cache")
         os.makedirs(cache_dir, exist_ok=True)
-        with open(os.path.join(cache_dir, "last-audit.json"), "w",
-                  encoding="utf-8") as fh:
-            json.dump(self._audit_obj(), fh, ensure_ascii=False)
 
         root = self._repo({"docs/_system/decided-facts.md":
                            _decided("DECIDED-001", "確定A")})
         docs_root = os.path.join(root, "docs")
+        with open(os.path.join(cache_dir, "last-audit.json"), "w",
+                  encoding="utf-8") as fh:
+            json.dump(self._audit_obj(root=docs_root), fh, ensure_ascii=False)
 
         old = os.environ.get("CLAUDE_PLUGIN_ROOT")
         os.environ["CLAUDE_PLUGIN_ROOT"] = plugin_root
@@ -420,21 +420,55 @@ class TestAuditHandshake(InjectBase):
         self.assertIn("SPEC-014", ctx)
         self.assertNotIn("前回監査なし", ctx)
 
+    def test_foreign_project_summary_is_not_injected(self):
+        """C3 越境汚染ガード: ${CLAUDE_PLUGIN_ROOT}/.cache は同じプラグインを
+        使う全プロジェクトで共有される。要約の root が現在の docs ルートと
+        一致しないなら、別プロジェクトの所見・是正指示を注入してはならない
+        (「前回監査なし」へ劣化する)。"""
+        plugin_root = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, plugin_root, ignore_errors=True)
+        cache_dir = os.path.join(plugin_root, ".cache")
+        os.makedirs(cache_dir, exist_ok=True)
+        with open(os.path.join(cache_dir, "last-audit.json"), "w",
+                  encoding="utf-8") as fh:
+            json.dump(self._audit_obj(root="/somewhere/else/docs"), fh,
+                      ensure_ascii=False)
+
+        root = self._repo({"docs/_system/decided-facts.md":
+                           _decided("DECIDED-001", "確定A")})
+        docs_root = os.path.join(root, "docs")
+
+        old = os.environ.get("CLAUDE_PLUGIN_ROOT")
+        os.environ["CLAUDE_PLUGIN_ROOT"] = plugin_root
+        try:
+            data = self._run_json(docs_root)
+        finally:
+            if old is None:
+                os.environ.pop("CLAUDE_PLUGIN_ROOT", None)
+            else:
+                os.environ["CLAUDE_PLUGIN_ROOT"] = old
+
+        ctx = self._ctx(data)
+        self.assertIn("前回監査なし", ctx)
+        # The foreign project's findings must not leak into this session.
+        self.assertNotIn("SPEC-014", ctx)
+        self.assertNotIn("dead_link", ctx)
+
     def test_summary_fallback_claude_cache(self):
         # No CLAUDE_PLUGIN_ROOT -> fallback to <proj>/.claude/.cache/last-audit.json.
         proj = _util.mkdtemp()
         self.addCleanup(shutil.rmtree, proj, ignore_errors=True)
         cache_dir = os.path.join(proj, ".claude", ".cache")
         os.makedirs(cache_dir, exist_ok=True)
+        docs_root = os.path.join(proj, "docs")
         with open(os.path.join(cache_dir, "last-audit.json"), "w",
                   encoding="utf-8") as fh:
-            json.dump(self._audit_obj(), fh, ensure_ascii=False)
+            json.dump(self._audit_obj(root=docs_root), fh, ensure_ascii=False)
 
         os.makedirs(os.path.join(proj, "docs", "_system"), exist_ok=True)
         with open(os.path.join(proj, "docs", "_system", "decided-facts.md"), "w",
                   encoding="utf-8") as fh:
             fh.write(_decided("DECIDED-001", "確定A"))
-        docs_root = os.path.join(proj, "docs")
 
         old_pr = os.environ.pop("CLAUDE_PLUGIN_ROOT", None)
         old_pd = os.environ.get("CLAUDE_PROJECT_DIR")
@@ -456,7 +490,10 @@ class TestAuditHandshake(InjectBase):
     def test_unregistered_count_names_docs_curate(self):
         # G3: counts_by_check.unregistered_document=N -> an actionable line that
         # NAMES docs-curate is injected, regardless of token-cap overflow.
-        obj = self._audit_obj()
+        root = self._repo({"docs/_system/decided-facts.md":
+                           _decided("DECIDED-001", "確定A")})
+        docs_root = os.path.join(root, "docs")
+        obj = self._audit_obj(root=docs_root)
         obj["counts_by_check"] = {"unregistered_document": 3}
         obj["totals"] = {"error": 3, "warn": 0, "advisory": 0}
         obj["top_findings"] = [
@@ -472,9 +509,6 @@ class TestAuditHandshake(InjectBase):
         with open(os.path.join(cache_dir, "last-audit.json"), "w",
                   encoding="utf-8") as fh:
             json.dump(obj, fh, ensure_ascii=False)
-        root = self._repo({"docs/_system/decided-facts.md":
-                           _decided("DECIDED-001", "確定A")})
-        docs_root = os.path.join(root, "docs")
         old = os.environ.get("CLAUDE_PLUGIN_ROOT")
         os.environ["CLAUDE_PLUGIN_ROOT"] = plugin_root
         try:

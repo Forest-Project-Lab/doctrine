@@ -226,6 +226,14 @@ def _check_status(meta, findings):
     if not _registry.is_known_type(type_code):
         # type itself unknown -> reported by _check_type; skip status here.
         return
+    if status is not None and not isinstance(status, str) \
+            and not _is_empty_value(status):
+        # Non-string, non-empty status (e.g. `status: [current]`): not
+        # covered by EMPTY_KEY, so it must be flagged here.
+        findings.append(Finding(
+            "BAD_STATUS", ERROR,
+            "status は統制語彙の文字列で書く(%r は不正)。" % (status,), "§3.3"))
+        return
     if not isinstance(status, str) or status.strip() == "":
         return  # empty status already flagged as EMPTY_KEY
     status = status.strip()
@@ -245,6 +253,13 @@ def _check_status(meta, findings):
 def _check_type_known(meta, findings):
     """UNKNOWN_TYPE (ERROR) — the 'type' value must be a registry type."""
     type_code = meta.get("type")
+    if type_code is not None and not isinstance(type_code, str):
+        # e.g. the YAML-list typo `type: [SPEC]`: present, non-empty, but
+        # not a string. Say so explicitly instead of passing silently.
+        findings.append(Finding(
+            "UNKNOWN_TYPE", ERROR,
+            "型は文字列で書く(%r は登録簿の型コードでない)。" % (type_code,), "§3.2"))
+        return
     if not isinstance(type_code, str) or type_code.strip() == "":
         return  # missing/empty handled by required-key check
     if not _registry.is_known_type(type_code):

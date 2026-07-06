@@ -194,6 +194,19 @@ class TestIsKnownType(unittest.TestCase):
         for bad in ("XYZ", "spec", "ICDINDEX", "", None):
             self.assertFalse(R.is_known_type(bad))
 
+    def test_unhashable_and_nonstring_do_not_raise(self):
+        """Frontmatter typos hand lists/dicts to the registry (`type: [SPEC]`).
+        Every type_code helper must degrade to its 'unknown' result instead of
+        raising TypeError (which would abort a whole lint/audit pass)."""
+        for bad in (["SPEC"], {"t": "SPEC"}, 7, True):
+            self.assertFalse(R.is_known_type(bad))
+            self.assertIsNone(R.default_status(bad))
+            self.assertIsNone(R.default_llm_context(bad))
+            self.assertEqual(R.status_allowed(bad), set())
+            self.assertEqual(R.allowed_locations(bad), [])
+            self.assertFalse(R.is_projection(bad))
+        self.assertIsNone(R.effective_llm_context({"type": ["SPEC"]}))
+
 
 class TestIsProjection(unittest.TestCase):
     """is_projection True for exactly {OVERVIEW, CTXMAP} (C8 / invariant 8)."""
