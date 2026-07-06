@@ -6,7 +6,7 @@ domain: lint
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-06-30
+updated: 2026-07-06
 sources: [plugin/tests/test_termcheck.py]
 depends_on: [SPEC-008]
 llm_context: task
@@ -22,6 +22,7 @@ llm_context: task
 ## 退行観点
 
 - `入出力`の中の`出力`、`現在形`の中の`現在`を誤検出しないこと（複合語の覆い隠し）。WATCH に挙げた懸念事項と突き合わせて確かめる。
+- 固有名の照合除外（ADR-018）: 意味欄が「固有名」の行を `proper_nouns` として読むこと。登録した固有名の中の禁止同義語は弾かず、地の文の単独出現は弾くこと。禁止同義語を包含する登録済み承認語も、辞書登録だけで照合から外れること。
 - 末尾注記の場合分け: 「可」を含む注記は文字列照合の対象にせず、含まない注記は素のトークンを照合すること。
 - 辞書を二重に定義しない、すなわち承認語表をハードコードしないこと[R6]。
 

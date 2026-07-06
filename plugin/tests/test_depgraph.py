@@ -408,6 +408,26 @@ class DepGraphCoreTest(unittest.TestCase):
         import json
         json.loads(json.dumps(j, ensure_ascii=False))
 
+    def test_duplicate_id_path_sorted_last_wins(self):
+        """同じ id の別ファイルはパス整列の最後が後勝ちでノードになる。
+
+        docs-audit の shadowed_document が『採用 paths[-1]』と報告する事実と
+        resolve() の答え(guard/linter が読む domain/type/status)が一致しな
+        ければならない(slice 05 A.3.2 の決定的後勝ち)。"""
+        _depgraph = _util.load_core("_depgraph")
+        fa = _node("DUP-1", "RESEARCH", "alpha")
+        fz = _node("DUP-1", "RESEARCH", "zulu")
+        root = _util.make_repo({
+            "docs/alpha/research/DUP-1.md": _util.fm_block(fa),
+            "docs/zulu/research/DUP-1.md": _util.fm_block(fz),
+        })
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        g = _depgraph.build_graph(os.path.join(root, "docs"))
+        self.assertEqual(g.nodes["DUP-1"]["path"], "zulu/research/DUP-1.md")
+        self.assertEqual(g.resolve("DUP-1")["domain"], "zulu")
+        self.assertEqual(sorted(g.dup_ids["DUP-1"]),
+                         ["alpha/research/DUP-1.md", "zulu/research/DUP-1.md"])
+
     def test_no_frontmatter_file_not_a_node(self):
         """A .md without frontmatter is a parse_warning, never a graph node."""
         _depgraph = _util.load_core("_depgraph")

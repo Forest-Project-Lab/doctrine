@@ -173,6 +173,30 @@ class TestR7IcdDependency(GuardTestBase):
         decision, _ = _pre(json.loads(out))
         self.assertEqual(decision, "allow")
 
+    def test_cross_domain_icd_dep_without_type_key_allowed(self):
+        """type: キーの無い ICD 文書(id 接頭辞 ICD-)への越境依存 -> 接頭辞
+        フォールバックで allow。
+
+        Regression(ミューテーション監査 Or->And): dep_type は
+        `info.get("type") or graph.type_of(dep)` で引く。frontmatter に type: が
+        無いノードは info["type"] が空なので、graph.type_of(id 接頭辞→登録簿)へ
+        倒れて ICD と判る。or が and に化けると dep_type が偽値になり、R7 の
+        正当な ICD 経路が誤って deny される。"""
+        fm_no_type = {"id": "ICD-09", "title": "t", "domain": "identity",
+                      "status": "current", "owner": "o", "updated": "2026-06-01",
+                      "sources": []}
+        root = self._repo({
+            "docs/identity/ICD.md": _util.fm_block(fm_no_type) + "ICD本文。\n",
+        })
+        new = _util.fm_block(_doc("billing", doc_id="SPEC-30",
+                                  fm_extra={"depends_on": ["ICD-09"]}))
+        tin = {"file_path": os.path.join(root, "docs/billing/spec/SPEC-30-x.md"),
+               "content": new + "本文。\n"}
+        out, _ = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Write", tin))
+        decision, reason = _pre(json.loads(out))
+        self.assertEqual(decision, "allow", reason)
+
     def test_status_blind_current_icd_irrelevant(self):
         """C12 restated: even a non-ICD cross-domain dep that is itself `current`
         is denied — status of the dep never saves a non-ICD cross-domain link."""
@@ -571,6 +595,39 @@ class TestDeleteSafety(GuardTestBase):
             "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Bash", tin))
         decision, _ = _pre(json.loads(out))
         self.assertEqual(decision, "allow")
+
+    def test_bash_rm_glob_no_violation_allowed(self):
+        """被依存ゼロの文書にだけ一致する glob rm -> allow(展開経路)。
+
+        Regression(ミューテーション監査 Is->IsNot): `if expanded is None:` が
+        反転すると、glob が正常に展開できたときに had_unexpandable が立ち、
+        無害な glob rm まで「glob を展開できません」で常時 deny になる。"""
+        root = self._repo({
+            "docs/billing/spec/SPEC-16.md": _util.fm_block(_doc(
+                "billing", doc_id="SPEC-16", status="current")) + "本文。\n",
+        })
+        tin = {"command": "rm %s" % os.path.join(
+            root, "docs/billing/spec/SPEC-1*.md")}
+        out, _ = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Bash", tin))
+        decision, reason = _pre(json.loads(out))
+        self.assertEqual(decision, "allow", reason)
+
+    def test_bash_rm_glob_matching_depended_doc_denied_with_dependents(self):
+        """被依存文書に一致する glob rm -> 依存名入りの deny(glob 文言でなく)。
+
+        glob 展開が実ターゲットへ届き、削除安全の違反文(逆依存の列挙)で拒否
+        されることを固定する。Is->IsNot 変異では展開成功が「展開不能」扱いに
+        なり、理由が glob 文言に化けて TEST-20 が消える。"""
+        root = self._depended_repo()
+        tin = {"command": "rm %s" % os.path.join(
+            root, "docs/billing/spec/SPEC-1*.md")}
+        out, _ = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Bash", tin))
+        decision, reason = _pre(json.loads(out))
+        self.assertEqual(decision, "deny")
+        self.assertIn("TEST-20", reason)
+        self.assertIn("SPEC-14", reason)
 
     def test_bash_rm_multiple_targets_last_violates_denied(self):
         """rm <harmless> <depended> — 複数ターゲットの末尾が違反 -> deny。"""

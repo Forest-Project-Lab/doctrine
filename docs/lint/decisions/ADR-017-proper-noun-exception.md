@@ -3,10 +3,11 @@ id: ADR-017
 title: 外部の公式名を固有名として辞書に登録し照合から外す
 type: ADR
 domain: lint
-status: accepted
+status: superseded
+superseded_by: ADR-018
 owner: doctrine-maintainers
 created: 2026-07-02
-updated: 2026-07-02
+updated: 2026-07-06
 sources: [doctrine-robustness-matrix.ja.md]
 depends_on: [SPEC-008]
 llm_context: task

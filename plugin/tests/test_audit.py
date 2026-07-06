@@ -153,6 +153,14 @@ class ReviewByTest(AuditBase):
         self.assertEqual(len(rb), 1)
         self.assertEqual(rb[0]["severity"], "error")
 
+    def test_review_by_due_today_not_overrun(self):
+        """review_by == today(期限当日)はまだ超過ではない(< の境界)。"""
+        root = self.build([
+            (_fm("DECIDED-1", "DECIDED", "billing", review_by=TODAY), "x"),
+        ])
+        data, _ = self.audit_json(root)
+        self.assertEqual(self.checks_for(data, "review_by_overrun"), [])
+
 
 # --- stale_draft (TC-088/089, R8/R2) --------------------------------------
 
@@ -303,6 +311,31 @@ class OrphanTest(AuditBase):
         ])
         data, _ = self.audit_json(root)
         self.assertEqual(self.checks_for(data, "orphan"), [])
+
+    def test_orphan_review_by_boundary(self):
+        """review_by 超過は陳腐化(orphan 成立)、当日はまだ非陳腐化(< の境界)。
+
+        updated は最近(180 日閾値未満)にして updated 経由の陳腐化を切り、
+        review_by 経由の陳腐化分岐だけを検証する。
+        """
+        # 過去の review_by + 最近の updated -> review_by 経由で orphan。
+        root = self.build([
+            (_fm("RESEARCH-1", "RESEARCH", "billing", status="draft",
+                 updated="2026-06-20", review_by="2026-06-28",
+                 llm_context="never"), "x"),
+        ])
+        data, _ = self.audit_json(root)
+        orph = self.checks_for(data, "orphan")
+        self.assertEqual(len(orph), 1)
+        self.assertEqual(orph[0]["doc_id"], "RESEARCH-1")
+        # review_by == today -> まだ陳腐化ではない -> not orphan。
+        root2 = self.build([
+            (_fm("RESEARCH-1", "RESEARCH", "billing", status="draft",
+                 updated="2026-06-20", review_by=TODAY,
+                 llm_context="never"), "x"),
+        ])
+        data2, _ = self.audit_json(root2)
+        self.assertEqual(self.checks_for(data2, "orphan"), [])
 
 
 # --- reverse_orphan (TC-093/094/095, R3/R8) -------------------------------

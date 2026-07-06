@@ -324,6 +324,27 @@ class TypeLocationTest(_Base):
         codes, _ = self._codes(p)
         self.assertIn("DOMAIN_PATH_MISMATCH", codes)
 
+    def test_domain_path_mismatch_involving_system(self):
+        """§3.4: _system が片側に絡む domain↔path 不一致も検出する(変異体監査)。
+
+        L379 の `path_domain == \"_system\" and declared == \"_system\"` の
+        どちらの == を != に反転しても不一致が抑止されるため、両方向を固定する。
+        """
+        # (1) domain:_system だが billing/ 配下 -> DOMAIN_PATH_MISMATCH
+        p = self._write("docs/billing/spec/SPEC-014-x.md",
+                        _valid_spec_fm(domain="_system"), _SPEC_BODY_4)
+        codes, _ = self._codes(p)
+        self.assertIn("DOMAIN_PATH_MISMATCH", codes)
+        # (2) _system/ 配下だが domain:billing -> DOMAIN_PATH_MISMATCH
+        p2 = self._write("docs/_system/decided-facts.md", {
+            "id": "DECIDED-1", "title": "d", "type": "DECIDED",
+            "domain": "billing", "status": "current", "owner": "a",
+            "updated": "2026-01-01", "review_by": "2027-01-01",
+            "sources": [],
+        }, "事実。\n")
+        codes2, _ = self._codes(p2)
+        self.assertIn("DOMAIN_PATH_MISMATCH", codes2)
+
     def test_watch_two_locations(self):
         """TC: WATCH allowed in _system/ AND in <domain>/test/."""
         p1 = self._write("docs/_system/watchlist.md", {
@@ -389,6 +410,31 @@ class RequiredKeysTest(_Base):
         self.assertIn("EMPTY_KEY", codes)
         # sources:[] must NOT produce EMPTY_KEY for sources.
         self.assertNotIn("sources", ctx.split("EMPTY_KEY")[1] if "EMPTY_KEY" in ctx else "")
+
+    def test_missing_status_flagged_not_crashed(self):
+        """status キー欠落 -> MISSING_KEY のみ。クラッシュも BAD_STATUS も出ない
+        (変異体監査: _check_status の early-return ガード or->and)。"""
+        fm = _valid_spec_fm()
+        del fm["status"]
+        self._write("docs/billing/REQ-2-x.md", _req_fm(), "本文。\n")
+        p = self._write("docs/billing/spec/SPEC-014-x.md", fm, _SPEC_BODY_4)
+        codes, ctx = self._codes(p)
+        self.assertIn("MISSING_KEY", codes)
+        self.assertIn("status", ctx)
+        self.assertNotIn("BAD_STATUS", codes)
+        self.assertNotIn("internal error", ctx)
+
+    def test_missing_domain_flagged_not_crashed(self):
+        """domain キー欠落 -> MISSING_KEY のみ。DOMAIN_PATH_MISMATCH 誤検出も
+        クラッシュも無し(変異体監査: _check_domain_path のガード or->and)。"""
+        fm = _valid_spec_fm()
+        del fm["domain"]
+        self._write("docs/billing/REQ-2-x.md", _req_fm(), "本文。\n")
+        p = self._write("docs/billing/spec/SPEC-014-x.md", fm, _SPEC_BODY_4)
+        codes, ctx = self._codes(p)
+        self.assertIn("MISSING_KEY", codes)
+        self.assertNotIn("DOMAIN_PATH_MISMATCH", codes)
+        self.assertNotIn("internal error", ctx)
 
     def test_spec_with_review_by_not_required_no_flag(self):
         """§B1: review_by present on a SPEC (not required) -> not flagged missing."""
@@ -782,6 +828,17 @@ class RobustnessTest(_Base):
         self.assertEqual(code, 0)
         self.assertIn("UNKNOWN_TYPE", out)
         self.assertNotIn("internal error", out)
+
+    def test_out_of_tree_doc_still_linted(self):
+        """§1.3 fail-open: docs/ 木の外(docs/・_system/・.claude/ を含まない
+        パス)の .md も検査され、クラッシュしない(変異体監査: in_scope の
+        最終 return True / _rel_under_docs の _system アンカー / rel_parts
+        ガードの or->and)。"""
+        p = self._write("stray/REQ-9-x.md",
+                        _req_fm(id="REQ-9", status="bogus"), "本文。\n")
+        codes, ctx = self._codes(p)
+        self.assertIn("BAD_STATUS", codes)
+        self.assertNotIn("internal error", ctx)
 
     def test_list_valued_status_flagged_not_crashed(self):
         """§8.C: `status: [current]` -> BAD_STATUS, no internal error."""

@@ -6,7 +6,7 @@ domain: lint
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-06-30
+updated: 2026-07-06
 sources: [plugin/scripts/_termcheck.py]
 depends_on: [SPEC-008]
 llm_context: task
@@ -21,7 +21,7 @@ llm_context: task
 
 ## 注意点
 
-- `_mask_approved_compounds` は、文字列照合の前に `入出力` や `現在形` を伏せ、覆いの外に素のまま現れた禁止同義語だけを照合に残す[R10]。
+- `_mask_approved_compounds` は、文字列照合の前に、組み込みの複合語（`入出力` や `現在形`）に加え、辞書の固有名の行（`proper_nouns`）と、禁止同義語を包含する登録済み承認語を、長い語から先に伏せる（ADR-018）。覆いの外に素のまま現れた禁止同義語だけを照合に残す[R10]。
 - 末尾注記 `（…）` の場合分け: 「可」を含めば文脈依存とみなして文字列照合の対象から外し、含まなければ素のトークンを取り出す。判定には `_TRAILING_PARENS_RE` と `_PARENS_ONLY_RE` を使う。
 - 運用辞書が解析できないときは、`_load_template_seed` が同梱テンプレートの種子に切り替える。あわせて `parse_error` を立て、呼び手が `GLOSSARY_PARSE_ERROR` を出せるようにする。
 

@@ -156,6 +156,18 @@ class TestMatrix(unittest.TestCase):
         self.assertEqual(fm, {"title": 'a "b" c'})
         self.assertEqual(errs, [])
 
+    def test_T15b_double_quoted_standard_escapes(self):
+        """T15b — double-quoted \\n \\t \\r \\\\ \\uXXXX escapes all processed.
+
+        Regression guard for the _unescape_double dispatch: a flipped
+        backslash comparison would emit literal backslashes for \\n/\\t/\\r/\\u
+        and swallow the character after \\\\."""
+        fm, body, errs = _frontmatter.parse(
+            '---\nt: "a\\nb\\tc\\rd\\\\e\\u0041"\n---\n'
+        )
+        self.assertEqual(fm, {"t": "a\nb\tc\rd\\eA"})
+        self.assertEqual(errs, [])
+
     def test_T16_single_quoted_escape(self):
         """T16 — single-quoted with '' -> ' escape."""
         fm, body, errs = _frontmatter.parse("---\ntitle: 'it''s ok'\n---\n")
@@ -223,6 +235,16 @@ class TestMatrix(unittest.TestCase):
             '---\nsources: ["a, b", c]\nupdated: 2026-06-30\n---\n'
         )
         self.assertEqual(fm, {"sources": ["a, b", "c"], "updated": "2026-06-30"})
+        self.assertEqual(errs, [])
+
+    def test_T24b_flow_single_quoted_comma_protected(self):
+        """T24b — single-quoted comma inside a flow list is not a separator.
+
+        Mirror of T24 for single quotes: a flipped quote comparison in
+        _split_top_level_commas would split 'a, b' into 'a / b', c and
+        corrupt sources/depends_on resolution."""
+        fm, body, errs = _frontmatter.parse("---\nsources: ['a, b', c]\n---\n")
+        self.assertEqual(fm, {"sources": ["a, b", "c"]})
         self.assertEqual(errs, [])
 
     def test_T25_dots_closer_and_body_blanks(self):

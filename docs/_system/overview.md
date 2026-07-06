@@ -78,7 +78,7 @@ sources: []
 | ADR-005 | ADR | lint | 承認辞書を体系内で一度だけ符号化する |
 | ADR-007 | ADR | lint | 禁止同義語セルの末尾注記の扱い |
 | ADR-012 | ADR | lint | 構造語彙を正本で定義済みと認め、doc-reviewを著述時の閉じた輪にする |
-| ADR-017 | ADR | lint | 外部の公式名を固有名として辞書に登録し照合から外す |
+| ADR-018 | ADR | lint | 固有名と登録承認語を辞書から動的に覆い、照合から外す |
 | IMPL-007 | IMPL | lint | `docs-linter.py` の実装メモ |
 | IMPL-008 | IMPL | lint | `_termcheck.py` の実装メモ |
 | IMPL-009 | IMPL | lint | `term-check.py` の実装メモ |
