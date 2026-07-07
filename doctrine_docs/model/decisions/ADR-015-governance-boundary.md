@@ -7,7 +7,7 @@ status: accepted
 owner: doctrine-maintainers
 created: 2026-07-02
 updated: 2026-07-02
-sources: [doctrine-robustness-matrix.ja.md]
+sources: [doctrine_docs/model/research/RESEARCH-001-robustness-matrix.md]
 depends_on: [REQ-001]
 llm_context: task
 ---

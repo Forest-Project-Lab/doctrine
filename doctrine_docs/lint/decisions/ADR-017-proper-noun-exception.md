@@ -8,7 +8,7 @@ superseded_by: ADR-018
 owner: doctrine-maintainers
 created: 2026-07-02
 updated: 2026-07-06
-sources: [doctrine-robustness-matrix.ja.md]
+sources: [doctrine_docs/model/research/RESEARCH-001-robustness-matrix.md]
 depends_on: [SPEC-008]
 llm_context: task
 ---

@@ -1,6 +1,19 @@
+---
+id: RESEARCH-001
+title: 従来開発・ビジネス成果物と doctrine の対応マトリクス(頑健性評価)
+type: RESEARCH
+domain: model
+status: archived
+owner: doctrine-maintainers
+created: 2026-07-05
+updated: 2026-07-06
+sources: [spec/doctrine.ja.md]
+llm_context: never
+---
+
 # 従来開発・ビジネス成果物と doctrine の対応マトリクス(頑健性評価)
 
-本書は、doctrine(`spec/doctrine.ja.md`, DOCTRINE-001)の頑健性を、従来開発(ウォーターフォール・アジャイル・スクラム)とビジネスの文書成果物を細粒度で列挙し、doctrineの統治モデルへ対応付けることで評価した報告である。本書自体は docs/ の登録簿の外に置く(取り込み要否は `external-md-intake` の3分類で後日判断する)。
+本書は、doctrine(`spec/doctrine.ja.md`, DOCTRINE-001)の頑健性を、従来開発(ウォーターフォール・アジャイル・スクラム)とビジネスの文書成果物を細粒度で列挙し、doctrineの統治モデルへ対応付けることで評価した報告である。本書は RESEARCH 型として統治木(model ドメイン)に置き、常時文脈には載せない(llm_context: never)。
 
 ## 1. 方法
 
