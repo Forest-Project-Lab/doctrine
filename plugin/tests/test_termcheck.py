@@ -269,7 +269,7 @@ class MaskingTest(unittest.TestCase):
 
 
 class SuppressionTest(unittest.TestCase):
-    """Skip the GLOSSARY正本 body and projection docs (MASTER §6)."""
+    """Skip GLOSSARY正本, projections, and never-context RESEARCH/ARCHIVE (ADR-023)."""
 
     def setUp(self):
         self.g = _g()
@@ -285,6 +285,16 @@ class SuppressionTest(unittest.TestCase):
 
     def test_projection_ctxmap_skipped(self):
         fs = tc.check("ドキュメント 領域", {"type": "CTXMAP"}, self.g)
+        self.assertEqual([f.code for f in fs], [])
+
+    def test_research_body_skipped(self):
+        """RESEARCH is llm_context: never + external vocabulary -> skip (ADR-023)."""
+        fs = tc.check("ドキュメント 領域 要件定義書", {"type": "RESEARCH"}, self.g)
+        self.assertEqual([f.code for f in fs], [])
+
+    def test_archive_body_skipped(self):
+        """ARCHIVE likewise -> skip body-level term checks (ADR-023)."""
+        fs = tc.check("ドキュメント 領域 要件定義書", {"type": "ARCHIVE"}, self.g)
         self.assertEqual([f.code for f in fs], [])
 
 
