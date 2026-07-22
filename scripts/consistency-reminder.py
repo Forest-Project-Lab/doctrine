@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""SessionStart フック: セッションを跨ぐカウンタを 1 増やし、
+"""UserPromptSubmit フック: 会話（ユーザ発話）ごとにカウンタを 1 増やし、
 INTERVAL 回ごとに整合点検のリマインドを注入する。
 
-- カウンタは .claude/.consistency-counter に置く(セッションを問わず持続)。
-- INTERVAL 回に達したセッションだけ、additionalContext でリマインドを返す。
-- 催促するだけで、点検自体は実行しない(実行は /consistency-check または
-  scripts/consistency-check.py に委ねる)。
+- カウンタは .claude/.consistency-counter に置く（セッションを問わず持続。
+  会話の回数を跨セッションで数え続ける）。
+- INTERVAL 回に達した会話だけ、additionalContext でリマインドを返す。
+- 催促するだけで、点検自体は実行しない（実行は /consistency-check または
+  scripts/consistency-check.py に委ねる）。
 - 何が起きても後続フックを壊さない。終了コードは常に 0。
 """
 import json
@@ -40,8 +41,7 @@ def main():
 
     if n % INTERVAL == 0:
         msg = (
-            "【整合点検のリマインド】これで %d 回目のセッションです"
-            "(%d 回ごと)。\n"
+            "【整合点検のリマインド】これで %d 回目の会話です（%d 回ごと）。\n"
             "linter と audit が同じファイルへ矛盾した判定を出していないか点検する"
             "時期です。次を実行してください:\n"
             "  /consistency-check   (または python3 scripts/consistency-check.py)\n"
@@ -50,7 +50,7 @@ def main():
             "固定してください。" % (n, INTERVAL)
         )
         out = {"hookSpecificOutput": {
-            "hookEventName": "SessionStart",
+            "hookEventName": "UserPromptSubmit",
             "additionalContext": msg}}
         try:
             sys.stdout.write(json.dumps(out, ensure_ascii=False))
