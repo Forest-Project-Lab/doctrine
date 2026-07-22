@@ -21,6 +21,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import _frontmatter
+import _intake
 import _registry
 import _termcheck
 
@@ -93,10 +94,11 @@ def _split_parts(path):
 
 
 def in_scope(path):
-    """True iff the linter should examine this path: every .md, anywhere.
+    """True iff the path is even a candidate to parse: any .md.
 
-    統治木の外でも点検する(fail-open toward checking, §1.3): 型付きなら
-    STRAY_DOCUMENT で置き場所を正させ、型なしでも用語の助言は価値がある。
+    ここは「.md か否か」だけを安く判じる入口。実際に統治するか否か
+    (体系外は無発火、登録済み非文書は schema 強制せず用語助言のみ)は
+    lint_text が統治木と intake を見て決める(ADR-024)。
     A deleted file (absent on disk) is handled by the caller (emit nothing).
     """
     return path.endswith(".md")
@@ -571,10 +573,37 @@ def _build_graph_for(path):
 # Orchestration
 # ---------------------------------------------------------------------------
 def lint_text(text, path):
-    """Run all checks over a parsed document. Returns list[Finding]."""
-    findings = []
-    meta, body, _errs = _frontmatter.parse(text)
+    """Run all checks over a parsed document. Returns list[Finding].
 
+    ADR-024: 判定の前に統治木を探す。①統治木が無ければ(体系外)何も出さない。
+    ②型付きは従来どおり全点検(統治木外なら STRAY)。③型なしで intake に
+    「非文書/投影」と登録されたファイルは schema 強制を飛ばし、用語助言だけを
+    WARN で残す。④それ以外は従来どおり。intake の読み取りは監査と同じ共有コア
+    (_intake)を使い、同じファイルへの分類が食い違わないようにする。
+    """
+    findings = []
+
+    # ① 統治木の外(体系外)。doctrine は統治しない。何も出さない。
+    docs_root = _docs_root_of(path)
+    if docs_root is None:
+        return findings
+
+    meta, body, _errs = _frontmatter.parse(text)
+    type_code = meta.get("type") if meta else None
+    typed = isinstance(type_code, str) and _registry.is_known_type(type_code)
+
+    # ③ 型なしで intake に「非文書/投影」と登録 → schema 強制せず用語助言のみ。
+    # 型付きは統治木外で STRAY を出したいので、この分岐に入れない(②)。
+    if not typed:
+        disp = _intake.disposition_for(path, docs_root)
+        if disp in ("非文書", "投影"):
+            _check_term_check(meta or {}, body, path, findings)
+            for f in findings:
+                if f.severity == ERROR:
+                    f.severity = WARN
+            return findings
+
+    # ④ 従来フロー(型付き、または型なし・未登録)。
     # Missing/empty frontmatter: emit one MISSING_FRONTMATTER and stop (every
     # other check needs `type`). §1.4.
     if not meta:

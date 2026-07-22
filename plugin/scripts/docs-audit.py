@@ -29,6 +29,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import _depgraph
 import _frontmatter
+import _intake
 import _registry
 
 
@@ -696,50 +697,21 @@ def run_audit(root, today, knobs):
 # 11. 体系外 .md(ADR-021)。docs/ の外の .md を分類の記録と突き合わせる。
 # ---------------------------------------------------------------------------
 
-_INTAKE_LEDGER = ".md-intake"
-_INTAKE_LINE_RE = re.compile(
-    r"^(?P<path>[^:#][^:]*?)\s*[:：]\s*(?P<kind>非文書|投影|保留)"
-    r"(?:\s+(?P<due>\d{4}-\d{2}-\d{2}))?\s*$")
+# 記録の読み取り・照合は共有コア _intake に一本化する(ADR-024)。リンタと
+# 同じコードで読むことで、同じファイルへの分類が食い違うのを構造的に防ぐ。
+_INTAKE_LEDGER = _intake.LEDGER_NAME
 _STRAY_SKIP_DIRS = ("node_modules", "__pycache__")
 _STRAY_LIST_CAP = 50
 
 
 def _load_intake_ledger(root):
-    """docs/_system/.md-intake を読む。(entries, bad_lines) を返す。
-
-    entries: list[(path, kind, due_or_None)]。パスはプロジェクト根からの
-    相対(末尾 / は配下全体)。無ければ空。決して例外を投げない。
-    """
-    path = os.path.join(root, "_system", _INTAKE_LEDGER)
-    entries = []
-    bad = []
-    try:
-        with open(path, "r", encoding="utf-8-sig") as fh:
-            lines = fh.read().splitlines()
-    except (OSError, UnicodeError):
-        return entries, bad
-    for i, raw in enumerate(lines, 1):
-        line = raw.strip()
-        if line == "" or line.startswith("#"):
-            continue
-        m = _INTAKE_LINE_RE.match(line)
-        if m is None or (m.group("kind") == "保留" and not m.group("due")):
-            bad.append((i, line))
-            continue
-        entries.append((m.group("path").strip().replace("\\", "/"),
-                        m.group("kind"), m.group("due")))
-    return entries, bad
+    """共有コアに委ねる。(entries, bad_lines) を返す。"""
+    return _intake.load_ledger(root)
 
 
 def _ledger_entry_for(relpath, entries):
-    """relpath(プロジェクト根からの相対、/ 区切り)に効く記録の項目を返す。"""
-    for path, kind, due in entries:
-        if path.endswith("/"):
-            if relpath.startswith(path):
-                return (path, kind, due)
-        elif relpath == path:
-            return (path, kind, due)
-    return None
+    """共有コアに委ねる。relpath に効く記録の項目、無ければ None。"""
+    return _intake.entry_for(relpath, entries)
 
 
 def _check_stray_documents(root, today):

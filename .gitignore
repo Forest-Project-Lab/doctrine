@@ -4,3 +4,4 @@
 # 個人用ローカル設定（bypassPermissions などを含む）
 .claude/settings.local.json
 .vscode/settings.json
+.claude/.consistency-counter

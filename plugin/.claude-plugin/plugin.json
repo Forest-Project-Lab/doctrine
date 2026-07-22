@@ -1,6 +1,6 @@
 {
   "name": "doctrine",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "AIが生成する文書を最小限に保ち、現行・依存・正本という位置づけを構造で示すプラグイン。",
   "author": {
     "name": "Forest-Project-Lab"

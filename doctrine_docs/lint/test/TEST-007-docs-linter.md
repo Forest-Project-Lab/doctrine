@@ -6,7 +6,7 @@ domain: lint
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-06
+updated: 2026-07-22
 sources: [plugin/tests/test_linter.py]
 depends_on: [SPEC-007]
 llm_context: task
@@ -27,6 +27,11 @@ llm_context: task
 ## 追加の観点（ADR-021）
 
 - `STRAY_DOCUMENT`: 登録簿の型を持つ .md が doctrine_docs/ の木の外に在れば `ERROR` で出ること。doctrine_docs/ の中の型付き文書と、doctrine_docs/ の外の型なし .md には出ないこと。
+
+## 追加の観点（ADR-024・監査との整合）
+
+- ①登録済み非文書: intake に『非文書』と登録された型なし .md には `MISSING_FRONTMATTER` も schema の ERROR も出ないこと（用語助言は WARN で可）。②統治木の中の型なし・未登録 .md には従来どおり `MISSING_FRONTMATTER`（ERROR）が出ること。③型付き文書が統治木のサブツリーの外なら `STRAY_DOCUMENT` を維持すること。④統治木の根に到達できない体系外のファイルには何も出さないこと。
+- 整合の合否は `scripts/consistency-check.py` が緑（監査が非文書と認めるファイルにリンタが ERROR を出さない）であることでも確かめる。
 
 ## 合否基準
 
