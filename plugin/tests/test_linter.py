@@ -758,7 +758,11 @@ class RobustnessTest(_Base):
         self.assertIn("BAD_STATUS", out)
 
     def test_malformed_frontmatter(self):
-        """§8.C: a file without frontmatter -> MISSING_FRONTMATTER, exit 0."""
+        """§8.C: 統治木の中の frontmatter 無しファイル -> MISSING_FRONTMATTER, exit 0.
+
+        ADR-024: 統治木の外(木なし)なら無発火なので、木の印 docs/_system を置く。
+        """
+        os.makedirs(os.path.join(self.root, "docs", "_system"), exist_ok=True)
         path = os.path.join(self.root, "docs", "billing", "spec", "x.md")
         os.makedirs(os.path.dirname(path))
         with open(path, "w", encoding="utf-8") as fh:
@@ -802,7 +806,12 @@ class RobustnessTest(_Base):
         self.assertIn("BAD_STATUS", out)
 
     def test_typed_doc_outside_docs_tree_flagged_stray(self):
-        """ADR-021: 登録簿の型を持つ .md が docs/ の木の外 -> STRAY_DOCUMENT。"""
+        """ADR-021/024: 登録簿の型を持つ .md が統治木のサブツリーの外 -> STRAY_DOCUMENT。
+
+        統治木は在る(walkup が根を見つける)が、ファイルは docs/ の下でない。
+        型付きなので intake 免除には入らず STRAY を出す(ADR-024 の②)。
+        """
+        os.makedirs(os.path.join(self.root, "docs", "_system"), exist_ok=True)
         path = os.path.join(self.root, "notes", "SPEC-014-x.md")
         os.makedirs(os.path.dirname(path))
         with open(path, "w", encoding="utf-8") as fh:
@@ -818,14 +827,24 @@ class RobustnessTest(_Base):
         codes, _ = self._codes(p)
         self.assertNotIn("STRAY_DOCUMENT", codes)
 
-    def test_untyped_md_outside_docs_not_stray(self):
-        """docs/ の外の型なし .md は STRAY_DOCUMENT の対象でない(intake に委ねる)。"""
+    def test_registered_non_document_no_schema_error(self):
+        """ADR-024: intake に「非文書」と登録された型なし .md は schema 強制しない。
+
+        統治木は在り、その _system/.md-intake に MEMO.md を非文書として登録する。
+        frontmatter が無くても MISSING_FRONTMATTER も STRAY_DOCUMENT も出さない
+        (用語助言のみ WARN)。監査(非文書と認める)と判定が一致する。
+        """
+        os.makedirs(os.path.join(self.root, "docs", "_system"), exist_ok=True)
+        with open(os.path.join(self.root, "docs", "_system", ".md-intake"),
+                  "w", encoding="utf-8") as fh:
+            fh.write("MEMO.md: 非文書\n")
         path = os.path.join(self.root, "MEMO.md")
         with open(path, "w", encoding="utf-8") as fh:
             fh.write("# メモ\n本文。\n")
-        codes, _ = self._codes(path)
+        codes, ctx = self._codes(path)
         self.assertNotIn("STRAY_DOCUMENT", codes)
-        self.assertIn("MISSING_FRONTMATTER", codes)
+        self.assertNotIn("MISSING_FRONTMATTER", codes)
+        self.assertNotIn("[ERROR]", ctx)
 
     def test_unknown_string_type_flagged(self):
         """§3.2: 登録簿に無い文字列型 -> UNKNOWN_TYPE(ミューテーション監査の穴埋め)。"""
@@ -842,6 +861,7 @@ class RobustnessTest(_Base):
         registry lookup, and the catch-all swallowed every other finding as
         'internal error'. It must now flag UNKNOWN_TYPE and keep the remaining
         checks alive (the doc below also lacks the SPEC 4 sections)."""
+        os.makedirs(os.path.join(self.root, "docs", "_system"), exist_ok=True)
         path = os.path.join(self.root, "docs", "billing", "spec",
                             "SPEC-014-x.md")
         os.makedirs(os.path.dirname(path))
@@ -855,19 +875,21 @@ class RobustnessTest(_Base):
         self.assertIn("UNKNOWN_TYPE", out)
         self.assertNotIn("internal error", out)
 
-    def test_out_of_tree_doc_still_linted(self):
-        """§1.3 fail-open: docs/ 木の外(docs/・_system/・.claude/ を含まない
-        パス)の .md も検査され、クラッシュしない(変異体監査: in_scope の
-        最終 return True / _rel_under_docs の _system アンカー / rel_parts
-        ガードの or->and)。"""
+    def test_out_of_tree_doc_not_linted(self):
+        """ADR-024: 統治木の根に到達できない体系外の .md は点検しない(無発火)。
+
+        以前は fail-open で「木の外でも点検」していたが、ADR-024 で反転した。
+        統治木が無いパスは doctrine の管轄外。ERROR も出さず、クラッシュもしない。
+        """
         p = self._write("stray/REQ-9-x.md",
                         _req_fm(id="REQ-9", status="bogus"), "本文。\n")
         codes, ctx = self._codes(p)
-        self.assertIn("BAD_STATUS", codes)
+        self.assertEqual(codes, set())
         self.assertNotIn("internal error", ctx)
 
     def test_list_valued_status_flagged_not_crashed(self):
         """§8.C: `status: [current]` -> BAD_STATUS, no internal error."""
+        os.makedirs(os.path.join(self.root, "docs", "_system"), exist_ok=True)
         path = os.path.join(self.root, "docs", "billing", "spec",
                             "SPEC-014-x.md")
         os.makedirs(os.path.dirname(path))

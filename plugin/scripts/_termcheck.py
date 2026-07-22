@@ -437,6 +437,10 @@ def check(body, meta, glossary):
     Skips entirely (returns []):
       - the GLOSSARY 正本 body (type == GLOSSARY): it *contains* the banned words.
       - projection docs (type in {OVERVIEW, CTXMAP}): body is rendered.
+      - never-context reference (type in {RESEARCH, ARCHIVE}): llm_context: never
+        and external-sourced vocabulary (standard/law/artifact names) -> term
+        matching is almost all false positives; judging the 地の文 is doc-review's
+        job, not the linter's (ADR-023). The 地の文 norm (ADR-017) still holds.
     Emits GLOSSARY_PARSE_ERROR WARN when the glossary degraded to seed.
     """
     findings = []
@@ -455,6 +459,12 @@ def check(body, meta, glossary):
     if doc_type == "GLOSSARY":
         return findings
     if doc_type in ("OVERVIEW", "CTXMAP"):
+        return findings
+    # RESEARCH/ARCHIVE are llm_context: never and carry external-sourced
+    # vocabulary (standard/law/artifact names); mechanical matching there is
+    # almost all false positives. The 地の文 norm (ADR-017) still holds; judging
+    # it is doc-review's job, not the linter's (ADR-023).
+    if doc_type in ("RESEARCH", "ARCHIVE"):
         return findings
 
     masked = mask_body(body or "")

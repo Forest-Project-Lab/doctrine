@@ -5,7 +5,7 @@ type: OVERVIEW
 domain: _system
 status: current
 owner: render-projection
-updated: 2026-07-06
+updated: 2026-07-22
 llm_context: always
 sources: []
 ---
@@ -19,7 +19,7 @@ sources: []
 | GLOSSARY-001 | GLOSSARY | _system | 用語辞書の正本 |
 | DECIDED-001 | DECIDED | _system | 横断の確定方針（8事実） |
 | NONGOAL-001 | NONGOAL | _system | 横断のやらないこと（6項） |
-| WATCH-001 | WATCH | _system | 横断の退行監視（4項） |
+| WATCH-001 | WATCH | _system | 横断の退行監視（5項） |
 | ICD-005 | ICD | audit | audit のインターフェース（全件監査の境界） |
 | REQ-008 | REQ | audit | 最小性の監査（過剰と不足の両側を全件検出） |
 | SPEC-011 | SPEC | audit | 全件監査の検査群・要約スキーマ・決定性 |
@@ -81,6 +81,8 @@ sources: []
 | ADR-007 | ADR | lint | 禁止同義語セルの末尾注記の扱い |
 | ADR-012 | ADR | lint | 構造語彙を正本で定義済みと認め、doc-reviewを著述時の閉じた輪にする |
 | ADR-018 | ADR | lint | 固有名と登録承認語を辞書から動的に覆い、照合から外す |
+| ADR-023 | ADR | lint | 用語チェッカーは never 文脈の RESEARCH・ARCHIVE を点検しない |
+| ADR-024 | ADR | lint | リンタは登録済み非文書と統治木外に schema 強制をしない（用語助言のみ） |
 | IMPL-007 | IMPL | lint | `docs-linter.py` の実装メモ |
 | IMPL-008 | IMPL | lint | `_termcheck.py` の実装メモ |
 | IMPL-009 | IMPL | lint | `term-check.py` の実装メモ |

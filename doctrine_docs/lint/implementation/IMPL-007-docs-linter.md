@@ -6,7 +6,7 @@ domain: lint
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-06-30
+updated: 2026-07-22
 sources: [plugin/scripts/docs-linter.py]
 depends_on: [SPEC-007]
 llm_context: task
@@ -21,12 +21,13 @@ llm_context: task
 
 ## 注意点
 
+- `lint_text` は点検の前にまず統治木を探す（ADR-024）。①根に到達できなければ何も返さない。②型付き（登録簿の型）は従来どおり全点検（統治木外なら STRAY）。③型なしで intake に『非文書』『投影』と登録されたファイルは、`_check_term_check` だけを走らせ ERROR を WARN へ丸める。④それ以外は従来フロー。intake の読み取りは監査と共有する `_intake`（`disposition_for`）を使い、判定の食い違いを構造的に防ぐ。
 - 依存先がどのドメインに属するかは、`_build_graph_for` が `_depgraph.build_graph` を一度だけ呼んで解決する。`_depgraph` が無い環境では、止まらずに `ICD_DEP_UNVERIFIED`（WARN）へ落として動き続ける。
 - `_is_system_singleton` は、`_system` の固定ファイル名（投影と正本）を、id とファイル名の一致点検から外す。
 - `main` は、標準入力の読み取り・パスの解決・点検・助言文の組み立てをすべて例外処理で包み、終了コードは常に 0 を返す。
 
 ## 対象部品
 
-`plugin/scripts/docs-linter.py`。`_registry`・`_frontmatter`・`_termcheck`・`_depgraph` を import する。
+`plugin/scripts/docs-linter.py`。`_registry`・`_frontmatter`・`_intake`・`_termcheck`・`_depgraph` を import する。
 
 <!-- 入れない: 仕様の正本 -->

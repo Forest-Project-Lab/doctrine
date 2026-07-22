@@ -17,7 +17,7 @@ llm_context: task
 ## 受入基準への対応
 
 - SPEC-008 の四つの照合規則 `BANNED_SYNONYM`・`CALQUE`[R10]・`CALQUE_WORDTRAP`・`UNDEFINED_TERM`[R6] を、発火すべき入力と発火すべきでない入力の両方で確認する。
-- 種子への切り替えを確認する。運用辞書が無いときは種子を使うこと、解析に失敗したときは種子を使ったうえで `GLOSSARY_PARSE_ERROR` を添えることである。あわせて、GLOSSARY 正本と投影の本文を点検から飛ばすことも確認する。
+- 種子への切り替えを確認する。運用辞書が無いときは種子を使うこと、解析に失敗したときは種子を使ったうえで `GLOSSARY_PARSE_ERROR` を添えることである。あわせて、型による飛ばしを確認する。GLOSSARY 正本・投影（OVERVIEW／CTXMAP）に加え、RESEARCH・ARCHIVE（`llm_context: never`）の本文も、禁止同義語を含んでも点検を飛ばすこと（ADR-023）である。
 
 ## 退行観点
 
