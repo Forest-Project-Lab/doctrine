@@ -83,7 +83,10 @@
   },
 
   // 新規の名前付きボリュームは root 所有で作られる。remoteUser が書けるよう所有権を移す。
-  "postCreateCommand": "sudo chown -R node:node /home/node/.claude || true",
+  // あわせて doctrine プラグインを自己導入する: プラグインの導入状態は ~/.claude ボリューム側の
+  // ユーザー状態であり、ボリュームが作り直されると黙って消える(2026-07 の全停止の一因)。
+  // 再ビルドのたびにここで入れ直し、統治が沈黙したまま始まらないようにする。
+  "postCreateCommand": "sudo chown -R node:node /home/node/.claude || true; (claude plugin marketplace add ${containerWorkspaceFolder}; claude plugin install doctrine@forest-project-lab) || true",
 
   "remoteUser": "node"
 }
