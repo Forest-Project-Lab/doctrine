@@ -2,6 +2,36 @@
 
 本ファイルは doctrine プラグインのリリースごとの変更を記録する。「なぜ」の根拠は各 ADR に、詳細な差分は git 履歴にある。版番号の正本は `plugin/.claude-plugin/plugin.json`。
 
+## [0.3.0] — 2026-07-26
+
+全体批判レビュー(2026-07-26)の全所見(重大12・中18・軽微18)への対応。主題は「自走しない統治」からの脱却 — 発火面の全域化と、統治自身の死活の可視化。
+
+### 追加
+
+- **R11 統治の生存性・R12 会話知識の捕捉を要求化**(REQ-014/REQ-015、spec §2)。
+- **Hook を 7 イベントへ**(ADR-028): `gov-heartbeat.py`(UserPromptSubmit。監査の鮮度と doc-review 定例の期限をセッションに一度督促)・`capture-nudge.py`(Stop。記録なきセッションの終端を一度だけ差し止め)・`precompact-dump.py`(PreCompact。圧縮前に未記録の決定を `_system/.session-notes` へ退避させ、次セッションが選別を義務化)。三つとも Level に依らず動く(ADR-030)。
+- **監査に 6 検査を追加**(計17): 陳腐化の疑い(型既定点検周期。ADR-025)・上流更新の伝播・アーカイブ整合(ADR-027)・決定の着地(adr_not_landed。「文書上の宣言に留まる」欠陥類型の機械化)・辞書シードの退行・外部アンカーの存在(ADR-026)。
+- **EXT 型**(ADR-026): 統治木の外への依存(設定・上位設計書・CI・実行環境の仕様)をアンカーとして登録し、存在を監査が見張る。「畿外の中身は統治しない、畿外への依存は統治する」。
+- **被覆マトリクス**(SPEC-025): 統治要求×発火経路×証跡の一覧をテストで凍結。空白のセルを構造的に禁じる。
+- 導入先向け CI 雛形(`docs-system-init/references/ci-example.md`)。
+
+### 修正
+
+- **自己適用の全停止を修復**: marketplace のパスが改名前の場所を指したまま、全フックが 4 日間沈黙していた。パス修復に加え、「前回監査なし/古い」を死活の警告へ格上げし、CLAUDE.md/AGENTS.md に統治の生存期待を明記(R11)。
+- **カルクの書き戻し先を運用正本(`_system/glossary.md`)へ統一**(5箇所が機械の読まない spec §1 を指していた)。辞書の階層(運用正本が機械照合の正本、spec §1 とテンプレートはシード)を明文化。
+- **doc-review 定例の周期を実体化**: 実施記録は `_system/.governance-state`、督促は heartbeat(cadence-review.md の誤引用を解消)。
+- **ADR の着地漏れを解消**: ADR-005/007/008/011/012/014/015/016 を SPEC/ICD/NONGOAL から引用。ADR-014 の帰結(DECIDED 混入の定例点検)を docs-curate に実装。WATCH 第6項に欠陥類型を登録。
+- **decided-facts の根拠不在を解消**: 事実3/7/8 の根拠 ADR が実在しなかったため、ADR-031(標準ライブラリのみ)/ADR-032(Hook スナップショット)/ADR-033(必須8キー)を追認起案して張り替え。
+- **アーカイブ整合**(ADR-027): status archived ⇔ `<domain>/archive/` をリンタ・監査・不変ガード(状態でも拒否)で機械化。RESEARCH-001 を `model/archive/` へ移送。
+- regression-guard の description を引用符で囲む(厳格 YAML での解析失敗を防止)。5 技能へ日本語トリガーを追加。3 技能の裸名スクリプト参照に `${CLAUDE_PLUGIN_ROOT}` を付与。docs-curate の Level 要求を作業別に分割(促しと拒否の往復を解消)。external-md-intake の統治木ハードコードを解消。投影の `--check` の正しい使用法と Context Map の印(手編集の境界)を明記。CLAUDE.md/AGENTS.md を「案内」に再定義(ADR-029)。
+- 0.2.1 の本履歴にある「10 セッションごと」は、その後の変更で「会話 10 回ごと」になった(履歴は当時のまま残す)。
+
+### 内部
+
+- spec/doctrine.ja.md を現行決定(ADR-023..033)へ整合し `status: current` に。型は 20(EXT 追加)、テンプレートは 21。
+- 統治木に 28 文書を追加(ADR 9・REQ 2・SPEC 5・TEST 5・IMPL 3・EXT 4)、投影を再描画。
+- 検証: 753 テスト緑・監査 error=0 warn=0 advisory=0(17検査)・linter⇔audit 整合・投影ドリフト 0・term-check 0。
+
 ## [0.2.1] — 2026-07-22
 
 ### 修正
