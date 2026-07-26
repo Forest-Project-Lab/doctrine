@@ -3,6 +3,9 @@
     "SessionStart": [
       { "hooks": [ { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/inject-contract.py\"" } ] }
     ],
+    "UserPromptSubmit": [
+      { "hooks": [ { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/gov-heartbeat.py\"" } ] }
+    ],
     "PreToolUse": [
       { "matcher": "Edit|Write|MultiEdit",
         "hooks": [ { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/policy-guard.py\"" } ] },
@@ -16,6 +19,12 @@
           { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/docs-linter.py\"" },
           { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/review-nudge.py\"" }
         ] }
+    ],
+    "Stop": [
+      { "hooks": [ { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/capture-nudge.py\"" } ] }
+    ],
+    "PreCompact": [
+      { "hooks": [ { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/precompact-dump.py\"" } ] }
     ],
     "SessionEnd": [
       { "hooks": [ { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/docs-audit.py\" --root-from \"${CLAUDE_PROJECT_DIR}\" --json --summary-out \"${CLAUDE_PLUGIN_ROOT}/.cache/last-audit.json\" --fail-on never --respect-docs-level" } ] }

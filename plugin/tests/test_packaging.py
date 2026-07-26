@@ -110,11 +110,14 @@ class TestHooksFullProfile(unittest.TestCase):
         self.path = os.path.join(_util.PLUGIN_ROOT, "hooks", "hooks.json")
         self.hooks = _load_json(self.path)
 
-    def test_has_all_four_events(self):
+    def test_has_all_seven_events(self):
+        # 4 events (SPEC-019) + UserPromptSubmit/Stop/PreCompact (ADR-028:
+        # R11 生存性のハートビートと R12 会話知識の捕捉)。
         events = set(self.hooks.get("hooks", {}).keys())
         self.assertEqual(
             events,
-            {"SessionStart", "PreToolUse", "PostToolUse", "SessionEnd"},
+            {"SessionStart", "UserPromptSubmit", "PreToolUse", "PostToolUse",
+             "Stop", "PreCompact", "SessionEnd"},
         )
 
     def test_every_command_is_a_plugin_script(self):

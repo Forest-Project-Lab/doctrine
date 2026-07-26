@@ -1,0 +1,541 @@
+"""Tests for R11 (統治の生存性) / R12 (会話知識の捕捉) and the ADR-025/026/027 checks.
+
+Covers:
+- gov-heartbeat.py: audit-freshness and cadence-overdue warnings, once-per-session,
+  silence outside a governed tree and before first use.
+- capture-nudge.py: Stop-time one-shot block when governed docs were edited but no
+  record (ADR/DECIDED/WATCH/CHANGE or .session-notes) was touched; loop guards.
+- precompact-dump.py: dump instruction envelope.
+- review-nudge.py: session flags (edits-/recorded-) written at every Level.
+- docs-audit.py new checks: stale_current (ADR-025), source_drift,
+  archive_integrity (ADR-027), adr_not_landed, orphan skips archived.
+- docs-linter.py: ARCHIVED_LOCATION_MISMATCH (ADR-027).
+- policy-guard.py: status:archived immutability outside archive/ (ADR-027).
+- inject-contract.py: audit staleness warning, pending session-notes section,
+  extended curate/doc-review nudges (R11/R12).
+- SKILL.md descriptions are quoted (strict-YAML safety).
+"""
+import json
+import os
+import shutil
+import sys
+import unittest
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import _util  # noqa: E402
+
+
+def _set_env(case, **kv):
+    """Set env vars for a test and restore after."""
+    for k, v in kv.items():
+        old = os.environ.get(k)
+        if v is None:
+            os.environ.pop(k, None)
+        else:
+            os.environ[k] = v
+
+        def _restore(k=k, old=old):
+            if old is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = old
+        case.addCleanup(_restore)
+
+
+def _write(path, text):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.write(text)
+
+
+def _summary_json(root, today):
+    return json.dumps({
+        "schema": "docs-audit/1", "root": os.path.abspath(root),
+        "today": today, "generated_at": today + "T00:00:00Z",
+        "totals": {"error": 0, "warn": 0, "advisory": 0},
+        "counts_by_check": {}, "top_findings": [], "findings": [],
+    })
+
+
+class LivenessBase(unittest.TestCase):
+    def setUp(self):
+        self.base = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.base, ignore_errors=True)
+        self.root = os.path.join(self.base, "doctrine_docs")
+        os.makedirs(os.path.join(self.root, "_system"), exist_ok=True)
+        self.plugin_root = os.path.join(self.base, "plugin-root")
+        os.makedirs(os.path.join(self.plugin_root, ".cache"), exist_ok=True)
+        _set_env(self, CLAUDE_PLUGIN_ROOT=self.plugin_root,
+                 CLAUDE_PROJECT_DIR=self.base)
+
+    def _hb(self, today, sid):
+        stdin = {"hook_event_name": "UserPromptSubmit", "session_id": sid}
+        return _util.invoke("gov-heartbeat", argv=["--today", today],
+                            stdin_obj=stdin)
+
+    def _put_summary(self, today):
+        _write(os.path.join(self.plugin_root, ".cache", "last-audit.json"),
+               _summary_json(self.root, today))
+
+    def _put_state(self, text):
+        _write(os.path.join(self.root, "_system", ".governance-state"), text)
+
+
+class TestHeartbeat(LivenessBase):
+    def test_fresh_audit_and_recent_cadence_is_silent(self):
+        self._put_summary("2026-07-25")
+        self._put_state("last_cadence_review: 2026-07-20\n")
+        out, code = self._hb("2026-07-26", "s1")
+        self.assertEqual((out, code), ("", 0))
+
+    def test_stale_audit_warns(self):
+        self._put_summary("2026-07-01")
+        self._put_state("last_cadence_review: 2026-07-20\n")
+        out, code = self._hb("2026-07-26", "s2")
+        self.assertEqual(code, 0)
+        ctx = json.loads(out)["hookSpecificOutput"]["additionalContext"]
+        self.assertIn("前回監査から", ctx)
+        self.assertIn("R11", ctx)
+
+    def test_missing_audit_with_state_warns(self):
+        self._put_state("last_cadence_review: 2026-07-20\n")
+        out, _ = self._hb("2026-07-26", "s3")
+        ctx = json.loads(out)["hookSpecificOutput"]["additionalContext"]
+        self.assertIn("前回監査の記録が見つからない", ctx)
+
+    def test_brand_new_tree_is_silent(self):
+        # 要約も状態も無い(使い始めの前) → 黙る。SessionStart の案内に譲る。
+        out, code = self._hb("2026-07-26", "s4")
+        self.assertEqual((out, code), ("", 0))
+
+    def test_cadence_overdue_warns(self):
+        self._put_summary("2026-07-26")
+        self._put_state("last_cadence_review: 2026-01-01\n")
+        out, _ = self._hb("2026-07-26", "s5")
+        ctx = json.loads(out)["hookSpecificOutput"]["additionalContext"]
+        self.assertIn("定例", ctx)
+        self.assertIn("last_cadence_review", ctx)
+
+    def test_missing_cadence_record_with_audit_prompts(self):
+        self._put_summary("2026-07-26")
+        out, _ = self._hb("2026-07-26", "s6")
+        ctx = json.loads(out)["hookSpecificOutput"]["additionalContext"]
+        self.assertIn("実施記録が無い", ctx)
+
+    def test_once_per_session(self):
+        self._put_summary("2026-07-01")
+        self._put_state("last_cadence_review: 2026-07-20\n")
+        out1, _ = self._hb("2026-07-26", "s7")
+        out2, _ = self._hb("2026-07-26", "s7")
+        self.assertTrue(out1)
+        self.assertEqual(out2, "")
+
+    def test_no_tree_is_silent(self):
+        empty = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, empty, ignore_errors=True)
+        _set_env(self, CLAUDE_PROJECT_DIR=empty)
+        out, code = self._hb("2026-07-26", "s8")
+        self.assertEqual((out, code), ("", 0))
+
+
+class TestCaptureNudge(LivenessBase):
+    def _flags(self):
+        d = os.path.join(self.plugin_root, ".cache", "session-flags")
+        os.makedirs(d, exist_ok=True)
+        return d
+
+    def _stop(self, sid, active=False):
+        stdin = {"hook_event_name": "Stop", "session_id": sid,
+                 "stop_hook_active": active}
+        return _util.invoke("capture-nudge", stdin_obj=stdin)
+
+    def test_edits_without_record_blocks_once(self):
+        d = self._flags()
+        _write(os.path.join(d, "edits-cap1"), "")
+        out1, code = self._stop("cap1")
+        self.assertEqual(code, 0)
+        resp = json.loads(out1)
+        self.assertEqual(resp["decision"], "block")
+        self.assertIn("記録", resp["reason"])
+        # 二度目は黙る(nudged 印)。
+        out2, _ = self._stop("cap1")
+        self.assertEqual(out2, "")
+
+    def test_recorded_session_is_silent(self):
+        d = self._flags()
+        _write(os.path.join(d, "edits-cap2"), "")
+        _write(os.path.join(d, "recorded-cap2"), "")
+        out, _ = self._stop("cap2")
+        self.assertEqual(out, "")
+
+    def test_no_edits_is_silent(self):
+        self._flags()
+        out, _ = self._stop("cap3")
+        self.assertEqual(out, "")
+
+    def test_stop_hook_active_is_silent(self):
+        d = self._flags()
+        _write(os.path.join(d, "edits-cap4"), "")
+        out, _ = self._stop("cap4", active=True)
+        self.assertEqual(out, "")
+
+
+class TestPrecompactDump(unittest.TestCase):
+    def test_emits_dump_instruction(self):
+        out, code = _util.invoke("precompact-dump", stdin_obj={
+            "hook_event_name": "PreCompact", "trigger": "auto"})
+        self.assertEqual(code, 0)
+        resp = json.loads(out)
+        self.assertEqual(resp["hookSpecificOutput"]["hookEventName"], "PreCompact")
+        self.assertIn(".session-notes", resp["hookSpecificOutput"]["additionalContext"])
+
+
+class TestReviewNudgeFlags(LivenessBase):
+    def _edit(self, path, sid="test-session"):
+        stdin = _util.hook_stdin("PostToolUse", tool_name="Edit",
+                                 tool_input={"file_path": path})
+        stdin["session_id"] = sid
+        return _util.invoke("review-nudge", stdin_obj=stdin)
+
+    def test_spec_edit_writes_edits_flag(self):
+        p = _util.write_doc(self.root, "model/spec/SPEC-901-x.md", {
+            "id": "SPEC-901", "title": "x", "type": "SPEC", "domain": "model",
+            "status": "current", "owner": "a", "updated": "2026-06-30",
+            "sources": [],
+        }, "本文。\n")
+        self._edit(p, "rn1")
+        d = os.path.join(self.plugin_root, ".cache", "session-flags")
+        self.assertTrue(os.path.isfile(os.path.join(d, "edits-rn1")))
+        self.assertFalse(os.path.isfile(os.path.join(d, "recorded-rn1")))
+
+    def test_adr_edit_writes_recorded_flag(self):
+        p = _util.write_doc(self.root, "model/decisions/ADR-901-x.md", {
+            "id": "ADR-901", "title": "x", "type": "ADR", "domain": "model",
+            "status": "accepted", "owner": "a", "updated": "2026-06-30",
+            "sources": [],
+        }, "本文。\n")
+        self._edit(p, "rn2")
+        d = os.path.join(self.plugin_root, ".cache", "session-flags")
+        self.assertTrue(os.path.isfile(os.path.join(d, "recorded-rn2")))
+
+    def test_session_notes_write_counts_as_recorded(self):
+        notes = os.path.join(self.root, "_system", ".session-notes")
+        _write(notes, "- 決定の一文 (出所: 会話, 2026-07-26)\n")
+        out, _ = self._edit(notes, "rn3")
+        self.assertEqual(out, "")  # ナッジは出ない(印だけ)。
+        d = os.path.join(self.plugin_root, ".cache", "session-flags")
+        self.assertTrue(os.path.isfile(os.path.join(d, "recorded-rn3")))
+
+
+class AuditChecksBase(unittest.TestCase):
+    def setUp(self):
+        self.base = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.base, ignore_errors=True)
+        self.root = os.path.join(self.base, "doctrine_docs")
+        os.makedirs(os.path.join(self.root, "_system"), exist_ok=True)
+
+    def _audit(self):
+        out, code = _util.invoke("docs-audit", argv=[
+            "--root", self.root, "--json", "--today", "2026-07-26"])
+        return json.loads(out), code
+
+    def _codes(self, summary, check):
+        return [f for f in summary["findings"] if f["check"] == check]
+
+
+class TestStaleCurrent(AuditChecksBase):
+    def test_old_spec_without_review_by_warns(self):
+        _util.write_doc(self.root, "model/spec/SPEC-901-x.md", {
+            "id": "SPEC-901", "title": "x", "type": "SPEC", "domain": "model",
+            "status": "current", "owner": "a", "updated": "2020-01-01",
+            "sources": [], "depends_on": ["REQ-901"],
+        }, "[R1]\n## 入出力\nx\n## 制約\nx\n## エラー時挙動\nx\n## 受入基準\nx\n")
+        _util.write_doc(self.root, "model/REQ-901-x.md", {
+            "id": "REQ-901", "title": "x", "type": "REQ", "domain": "model",
+            "status": "current", "owner": "a", "updated": "2020-01-01",
+            "sources": [],
+        }, "本文。\n")
+        _util.write_doc(self.root, "model/test/TEST-901-x.md", {
+            "id": "TEST-901", "title": "x", "type": "TEST", "domain": "model",
+            "status": "current", "owner": "a", "updated": "2020-01-01",
+            "sources": [], "depends_on": ["SPEC-901"],
+        }, "本文。\n")
+        summary, _ = self._audit()
+        hits = self._codes(summary, "stale_current")
+        self.assertTrue(any(f["doc_id"] == "SPEC-901" for f in hits))
+        for f in hits:
+            self.assertEqual(f["severity"], "warn")
+
+    def test_explicit_review_by_defers_to_review_by_check(self):
+        _util.write_doc(self.root, "model/spec/SPEC-902-x.md", {
+            "id": "SPEC-902", "title": "x", "type": "SPEC", "domain": "model",
+            "status": "current", "owner": "a", "updated": "2020-01-01",
+            "sources": [], "review_by": "2027-01-01", "depends_on": ["REQ-902"],
+        }, "[R1]\n## 入出力\nx\n## 制約\nx\n## エラー時挙動\nx\n## 受入基準\nx\n")
+        _util.write_doc(self.root, "model/REQ-902-x.md", {
+            "id": "REQ-902", "title": "x", "type": "REQ", "domain": "model",
+            "status": "current", "owner": "a", "updated": "2020-01-01",
+            "sources": [],
+        }, "本文。\n")
+        _util.write_doc(self.root, "model/test/TEST-902-x.md", {
+            "id": "TEST-902", "title": "x", "type": "TEST", "domain": "model",
+            "status": "current", "owner": "a", "updated": "2020-01-01",
+            "sources": [], "depends_on": ["SPEC-902"],
+        }, "本文。\n")
+        summary, _ = self._audit()
+        self.assertFalse(
+            [f for f in self._codes(summary, "stale_current")
+             if f["doc_id"] == "SPEC-902"])
+
+
+class TestSourceDrift(AuditChecksBase):
+    def test_upstream_newer_than_downstream_advises(self):
+        _util.write_doc(self.root, "model/REQ-903-x.md", {
+            "id": "REQ-903", "title": "x", "type": "REQ", "domain": "model",
+            "status": "current", "owner": "a", "updated": "2026-07-20",
+            "sources": [],
+        }, "本文。\n")
+        _util.write_doc(self.root, "model/spec/SPEC-903-x.md", {
+            "id": "SPEC-903", "title": "x", "type": "SPEC", "domain": "model",
+            "status": "current", "owner": "a", "updated": "2026-07-01",
+            "sources": [], "depends_on": ["REQ-903"],
+        }, "[R1]\n## 入出力\nx\n## 制約\nx\n## エラー時挙動\nx\n## 受入基準\nx\n")
+        _util.write_doc(self.root, "model/test/TEST-903-x.md", {
+            "id": "TEST-903", "title": "x", "type": "TEST", "domain": "model",
+            "status": "current", "owner": "a", "updated": "2026-07-20",
+            "sources": [], "depends_on": ["SPEC-903"],
+        }, "本文。\n")
+        summary, _ = self._audit()
+        hits = self._codes(summary, "source_drift")
+        self.assertTrue(any(f["doc_id"] == "SPEC-903" and "REQ-903" in f["refs"]
+                            for f in hits))
+        for f in hits:
+            self.assertEqual(f["severity"], "advisory")
+
+
+class TestArchiveIntegrity(AuditChecksBase):
+    def test_archived_outside_archive_dir_errors(self):
+        _util.write_doc(self.root, "model/research/RESEARCH-901-x.md", {
+            "id": "RESEARCH-901", "title": "x", "type": "RESEARCH",
+            "domain": "model", "status": "archived", "owner": "a",
+            "updated": "2026-07-01", "sources": [], "llm_context": "never",
+        }, "本文。\n")
+        summary, _ = self._audit()
+        hits = self._codes(summary, "archive_integrity")
+        self.assertTrue(any(f["severity"] == "error" for f in hits))
+
+    def test_archived_inside_archive_dir_is_clean_and_not_orphan(self):
+        _util.write_doc(self.root, "model/archive/RESEARCH-902-x.md", {
+            "id": "RESEARCH-902", "title": "x", "type": "RESEARCH",
+            "domain": "model", "status": "archived", "owner": "a",
+            "updated": "2020-01-01", "sources": [], "llm_context": "never",
+        }, "本文。\n")
+        summary, _ = self._audit()
+        self.assertFalse([f for f in self._codes(summary, "archive_integrity")
+                          if f["severity"] == "error"])
+        # 孤児にも数えない(ADR-027: 倉庫の中身を削除候補へ昇格させない)。
+        self.assertFalse([f for f in self._codes(summary, "orphan")
+                          if f["doc_id"] == "RESEARCH-902"])
+
+    def test_non_research_without_successor_advises(self):
+        _util.write_doc(self.root, "model/archive/SPEC-904-x.md", {
+            "id": "SPEC-904", "title": "x", "type": "SPEC", "domain": "model",
+            "status": "archived", "owner": "a", "updated": "2026-07-01",
+            "sources": [],
+        }, "本文。\n")
+        summary, _ = self._audit()
+        hits = self._codes(summary, "archive_integrity")
+        self.assertTrue(any(f["severity"] == "advisory" and
+                            "superseded_by" in f["message"] for f in hits))
+
+
+class TestAdrNotLanded(AuditChecksBase):
+    def _adr(self, num):
+        _util.write_doc(self.root, "model/decisions/ADR-9%02d-x.md" % num, {
+            "id": "ADR-9%02d" % num, "title": "x", "type": "ADR",
+            "domain": "model", "status": "accepted", "owner": "a",
+            "updated": "2026-07-01", "sources": [],
+        }, "決定の本文。\n")
+
+    def test_unreferenced_accepted_adr_warns(self):
+        self._adr(5)
+        summary, _ = self._audit()
+        hits = self._codes(summary, "adr_not_landed")
+        self.assertTrue(any(f["doc_id"] == "ADR-905" for f in hits))
+
+    def test_adr_cited_from_current_spec_is_landed(self):
+        self._adr(6)
+        _util.write_doc(self.root, "model/spec/SPEC-905-x.md", {
+            "id": "SPEC-905", "title": "x", "type": "SPEC", "domain": "model",
+            "status": "current", "owner": "a", "updated": "2026-07-02",
+            "sources": [], "depends_on": ["REQ-905"],
+        }, "[R1] ADR-906 の決定を実装する。\n"
+           "## 入出力\nx\n## 制約\nx\n## エラー時挙動\nx\n## 受入基準\nx\n")
+        _util.write_doc(self.root, "model/REQ-905-x.md", {
+            "id": "REQ-905", "title": "x", "type": "REQ", "domain": "model",
+            "status": "current", "owner": "a", "updated": "2026-07-01",
+            "sources": [],
+        }, "本文。\n")
+        _util.write_doc(self.root, "model/test/TEST-905-x.md", {
+            "id": "TEST-905", "title": "x", "type": "TEST", "domain": "model",
+            "status": "current", "owner": "a", "updated": "2026-07-02",
+            "sources": [], "depends_on": ["SPEC-905"],
+        }, "本文。\n")
+        summary, _ = self._audit()
+        self.assertFalse([f for f in self._codes(summary, "adr_not_landed")
+                          if f["doc_id"] == "ADR-906"])
+
+
+class TestLinterArchivedLocation(unittest.TestCase):
+    def setUp(self):
+        self.base = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.base, ignore_errors=True)
+        self.root = os.path.join(self.base, "doctrine_docs")
+        os.makedirs(os.path.join(self.root, "_system"), exist_ok=True)
+
+    def _lint(self, path):
+        out, code = _util.invoke("docs-linter", argv=[path])
+        return out, code
+
+    def test_archived_outside_archive_flags(self):
+        p = _util.write_doc(self.root, "model/spec/SPEC-906-x.md", {
+            "id": "SPEC-906", "title": "x", "type": "SPEC", "domain": "model",
+            "status": "archived", "owner": "a", "updated": "2026-07-01",
+            "sources": [],
+        }, "本文。\n")
+        out, code = self._lint(p)
+        self.assertEqual(code, 0)
+        self.assertIn("ARCHIVED_LOCATION_MISMATCH", out)
+
+    def test_archived_inside_archive_passes_location(self):
+        p = _util.write_doc(self.root, "model/archive/RESEARCH-907-x.md", {
+            "id": "RESEARCH-907", "title": "x", "type": "RESEARCH",
+            "domain": "model", "status": "archived", "owner": "a",
+            "updated": "2026-07-01", "sources": [], "llm_context": "never",
+        }, "本文。\n")
+        out, _ = self._lint(p)
+        self.assertNotIn("ARCHIVED_LOCATION_MISMATCH", out)
+        self.assertNotIn("TYPE_LOCATION_MISMATCH", out)
+
+
+class TestGuardArchivedImmutability(unittest.TestCase):
+    def setUp(self):
+        self.base = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.base, ignore_errors=True)
+        self.root = os.path.join(self.base, "doctrine_docs")
+        os.makedirs(os.path.join(self.root, "_system"), exist_ok=True)
+
+    def test_editing_archived_doc_outside_archive_denied(self):
+        p = _util.write_doc(self.root, "model/research/RESEARCH-908-x.md", {
+            "id": "RESEARCH-908", "title": "x", "type": "RESEARCH",
+            "domain": "model", "status": "archived", "owner": "a",
+            "updated": "2026-07-01", "sources": [], "llm_context": "never",
+        }, "本文。\n")
+        stdin = _util.hook_stdin("PreToolUse", tool_name="Edit", tool_input={
+            "file_path": p, "old_string": "本文。", "new_string": "改変。"})
+        out, code = _util.invoke("policy-guard", stdin_obj=stdin)
+        self.assertEqual(code, 0)
+        resp = json.loads(out)
+        self.assertEqual(
+            resp["hookSpecificOutput"]["permissionDecision"], "deny")
+        self.assertIn("archived", resp["hookSpecificOutput"]["permissionDecisionReason"])
+
+    def test_demoting_write_to_archived_is_still_allowed(self):
+        # 現行 → archived への遷移そのもの(アーカイブする操作)は不変ガードの対象外。
+        p = _util.write_doc(self.root, "model/research/RESEARCH-909-x.md", {
+            "id": "RESEARCH-909", "title": "x", "type": "RESEARCH",
+            "domain": "model", "status": "current", "owner": "a",
+            "updated": "2026-07-01", "sources": [], "llm_context": "never",
+        }, "本文。\n")
+        new_text = _util.read(p).replace("status: current", "status: archived")
+        stdin = _util.hook_stdin("PreToolUse", tool_name="Write", tool_input={
+            "file_path": p, "content": new_text})
+        out, code = _util.invoke("policy-guard", stdin_obj=stdin)
+        self.assertEqual(code, 0)
+        resp = json.loads(out)
+        self.assertEqual(
+            resp["hookSpecificOutput"]["permissionDecision"], "allow")
+
+
+class TestInjectLiveness(unittest.TestCase):
+    def setUp(self):
+        self.base = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.base, ignore_errors=True)
+        self.root = os.path.join(self.base, "doctrine_docs")
+        os.makedirs(os.path.join(self.root, "_system"), exist_ok=True)
+        self.plugin_root = os.path.join(self.base, "plugin-root")
+        os.makedirs(os.path.join(self.plugin_root, ".cache"), exist_ok=True)
+        _set_env(self, CLAUDE_PLUGIN_ROOT=self.plugin_root,
+                 CLAUDE_PROJECT_DIR=self.base)
+        _util.write_doc(self.root, "_system/decided-facts.md", {
+            "id": "DECIDED-901", "title": "d", "type": "DECIDED",
+            "domain": "_system", "status": "current", "owner": "a",
+            "updated": "2026-07-01", "sources": [], "review_by": "2027-01-01",
+        }, "- 事実。\n")
+
+    def _inject(self, today):
+        out, code = _util.invoke(
+            "inject-contract",
+            argv=["--docs-root", self.root, "--today", today])
+        ctx = json.loads(out)["hookSpecificOutput"]["additionalContext"]
+        return ctx, code
+
+    def test_stale_audit_summary_warns(self):
+        _write(os.path.join(self.plugin_root, ".cache", "last-audit.json"),
+               _summary_json(self.root, "2026-07-01"))
+        ctx, code = self._inject("2026-07-26")
+        self.assertEqual(code, 0)
+        self.assertIn("日が経っている", ctx)
+        self.assertIn("R11", ctx)
+
+    def test_fresh_audit_summary_no_staleness_warning(self):
+        _write(os.path.join(self.plugin_root, ".cache", "last-audit.json"),
+               _summary_json(self.root, "2026-07-25"))
+        ctx, _ = self._inject("2026-07-26")
+        self.assertNotIn("日が経っている", ctx)
+
+    def test_pending_session_notes_section(self):
+        _write(os.path.join(self.root, "_system", ".session-notes"),
+               "- 決定A (出所: 会話, 2026-07-25)\n- 決定B (出所: 会話, 2026-07-25)\n")
+        ctx, _ = self._inject("2026-07-26")
+        self.assertIn("未選別のセッションメモ", ctx)
+        self.assertIn("2 行", ctx)
+
+    def test_curate_nudge_covers_new_checks(self):
+        mod = _util.load_script("inject-contract")
+        line = mod._curate_nudge({"error": 0}, {"review_by_overrun": 2})
+        self.assertIn("doc-review", line)
+        line = mod._curate_nudge({"error": 0}, {"stale_current": 3})
+        self.assertIn("docs-curate", line)
+        line = mod._curate_nudge({"error": 0}, {"adr_not_landed": 1})
+        self.assertIn("doc-review", line)
+        line = mod._curate_nudge({"error": 0}, {"near_duplicate": 1})
+        self.assertIn("定例", line)
+
+
+class TestSkillDescriptionsQuoted(unittest.TestCase):
+    """S11: 全 SKILL.md の description は引用符で囲む(厳格YAMLでの解析失敗を防ぐ)。"""
+
+    def test_all_descriptions_quoted(self):
+        skills_dir = os.path.join(_util.PLUGIN_ROOT, "skills")
+        found = 0
+        for name in sorted(os.listdir(skills_dir)):
+            path = os.path.join(skills_dir, name, "SKILL.md")
+            if not os.path.isfile(path):
+                continue
+            found += 1
+            with open(path, "r", encoding="utf-8") as fh:
+                for line in fh:
+                    if line.startswith("description:"):
+                        value = line[len("description:"):].strip()
+                        self.assertTrue(
+                            value.startswith("'") or value.startswith('"'),
+                            "%s: description は引用符で囲む(平文スカラの『: 』は"
+                            "厳格YAMLで壊れる)" % name)
+                        break
+        self.assertEqual(found, 7)
+
+
+if __name__ == "__main__":
+    unittest.main()

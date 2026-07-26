@@ -41,7 +41,8 @@ _frontmatter = _util.load_core("_frontmatter")
 
 # --- The shipped template inventory ----------------------------------------
 # Maps template filename -> the type code its frontmatter MUST carry.
-# 18 single-type templates + glossary (sibling-owned) = 19 type templates;
+# 19 single-type templates + glossary (sibling-owned) = 20 type templates
+# (18+glossary per MASTER §2.1 + ADR-013 PROC + ADR-026 EXT);
 # icd-index is the +1 projection seed (type OVERVIEW, C8).
 TYPE_TEMPLATES = {
     "icd.md.tmpl": "ICD",
@@ -63,12 +64,13 @@ TYPE_TEMPLATES = {
     "test.md.tmpl": "TEST",
     "research.md.tmpl": "RESEARCH",
     "archive.md.tmpl": "ARCHIVE",
+    "ext.md.tmpl": "EXT",
 }
 
-# Projection seed outside the 19 (type OVERVIEW reused, C8).
+# Projection seed outside the type templates (type OVERVIEW reused, C8).
 PROJECTION_SEED = {"icd-index.md.tmpl": "OVERVIEW"}
 
-# All 20 shipped templates (19 type + 1 projection seed).
+# All 21 shipped templates (20 type + 1 projection seed).
 ALL_TEMPLATES = dict(TYPE_TEMPLATES)
 ALL_TEMPLATES.update(PROJECTION_SEED)
 
@@ -89,20 +91,20 @@ def _parse(name):
 
 
 class TemplatesExistTest(unittest.TestCase):
-    """The 20 templates are present on disk (glossary by path, sibling-owned)."""
+    """The 21 templates are present on disk (glossary by path, sibling-owned)."""
 
-    def test_all_twenty_present(self):
+    def test_all_templates_present(self):
         missing = [n for n in ALL_TEMPLATES if not os.path.isfile(_path(n))]
         self.assertEqual(missing, [], "missing templates: %s" % missing)
 
-    def test_exactly_twenty_md_tmpl(self):
-        """No stray *.md.tmpl beyond the 20 documented ones."""
+    def test_exactly_the_documented_md_tmpl(self):
+        """No stray *.md.tmpl beyond the 21 documented ones."""
         on_disk = sorted(
             f for f in os.listdir(_util.TEMPLATES) if f.endswith(".md.tmpl")
         )
         self.assertEqual(
             on_disk, sorted(ALL_TEMPLATES.keys()),
-            "templates/ must hold exactly the 20 documented *.md.tmpl files",
+            "templates/ must hold exactly the 21 documented *.md.tmpl files",
         )
 
 

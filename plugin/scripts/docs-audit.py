@@ -31,6 +31,7 @@ import _depgraph
 import _frontmatter
 import _intake
 import _registry
+import _termcheck
 
 
 SCHEMA = "docs-audit/1"
@@ -321,6 +322,10 @@ def _check_orphan(g, today, stale_days):
         t = node["type"]
         if t == "ICD" or _registry.is_projection(t):
             continue
+        if node["status"] == "archived":
+            # アーカイブ済みは §3.8 の階段を終えた証跡。孤児(取り除き候補)に
+            # 数えない(ADR-027。倉庫の中身を削除候補へ昇格させない)。
+            continue
         eff = _registry.effective_llm_context(_node_meta(node))
         if eff == "always":
             continue
@@ -371,6 +376,167 @@ def _check_reverse_orphan(g):
         out.append(_finding(
             "reverse_orphan_spec_no_test", SEV_ERROR, doc_id, node["path"],
             "仕様 %s に対応する現行 TEST が無い(逆孤児)" % doc_id))
+    return out
+
+
+def _check_stale_current(g, today):
+    """12. 陳腐化の疑い(R2, ADR-025)。型の既定点検周期で全現行文書に実効期限を張る。
+
+    明示の review_by を持つ文書は review_by 検査(2)が見る。持たない現行文書は
+    updated + 型既定周期(_registry.TYPE_REVIEW_CYCLE_DAYS)を実効期限とし、
+    超過を warn で挙げる。周期の無い型(投影・ADR・DECIDED/WATCH 等)は対象外。
+    """
+    out = []
+    for doc_id in sorted(g.nodes):
+        node = g.nodes[doc_id]
+        if not _registry.is_current(node["status"]):
+            continue
+        if node["review_by"]:
+            continue  # 明示期限は review_by 検査が見る。
+        cycle = _registry.review_cycle_days(node["type"])
+        if cycle is None:
+            continue
+        d = _parse_date(node["updated"])
+        overdue = (d is None) or ((today - d).days >= cycle)
+        if overdue:
+            out.append(_finding(
+                "stale_current", SEV_WARN, doc_id, node["path"],
+                "型 %s の既定点検周期 %d 日を超えた(updated %s)。内容を確かめて "
+                "updated を更新するか、review_by を付ける(ADR-025)"
+                % (node["type"], cycle, node["updated"] or "?")))
+    return out
+
+
+def _check_source_drift(g):
+    """13. 上流更新の伝播(R2/R4)。依存先が自分より後に更新されていれば追随疑い。
+
+    対象は現行の文書。ADR(不変の決定)と投影は対象外。判定は depends_on の
+    端だけ(impacts は前向きの波及であり、上流ではない)。助言に留める
+    (追随済みで updated だけ古い場合があるため。確認して updated を上げれば消える)。
+    """
+    out = []
+    for doc_id in sorted(g.nodes):
+        node = g.nodes[doc_id]
+        if not _registry.is_current(node["status"]):
+            continue
+        t = node["type"]
+        if t == "ADR" or _registry.is_projection(t):
+            continue
+        own = _parse_date(node["updated"])
+        if own is None:
+            continue  # updated 壊れは必須キー/陳腐化側の話。
+        for dep in sorted(node["depends_on"]):
+            target = g.nodes.get(dep)
+            if target is None:
+                continue  # dead link 検査が見る。
+            td = _parse_date(target["updated"])
+            if td is None:
+                continue
+            if td > own:
+                out.append(_finding(
+                    "source_drift", SEV_ADVISORY, doc_id, node["path"],
+                    "上流 %s(updated %s)が %s(updated %s)より後に更新された。"
+                    "追随したかを確かめ、確かめたら updated を上げる"
+                    % (dep, target["updated"], doc_id, node["updated"]),
+                    refs=[dep]))
+    return out
+
+
+def _check_archive_integrity(g):
+    """14. アーカイブ整合(§3.8, ADR-027)。status:archived ⇔ <domain>/archive/。
+
+    - archived なのに path が archive/ 配下でない → error(倉庫の外の archived)。
+    - archived の非 RESEARCH に superseded_by が無い → advisory(後継の記録が無い。
+      RESEARCH の証跡は後継を持たないことがあるため対象外)。
+    """
+    out = []
+    for doc_id in sorted(g.nodes):
+        node = g.nodes[doc_id]
+        if node["status"] != "archived":
+            continue
+        parts = [p for p in node["path"].replace("\\", "/").split("/") if p]
+        if "archive" not in parts[:-1]:
+            out.append(_finding(
+                "archive_integrity", SEV_ERROR, doc_id, node["path"],
+                "status『archived』だが <domain>/archive/ の外に在る。"
+                "倉庫へ移す(§3.8。不変ガードの保護もパスに掛かる)"))
+        if node["type"] != "RESEARCH" and not node["superseded_by"]:
+            out.append(_finding(
+                "archive_integrity", SEV_ADVISORY, doc_id, node["path"],
+                "アーカイブ済みだが superseded_by(後継の記録)が無い。"
+                "後継が在るなら付ける(§3.8)"))
+    return out
+
+
+def _check_adr_not_landed(g):
+    """15. ADR の帰結の着地(R3/R8)。accepted の ADR は現行文書から参照されること。
+
+    「文書上の宣言に留まる」欠陥類型(ADR-019/020/014 で三度再発)を機械検出に
+    変える。参照元に数えるのは、現行かつ ADR でも投影でもない文書の
+    depends_on・impacts・superseded_by・本文の id 参照。どこからも参照されない
+    accepted ADR は、決定が SPEC/ICD に落ちていない疑いとして warn。
+    """
+    referenced = set()
+    for doc_id, node in g.nodes.items():
+        if not _registry.is_current(node["status"]):
+            continue
+        t = node["type"]
+        if t == "ADR" or _registry.is_projection(t):
+            continue
+        for field in ("depends_on", "impacts"):
+            referenced.update(node[field])
+        if node["superseded_by"]:
+            referenced.add(node["superseded_by"])
+        referenced |= _body_id_refs(g, node)
+    out = []
+    for doc_id in sorted(g.nodes):
+        node = g.nodes[doc_id]
+        if node["type"] != "ADR" or node["status"] != "accepted":
+            continue
+        if doc_id in referenced:
+            continue
+        out.append(_finding(
+            "adr_not_landed", SEV_WARN, doc_id, node["path"],
+            "accepted の %s を、現行の文書(ADR と投影を除く)が一つも参照して"
+            "いない。決定を SPEC/ICD へ反映し、そこから引く(欠陥類型: "
+            "文書上の宣言に留まる)" % doc_id))
+    return out
+
+
+def _check_glossary_seed(root):
+    """16. 辞書シードの退行(R6, ADR-005)。運用正本 ⊇ 同梱シードを機械で守る。
+
+    運用正本(<root>/_system/glossary.md)が同梱テンプレートのシードに在る
+    承認語・カルク行を落としていたら warn(シードからの成長は正しい。欠落は退行)。
+    運用正本が無い・読めないときは何も出さない(シードで運用中)。
+    """
+    out = []
+    try:
+        op = _termcheck.load_glossary(root)
+    except Exception:
+        return out
+    if op is None or getattr(op, "source", "") != "operational":
+        return out
+    try:
+        seed = _termcheck._load_template_seed()
+    except Exception:
+        return out
+    if seed is None or getattr(seed, "parse_error", False):
+        return out
+    missing_terms = sorted(set(seed.approved_terms) - set(op.approved_terms))
+    if missing_terms:
+        out.append(_finding(
+            "glossary_seed_drift", SEV_WARN, "", "_system/glossary.md",
+            "運用正本の承認語の表からシードの語が欠けている: %s(シードは最小集合。"
+            "落とすなら ADR で決める)" % ", ".join(missing_terms[:10])))
+    seed_calques = {s for s, _f, _e in seed.calque_table}
+    op_calques = {s for s, _f, _e in op.calque_table}
+    missing_calques = sorted(seed_calques - op_calques)
+    if missing_calques:
+        out.append(_finding(
+            "glossary_seed_drift", SEV_WARN, "", "_system/glossary.md",
+            "運用正本のカルク表からシードの行が欠けている: %s"
+            % ", ".join(missing_calques[:10])))
     return out
 
 
@@ -688,6 +854,11 @@ def run_audit(root, today, knobs):
     findings += _check_projection_drift(g)
     findings += _check_unregistered(g)
     findings += _check_stray_documents(root, today)
+    findings += _check_stale_current(g, today)
+    findings += _check_source_drift(g)
+    findings += _check_archive_integrity(g)
+    findings += _check_adr_not_landed(g)
+    findings += _check_glossary_seed(root)
 
     findings.sort(key=lambda f: (f["check"], f["doc_id"], f["message"]))
     return findings

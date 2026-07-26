@@ -14,9 +14,11 @@ GLOSSARY見出し)を要点だけに絞り、上限を守って additionalContex
 セッションを落とさないため、内容由来の例外は決して main から外へ出さない。常に終了コード 0。
 標準ライブラリだけを使う。pip も通信も使わない。決定的に動く(壁時計に依らない)。
 """
+import datetime
 import json
 import math
 import os
+import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -64,6 +66,7 @@ def _parse_args(argv):
         "cap": None,
         "config": None,
         "format": "json",
+        "today": None,   # YYYY-MM-DD。鮮度警告の基準日(テストの決定性用)。
     }
     i = 0
     n = len(argv)
@@ -85,6 +88,10 @@ def _parse_args(argv):
             opts["format"] = argv[i + 1]; i += 2; continue
         if a.startswith("--format="):
             opts["format"] = a.split("=", 1)[1]; i += 1; continue
+        if a == "--today" and i + 1 < n:
+            opts["today"] = argv[i + 1]; i += 2; continue
+        if a.startswith("--today="):
+            opts["today"] = a.split("=", 1)[1]; i += 1; continue
         i += 1
     if opts["format"] not in ("json", "text"):
         opts["format"] = "json"
@@ -415,10 +422,35 @@ def _headline_of(d):
 # ---------------------------------------------------------------------------
 # 監査要約の描画
 # ---------------------------------------------------------------------------
-def _render_audit_summary(summary):
-    """前回監査の要約を一行群に。None/不正 → 「前回監査なし」。本文は転載しない。"""
+_DATE_RE = re.compile(r"^(\d{4})-(\d{2})-(\d{2})$")
+
+# 前回監査がこの日数より古ければ、統治の死活を疑う警告を出す(R11)。
+DEFAULT_AUDIT_STALE_DAYS = 7
+
+
+def _parse_date(s):
+    if not isinstance(s, str):
+        return None
+    m = _DATE_RE.match(s.strip())
+    if not m:
+        return None
+    try:
+        return datetime.date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+    except ValueError:
+        return None
+
+
+def _render_audit_summary(summary, today=None, stale_days=DEFAULT_AUDIT_STALE_DAYS):
+    """前回監査の要約を一行群に。本文は転載しない。
+
+    R11(統治の生存性): 要約が無いことと、要約が古いことは、どちらも
+    「SessionEnd の監査が動いていない」兆候である。沈黙させず、実行可能な
+    警告として出す(要約なし=情報なしではなく、死活の疑いとして扱う)。
+    """
     if not isinstance(summary, dict):
-        return ["前回監査なし。"]
+        return ["前回監査なし。⚠ SessionEnd の監査が一度も動いていないか、"
+                "統治木の場所が変わった可能性がある。docs-audit を手で実行して、"
+                "統治が生きていることを確かめること(R11)。"]
     schema = summary.get("schema")
     if schema != "docs-audit/1":
         # スキーマが合わなくても落とさない。最低限のことだけ伝える。
@@ -431,6 +463,16 @@ def _render_audit_summary(summary):
     if gen:
         head += "（%s）" % gen
     lines.append(head)
+    # 鮮度の照合(R11)。today が与えられないときだけ壁時計に退避する(監査と同じ規約)。
+    audit_day = _parse_date(summary.get("today"))
+    if audit_day is not None:
+        now = today if isinstance(today, datetime.date) else datetime.date.today()
+        age = (now - audit_day).days
+        if age >= stale_days:
+            lines.append(
+                "⚠ 前回監査から %d 日が経っている。SessionEnd の監査が動いて"
+                "いない可能性がある。docs-audit を手で実行して確かめること(R11)。"
+                % age)
     top = summary.get("top_findings")
     if isinstance(top, list) and top:
         # 同一の要点行は一つにまとめ、件数を添える(重複した所見で上限を食わない)。
@@ -481,6 +523,11 @@ def _curate_nudge(totals, counts_by_check):
             errs = int(totals.get("error") or 0)
         except (TypeError, ValueError):
             errs = 0
+    overrun = _c("review_by_overrun")
+    stale = _c("stale_current")
+    ndup = _c("near_duplicate")
+    canon = _c("canonical_conflict")
+    unlanded = _c("adr_not_landed")
     if reg > 0:
         return ("→ docs-curate を起動: 未登録/影文書 %d 件に型を与えて登録するか "
                 "archive/ へ退避すること。" % reg)
@@ -491,6 +538,18 @@ def _curate_nudge(totals, counts_by_check):
         return "→ docs-curate を起動: 孤児 %d 件を取り除く候補として整理すること。" % orph
     if errs > 0:
         return "→ docs-curate を起動: error %d 件を解消すること。" % errs
+    if overrun > 0:
+        return ("→ doc-review を起動: review_by 超過 %d 件。期限切れの事実を再点検し、"
+                "更新するか降ろすこと(黙って頼り続けない)。" % overrun)
+    if stale > 0:
+        return ("→ docs-curate を起動: 陳腐化の疑い %d 件(型既定周期の超過)。内容を"
+                "確かめて updated を上げるか、review_by を付けること(ADR-025)。" % stale)
+    if unlanded > 0:
+        return ("→ doc-review を起動: 未着地の accepted ADR %d 件。決定を SPEC/ICD へ"
+                "反映し、そこから引くこと。" % unlanded)
+    if canon > 0 or ndup > 0:
+        return ("→ doc-review を起動(定例): canonical_for 衝突 %d 件・語彙的酷似 %d 件。"
+                "意味の判断で閉じること。" % (canon, ndup))
     return ""
 
 
@@ -575,11 +634,25 @@ def _priority_headlines(docs, config):
     return uniq
 
 
-def _build_sections(docs, audit_summary, config):
+def _count_session_notes(docs_root):
+    """_system/.session-notes の未選別行(非空・非コメント)を数える(R12)。決して例外を投げない。"""
+    if not docs_root:
+        return 0
+    path = os.path.join(docs_root, "_system", ".session-notes")
+    try:
+        with open(path, "r", encoding="utf-8-sig") as fh:
+            return sum(1 for ln in fh
+                       if ln.strip() and not ln.strip().startswith("#"))
+    except (OSError, UnicodeError):
+        return 0
+
+
+def _build_sections(docs, audit_summary, config, today=None,
+                    stale_days=DEFAULT_AUDIT_STALE_DAYS, notes_pending=0):
     """全ブロックを (タイトル, [行...], tier) の順序付きリストで返す。
 
     tier はトリム時の落とす順(大きいほど先に詳細を落とす)。RECAP・最新 DECIDED・全 NONGOAL
-    見出し・監査要約は保護(tier 0)で、節は残し詳細だけ削る。本文全量はどこにも入れない。
+    見出し・監査要約・未選別メモは保護(tier 0)で、節は残し詳細だけ削る。本文全量はどこにも入れない。
     """
     decided = _decided_current(docs)
     nongoals = _nongoals(docs)
@@ -671,10 +744,24 @@ def _build_sections(docs, audit_summary, config):
     sections.append({
         "key": "audit",
         "title": "## 前回監査の要約",
-        "lines": _render_audit_summary(audit_summary),
+        "lines": _render_audit_summary(audit_summary, today, stale_days),
         "tier": 0,
         "protected": True,
     })
+
+    # 8b. 未選別のセッションメモ(保護、R12)。圧縮・終了前に退避した決定の選別を義務化。
+    if notes_pending > 0:
+        sections.append({
+            "key": "notes",
+            "title": "## 未選別のセッションメモ",
+            "lines": [
+                "未選別のメモが %d 行ある（`_system/.session-notes`）。doc-author で "
+                "ADR・DECIDED へ選別して該当行を消すか、要らないと判じて行を消すこと"
+                "（R12。放置するとこの節は毎セッション出る）。" % notes_pending,
+            ],
+            "tier": 0,
+            "protected": True,
+        })
 
     # 9. TAIL priority(重要文書を末尾へ繰り返す。見出しのみ)
     if pinned:
@@ -760,7 +847,8 @@ def _trim_to_fit(sections, budget, chars_per_token):
     return work
 
 
-def _assemble(docs, audit_summary, config, cap, chars_per_token, had_docs_root):
+def _assemble(docs, audit_summary, config, cap, chars_per_token, had_docs_root,
+              today=None, stale_days=DEFAULT_AUDIT_STALE_DAYS, notes_pending=0):
     """注入文字列を組み立て、上限を強制し、超過時に通知を付ける。
 
     返り値: (context_string, overflow_bool, untrimmed_estimate)。
@@ -777,7 +865,8 @@ def _assemble(docs, audit_summary, config, cap, chars_per_token, had_docs_root):
         return (_ONBOARDING_NOTICE, False,
                 estimate_tokens(_ONBOARDING_NOTICE, chars_per_token))
 
-    sections = _build_sections(docs, audit_summary, config)
+    sections = _build_sections(docs, audit_summary, config, today, stale_days,
+                               notes_pending)
     untrimmed = _render_sections(sections)
     untrimmed_est = estimate_tokens(untrimmed, chars_per_token)
 
@@ -843,12 +932,22 @@ def main(argv=None):
             except (TypeError, ValueError):
                 pass
 
+        # 鮮度警告の基準日(--today 優先。無ければ描画時に壁時計へ退避)と閾値。
+        today = _parse_date(opts.get("today"))
+        stale_days = DEFAULT_AUDIT_STALE_DAYS
+        if isinstance(config, dict):
+            sd = _to_int(config.get("audit_stale_days"))
+            if sd is not None and sd > 0:
+                stale_days = sd
+
         warnings = []
         docs = _load_corpus(docs_root, warnings.append) if had_docs_root else []
         audit_summary = _load_audit_summary(docs_root if had_docs_root else None)
+        notes_pending = _count_session_notes(docs_root if had_docs_root else None)
 
         context, _overflow, _est = _assemble(
-            docs, audit_summary, config, cap, cpt, had_docs_root)
+            docs, audit_summary, config, cap, cpt, had_docs_root,
+            today, stale_days, notes_pending)
 
         for w in warnings:
             sys.stderr.write("inject-contract: %s\n" % w)
