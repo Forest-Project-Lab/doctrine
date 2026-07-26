@@ -440,14 +440,20 @@ def _parse_date(s):
         return None
 
 
-def _render_audit_summary(summary, today=None, stale_days=DEFAULT_AUDIT_STALE_DAYS):
+def _render_audit_summary(summary, today=None, stale_days=DEFAULT_AUDIT_STALE_DAYS,
+                          docs_level=4):
     """前回監査の要約を一行群に。本文は転載しない。
 
     R11(統治の生存性): 要約が無いことと、要約が古いことは、どちらも
     「SessionEnd の監査が動いていない」兆候である。沈黙させず、実行可能な
     警告として出す(要約なし=情報なしではなく、死活の疑いとして扱う)。
+    Level 2 に SessionEnd の監査は無い(ADR-019)ため、Level 2 では死活の
+    疑いを立てず、事実だけを静かに書く(誤報を出さない)。
     """
     if not isinstance(summary, dict):
+        if docs_level < 3:
+            return ["前回監査なし。Level 2 では SessionEnd の監査は走らない"
+                    "(マージ前の検証は CI が担う。手動の docs-audit も使える)。"]
         return ["前回監査なし。⚠ SessionEnd の監査が一度も動いていないか、"
                 "統治木の場所が変わった可能性がある。docs-audit を手で実行して、"
                 "統治が生きていることを確かめること(R11)。"]
@@ -464,7 +470,8 @@ def _render_audit_summary(summary, today=None, stale_days=DEFAULT_AUDIT_STALE_DA
         head += "（%s）" % gen
     lines.append(head)
     # 鮮度の照合(R11)。today が与えられないときだけ壁時計に退避する(監査と同じ規約)。
-    audit_day = _parse_date(summary.get("today"))
+    # Level 2 では SessionEnd が書かないため、古さは死活の兆候にならない(照合しない)。
+    audit_day = _parse_date(summary.get("today")) if docs_level >= 3 else None
     if audit_day is not None:
         now = today if isinstance(today, datetime.date) else datetime.date.today()
         age = (now - audit_day).days
@@ -496,6 +503,12 @@ def _render_audit_summary(summary, today=None, stale_days=DEFAULT_AUDIT_STALE_DA
         for line in order:
             n = counts[line]
             lines.append(line if n == 1 else "%s（×%d）" % (line, n))
+    strays = [f for f in (summary.get("findings") or [])
+              if isinstance(f, dict) and f.get("check") == "stray_document"
+              and "未分類" in str(f.get("message"))]
+    if strays:
+        lines.append("移行の統治率: 未分類の体系外 .md が %d 件(1鼓動1件で分類を進める。"
+                     "進捗の正本は _system/.md-intake)。" % len(strays))
     remedy = _curate_nudge(totals, summary.get("counts_by_check"))
     if remedy:
         lines.append(remedy)
@@ -648,7 +661,8 @@ def _count_session_notes(docs_root):
 
 
 def _build_sections(docs, audit_summary, config, today=None,
-                    stale_days=DEFAULT_AUDIT_STALE_DAYS, notes_pending=0):
+                    stale_days=DEFAULT_AUDIT_STALE_DAYS, notes_pending=0,
+                    docs_level=4):
     """全ブロックを (タイトル, [行...], tier) の順序付きリストで返す。
 
     tier はトリム時の落とす順(大きいほど先に詳細を落とす)。RECAP・最新 DECIDED・全 NONGOAL
@@ -744,7 +758,7 @@ def _build_sections(docs, audit_summary, config, today=None,
     sections.append({
         "key": "audit",
         "title": "## 前回監査の要約",
-        "lines": _render_audit_summary(audit_summary, today, stale_days),
+        "lines": _render_audit_summary(audit_summary, today, stale_days, docs_level),
         "tier": 0,
         "protected": True,
     })
@@ -848,7 +862,8 @@ def _trim_to_fit(sections, budget, chars_per_token):
 
 
 def _assemble(docs, audit_summary, config, cap, chars_per_token, had_docs_root,
-              today=None, stale_days=DEFAULT_AUDIT_STALE_DAYS, notes_pending=0):
+              today=None, stale_days=DEFAULT_AUDIT_STALE_DAYS, notes_pending=0,
+              docs_level=4):
     """注入文字列を組み立て、上限を強制し、超過時に通知を付ける。
 
     返り値: (context_string, overflow_bool, untrimmed_estimate)。
@@ -866,7 +881,7 @@ def _assemble(docs, audit_summary, config, cap, chars_per_token, had_docs_root,
                 estimate_tokens(_ONBOARDING_NOTICE, chars_per_token))
 
     sections = _build_sections(docs, audit_summary, config, today, stale_days,
-                               notes_pending)
+                               notes_pending, docs_level)
     untrimmed = _render_sections(sections)
     untrimmed_est = estimate_tokens(untrimmed, chars_per_token)
 
@@ -945,9 +960,10 @@ def main(argv=None):
         audit_summary = _load_audit_summary(docs_root if had_docs_root else None)
         notes_pending = _count_session_notes(docs_root if had_docs_root else None)
 
+        docs_level = _registry.docs_level(docs_root) if had_docs_root else 4
         context, _overflow, _est = _assemble(
             docs, audit_summary, config, cap, cpt, had_docs_root,
-            today, stale_days, notes_pending)
+            today, stale_days, notes_pending, docs_level)
 
         for w in warnings:
             sys.stderr.write("inject-contract: %s\n" % w)

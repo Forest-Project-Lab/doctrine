@@ -27,7 +27,7 @@
       { "hooks": [ { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/precompact-dump.py\"" } ] }
     ],
     "SessionEnd": [
-      { "hooks": [ { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/docs-audit.py\" --root-from \"${CLAUDE_PROJECT_DIR}\" --json --summary-out \"${CLAUDE_PLUGIN_ROOT}/.cache/last-audit.json\" --fail-on never --respect-docs-level" } ] }
+      { "hooks": [ { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/docs-audit.py\" --root-from \"${CLAUDE_PROJECT_DIR}\" --json --summary-out \"${CLAUDE_PROJECT_DIR}/.claude/.cache/last-audit.json\" --fail-on never --respect-docs-level" } ] }
     ]
   }
 }

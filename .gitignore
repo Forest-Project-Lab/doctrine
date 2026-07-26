@@ -5,3 +5,6 @@
 .claude/settings.local.json
 .vscode/settings.json
 .claude/.consistency-counter
+
+# 実行時の状態(監査の要約キャッシュ・セッションの印)。コミットしない
+.claude/.cache/

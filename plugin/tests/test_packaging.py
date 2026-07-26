@@ -174,17 +174,18 @@ class TestHooksFullProfile(unittest.TestCase):
         )
 
     def test_sessionend_runs_audit_and_writes_the_inject_cache(self):
-        # G2: SessionEnd must run docs-audit.py AND write the summary to the
-        # exact cache inject-contract reads, else every SessionStart shows
-        # 前回監査なし. The command carries the SessionEnd contract
-        # (--summary-out <plugin-root>/.cache/last-audit.json, --fail-on never).
+        # G2: SessionEnd must run docs-audit.py AND write the summary to a
+        # cache inject-contract reads, else every SessionStart shows
+        # 前回監査なし. v0.4.0: the summary is PROJECT-scoped
+        # (${CLAUDE_PROJECT_DIR}/.claude/.cache) so it survives plugin updates
+        # and two projects sharing one plugin do not clobber each other.
         cmds = _commands_for(self.hooks, "SessionEnd")
         self.assertEqual(len(cmds), 1)
         argv = _argv(cmds[0])
         self.assertTrue(argv[0].endswith("/scripts/docs-audit.py"))
         self.assertIn("--summary-out", argv)
         self.assertEqual(argv[argv.index("--summary-out") + 1],
-                         "${CLAUDE_PLUGIN_ROOT}/.cache/last-audit.json")
+                         "${CLAUDE_PROJECT_DIR}/.claude/.cache/last-audit.json")
         self.assertIn("--root-from", argv)
         self.assertEqual(argv[argv.index("--root-from") + 1],
                          "${CLAUDE_PROJECT_DIR}")

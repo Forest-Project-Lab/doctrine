@@ -24,6 +24,9 @@ SPEC-021 の受入を `plugin/tests/test_liveness_capture.py` が機械で確認
 - 定例の記録なし・周期超過 → 実行と記録先を含む督促(test_missing_cadence_record_with_audit_prompts / test_cadence_overdue_warns)。
 - セッションに一度だけ(test_once_per_session)。
 - 注入側の鮮度警告と未選別メモ節(TestInjectLiveness)。
+- Level 2 で監査の死活を誤報しない(test_level2_missing_audit_is_not_flagged)。
+- 移行キャンペーン: 未分類ありで統治率つきの1件を促し、ゼロなら無音(TestMigrationCampaign)。
+- メモリの影: 統治文書へ言及するメモリを advisory で挙げ、索引と無言及・置き場なしは無音(TestMemoryShadow)。
 
 ## 退行観点
 
