@@ -41,8 +41,10 @@ sources: []
 - SPEC-006 --depends_on--> ICD-001
 - SPEC-007 --depends_on--> ICD-001
 - SPEC-007 --depends_on--> ICD-002
+- SPEC-007 --depends_on--> ICD-005
 - SPEC-011 --depends_on--> ICD-001
 - SPEC-011 --depends_on--> ICD-002
+- SPEC-011 --depends_on--> ICD-008
 - SPEC-012 --depends_on--> ICD-001
 - SPEC-012 --depends_on--> ICD-005
 - SPEC-013 --depends_on--> ICD-001
@@ -58,4 +60,9 @@ sources: []
 - SPEC-019 --depends_on--> ICD-005
 - SPEC-019 --depends_on--> ICD-006
 - SPEC-019 --depends_on--> ICD-007
+- SPEC-021 --depends_on--> ICD-005
+- SPEC-021 --depends_on--> ICD-006
+- SPEC-022 --depends_on--> ICD-004
+- SPEC-022 --depends_on--> ICD-006
+- SPEC-023 --depends_on--> ICD-005
 <!-- END PROJECTION:context-map-skeleton -->

@@ -25,7 +25,9 @@
 
 ## プラグインの自己適用
 
-本リポジトリは doctrine プラグインを自分に適用する（`.claude/settings.json`。ガード・リンタ・注入・監査のフックが各セッションで動く）。marketplace の場所は絶対パスで書く必要があるため、devcontainer の `/workspaces/llm-docs-governance` を前提とする。devcontainer の外で作業する場合は、`.claude/settings.local.json` で自分の絶対パスに上書きする。
+本リポジトリは doctrine プラグインを自分に適用する（`.claude/settings.json`。ガード・リンタ・注入・監査のフックが各セッションで動く）。marketplace の場所は絶対パスで書く必要があるため、devcontainer の `/workspaces/doctrine` を前提とする。devcontainer の外で作業する場合は、`.claude/settings.local.json` で自分の絶対パスに上書きする。
+
+作業フォルダを改名・移動したときは、このパスが黙って壊れる（フックは何も言わずに止まる）。改名後は必ず、(1) `.claude/settings.json` のパスを直し、(2) 新しいセッションを開き、(3) セッション冒頭に契約の注入が出ることを確かめる。注入が無ければ自己適用は死んでいる。
 
 ## ライセンス
 

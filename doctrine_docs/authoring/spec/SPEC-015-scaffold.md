@@ -6,7 +6,7 @@ domain: authoring
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-06
+updated: 2026-07-26
 sources: [plugin/scripts/scaffold.py]
 depends_on: [REQ-011]
 llm_context: task
@@ -25,7 +25,7 @@ llm_context: task
 - `doctrine_docs/_system/non-goals.md`（NONGOAL）。
 - `doctrine_docs/_system/overview.md`（OVERVIEW 投影。この実行で新規に置いた場合だけ、種蒔きの直後に `render-projection.py` を呼び、置いた正本から導出した一覧で置き直す。既存の overview には触れない）。
 - `doctrine_docs/_system/.docs-level`（`level: N` の一行。いま使われている Level を公開する）。
-- ルートの `AGENTS.md`・`CLAUDE.md`（案内の投影。知識は持たせない）。
+- ルートの `AGENTS.md`・`CLAUDE.md`（案内。手で保守する最小の入口。知識は持たせない。ADR-029。統治の生存期待の一行を含む: セッション冒頭に契約の注入が無ければ統治は死んでいる、と利用者へ報せる `[R11]`）。既定の Level は 2 とする（ADR-030）。
 
 `--fallback` を付けると、`_system` の文書と案内を `.claude/` 配下へ移す（プラグインを導入していない場合の経路）。
 

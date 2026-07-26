@@ -43,9 +43,9 @@ jobs:
       # the hook chain), so gate on its output. spec/doctrine.ja.md is
       # intentionally excluded: it carries the §1 vocabulary tables by
       # definition and would self-flag.
-      - name: Term-check root docs (README, CONTRIBUTING, plugin/README)
+      - name: Term-check root docs (README, CONTRIBUTING, plugin/README, CLAUDE, AGENTS)
         run: |
-          out=$(CLAUDE_PLUGIN_ROOT="$PWD/plugin" python3 plugin/scripts/term-check.py README.md CONTRIBUTING.md plugin/README.md)
+          out=$(CLAUDE_PLUGIN_ROOT="$PWD/plugin" python3 plugin/scripts/term-check.py README.md CONTRIBUTING.md plugin/README.md CLAUDE.md AGENTS.md)
           echo "$out"
           if echo "$out" | grep -q '\[ERROR\]'; then
             echo "::error::term-check found banned-synonym/calque ERRORs in root docs"

@@ -26,7 +26,7 @@ import _registry as R  # noqa: E402
 EXPECTED_TYPES = (
     "ICD", "OVERVIEW", "GLOSSARY", "CTXMAP", "DECIDED", "NONGOAL", "WATCH",
     "REQ", "SPEC", "DATA", "API", "ADR", "CHANGE", "IMPACT", "IMPL", "PROC",
-    "TEST", "RESEARCH", "ARCHIVE",
+    "TEST", "RESEARCH", "ARCHIVE", "EXT",
 )
 
 EXPECTED_DEFAULT_STATUS = {
@@ -36,6 +36,7 @@ EXPECTED_DEFAULT_STATUS = {
     "API": "current", "ADR": "accepted", "CHANGE": "proposed",
     "IMPACT": "current", "IMPL": "current", "PROC": "current",
     "TEST": "current", "RESEARCH": "draft", "ARCHIVE": "archived",
+    "EXT": "current",
 }
 
 EXPECTED_DEFAULT_LLM_CONTEXT = {
@@ -44,16 +45,18 @@ EXPECTED_DEFAULT_LLM_CONTEXT = {
     "SPEC": "task", "DATA": "task", "API": "task", "ADR": "task",
     "CHANGE": "task", "IMPACT": "task", "IMPL": "task", "PROC": "task",
     "TEST": "task", "RESEARCH": "never", "ARCHIVE": "never",
+    "EXT": "task",
 }
 
 
 class TestTypeRegistryParity(unittest.TestCase):
     """All 19 types present, in registry order, with correct default tables (MASTER §2.1 + ADR-013)."""
 
-    def test_19_types_in_order(self):
+    def test_20_types_in_order(self):
+        # 19 types (MASTER §2.1 + ADR-013) + EXT (ADR-026 外部アンカー).
         self.assertEqual(R.TYPES, EXPECTED_TYPES)
-        self.assertEqual(len(R.TYPES), 19)
-        self.assertEqual(len(set(R.TYPES)), 19, "no duplicate type codes")
+        self.assertEqual(len(R.TYPES), 20)
+        self.assertEqual(len(set(R.TYPES)), 20, "no duplicate type codes")
 
     def test_default_status_per_type(self):
         self.assertEqual(set(R.TYPE_DEFAULT_STATUS), set(EXPECTED_TYPES))
@@ -470,6 +473,42 @@ class TestDocsLevel(unittest.TestCase):
         for bad in ("level: 9\n", "lev: 2\n", "garbage\n", "level: two\n", ""):
             root = self._root_with_marker(bad)
             self.assertEqual(R.docs_level(root), 4, repr(bad))
+
+
+class TestReviewCycle(unittest.TestCase):
+    """型ごとの既定点検周期 (ADR-025) と EXT 型 (ADR-026) の登録。"""
+
+    def test_cycle_types_are_known(self):
+        for t in R.TYPE_REVIEW_CYCLE_DAYS:
+            self.assertIn(t, R.TYPES, t)
+            self.assertIsInstance(R.TYPE_REVIEW_CYCLE_DAYS[t], int)
+            self.assertGreater(R.TYPE_REVIEW_CYCLE_DAYS[t], 0)
+
+    def test_exempt_types_have_no_cycle(self):
+        # 投影・不変の決定・明示 review_by 必須・一時物・draft 検査対象は周期の対象外。
+        for t in ("OVERVIEW", "CTXMAP", "ADR", "DECIDED", "WATCH",
+                  "CHANGE", "IMPACT", "RESEARCH", "ARCHIVE"):
+            self.assertIsNone(R.review_cycle_days(t), t)
+
+    def test_core_cycles(self):
+        self.assertEqual(R.review_cycle_days("SPEC"), 180)
+        self.assertEqual(R.review_cycle_days("ICD"), 180)
+        self.assertEqual(R.review_cycle_days("REQ"), 365)
+        self.assertEqual(R.review_cycle_days("EXT"), 180)
+
+    def test_unknown_type_has_no_cycle(self):
+        self.assertIsNone(R.review_cycle_days("XYZ"))
+        self.assertIsNone(R.review_cycle_days(None))
+
+    def test_ext_registration(self):
+        self.assertEqual(R.default_status("EXT"), "current")
+        self.assertEqual(R.default_llm_context("EXT"), "task")
+        self.assertEqual(R.allowed_locations("EXT"), ["<domain>/external/"])
+        self.assertEqual(R.type_of("EXT-1"), "EXT")
+
+    def test_archived_location_constant(self):
+        # status:archived は型に依らず <domain>/archive/ (ADR-027)。
+        self.assertEqual(R.ARCHIVED_LOCATION, ["<domain>/archive/"])
 
 
 if __name__ == "__main__":

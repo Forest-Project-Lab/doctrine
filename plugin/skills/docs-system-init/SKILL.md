@@ -1,6 +1,6 @@
 ---
 name: docs-system-init
-description: 'Sets up the document governance system in a repository: creates the minimal _system layer (glossary, decided-facts, non-goals, overview projection) and the root entry points (CLAUDE.md, AGENTS.md), and wires up the guards and linter without overwriting anything that already exists. Use this skill when the user wants to "initialize docs", "set up the documentation system", "bootstrap docs governance", "set up doctrine", "scaffold _system", or asks "how do I start using this plugin" / "set up doc governance in this repo".'
+description: 'Sets up the document governance system in a repository: creates the minimal _system layer (glossary, decided-facts, non-goals, overview projection) and the root entry points (CLAUDE.md, AGENTS.md), and wires up the guards and linter without overwriting anything that already exists. Use this skill when the user wants to "initialize docs", "set up the documentation system", "bootstrap docs governance", "set up doctrine", "scaffold _system", "文書統治を導入して", "docs を初期化して", "doctrine を設定して", "このリポジトリで使い始めたい", or asks "how do I start using this plugin" / "set up doc governance in this repo".'
 ---
 
 # docs-system-init
@@ -19,11 +19,11 @@ description: 'Sets up the document governance system in a repository: creates th
 ## 手順
 
 1. 既存の状態を調べる。`doctrine_docs/_system/` はあるか。プラグイン配置か `.claude/` 退避配置か。どの Level か（§4.4）。
-2. 構成を選ぶ。既定は縮小構成の Level 2 とする。利用者が Level 3 か 4 を求めたときだけ上げる。縮小構成は `_frontmatter.py`・`docs-linter.py`・`policy-guard.py`・`inject-contract.py` だけを使い、型を `ICD`・`REQ`・`SPEC`・`ADR`・`DECIDED`・`OVERVIEW` に絞る（型コードは§3.2の登録簿で定める）。
+2. 構成を選ぶ。既定は縮小構成の Level 2 とする（根拠は ADR-030。統治の生存性の機構は Level に依らず動く）。利用者が Level 3 か 4 を求めたときだけ上げる。縮小構成は `_frontmatter.py`・`docs-linter.py`・`policy-guard.py`・`inject-contract.py` だけを使い、型を `ICD`・`REQ`・`SPEC`・`ADR`・`DECIDED`・`OVERVIEW` に絞る（型コードは§3.2の登録簿で定める）。
 3. `scaffold.py` を非破壊で実行する。欠けたものだけを作る。既存の文書は上書きも改変もしない（受入条件「既存を壊さない」）。
 4. `_system` の最小を置く。`glossary.md`（用語辞書の正本）・`decided-facts.md`（`DECIDED` の正本）・`non-goals.md`（`NONGOAL` の正本）・`overview.md`（`OVERVIEW` の投影）。Context Map と ICD 一覧は Level 4 まで先に作らない。
 5. 入口の案内 `CLAUDE.md`・`AGENTS.md` を投影として置く。入口だけを示し、事実を集めない（§5／§3.7）。すでにあるときは置かない。
-6. ガードを設定する。SessionStart の `inject-contract.py`、PreToolUse の三つのガード、PostToolUse のリンタ、SessionEnd と継続的結合（`CI`）の監査。Hook の設定はセッション開始時にだけ取り込まれると伝える。ガードを変えたら新しいセッションで効く（§5 運用上の前提）。
+6. ガードの効き方を伝える。プラグイン導入なら Hook（SessionStart の注入・PreToolUse の三ガード・PostToolUse のリンタ・Stop と PreCompact の捕捉・SessionEnd の監査）は導入自体が配線しており、このスキルは何も置かない。プラグインを使わないなら `.claude/` へ退避配置する（§5）。継続的結合（`CI`）の監査はこのスキルもプラグインも作らない。導入先に `CI` があるなら、`references/ci-example.md` の雛形を案内する（無ければ SessionEnd と `gov-heartbeat.py` の鮮度照合だけで回ると伝える）。Hook の設定はセッション開始時にだけ取り込まれる。設定を変えたら新しいセッションで効く（§5 運用上の前提）。
 7. 何を作り何を飛ばしたか（既存だから飛ばした分）を報告する。引き渡す。「最初の文書は `doc-author` で作る。フォルダはそのとき生成される」。
 
 ## 詳細（references/）
@@ -31,6 +31,7 @@ description: 'Sets up the document governance system in a repository: creates th
 - `references/levels.md` — §4.4 の Level 2／3／4 の型とスクリプトの対応表。
 - `references/fallback.md` — プラグイン配置と `.claude/` 退避配置、`${CLAUDE_PLUGIN_ROOT}` の解決。
 - `references/hook-snapshot.md` — Hook 設定がセッション開始時にだけ取り込まれる前提。
+- `references/ci-example.md` — 導入先に置ける `CI` 監査ステップの雛形（任意）。
 
 ## 保証限界
 

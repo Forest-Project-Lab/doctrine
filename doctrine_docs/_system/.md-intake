@@ -1,9 +1,9 @@
 # 体系外 .md の分類の記録(ADR-021)。external-md-intake の三分類の結果を書く。
 # 形式: パス: 非文書|投影|保留 [YYYY-MM-DD](保留は期限必須。末尾 / は配下全体)
-# 根の案内(CLAUDE.md/AGENTS.md)は仕様が投影と定める固定名のため記録不要。
+# 根の案内(CLAUDE.md/AGENTS.md)は仕様が案内と定める固定名のため記録不要(ADR-029)。
+# dot ディレクトリ(.claude/ .github/ .devcontainer/ など)は走査の対象外のため記録も不要。
 README.md: 非文書
 CONTRIBUTING.md: 非文書
 CHANGELOG.md: 非文書
 spec/doctrine.ja.md: 非文書
 plugin/: 非文書
-.claude/: 非文書

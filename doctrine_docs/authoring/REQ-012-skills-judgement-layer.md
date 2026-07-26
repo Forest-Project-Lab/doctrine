@@ -6,8 +6,9 @@ domain: authoring
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-06-30
+updated: 2026-07-26
 sources: [spec/doctrine.ja.md §4.1]
+llm_context: task
 ---
 
 # 判断の層（技能と候補語抽出）が決定論を補い保証限界を明示する

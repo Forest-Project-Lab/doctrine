@@ -39,18 +39,23 @@
 
 ---
 
-## Hook（4つのイベント）
+## Hook（7つのイベント）
 
 per-turn（毎ターン）のHookは単一文書だけを点検する。全件走査はセッション境界のHookと `CI`（継続的結合の自動点検）へ隔離し、体感速度を守る。Hookの設定は `hooks/hooks.json` にある。
 
 - `SessionStart` → `inject-contract.py`: 契約の最小注入。`DECIDED`（現行）・`NONGOAL`・廃止事実・`GLOSSARY` 見出し・`WATCH` の要点と、前回監査の要約を描画して渡す。注入量の上限を守り、冒頭で要点を復唱させ、重要な文書を冒頭と末尾に置く。
 - `PreToolUse` → `policy-guard.py`: 三つのガード。不変性ガード（`archive/` と既存 `ADR` の改変を拒否）、`ICD` 依存ガード（ドメイン外の非 `ICD` 宛 `depends_on` を拒否）、削除安全ガード（現行の依存が残る降格・削除を拒否）。違反は実行前に拒否する。
 - `PostToolUse` → `policy-guard.py`・`docs-linter.py`・`review-nudge.py`（この順）: ガードは `Edit`・`MultiEdit` の事後で、事前に判定できなかった `ICD` 依存違反・削除安全違反を再点検して止める。リンタは助言だけを返す（必須キー・状態の型別許可・id とファイル名の一致・型と置き場所の整合・`llm_context` の値・`SPEC` 必須4節・用語チェッカー・追跡性）。`review-nudge.py` は型付き文書の編集に doc-review を促す助言で、`decision` は出さない。リンタと nudge は決して止めない。
+- `UserPromptSubmit` → `gov-heartbeat.py`: 統治ハートビート。前回監査の鮮度と doc-review 定例の期限を毎会話で照合し、最も重い一件だけをセッションに一度促す。統治の全停止(フックの沈黙)を警報に変える(R11)。
+- `Stop` → `capture-nudge.py`: 記録の確認。統治文書を編集したのに記録(ADR・DECIDED・WATCH・CHANGE、またはセッションメモ)へ触れていないセッションの終端を一度だけ差し止め、「記録するか、決定なしと明言するか」を問う(R12)。
+- `PreCompact` → `precompact-dump.py`: 圧縮で会話が要約される前に、未記録の決定を `_system/.session-notes` へ退避させる指示を注入する。未選別のメモは次セッションの注入が選別を義務化する(R12)。
 - `SessionEnd` → `docs-audit.py`: 全件監査を走らせ、結果の要約を保存する。次の `SessionStart` で注入する。当ターンには差し込まない。
+
+生存性(R11)と捕捉(R12)の三イベントは、段階導入の Level に依らず動く(ADR-030)。
 
 ---
 
-## スクリプト（15個）
+## スクリプト（19個）
 
 外部 pip 依存を作らない。標準ライブラリだけで動く。`scripts/` にある。
 
@@ -60,19 +65,23 @@ per-turn（毎ターン）のHookは単一文書だけを点検する。全件�
 | `_registry.py` | 共有 | 型・状態・`llm_context`・必須キー・置き場所の登録簿（単一の出所） |
 | `_depgraph.py` | 共有 | 依存グラフの中核（`dep-graph.py`・監査が読み込む） |
 | `_termcheck.py` | 共有 | 用語チェックの中核（辞書の解析・照合。`term-check.py`・リンタが読み込む） |
+| `_intake.py` | 共有 | 分類の記録（`.md-intake`）の読み取り（監査・リンタ・整合点検が共有） |
 | `docs-linter.py` | `PostToolUse` | 単一文書の点検（助言のみ） |
 | `review-nudge.py` | `PostToolUse` | 型付き文書の編集時に doc-review を促す助言（`decision` は出さない） |
 | `term-check.py` | リンタ | 禁止同義語・カルク・未定義語の照合 |
 | `policy-guard.py` | `PreToolUse`・`PostToolUse` | 不変性・`ICD` 依存・削除安全の三ガード |
 | `inject-contract.py` | `SessionStart` | 契約の最小注入 |
-| `docs-audit.py` | `SessionEnd`・`CI` | 全件監査（孤児・逆孤児・dead link・`canonical_for` 衝突・`ICD` 違反・投影ドリフト・`review_by` 超過） |
+| `docs-audit.py` | `SessionEnd`・`CI` | 全件監査（17検査。孤児・逆孤児・dead link・`canonical_for` 衝突・`ICD` 違反・投影ドリフト・`review_by` 超過・陳腐化の疑い・上流更新の伝播・アーカイブ整合・決定の着地・辞書シードの退行・外部アンカーの存在） |
+| `gov-heartbeat.py` | `UserPromptSubmit` | 統治の生存と定例の期限の照合（R11）。1会話1件・セッションに一度 |
+| `capture-nudge.py` | `Stop` | 記録の確認の一度きりの差し止め（R12） |
+| `precompact-dump.py` | `PreCompact` | 圧縮前の退避指示（R12） |
 | `dep-graph.py` | `change-impact`・ガード・監査 | 依存の有向グラフ。波及先と逆参照を列挙し、ドメイン跨ぎを分類する |
 | `render-projection.py` | `docs-curate`・監査 | Overview・`ICD` 一覧・Context Map をフロントマターから描画する |
 | `term-extract.py` | `docs-curate` | ドメイン特徴語の候補を出す（採否は人間） |
 | `collect-context.py` | `llm-context-pack` | 被覆を満たす最少集合に絞り、各事実の出所を表示する |
 | `scaffold.py` | `docs-system-init` | `_system` の最小配置（非破壊）。`--level` で能動 Level を `.docs-level` に記録する |
 
-`_` で始まる4つ（`_frontmatter.py`・`_registry.py`・`_depgraph.py`・`_termcheck.py`）は、二つ以上の入口が共有する中核である。ハイフン名の入口スクリプトから読み込む。
+`_` で始まる5つ（`_frontmatter.py`・`_registry.py`・`_depgraph.py`・`_termcheck.py`・`_intake.py`）は、二つ以上の入口が共有する中核である。ハイフン名の入口スクリプトから読み込む。
 
 ---
 

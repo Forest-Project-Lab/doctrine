@@ -6,7 +6,7 @@ domain: context
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-06-30
+updated: 2026-07-26
 sources: [plugin/tests/test_render.py]
 depends_on: [SPEC-014]
 llm_context: task

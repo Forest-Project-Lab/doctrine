@@ -6,7 +6,7 @@ domain: _system
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-06-30
+updated: 2026-07-26
 sources: [spec/doctrine.ja.md]
 review_by: 2026-09-28
 canonical_for: [cross-cutting-frozen-decisions]
@@ -19,7 +19,7 @@ llm_context: always
 
 ## 確定方針
 
-1. 構造規則（型・`status`・置き場所・必須キー）は、`scripts/_registry.py` の中に一度だけ正本化する。他のスクリプト（実行可能な処理単位）は、この表を二重定義しない。
+1. 構造規則（型・`status`・置き場所・必須キー）は、`plugin/scripts/_registry.py` の中に一度だけ正本化する。他のスクリプト（実行可能な処理単位）は、この表を二重定義しない。
 2. フロントマター（YAMLで書く文書先頭のメタデータ）の解析では、`parse(text)` が `(frontmatter, body, errors)` の3要素を返す。本文の内容を理由に例外を投げることはない。
 3. 必須キーはちょうど8個（id・title・type・domain・`status`・owner・updated・sources）とする。`created` は必須に含めない。DECIDED と WATCH は、これに加えて `review_by` も必須とする。
 4. ドメインを越える依存は、相手ドメインのICD宛だけを許す。相手ドメインの内部文書を直接の依存先にはしない。
@@ -36,12 +36,12 @@ llm_context: always
 
 - 事実1: ADR-001（構造規則の単一正本化）
 - 事実2: ADR-002（フロントマター解析の3要素戻り値）
-- 事実3: ADR-001
+- 事実3: ADR-033（必須キーはちょうど8個）
 - 事実4: ADR-003・ADR-006（ICD宛のみ・違反は depends_on 端のみ）
-- 事実5: ADR-004（PostToolUse の事前状態を全文で復元）
+- 事実5: ADR-004（手段: 編集前の状態を全文で復元）。不変条件そのものの正本は SPEC-003・REQ-004
 - 事実6: ADR-009（注入とパックで二つの別上限）
-- 事実7: ADR-011（段階導入と標準ライブラリのみ）
-- 事実8: ADR-010・ADR-011（7技能固定・Hookスナップショット）
+- 事実7: ADR-031（標準ライブラリのみ）
+- 事実8: ADR-010・ADR-032（7技能固定・Hookスナップショット前提）
 
 ## 再点検期限
 

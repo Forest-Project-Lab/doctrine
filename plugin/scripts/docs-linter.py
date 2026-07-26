@@ -312,7 +312,11 @@ def _check_stray_location(meta, rel_parts, findings):
 
 
 def _check_type_location(meta, path, rel_parts, findings):
-    """§3.4 TYPE_LOCATION_MISMATCH + DOMAIN_PATH_MISMATCH (ERROR)."""
+    """§3.4 TYPE_LOCATION_MISMATCH + DOMAIN_PATH_MISMATCH (ERROR).
+
+    ADR-027: status『archived』の文書は、型に依らず <domain>/archive/ に置く
+    (§3.8 の倉庫への退避)。archived ではこの規則が型の置き場所規則より優先する。
+    """
     type_code = meta.get("type")
     if not _registry.is_known_type(type_code):
         return
@@ -320,6 +324,17 @@ def _check_type_location(meta, path, rel_parts, findings):
         return  # cannot locate a docs root -> cannot judge location
     fname = rel_parts[-1]
     dir_parts = rel_parts[:-1]              # directory segments under docs/
+
+    status = meta.get("status")
+    if isinstance(status, str) and status.strip() == "archived":
+        if not _location_matches(dir_parts, _registry.ARCHIVED_LOCATION):
+            findings.append(Finding(
+                "ARCHIVED_LOCATION_MISMATCH", ERROR,
+                "status『archived』の文書は <domain>/archive/ に置く(現在: %s/)。"
+                % ("/".join(dir_parts) or "."), "§3.8/ADR-027"))
+            return
+        _check_domain_path(meta, dir_parts, type_code, findings)
+        return
 
     # ICD: must be the literal file ICD.md at <domain>/ root.
     if type_code == "ICD":

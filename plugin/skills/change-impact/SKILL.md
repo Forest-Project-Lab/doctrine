@@ -1,6 +1,6 @@
 ---
 name: change-impact
-description: 'Runs the 14-step change flow for a proposed change: traces dependencies to enumerate every document, implementation, and test affected, then drives the updates in the mandated order — decision (ADR) first, then current spec (SPEC), then implementation, then test, then LLM context, then deprecation cleanup — keeping "what changed" (CHANGE/git) separate from "why decided" (ADR). Use this skill when the user wants to "assess the impact of a change", "what does changing X break", "plan a change", "run the change flow", "trace impact", "what needs updating if I change this spec/ICD", or "propose and roll out a change".'
+description: 'Runs the 14-step change flow for a proposed change: traces dependencies to enumerate every document, implementation, and test affected, then drives the updates in the mandated order — decision (ADR) first, then current spec (SPEC), then implementation, then test, then LLM context, then deprecation cleanup — keeping "what changed" (CHANGE/git) separate from "why decided" (ADR). Use this skill when the user wants to "assess the impact of a change", "what does changing X break", "plan a change", "run the change flow", "trace impact", "what needs updating if I change this spec/ICD", "影響範囲を洗い出して", "この変更で何が壊れるか", "変更フローを回して", "この仕様を変えたらどこを直すか", or "propose and roll out a change".'
 ---
 
 # change-impact

@@ -6,7 +6,7 @@ domain: context
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-06-30
+updated: 2026-07-26
 sources: [plugin/scripts/collect-context.py]
 depends_on: [REQ-010, ICD-001]
 llm_context: task

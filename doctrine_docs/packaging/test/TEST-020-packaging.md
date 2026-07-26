@@ -6,7 +6,7 @@ domain: packaging
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-06
+updated: 2026-07-26
 sources: [plugin/tests/test_meta.py, plugin/tests/test_packaging.py]
 depends_on: [SPEC-020]
 llm_context: task

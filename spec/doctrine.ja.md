@@ -2,10 +2,10 @@
 id: DOCTRINE-001
 title: LLM開発のための情報統治設計書
 type: DOCTRINE
-status: proposed
+status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-06
+updated: 2026-07-26
 sources: [ASD-STE100, S1000D, DO-178C, MBSE/SysML, c-TF-IDF, JTCA, context-rot, claude-code-hooks]
 ---
 
@@ -29,7 +29,7 @@ sources: [ASD-STE100, S1000D, DO-178C, MBSE/SysML, c-TF-IDF, JTCA, context-rot, 
 
 ## 1. 統制語彙　モデル
 
-用語辞書の正本である。各語は一つの意味だけを持つ。右列の同義語は使わない。実装するGlossaryは、この辞書の運用版である。`[R6]`
+用語辞書の初期シードである。各語は一つの意味だけを持つ。右列の同義語は使わない。導入先では、この表を書き写した運用正本（`_system/glossary.md`）が機械照合の正本になり、本表はその種である。運用正本がシードの行を落とす退行は監査が検出する（glossary_seed_drift）。`[R6]`
 
 | 承認語 | 唯一の意味 | 禁止する同義語 |
 |---|---|---|
@@ -72,7 +72,7 @@ sources: [ASD-STE100, S1000D, DO-178C, MBSE/SysML, c-TF-IDF, JTCA, context-rot, 
 
 一語訳の罠（辞書の一番目を疑う）: status→位置づけ・区分、native→標準で・組み込みで、robust→壊れにくい、leverage→活かす。
 
-判定は逆翻訳テル。怪しい箇所を英語に戻し、英語の慣用句・固定表現にそのまま戻れば、それはカルク。直すときは英語を捨て、日本語で選び直す。定着した借用語（データ・リスク等）と普通の否定文はカルクではない（擬陽性を避ける）。強制は二段。リンタが上の禁止表現を機械的に照合する。一覧にない訳語臭は doc-review が判定する。新しいカルクは、別ファイルを作らず、この表に一行足す。
+判定は逆翻訳テル。怪しい箇所を英語に戻し、英語の慣用句・固定表現にそのまま戻れば、それはカルク。直すときは英語を捨て、日本語で選び直す。定着した借用語（データ・リスク等）と普通の否定文はカルクではない（擬陽性を避ける）。強制は二段。リンタが上の禁止表現を機械的に照合する。一覧にない訳語臭は doc-review が判定する。新しいカルクは、別ファイルを作らず、運用正本のこの表に一行足す（ADRは要らない）。
 
 **固有名の例外**。外部の規格・法令・他体系の公式名に、禁止同義語が埋め込まれることがある。固有名は、承認語の表へ「固有名」と記して一行足し、照合から外す。固有名の登録は語の意味体系を変えないため、ADRは要らない。地の文では承認語を使う。引用の原文は機械照合になじまないため、doc-review が文脈で判断する。`[R6]`
 
@@ -101,6 +101,8 @@ sources: [ASD-STE100, S1000D, DO-178C, MBSE/SysML, c-TF-IDF, JTCA, context-rot, 
 - **R8 最小性**: 要求に紐づかない文書を作らない。テストできない記述を弾く。孤児を取り除く。重複した事実を一本化する。かつ、必要なのに不在の文書・記述を残さない（逆孤児を検出する。逆方向の追跡性）。
 - **R9 保証限界の明示**: 何を予防・検出・委ねるかを各成果物に書く。
 - **R10 明快な日本語**: 訳語臭（カルク）を排し、一文一義で書く。英語の語・比喩・構文・一語訳をなぞらない。
+- **R11 統治の生存性**: 統治の機構が動いていないことを、利用者が気づける形で報せる。正の生存信号（前回監査の日付）を出し、欠落と古びを警告に変える。沈黙する故障を禁じる。
+- **R12 会話知識の捕捉**: 会話の中の決定・撤回・用語が、セッションの終了・圧縮で失われる前に、記録かセッションメモへ落ちるよう促す。退避したメモの選別を義務化する。
 
 
 ---
@@ -143,6 +145,7 @@ sources: [ASD-STE100, S1000D, DO-178C, MBSE/SysML, c-TF-IDF, JTCA, context-rot, 
 | TEST | Test Plan | `<domain>/test/` | current | task | 受入基準への対応、退行観点、合否基準 | 無関係な要求 |
 | RESEARCH | Research Note | `<domain>/research/` | draft | never | 出所、取得日、事実、比較 | 決定 |
 | ARCHIVE | Archive Note | `<domain>/archive/` | archived | never | アーカイブ理由、アーカイブ日、後継ID | 現行情報 |
+| EXT | External Anchor（外部依存の登録） | `<domain>/external/` | current | task | 対象の場所、検査の方法（exists／hash／`review_by` のみ）、期待、壊れ方 | 外部の正本の中身の写し |
 
 新しい型を増やすのは、既存型で表せない情報が出てからにする。空の型を先に作らない。`[R8]`
 
@@ -186,7 +189,7 @@ llm_context: <always|task|never>
 ---
 ```
 
-リンタが必須とする項目（Level 2以降）: `id, title, type, domain, status, owner, updated, sources`。DECIDED・WATCHでは `review_by` も必須とする（古びの検出に使う）。`canonical_for` はLevel 4+で任意とし、同じ事実が二重に書かれた型から付ける。Level の段差は§4.4の段階導入に対応する。`[R6][R8]`
+リンタが必須とする項目（Level 2以降）: `id, title, type, domain, status, owner, updated, sources`（ADR-033）。DECIDED・WATCHでは `review_by` も必須とする（古びの検出に使う）。明示の `review_by` を持たない現行文書には、型ごとの既定点検周期（登録簿。ADR-025）が `updated`＋周期の実効期限を張り、超過を監査が挙げる。`canonical_for` はLevel 4+で任意とし、同じ事実が二重に書かれた型から付ける。Level の段差は§4.4の段階導入に対応する。`[R6][R8]`
 
 ### 3.5 ICD
 
@@ -227,6 +230,7 @@ ICDの内部実装は書かない。ICDの中身が変わるときは、依存�
         ├── procedures/         # PROC
         ├── test/               # TEST/WATCH
         ├── research/           # RESEARCH
+        ├── external/           # EXT（統治木の外への依存のアンカー）
         └── archive/            # アーカイブ（現行と分離）
 ```
 
@@ -242,7 +246,7 @@ ICDの内部実装は書かない。ICDの中身が変わるときは、依存�
 
 1. 現行（current）。
 2. 廃止（deprecated）。方針を撤回。事実だけをDECIDEDの対の記録に残し、本文はLLMに渡さない。
-3. アーカイブ（archived）。証跡のある本文を `<domain>/archive/` へ移し `superseded_by` を付ける。検索から除外。編集はガードが拒否。
+3. アーカイブ（archived）。証跡のある本文を `<domain>/archive/` へ移し `superseded_by` を付ける。検索から除外。編集はガードが拒否（パスに加えて `status: archived` でも拒否する。倉庫の外に居る archived はリンタと監査が矛盾として検出する。ADR-027）。
 4. git履歴のみ。文書は消すが、コミットに撤去理由とIDを残す。
 5. 完全消去。孤児かつ証跡なしかつ再現できる一時文書だけに限る。
 
@@ -293,7 +297,7 @@ Skillの本文は500行未満。詳細は `references/` に分ける。決定論
 |---|---|---|
 | `docs-system-init` | `_system` の最小配置、案内、ガード/リンタ設定。既存を壊さない | R1,R8 |
 | `doc-author` | 型付き文書（ICDを含む）の作成・更新。型・置き場所・フロントマターを正す | R1,R3,R6,R7 |
-| `doc-review` | 文章規範と位置づけのレビュー。用語チェッカーを併走（未承認語・禁止同義語・禁止表現・未定義語）。カルクは逆翻訳テルで判定する。doc-authorが著述のたびに起動する（定例だけに頼らない）。指摘は定義の在処へ書き戻す（一覧外カルク→§1表、新承認語→ADRと用語辞書）。canonical_for未付与・辞書外の訳語臭・意味的重複は定例（周期を定める）で点検する | R6,R10 |
+| `doc-review` | 文章規範と位置づけのレビュー。用語チェッカーを併走（未承認語・禁止同義語・禁止表現・未定義語）。カルクは逆翻訳テルで判定する。doc-authorが著述のたびに起動する（定例だけに頼らない）。指摘は定義の在処へ書き戻す（一覧外カルク→§1表、新承認語→ADRと用語辞書）。canonical_for未付与・辞書外の訳語臭・意味的重複は定例で点検する（周期の実体は実施記録 `_system/.governance-state` と `gov-heartbeat.py` の督促） | R6,R10 |
 | `change-impact` | 14ステップの変更フロー（全14ステップは change-impact が定める）。依存をたどり影響を列挙。更新順序を守る | R3,R4 |
 | `regression-guard` | 廃止の復活・撤回方針の再採用を防ぐ。DECIDED・WATCHと突き合わせる | R5 |
 | `llm-context-pack` | タスク別の最小コンテキストを集約。never群を除外。被覆を満たす最少集合に絞り、出所を表示する | R5 |
@@ -323,9 +327,15 @@ for dep in proposed.get("depends_on", []):
         deny(f"{dep} は {dep_domain} の内部です。{dep_domain} の ICD 宛にしてください。")
 ```
 
-**PostToolUse → リンタ**。`docs-linter.py` を実行する。点検は、必須キーの存在、status の型別許可、id とファイル名の一致、type と置き場所の整合、`llm_context` の値、型規律（RESEARCHに「決定」見出しがあれば警告）、**SPEC必須4節の存在（入出力・制約・エラー時挙動・受入基準。空節は指摘）**、**用語チェッカー（未承認語・禁止同義語・禁止表現（カルク辞書）・未定義語）**、**ICD依存規則の照合（事後の検出として）**、**追跡性（SPEC/IMPL/TEST が要求または依存を持つか）**。違反は `decision` を出さず `additionalContext` で指摘し、Claudeに自己修正させる。参照整合（dead link）と逆方向の追跡性は全件走査が要るので監査へ。`[R3][R6][R7][R8][R10]` あわせて `review-nudge.py` を実行し、型付き文書の編集に doc-review（文章規範・一覧外カルク・位置づけ）を促す（助言のみ。`decision` は出さない。doc-author を介さない手編集を補う。§4.1）。`[R10]`
+**PostToolUse → リンタ**。`docs-linter.py` を実行する。点検は、必須キーの存在、status の型別許可、id とファイル名の一致、type と置き場所の整合、`llm_context` の値、型規律（RESEARCHに「決定」見出しがあれば警告）、**SPEC必須4節の存在（入出力・制約・エラー時挙動・受入基準。空節は指摘）**、**用語チェッカー（未承認語・禁止同義語・禁止表現（カルク辞書）・未定義語。GLOSSARY 正本・投影・never 文脈の RESEARCH／ARCHIVE は型で飛ばす。ADR-023）**、**ICD依存規則の照合（事後の検出として）**、**追跡性（SPEC/IMPL/TEST が要求または依存を持つか）**、**archived の置き場所（`<domain>/archive/` の外の archived を指摘。ADR-027）**。点検の前に統治木を探し、体系外のファイルには出力しない。型なしで分類の記録に『非文書／投影』と登録されたファイルは schema 強制を飛ばし、用語助言だけを WARN で残す（ADR-024）。違反は `decision` を出さず `additionalContext` で指摘し、Claudeに自己修正させる。参照整合（dead link）と逆方向の追跡性は全件走査が要るので監査へ。`[R3][R6][R7][R8][R10]` あわせて `review-nudge.py` を実行し、型付き文書の編集に doc-review（文章規範・一覧外カルク・位置づけ）を促す（助言のみ。`decision` は出さない。doc-author を介さない手編集を補う。§4.1）。`[R10]`
 
-**監査（セッション境界のHookとCI、毎ターン実行しない）**。`docs-audit.py` が全件で、dead link、`review_by` 超過（DECIDED・WATCHを含む）、draft放置、孤児（逆参照ゼロ∧陳腐化∧再現可能）、**逆孤児（要求に対応する仕様の不在、受入基準に対応するテストの不在。逆方向の追跡性）**、`canonical_for` 衝突、語彙的に酷似する文書対（助言）、ICD依存違反、投影ドリフト、未登録/影文書（統治木の内で登録簿ノードにならない .md）、体系外 .md（統治木の外の .md を `_system/.md-intake` の分類の記録と突き合わせ、未分類と期限切れの保留だけを挙げる。ADR-021）を一覧化する。起動は人手のコマンドに頼らない。SessionEnd のHookとCIから走らせ、結果は次の SessionStart で要約を注入する。毎ターンは走らせない（体感速度を守る）。周期はこの二経路で定める。`[R1][R3][R4][R8]`
+**UserPromptSubmit → 統治ハートビート**。`gov-heartbeat.py` が、前回監査の鮮度と doc-review 定例の期限を毎会話で照合し、最も重い一件だけをセッションに一度促す。統治の全停止（フックの沈黙）を警報に変える。`[R11]`
+
+**Stop → 記録の確認**。`capture-nudge.py` が、統治文書を編集したのに記録（ADR・DECIDED・WATCH・CHANGE、またはセッションメモ）へ触れていないセッションの終端を一度だけ差し止め、「記録するか、決定なしと明言するか」を問う。`[R12]`
+
+**PreCompact → 退避の指示**。`precompact-dump.py` が、圧縮で文脈が失われる前に、未記録の決定を `_system/.session-notes` へ退避させる指示を注入する。未選別のメモは次の SessionStart が選別を義務化する。`[R12]` 三つとも段差に依らず動く（ADR-030）。
+
+**監査（セッション境界のHookとCI、毎ターン実行しない）**。`docs-audit.py` が全件で、dead link、`review_by` 超過（DECIDED・WATCHを含む）、draft放置、孤児（逆参照ゼロ∧陳腐化∧再現可能）、**逆孤児（要求に対応する仕様の不在、受入基準に対応するテストの不在。逆方向の追跡性）**、`canonical_for` 衝突、語彙的に酷似する文書対（助言）、ICD依存違反、投影ドリフト、未登録/影文書（統治木の内で登録簿ノードにならない .md）、体系外 .md（統治木の外の .md を `_system/.md-intake` の分類の記録と突き合わせ、未分類と期限切れの保留だけを挙げる。ADR-021）、**陳腐化の疑い（型既定周期の超過。ADR-025）**、**上流更新の伝播（依存先が自分より新しい）**、**アーカイブ整合（status⇔置き場所。ADR-027）**、**決定の着地（現行文書から参照されない accepted ADR）**、**辞書シードの退行**、**外部アンカーの存在（EXT の対象。ADR-026）**を一覧化する。起動は人手のコマンドに頼らない。SessionEnd のHookとCIから走らせ、結果は次の SessionStart で要約を注入する。毎ターンは走らせない（体感速度を守る）。周期はこの二経路で定める。`[R1][R3][R4][R8]`
 
 ### 4.3 スクリプト
 
@@ -345,7 +355,10 @@ for dep in proposed.get("depends_on", []):
 | `dep-graph.py` | change-impact, ガード | 依存の有向グラフ。波及先と逆参照を列挙。ドメイン跨ぎを分類。逆方向で逆孤児を出す |
 | `render-projection.py` | docs-curate | Overview・ICD一覧・Context Map をフロントマターから描画 |
 | `term-extract.py` | docs-curate | 各ドメイン（フォルダ）を1クラスとしたclass-based tf-idf（c-TF-IDF）でドメイン特徴語の候補を出す。辞書の素案づくり。採否は人間 |
-| `term-check.py` | docs-linter | 禁止同義語・禁止表現（カルク辞書）・未定義語の照合 |
+| `term-check.py` | doc-review, CI | 禁止同義語・禁止表現（カルク辞書）・未定義語の照合（リンタは中核 `_termcheck.py` を直接読む） |
+| `gov-heartbeat.py` | UserPromptSubmit | 統治の生存と定例の期限の照合（R11）。1会話1件・セッションに一度 |
+| `capture-nudge.py` | Stop | 記録の確認の一度きりの差し止め（R12） |
+| `precompact-dump.py` | PreCompact | 圧縮前の退避指示（R12） |
 | `collect-context.py` | llm-context-pack | `llm_context` でフィルタした最小コンテキスト。被覆を満たす最少集合に絞り、出所を表示する |
 | `scaffold.py` | docs-system-init | `_system` 最小配置（非破壊）。段階導入の縮小構成を選べる |
 
@@ -368,7 +381,7 @@ for dep in proposed.get("depends_on", []):
 ```
 doctrine/
 ├── .claude-plugin/plugin.json
-├── hooks/hooks.json                 # §4.2 のHook（SessionStart・PreToolUse・PostToolUse・SessionEnd）
+├── hooks/hooks.json                 # §4.2 のHook（7イベント: SessionStart・UserPromptSubmit・PreToolUse・PostToolUse・Stop・PreCompact・SessionEnd）
 ├── hooks/hooks.level2.json          # §4.4 の縮小構成（Level 2）
 ├── skills/<7つのSkill>/SKILL.md     # + references/
 ├── scripts/<§4.3 のスクリプト>
@@ -389,7 +402,7 @@ doctrine/
 | 要求 | 合格を確認するテスト |
 |---|---|
 | R1 見つけやすさ | Overview投影が現行文書を網羅する。監査が孤児を検出する |
-| R2 現行性 | リンタが status の型別許可を強制する。監査が `review_by` 超過（DECIDED・WATCHを含む）を一覧化する |
+| R2 現行性 | リンタが status の型別許可を強制する。監査が `review_by` 超過（DECIDED・WATCHを含む）と、型既定周期の超過（stale_current。ADR-025）を一覧化する |
 | R3 追跡性 | `dep-graph.py` が要求→仕様→実装→テスト→決定をたどる。リンタが要求なしSPEC/IMPL/TESTを指摘する。監査が逆方向（要求に対応する仕様、受入基準に対応するテストの不在）を検出する |
 | R4 変更耐性 | `change-impact` が影響集合を列挙する。監査が dead link を検出する |
 | R5 LLM適合 | `inject-contract.py` が事実・要点のみを注入する。never群が渡らない。注入量の上限を守り、超過時に `docs-curate` を促す。冒頭で要点を復唱する |
@@ -398,6 +411,8 @@ doctrine/
 | R8 最小性 | 監査が孤児・逆孤児・`canonical_for`衝突を一覧化する。テスト不能記述は doc-review が判定する（意味の判断であり決定論で照合できないため。ADR-020）。リンタが SPEC 必須4節の空を指摘する。`docs-curate` が一片ずつ取り除く |
 | R9 保証限界 | 各成果物に予防・検出・委ねるの別が書かれている（本書§7を継承） |
 | R10 明快な日本語 | `term-check.py` が禁止表現（カルク）を照合する。doc-review が逆翻訳テルで一覧外のカルクを判定する |
+| R11 統治の生存性 | `gov-heartbeat.py` と SessionStart 注入が、監査の欠落・古びを警告する。監査が EXT アンカーの対象の存在を検査する |
+| R12 会話知識の捕捉 | Stop の差し止めが記録の確認を強制し、PreCompact が退避を指示し、SessionStart 注入が未選別メモの選別を義務化する |
 
 メタ条件: プラグインが配布できる。`docs-system-init` が既存を壊さない。スクリプトが標準ライブラリだけで動く。per-turnのHookがエージェントを体感的に遅くしない。監査が人手起動に頼らず、セッション境界のHookとCIから周期的に走る。縮小構成が小規模で破綻なく動く。ガードの変更がセッション開始時に反映される前提で運用される。
 
@@ -417,6 +432,10 @@ doctrine/
 - Bashマッチャの Hook では文脈注入（additionalContext・素のstdout 等）が現状モデルに届かない。削除安全ガードは拒否（deny）だけに頼る。
 - 常時集合の縮小は注入量の上限で機械的に促すが、何を残すかの最終判断は人間に依る。
 - Hookの設定の反映は運用上の前提のとおり（§4.4末尾。新しいセッションから効く）。
+- SessionEnd はセッションの正常終了時にだけ発火する。強制終了・窓の閉鎖では監査が走らない。補いは `gov-heartbeat.py` の鮮度照合と CI に依る。
+- 監査の要約キャッシュ（`${CLAUDE_PLUGIN_ROOT}/.cache`）は同じプラグインを使う全プロジェクトで共有され、後に書いた側が残る。root 照合が誤注入を防ぐが、他プロジェクトは「前回監査なし」に劣化する（劣化は警告として可視。R11）。
+- matcher のツール名は実行環境の仕様への依存であり、書き込み系ツールの追加・改名は黙って素通りする。EXT アンカー（EXT-001）の `review_by` で定期再検証する。
+- 会話知識の捕捉（R12）は促しと選別の義務までである。記録されなかった決定が「無かった」ことの検証はできない（NONGOAL 第7項）。
 - 仕様が実装どおり動くかは、テストの責務であり、構造だけでは閉じない。
 - 常時投入を最小に保つことの性能上の益は、長文ほど劣化するという知見と整合するが（付録C）、最適な上限は運用と受入テストで確かめる。肥大はLLMの成功率を下げる。
 - 「100%の予防」は構造上不可能である。本体系の効果は、適切に運用された場合に特定の失敗類型を検出・早期発見できることに限る。

@@ -6,7 +6,7 @@ domain: packaging
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-06
+updated: 2026-07-26
 sources: [plugin/tests/test_packaging.py, plugin/tests/test_integration_e2e.py]
 depends_on: [SPEC-019]
 llm_context: task
@@ -18,7 +18,7 @@ llm_context: task
 
 SPEC-019 の受入基準を確認する。
 
-- `hooks.json` が 4 つのイベント（SessionStart・PreToolUse・PostToolUse・SessionEnd）を持つ。
+- `hooks.json` が 7 つのイベント（SessionStart・UserPromptSubmit・PreToolUse・PostToolUse・Stop・PreCompact・SessionEnd。ADR-028）を持つ（test_packaging の test_has_all_seven_events）。
 - 各 `command` が `${CLAUDE_PLUGIN_ROOT}/scripts/` 配下の `.py` を指す。
 - PostToolUse の `Edit|Write|MultiEdit` が `policy-guard.py` → `docs-linter.py` → `review-nudge.py` の順である `[R7][R10]`。
 - `Bash` matcher が `policy-guard.py` へ配線されている。

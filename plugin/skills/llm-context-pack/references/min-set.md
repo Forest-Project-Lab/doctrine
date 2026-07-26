@@ -1,6 +1,6 @@
 # 最少被覆集合の計算
 
-タスクの要求を満たす最少の文書集合を求める手順を記す。`collect-context.py` がこの計算を持つ。
+タスクの要求を満たす最少の文書集合を求める手順を記す。`${CLAUDE_PLUGIN_ROOT}/scripts/collect-context.py` がこの計算を持つ。
 
 ## 被覆の計算
 

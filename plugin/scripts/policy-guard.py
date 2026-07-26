@@ -174,7 +174,15 @@ def guard_immutability(file_path, tool, tin):
         # 既存ファイルが読めない。fail-closed(Guard1 は安全側)。
         return ("ガード異常: 既存ファイル %s を読めません。手で確認してください。" % file_path)
 
-    if _coerce_type(cur_fm) != "ADR":
+    cur_type = _coerce_type(cur_fm)
+    if cur_type != "ADR":
+        # ADR-027: status『archived』の文書は、置き場所に依らず不変。
+        # (パス判定だけでは、倉庫の外に居る archived 文書が編集自由になる。)
+        eff_status = _coerce_str(cur_fm.get("status")).strip() \
+            or _registry.default_status(cur_type) or ""
+        if eff_status == "archived":
+            return ("アーカイブ済み(status: archived)の文書は不変です。%s は編集できません。"
+                    % (cur_fm.get("id") or file_path))
         return None
 
     # ここから先は既存 ADR の改変。carve-out だけかを判定する。

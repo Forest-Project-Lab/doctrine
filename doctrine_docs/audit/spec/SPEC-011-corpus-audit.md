@@ -6,9 +6,9 @@ domain: audit
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-06
+updated: 2026-07-26
 sources: [spec/doctrine.ja.md#4.2]
-depends_on: [REQ-008, ICD-001, ICD-002]
+depends_on: [REQ-008, ICD-008, ICD-001, ICD-002]
 llm_context: task
 ---
 
@@ -25,16 +25,22 @@ llm_context: task
 ## 制約
 
 - 標準ライブラリだけを使う。pip での外部パッケージ取得も、ネットワーク通信もしない。返す値は毎回同じになる（所見を check・doc_id・message の順で整列する）。
-- 11 検査の重大度は固定とする（ICD-005 の表のとおり）。`top_findings` は error を優先し、上限 20 件とする。
+- 17 検査の重大度は固定とする（ICD-005 の表のとおり）。`top_findings` は error を優先し、上限 20 件とする。
 - 語彙的酷似（near_duplicate）の対走査は O(n^2) であり、規模上限 `near_dup_max_docs`（既定 800、`--config` で上書き）を設ける。現行文書数がこの上限を超えた場合は対走査を省き、省いた事実を near_duplicate の助言一つで正直に告げる（黙って切り詰めない）。重大度は advisory のまま（ICD-005 不変）。`[R8]`
 - `generated_at` は `today` から決める（`today.isoformat()+"T00:00:00Z"`）。テストが制御できないシステム時刻は参照しない。`[R1]`
-- 孤児は三条件すべてを満たす文書とする（どの現行文書からも依存されない、かつ陳腐化している、かつ再現可能）。投影・`llm_context`==always・ICD は孤児にしない。`[R8]`
+- 孤児は三条件すべてを満たす文書とする（どの現行文書からも依存されない、かつ陳腐化している、かつ再現可能。ADR-008）。投影・`llm_context`==always・ICD・`status`==archived は孤児にしない（archived の除外は ADR-027。倉庫の証跡を削除候補へ昇格させない）。`[R8]`
 - 逆孤児は現行文書だけを対象とする（判定は graph の `reverse_orphans` に委ねる）。`[R3]`
 - ドメインをまたぐ `depends_on` の違反だけを icd_dependency_violation として上げる。ドメインをまたぐ impacts は違反としない。`[R4]`
 - 未登録/影文書は、`build_graph` が既に集める `parse_warnings`（frontmatter か id が無い .md）と `dup_ids`（id 衝突で影に隠れた別ファイル）を読むだけで検出する。新たな走査はしない。他の全検査は登録簿ノード上の述語なので、ノードにならないファイルはこの検査だけが拾える。取り除きではなく、型を与えて登録するか archive/ へ退避する候補として error で挙げる。`[R1][R8]`
 - 投影ドリフトは三つの投影を対象とする。Overview と ICD-index は id 集合の差（error）。Context Map は印の区間の骨格を内部で再導出して突き合わせ、構造の差（ドメインの過不足・ドメイン越え依存端の過不足・印の区間が無い）を error、ラベルの差（ドメイン行の ICD 列挙・境界違反マーク）を warn とする（ICD-005 の表のとおり）。`[R1][R8]`
 - テスト不能記述は検査しない。意味の判断であり、doc-review が担う（ADR-020）。
-- 体系外 .md（stray_document、ADR-021）: 統治木のルートの親から .md を整列走査し（dot ディレクトリ・node_modules・監査対象の統治木自身は見ない）、`doctrine_docs/_system/.md-intake`（分類の記録。`パス: 非文書|投影|保留 日付`、末尾 `/` は配下全体）と突き合わせる。登録簿の型を持つ .md は warn、記録に無い .md は advisory（上限 50 件で正直に切り詰める）、期限を過ぎた保留は warn、実在しないパスを指す記録の項目と読めない行は advisory。記録の分類の当否は判断であり docs-curate に委ねる。`[R1][R8]`
+- 体系外 .md（stray_document、ADR-021）: 統治木のルートの親から .md を整列走査し（dot ディレクトリ・node_modules・監査対象の統治木自身は見ない）、`doctrine_docs/_system/.md-intake`（分類の記録。`パス: 非文書|投影|保留 日付`、末尾 `/` は配下全体。書式の正本は ICD-005）と突き合わせる。登録簿の型を持つ .md は warn、記録に無い .md は advisory（上限 50 件で正直に切り詰める）、期限を過ぎた保留は warn、実在しないパスを指す記録の項目と読めない行は advisory。記録の分類の当否は判断であり docs-curate に委ねる。`[R1][R8]`
+- 陳腐化の疑い（stale_current、ADR-025）: 明示の `review_by` を持たない現行文書に、型の既定点検周期（登録簿の `TYPE_REVIEW_CYCLE_DAYS`）で実効期限を張り、`updated`＋周期の超過を warn で挙げる。明示の `review_by` は既定より優先し、review_by_overrun 検査が見る。周期の無い型（投影・ADR・DECIDED・WATCH・CHANGE・IMPACT・RESEARCH・ARCHIVE）は対象外。`[R2]`
+- 上流更新の伝播（source_drift）: 現行文書（ADR と投影を除く）の `depends_on` 先の `updated` が自分の `updated` より新しいとき、追随の疑いとして advisory で挙げる。確かめたら自分の `updated` を上げれば消える。`[R2][R4]`
+- アーカイブ整合（archive_integrity、ADR-027）: `status`==archived なのに `<domain>/archive/` の外に在る文書を error で挙げる。archived の非 RESEARCH に `superseded_by` が無ければ advisory。`[R8]`
+- 決定の着地（adr_not_landed）: accepted の ADR を、現行の文書（ADR と投影を除く）の `depends_on`・`impacts`・`superseded_by`・本文の id 参照のどれも指していないとき、「文書上の宣言に留まる」欠陥類型の疑いとして warn で挙げる（WATCH-001 第6項の機械化）。`[R3][R8]`
+- 辞書シードの退行（glossary_seed_drift、ADR-005）: 運用正本（`_system/glossary.md`）が同梱シードの承認語・カルク行を落としていたら warn（シードからの成長は正しい。欠落は退行）。運用正本が無ければ検査しない。`[R6]`
+- 外部アンカーの存在（ext_anchor_broken、ADR-026）: 現行 EXT の「対象」のうち検査が exists のものについて、プロジェクト根からの相対で実在を確かめ、無ければ error。「対象」の行が無い EXT は warn。URL と「review_by のみ」は機械検査しない（通信はしない）。`[R11]`
 
 ## エラー時挙動
 

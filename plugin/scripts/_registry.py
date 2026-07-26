@@ -22,7 +22,7 @@ import re
 TYPES = (
     "ICD", "OVERVIEW", "GLOSSARY", "CTXMAP", "DECIDED", "NONGOAL", "WATCH",
     "REQ", "SPEC", "DATA", "API", "ADR", "CHANGE", "IMPACT", "IMPL", "PROC",
-    "TEST", "RESEARCH", "ARCHIVE",
+    "TEST", "RESEARCH", "ARCHIVE", "EXT",
 )
 
 # 既定status — one value per type (§3.2 「既定status」 column).
@@ -46,6 +46,7 @@ TYPE_DEFAULT_STATUS = {
     "TEST": "current",
     "RESEARCH": "draft",
     "ARCHIVE": "archived",
+    "EXT": "current",
 }
 
 # 既定 llm_context — always|task|never (§3.2 「llm_context」 column).
@@ -69,6 +70,7 @@ TYPE_DEFAULT_LLM_CONTEXT = {
     "TEST": "task",
     "RESEARCH": "never",
     "ARCHIVE": "never",
+    "EXT": "task",
 }
 
 # 置き場所 — allowed directories relative to docs/ (set of patterns).
@@ -94,7 +96,12 @@ TYPE_LOCATION = {
     "TEST": ["<domain>/test/"],
     "RESEARCH": ["<domain>/research/"],
     "ARCHIVE": ["<domain>/archive/"],
+    "EXT": ["<domain>/external/"],
 }
+
+# status:archived の文書は、型に依らず <domain>/archive/ 配下に置く(ADR-027)。
+# §3.2(型で置き場所)と §3.8(アーカイブは倉庫へ移す)の衝突をこの一行で解く。
+ARCHIVED_LOCATION = ["<domain>/archive/"]
 
 # 投影 (projections) — rendered, "手で編集しない". ICD-index reuses type OVERVIEW (C8),
 # so it is NOT a separate type here ("空の型を先に作らない", §3.2).
@@ -162,6 +169,32 @@ REQUIRED_KEYS_L2 = (
 
 # DECIDED/WATCH additionally require `review_by` (古びの検出に使う, §3.4).
 REQUIRED_REVIEW_BY_TYPES = ("DECIDED", "WATCH")
+
+# 型ごとの既定点検周期(日)。review_by を持たない現行文書の実効期限は
+# updated + この日数とする(ADR-025)。None の型は周期の対象外:
+# 投影は描画物、ADR は不変の決定、DECIDED/WATCH は明示 review_by が必須、
+# CHANGE/IMPACT は変更フローの一時物、RESEARCH は draft 放置検査、
+# ARCHIVE は不変。明示の review_by は常にこの既定より優先する。
+TYPE_REVIEW_CYCLE_DAYS = {
+    "ICD": 180,
+    "GLOSSARY": 180,
+    "NONGOAL": 365,
+    "REQ": 365,
+    "SPEC": 180,
+    "DATA": 180,
+    "API": 180,
+    "IMPL": 365,
+    "PROC": 180,
+    "TEST": 365,
+    "EXT": 180,
+}
+
+
+def review_cycle_days(type_code):
+    """型の既定点検周期(日)。対象外の型・未知の型は None(ADR-025)。"""
+    if not isinstance(type_code, str):
+        return None
+    return TYPE_REVIEW_CYCLE_DAYS.get(type_code)
 
 # Keys introduced at Level 3 (permitted/meaningful, NOT required) — §3.4/§4.4.
 LEVEL3_KEYS = ("depends_on", "impacts", "review_by")

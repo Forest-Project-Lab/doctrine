@@ -5,7 +5,7 @@ type: OVERVIEW
 domain: _system
 status: current
 owner: render-projection
-updated: 2026-07-22
+updated: 2026-07-26
 llm_context: always
 sources: []
 ---
@@ -18,8 +18,8 @@ sources: []
 |---|---|---|---|
 | GLOSSARY-001 | GLOSSARY | _system | 用語辞書の正本 |
 | DECIDED-001 | DECIDED | _system | 横断の確定方針（8事実） |
-| NONGOAL-001 | NONGOAL | _system | 横断のやらないこと（6項） |
-| WATCH-001 | WATCH | _system | 横断の退行監視（5項） |
+| NONGOAL-001 | NONGOAL | _system | 横断のやらないこと（7項） |
+| WATCH-001 | WATCH | _system | 横断の退行監視（6項） |
 | ICD-005 | ICD | audit | audit のインターフェース（全件監査の境界） |
 | REQ-008 | REQ | audit | 最小性の監査（過剰と不足の両側を全件検出） |
 | SPEC-011 | SPEC | audit | 全件監査の検査群・要約スキーマ・決定性 |
@@ -27,21 +27,27 @@ sources: []
 | ADR-020 | ADR | audit | テスト不能記述の判定は監査でなく doc-review が担う |
 | ADR-021 | ADR | audit | 体系外 .md は分類の記録と突き合わせ、未分類だけを監査が挙げる |
 | IMPL-011 | IMPL | audit | docs-audit.py の実装メモ |
+| IMPL-018 | IMPL | audit | _intake.py（分類の記録の共有コア）の実装メモ |
 | TEST-011 | TEST | audit | 監査の検査群テスト計画 |
 | ICD-007 | ICD | authoring | authoring のインターフェース（作成・初期化・支援） |
 | REQ-011 | REQ | authoring | 型付き文書を正しい場所と様式で作り初期化は非破壊・最小に保つ |
 | REQ-012 | REQ | authoring | 判断の層（技能と候補語抽出）が決定論を補い保証限界を明示する |
+| REQ-015 | REQ | authoring | 会話知識の捕捉（セッションの決定は消える前にディスクへ） |
 | SPEC-015 | SPEC | authoring | scaffold（_system 非破壊シード） |
 | SPEC-016 | SPEC | authoring | skills（7技能を一仕様で） |
-| SPEC-017 | SPEC | authoring | templates（19型＋icd-index） |
+| SPEC-017 | SPEC | authoring | templates（20型＋icd-index） |
 | SPEC-018 | SPEC | authoring | term-extract（c-TF-IDF 候補語抽出） |
+| SPEC-022 | SPEC | authoring | 会話知識の捕捉（終端の確認・圧縮前の退避・次セッションの選別） |
 | ADR-010 | ADR | authoring | 作成・初期化の設計判断（7技能固定・遅延生成・テンプレが語彙符号化） |
+| ADR-029 | ADR | authoring | CLAUDE.md と AGENTS.md は投影ではなく案内と定める |
 | IMPL-015 | IMPL | authoring | scaffold/term-extract の実装注記 |
 | IMPL-016 | IMPL | authoring | skills/templates の実装注記 |
+| IMPL-020 | IMPL | authoring | capture-nudge.py / precompact-dump.py（捕捉）の実装メモ |
 | TEST-015 | TEST | authoring | scaffold の検証 |
 | TEST-016 | TEST | authoring | skills の検証 |
 | TEST-017 | TEST | authoring | templates の検証 |
 | TEST-018 | TEST | authoring | term-extract の検証 |
+| TEST-022 | TEST | authoring | 会話知識の捕捉の受入 |
 | ICD-006 | ICD | context | context のインターフェース（注入・パック・投影描画の契約） |
 | REQ-009 | REQ | context | 見つけやすさ（投影を正本から決定論で描画） |
 | REQ-010 | REQ | context | LLM適合（常時投入を最小に・never群を渡さない） |
@@ -77,6 +83,8 @@ sources: []
 | REQ-007 | REQ | lint | 明快な日本語（カルクを照合する） |
 | SPEC-007 | SPEC | lint | 単一文書リンタの全 PostToolUse 点検 |
 | SPEC-008 | SPEC | lint | 用語チェッカーの照合規則 |
+| SPEC-023 | SPEC | lint | 整合点検（linter と audit の食い違いの回帰ガード）と横断リマインダ |
+| SPEC-024 | SPEC | lint | review-nudge（手編集への doc-review の促しと捕捉の印） |
 | ADR-005 | ADR | lint | 承認辞書を体系内で一度だけ符号化する |
 | ADR-007 | ADR | lint | 禁止同義語セルの末尾注記の扱い |
 | ADR-012 | ADR | lint | 構造語彙を正本で定義済みと認め、doc-reviewを著述時の閉じた輪にする |
@@ -88,6 +96,8 @@ sources: []
 | IMPL-009 | IMPL | lint | `term-check.py` の実装メモ |
 | TEST-007 | TEST | lint | リンタのテスト計画 |
 | TEST-008 | TEST | lint | 用語チェッカーのテスト計画 |
+| TEST-023 | TEST | lint | 整合点検と横断リマインダの受入 |
+| TEST-024 | TEST | lint | review-nudge の受入 |
 | ICD-001 | ICD | model | model のインターフェース（登録簿と解析の公開契約） |
 | REQ-001 | REQ | model | 構造規則とメタデータ様式を単一の正本として定義する |
 | SPEC-001 | SPEC | model | 登録簿の契約（registry contract） |
@@ -97,17 +107,35 @@ sources: []
 | ADR-002 | ADR | model | フロントマター解析の3要素戻り値（C1） |
 | ADR-013 | ADR | model | 手順を運ぶ型 PROC を一つだけ新設する |
 | ADR-015 | ADR | model | 統治の対象を知識と決定の層に限る |
+| ADR-025 | ADR | model | 型ごとの既定点検周期で全現行文書に実効期限を張る |
+| ADR-026 | ADR | model | 統治木の外への依存を EXT 型のアンカーとして統治する |
+| ADR-027 | ADR | model | status archived の文書は型に依らず倉庫に置き、状態でも不変にする |
+| ADR-033 | ADR | model | 必須キーはちょうど 8 個とする(追認) |
 | IMPL-001 | IMPL | model | `_registry.py` の実装メモ |
 | IMPL-002 | IMPL | model | `_frontmatter.py` の実装メモ |
 | TEST-001 | TEST | model | 登録簿契約のテスト計画 |
 | TEST-002 | TEST | model | フロントマター解析契約のテスト計画 |
+| EXT-003 | EXT | model | 上位設計書（spec/doctrine.ja.md, DOCTRINE-001）への依存 |
 | ICD-008 | ICD | packaging | packaging のインターフェース（配布物の形・Hook配線・段差） |
 | REQ-013 | REQ | packaging | 保証限界の明示（各成果物が予防・検出・委ねるを書く） |
-| SPEC-019 | SPEC | packaging | Hook配線（4イベント／matcher／解決／縮小構成／スナップショット） |
+| REQ-014 | REQ | packaging | 統治の生存性（統治自身の死活が可視で、沈黙する故障を禁じる） |
+| SPEC-019 | SPEC | packaging | Hook配線（7イベント／matcher／解決／縮小構成／スナップショット） |
 | SPEC-020 | SPEC | packaging | パッケージ配布（plugin.json／install／.claude フォールバック／標準ライブラリ） |
+| SPEC-021 | SPEC | packaging | 統治ハートビート（監査の鮮度・定例の期限・外部アンカーの存在） |
+| SPEC-025 | SPEC | packaging | 被覆マトリクス（統治要求×発火経路×証跡） |
 | ADR-011 | ADR | packaging | 段階導入とBash matcherの拒否限定 |
 | ADR-019 | ADR | packaging | 段差は .docs-level をスクリプト自身が読んで自主停止で実現する |
 | ADR-022 | ADR | packaging | 統治木の既定名を doctrine_docs にし、素の docs は他所の土地として触れない |
+| ADR-028 | ADR | packaging | Hook を 7 イベントに広げ、生存性と捕捉を発火面に載せる |
+| ADR-030 | ADR | packaging | 既定 Level 2 を追認し、生存性と捕捉は段差に依らず動くと定める |
+| ADR-031 | ADR | packaging | 全スクリプトは標準ライブラリだけで動く(追認) |
+| ADR-032 | ADR | packaging | Hook 設定はセッション開始時に固定される前提で運用する(追認) |
 | IMPL-017 | IMPL | packaging | パッケージ・Hook配線の実装注記 |
+| IMPL-019 | IMPL | packaging | gov-heartbeat.py（統治ハートビート）の実装メモ |
 | TEST-019 | TEST | packaging | Hook配線・e2e連鎖の受入 |
 | TEST-020 | TEST | packaging | 配布・標準ライブラリの受入 |
+| TEST-021 | TEST | packaging | 統治ハートビートと死活警告の受入 |
+| TEST-025 | TEST | packaging | 被覆マトリクスの受入 |
+| EXT-001 | EXT | packaging | Claude Code の Hook 仕様とツール名への依存 |
+| EXT-002 | EXT | packaging | 自己適用の設定（.claude/settings.json のマーケットプレイス登録）への依存 |
+| EXT-004 | EXT | packaging | 継続的結合の定義（.github/workflows/checks.yml）への依存 |
