@@ -6,9 +6,9 @@ domain: lint
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-22
+updated: 2026-07-26
 sources: [plugin/scripts/docs-linter.py]
-depends_on: [REQ-005, REQ-006, REQ-007, ICD-001, ICD-002]
+depends_on: [REQ-005, REQ-006, REQ-007, ICD-001, ICD-002, ICD-005]
 llm_context: task
 ---
 
@@ -24,7 +24,7 @@ llm_context: task
 ## 制約
 
 - 標準ライブラリだけを使う。文書は編集された一つだけを読み、全件は走査しない。`decision` は決して返さず、助言だけを出す[R7]。
-- 各点検の重大度は次のとおり。`MISSING_KEY`・`EMPTY_KEY`・`BAD_STATUS`・`UNKNOWN_TYPE`・`ID_FILENAME_MISMATCH`・`BAD_FILENAME`・`TYPE_LOCATION_MISMATCH`・`DOMAIN_PATH_MISMATCH`は ERROR（重大度・誤り）。`BAD_LLM_CONTEXT`は、値が不正なら ERROR、既定値の上書きなら WARN（重大度・警告）。`RESEARCH_HAS_DECISION`は WARN。`SPEC_MISSING_SECTION`・`SPEC_EMPTY_SECTION`・`MISSING_TRACE`は ERROR。`STRAY_DOCUMENT`（登録簿の型を持つ文書が doctrine_docs/ の木の外に在る。ADR-021）は ERROR。型なしの .md には出さない（README 等の非文書の分類は external-md-intake に委ねる）。点検の前にまず統治木を探し、根に到達できない体系外のファイルは点検しない。型なしで intake（`_system/.md-intake`）に『非文書』『投影』と登録されたファイルは、schema/frontmatter の点検を飛ばし、用語助言だけを WARN で残す（ADR-024）。intake の読み取りは監査と同じ共有コア（`_intake`）を使い、同じファイルへの分類が食い違わないようにする。
+- 各点検の重大度は次のとおり。`MISSING_KEY`・`EMPTY_KEY`・`BAD_STATUS`・`UNKNOWN_TYPE`・`ID_FILENAME_MISMATCH`・`BAD_FILENAME`・`TYPE_LOCATION_MISMATCH`・`DOMAIN_PATH_MISMATCH`は ERROR（重大度・誤り）。`BAD_LLM_CONTEXT`は、値が不正なら ERROR、既定値の上書きなら WARN（重大度・警告）。`RESEARCH_HAS_DECISION`は WARN。`SPEC_MISSING_SECTION`・`SPEC_EMPTY_SECTION`・`MISSING_TRACE`は ERROR。`STRAY_DOCUMENT`（登録簿の型を持つ文書が doctrine_docs/ の木の外に在る。ADR-021）は ERROR。`ARCHIVED_LOCATION_MISMATCH`（`status`==archived なのに `<domain>/archive/` の外に在る。ADR-027。archived ではこの規則が型の置き場所規則より優先する）は ERROR。型なしの .md には出さない（README 等の非文書の分類は external-md-intake に委ねる）。点検の前にまず統治木を探し、根に到達できない体系外のファイルは点検しない。型なしで intake（`_system/.md-intake`）に『非文書』『投影』と登録されたファイルは、schema/frontmatter の点検を飛ばし、用語助言だけを WARN で残す（ADR-024）。intake の読み取りは監査と同じ共有コア（`_intake`。書式の正本は audit の ICD-005）を使い、同じファイルへの分類が食い違わないようにする。
 - 必須キーの 8 つも、`status` の型別許可表も、登録簿（model）に問い合わせる。`_system` の固定ファイル名は、`id` とファイル名の一致点検を免除する。
 - 依存先がどのドメインに属するかは dep-graph に解決を委ねる。解決できない依存は、ERROR で止めず `ICD_DEP_UNVERIFIED`（WARN）に落とす。別ドメインの ICD 以外を横断して依存していれば `ICD_DEP_VIOLATION`（助言の ERROR）を出すが、それでも編集は拒否しない[R7]。
 

@@ -387,6 +387,39 @@ class TestAdrNotLanded(AuditChecksBase):
                           if f["doc_id"] == "ADR-906"])
 
 
+class TestExtAnchors(AuditChecksBase):
+    def _ext(self, num, body):
+        _util.write_doc(self.root, "packaging/external/EXT-9%02d-x.md" % num, {
+            "id": "EXT-9%02d" % num, "title": "x", "type": "EXT",
+            "domain": "packaging", "status": "current", "owner": "a",
+            "updated": "2026-07-26", "sources": [], "review_by": "2027-01-01",
+        }, body)
+
+    def test_missing_target_errors(self):
+        self._ext(1, "## 期待\n\n- 対象: `no/such/file.md`\n- 検査: exists\n")
+        summary, _ = self._audit()
+        hits = self._codes(summary, "ext_anchor_broken")
+        self.assertTrue(any(f["severity"] == "error" for f in hits))
+
+    def test_existing_target_is_clean(self):
+        _write(os.path.join(self.base, "present.md"), "x\n")
+        self._ext(2, "## 期待\n\n- 対象: `present.md`\n- 検査: exists\n")
+        summary, _ = self._audit()
+        self.assertFalse(self._codes(summary, "ext_anchor_broken"))
+
+    def test_review_by_only_anchor_is_not_checked(self):
+        self._ext(3, "## 期待\n\n- 対象: `実行環境の仕様(ファイルではない)`\n"
+                     "- 検査: review_by のみ\n")
+        summary, _ = self._audit()
+        self.assertFalse(self._codes(summary, "ext_anchor_broken"))
+
+    def test_anchor_without_target_line_warns(self):
+        self._ext(4, "本文だけ。\n")
+        summary, _ = self._audit()
+        hits = self._codes(summary, "ext_anchor_broken")
+        self.assertTrue(any(f["severity"] == "warn" for f in hits))
+
+
 class TestLinterArchivedLocation(unittest.TestCase):
     def setUp(self):
         self.base = _util.mkdtemp()

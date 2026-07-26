@@ -6,7 +6,7 @@ domain: audit
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-06
+updated: 2026-07-26
 sources: [plugin/tests/test_audit.py]
 depends_on: [SPEC-011]
 llm_context: task
@@ -16,7 +16,7 @@ llm_context: task
 
 ## 受入基準への対応
 
-SPEC-011 の 10 検査について、それぞれ pass と fail の両側を確認する。`[R3][R8]`
+SPEC-011 の 17 検査について、それぞれ pass と fail の両側を確認する。新設の 6 検査（stale_current・source_drift・archive_integrity・adr_not_landed・glossary_seed_drift・ext_anchor_broken）は `plugin/tests/test_liveness_capture.py` が確認する。`[R3][R8]`
 
 - dead_link: すべての参照が解決すれば pass、解決先のない `depends_on` があれば fail。
 - review_by_overrun: `review_by` が未来日なら pass、期限を過ぎていれば fail（DECIDED と WATCH を含む）。DECIDED に `review_by` が無い場合は error。

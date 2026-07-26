@@ -6,7 +6,7 @@ domain: model
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-06
+updated: 2026-07-26
 sources: [DOCTRINE-001]
 canonical_for: [type-registry, status-vocabulary, frontmatter-schema, frontmatter-parser, llm-context-policy]
 llm_context: task
@@ -19,7 +19,7 @@ model ドメインは、構造規則とフロントマターの解析を、体�
 ## 公開する用語
 
 - 文書: 管理対象の最小単位。
-- 型: 19 種類の文書種別（ICD・REQ・SPEC など）。
+- 型: 20 種類の文書種別（ICD・REQ・SPEC・EXT など）。
 - 正本: ある事実の唯一の権威ある出所。
 - 投影: モデルから描画した派生表示。手で保守しない。
 - 現行: いま効力を持つ版（`status`=current/accepted）。
@@ -31,7 +31,7 @@ model ドメインは、構造規則とフロントマターの解析を、体�
 
 本 ICD だけが正本である事実を以下に挙げる。`canonical_for` の値と対応する。
 
-- type-registry: 19 型の登録簿（ADR-013 で PROC を追加）。型の順序、既定 `status`、既定 `llm_context`、置き場所を定める。
+- type-registry: 20 型の登録簿（ADR-013 で PROC を、ADR-026 で EXT を追加）。型の順序、既定 `status`、既定 `llm_context`、置き場所、既定点検周期（ADR-025）、archived の置き場所（ADR-027）を定める。
 - `status-vocabulary`: `status` の統制語彙 8 値。accepted は ADR だけに使う。draft は RESEARCH だけに使う。
 - frontmatter-schema: 必須 8 キー（`id`, title, `type`, `domain`, `status`, `owner`, `updated`, `sources`）。created は必須としない。DECIDED と WATCH は `review_by` も必須とする。
 - frontmatter-parser: フロントマター解析が 3 要素を返す契約。詳細は後述する。

@@ -503,6 +503,52 @@ def _check_adr_not_landed(g):
     return out
 
 
+_EXT_TARGET_RE = re.compile(r"対象[:：]\s*`([^`]+)`")
+_EXT_CHECK_RE = re.compile(r"検査[:：]\s*(\S+)")
+
+
+def _check_ext_anchors(g, root):
+    """17. 外部アンカーの存在(ADR-026, R11)。EXT の対象が実在するかを検査する。
+
+    本文の「- 対象: `<パス>`」を読み、「- 検査:」が exists を含むアンカーだけ、
+    プロジェクト根(統治木の親)からの相対で存在を確かめる。URL と
+    「review_by のみ」のアンカーは機械検査の対象外(期限の再検証は review_by
+    検査が見る)。対象の行が無い EXT は書きかけとして warn。
+    """
+    out = []
+    proj = os.path.dirname(os.path.abspath(root))
+    for doc_id in sorted(g.nodes):
+        node = g.nodes[doc_id]
+        if node["type"] != "EXT":
+            continue
+        if not _registry.is_current(node["status"]):
+            continue
+        body = node.get("_body")
+        if body is None:
+            body = _read_body(os.path.join(g.root, node["path"]))
+        m = _EXT_TARGET_RE.search(body)
+        if m is None:
+            out.append(_finding(
+                "ext_anchor_broken", SEV_WARN, doc_id, node["path"],
+                "EXT に「対象: `<パス>`」の行が無い(アンカーが何も指していない)"))
+            continue
+        target = m.group(1).strip()
+        cm = _EXT_CHECK_RE.search(body)
+        check = cm.group(1) if cm else "exists"
+        if "exists" not in check:
+            continue  # review_by のみ / hash(未実装) は機械検査しない。
+        if target.startswith("http://") or target.startswith("https://"):
+            continue  # 通信はしない(ADR-031)。URL は review_by で見る。
+        abspath = target if os.path.isabs(target) else os.path.join(proj, target)
+        if not os.path.exists(abspath):
+            out.append(_finding(
+                "ext_anchor_broken", SEV_ERROR, doc_id, node["path"],
+                "外部アンカーの対象 %s が実在しない。依存先が消えたか動いた。"
+                "対象を直すか、依存元とともに整理する(ADR-026)" % target,
+                refs=[]))
+    return out
+
+
 def _check_glossary_seed(root):
     """16. 辞書シードの退行(R6, ADR-005)。運用正本 ⊇ 同梱シードを機械で守る。
 
@@ -859,6 +905,7 @@ def run_audit(root, today, knobs):
     findings += _check_archive_integrity(g)
     findings += _check_adr_not_landed(g)
     findings += _check_glossary_seed(root)
+    findings += _check_ext_anchors(g, root)
 
     findings.sort(key=lambda f: (f["check"], f["doc_id"], f["message"]))
     return findings

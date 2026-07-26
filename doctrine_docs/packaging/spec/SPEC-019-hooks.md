@@ -1,20 +1,20 @@
 ---
 id: SPEC-019
-title: Hook配線（4イベント／matcher／解決／縮小構成／スナップショット）
+title: Hook配線（7イベント／matcher／解決／縮小構成／スナップショット）
 type: SPEC
 domain: packaging
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-06
+updated: 2026-07-26
 sources: [plugin/hooks/hooks.json]
 depends_on: [ICD-008, ICD-001, ICD-002, ICD-003, ICD-004, ICD-005, ICD-006, ICD-007]
 llm_context: task
 ---
 
-# Hook配線（4イベント／matcher／解決／縮小構成／スナップショット）
+# Hook配線（7イベント／matcher／解決／縮小構成／スナップショット）
 
-`hooks/hooks.json` が、4 つのイベントを各スクリプトへ配線する仕様である。各スクリプトの中身は相手ドメインの ICD（ICD-001 から ICD-007）に委ね、この仕様は配線だけを所有する `[R9]`。
+`hooks/hooks.json` が、7 つのイベントを各スクリプトへ配線する仕様である（ADR-028）。各スクリプトの中身は相手ドメインの ICD（ICD-001 から ICD-007）に委ね、この仕様は配線だけを所有する `[R9]`。
 
 ## 入出力
 
@@ -33,8 +33,9 @@ llm_context: task
 - `command` には、`${CLAUDE_PLUGIN_ROOT}/scripts/` 直下の `.py` だけを書く。第三者のパスは書かない。
 - 変数を含むパスは二重引用符で囲む。空白を含むパスでも語が割れないためである。
 - スクリプトは直接起動する（`python3` を前置しない）ため、全スクリプトは実行ビットと `python3` のシバンを持つ。実行ビットは git の登録簿（インデックス）に 100755 で記録する。作業ツリーの `chmod` だけでは配布物に載らない。
-- matcher は、`Edit|Write|MultiEdit` と `Bash` の二系統だけにする。
+- matcher は、`Edit|Write|MultiEdit` と `Bash` の二系統だけにする。ツール名は実行環境の仕様への依存であり、EXT-001 のアンカーが `review_by` で定期再検証する（書き込み系ツールの追加・改名は matcher を黙って素通りするため）。
 - PostToolUse は `policy-guard.py` → `docs-linter.py` → `review-nudge.py` の順を守る `[R7]`。先に走る `policy-guard.py` は起動後の違反を拒否しうる。これを、助言だけを返す `docs-linter.py`・`review-nudge.py` より前に判定する。
+- 生存性と捕捉の三イベント（ADR-028）: UserPromptSubmit は `gov-heartbeat.py`（統治の生存と定例の期限。SPEC-021）、Stop は `capture-nudge.py`（記録の確認の一度きりの差し止め。SPEC-022）、PreCompact は `precompact-dump.py`（圧縮前の退避指示。SPEC-022）を起動する。三つとも `.docs-level` に依らず動く（ADR-030）。
 - 縮小構成 `hooks/hooks.level2.json` は、全構成から SessionEnd の `docs-audit.py` と、PostToolUse の `policy-guard.py`・`review-nudge.py` を外し、PostToolUse を `docs-linter.py` だけにしたものである。監査と依存グラフは Level 3 以降に置く。起動後のブロックには依存グラフが要るからである `[R5]`。
 - 段差の実現は配線の差し替えではなく自主停止である（ADR-019）: 配線は常に全構成 `hooks.json` とし、SessionEnd の監査・PostToolUse の `policy-guard.py`・`review-nudge.py` が `doctrine_docs/_system/.docs-level` を読み、Level 2 では静かに済ませる。`hooks.level2.json` は、プラグインを使わず手で配線する場合の代替として同梱を続ける。
 - Hook 設定はセッション開始時にスナップショットして固定する。配線を変えても、そのセッションには反映されず、新しいセッションから反映する。
@@ -42,10 +43,10 @@ llm_context: task
 ## エラー時挙動
 
 - 各スクリプトは、通常の運用では終了コード 0 を返し、判定は JSON に載せる。スクリプト自身が異常を起こしたときだけ、非ゼロを返す。
-- `Bash` matcher の枝は deny だけを返す。`additionalContext` も `decision:block` もモデルへ届かないからである。
+- `Bash` matcher の枝は deny だけを返す（ADR-011）。`additionalContext` も `decision:block` もモデルへ届かないからである。段階導入の縮小構成の由来も ADR-011 が定める。
 
 ## 受入基準
 
-`hooks.json` が 4 つのイベントを持ち、各 `command` が `${CLAUDE_PLUGIN_ROOT}/scripts/` 配下の `.py` を指し、PostToolUse が `policy-guard.py` → `docs-linter.py` → `review-nudge.py` の順であり、`hooks.level2.json` が縮小差分であること。空白を含むパスへ置換しても `command` の語数が変わらないこと。全スクリプトが実行ビットとシバンを持つこと。対応テストは TEST-019 と TEST-020。
+`hooks.json` が 7 つのイベント（SessionStart・UserPromptSubmit・PreToolUse・PostToolUse・Stop・PreCompact・SessionEnd。ADR-028）を持ち、各 `command` が `${CLAUDE_PLUGIN_ROOT}/scripts/` 配下の `.py` を指し、PostToolUse が `policy-guard.py` → `docs-linter.py` → `review-nudge.py` の順であり、`hooks.level2.json` が縮小差分であること。空白を含むパスへ置換しても `command` の語数が変わらないこと。全スクリプトが実行ビットとシバンを持つこと。イベント集合と要求の対応は被覆マトリクス（SPEC-025）が持つ。対応テストは TEST-019 と TEST-020 と TEST-025。
 
 <!-- 入れない: 廃止、検討、実装コードの写し -->

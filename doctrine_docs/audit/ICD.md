@@ -6,9 +6,9 @@ domain: audit
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-06
+updated: 2026-07-26
 sources: [spec/doctrine.ja.md#4.2]
-canonical_for: [corpus-audit, audit-summary-schema]
+canonical_for: [corpus-audit, audit-summary-schema, intake-ledger-format]
 llm_context: task
 ---
 
@@ -28,10 +28,11 @@ ICD・正本・投影・現行・依存・参照は用語辞書（`_system/gloss
 
 このドメインだけが正本となる事実を挙げる（frontmatter の `canonical_for` と一致する）。
 
-- `corpus-audit`: 全件監査の検査群（11 検査）と、各検査の重大度。
+- `corpus-audit`: 全件監査の検査群（17 検査）と、各検査の重大度。
+- `intake-ledger-format`: 分類の記録（`_system/.md-intake`）の書式の正本。一行一項目 `パス: 非文書|投影|保留 [YYYY-MM-DD]`（保留は期限必須。末尾 `/` は配下全体）。読み取りは共有コア `_intake.py`（IMPL-018）に一本化する。
 - `audit-summary-schema`: 監査の要約スキーマ `docs-audit/1` の形。
 
-11 検査と重大度（固定）:
+17 検査と重大度（固定）:
 
 | 検査名 | 重大度 |
 |---|---|
@@ -46,6 +47,12 @@ ICD・正本・投影・現行・依存・参照は用語辞書（`_system/gloss
 | projection_drift | error（Context Map のラベル差のみ warn） |
 | unregistered_document / shadowed_document（doctrine_docs/ 内で登録簿ノードにならない .md） | error |
 | stray_document（doctrine_docs/ の外の .md。ADR-021） | warn（型付き・期限切れ保留）／advisory（未分類・記録の掃除） |
+| stale_current（型既定周期の超過。ADR-025） | warn |
+| source_drift（上流更新の伝播） | advisory |
+| archive_integrity（status⇔置き場所。ADR-027） | error（倉庫の外）／advisory（superseded_by なし） |
+| adr_not_landed（決定の着地） | warn |
+| glossary_seed_drift（辞書シードの退行） | warn |
+| ext_anchor_broken（外部アンカーの存在。ADR-026） | error（対象なし）／warn（対象の行なし） |
 
 ## データ契約
 

@@ -6,7 +6,7 @@ domain: authoring
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-06-30
+updated: 2026-07-26
 sources: [plugin/scripts/scaffold.py, plugin/scripts/term-extract.py]
 depends_on: [SPEC-015, SPEC-018]
 llm_context: task

@@ -6,8 +6,9 @@ domain: authoring
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-06-30
+updated: 2026-07-26
 sources: [spec/doctrine.ja.md §3.7]
+llm_context: task
 ---
 
 # 型付き文書を正しい場所と様式で作り初期化は非破壊・最小に保つ

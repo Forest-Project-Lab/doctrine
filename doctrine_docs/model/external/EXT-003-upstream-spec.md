@@ -1,0 +1,33 @@
+---
+id: EXT-003
+title: 上位設計書（spec/doctrine.ja.md, DOCTRINE-001）への依存
+type: EXT
+domain: model
+status: current
+owner: doctrine-maintainers
+created: 2026-07-26
+updated: 2026-07-26
+sources: [spec/doctrine.ja.md]
+review_by: 2026-10-26
+llm_context: task
+---
+
+# 上位設計書（spec/doctrine.ja.md, DOCTRINE-001）への依存
+
+統治木の外への依存を登録するアンカーである(ADR-026)。中身は写さない。
+
+## 何に依存しているか
+
+統治木の全文書は、統治木の外にある上位設計書 DOCTRINE-001(`spec/doctrine.ja.md`)の §1〜§7 を規範として引く。上位設計書は登録簿による統治の対象外(非文書)だが、体系はそこへ依存している。用語辞書の階層では、上位設計書の §1 は初期シードであり、運用の正本は導入先の `_system/glossary.md` である(ADR-005)。
+
+## 期待
+
+- 対象: `spec/doctrine.ja.md`
+- 検査: exists(存在)
+- 期待する状態: 在ること。加えて、決定(ADR)が上位設計書の記述を変えるとき、同じ変更で上位設計書も更新される(上位が下位 SPEC より古い逆転を作らない。過去に ADR-023/024 で 16 日の逆転が起きた)
+
+## 動いたら何が壊れるか
+
+消えると全文書の規範の参照先(§番号)が宙に浮く。古びると、上位を読んだ判断が現行の決定と食い違う。鮮度の異常は監査の source_drift と doc-review の定例で拾う。
+
+<!-- 入れない: 外部の正本の中身の写し(正本の二重化)。要点の転記と出所の参照だけを許す -->

@@ -6,7 +6,7 @@ domain: context
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-06-30
+updated: 2026-07-26
 sources: [plugin/scripts/render-projection.py]
 depends_on: [REQ-009, ICD-001]
 llm_context: task
@@ -19,6 +19,8 @@ llm_context: task
 ## 入出力
 
 - 入力: モード `overview|icd-index|context-map-skeleton|all` のうち一つと、`[--docs-root R] [--out PATH|-] [--check]`。源は、各文書のフロントマターと §3 の登録簿（ICD-001）。本文は読まない。
+- 投影ごとの「源」の定義: Overview の源は現行の全ソース文書、ICD 一覧の源は現行の全 ICD、Context Map の源はドメイン集合とドメイン越えの `depends_on` 端の当事者。源が違うため、三つの投影の `updated` は互いにずれてよい（ずれは古びではない）。
+- 投影の境界（ADR-016）: 投影と呼ぶのは、この仕様の三つと SessionStart 契約のように、正本から描画し直せる派生表示だけである。外部ツールのデータから作る図表と、複数の現行文書から組み立てる刊行物（FAQ・リリースノートなど）は投影ではなく、描画先にも `--check` の対象にも含めない。投影の種類を足すときは ADR で決める。
 - 描画先: `_system/overview.md`・`_system/icd-index.md`・`_system/context-map.md`。Overview と ICD 一覧の冒頭一行は「描画される。手で編集しない。」とする。
 - 投影自身のフロントマターは `type: OVERVIEW`、`id: OVERVIEW-<n>` とする（C8とは凍結した契約の整合を見る判断項目をいう。INDEX（索引）型は作らない）。
 

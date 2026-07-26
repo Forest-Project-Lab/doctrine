@@ -6,7 +6,7 @@ domain: packaging
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-06
+updated: 2026-07-26
 sources: [spec/doctrine.ja.md §4.3]
 canonical_for: [plugin-packaging, hook-wiring, level-staging]
 llm_context: task
@@ -29,7 +29,7 @@ packaging ドメインは、配布物の形（`plugin.json`）、Hook の配線�
 このドメインだけが正本である事実は、次の三つである（canonical_for と一致する）。
 
 - **plugin-packaging**: 配布は `/plugin install` で行う。プラグインを配置できないときは `.claude/` へ退避する。スクリプトは標準ライブラリだけで動く。`plugin.json` の最小キーは、name=`doctrine`、version、license=MIT の三つである。version の値の正本は `plugin.json` と `marketplace.json`（同値をテストが強制する）。
-- **hook-wiring**: 4 つのイベント（SessionStart・PreToolUse・PostToolUse・SessionEnd）を各スクリプトへ対応づける。統治木の解決は登録簿（ADR-022: doctrine_docs 優先、docs は `_system` を持つ場合だけ。素の docs は触れない）に一本化する。matcher は `Edit|Write|MultiEdit` と `Bash` の二系統に分ける。PostToolUse では `policy-guard.py`・`docs-linter.py`・`review-nudge.py` をこの順に起動する。
+- **hook-wiring**: 7 つのイベント（SessionStart・UserPromptSubmit・PreToolUse・PostToolUse・Stop・PreCompact・SessionEnd。ADR-028）を各スクリプトへ対応づける。統治木の解決は登録簿（ADR-022: doctrine_docs 優先、docs は `_system` を持つ場合だけ。素の docs は触れない）に一本化する。matcher は `Edit|Write|MultiEdit` と `Bash` の二系統に分ける。PostToolUse では `policy-guard.py`・`docs-linter.py`・`review-nudge.py` をこの順に起動する。
 - **level-staging**: 段差は `.docs-level` を読んだ自主停止で実現する（ADR-019）。Level 2 では SessionEnd の監査・起動後ガード・レビューのナッジが静かに済ませ、Level 3 で監査と依存グラフを、Level 4 で投影の一式を足す。縮小構成 `hooks/hooks.level2.json` は手配線用の代替として同梱する。Hook 設定は、セッション開始時にスナップショットして固定する。
 
 ## データ契約

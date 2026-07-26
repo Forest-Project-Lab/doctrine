@@ -6,7 +6,7 @@ domain: guard
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-06
+updated: 2026-07-26
 sources: [spec/doctrine.ja.md §4.2]
 depends_on: [REQ-004, ICD-001, ICD-002]
 llm_context: task
@@ -25,7 +25,7 @@ llm_context: task
 
 各ガードの規則:
 
-- 不変（Guard1, `[R8]`）: `<domain>/archive/` 下の編集を拒否する。既存の `type:ADR` ファイルの改変も拒否する。ただし carve-out だけは許す。carve-out とは、`status` を proposed→accepted・accepted→superseded・accepted→deprecated の範囲で動かし、`superseded_by` と `updated` を付ける編集をいう。
+- 不変（Guard1, `[R8]`）: `<domain>/archive/` 下の編集を拒否する。加えて、置き場所に依らず、ディスク上の実効 `status` が archived の既存文書の編集も拒否する（ADR-027。パス判定だけでは倉庫の外に居る archived 文書が編集自由になる）。現行から archived への遷移の書き込み自体は対象外とする（それは降格の操作であり、削除安全ガードが逆参照ゼロを守る）。既存の `type:ADR` ファイルの改変も拒否する。ただし carve-out だけは許す。carve-out とは、`status` を proposed→accepted・accepted→superseded・accepted→deprecated の範囲で動かし、`superseded_by` と `updated` を付ける編集をいう。
 - ICD依存（Guard2, `[R7]`）: Write の content からフロントマターを読み、`depends_on` の各 dep を調べる。相手のドメインが自ドメインと異なり、しかも相手の型が ICD でなければ拒否する。dep の `status` は見ない（C12: 整合判断id）。Edit・MultiEdit は書き込む前に全文を組み立てられないため、PostToolUse の block に回す。
 - 削除安全（Guard3, `[R4]`）: 現行（current/accepted）から deprecated/superseded/archived への降格、本文を空にする編集、Bash の `rm`・`git rm`・`mv` を対象とする。その文書を指す現行の逆依存が残っているとき、これらを拒否する。逆依存は graph の `reverse_current_dependents(id)` で引く。
 
@@ -45,6 +45,6 @@ llm_context: task
 - Hook 事象では main から例外を投げない。判定は JSON に載せ、終了コードは常に 0 を返す。
 
 ## 受入基準
-TEST-003 が次を確認する: 受入シナリオ TC（番号は次のとおり）。TC-070..072（越境ICD許可・非ICD拒否・同ドメイン許可）、TC-117（相手 `status` 無関係）、TC-123（分類不能=拒否）、dangling 連れ合い（=許可）、TC-075..077（不変）、TC-078..081（削除安全）、TC-118（block→張り替え→許可）、TC-119（Write deny と Edit block が同一違反）、TC-132（Bash deny に additionalContext も block も無い）。加えて、`mv` の宛先が既存の被依存文書なら deny、新パスへの改名なら allow。
+TEST-003 が次を確認する: 受入シナリオ TC（番号は次のとおり）。TC-070..072（越境ICD許可・非ICD拒否・同ドメイン許可）、TC-117（相手 `status` 無関係）、TC-123（分類不能=拒否）、dangling 連れ合い（=許可）、TC-075..077（不変）、TC-078..081（削除安全）、TC-118（block→張り替え→許可）、TC-119（Write deny と Edit block が同一違反）、TC-132（Bash deny に additionalContext も block も無い）。加えて、`mv` の宛先が既存の被依存文書なら deny、新パスへの改名なら allow。archived の不変（倉庫の外でも deny、現行→archived の遷移は allow）は `plugin/tests/test_liveness_capture.py` が確認する（ADR-027）。
 
 <!-- 入れない: 廃止、検討、実装コードの写し -->

@@ -6,9 +6,10 @@ domain: context
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-06
+updated: 2026-07-26
 sources: [plugin/scripts/inject-contract.py]
 depends_on: [REQ-010, ICD-001, ICD-005]
+impacts: [SPEC-021]
 llm_context: task
 ---
 
@@ -18,15 +19,19 @@ llm_context: task
 
 ## 入出力
 
-- 入力: SessionStart の Hook JSON を標準入力で受け取るが、内容は読み捨てる。引数は `[--docs-root R] [--cap N] [--config PATH] [--format json|text]`。統治木は `--docs-root` → プロジェクト根 → 作業ディレクトリの順に、登録簿の解決（ADR-022: doctrine_docs 優先、docs は `_system` を持つ場合だけ）で決める。日付は受け取らない（古び検出は監査の仕事で、本スクリプトは監査の要約を読むだけ）。未知の引数は無視する。
+- 入力: SessionStart の Hook JSON を標準入力で受け取るが、内容は読み捨てる。引数は `[--docs-root R] [--cap N] [--config PATH] [--format json|text] [--today YYYY-MM-DD]`。統治木は `--docs-root` → プロジェクト根 → 作業ディレクトリの順に、登録簿の解決（ADR-022: doctrine_docs 優先、docs は `_system` を持つ場合だけ）で決める。`--today` は監査の鮮度警告の基準日で、与えないときだけ壁時計に退避する（テストの決定性用）。未知の引数は無視する。
 - 応答: `{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":<契約文字列>}}`。
-- 契約文字列は次の順に並べる。要点復唱 → 重要文書（冒頭）→ GLOSSARY 見出し → 確定事実（現行の DECIDED）→ NONGOAL → 廃止事実 → WATCH の要点 → 前回監査の要約 → 重要文書（末尾に再掲）→ 超過通知（条件を満たすときだけ）。
-- 前回監査の要約は実行可能にする。`top_findings` の同一行は一つにまとめて件数を添える。`counts_by_check` に未登録/影文書（`unregistered_document`・`shadowed_document`）・体系外 .md（`stray_document`）または孤児（`orphan`）が在るとき、あるいは error があるときは、`docs-curate` を名指しで起動する一行を要約に加える（受動の案内に留めない）。この一行は上限超過の有無に依らず出す。
+- 契約文字列は次の順に並べる。要点復唱 → 重要文書（冒頭）→ GLOSSARY 見出し → 確定事実（現行の DECIDED）→ NONGOAL → 廃止事実 → WATCH の要点 → 前回監査の要約 → 未選別のセッションメモ（在るときだけ）→ 重要文書（末尾に再掲）→ 超過通知（条件を満たすときだけ）。
+- 前回監査の要約は実行可能にする。`top_findings` の同一行は一つにまとめて件数を添える。促しの一行は次の優先順で一つだけ出す（受動の案内に留めない。上限超過の有無に依らず出す）: 未登録/影文書・体系外 .md・孤児・error → `docs-curate` 名指し。`review_by_overrun` → doc-review 名指し（期限切れの再点検）。`stale_current`（型既定周期の超過。ADR-025）→ `docs-curate` 名指し。`adr_not_landed` → doc-review 名指し（決定の着地）。`canonical_conflict`・`near_duplicate` → doc-review の定例名指し。
+- 統治の生存性 `[R11]`（SPEC-021 と対）: 監査要約が無いときの「前回監査なし」は、SessionEnd 監査の停止か統治木の移動を疑う警告文として出す。要約の `today` が基準日より `audit_stale_days`（設定。既定 7 日）以上古いときは、経過日数つきの死活警告を要約に足す。
+- 会話知識の捕捉 `[R12]`（SPEC-022 と対）: `_system/.session-notes` に未選別の行（非空・非コメント）があるとき、保護節「未選別のセッションメモ」で選別（doc-author で ADR・DECIDED へ、または破棄の明言）を義務として出す。
+- DECIDED の絞りは ADR-014 の階層に従う（常時集合へ写すのは横断の確定事実だけ。ドメイン固有の事実は ICD「正本である事実」か task の文書で持つ。混入の点検は docs-curate の手順 7）。
+- 登録簿の型既定と現行判定は ICD-001 に、前回監査の要約は ICD-005 の成果物に、それぞれ依存する。
 - 登録簿の型既定と現行判定は ICD-001 に、前回監査の要約は ICD-005 の成果物に、それぞれ依存する。
 
 ## 制約
 
-- 標準ライブラリだけを使う。pip も通信も使わない。壁時計を読まず、同じ入力には同じ結果を返す（決定的）。
+- 標準ライブラリだけを使う。pip も通信も使わない。壁時計は監査の鮮度警告の基準日にだけ、`--today` が無いとき退避として使う（それ以外は決定的。監査と同じ規約）。
 - 上限は `--cap`、`injection_token_cap`、既定 12000 の順に、先に見つかったものを使う。注入とパックは別々の上限を持つ（C10とは凍結した契約の整合を見る判断項目をいう）。
 - トークンの見積もりは `ceil(len/4.0)` で計算する。日本語では多めに出る、安全側の近似である。
 - 文書の本文全量と never 群の本文は、いずれも含めない `[R5]`。GLOSSARY には承認語と一行の意味だけを載せ、禁止同義語の表は載せない。
@@ -34,7 +39,7 @@ llm_context: task
 ## エラー時挙動
 
 - 内容に由来する例外は main の外へ出さない。常に終了コード 0 を返し、セッションを落とさない。何が起きても、空でない妥当な JSON を返す。
-- 監査要約が無い、またはスキーマが合わないときは「前回監査なし」と書く。
+- 監査要約が無い、またはスキーマが合わないときは「前回監査なし」に死活の疑いの警告を添えて書く（`[R11]`。無音の劣化にしない）。
 - 監査要約の `root` が注入先セッションの統治木のルートと一致しない要約は捨て、「前回監査なし」へ劣化する。`${CLAUDE_PLUGIN_ROOT}/.cache` は同じプラグインを使う全プロジェクトで共有されるため、照合しないと別プロジェクトの所見と是正指示を注入してしまう。`root` の無い要約も捨てる（誤注入より無注入が安全側）。
 - `_system` が無いときは、ブートストラップの通知だけを返す（空文字列は返さない）。
 - `doctrine_docs/` は在るが登録文書（frontmatter に `id` を持つ `.md`）が一つも無いときは、オンボーディングの通知だけを返す。docs-system-init での最小構成の用意と、散在する未登録ファイルの docs-curate での整理・登録を促す（空文字列は返さない）。ブートストラップ（`doctrine_docs/` 自体が無い）とは相互排他である。

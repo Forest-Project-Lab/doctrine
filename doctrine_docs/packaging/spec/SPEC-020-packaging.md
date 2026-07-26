@@ -6,7 +6,7 @@ domain: packaging
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-06-30
+updated: 2026-07-26
 sources: [plugin/.claude-plugin/plugin.json]
 depends_on: [REQ-013]
 llm_context: task
@@ -29,7 +29,8 @@ llm_context: task
 ## 制約
 
 - `plugin.json` は最小キーだけを持つ。想定外の最上位キーを足さない。
-- スクリプトは、標準ライブラリと、兄弟の `_` コア（`_registry`・`_frontmatter` など）だけを import する。pip で入れる第三者依存を作らない `[R5]`。
+- スクリプトは、標準ライブラリと、兄弟の `_` コア（`_registry`・`_frontmatter` など）だけを import する。pip で入れる第三者依存を作らない（ADR-031）`[R5]`。
+- 配布物のほかに、リポジトリ直下の `scripts/`（整合点検の二本。SPEC-023）が在る。これは本リポジトリ専用の自己適用であり、配布物には含めない。「`scripts/`」と書くときは、`plugin/scripts/`（配布物）とリポジトリ直下 `scripts/`（自己適用）を必ず書き分ける。
 - 各エントリスクリプトは `def main` を定義し、`sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))` のブートストラップを持つ。これで兄弟コアを解決する。
 - プラグインを配置できないときは、`.claude/` へ退避する（`scaffold.py --fallback`）。
 
@@ -40,6 +41,6 @@ llm_context: task
 
 ## 受入基準
 
-`plugin.json` が妥当な JSON で最小キーを満たし、`name` が `doctrine` であること。`scripts/` の全 `.py` が、標準ライブラリと兄弟コアだけを import すること。README（案内ファイル）が存在し、索引項目（install 経路・7 つの技能・4 つの Hook・スクリプト名・段）を含むこと。対応テストは TEST-020。
+`plugin.json` が妥当な JSON で最小キーを満たし、`name` が `doctrine` であること。`plugin/scripts/` の全 `.py` が、標準ライブラリと兄弟コアだけを import すること。README（案内ファイル）が存在し、索引項目（install 経路・7 つの技能・Hook の各イベント・スクリプト名・段）を含むこと。対応テストは TEST-020。
 
 <!-- 入れない: 廃止、検討、実装コードの写し -->
