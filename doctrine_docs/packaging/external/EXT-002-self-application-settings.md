@@ -18,7 +18,7 @@ llm_context: task
 
 ## 何に依存しているか
 
-本リポジトリの自己適用(ドッグフード)は、二つに依存する。(1) `.claude/settings.json` のマーケットプレイス登録(絶対パス `/workspaces/doctrine`)がプラグインを解決できること。(2) `~/.claude` ボリューム側の導入状態(installed_plugins)にプラグインが入っていること。どちらが欠けても、注入・ガード・リンタ・監査の全フックが警報なしに沈黙する(2026-07-22 の改名と、ボリュームの作り直しで実際に起きた)。ボリューム側は devcontainer の postCreateCommand が自己導入で復元する。導入は複製(cache)であり、`plugin/` の変更後は `claude plugin update doctrine` で追随させる。
+本リポジトリの自己適用(ドッグフード)は、二つに依存する。(1) `.claude/settings.json` のマーケットプレイス登録(絶対パス `/workspaces/doctrine`)がプラグインを解決できること。(2) `~/.claude` ボリューム側の導入状態(installed_plugins)にプラグインが入っていること。どちらが欠けても、注入・ガード・リンタ・監査の全フックが警報なしに沈黙する(2026-07-22 の改名と、ボリュームの作り直しで実際に起きた)。ボリューム側は devcontainer の postCreateCommand が自己導入で復元する。導入は複製(cache)であり、`plugin/` の変更後は `claude plugin update doctrine@forest-project-lab` で追随させる。
 
 ## 期待
 
