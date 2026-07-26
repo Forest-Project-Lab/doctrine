@@ -4,7 +4,7 @@
     "forest-project-lab": {
       "source": {
         "source": "directory",
-        "path": "/workspaces/llm-docs-governance"
+        "path": "/workspaces/doctrine"
       }
     }
   },
