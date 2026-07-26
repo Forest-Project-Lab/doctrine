@@ -24,6 +24,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import _intake  # noqa: E402
 import _registry  # noqa: E402
 
 DEFAULT_AUDIT_STALE_DAYS = 7
@@ -166,6 +167,40 @@ def _once_per_session(sid):
     return False
 
 
+def _unclassified_strays(summary):
+    """要約から未分類の体系外 .md の一覧(paths)を返す(移行キャンペーンの種。ADR-034)。
+
+    台帳(.md-intake)に無い .md だけを数える。判定は監査が付けた所見の文言
+    (「未分類」)で行う。台帳を二重に持たない(導出で回す)。"""
+    out = []
+    if not isinstance(summary, dict):
+        return out
+    for f in summary.get("findings") or []:
+        if not isinstance(f, dict):
+            continue
+        if f.get("check") == "stray_document" and "未分類" in str(f.get("message")):
+            p = str(f.get("path") or "").strip()
+            if p:
+                out.append(p)
+    return out
+
+
+def migration_line(docs_root, summary):
+    """移行キャンペーンの一件(1鼓動1件)。対象が無ければ空文字列(ADR-034)。"""
+    strays = _unclassified_strays(summary)
+    if not strays:
+        return ""
+    entries, _bad = _intake.load_ledger(docs_root)
+    done = len(entries)
+    total = done + len(strays)
+    nxt = strays[0]
+    return ("【移行 %d/%d】統治木の外の .md が %d 件未分類。次の1件: %s — "
+            "「これを分類して」と言えば docs-curate で進める(取り込む=doc-author で"
+            "型を与える／参照=EXT アンカー／非文書=期限付きで台帳へ)。分類のたびに"
+            "この数は減り、台帳(_system/.md-intake)が進捗の正本になる。"
+            % (done, total, len(strays), nxt))
+
+
 def build_message(docs_root, today, config):
     """最も重い一件の警告文を返す。何も無ければ空文字列。純粋(入出力なしの判定は分離)。"""
     audit_stale_days = _knob(config, "audit_stale_days", DEFAULT_AUDIT_STALE_DAYS)
@@ -173,22 +208,27 @@ def build_message(docs_root, today, config):
 
     summary = _audit_summary(docs_root)
     state = read_state(docs_root)
+    level = _registry.docs_level(docs_root)
 
-    # 1) 監査の死活(R11)。要約なし・古い、の順に重い。
-    if summary is None:
-        if not state:
-            return ""  # 使い始めの前(記録が何も無い)は黙る。SessionStart の案内に譲る。
-        return ("【統治】前回監査の記録が見つからない。SessionEnd の監査が動いて"
-                "いない可能性がある。「監査を実行して」と言えば docs-audit で確かめる(R11)。")
-    audit_day = _parse_date(summary.get("today"))
-    if audit_day is not None and (today - audit_day).days >= audit_stale_days:
-        return ("【統治】前回監査から %d 日が経っている(最終 %s)。SessionEnd の監査が"
-                "動いていない可能性がある。「監査を実行して」と言えば確かめる(R11)。"
-                % ((today - audit_day).days, audit_day.isoformat()))
+    # 1) 監査の死活(R11)。要約なし・古い、の順に重い。Level 2 に SessionEnd の監査は
+    #    無い(ADR-019)ため、この検査は Level 3 以上でだけ意味を持つ(誤報を出さない)。
+    if level >= 3:
+        if summary is None:
+            if not state:
+                return ""  # 使い始めの前(記録が何も無い)は黙る。SessionStart の案内に譲る。
+            return ("【統治】前回監査の記録が見つからない。SessionEnd の監査が動いて"
+                    "いない可能性がある。「監査を実行して」と言えば docs-audit で確かめる(R11)。")
+        audit_day = _parse_date(summary.get("today"))
+        if audit_day is not None and (today - audit_day).days >= audit_stale_days:
+            return ("【統治】前回監査から %d 日が経っている(最終 %s)。SessionEnd の監査が"
+                    "動いていない可能性がある。「監査を実行して」と言えば確かめる(R11)。"
+                    % ((today - audit_day).days, audit_day.isoformat()))
 
     # 2) doc-review 定例の周期(運用契約、§7)。
     last = _parse_date(state.get("last_cadence_review"))
     if last is None:
+        if summary is None and not state:
+            return ""  # 使い始めの前は促さない(騒がしい導入にしない)。
         return ("【統治】doc-review の定例(canonical_for 未付与・辞書外の訳語臭・"
                 "意味的重複)の実施記録が無い。「定例レビューをやって」と言えば回す。"
                 "終えたら _system/%s の last_cadence_review に日付を書く。" % STATE_NAME)
@@ -197,7 +237,9 @@ def build_message(docs_root, today, config):
                 "「定例レビューをやって」と言えば回す。終えたら _system/%s の "
                 "last_cadence_review を更新する。"
                 % (last.isoformat(), (today - last).days, cadence_days, STATE_NAME))
-    return ""
+
+    # 3) 移行キャンペーン(1鼓動1件。ADR-034)。上の義務がすべて静かなときだけ出す。
+    return migration_line(docs_root, summary)
 
 
 def main(argv=None):

@@ -549,6 +549,40 @@ def _check_ext_anchors(g, root):
     return out
 
 
+def _check_memory_shadow(g, root):
+    """18. メモリの影(R8, ADR-035)。ハーネスのメモリが統治文書に言及していたら点検を促す。
+
+    メモリの置き場は CLAUDE_CONFIG_DIR(無ければ ~/.claude)/projects/<プロジェクト根の
+    絶対パスの / を - に置換した名前>/memory/。無ければ何も出さない(CI では通常無い)。
+    中身の真偽・矛盾の判定はしない(§7)。統治文書への言及の検出まで(advisory)。
+    メモリを統治はしない(中身は写さない・強制しない)。影の正本化だけを見張る。
+    """
+    out = []
+    proj = os.path.dirname(os.path.abspath(root))
+    cfg = os.environ.get("CLAUDE_CONFIG_DIR") or os.path.expanduser("~/.claude")
+    munged = proj.replace("\\", "/").replace("/", "-")
+    mdir = os.path.join(cfg, "projects", munged, "memory")
+    if not os.path.isdir(mdir):
+        return out
+    try:
+        names = sorted(os.listdir(mdir))
+    except OSError:
+        return out
+    for name in names:
+        if not name.endswith(".md") or name == "MEMORY.md":
+            continue
+        body = _read_body(os.path.join(mdir, name))
+        ids = sorted({m.group(1) for m in _ID_TOKEN_RE.finditer(body)
+                      if m.group(1) in g.nodes})
+        if ids:
+            out.append(_finding(
+                "memory_shadow", SEV_ADVISORY, "", "memory/" + name,
+                "ハーネスのメモリ %s が統治文書(%s)に言及している。正本と矛盾して"
+                "いないか点検し、残すべき事実は正本(DECIDED・ADR)へ移す(ADR-035)"
+                % (name, ", ".join(ids[:5]))))
+    return out
+
+
 def _check_glossary_seed(root):
     """16. 辞書シードの退行(R6, ADR-005)。運用正本 ⊇ 同梱シードを機械で守る。
 
@@ -906,6 +940,7 @@ def run_audit(root, today, knobs):
     findings += _check_adr_not_landed(g)
     findings += _check_glossary_seed(root)
     findings += _check_ext_anchors(g, root)
+    findings += _check_memory_shadow(g, root)
 
     findings.sort(key=lambda f: (f["check"], f["doc_id"], f["message"]))
     return findings

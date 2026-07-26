@@ -71,7 +71,7 @@ per-turn（毎ターン）のHookは単一文書だけを点検する。全件�
 | `term-check.py` | リンタ | 禁止同義語・カルク・未定義語の照合 |
 | `policy-guard.py` | `PreToolUse`・`PostToolUse` | 不変性・`ICD` 依存・削除安全の三ガード |
 | `inject-contract.py` | `SessionStart` | 契約の最小注入 |
-| `docs-audit.py` | `SessionEnd`・`CI` | 全件監査（17検査。孤児・逆孤児・dead link・`canonical_for` 衝突・`ICD` 違反・投影ドリフト・`review_by` 超過・陳腐化の疑い・上流更新の伝播・アーカイブ整合・決定の着地・辞書シードの退行・外部アンカーの存在） |
+| `docs-audit.py` | `SessionEnd`・`CI` | 全件監査（18検査。孤児・逆孤児・dead link・`canonical_for` 衝突・`ICD` 違反・投影ドリフト・`review_by` 超過・陳腐化の疑い・上流更新の伝播・アーカイブ整合・決定の着地・辞書シードの退行・外部アンカーの存在・メモリの影） |
 | `gov-heartbeat.py` | `UserPromptSubmit` | 統治の生存と定例の期限の照合（R11）。1会話1件・セッションに一度 |
 | `capture-nudge.py` | `Stop` | 記録の確認の一度きりの差し止め（R12） |
 | `precompact-dump.py` | `PreCompact` | 圧縮前の退避指示（R12） |

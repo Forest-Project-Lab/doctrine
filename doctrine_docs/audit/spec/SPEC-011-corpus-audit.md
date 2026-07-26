@@ -25,7 +25,7 @@ llm_context: task
 ## 制約
 
 - 標準ライブラリだけを使う。pip での外部パッケージ取得も、ネットワーク通信もしない。返す値は毎回同じになる（所見を check・doc_id・message の順で整列する）。
-- 17 検査の重大度は固定とする（ICD-005 の表のとおり）。`top_findings` は error を優先し、上限 20 件とする。
+- 18 検査の重大度は固定とする（ICD-005 の表のとおり）。`top_findings` は error を優先し、上限 20 件とする。
 - 語彙的酷似（near_duplicate）の対走査は O(n^2) であり、規模上限 `near_dup_max_docs`（既定 800、`--config` で上書き）を設ける。現行文書数がこの上限を超えた場合は対走査を省き、省いた事実を near_duplicate の助言一つで正直に告げる（黙って切り詰めない）。重大度は advisory のまま（ICD-005 不変）。`[R8]`
 - `generated_at` は `today` から決める（`today.isoformat()+"T00:00:00Z"`）。テストが制御できないシステム時刻は参照しない。`[R1]`
 - 孤児は三条件すべてを満たす文書とする（どの現行文書からも依存されない、かつ陳腐化している、かつ再現可能。ADR-008）。投影・`llm_context`==always・ICD・`status`==archived は孤児にしない（archived の除外は ADR-027。倉庫の証跡を削除候補へ昇格させない）。`[R8]`
@@ -41,6 +41,7 @@ llm_context: task
 - 決定の着地（adr_not_landed）: accepted の ADR を、現行の文書（ADR と投影を除く）の `depends_on`・`impacts`・`superseded_by`・本文の id 参照のどれも指していないとき、「文書上の宣言に留まる」欠陥類型の疑いとして warn で挙げる（WATCH-001 第6項の機械化）。`[R3][R8]`
 - 辞書シードの退行（glossary_seed_drift、ADR-005）: 運用正本（`_system/glossary.md`）が同梱シードの承認語・カルク行を落としていたら warn（シードからの成長は正しい。欠落は退行）。運用正本が無ければ検査しない。`[R6]`
 - 外部アンカーの存在（ext_anchor_broken、ADR-026）: 現行 EXT の「対象」のうち検査が exists のものについて、プロジェクト根からの相対で実在を確かめ、無ければ error。「対象」の行が無い EXT は warn。URL と「review_by のみ」は機械検査しない（通信はしない）。`[R11]`
+- メモリの影（memory_shadow、ADR-035）: ハーネスのメモリ（`CLAUDE_CONFIG_DIR`（無ければ `~/.claude`）`/projects/<プロジェクト根の絶対パスの / を - に置換した名前>/memory/` の .md。索引 MEMORY.md を除く）が統治文書の id に言及していたら advisory で挙げ、正本との矛盾の点検を促す。置き場が無ければ検査しない（CI では通常無い）。中身の真偽・矛盾は判定しない（§7）。`[R8]`
 
 ## エラー時挙動
 

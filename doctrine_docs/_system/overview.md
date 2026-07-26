@@ -17,7 +17,7 @@ sources: []
 | id | type | domain | title |
 |---|---|---|---|
 | GLOSSARY-001 | GLOSSARY | _system | 用語辞書の正本 |
-| DECIDED-001 | DECIDED | _system | 横断の確定方針（8事実） |
+| DECIDED-001 | DECIDED | _system | 横断の確定方針（9事実） |
 | NONGOAL-001 | NONGOAL | _system | 横断のやらないこと（7項） |
 | WATCH-001 | WATCH | _system | 横断の退行監視（6項） |
 | ICD-005 | ICD | audit | audit のインターフェース（全件監査の境界） |
@@ -26,6 +26,7 @@ sources: []
 | ADR-008 | ADR | audit | 孤児を三条件の連言で定義する |
 | ADR-020 | ADR | audit | テスト不能記述の判定は監査でなく doc-review が担う |
 | ADR-021 | ADR | audit | 体系外 .md は分類の記録と突き合わせ、未分類だけを監査が挙げる |
+| ADR-034 | ADR | audit | 移行の台帳は分類の記録から導出し、二重の台帳を持たない |
 | IMPL-011 | IMPL | audit | docs-audit.py の実装メモ |
 | IMPL-018 | IMPL | audit | _intake.py（分類の記録の共有コア）の実装メモ |
 | TEST-011 | TEST | audit | 監査の検査群テスト計画 |
@@ -111,6 +112,7 @@ sources: []
 | ADR-026 | ADR | model | 統治木の外への依存を EXT 型のアンカーとして統治する |
 | ADR-027 | ADR | model | status archived の文書は型に依らず倉庫に置き、状態でも不変にする |
 | ADR-033 | ADR | model | 必須キーはちょうど 8 個とする(追認) |
+| ADR-035 | ADR | model | ハーネスのメモリは環境と個人の事実に限り、影の正本化を見張る |
 | IMPL-001 | IMPL | model | `_registry.py` の実装メモ |
 | IMPL-002 | IMPL | model | `_frontmatter.py` の実装メモ |
 | TEST-001 | TEST | model | 登録簿契約のテスト計画 |

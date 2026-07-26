@@ -135,6 +135,11 @@ class TestHeartbeat(LivenessBase):
         empty = _util.mkdtemp()
         self.addCleanup(shutil.rmtree, empty, ignore_errors=True)
         _set_env(self, CLAUDE_PROJECT_DIR=empty)
+        # cwd の退避解決が本物のリポジトリを見つけないよう、cwd も空へ移す
+        # (実運用では cwd=プロジェクトであり、この退避は正しい挙動)。
+        prev = os.getcwd()
+        os.chdir(empty)
+        self.addCleanup(os.chdir, prev)
         out, code = self._hb("2026-07-26", "s8")
         self.assertEqual((out, code), ("", 0))
 
@@ -418,6 +423,86 @@ class TestExtAnchors(AuditChecksBase):
         summary, _ = self._audit()
         hits = self._codes(summary, "ext_anchor_broken")
         self.assertTrue(any(f["severity"] == "warn" for f in hits))
+
+
+class TestMemoryShadow(AuditChecksBase):
+    def _memdir(self):
+        cfg = os.path.join(self.base, "cfg")
+        munged = os.path.abspath(self.base).replace("\\", "/").replace("/", "-")
+        d = os.path.join(cfg, "projects", munged, "memory")
+        os.makedirs(d, exist_ok=True)
+        _set_env(self, CLAUDE_CONFIG_DIR=cfg)
+        return d
+
+    def _seed_doc(self):
+        _util.write_doc(self.root, "model/decisions/ADR-950-x.md", {
+            "id": "ADR-950", "title": "x", "type": "ADR", "domain": "model",
+            "status": "accepted", "owner": "a", "updated": "2026-07-01",
+            "sources": [],
+        }, "決定。\n")
+
+    def test_memory_referencing_governance_advises(self):
+        self._seed_doc()
+        d = self._memdir()
+        _write(os.path.join(d, "note.md"),
+               "---\nname: note\n---\n\nADR-950 は不要になった気がする。\n")
+        summary, _ = self._audit()
+        hits = self._codes(summary, "memory_shadow")
+        self.assertTrue(any("note.md" in f["path"] and "ADR-950" in f["message"]
+                            for f in hits))
+        for f in hits:
+            self.assertEqual(f["severity"], "advisory")
+
+    def test_plain_memory_and_index_are_silent(self):
+        self._seed_doc()
+        d = self._memdir()
+        _write(os.path.join(d, "MEMORY.md"), "- ADR-950 への言及(索引は対象外)\n")
+        _write(os.path.join(d, "env.md"), "---\nname: env\n---\n\n端末は bash。\n")
+        summary, _ = self._audit()
+        self.assertFalse(self._codes(summary, "memory_shadow"))
+
+    def test_no_memory_dir_is_silent(self):
+        self._seed_doc()
+        _set_env(self, CLAUDE_CONFIG_DIR=os.path.join(self.base, "nocfg"))
+        summary, _ = self._audit()
+        self.assertFalse(self._codes(summary, "memory_shadow"))
+
+
+class TestMigrationCampaign(LivenessBase):
+    def _summary_with_strays(self, n):
+        fs = [{"check": "stray_document", "severity": "advisory", "doc_id": "",
+               "path": "notes/n%d.md" % i,
+               "message": "統治木の外の .md が未分類。docs-curate(external-md-intake)で三分類し…",
+               "refs": []} for i in range(n)]
+        import json as _j
+        _write(os.path.join(self.plugin_root, ".cache", "last-audit.json"), _j.dumps({
+            "schema": "docs-audit/1", "root": os.path.abspath(self.root),
+            "today": "2026-07-26", "generated_at": "2026-07-26T00:00:00Z",
+            "totals": {"error": 0, "warn": 0, "advisory": n},
+            "counts_by_check": {"stray_document": n}, "top_findings": [],
+            "findings": fs}))
+
+    def test_migration_drips_one_item(self):
+        self._summary_with_strays(3)
+        self._put_state("last_cadence_review: 2026-07-25\n")
+        _write(os.path.join(self.root, "_system", ".md-intake"), "a.md: 非文書\n")
+        out, _ = self._hb("2026-07-26", "mig1")
+        ctx = json.loads(out)["hookSpecificOutput"]["additionalContext"]
+        self.assertIn("【移行 1/4】", ctx)
+        self.assertIn("notes/n0.md", ctx)
+
+    def test_no_strays_is_silent(self):
+        self._summary_with_strays(0)
+        self._put_state("last_cadence_review: 2026-07-25\n")
+        out, _ = self._hb("2026-07-26", "mig2")
+        self.assertEqual(out, "")
+
+    def test_level2_missing_audit_is_not_flagged(self):
+        # Level 2 に SessionEnd の監査は無い(ADR-019)。誤報を出さない。
+        _write(os.path.join(self.root, "_system", ".docs-level"), "level: 2\n")
+        self._put_state("last_cadence_review: 2026-07-25\n")
+        out, code = self._hb("2026-07-26", "lv2a")
+        self.assertEqual((out, code), ("", 0))
 
 
 class TestLinterArchivedLocation(unittest.TestCase):
