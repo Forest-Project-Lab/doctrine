@@ -29,6 +29,8 @@
 
 作業フォルダを改名・移動したときは、このパスが黙って壊れる（フックは何も言わずに止まる）。改名後は必ず、(1) `.claude/settings.json` のパスを直し、(2) 新しいセッションを開き、(3) セッション冒頭に契約の注入が出ることを確かめる。注入が無ければ自己適用は死んでいる。
 
+プラグインの導入状態は `~/.claude` ボリューム側のユーザー状態であり、リポジトリの設定だけでは復元されない。ボリュームが作り直されたときは devcontainer の postCreateCommand が自己導入する。手で入れ直すときは `claude plugin marketplace add <リポジトリの絶対パス>` と `claude plugin install doctrine@forest-project-lab` を実行する。導入はその時点の複製（cache）なので、`plugin/` を変更したら `claude plugin update doctrine` で追随させ、新しいセッションで反映を確かめる。
+
 ## ライセンス
 
 寄稿は MIT ライセンスの下で受け入れる。Pull Request を出すことで、寄稿を MIT ライセンスで配布することに同意したものとする。
