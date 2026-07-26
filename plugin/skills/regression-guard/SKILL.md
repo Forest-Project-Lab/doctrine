@@ -1,9 +1,11 @@
 ---
 name: regression-guard
-description: Guards against regressions: prevents reviving deprecated approaches or re-adopting a withdrawn decision by cross-checking the proposed change against Decided Facts (DECIDED) and the Regression Watchlist (WATCH), flagging any change that contradicts a current decided fact or reintroduces something the watchlist says must not come back. Use this skill when the user wants to "check for regressions", "are we re-adding something we removed", "does this contradict a decided fact", "check the watchlist", "guard against backsliding", or before re-introducing a previously-rejected approach.
+description: 'Guards against regressions: prevents reviving deprecated approaches or re-adopting a withdrawn decision by cross-checking the proposed change against Decided Facts (DECIDED) and the Regression Watchlist (WATCH), flagging any change that contradicts a current decided fact or reintroduces something the watchlist says must not come back. Use this skill when the user wants to "check for regressions", "are we re-adding something we removed", "does this contradict a decided fact", "check the watchlist", "guard against backsliding", "退行していないか見て", "廃止した方針を復活させていないか", "決定と矛盾しないか確かめて", "戻してはならない一覧と突き合わせて", or before re-introducing a previously-rejected approach.'
 ---
 
 # regression-guard
+
+## 役割
 
 廃止した方針の復活と、撤回した決定の再採用を防ぐ。提案された変更を DECIDED（決定事実）と WATCH（戻してはならない一覧）の正本に突き合わせ、現行の決定事実に反する変更や、戻してはならない項目を再び持ち込む変更を指摘する。主な要求は R5。
 
@@ -12,7 +14,7 @@ description: Guards against regressions: prevents reviving deprecated approaches
 ## 何に頼るか
 
 - DECIDED 正本（`_system/decided-facts.md`）と WATCH 正本（`_system/watchlist.md` または各ドメインの `test/`）を読み、変更と突き合わせる。
-- `dep-graph.py` を逆方向で呼び、廃止・置換した文書へ現行の依存が再び付かないか確かめる。
+- `${CLAUDE_PLUGIN_ROOT}/scripts/dep-graph.py` を逆方向で呼び、廃止・置換した文書へ現行の依存が再び付かないか確かめる。
 - `change-impact` の降格・WATCH 更新の段で呼び出される。
 
 ## 手順

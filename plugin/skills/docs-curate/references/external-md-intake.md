@@ -1,15 +1,17 @@
-# doctrine_docs/ の外の .md ファイルの取り込み
+# 統治木の外の .md ファイルの取り込み
 
-doctrine_docs/ の外にも .md ファイルは在る。README・CONTRIBUTING・AGENTS・CLAUDE、仕様の下書きなど。これらは管理対象の文書とは限らない。この案内は、それらを検出し、三つに分けて扱い、判断の結果を記録する。監査(`docs-audit.py` の `stray_document` 検査、ADR-021)は記録に無い .md と期限切れの保留を挙げ続けるので、doctrine_docs/ の外に .md が生まれ続けても、分類されないまま埋もれることはない。
+統治木の外にも .md ファイルは在る。README・CONTRIBUTING・AGENTS・CLAUDE、仕様の下書きなど。これらは管理対象の文書とは限らない。この案内は、それらを検出し、三つに分けて扱い、判断の結果を記録する。監査(`docs-audit.py` の `stray_document` 検査、ADR-021)は記録に無い .md と期限切れの保留を挙げ続けるので、統治木の外に .md が生まれ続けても、分類されないまま埋もれることはない。
 
 ## 検出
 
-`git ls-files '*.md' ':!:doctrine_docs/**'` で doctrine_docs/ の外の追跡下の .md を出す。git は .gitignore を尊ぶので node_modules は出ない。git が無い・使えない、または git 管理でないときは `find . -name '*.md' -not -path './doctrine_docs/*' -not -path '*/node_modules/*' -not -path './.git/*'` を使う。追跡下だけを見る git ls-files と、すべてのファイルを見る find では、結果がずれることがある(追跡されていないファイルは find にだけ出る)。除外の `:!:doctrine_docs/**` は最上位の doctrine_docs/ の木だけに掛かる。`plugin/doctrine_docs/x.md` のような入れ子の doctrine_docs/ は出る。これは `docs-audit.py` の `--root doctrine_docs/` の範囲と揃う。監査の `stray_document` も同じ範囲を機械で走査する(dot ディレクトリと node_modules は見ない)。この検出は作業一覧を作るだけで、何も動かさない。要否は各ファイルごとに人間が判断する。
+まず統治木の名前を解決する。既定は `doctrine_docs/`。`_system/` を持つ `docs/` も後方互換で統治木と認める(ADR-022)。以下の `<統治木>` は解決した名前で読み替える(この解決を飛ばして `doctrine_docs/` を決め打ちすると、後方互換の `docs/` 木では統治下の全文書を「外」として誤って列挙してしまう)。
+
+`git ls-files '*.md' ':!:<統治木>/**'` で統治木の外の追跡下の .md を出す。git は .gitignore を尊ぶので node_modules は出ない。git が無い・使えない、または git 管理でないときは `find . -name '*.md' -not -path './<統治木>/*' -not -path '*/node_modules/*' -not -path './.git/*'` を使う。追跡下だけを見る git ls-files と、すべてのファイルを見る find では、結果がずれることがある(追跡されていないファイルは find にだけ出る)。除外の `:!:<統治木>/**` は最上位の統治木だけに掛かる。`plugin/doctrine_docs/x.md` のような入れ子は出る。これは `docs-audit.py` の `--root <統治木>` の範囲と揃う。監査の `stray_document` も同じ範囲を機械で走査する(dot ディレクトリと node_modules は見ない)。この検出は作業一覧を作るだけで、何も動かさない。要否は各ファイルごとに人間が判断する。
 
 ## 三つの分け方
 
 - 投影: モデルから描き直せる派生表示。正本ではない。倉庫へ退避するか、そのまま残す。
-- 出所: 管理対象にすべき事実を持つ。doc-author を呼び、型・ドメイン・フロントマターを正して doctrine_docs/<domain>/ の下へ書く。元のファイルは倉庫へ退避し、後から引けるようにする。
+- 出所: 管理対象にすべき事実を持つ。doc-author を呼び、型・ドメイン・フロントマターを正して統治木の `<domain>/` の下へ書く。元のファイルは倉庫へ退避し、後から引けるようにする。
 - 非文書: README・LICENSE・入口の案内など、doctrine_docs/ の外に在るべきもの。そのまま残す。
 
 型・ドメインの割り当ては人間の判断を要する。自動の規則にしない。doc-author への取り込みでは、その手順とリンタがフロントマターと置き場所を正す。

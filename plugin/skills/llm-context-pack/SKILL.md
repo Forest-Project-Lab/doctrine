@@ -1,18 +1,20 @@
 ---
 name: llm-context-pack
-description: "Builds the minimal context for a specific task: gathers only the fewest documents whose coverage satisfies the task's requirements, excludes everything marked llm_context: never (RESEARCH, ARCHIVE), and shows the provenance (source document) of each fact so near-vocabulary documents are not confused. Use this skill when the user wants to \"build context for this task\", \"pack the minimal context\", \"what docs do I need for X\", \"assemble LLM context\", \"give me the smallest set of docs to work on Y\", or \"prepare context for the agent\"."
+description: "Builds the minimal context for a specific task: gathers only the fewest documents whose coverage satisfies the task's requirements, excludes everything marked llm_context: never (RESEARCH, ARCHIVE), and shows the provenance (source document) of each fact so near-vocabulary documents are not confused. Use this skill when the user wants to \"build context for this task\", \"pack the minimal context\", \"what docs do I need for X\", \"assemble LLM context\", \"give me the smallest set of docs to work on Y\", \"このタスクに要る文書だけ集めて\", \"最少の文脈を組んで\", \"どの文書を読めばよいか\", or \"prepare context for the agent\"."
 ---
 
 # llm-context-pack
 
+## 役割
+
 タスク別の最小の文脈を集める。タスクの要求を満たす最少の文書だけを集め、`llm_context: never` の文書（RESEARCH・ARCHIVE）をすべて除外し、各事実の出所（出所となる文書）を示して、語彙の近い文書を取り違えないようにする。主な要求は R5。
 
-決定論の処理は `collect-context.py` に委ねる。この技能は、被覆が曖昧なときに最少集合をどう選ぶかの判断を持つ。
+決定論の処理は `${CLAUDE_PLUGIN_ROOT}/scripts/collect-context.py` に委ねる。この技能は、被覆が曖昧なときに最少集合をどう選ぶかの判断を持つ。
 
 ## 何に頼るか
 
-- `collect-context.py` — `llm_context` で絞り、出所つきの最少被覆集合を返す。
-- §3.2 の `llm_context` 既定（always／task／never）と、`dep-graph.py` 経由の `depends_on` グラフを読み、被覆を計算する。
+- `${CLAUDE_PLUGIN_ROOT}/scripts/collect-context.py` — `llm_context` で絞り、出所つきの最少被覆集合を返す。
+- §3.2 の `llm_context` 既定（always／task／never）と、`${CLAUDE_PLUGIN_ROOT}/scripts/dep-graph.py` 経由の `depends_on` グラフを読み、被覆を計算する。
 
 ## 手順
 

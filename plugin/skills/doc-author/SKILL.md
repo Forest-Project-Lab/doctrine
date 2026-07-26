@@ -1,6 +1,6 @@
 ---
 name: doc-author
-description: 'Creates and updates typed governance documents — SPEC, REQ, ADR, DATA, API, IMPL, TEST, DECIDED, NONGOAL, WATCH, RESEARCH, ARCHIVE, and ICD — placing each in the correct location with correct frontmatter (id matching filename, type, domain, status, owner, dates, sources), and generating the domain folder and its layer subfolders the first time a document of that type is written. Use this skill when the user wants to "write a spec", "add an ADR", "create an ICD", "author a requirement", "add a doc", "document this decision", "record a data model", "start a new domain", or says "I need a SPEC/REQ/ADR/TEST for ...".'
+description: 'Creates and updates typed governance documents — SPEC, REQ, ADR, DATA, API, IMPL, TEST, DECIDED, NONGOAL, WATCH, RESEARCH, ARCHIVE, and ICD — placing each in the correct location with correct frontmatter (id matching filename, type, domain, status, owner, dates, sources), and generating the domain folder and its layer subfolders the first time a document of that type is written. Use this skill when the user wants to "write a spec", "add an ADR", "create an ICD", "author a requirement", "add a doc", "document this decision", "record a data model", "start a new domain", "仕様を書いて", "ADR を起こして", "ICD を作って", "この決定を記録して", "要求を文書にして", or says "I need a SPEC/REQ/ADR/TEST for ...".'
 ---
 
 # doc-author
@@ -31,7 +31,7 @@ ICD もこのスキルが書く（ICD 専用スキルは作らない）。ドメ
 8. 追跡性（`R3`）。`SPEC`・`IMPL`・`TEST` には要求または依存のリンクを持たせる（リンタが点検する）。`REQ`→`SPEC`→`IMPL`→`TEST`→`ADR` の順で前向きに結ぶ。
 9. 本文を書く（語彙を正し、一文一義で、§1 の文章の規則に従う）。本文に変更の理由（履歴）を書かない。理由は `ADR` の `id` で引く（§3.8 現行と履歴の分離）。
 10. リンタを動かし、指摘された項目を直す。
-11. 文書を著したら doc-review を回す（§4.1）。文章規範と位置づけを見直し、用語チェッカーが拾えない一覧外のカルクを逆翻訳テルで判定する。これは著述・編集のたびに行い、定例だけに頼らない。見つけた一覧外のカルクは用語辞書の正本（§1 のカルク表）に一行足す。新しい承認語が要るなら、ADR と用語辞書の更新をもって加える。型コードと要求タグの定義の在処は登録簿（§3.2）と §2 であり、辞書に二重定義しない。
+11. 文書を著したら doc-review を回す（§4.1）。文章規範と位置づけを見直し、用語チェッカーが拾えない一覧外のカルクを逆翻訳テルで判定する。これは著述・編集のたびに行い、定例だけに頼らない。見つけた一覧外のカルクは、導入先の用語辞書の運用正本（`_system/glossary.md` のカルク表）に一行足す。用語チェッカーが読むのはこの運用正本である（spec §1 は初期シード）。新しい承認語が要るなら、ADR と用語辞書の更新をもって加える。型コードと要求タグの定義の在処は登録簿（§3.2）と §2 であり、辞書に二重定義しない。
 
 ## 詳細（references/）
 
