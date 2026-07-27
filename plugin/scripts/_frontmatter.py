@@ -14,8 +14,31 @@ MASTER §1 の API をそのまま実装する。仕様 §3.4 のフロントマ
 標準ライブラリのみ。PyYAML は使わない。
 """
 import os
+import re
 
 FRONTMATTER_VERSION = 1  # bump if parse semantics change
+
+# 制御文字(C0 + DEL + C1)。改行・タブ・復帰を含む。注入境界で空白へ畳む。
+_CONTROL_RE = re.compile(r"[\x00-\x1f\x7f-\x9f]")
+_WS_RE = re.compile(r"\s+")
+
+
+def sanitize_inline(value, limit=200):
+    """注入境界(additionalContext へ挿入する各フィールド)の一行サニタイザ。ADR-040。
+
+    文書内容やファイル名は攻撃者制御になりうる(#96)。逐語挿入すると、title の
+    改行で偽のセクション見出しを捏造したり、巨大な値で注入上限を回避したりできる。
+    ここで一律に、(1) 制御文字(改行・タブ含む)を空白へ、(2) 連続空白を畳み、
+    (3) 前後を削り、(4) limit で長さを hard-bound する。決して例外を投げない。
+
+    これはデータ境界の一段目である(provenance フェンスが二段目)。
+    """
+    s = "" if value is None else (value if isinstance(value, str) else str(value))
+    s = _CONTROL_RE.sub(" ", s)
+    s = _WS_RE.sub(" ", s).strip()
+    if len(s) > limit:
+        s = s[:limit].rstrip() + "…"
+    return s
 
 # ---------------------------------------------------------------------------
 # Tunables (single, documented). See MASTER §1 frozen semantics.
