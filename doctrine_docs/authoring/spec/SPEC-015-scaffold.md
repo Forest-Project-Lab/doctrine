@@ -6,7 +6,7 @@ domain: authoring
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-26
+updated: 2026-07-27
 sources: [plugin/scripts/scaffold.py]
 depends_on: [REQ-011]
 llm_context: task
@@ -25,13 +25,15 @@ llm_context: task
 - `doctrine_docs/_system/non-goals.md`（NONGOAL）。
 - `doctrine_docs/_system/overview.md`（OVERVIEW 投影。この実行で新規に置いた場合だけ、種蒔きの直後に `render-projection.py` を呼び、置いた正本から導出した一覧で置き直す。既存の overview には触れない）。
 - `doctrine_docs/_system/.docs-level`（`level: N` の一行。いま使われている Level を公開する）。
+- `doctrine_docs/_system/.governance-state`（`initialized: <作成日>` と `last_cadence_review: <作成日>` を種蒔きする。導入初日を警告・催促で始めないため。ADR-041、#74）。
 - ルートの `AGENTS.md`・`CLAUDE.md`（案内。手で保守する最小の入口。知識は持たせない。ADR-029。統治の生存期待の一行を含む: セッション冒頭に契約の注入が無ければ統治は死んでいる、と利用者へ報せる `[R11]`）。既定の Level は 2 とする（ADR-030）。
+- ルートの `.gitignore` に `.claude/.cache/` を非破壊で追記する（監査キャッシュを追跡から外す。既存行は消さない。ADR-041、#74）。
 
 `--fallback` を付けると、`_system` の文書と案内を `.claude/` 配下へ移す（プラグインを導入していない場合の経路）。
 
 ## 制約
 
-標準ライブラリだけで動き、pip も通信も使わない。書き込みは原子的で、何度実行しても結果は変わらない。対象が既にあれば飛ばし、上書き・併合・切り詰めはしない。ドメインのフォルダ・各層・watchlist・context-map・icd-index・hooks・skills は先に作らない。DECIDED の `review_by` は created+90日に設定する。GLOSSARY の雛形は §1 の表をそのまま写すので、辞書を二重に定義しない。
+標準ライブラリだけで動き、pip も通信も使わない。書き込みは原子的で、何度実行しても結果は変わらない。対象が既にあれば飛ばし、上書き・併合・切り詰めはしない。ドメインのフォルダ・各層・watchlist・context-map・icd-index・hooks・skills は先に作らない。DECIDED の `review_by` は created+90日に設定する。GLOSSARY の雛形は §1 の表をそのまま写すので、辞書を二重に定義しない。ただし `--level N` が既存の `.docs-level` と食い違うときは、明示の選択として印を更新し昇格・降格を報告する（`.docs-level` は制御の入力であり、内容の種とは別に扱う。非破壊の対象外。ADR-041、#90）。`--dry-run` は後段（Level 更新・`.gitignore` の追記）の意図も見せる。
 
 ## エラー時挙動
 

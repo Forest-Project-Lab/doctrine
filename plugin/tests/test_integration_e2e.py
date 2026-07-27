@@ -157,6 +157,8 @@ class TestScaffoldLifecycle(unittest.TestCase):
         "doctrine_docs/_system/non-goals.md",
         "doctrine_docs/_system/overview.md",
         "doctrine_docs/_system/.docs-level",
+        "doctrine_docs/_system/.governance-state",
+        ".gitignore",
         "AGENTS.md",
         "CLAUDE.md",
     }

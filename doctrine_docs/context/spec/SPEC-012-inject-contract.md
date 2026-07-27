@@ -23,7 +23,7 @@ llm_context: task
 - 応答: `{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":<契約文字列>}}`。
 - 契約文字列は次の順に並べる。要点復唱 → 重要文書（冒頭）→ GLOSSARY 見出し → 確定事実（現行の DECIDED）→ NONGOAL → 廃止事実 → WATCH の要点 → 前回監査の要約 → 未選別のセッションメモ（在るときだけ）→ 重要文書（末尾に再掲）→ 超過通知（条件を満たすときだけ）。
 - 前回監査の要約は実行可能にする。`top_findings` の同一行は一つにまとめて件数を添える。促しの一行は次の優先順で一つだけ出す（受動の案内に留めない。上限超過の有無に依らず出す）: 未登録/影文書・体系外 .md・孤児・error → `docs-curate` 名指し。`review_by_overrun` → doc-review 名指し（期限切れの再点検）。`stale_current`（型既定周期の超過。ADR-025）→ `docs-curate` 名指し。`adr_not_landed` → doc-review 名指し（決定の着地）。`canonical_conflict`・`near_duplicate` → doc-review の定例名指し。
-- 統治の生存性 `[R11]`（SPEC-021 と対）: 監査要約が無いときの「前回監査なし」は、SessionEnd 監査の停止か統治木の移動を疑う警告文として出す。要約の `today` が基準日より `audit_stale_days`（設定。既定 7 日）以上古いときは、経過日数つきの死活警告を要約に足す。Level 2 では SessionEnd の監査が無い（ADR-019）ため、死活の疑いは立てず事実だけを静かに書く（誤報を出さない。ADR-030）。
+- 統治の生存性 `[R11]`（SPEC-021 と対）: 監査要約が無いときの「前回監査なし」は、SessionEnd 監査の停止か統治木の移動を疑う警告文として出す。要約の `today` が基準日より `audit_stale_days`（設定。既定 7 日）以上古いときは、経過日数つきの死活警告を要約に足す。Level 2 では SessionEnd の監査が無い（ADR-019）ため、死活の疑いは立てず事実だけを静かに書く（誤報を出さない。ADR-030）。 導入直後（`.governance-state` に `initialized` の印があり監査要約が無い）は、警告ではなく中立の案内にする（ADR-041、#74）。
 - 移行の統治率（ADR-034）: 要約に未分類の体系外 .md があるとき、その残数を統治率の一行として要約に足す（進捗の正本は `_system/.md-intake`）。
 - 会話知識の捕捉 `[R12]`（SPEC-022 と対）: `_system/.session-notes` に未選別の行（非空・非コメント）があるとき、保護節「未選別のセッションメモ」で選別（doc-author で ADR・DECIDED へ、または破棄の明言）を義務として出す。
 - DECIDED の絞りは ADR-014 の階層に従う（常時集合へ写すのは横断の確定事実だけ。ドメイン固有の事実は ICD「正本である事実」か task の文書で持つ。混入の点検は docs-curate の手順 7）。

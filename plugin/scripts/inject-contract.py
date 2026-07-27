@@ -446,8 +446,27 @@ def _parse_date(s):
         return None
 
 
+def _tree_initialized(docs_root):
+    """統治木が scaffold で初期化済みか(_system/.governance-state に initialized 行)。
+
+    導入直後で初回監査がまだ走っていない状態を、監査の停止と区別するための印(#74)。
+    決して例外を投げない。
+    """
+    if not docs_root:
+        return False
+    path = os.path.join(docs_root, "_system", ".governance-state")
+    try:
+        with open(path, "r", encoding="utf-8-sig") as fh:
+            for line in fh:
+                if line.strip().startswith("initialized:"):
+                    return True
+    except (OSError, UnicodeError):
+        return False
+    return False
+
+
 def _render_audit_summary(summary, today=None, stale_days=DEFAULT_AUDIT_STALE_DAYS,
-                          docs_level=4):
+                          docs_level=4, tree_initialized=False):
     """前回監査の要約を一行群に。本文は転載しない。
 
     R11(統治の生存性): 要約が無いことと、要約が古いことは、どちらも
@@ -460,6 +479,11 @@ def _render_audit_summary(summary, today=None, stale_days=DEFAULT_AUDIT_STALE_DA
         if docs_level < 3:
             return ["前回監査なし。Level 2 では SessionEnd の監査は走らない"
                     "(マージ前の検証は CI が担う。手動の docs-audit も使える)。"]
+        if tree_initialized:
+            # 導入直後で初回 SessionEnd 監査がまだ走っていない(#74)。監査の停止では
+            # ないので ⚠ ではなく中立の案内にする(導入初日を警告で始めない)。
+            return ["前回監査なし。導入直後です。初回の監査はこのセッションの終了時"
+                    "(SessionEnd)に走ります。すぐ確かめたいなら docs-audit を手で実行できます。"]
         return ["前回監査なし。⚠ SessionEnd の監査が一度も動いていないか、"
                 "統治木の場所が変わった可能性がある。docs-audit を手で実行して、"
                 "統治が生きていることを確かめること(R11)。"]
@@ -673,7 +697,7 @@ def _count_session_notes(docs_root):
 
 def _build_sections(docs, audit_summary, config, today=None,
                     stale_days=DEFAULT_AUDIT_STALE_DAYS, notes_pending=0,
-                    docs_level=4):
+                    docs_level=4, tree_initialized=False):
     """全ブロックを (タイトル, [行...], tier) の順序付きリストで返す。
 
     tier はトリム時の落とす順(大きいほど先に詳細を落とす)。RECAP・最新 DECIDED・全 NONGOAL
@@ -769,7 +793,8 @@ def _build_sections(docs, audit_summary, config, today=None,
     sections.append({
         "key": "audit",
         "title": "## 前回監査の要約",
-        "lines": _render_audit_summary(audit_summary, today, stale_days, docs_level),
+        "lines": _render_audit_summary(audit_summary, today, stale_days,
+                                       docs_level, tree_initialized),
         "tier": 0,
         "protected": True,
     })
@@ -874,7 +899,7 @@ def _trim_to_fit(sections, budget, chars_per_token):
 
 def _assemble(docs, audit_summary, config, cap, chars_per_token, had_docs_root,
               today=None, stale_days=DEFAULT_AUDIT_STALE_DAYS, notes_pending=0,
-              docs_level=4):
+              docs_level=4, tree_initialized=False):
     """注入文字列を組み立て、上限を強制し、超過時に通知を付ける。
 
     返り値: (context_string, overflow_bool, untrimmed_estimate)。
@@ -892,7 +917,7 @@ def _assemble(docs, audit_summary, config, cap, chars_per_token, had_docs_root,
                 estimate_tokens(_ONBOARDING_NOTICE, chars_per_token))
 
     sections = _build_sections(docs, audit_summary, config, today, stale_days,
-                               notes_pending, docs_level)
+                               notes_pending, docs_level, tree_initialized)
     untrimmed = _render_sections(sections)
     untrimmed_est = estimate_tokens(untrimmed, chars_per_token)
 
@@ -972,9 +997,10 @@ def main(argv=None):
         notes_pending = _count_session_notes(docs_root if had_docs_root else None)
 
         docs_level = _registry.docs_level(docs_root) if had_docs_root else 4
+        tree_initialized = _tree_initialized(docs_root) if had_docs_root else False
         context, _overflow, _est = _assemble(
             docs, audit_summary, config, cap, cpt, had_docs_root,
-            today, stale_days, notes_pending, docs_level)
+            today, stale_days, notes_pending, docs_level, tree_initialized)
 
         for w in warnings:
             sys.stderr.write("inject-contract: %s\n" % w)

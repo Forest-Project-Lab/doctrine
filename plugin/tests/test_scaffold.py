@@ -57,6 +57,8 @@ class TestCreatesMinimalSet(ScaffoldBase):
             os.path.join("doctrine_docs", "_system", "non-goals.md"),
             os.path.join("doctrine_docs", "_system", "overview.md"),
             os.path.join("doctrine_docs", "_system", ".docs-level"),
+            os.path.join("doctrine_docs", "_system", ".governance-state"),
+            ".gitignore",
             "AGENTS.md",
             "CLAUDE.md",
         ])
@@ -204,8 +206,9 @@ class TestIdempotentReRun(ScaffoldBase):
 
         out2, code2 = self.run_scaffold()
         self.assertEqual(code2, 0)
-        # Every line of the second run is a SKIP.
-        self.assertIn("飛ばし 7", out2)
+        # Every line of the second run is a SKIP (8 plan items: 4 docs +
+        # .docs-level + .governance-state + 2 pointers).
+        self.assertIn("飛ばし 8", out2)
         self.assertNotIn("CREATE ", out2)
         after = self._snapshot()
         self.assertEqual(before, after, "re-run changed files")
@@ -261,8 +264,10 @@ class TestDryRun(ScaffoldBase):
         out_dry, _ = self.run_scaffold("--dry-run")
         out_real, code = self.run_scaffold()
         self.assertEqual(code, 0)
-        # All 7 entries the dry-run advertised now exist.
-        self.assertEqual(len(self.listing()), 7)
+        # 8 plan entries + .gitignore post-step = 9 files on disk.
+        self.assertEqual(len(self.listing()), 9)
+        # dry-run advertised the .gitignore append too (honest preview).
+        self.assertIn(".gitignore", out_dry)
 
 
 class TestDocsLevelMarker(ScaffoldBase):
@@ -277,13 +282,21 @@ class TestDocsLevelMarker(ScaffoldBase):
         self.run_scaffold("--level", "3")
         self.assertEqual(_util.read(self.sysfile(".docs-level")), "level: 3\n")
 
-    def test_marker_idempotent_not_rewritten(self):
-        self.run_scaffold()
+    def test_marker_same_level_rerun_idempotent(self):
+        self.run_scaffold("--level", "3")
         first = _util.read(self.sysfile(".docs-level"))
-        # Re-run with a DIFFERENT level: existing marker is NOT overwritten
-        # (non-destruction wins; the marker is a one-time publish).
-        self.run_scaffold("--level", "4")
+        # Re-run with the SAME level: marker unchanged.
+        self.run_scaffold("--level", "3")
         self.assertEqual(_util.read(self.sysfile(".docs-level")), first)
+
+    def test_marker_upgrade_on_different_level(self):
+        # #90: re-run with a DIFFERENT --level UPDATES the marker (explicit
+        # user intent; the marker is a control input, not a content seed).
+        self.run_scaffold("--level", "2")
+        out, code = self.run_scaffold("--level", "4")
+        self.assertEqual(code, 0)
+        self.assertEqual(_util.read(self.sysfile(".docs-level")), "level: 4\n")
+        self.assertIn("UPGRADE", out)
 
 
 class TestLevel2Selection(ScaffoldBase):
@@ -292,7 +305,8 @@ class TestLevel2Selection(ScaffoldBase):
 
     def test_level2_is_the_minimal_core(self):
         self.run_scaffold("--level", "2")
-        self.assertEqual(len(self.listing()), 7)
+        # 8 plan files + .gitignore = 9.
+        self.assertEqual(len(self.listing()), 9)
         self.assertEqual(_util.read(self.sysfile(".docs-level")), "level: 2\n")
 
     def test_level4_writes_same_minimal_core(self):
@@ -302,7 +316,8 @@ class TestLevel2Selection(ScaffoldBase):
         self.assertEqual(
             names,
             {"glossary.md", "decided-facts.md", "non-goals.md",
-             "overview.md", ".docs-level", "AGENTS.md", "CLAUDE.md"})
+             "overview.md", ".docs-level", ".governance-state",
+             ".gitignore", "AGENTS.md", "CLAUDE.md"})
 
 
 class TestFallback(ScaffoldBase):

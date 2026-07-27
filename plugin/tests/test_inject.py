@@ -683,6 +683,29 @@ class TestAuditHandshake(InjectBase):
         self.assertIn("FRESH-002", ctx)   # 新しい要約が勝つ
         self.assertNotIn("STALE-001", ctx)  # 旧残骸は影にならない
 
+    def test_fresh_tree_no_audit_is_neutral_not_alarm(self):
+        """#74: 導入直後(initialized 印あり・監査要約なし)は ⚠ でなく中立案内。"""
+        root = self._repo({
+            "docs/_system/decided-facts.md": _decided("DECIDED-001", "確定A"),
+            "docs/_system/.docs-level": "level: 3\n",
+            "docs/_system/.governance-state":
+                "initialized: 2026-07-27\nlast_cadence_review: 2026-07-27\n",
+        })
+        ctx = self._ctx(self._run_json(os.path.join(root, "docs"),
+                                       extra=["--today", "2026-07-27"]))
+        self.assertIn("導入直後", ctx)
+        self.assertNotIn("⚠", ctx)
+
+    def test_stopped_audit_no_init_marker_keeps_alarm(self):
+        """対照: initialized 印が無く監査要約もない(=停止の疑い)は ⚠ 維持。"""
+        root = self._repo({
+            "docs/_system/decided-facts.md": _decided("DECIDED-001", "確定A"),
+            "docs/_system/.docs-level": "level: 3\n",
+        })
+        ctx = self._ctx(self._run_json(os.path.join(root, "docs"),
+                                       extra=["--today", "2026-07-27"]))
+        self.assertIn("⚠", ctx)
+
     def test_foreign_project_summary_is_not_injected(self):
         """C3 越境汚染ガード: ${CLAUDE_PLUGIN_ROOT}/.cache は同じプラグインを
         使う全プロジェクトで共有される。要約の root が現在の docs ルートと
