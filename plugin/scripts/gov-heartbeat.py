@@ -223,6 +223,13 @@ def build_message(docs_root, today, config):
         if summary is None:
             if not state:
                 return ""  # 使い始めの前(記録が何も無い)は黙る。SessionStart の案内に譲る。
+            if state.get("initialized"):
+                # 導入直後で、初回の SessionEnd 監査がまだ走っていない状態(#74)。
+                # 監査の停止ではないので警告ではなく中立の案内にする(導入初日を
+                # ⚠ で始めない)。最初のセッション終了で監査が走り、以後は鮮度で促す。
+                return ("【統治】導入直後です。初回の監査はこのセッションの終了時"
+                        "(SessionEnd)に走ります。すぐ確かめたいなら「監査を実行して」"
+                        "と言えば docs-audit で走らせられます。")
             return ("【統治】前回監査の記録が見つからない。SessionEnd の監査が動いて"
                     "いない可能性がある。「監査を実行して」と言えば docs-audit で確かめる(R11)。")
         audit_day = _parse_date(summary.get("today"))

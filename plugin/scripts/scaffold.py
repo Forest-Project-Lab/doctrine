@@ -31,6 +31,7 @@ overview には決して触れない(非破壊)。導出に失敗しても足場
 標準ライブラリのみ。pip も通信も使わない。決定的(実行日は --today で上書き可)。
 """
 import os
+import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -175,6 +176,19 @@ def _docs_level_marker(level):
     return "level: %d\n" % level
 
 
+def _governance_state_seed(created):
+    """Seed _system/.governance-state (#74)。定例レビューの実施記録を初期化する。
+
+    種蒔きが無いと、導入直後から heartbeat が「doc-review 定例の実施記録が無い」を
+    毎セッション促す(導入初日が催促から始まる)。作成日を last_cadence_review に
+    置き、新品の木では定例を「済み」として扱う(空の木に見直す事実は無い)。以後は
+    定例の周期でだけ促す。手で書くファイル(SPEC-021/ADR-034)。
+    """
+    return ("# 統治の運用状態(手で書く。定例を終えたら日付を更新する。SPEC-021/ADR-034)\n"
+            "initialized: %s\n"
+            "last_cadence_review: %s\n" % (created, created))
+
+
 # ---------------------------------------------------------------------------
 # Plan: the EXACT set of paths scaffold may write (relative to root).
 # ---------------------------------------------------------------------------
@@ -197,10 +211,11 @@ def _build_plan(level, created, fallback, tree=_registry.DOCS_DIR_NAMES[0]):
 
     With --fallback the _system docs + pointers move under '.claude/' (§5 /
     MASTER §9 plugin-not-installed mode). Without it they live at the repo root.
-    The set is EXACTLY: 4 _system docs + .docs-level marker + 2 root pointers.
-    NOTHING else (no domain folders, no watchlist/context-map/icd-index, no
-    hooks, no skills — §3.7, A.2). `tree` is the governed root dir name
-    (ADR-022: doctrine_docs, or docs for a pre-existing legacy tree).
+    The set is EXACTLY: 4 _system docs + .docs-level marker +
+    .governance-state seed + 2 root pointers. NOTHING else (no domain folders,
+    no watchlist/context-map/icd-index, no hooks, no skills — §3.7, A.2).
+    `tree` is the governed root dir name (ADR-022: doctrine_docs, or docs for a
+    pre-existing legacy tree).
     """
     prefix = ".claude/" if fallback else ""
     sysdir = prefix + tree + "/_system/"
@@ -210,6 +225,7 @@ def _build_plan(level, created, fallback, tree=_registry.DOCS_DIR_NAMES[0]):
         (sysdir + "non-goals.md", _nongoal_seed(created)),
         (sysdir + "overview.md", _overview_seed(created)),
         (sysdir + ".docs-level", _docs_level_marker(level)),
+        (sysdir + ".governance-state", _governance_state_seed(created)),
         (prefix + "AGENTS.md", _agents_pointer(created, tree)),
         (prefix + "CLAUDE.md", _claude_pointer(created, tree)),
     ]
@@ -373,6 +389,69 @@ def _derive_overview(root, fallback):
 # ---------------------------------------------------------------------------
 # Entry point.
 # ---------------------------------------------------------------------------
+_GITIGNORE_LINES = (".claude/.cache/",)
+
+
+def _reconcile_level(level_path, requested):
+    """既存の .docs-level を要求 Level に合わせる(#90)。戻り値は報告文 or ""。
+
+    印が無ければ何もしない(plan の作成が扱う)。読めて同じなら何もしない。異なれば
+    要求 Level へ書き換え、UPGRADE/DOWNGRADE を報告する。--level は利用者の能動的な
+    選択なので、既存印の更新は意図どおり(非破壊の対象外)。決して例外を投げない。
+    """
+    try:
+        if not os.path.isfile(level_path):
+            return ""
+        with open(level_path, "r", encoding="utf-8-sig") as fh:
+            cur = fh.read()
+        m = re.search(r"level:\s*([2-4])", cur)
+        cur_level = int(m.group(1)) if m else None
+        if cur_level == requested:
+            return ""
+        tmp_dir = os.path.dirname(level_path) or "."
+        fd, tmp = _mkstemp_in(tmp_dir)
+        with os.fdopen(fd, "w", encoding="utf-8", newline="") as fh:
+            fh.write(_docs_level_marker(requested))
+        os.replace(tmp, level_path)
+        verb = "UPGRADE" if (cur_level is None or requested > cur_level) else "DOWNGRADE"
+        return ("%s Level %s → %d(.docs-level を更新)。Level 3 以上では初回の "
+                "SessionEnd 監査から全件検査が効く。" % (verb, cur_level, requested))
+    except OSError:
+        return ""
+
+
+def _ensure_gitignore(root):
+    """root/.gitignore に監査キャッシュの行を非破壊で足す(#74)。戻り値は報告文 or ""。
+
+    既に在れば何もしない。無ければ作る/追記する。SessionEnd 監査が
+    .claude/.cache/last-audit.json を無断生成するため、追跡から外して未追跡ファイルの
+    常駐を避ける。決して既存行を消さない。例外を投げない。
+    """
+    try:
+        path = os.path.join(root, ".gitignore")
+        existing = ""
+        if os.path.isfile(path):
+            with open(path, "r", encoding="utf-8-sig") as fh:
+                existing = fh.read()
+        have = set(ln.strip() for ln in existing.splitlines())
+        missing = [ln for ln in _GITIGNORE_LINES if ln not in have]
+        if not missing:
+            return ""
+        add = ""
+        if existing and not existing.endswith("\n"):
+            add += "\n"
+        if existing:
+            add += "\n# doctrine: 監査キャッシュ(実行時状態。コミットしない)\n"
+        else:
+            add = "# doctrine: 監査キャッシュ(実行時状態。コミットしない)\n"
+        add += "\n".join(missing) + "\n"
+        with open(path, "a", encoding="utf-8", newline="") as fh:
+            fh.write(add)
+        return "GITIGNORE   .gitignore に %s を追記(監査キャッシュを追跡から除外)" % ", ".join(missing)
+    except OSError:
+        return ""
+
+
 def main(argv=None):
     """Lay down the minimal _system layout non-destructively. Exit 0 on all-skip."""
     if argv is None:
@@ -402,6 +481,28 @@ def main(argv=None):
                 abspath = os.path.join(root, relpath)
                 state = "SKIP (exists)" if os.path.exists(abspath) else "CREATE"
                 sys.stdout.write("  %-14s %s\n" % (state, relpath))
+            # 後段(Level 昇格・.gitignore)の意図も dry-run で正直に見せる。
+            level_rel = (".claude/" if opts["fallback"] else "") + tree + "/_system/.docs-level"
+            lp = os.path.join(root, level_rel)
+            if os.path.isfile(lp):
+                try:
+                    with open(lp, "r", encoding="utf-8-sig") as fh:
+                        m = re.search(r"level:\s*([2-4])", fh.read())
+                    if m and int(m.group(1)) != opts["level"]:
+                        sys.stdout.write("  %-14s %s (level %s→%d)\n"
+                                         % ("UPDATE", level_rel, m.group(1), opts["level"]))
+                except OSError:
+                    pass
+            gi = os.path.join(root, ".gitignore")
+            gi_have = set()
+            if os.path.isfile(gi):
+                try:
+                    with open(gi, "r", encoding="utf-8-sig") as fh:
+                        gi_have = set(ln.strip() for ln in fh.read().splitlines())
+                except OSError:
+                    pass
+            if any(ln not in gi_have for ln in _GITIGNORE_LINES):
+                sys.stdout.write("  %-14s .gitignore (監査キャッシュを追記)\n" % "APPEND")
             return 0
 
         created_n = 0
@@ -420,6 +521,20 @@ def main(argv=None):
                 sys.stdout.write("SKIP (exists) %s\n" % relpath)
         if overview_created:
             _derive_overview(root, opts["fallback"])
+
+        # #90 Level 昇格/降格: .docs-level は利用者が --level で能動的に選ぶ制御印で
+        # あり、非破壊の対象(内容の種)とは別物。既存の印が --level と食い違うなら、
+        # 明示の意図として更新する(SKIP だと「--level 3 と言ったのに変わらない」問題)。
+        level_rel = (".claude/" if opts["fallback"] else "") + tree + "/_system/.docs-level"
+        upgrade_msg = _reconcile_level(os.path.join(root, level_rel), opts["level"])
+        if upgrade_msg:
+            sys.stdout.write(upgrade_msg + "\n")
+
+        # #74 .gitignore: 監査キャッシュ(実行時状態)を追跡から外す。非破壊の追記。
+        gi_msg = _ensure_gitignore(root)
+        if gi_msg:
+            sys.stdout.write(gi_msg + "\n")
+
         sys.stdout.write("作成 %d, 飛ばし %d。\n" % (created_n, skipped_n))
         return 0
     except OSError as exc:
