@@ -89,6 +89,17 @@ class TestHeartbeat(LivenessBase):
         out, code = self._hb("2026-07-26", "s1")
         self.assertEqual((out, code), ("", 0))
 
+    def test_guard_liveness_gap_is_announced(self):
+        """拒否経路の欠落の疑い(ADR-062)を、他が健全でも鼓動が告げる。"""
+        self._put_summary("2026-07-25")
+        self._put_state("last_cadence_review: 2026-07-20\n")
+        _write(os.path.join(self.base, ".claude", ".cache", "hook-stamps"),
+               "hook_docs_linter: 2026-07-26T10:00:00Z\n")
+        out, code = self._hb("2026-07-26", "s-gap")
+        self.assertEqual(code, 0)
+        self.assertIn("拒否経路の疑い", out)
+        self.assertIn("ADR-062", out)
+
     def test_stale_audit_warns(self):
         self._put_summary("2026-07-01")
         self._put_state("last_cadence_review: 2026-07-20\n")

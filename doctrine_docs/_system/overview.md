@@ -161,6 +161,7 @@ sources: []
 | ADR-047 | ADR | packaging | 開発方法論（TDD・DDD・OOP の採用範囲）と性能の上限・導入先への無影響保証 |
 | ADR-050 | ADR | packaging | ガードが拒否できる状態かは検出しないと明記し、機能カナリアを次の版に分ける |
 | ADR-052 | ADR | packaging | 編集画面の表示層は統治判断を持たず、索引が無ければ黙る |
+| ADR-062 | ADR | packaging | フックは発火の印を残し、対の食い違いから拒否経路の欠落を疑う |
 | IMPL-017 | IMPL | packaging | パッケージ・Hook配線の実装注記 |
 | IMPL-019 | IMPL | packaging | gov-heartbeat.py（統治ハートビート）の実装メモ |
 | TEST-019 | TEST | packaging | Hook配線・e2e連鎖の受入 |

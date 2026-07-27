@@ -234,5 +234,88 @@ class ReaderAgreementTest(CacheBase):
         self.assertIsNotNone(a)
 
 
+class HookStampsTest(unittest.TestCase):
+    """フックの発火の印と、拒否経路の欠落の判定(ADR-062)。
+
+    判定はこの共有コアに一度だけ在る(鼓動と監査が同じ答えを得る。ADR-053 と
+    同じ原理)。印が無ければ判じない(前方寛容)。
+    """
+
+    def setUp(self):
+        self.proj = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.proj, ignore_errors=True)
+
+    def _ts(self, s):
+        return datetime.datetime.strptime(
+            s, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=datetime.timezone.utc)
+
+    def test_write_and_read_roundtrip(self):
+        now = self._ts("2026-07-27T10:00:00Z")
+        A.write_stamp("hook_docs_linter", now=now, proj=self.proj)
+        stamps = A.read_stamps(self.proj)
+        self.assertEqual(stamps.get("hook_docs_linter"), now)
+
+    def test_upsert_keeps_unknown_lines_and_overwrites_the_key(self):
+        path = A.stamps_path(self.proj)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write("hook_docs_linter: 2026-07-27T09:00:00Z\n"
+                     "future_key: keep-me\n"
+                     "壊れた行 まるごと\n")
+        A.write_stamp("hook_docs_linter",
+                      now=self._ts("2026-07-27T10:00:00Z"), proj=self.proj)
+        with open(path, "r", encoding="utf-8") as fh:
+            text = fh.read()
+        self.assertIn("hook_docs_linter: 2026-07-27T10:00:00Z", text)
+        self.assertIn("future_key: keep-me", text, "知らない鍵の行を消さない")
+        self.assertIn("壊れた行", text, "読めない行も消さない(ADR-042 の寛容)")
+
+    def test_gap_is_none_without_a_linter_stamp(self):
+        self.assertIsNone(A.liveness_gap({}))
+        self.assertIsNone(A.liveness_gap(
+            {"hook_policy_guard_pre": self._ts("2026-07-27T10:00:00Z")}))
+
+    def test_gap_when_guard_stamp_is_missing(self):
+        gap = A.liveness_gap(
+            {"hook_docs_linter": self._ts("2026-07-27T10:00:00Z")})
+        self.assertIsNotNone(gap)
+        self.assertIn("ガード", gap)
+
+    def test_gap_when_guard_is_older_than_the_skew(self):
+        gap = A.liveness_gap({
+            "hook_docs_linter": self._ts("2026-07-27T10:10:00Z"),
+            "hook_policy_guard_pre": self._ts("2026-07-27T10:00:00Z"),
+        })
+        self.assertIsNotNone(gap)
+
+    def test_no_gap_for_a_fresh_pair(self):
+        self.assertIsNone(A.liveness_gap({
+            "hook_docs_linter": self._ts("2026-07-27T10:00:30Z"),
+            "hook_policy_guard_pre": self._ts("2026-07-27T10:00:00Z"),
+        }))
+
+    def test_writers_leave_stamps_via_the_hook_entrypoints(self):
+        """統合: リンタとガードの入口が印を残す(ADR-062 の書き手)。"""
+        old = os.environ.get("CLAUDE_PROJECT_DIR")
+        os.environ["CLAUDE_PROJECT_DIR"] = self.proj
+        self.addCleanup(
+            lambda: (os.environ.__setitem__("CLAUDE_PROJECT_DIR", old)
+                     if old is not None
+                     else os.environ.pop("CLAUDE_PROJECT_DIR", None)))
+        target = os.path.join(self.proj, "note.txt")
+        with open(target, "w", encoding="utf-8") as fh:
+            fh.write("x\n")
+        _util.invoke("docs-linter", stdin_obj={
+            "hook_event_name": "PostToolUse",
+            "tool_input": {"file_path": target}})
+        _util.invoke("policy-guard", stdin_obj={
+            "hook_event_name": "PreToolUse", "tool_name": "Edit",
+            "tool_input": {"file_path": target, "old_string": "x",
+                           "new_string": "y"}})
+        stamps = A.read_stamps(self.proj)
+        self.assertIn("hook_docs_linter", stamps)
+        self.assertIn("hook_policy_guard_pre", stamps)
+
+
 if __name__ == "__main__":
     unittest.main()

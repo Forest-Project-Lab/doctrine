@@ -1150,6 +1150,15 @@ def main(argv=None):
     except (ValueError, TypeError):
         obj = {}
 
+    # 発火の印(ADR-062)。予防の面(PreToolUse)が生きている証跡を残す。
+    # 最善努力であり、失敗しても本務(判定)を妨げない。
+    try:
+        if isinstance(obj, dict) and obj.get("hook_event_name") == "PreToolUse":
+            import _auditcache
+            _auditcache.write_stamp("hook_policy_guard_pre")
+    except Exception:
+        pass
+
     try:
         response = _route(obj)
     except Exception as exc:
