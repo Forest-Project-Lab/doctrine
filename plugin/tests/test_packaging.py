@@ -120,6 +120,27 @@ class TestHooksFullProfile(unittest.TestCase):
              "Stop", "PreCompact", "SessionEnd"},
         )
 
+    def test_coverage_matrix_has_no_empty_cell(self):
+        """#94 / SPEC-025: 被覆マトリクスの R1〜R12 の全行が、発火経路・実行する
+        もの・証跡・Level 2 での担保の各列を空白なく埋めていること(保証マトリクスの
+        空欄を許さない原則)。表を機械で読み、空セルを凍結する。"""
+        repo = os.path.dirname(_util.PLUGIN_ROOT)
+        spec = os.path.join(repo, "doctrine_docs", "packaging", "spec",
+                            "SPEC-025-coverage-matrix.md")
+        rows = []
+        with open(spec, encoding="utf-8") as fh:
+            for line in fh:
+                s = line.strip()
+                if s.startswith("| R") and s.endswith("|"):
+                    cells = [c.strip() for c in s.strip("|").split("|")]
+                    rows.append(cells)
+        # R1〜R12 の 12 行。各行はちょうど 5 列で、どのセルも空でない。
+        self.assertEqual(len(rows), 12, "expected R1..R12 rows, got %d" % len(rows))
+        for cells in rows:
+            self.assertEqual(len(cells), 5, "row must have 5 columns: %r" % cells)
+            for c in cells:
+                self.assertTrue(c, "empty cell in coverage matrix row: %r" % cells)
+
     def test_every_command_is_a_plugin_script(self):
         for event, matcher, command in _commands(self.hooks):
             with self.subTest(event=event, matcher=matcher, command=command):
