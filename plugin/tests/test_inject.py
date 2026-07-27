@@ -585,6 +585,57 @@ class TestAuditHandshake(InjectBase):
         self.assertIn("SPEC-014", ctx)
         self.assertNotIn("前回監査なし", ctx)
 
+    def test_project_scope_cache_wins_over_stale_plugin_root(self):
+        """ADR-037 / #69: 同じ root を指す旧 ${CLAUDE_PLUGIN_ROOT}/.cache の残骸が
+        在っても、新しいプロジェクトスコープ .claude/.cache が勝つ。旧配置を先に
+        読むと古い要約が新しいものを恒久的に影で隠し偽の R11 警報を出していた。"""
+        plugin_root = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, plugin_root, ignore_errors=True)
+        os.makedirs(os.path.join(plugin_root, ".cache"), exist_ok=True)
+
+        root = self._repo({"docs/_system/decided-facts.md":
+                           _decided("DECIDED-001", "確定A")})
+        docs_root = os.path.join(root, "docs")
+
+        # 旧プラグインroot: 古い要約(same root)。
+        stale = self._audit_obj(root=docs_root)
+        stale["today"] = "2026-05-01"
+        stale["top_findings"] = [
+            {"check": "dead_link", "severity": "error", "doc_id": "STALE-001",
+             "path": "x", "message": "古い", "refs": []}]
+        with open(os.path.join(plugin_root, ".cache", "last-audit.json"), "w",
+                  encoding="utf-8") as fh:
+            json.dump(stale, fh, ensure_ascii=False)
+        # プロジェクトスコープ: 新しい要約(same root)。
+        fresh = self._audit_obj(root=docs_root)
+        fresh["today"] = "2026-07-25"
+        fresh["top_findings"] = [
+            {"check": "review_by_overrun", "severity": "warn", "doc_id": "FRESH-002",
+             "path": "y", "message": "新しい", "refs": []}]
+        proj_cache = os.path.join(root, ".claude", ".cache")
+        os.makedirs(proj_cache, exist_ok=True)
+        with open(os.path.join(proj_cache, "last-audit.json"), "w",
+                  encoding="utf-8") as fh:
+            json.dump(fresh, fh, ensure_ascii=False)
+
+        old_pr = os.environ.get("CLAUDE_PLUGIN_ROOT")
+        old_pd = os.environ.get("CLAUDE_PROJECT_DIR")
+        os.environ["CLAUDE_PLUGIN_ROOT"] = plugin_root
+        os.environ["CLAUDE_PROJECT_DIR"] = root
+        try:
+            data = self._run_json(docs_root, extra=["--today", "2026-07-27"])
+        finally:
+            for k, v in (("CLAUDE_PLUGIN_ROOT", old_pr),
+                         ("CLAUDE_PROJECT_DIR", old_pd)):
+                if v is None:
+                    os.environ.pop(k, None)
+                else:
+                    os.environ[k] = v
+
+        ctx = self._ctx(data)
+        self.assertIn("FRESH-002", ctx)   # 新しい要約が勝つ
+        self.assertNotIn("STALE-001", ctx)  # 旧残骸は影にならない
+
     def test_foreign_project_summary_is_not_injected(self):
         """C3 越境汚染ガード: ${CLAUDE_PLUGIN_ROOT}/.cache は同じプラグインを
         使う全プロジェクトで共有される。要約の root が現在の docs ルートと

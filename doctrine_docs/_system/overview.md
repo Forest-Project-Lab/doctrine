@@ -58,6 +58,7 @@ sources: []
 | ADR-009 | ADR | context | 注入とパックで二つの別上限を持つ（C10） |
 | ADR-014 | ADR | context | DECIDED へ写すのは横断の確定事実だけとする |
 | ADR-016 | ADR | context | 投影を正本から描画し直せる派生表示に限り、刊行物は投影一覧に含めない |
+| ADR-037 | ADR | context | 監査要約キャッシュはプロジェクトスコープを先に読み、旧プラグインroot配置は後方互換のフォールバックに限る |
 | IMPL-012 | IMPL | context | `inject-contract.py` の実装メモ |
 | IMPL-013 | IMPL | context | `collect-context.py` の実装メモ |
 | IMPL-014 | IMPL | context | `render-projection.py` の実装メモ |
