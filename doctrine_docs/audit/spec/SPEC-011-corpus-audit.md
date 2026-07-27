@@ -20,12 +20,13 @@ llm_context: task
 
 - 入力: コマンドライン引数 `[--root PATH | --root-from PROJ] [--json] [--summary-out PATH] [--fail-on error|never] [--config PATH] [--today YYYY-MM-DD] [--respect-docs-level]`。`--root-from` はプロジェクト根を取り、統治木を ADR-022 の優先順で解決する（統治木が無ければ飛ばして 0）。標準入力は読まない。入力内容に結果が左右されないからであり、対話端末から起動しても入力待ちで止まらない。
 - 処理: 統治木のルート配下のすべての .md について、graph（ICD-002）が依存グラフを組み、登録簿（ICD-001）が各文書の型・`status`・`llm_context` を解決する。本文は一度だけ読んでノードに付ける。
-- 返す値: 要約スキーマ `docs-audit/1`。形は `{schema, generated_at, today, root, totals:{error,warn,advisory}, counts_by_check, top_findings, findings}`。`root` は絶対パスに正規化して書く（注入側が相対 root を照合不能として捨てるため。SPEC-012）。`--json` を付けると機械向けの JSON を、付けなければ人間向けの平文を出す。`--summary-out` を指定すると、要約を一時ファイルに書いてから改名して差し替え、途中状態を残さない。
+- 返す値: 要約スキーマ `docs-audit/1`。形は `{schema, generated_at, today, root, totals:{error,warn,advisory}, counts_by_check, checks_run, top_findings, findings}`。`root` は絶対パスに正規化して書く（注入側が相対 root を照合不能として捨てるため。SPEC-012）。`--json` を付けると機械向けの JSON を、付けなければ人間向けの平文を出す。`--summary-out` を指定すると、要約を一時ファイルに書いてから改名して差し替え、途中状態を残さない。
 
 ## 制約
 
 - 標準ライブラリだけを使う。pip での外部パッケージ取得も、ネットワーク通信もしない。返す値は毎回同じになる（所見を check・doc_id・message の順で整列する）。
 - 19 検査の重大度は固定とする（ICD-005 の表のとおり）。`top_findings` は error を優先し、上限 20 件とする。
+- 要約に `checks_run`（この版が走らせた検査名の一覧。`AUDIT_CHECKS`）を載せる（#95）。`counts_by_check` は所見のある検査しか載らないため、0 件の検査と走らなかった検査を区別できない。`checks_run` で走った検査集合を明示し、黙って消えた検査を読み手が見つけられるようにする（沈黙する検証器の禁止。`[R11]`）。
 - 依存の循環（dep_cycle、ADR-038）: `depends_on` 端の循環（自己依存 A→A、多頂点循環 A→B→C→A）を graph の `find_cycles`（Tarjan、サイクル安全）で求め、warn で挙げる。循環の全構成員は削除安全ガードの「現行の依存が残る」判定に永久に該当し降格できなくなる論理的デッドロックになる。dead link 検査の自己参照除外はそのまま（自己依存は dep_cycle が受け持つ）。`[R3][R8]`
 - 語彙的酷似（near_duplicate）の対走査は O(n^2) であり、規模上限 `near_dup_max_docs`（既定 800、`--config` で上書き）を設ける。現行文書数がこの上限を超えた場合は対走査を省き、省いた事実を near_duplicate の助言一つで正直に告げる（黙って切り詰めない）。重大度は advisory のまま（ICD-005 不変）。`[R8]`
 - `generated_at` は `today` から決める（`today.isoformat()+"T00:00:00Z"`）。テストが制御できないシステム時刻は参照しない。`[R1]`

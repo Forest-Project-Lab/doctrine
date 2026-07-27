@@ -61,9 +61,9 @@ ICD・正本・投影・現行・依存・参照は用語辞書（`_system/gloss
 他ドメインが依存してよい入出力を定める。
 
 - 入力: 統治木のルート、`--config`（調整値）、`--today YYYY-MM-DD`（基準日。同じ値なら毎回同じ結果になる）。
-- 返す値: 要約スキーマ `docs-audit/1`。形は `{schema, generated_at, today, root, totals:{error,warn,advisory}, counts_by_check, top_findings, findings}`。`top_findings` は error を先頭に並べ、上限 20 件とする。
+- 返す値: 要約スキーマ `docs-audit/1`。形は `{schema, generated_at, today, root, totals:{error,warn,advisory}, counts_by_check, checks_run, top_findings, findings}`。`top_findings` は error を先頭に並べ、上限 20 件とする。
 - 終了コード: SessionEnd 経路（`--fail-on never`）は常に 0 を返し、セッションの後始末を妨げない。CI 経路（`--fail-on error`）は error 所見が一つでもあれば 1 を返す。
-- context ドメインへの注入との受け渡し: 監査は要約を `${CLAUDE_PLUGIN_ROOT}/.cache/last-audit.json`（読めない場合は `.claude/.cache/last-audit.json`）へ書く。書き込みは一時ファイルを経て一括で差し替え、途中状態を残さない。次のセッションで context の SessionStart 注入がこの要約を読む。
+- context ドメインへの注入との受け渡し: 監査は要約を `${CLAUDE_PROJECT_DIR}/.claude/.cache/last-audit.json`（プロジェクトスコープ。ADR-037）へ書く。書き込みは一時ファイルを経て一括で差し替え、途中状態を残さない。次のセッションで context の SessionStart 注入がこの要約を読む（読み手はプロジェクトスコープを先に、旧 `${CLAUDE_PLUGIN_ROOT}/.cache` を後方互換の最後に見る）。
 
 ## 依存してよい入口
 

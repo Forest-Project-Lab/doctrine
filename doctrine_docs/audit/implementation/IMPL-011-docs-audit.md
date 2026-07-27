@@ -30,4 +30,4 @@ llm_context: task
 
 ## 対象部品
 
-対象は `plugin/scripts/docs-audit.py` である。各 `_check_*` は `plugin/scripts/_depgraph.py`（依存グラフ）と `plugin/scripts/_registry.py`（登録簿）を使う。`_check_dep_cycle` は `find_cycles` を呼び循環を warn で挙げる（ADR-038、#89）。
+対象は `plugin/scripts/docs-audit.py` である。各 `_check_*` は `plugin/scripts/_depgraph.py`（依存グラフ）と `plugin/scripts/_registry.py`（登録簿）を使う。`_check_dep_cycle` は `find_cycles` を呼び循環を warn で挙げる（ADR-038、#89）。`build_summary` は `AUDIT_CHECKS`（この版が走らせる検査名の一覧）を `checks_run` として要約へ載せる（#95）。
