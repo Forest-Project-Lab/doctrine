@@ -122,6 +122,58 @@ class InjectBase(unittest.TestCase):
         return hso["additionalContext"]
 
 
+class TestTraceCoverageLine(InjectBase):
+    """勘定の冒頭表示(ADR-058)。追跡を使う体系でだけ、件数の一行を足す。"""
+
+    def _summary_obj(self, docs_root, with_coverage):
+        obj = {
+            "schema": "docs-audit/1",
+            "generated_at": "2026-07-27T00:00:00Z", "today": "2026-07-27",
+            "root": docs_root,
+            "totals": {"error": 0, "warn": 0, "advisory": 0},
+            "counts_by_check": {}, "top_findings": [], "findings": [],
+        }
+        if with_coverage:
+            obj["trace_coverage"] = {
+                "unmarked_files": 71,
+                "spec_coverage": {"traced": 2, "no_code": 0, "undeclared": 20},
+            }
+        return obj
+
+    def _render_with_summary(self, with_coverage):
+        plugin_root = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, plugin_root, ignore_errors=True)
+        cache_dir = os.path.join(plugin_root, ".cache")
+        os.makedirs(cache_dir, exist_ok=True)
+        root = self._repo({"docs/_system/decided-facts.md":
+                           _decided("DECIDED-001", "確定A")})
+        docs_root = os.path.join(root, "docs")
+        with open(os.path.join(cache_dir, "last-audit.json"), "w",
+                  encoding="utf-8") as fh:
+            json.dump(self._summary_obj(docs_root, with_coverage), fh,
+                      ensure_ascii=False)
+        old = os.environ.get("CLAUDE_PLUGIN_ROOT")
+        os.environ["CLAUDE_PLUGIN_ROOT"] = plugin_root
+        try:
+            data = self._run_json(docs_root)
+        finally:
+            if old is None:
+                os.environ.pop("CLAUDE_PLUGIN_ROOT", None)
+            else:
+                os.environ["CLAUDE_PLUGIN_ROOT"] = old
+        return self._ctx(data)
+
+    def test_coverage_counts_appear_when_summary_has_them(self):
+        ctx = self._render_with_summary(with_coverage=True)
+        self.assertIn("印なし 71", ctx)
+        self.assertIn("未宣言 SPEC 20", ctx)
+        self.assertIn("trace-index --coverage", ctx)
+
+    def test_no_line_without_coverage(self):
+        ctx = self._render_with_summary(with_coverage=False)
+        self.assertNotIn("印なし", ctx)
+
+
 class TestSessionStartShape(InjectBase):
     """TC-101 baseline: output is a valid SessionStart additionalContext JSON,
     exit 0 always."""
