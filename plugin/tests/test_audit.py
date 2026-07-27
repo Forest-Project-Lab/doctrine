@@ -114,6 +114,41 @@ class DeadLinkTest(AuditBase):
         self.assertTrue(all(f["severity"] == "error" for f in dl))
 
 
+# --- checks_run 検証器の実行証跡 (#95) -------------------------------------
+
+class ChecksRunTest(AuditBase):
+    def test_summary_lists_checks_run(self):
+        """#95: 要約に checks_run(この版が走らせた検査の一覧)が載る。0 件の検査と
+        走らなかった検査を区別できるようにする(沈黙する検証器の禁止。R11)。"""
+        root = self.build([
+            (_fm("SPEC-1", "SPEC", "billing", depends_on=["REQ-1"]), "本文"),
+            (_fm("REQ-1", "REQ", "billing"), "本文"),
+        ])
+        data, _ = self.audit_json(root)
+        self.assertIn("checks_run", data)
+        cr = data["checks_run"]
+        # 主要な検査が漏れなく載っている(黙って消えたら気づける)。
+        for name in ("dead_link", "dep_cycle", "reverse_orphan_spec_no_test",
+                     "ext_anchor_broken", "projection_drift", "memory_shadow"):
+            self.assertIn(name, cr)
+        self.assertEqual(len(cr), len(set(cr)), "checks_run に重複がある")
+
+    def test_every_emitted_check_is_declared(self):
+        """発火した所見の check 名は、必ず checks_run に宣言済みであること
+        (未宣言の検査名が出る=一覧の更新漏れ、を凍結する)。"""
+        # 多くの検査を誘発する木: 循環・逆孤児・dead link。
+        root = self.build([
+            (_fm("SPEC-1", "SPEC", "billing", depends_on=["SPEC-2"]), "本文 [R1]"),
+            (_fm("SPEC-2", "SPEC", "billing", depends_on=["SPEC-1"]), "本文 [R1]"),
+            (_fm("SPEC-3", "SPEC", "billing", depends_on=["NOPE-9"]), "本文 [R1]"),
+        ])
+        data, _ = self.audit_json(root)
+        declared = set(data["checks_run"])
+        for f in data["findings"]:
+            self.assertIn(f["check"], declared,
+                          "未宣言の検査名 %s(checks_run 更新漏れ)" % f["check"])
+
+
 # --- ext_anchor hash (ADR-039 / #70) --------------------------------------
 
 class ExtHashTest(AuditBase):

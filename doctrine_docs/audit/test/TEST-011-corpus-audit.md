@@ -40,4 +40,4 @@ WATCH と突き合わせ、後退させてはならない事項を挙げる。
 
 ## 合否基準
 
-`plugin/tests/test_audit.py` の全クラス（DeadLinkTest・ReviewByTest・StaleDraftTest・OrphanTest・ReverseOrphanTest・CanonicalConflictTest・IcdViolationTest・ProjectionDriftTest・IcdIndexDriftTest・CtxmapDriftTest・DepCycleTest（ADR-038: 循環なし・自己依存 warn・多頂点循環 warn）・ExtHashTest（ADR-039: hash 一致=無言・不一致 warn・期待値なし warn・対象なし error）・NearDuplicateTest・SummaryHandshakeTest・DeterminismTest・DetectedFallbackTest・UnregisteredTest）が通れば合格とする。
+`plugin/tests/test_audit.py` の全クラス（DeadLinkTest・ReviewByTest・StaleDraftTest・OrphanTest・ReverseOrphanTest・CanonicalConflictTest・IcdViolationTest・ProjectionDriftTest・IcdIndexDriftTest・CtxmapDriftTest・DepCycleTest（ADR-038: 循環なし・自己依存 warn・多頂点循環 warn）・ExtHashTest（ADR-039: hash 一致=無言・不一致 warn・期待値なし warn・対象なし error）・ChecksRunTest（#95: 要約に checks_run が載り、発火した所見の check 名は必ず checks_run に宣言済み）・NearDuplicateTest・SummaryHandshakeTest・DeterminismTest・DetectedFallbackTest・UnregisteredTest）が通れば合格とする。

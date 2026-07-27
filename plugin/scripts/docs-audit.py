@@ -37,6 +37,19 @@ import _termcheck
 
 SCHEMA = "docs-audit/1"
 
+# この版の監査が走らせる検査の名前の一覧(#95。検証器の実行証跡)。要約に
+# checks_run として載せ、読み手(注入・生存性)が期待する検査集合を知れるようにする。
+# 検査を足す・消すときは本一覧を同じ変更で更新する(TEST が凍結する)。ある検査が
+# 黙って消えても、この一覧と要約の差で見えるようにする(沈黙する検証器の禁止。R11)。
+AUDIT_CHECKS = (
+    "dead_link", "dep_cycle", "review_by_overrun", "stale_draft", "orphan",
+    "reverse_orphan_req_no_spec", "reverse_orphan_spec_no_test",
+    "canonical_conflict", "near_duplicate", "icd_dependency_violation",
+    "projection_drift", "unregistered_document", "shadowed_document",
+    "stray_document", "stale_current", "source_drift", "archive_integrity",
+    "adr_not_landed", "glossary_seed_drift", "ext_anchor_broken", "memory_shadow",
+)
+
 # 既定の調整値(仕様に数値が無い。すべて --config で上書きできる。slice 05 C.6)。
 DEFAULT_DRAFT_STALE_DAYS = 90       # draft 放置の閾値
 DEFAULT_ORPHAN_STALE_DAYS = 180     # 孤児の陳腐化の閾値
@@ -1179,6 +1192,11 @@ def build_summary(root, findings, today, knobs, generated_at=None):
         "root": os.path.abspath(root),
         "totals": totals,
         "counts_by_check": counts_by_check,
+        # この版が走らせた検査の一覧(#95。検証器の実行証跡)。counts_by_check は
+        # 所見のある検査しか載らないため、0 件の検査と「走らなかった検査」を
+        # 区別できない。checks_run は走った検査集合を明示し、黙って消えた検査を
+        # 読み手が見つけられるようにする(R11)。
+        "checks_run": list(AUDIT_CHECKS),
         "top_findings": top,
         "findings": findings,
     }
