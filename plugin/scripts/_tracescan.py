@@ -6,9 +6,11 @@ ADR-054 が定めた追跡の終点は「注釈の対が囲むコードのテキ
 分けない — 「範囲はどこか」の答えを二つ持つと、重複 id(ADR-049)や監査要約の
 読み取り(ADR-053)で二度直した欠陥類型を、設計の時点で作り込むことになる。
 
-印は、行から前後の空白と非語文字を取り除いた残りが `doctrine:begin <id>` /
-`doctrine:end <id>` に一致する行である。前後の非語文字を無視するので、# // --
-; % /* */ <!-- --> のいずれの注釈記号でも同じ規則が効き、言語を知る必要がない。
+印は、行から前後の空白と非語文字を取り除いた残りが「印の語 + begin + id」
+「印の語 + end + id」の厳密な形(_MARK_RE)に一致する行である。前後の非語文字を
+無視するので、# // -- ; % /* */ <!-- --> のいずれの注釈記号でも同じ規則が効き、
+言語を知る必要がない。書式の例示は統治文書(SPEC-026)だけが持つ — この説明文に
+印の形をそのまま書くと、疑いの照合(ADR-059)が実装自身に反応する。
 
 保証限界:
 - 予防: 何も予防しない。走査して集めるだけである。
@@ -34,6 +36,12 @@ MARKER_WORD = "doctrine:"
 # 先頭に語文字があれば一致しない(コードの途中の文字列は印にならない)。
 _MARK_RE = re.compile(
     r"^[^\w]*doctrine:(begin|end)\s+([A-Z]+-\d+)[^\w]*$")
+
+# 疑いの照合(ADR-059)。厳密な形に一致しない行のうち、印の語の直後(空白を許す)に
+# begin/end の語が続くものは「打ったつもりの印」の兆候として挙げる。厳密な照合は
+# 変えない(緩めると文字列を印として拾う)。この正規表現の原文自身が疑いに一致
+# しないのは、コロンの直後に来るのが空白でも begin/end でもないからである。
+_MARK_SUSPECT_RE = re.compile(r"doctrine:\s*(begin|end)\b")
 
 # 走査しないディレクトリ名(監査の体系外 .md 走査と同じ規約。SPEC-011)。
 SKIP_DIR_NAMES = frozenset({"node_modules", "__pycache__"})
@@ -145,6 +153,18 @@ def scan_text(text, relpath):
     ranges, findings = [], []
     raw = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
     open_mark = None   # (行番号, id)
+
+    # 疑いの照合(ADR-059)。厳密な印に一致しない行だけを見る。
+    for i, line in enumerate(raw, start=1):
+        if _MARK_RE.match(line):
+            continue
+        if _MARK_SUSPECT_RE.search(line):
+            # 書式の綴りを原文へ直に書かない(この行自身が疑いに一致するため)。
+            findings.append(_finding(
+                "trace_marker_suspect", relpath, i,
+                "印に見えるが読めない(綴りの揺れ)。書式は「注釈記号 + "
+                + MARKER_WORD + "begin <TYPE>-<NNN>」で、id は大文字と数字、"
+                "コロンの後に空白を置かない(SPEC-026)"))
 
     for line_no, kind, doc_id in parse_marks(text):
         if kind == "begin":
@@ -311,7 +331,9 @@ def scan_tree(root, docs_root=None, max_files=DEFAULT_MAX_FILES,
         try:
             with open(path, "rb") as fh:
                 data = fh.read()
-        except OSError:
+        except (OSError, MemoryError):
+            # MemoryError は OSError の子ではない。通常ファイル判定と大きさの
+            # 上限で実質は起きないが、保証(例外を外へ出さない)の破れを塞ぐ。
             cov["excluded"]["unreadable"] += 1
             _member("excluded:unreadable", rel)
             continue

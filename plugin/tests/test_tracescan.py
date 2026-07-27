@@ -80,17 +80,26 @@ class LanguageAgnosticTest(unittest.TestCase):
         self.assertEqual(len(r), 1)
 
     def test_marker_inside_code_is_not_a_mark(self):
-        """行の先頭に語文字があれば印にしない(文字列の中の綴りを拾わない)。"""
+        """行の先頭に語文字があれば印にしない(文字列の中の綴りを拾わない)。
+
+        範囲は決して作らない。ADR-059 以降は無音でもない — 印の形をした文字列は
+        疑い(advisory)として挙がる。厳密な照合と疑いの照合の分離を凍結する。
+        """
         src = 'x = "%s"\ny = 1\n' % _mark("begin", "SPEC-014", "")
         r, f = T.scan_text(src, "a.py")
         self.assertEqual(r, [])
-        self.assertEqual(f, [])
+        self.assertEqual([x["code"] for x in f], ["trace_marker_suspect"])
 
     def test_lowercase_id_is_not_a_mark(self):
-        """id は登録簿の書式(大文字-数字)。緩めると偶然の一致が増える。"""
+        """id は登録簿の書式(大文字-数字)。緩めると偶然の一致が増える。
+
+        範囲は作らない。ADR-059 以降、綴りの揺れは疑いとして挙がる(begin と
+        end の二行それぞれ)。
+        """
         r, f = T.scan_text(_block("spec-014", ["x"]), "a.py")
         self.assertEqual(r, [])
-        self.assertEqual(f, [])
+        self.assertEqual([x["code"] for x in f],
+                         ["trace_marker_suspect", "trace_marker_suspect"])
 
 
 class FingerprintStabilityTest(unittest.TestCase):
@@ -304,7 +313,7 @@ class TreeScanTest(unittest.TestCase):
     def test_undecodable_file_does_not_stop_the_scan(self):
         root = self._repo({"good.py": _block("SPEC-014", ["x"])})
         with open(os.path.join(root, "bad.py"), "wb") as fh:
-            fh.write(b"# doctrine:begin SPEC-015\n\xff\xfe not utf8\n")
+            fh.write(b"# doctrine:" + b"begin SPEC-015\n\xff\xfe not utf8\n")
         r, f, _ = T.scan_tree(root)
         self.assertEqual([x["id"] for x in r], ["SPEC-014"])
 
@@ -418,7 +427,7 @@ class CoverageAccountingTest(unittest.TestCase):
         with open(os.path.join(root, "blob.bin"), "wb") as fh:
             fh.write(b"\x00\x01data")                      # binary
         with open(os.path.join(root, "bad.py"), "wb") as fh:
-            fh.write(b"# doctrine:begin SPEC-015\n\xff\xfe\n")  # undecodable
+            fh.write(b"# doctrine:" + b"begin SPEC-015\n\xff\xfe\n")  # undecodable
         _, _, cov = T.scan_tree(root, max_file_bytes=1024)
         self.assertEqual(cov["annotated_files"], 1)
         self.assertEqual(cov["unmarked_files"], 1)
@@ -438,7 +447,9 @@ class CoverageAccountingTest(unittest.TestCase):
 
     def test_marker_word_without_valid_range_is_unmarked(self):
         """印の語はあるが対を成さない(綴りの揺れ)も印なしに数える。"""
-        root = self._repo({"a.py": "# doctrine: begin SPEC-014\nx = 1\n"})
+        # 原文に疑いの形を書かない(自己反応を避ける)。実行時に連結して作る。
+        near_mark = "# doctrine:" + " begin SPEC-014\nx = 1\n"
+        root = self._repo({"a.py": near_mark})
         r, _, cov = T.scan_tree(root)
         self.assertEqual(r, [])
         self.assertEqual(cov["unmarked_files"], 1)
@@ -536,6 +547,65 @@ class CoverageAccountingTest(unittest.TestCase):
         _, _, cov = T.scan_tree(root, collect_members=True)
         self.assertEqual(cov["members"]["unmarked"], ["a.py", "b.py"])
         self.assertEqual(cov["members"]["annotated"], ["src/m.py"])
+
+
+class MarkerSuspectTest(unittest.TestCase):
+    """6. 打ったつもりの印を無音にしない(ADR-059)。
+
+    厳密な照合は変えない。照合に落ちた行のうち、印の語の直後に begin/end が
+    続くものだけを疑いとして挙げる。原文に疑いの形を直に書かない(自己反応を
+    避けるため、実行時に連結して作る)。
+    """
+
+    def codes(self, findings):
+        return [f["code"] for f in findings]
+
+    def _suspects(self, src):
+        _, f = T.scan_text(src, "a.py")
+        return [x for x in f if x["code"] == "trace_marker_suspect"]
+
+    def test_typo_variants_are_flagged_as_suspect(self):
+        colon = "# doctrine:"
+        word = "doctrine:"
+        variants = [
+            colon + " begin SPEC-014",          # コロンの後に空白
+            colon + "begin spec-014",           # 小文字の id
+            colon + "begin SPEC_014",           # 下線の id
+            "x" + word + "begin SPEC-014",      # 行頭に語文字(文字列の中)
+            colon + "begin SPEC-014 メモ",      # 余計な語
+            colon + "begin",                    # id の欠落
+        ]
+        for src in variants:
+            with self.subTest(src=src):
+                self.assertEqual(len(self._suspects(src)), 1, src)
+
+    def test_valid_mark_is_not_suspect(self):
+        src = _block("SPEC-014", ["x = 1"])
+        self.assertEqual(self._suspects(src), [])
+
+    def test_marker_word_alone_in_prose_is_not_suspect(self):
+        """印の語だけの散文(定数定義など)は疑いにしない。"""
+        src = 'MARKER = "doctrine:"\nprint(MARKER)'
+        self.assertEqual(self._suspects(src), [])
+
+    def test_regex_like_source_is_not_suspect(self):
+        """コロンの直後が空白でも begin でもない行(照合の原文など)は拾わない。"""
+        src = 'PAT = r"doctrine:(begin|end)"'
+        self.assertEqual(self._suspects(src), [])
+
+    def test_suspect_points_at_the_line(self):
+        src = "x = 1\n" + "# doctrine:" + " begin SPEC-014\n"
+        sus = self._suspects(src)
+        self.assertEqual([s["line"] for s in sus], [2])
+
+    def test_self_scan_of_this_repository_has_no_suspects(self):
+        """自己適用: 実装・試験の原文が疑いに一致しない(規律の凍結。ADR-059)。"""
+        repo = os.path.dirname(os.path.dirname(os.path.dirname(
+            os.path.abspath(__file__))))
+        docs = os.path.join(repo, "doctrine_docs")
+        _, f, _cov = T.scan_tree(repo, docs_root=docs)
+        sus = [x for x in f if x["code"] == "trace_marker_suspect"]
+        self.assertEqual(sus, [], "原文に印の形を書いた箇所がある: %r" % sus)
 
 
 class CoverageCLITest(unittest.TestCase):

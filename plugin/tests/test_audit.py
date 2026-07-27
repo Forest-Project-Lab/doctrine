@@ -1224,6 +1224,57 @@ class CodeTraceTest(AuditBase):
             "保存則が破れている: %r" % (cov,))
         self.assertNotIn("members", cov, "要約に一覧を載せない(件数だけ)")
 
+    def test_suspect_marker_surfaces_as_advisory(self):
+        """綴りの揺れた印が advisory で挙がる(ADR-059)。合否は変えない。"""
+        root = _util.make_repo({"src/a.py": ""})
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        code = "\n".join([_tmark("begin", "SPEC-900"), "x=1",
+                          _tmark("end", "SPEC-900")])
+        with open(os.path.join(root, "src", "a.py"), "w", encoding="utf-8") as fh:
+            fh.write(code)
+        # 原文に疑いの形を書かない(実行時に連結して作る)。
+        with open(os.path.join(root, "src", "b.py"), "w", encoding="utf-8") as fh:
+            fh.write("# doctrine:" + " begin SPEC-901\ny=2\n")
+        tracescan = _util.load_core("_tracescan")
+        ranges, _ = tracescan.scan_text(code, "src/a.py")
+        os.makedirs(os.path.join(root, "docs", "app", "spec"), exist_ok=True)
+        with open(os.path.join(root, "docs", "app", "spec", "SPEC-900.md"),
+                  "w", encoding="utf-8") as fh:
+            fh.write(_spec_with_fingerprints(
+                "SPEC-900", [ranges[0]["fingerprint"]]))
+        data, _ = self.audit_json(os.path.join(root, "docs"))
+        sus = self.checks_for(data, "trace_marker_suspect")
+        self.assertEqual(len(sus), 1)
+        self.assertEqual(sus[0]["severity"], "advisory",
+                         "疑いは advisory に留める(合否を変えない。ADR-059)")
+        for check in ("trace_marker_suspect",):
+            self.assertIn(check, data["checks_run"], check)
+
+    def test_scan_truncation_surfaces_as_advisory(self):
+        """走査が告げた切り詰めを、監査が握らず advisory で載せる(ADR-059)。"""
+        root = _util.make_repo({"src/a.py": ""})
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        code = "\n".join([_tmark("begin", "SPEC-900"), "x=1",
+                          _tmark("end", "SPEC-900")])
+        with open(os.path.join(root, "src", "a.py"), "w", encoding="utf-8") as fh:
+            fh.write(code)
+        # 大きさの上限(既定 1MiB)を超えるファイル -> 走査は所見で告げる。
+        with open(os.path.join(root, "src", "big.py"), "w",
+                  encoding="utf-8") as fh:
+            fh.write("#" * (1024 * 1024 + 16))
+        tracescan = _util.load_core("_tracescan")
+        ranges, _ = tracescan.scan_text(code, "src/a.py")
+        os.makedirs(os.path.join(root, "docs", "app", "spec"), exist_ok=True)
+        with open(os.path.join(root, "docs", "app", "spec", "SPEC-900.md"),
+                  "w", encoding="utf-8") as fh:
+            fh.write(_spec_with_fingerprints(
+                "SPEC-900", [ranges[0]["fingerprint"]]))
+        data, _ = self.audit_json(os.path.join(root, "docs"))
+        tr = self.checks_for(data, "trace_scan_truncated")
+        self.assertEqual(len(tr), 1)
+        self.assertEqual(tr[0]["severity"], "advisory")
+        self.assertEqual(data["trace_coverage"]["excluded"]["oversize"], 1)
+
     def test_summary_has_no_trace_coverage_without_opt_in(self):
         """opt-in が無ければ走査せず、勘定も載らない(ADR-056 の静けさを保つ)。"""
         root = _util.make_repo({

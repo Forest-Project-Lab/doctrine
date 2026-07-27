@@ -51,7 +51,8 @@ AUDIT_CHECKS = (
     "stray_document", "stale_current", "source_drift", "archive_integrity",
     "adr_not_landed", "glossary_seed_drift", "ext_anchor_broken", "memory_shadow",
     "trace_mark_error", "trace_broken_ref", "trace_deprecated_ref",
-    "trace_stale", "trace_missing_impl",
+    "trace_stale", "trace_missing_impl", "trace_marker_suspect",
+    "trace_scan_truncated",
 )
 # doctrine:end SPEC-011
 
@@ -697,6 +698,16 @@ def _check_code_traces(g, root):
             out.append(_finding(
                 "trace_mark_error", SEV_ERROR, "", f["path"],
                 "%s(%d 行目)。印の対を直す(SPEC-026)" % (f["message"], f["line"])))
+        elif f["code"] == "trace_marker_suspect":
+            # 打ったつもりの印の兆候(ADR-059)。誤検出がありうるので advisory。
+            out.append(_finding(
+                "trace_marker_suspect", SEV_ADVISORY, "", f["path"],
+                "%s(%d 行目)" % (f["message"], f["line"])))
+        elif f["code"] == "trace_scan_truncated":
+            # 走査が告げた切り詰めを読み手が握らない(ADR-059)。
+            out.append(_finding(
+                "trace_scan_truncated", SEV_ADVISORY, "", f["path"],
+                f["message"]))
 
     by_id = {}
     for r in ranges:
