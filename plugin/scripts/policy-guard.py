@@ -399,11 +399,35 @@ def guard_delete_safety_bash(command, cwd, graph_cache):
         if had_glob_unexpandable:
             return ("削除対象の glob を展開できません: %s。安全のため拒否します。"
                     % seg.strip())
-        for tgt in targets:
+        # ディレクトリ対象(rm -rf <domain> / git rm -r / mv <dir> 等)は、配下の
+        # 統治文書(.md)を列挙して一つずつ検査する(#71)。単一ファイル指定より
+        # ドメインごと消す方が高頻度の破壊経路であり、素通りさせない。
+        for tgt in _expand_dir_targets(targets):
             reason = _bash_target_violation(tgt, graph_cache)
             if reason is not None:
                 return reason
     return None
+
+
+def _expand_dir_targets(targets):
+    """対象のうちディレクトリを、配下の .md ファイルへ展開する(#71)。
+
+    ファイルはそのまま返す。ディレクトリは、その中の全 .md を再帰列挙して返す
+    (統治文書かどうかは _bash_target_violation が木の解決で判じる)。存在しない
+    対象・.md 以外のファイルはそのまま通す(後段が対象外と判じる)。決定的(整列)。
+    """
+    out = []
+    for t in targets:
+        ap = os.path.abspath(t)
+        if os.path.isdir(ap):
+            for dirpath, dirnames, filenames in os.walk(ap):
+                dirnames.sort()
+                for fn in sorted(filenames):
+                    if fn.endswith(".md"):
+                        out.append(os.path.join(dirpath, fn))
+        else:
+            out.append(t)
+    return out
 
 
 def _bash_target_violation(target_path, graph_cache):
@@ -541,8 +565,32 @@ def _extract_remove_targets(segment, cwd):
         return [], None, False
 
     arg_tokens = _strip_redirections(tokens[arg_start:])
-    raw_args = [t for t in arg_tokens if not t.startswith("-")]
     base = os.path.abspath(cwd) if cwd else os.getcwd()
+
+    # mv の -t/--target-directory は引数順を逆にする(-t DIR SRC…)。DIR が宛先で
+    # 位置引数はすべて src。これを取り違えると宛先の上書き検査が誤対象になる(#71)。
+    forced_dst = None  # -t/--target-directory で明示された宛先
+    raw_args = []
+    j = 0
+    while j < len(arg_tokens):
+        tok = arg_tokens[j]
+        if tok in ("-t", "--target-directory"):
+            if j + 1 < len(arg_tokens):
+                forced_dst = arg_tokens[j + 1]
+                j += 2
+                continue
+            j += 1
+            continue
+        if tok.startswith("--target-directory="):
+            forced_dst = tok.split("=", 1)[1]
+            j += 1
+            continue
+        if tok.startswith("-"):
+            j += 1
+            continue  # その他の旗(-T/-f 等)は飛ばす。
+        raw_args.append(tok)
+        j += 1
+
     # mv は最後の引数が宛先。対象は src 群(末尾を除く)。ただし上書きは宛先
     # 内容の破壊なので、rm と同等に宛先側も対象へ含める:
     # - 宛先が既存ファイル → その宛先。
@@ -551,10 +599,19 @@ def _extract_remove_targets(segment, cwd):
     # 新しい名前への改名だけが破壊でないので含めない。
     extra_targets = []
     had_unexpandable = False
-    if verb == "mv" and len(raw_args) >= 2:
+    # 宛先(dst)と src 群を決める。-t DIR SRC… なら DIR が宛先で位置引数は全て src。
+    # そうでなければ末尾が宛先。宛先の上書きは破壊なので extra_targets に含める。
+    dst = None
+    srcs = []
+    if verb == "mv" and forced_dst is not None and raw_args:
+        dst = forced_dst
+        srcs = raw_args
+        raw_args = srcs
+    elif verb == "mv" and len(raw_args) >= 2:
         dst = raw_args[-1]
         srcs = raw_args[:-1]
         raw_args = srcs
+    if verb == "mv" and dst is not None:
         if _has_glob(dst):
             dst_paths = _expand_glob(dst, base)
             if dst_paths is None:
