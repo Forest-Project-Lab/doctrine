@@ -35,6 +35,7 @@ description: "Reviews a document's prose and positioning against the writing nor
 - `references/writing-rules.md` — §1 文章の規則の展開。
 - `references/cadence-review.md` — 定例の `canonical_for`・訳語臭・意味的重複の手順、監査との対。
 - `references/term-addition.md` — `ADR` と用語辞書の更新の流れ、`term-extract` の候補の使い方。
+- `references/textlint-recipe.md` — textlint-ja を CI で任意に併用するレシピ（本体は標準ライブラリのみ。役割を分ける。#82）。
 
 ## 保証限界
 
