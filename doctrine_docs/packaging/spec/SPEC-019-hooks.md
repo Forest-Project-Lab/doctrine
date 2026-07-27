@@ -39,6 +39,7 @@ llm_context: task
 - 縮小構成 `hooks/hooks.level2.json` は、全構成から SessionEnd の `docs-audit.py` と、PostToolUse の `policy-guard.py`・`review-nudge.py` を外し、PostToolUse を `docs-linter.py` だけにしたものである。監査と依存グラフは Level 3 以降に置く。起動後のブロックには依存グラフが要るからである `[R5]`。
 - 段差の実現は配線の差し替えではなく自主停止である（ADR-019）: 配線は常に全構成 `hooks.json` とし、SessionEnd の監査・PostToolUse の `policy-guard.py`・`review-nudge.py` が `doctrine_docs/_system/.docs-level` を読み、Level 2 では静かに済ませる。`hooks.level2.json` は、プラグインを使わず手で配線する場合の代替として同梱を続ける。手で配線するときは、`${CLAUDE_PLUGIN_ROOT}/scripts/` を実際のスクリプトの場所（退避配置なら `.claude/scripts`）へ書き換えること。書き換えないと変数が未定義のため各 `command` が失敗し、予防が黙って無効になる（fail-open）。手順は `docs-system-init` の `references/fallback.md` に置く（#75）。
 - Hook 設定はセッション開始時にスナップショットして固定する。配線を変えても、そのセッションには反映されず、新しいセッションから反映する。
+- per-turn のフック（PreToolUse・PostToolUse・UserPromptSubmit・SessionStart）は体感速度を壊さない。実測（1414 文書）で 1 編集あたり合計およそ 0.4 秒。目安は 1 編集あたり 1 秒以内（1500 文書規模）で、数値の確定は受入テストで詰める（開発方法論と性能の上限は ADR-047）。全件監査はセッション境界と CI に隔離し、per-turn では走らせない。
 
 ## エラー時挙動
 

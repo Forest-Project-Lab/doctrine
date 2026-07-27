@@ -23,6 +23,13 @@
 - Pull Request は、一つの主題に絞る。
 - 仕様の規則を変える Pull Request は、その規則に依存する記述（付録のテンプレートなど）の更新を同じ Pull Request に含める。
 
+## テストと方法論（ADR-047）
+
+- 挙動を変えるときは、テストを先に足す（または同じ Pull Request で足す）。バグ修正は、再現テストを添えてから直す（テスト駆動）。
+- 変更フローは、根拠（ADR）→現行仕様（SPEC）→実装→テスト→LLM へ渡す情報→廃止整理の順で行う。
+- コードは共有コア（`_registry`・`_depgraph`・`_termcheck`・`_intake`・`_frontmatter`）を境界として使い、規則を二重定義しない。抽象の先取り（使わない拡張点）は最小性に反するので避ける。
+- リファクタリングは、全テストと CI の一括スキーマゲートが緑のまま行う。挙動を変える変更は semver の minor 以上、壊す変更は major とし、`CHANGELOG.md` に記す（導入先への無影響は、挙動の凍結・状態の前方互換・semver で担保する）。
+
 ## プラグインの自己適用
 
 本リポジトリは doctrine プラグインを自分に適用する（`.claude/settings.json`。ガード・リンタ・注入・監査のフックが各セッションで動く）。marketplace の場所は絶対パスで書く必要があるため、devcontainer の `/workspaces/doctrine` を前提とする。devcontainer の外で作業する場合は、`.claude/settings.local.json` で自分の絶対パスに上書きする。
