@@ -23,7 +23,7 @@ llm_context: task
 ## 注意点
 - C13（整合判断id）が知らぬ間に「危険でも通す」側へ倒れないようにする。`_icd_judge_dep` は、索引にある dep なら domain を読んで判定し、索引に無い dep なら `_registry.type_of` で型を引く。型を引ければ dangling として許し、引けなければ拒否する。
 - PostToolUse の削除安全は `_post_delete_safety` が PRE（書き込み前）から POST（書き込み後）への遷移で判じる。`_reconstruct_pre_edit_state` と `_invert_edits` が、POST の全文に編集を逆向きに当てて PRE を復元する。当て直しは生の全文（raw_post_text）に対して行う。組み直した近似に当てると、フロントマター内の編集で当て直しが外れることがあるからである。
-- Bash 経路は `_split_command`・`_tokenize`・`_strip_redirections`・`_expand_glob` で対象を取り出す。展開できない glob は安全側に倒して拒否する。リダイレクト先のファイルは削除対象に数えない。
+- Bash 経路は `_split_command`・`_tokenize`・`_strip_redirections`・`_expand_glob` で対象を取り出す。展開できない glob は安全側に倒して拒否する。リダイレクト先のファイルは削除対象に数えない。ディレクトリ対象は `_expand_dir_targets` が配下の `.md` を再帰列挙して検査する(#71)。`mv` の `-t`/`--target-directory` は `_extract_remove_targets` が引数逆転を解いて DIR を宛先として扱う(#71)。
 - 統治木の無いプロジェクトでは二・三ガードを発火させない（ADR-036）。`_project_has_tree` が `walkup_docs_root(file_path, cwd)` で木の有無を判じ、`_handle_pre_edit_write` は木が無ければ早期に allow、`_handle_post_edit` は木が無ければ静かに通す。木が在れば木の外の stray 文書にも従来どおり当てる。
 
 ## 対象部品

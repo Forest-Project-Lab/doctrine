@@ -509,6 +509,77 @@ class TestDeleteSafety(GuardTestBase):
         self.assertEqual(decision, "deny")
         self.assertIn("TEST-20", reason)
 
+    def test_bash_rm_rf_directory_with_depended_doc_denied(self):
+        """#71: rm -rf <domain> は配下の被依存文書を検査し deny(ディレクトリ素通り禁止)。"""
+        root = self._depended_repo()
+        target = os.path.join(root, "docs/billing")
+        tin = {"command": "rm -rf %s" % target}
+        out, _ = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Bash", tin))
+        decision, reason = _pre(json.loads(out))
+        self.assertEqual(decision, "deny")
+        self.assertIn("SPEC-14", reason)
+
+    def test_bash_git_rm_r_directory_denied(self):
+        """#71: git rm -r <domain> も配下を検査し deny。"""
+        root = self._depended_repo()
+        target = os.path.join(root, "docs/billing")
+        tin = {"command": "git rm -r %s" % target}
+        out, _ = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Bash", tin))
+        decision, _ = _pre(json.loads(out))
+        self.assertEqual(decision, "deny")
+
+    def test_bash_git_mv_directory_denied(self):
+        """#71: git mv <domain> /tmp/x はドメインごとの移動=配下の破壊で deny。"""
+        root = self._depended_repo()
+        target = os.path.join(root, "docs/billing")
+        tin = {"command": "git mv %s /tmp/moved-domain" % target}
+        out, _ = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Bash", tin))
+        decision, _ = _pre(json.loads(out))
+        self.assertEqual(decision, "deny")
+
+    def test_bash_rm_rf_directory_no_dependents_allowed(self):
+        """対照: 被依存文書を含まないディレクトリの rm -rf は allow。"""
+        root = self._repo({
+            "docs/billing/spec/SPEC-15.md": _util.fm_block(_doc(
+                "billing", doc_id="SPEC-15", status="current")) + "本文。\n",
+        })
+        tin = {"command": "rm -rf %s" % os.path.join(root, "docs/billing")}
+        out, _ = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Bash", tin))
+        decision, _ = _pre(json.loads(out))
+        self.assertEqual(decision, "allow")
+
+    def test_bash_mv_t_overwrite_depended_doc_denied(self):
+        """#71: mv -t DIR SRC の引数逆転を正しく解析し、宛先の上書きを検査して deny。"""
+        root = self._depended_repo()
+        # 宛先 docs/billing/spec に、既存 SPEC-14.md と同名の新ファイルを mv -t する。
+        src = os.path.join(root, "SPEC-14.md")
+        with open(src, "w", encoding="utf-8") as fh:
+            fh.write("上書きしようとする新内容。\n")
+        dst_dir = os.path.join(root, "docs/billing/spec")
+        tin = {"command": "mv -t %s %s" % (dst_dir, src)}
+        out, _ = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Bash", tin))
+        decision, reason = _pre(json.loads(out))
+        self.assertEqual(decision, "deny")
+        self.assertIn("SPEC-14", reason)
+
+    def test_bash_mv_t_new_name_allowed(self):
+        """対照: mv -t で新規名(上書きでない)は allow。"""
+        root = self._depended_repo()
+        src = os.path.join(root, "SPEC-99-new.md")
+        with open(src, "w", encoding="utf-8") as fh:
+            fh.write("新規。\n")
+        dst_dir = os.path.join(root, "docs/billing/spec")
+        tin = {"command": "mv -t %s %s" % (dst_dir, src)}
+        out, _ = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Bash", tin))
+        decision, _ = _pre(json.loads(out))
+        self.assertEqual(decision, "allow")
+
     def test_tc081_demote_with_zero_dependents_allowed(self):
         """TC-081 / TC-044: demote a doc with ZERO current dependents -> allow."""
         root = self._repo({
