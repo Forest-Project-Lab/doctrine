@@ -27,6 +27,7 @@ SPEC-021 の受入を `plugin/tests/test_liveness_capture.py` が機械で確認
 - Level 2 で監査の死活を誤報しない(test_level2_missing_audit_is_not_flagged)。
 - 移行キャンペーン: 未分類ありで統治率つきの1件を促し、ゼロなら無音(TestMigrationCampaign)。
 - メモリの影: 統治文書へ言及するメモリを advisory で挙げ、索引と無言及・置き場なしは無音(TestMemoryShadow)。
+- 世代の照合(ADR-053): 統治木を作り直したとき、前の世代の要約を読まない。読み手(注入と鼓動)が同じ答えを返す。印を持たない木では判じない。tests/test_auditcache.py が凍らせる。
 
 ## 退行観点
 
