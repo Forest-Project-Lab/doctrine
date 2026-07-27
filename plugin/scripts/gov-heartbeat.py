@@ -24,6 +24,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import _auditcache  # noqa: E402
 import _frontmatter  # noqa: E402
 import _intake  # noqa: E402
 import _registry  # noqa: E402
@@ -90,45 +91,15 @@ def _knob(config, key, default):
 
 
 def _audit_summary(docs_root):
-    """前回監査の要約。inject-contract と同じ候補順・同じ root 照合。無ければ None。
+    """前回監査の要約。無ければ None。
 
-    プロジェクトスコープを先に、旧 ${CLAUDE_PLUGIN_ROOT}/.cache を後方互換の
-    フォールバックとして最後に見る(ADR-037、#69)。inject-contract と一致させる。
+    候補順・schema 照合・root 照合・世代の照合は、共有コア `_auditcache` が
+    一度だけ定める(ADR-053)。ここは自前の照合を持たない。注入(inject-contract)
+    も同じ関数を呼ぶので、「どの要約を読むか」の答えは読み手をまたいで一つに
+    なる。以前は照合の段が揃っておらず、未知のスキーマの候補が先にあると、
+    一方は次の候補へ進み、もう一方はそこで止まった。
     """
-    cands = []
-    proj = os.environ.get("CLAUDE_PROJECT_DIR")
-    if proj:
-        cands.append(os.path.join(proj, ".claude", ".cache", "last-audit.json"))
-    cands.append(os.path.join(os.getcwd(), ".claude", ".cache", "last-audit.json"))
-    plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT")
-    if plugin_root:
-        cands.append(os.path.join(plugin_root, ".cache", "last-audit.json"))
-    for path in cands:
-        if not os.path.isfile(path):
-            continue
-        try:
-            with open(path, "r", encoding="utf-8-sig") as fh:
-                data = json.load(fh)
-        except (OSError, ValueError, UnicodeError):
-            continue
-        if not isinstance(data, dict):
-            continue
-        # スキーマを照合する(#77)。注入(inject-contract)と読者間で判定を揃える。
-        # 未知のスキーマ(将来の docs-audit/2 や別ツールの出力)は読まない — 形が
-        # 違えば today の解釈も誤りうる。読まない=「前回監査なし」へ安全側に倒す。
-        if data.get("schema") != "docs-audit/1":
-            continue
-        root = data.get("root")
-        if not isinstance(root, str) or not os.path.isabs(root):
-            continue
-        try:
-            if docs_root and os.path.realpath(root) != os.path.realpath(
-                    os.path.abspath(docs_root)):
-                continue
-        except (OSError, ValueError):
-            continue
-        return data
-    return None
+    return _auditcache.load(docs_root)
 
 
 def read_state(docs_root):

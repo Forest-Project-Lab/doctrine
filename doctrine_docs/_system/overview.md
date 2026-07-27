@@ -62,6 +62,7 @@ sources: []
 | ADR-037 | ADR | context | 監査要約キャッシュはプロジェクトスコープを先に読み、旧プラグインroot配置は後方互換のフォールバックに限る |
 | ADR-040 | ADR | context | 注入境界のフィールドをサニタイズし、引用データと指示を分ける |
 | ADR-043 | ADR | context | SessionStart 契約は確定事実・非目標・退行監視の要点行を運ぶ |
+| ADR-053 | ADR | context | 監査要約の読み取りを一箇所に正本化し、木の世代をまたいだ要約は捨てる |
 | IMPL-012 | IMPL | context | `inject-contract.py` の実装メモ |
 | IMPL-013 | IMPL | context | `collect-context.py` の実装メモ |
 | IMPL-014 | IMPL | context | `render-projection.py` の実装メモ |

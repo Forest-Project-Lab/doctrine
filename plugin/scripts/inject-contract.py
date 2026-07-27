@@ -23,6 +23,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import _auditcache
 import _frontmatter
 import _registry
 
@@ -144,71 +145,15 @@ def _load_config(docs_root, config_path):
         return {}
 
 
-def _plugin_root_cache_candidates():
-    """前回監査の要約成果物の候補パスを優先順で返す(C3、ADR-037)。
-
-    第一はプロジェクトスコープ .claude/.cache/last-audit.json(CLAUDE_PROJECT_DIR
-    基準、無ければ cwd 基準)。docs-audit.py が SessionEnd で書く現行の場所であり、
-    inject-contract が次の SessionStart でここから読む(両者の握手)。
-    ${CLAUDE_PLUGIN_ROOT}/.cache は v0.3.0 以前の旧配置で、**後方互換の読み取り
-    フォールバックとしてのみ**最後に見る(ADR-037)。旧配置を先に見ると、同じ
-    プロジェクトに残った移行前のキャッシュ(root は一致するが古い)が、新しい
-    プロジェクトスコープの要約を恒久的に影で隠し、偽の R11 警報を毎セッション
-    出す(#69)。フレッシュな書き込み先を先に読むことでこれを断つ。
-    """
-    cands = []
-    proj = os.environ.get("CLAUDE_PROJECT_DIR")
-    if proj:
-        cands.append(os.path.join(proj, ".claude", ".cache", "last-audit.json"))
-    cands.append(os.path.join(os.getcwd(), ".claude", ".cache", "last-audit.json"))
-    plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT")
-    if plugin_root:
-        # 旧配置(v0.3.0 以前)。後方互換のためだけに最後に見る。
-        cands.append(os.path.join(plugin_root, ".cache", "last-audit.json"))
-    return cands
-
-
 def _load_audit_summary(docs_root=None):
     """前回監査の要約(docs-audit/1)を読む。無ければ None。決して例外を投げない。
 
-    要約の root(docs-audit が監査した docs のパス)が現在の docs_root と一致
-    しない候補は捨てる。第一候補の ${CLAUDE_PLUGIN_ROOT}/.cache は同じプラグ
-    インを使う全プロジェクトで共有されるため、照合しないと別プロジェクトの
-    監査所見と是正指示を注入してしまう(越境汚染)。root キーが無い要約は
-    照合できないので、これも捨てる(誤注入より無注入が安全側)。
+    候補順・schema 照合・root 照合・世代の照合は、共有コア `_auditcache` が
+    一度だけ定める(ADR-053)。ここは自前の照合を持たない。鼓動(gov-heartbeat)
+    も同じ関数を呼ぶので、「どの要約を読むか」の答えは読み手をまたいで一つに
+    なる。
     """
-    for path in _plugin_root_cache_candidates():
-        if not os.path.isfile(path):
-            continue
-        try:
-            with open(path, "r", encoding="utf-8-sig") as fh:
-                data = json.load(fh)
-        except (OSError, ValueError, UnicodeError):
-            continue
-        if not isinstance(data, dict):
-            continue
-        if docs_root and not _same_docs_root(data.get("root"), docs_root):
-            continue
-        return data
-    return None
-
-
-def _same_docs_root(summary_root, docs_root):
-    """要約の root と現在の docs_root が同じ場所を指すか。決して例外を投げない。
-
-    相対パスの root は照合できない(読み手の cwd 基準でどのプロジェクトとも
-    一致し得る)ため、不一致として捨てる。同梱の SessionEnd 配線は常に絶対
-    パスを書くので、正当な要約はここで落ちない。
-    """
-    if not isinstance(summary_root, str) or not summary_root.strip():
-        return False
-    if not os.path.isabs(summary_root):
-        return False
-    try:
-        return (os.path.realpath(summary_root)
-                == os.path.realpath(os.path.abspath(docs_root)))
-    except (OSError, ValueError):
-        return False
+    return _auditcache.load(docs_root)
 
 
 # ---------------------------------------------------------------------------
@@ -319,7 +264,9 @@ def _load_corpus(docs_root, warn):
     """docs ルート配下の全 .md から _Doc の一覧を組み立てる。
 
     決定的にファイルを整列走査する。frontmatter の無い/id の無いファイル、解析に失敗した
-    ファイルは飛ばす(復元力 > 完全性、§1.10)。重複 id は最初(整列パス順)を採り警告する。
+    ファイルは飛ばす(復元力 > 完全性、§1.10)。重複 id の採用先は登録簿の
+    resolve_duplicate_id が一度だけ定める(先勝ち。ADR-049)。グラフ・監査も同じ関数を
+    呼ぶので、契約が運ぶ文書と監査が採用と告げる文書は食い違わない。
     本文は first-fact 抽出にだけ使い、全量は保持しない(R5)。
     """
     docs = []
@@ -333,7 +280,7 @@ def _load_corpus(docs_root, warn):
                 paths.append(os.path.join(dirpath, name))
     paths.sort()
 
-    seen_ids = set()
+    seen_ids = {}   # id -> (relpath, docs 内の位置)
     for path in paths:
         relpath = os.path.relpath(path, docs_root)
         try:
@@ -345,10 +292,16 @@ def _load_corpus(docs_root, warn):
         if not doc_id:
             # frontmatter が無い/id が無い → 飛ばす。
             continue
+        replace_at = None
         if doc_id in seen_ids:
-            warn("duplicate id, kept first by path order: %s (%s)" % (doc_id, relpath))
-            continue
-        seen_ids.add(doc_id)
+            prev_rel, prev_idx = seen_ids[doc_id]
+            keep = _registry.resolve_duplicate_id([prev_rel, relpath])
+            shadowed = relpath if keep == prev_rel else prev_rel
+            warn("duplicate id %s: adopted %s, shadowed %s" % (doc_id, keep, shadowed))
+            if keep == prev_rel:
+                continue
+            # 採用先が入れ替わる(走査順が整列でなくなっても規則どおりに落ち着く)。
+            replace_at = prev_idx
 
         d = _Doc()
         d.id = _frontmatter.sanitize_inline(doc_id, 60)
@@ -369,7 +322,12 @@ def _load_corpus(docs_root, warn):
         # 契約の復唱が空洞化せず、注入上限が実際に効くようにする。
         if d.type in ("DECIDED", "NONGOAL", "WATCH"):
             d.facts = _fact_lines(body)
-        docs.append(d)
+        if replace_at is None:
+            docs.append(d)
+            seen_ids[doc_id] = (relpath, len(docs) - 1)
+        else:
+            docs[replace_at] = d
+            seen_ids[doc_id] = (relpath, replace_at)
     return docs
 
 
@@ -516,19 +474,11 @@ def _tree_initialized(docs_root):
     """統治木が scaffold で初期化済みか(_system/.governance-state に initialized 行)。
 
     導入直後で初回監査がまだ走っていない状態を、監査の停止と区別するための印(#74)。
+    印の読みは共有コア `_auditcache` に一本化する(ADR-053)。判定は印の有無だけ
+    で行い、日付の可否は問わない(印が壊れた木の初日を、警告で始めない)。
     決して例外を投げない。
     """
-    if not docs_root:
-        return False
-    path = os.path.join(docs_root, "_system", ".governance-state")
-    try:
-        with open(path, "r", encoding="utf-8-sig") as fh:
-            for line in fh:
-                if line.strip().startswith("initialized:"):
-                    return True
-    except (OSError, UnicodeError):
-        return False
-    return False
+    return _auditcache.has_initialized_marker(docs_root)
 
 
 def _render_audit_summary(summary, today=None, stale_days=DEFAULT_AUDIT_STALE_DAYS,
@@ -555,6 +505,9 @@ def _render_audit_summary(summary, today=None, stale_days=DEFAULT_AUDIT_STALE_DA
                 "統治が生きていることを確かめること(R11)。"]
     schema = summary.get("schema")
     if schema != "docs-audit/1":
+        # 通常の経路ではここへ来ない。_auditcache.load がスキーマの合わない候補を
+        # 飛ばすため(ADR-053)、main から渡る要約は必ず docs-audit/1 である。
+        # 直に呼ばれたとき(テスト・将来の別の呼び出し側)の守りとして残す。
         # スキーマが合わなくても落とさない。最低限のことだけ伝える。
         return ["前回監査の要約を読めなかった（スキーマ不一致）。"]
     lines = []
