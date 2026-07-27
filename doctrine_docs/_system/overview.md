@@ -143,6 +143,7 @@ sources: []
 | ADR-041 | ADR | packaging | 導入直後を警告で始めない（状態の種蒔き・Level 昇格・初日の中立案内） |
 | ADR-042 | ADR | packaging | 監査要約のスキーマは全読者が照合する・状態ファイルの書式は前方寛容とする |
 | ADR-046 | ADR | packaging | 既定 Level 2 では全件検査を CI に委ね、初回監査前は警告でなく案内を出す |
+| ADR-047 | ADR | packaging | 開発方法論（TDD・DDD・OOP の採用範囲）と性能の上限・導入先への無影響保証 |
 | IMPL-017 | IMPL | packaging | パッケージ・Hook配線の実装注記 |
 | IMPL-019 | IMPL | packaging | gov-heartbeat.py（統治ハートビート）の実装メモ |
 | TEST-019 | TEST | packaging | Hook配線・e2e連鎖の受入 |
