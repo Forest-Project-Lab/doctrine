@@ -521,6 +521,17 @@ def _render_audit_summary(summary, today=None, stale_days=DEFAULT_AUDIT_STALE_DA
     if gen:
         head += "（%s）" % gen
     lines.append(head)
+    # 走査の勘定(ADR-058)。追跡を使っている体系では、印なしと未宣言の数を
+    # 冒頭に出し、「触った所から紐づける」進捗計を毎セッション目に入れる。
+    # 勘定が無ければ何も足さない(追跡を使っていない体系を騒がせない)。
+    cov = summary.get("trace_coverage")
+    if isinstance(cov, dict):
+        parts = ["追跡: 印なし %s" % _num(cov.get("unmarked_files"))]
+        spec_cov = cov.get("spec_coverage")
+        if isinstance(spec_cov, dict):
+            parts.append("未宣言 SPEC %s" % _num(spec_cov.get("undeclared")))
+        lines.append("、".join(parts)
+                     + "（内訳は trace-index --coverage で導出）")
     # 鮮度の照合(R11)。today が与えられないときだけ壁時計に退避する(監査と同じ規約)。
     # Level 2 では SessionEnd が書かないため、古さは死活の兆候にならない(照合しない)。
     audit_day = _parse_date(summary.get("today")) if docs_level >= 3 else None
