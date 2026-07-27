@@ -19,6 +19,7 @@ import re
 # §3.2 型登録簿 — 19 types, registry order (= spec table row order)
 # ---------------------------------------------------------------------------
 
+# doctrine:begin SPEC-001
 TYPES = (
     "ICD", "OVERVIEW", "GLOSSARY", "CTXMAP", "DECIDED", "NONGOAL", "WATCH",
     "REQ", "SPEC", "DATA", "API", "ADR", "CHANGE", "IMPACT", "IMPL", "PROC",
@@ -113,6 +114,7 @@ SYSTEM_TIER_TYPES = ("OVERVIEW", "GLOSSARY", "CTXMAP", "DECIDED", "NONGOAL", "WA
 
 # Types that form the always-injected contract residue (§3.9 / inject-contract).
 ALWAYS_CONTRACT_TYPES = ("DECIDED", "NONGOAL", "WATCH", "GLOSSARY")
+# doctrine:end SPEC-001
 
 # ---------------------------------------------------------------------------
 # §3.3 status 統制語彙

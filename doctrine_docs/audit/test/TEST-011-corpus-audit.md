@@ -27,7 +27,7 @@ SPEC-011 の 18 検査について、それぞれ pass と fail の両側を確�
 - icd_dependency_violation: ドメインをまたいで ICD 以外を指していれば fail、ドメインをまたいでも ICD を指していれば pass。
 - projection_drift: Overview（全体図の投影）が一致すれば pass、項目が欠けていれば fail、廃止した項目が残っていれば fail。ICD-index の欠落も fail。Context Map は、骨格が一致すれば pass、ドメインや依存端の過不足・印の区間の不在は error、ICD 列挙や境界違反マークのずれは warn。
 - near_duplicate: 助言（advisory）にとどまり error にはならないこと、本文が別物なら酷似と判定しないことを確認する。
-- unregistered_document / shadowed_document: 登録簿の外の `.md`（frontmatter や `id` の無いもの）と、重複 `id` で影になった文書が error で挙がること。登録済みだけのコーパスでは挙がらないこと。
+- unregistered_document / shadowed_document: 登録簿の外の `.md`（frontmatter や `id` の無いもの）と、重複 `id` で影になった文書が error で挙がること。登録済みだけのコーパスでは挙がらないこと。所見が告げる採用先が、登録簿の `resolve_duplicate_id` の答え（グラフ・注入と同じ一件）と一致すること（ADR-049）。
 - stray_document: doctrine_docs/ の外の型付き .md が warn、分類の記録に無い .md が advisory、期限を過ぎた保留が warn で挙がること。記録された非文書・投影（末尾 `/` の配下指定を含む）は挙がらないこと。実在しないパスを指す記録の項目が advisory で挙がること。
 
 ## 退行観点

@@ -17,7 +17,7 @@ sources: []
 | id | type | domain | title |
 |---|---|---|---|
 | GLOSSARY-001 | GLOSSARY | _system | 用語辞書の正本 |
-| DECIDED-001 | DECIDED | _system | 横断の確定方針（9事実） |
+| DECIDED-001 | DECIDED | _system | 横断の確定方針（10事実） |
 | NONGOAL-001 | NONGOAL | _system | 横断のやらないこと（9項） |
 | WATCH-001 | WATCH | _system | 横断の退行監視（6項） |
 | ICD-005 | ICD | audit | audit のインターフェース（全件監査の境界） |
@@ -28,6 +28,7 @@ sources: []
 | ADR-021 | ADR | audit | 体系外 .md は分類の記録と突き合わせ、未分類だけを監査が挙げる |
 | ADR-034 | ADR | audit | 移行の台帳は分類の記録から導出し、二重の台帳を持たない |
 | ADR-039 | ADR | audit | EXT の hash 検査を実装し、hash 指定を沈黙で素通りさせない |
+| ADR-056 | ADR | audit | 追跡の検査は、仕様が指紋を記録したときだけ効く（黙って始まり、黙って終わる） |
 | IMPL-011 | IMPL | audit | docs-audit.py の実装メモ |
 | IMPL-018 | IMPL | audit | _intake.py（分類の記録の共有コア）の実装メモ |
 | TEST-011 | TEST | audit | 監査の検査群テスト計画 |
@@ -74,12 +75,17 @@ sources: []
 | REQ-002 | REQ | graph | 追跡性（要求→仕様→実装→テスト→決定をたどる） |
 | REQ-003 | REQ | graph | 変更耐性（影響集合を依存から列挙する） |
 | SPEC-006 | SPEC | graph | 依存グラフの契約（forward/reverse/classify/reverse-orphans） |
+| SPEC-026 | SPEC | graph | コード注釈の書式（対の印・範囲の指紋・走査の対象） |
 | ADR-006 | ADR | graph | cross_domain_violation は depends_on 端のみに付ける |
 | ADR-038 | ADR | graph | 依存の循環を監査が検出する（自己依存と多頂点循環） |
 | ADR-045 | ADR | graph | 本文の要求タグは自己適用の約束であり、追跡の正路は depends_on の REQ である |
 | ADR-048 | ADR | graph | コードと仕様の双方向トレースは、条件を満たす段階拡張として採る |
+| ADR-054 | ADR | graph | 統治対象に「注釈が囲むコードの範囲」を加え、言語ごとに手段を分けない |
+| ADR-055 | ADR | graph | トレース索引はファイルに置かず毎回導出し、記録するのは人の確認だけとする |
 | IMPL-006 | IMPL | graph | `_depgraph.py`＋`dep-graph.py` の実装メモ |
+| IMPL-021 | IMPL | graph | `_tracescan.py`（コード注釈の走査）の実装メモ |
 | TEST-006 | TEST | graph | 依存グラフのテスト計画 |
+| TEST-026 | TEST | graph | コード注釈の書式の検証 |
 | ICD-003 | ICD | guard | guard のインターフェース（三ガードの公開境界） |
 | REQ-004 | REQ | guard | 境界明瞭（越境依存は相手ICD宛のみ許す） |
 | SPEC-003 | SPEC | guard | 三ガードの判定規則（不変・ICD依存・削除安全） |
@@ -149,6 +155,7 @@ sources: []
 | ADR-046 | ADR | packaging | 既定 Level 2 では全件検査を CI に委ね、初回監査前は警告でなく案内を出す |
 | ADR-047 | ADR | packaging | 開発方法論（TDD・DDD・OOP の採用範囲）と性能の上限・導入先への無影響保証 |
 | ADR-050 | ADR | packaging | ガードが拒否できる状態かは検出しないと明記し、機能カナリアを次の版に分ける |
+| ADR-052 | ADR | packaging | 編集画面の表示層は統治判断を持たず、索引が無ければ黙る |
 | IMPL-017 | IMPL | packaging | パッケージ・Hook配線の実装注記 |
 | IMPL-019 | IMPL | packaging | gov-heartbeat.py（統治ハートビート）の実装メモ |
 | TEST-019 | TEST | packaging | Hook配線・e2e連鎖の受入 |
