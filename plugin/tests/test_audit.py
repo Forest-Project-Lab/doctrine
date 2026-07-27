@@ -1166,7 +1166,7 @@ EXPECTED_AUDIT_CHECKS = (
     "adr_not_landed", "glossary_seed_drift", "ext_anchor_broken", "memory_shadow",
     "trace_mark_error", "trace_broken_ref", "trace_deprecated_ref",
     "trace_stale", "trace_missing_impl", "trace_marker_suspect",
-    "trace_scan_truncated",
+    "trace_scan_truncated", "trace_unexpected_impl", "trace_undeclared_impl",
 )
 
 
@@ -1391,6 +1391,64 @@ class CodeTraceTest(AuditBase):
         self.assertEqual(len(tr), 1)
         self.assertEqual(tr[0]["severity"], "advisory")
         self.assertEqual(data["trace_coverage"]["excluded"]["oversize"], 1)
+
+    def test_no_code_declaration_is_silent_when_reality_agrees(self):
+        """「コード対応なし」の宣言は、範囲が無ければ何も挙げない(ADR-061)。"""
+        root = _util.make_repo({
+            "docs/app/spec/SPEC-900.md": _spec_with_fingerprints("SPEC-900", None)
+            .replace("## 受入基準", "## 実装の指紋\n\n- コード対応なし: 運用手順のみの仕様\n\n## 受入基準"),
+            "src/a.py": "print(1)\n",
+        })
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        data, _ = self.audit_json(os.path.join(root, "docs"))
+        for check in ("trace_unexpected_impl", "trace_missing_impl",
+                      "trace_stale"):
+            self.assertEqual(self.checks_for(data, check), [], check)
+        self.assertEqual(data["trace_coverage"]["spec_coverage"],
+                         {"traced": 0, "no_code": 1, "undeclared": 0})
+
+    def test_no_code_declaration_with_ranges_is_a_warn(self):
+        """宣言と実態の矛盾(ADR-061): 対応なしと言いながら範囲がある。"""
+        root = _util.make_repo({
+            "docs/app/spec/SPEC-900.md": _spec_with_fingerprints("SPEC-900", None)
+            .replace("## 受入基準", "## 実装の指紋\n\n- コード対応なし: 理由\n\n## 受入基準"),
+            "src/a.py": "\n".join([_tmark("begin", "SPEC-900"), "x=1",
+                                   _tmark("end", "SPEC-900")]),
+        })
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        data, _ = self.audit_json(os.path.join(root, "docs"))
+        hits = self.checks_for(data, "trace_unexpected_impl")
+        self.assertEqual(len(hits), 1)
+        self.assertEqual(hits[0]["severity"], "warn")
+        self.assertEqual(hits[0]["doc_id"], "SPEC-900")
+
+    def test_annotation_to_sectionless_current_spec_is_advisory(self):
+        """欠陥D(ADR-061): 節の無い現行仕様を注釈が指す。advisory で名指しする。"""
+        root = _util.make_repo({"src/a.py": "", "src/b.py": ""})
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        gate_code = "\n".join([_tmark("begin", "SPEC-901"), "y=2",
+                               _tmark("end", "SPEC-901")])
+        orphan_code = "\n".join([_tmark("begin", "SPEC-900"), "x=1",
+                                 _tmark("end", "SPEC-900")])
+        with open(os.path.join(root, "src", "a.py"), "w", encoding="utf-8") as fh:
+            fh.write(gate_code)
+        with open(os.path.join(root, "src", "b.py"), "w", encoding="utf-8") as fh:
+            fh.write(orphan_code)
+        tracescan = _util.load_core("_tracescan")
+        gate_fp = tracescan.scan_text(gate_code, "src/a.py")[0][0]["fingerprint"]
+        os.makedirs(os.path.join(root, "docs", "app", "spec"), exist_ok=True)
+        with open(os.path.join(root, "docs", "app", "spec", "SPEC-901.md"),
+                  "w", encoding="utf-8") as fh:
+            fh.write(_spec_with_fingerprints("SPEC-901", [gate_fp]))
+        with open(os.path.join(root, "docs", "app", "spec", "SPEC-900.md"),
+                  "w", encoding="utf-8") as fh:
+            fh.write(_spec_with_fingerprints("SPEC-900", None))
+        data, _ = self.audit_json(os.path.join(root, "docs"))
+        hits = self.checks_for(data, "trace_undeclared_impl")
+        self.assertEqual([h["doc_id"] for h in hits], ["SPEC-900"])
+        self.assertEqual(hits[0]["severity"], "advisory")
+        self.assertEqual(data["trace_coverage"]["spec_coverage"],
+                         {"traced": 1, "no_code": 0, "undeclared": 1})
 
     def test_summary_has_no_trace_coverage_without_opt_in(self):
         """opt-in が無ければ走査せず、勘定も載らない(ADR-056 の静けさを保つ)。"""

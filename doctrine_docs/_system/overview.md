@@ -85,6 +85,7 @@ sources: []
 | ADR-058 | ADR | graph | 走査は勘定を返し、触れた対象を必ず分類する（保存則） |
 | ADR-059 | ADR | graph | 印に見えるが読めない行を疑いとして挙げる（打ったつもりの無音を塞ぐ） |
 | ADR-060 | ADR | graph | 走査の門を「節の有無」に揃え、検査の挙動を正本の列挙で添字づけた試験が凍結する |
+| ADR-061 | ADR | graph | 仕様はコードとの関係を宣言できる — 明示の「対応なし」と、宣言と実態の矛盾の検査 |
 | IMPL-006 | IMPL | graph | `_depgraph.py`＋`dep-graph.py` の実装メモ |
 | IMPL-021 | IMPL | graph | `_tracescan.py`（コード注釈の走査）の実装メモ |
 | TEST-006 | TEST | graph | 依存グラフのテスト計画 |
