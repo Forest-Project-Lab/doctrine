@@ -37,7 +37,7 @@ llm_context: task
 - PostToolUse は `policy-guard.py` → `docs-linter.py` → `review-nudge.py` の順を守る `[R7]`。先に走る `policy-guard.py` は起動後の違反を拒否しうる。これを、助言だけを返す `docs-linter.py`・`review-nudge.py` より前に判定する。
 - 生存性と捕捉の三イベント（ADR-028）: UserPromptSubmit は `gov-heartbeat.py`（統治の生存と定例の期限。SPEC-021）、Stop は `capture-nudge.py`（記録の確認の一度きりの差し止め。SPEC-022）、PreCompact は `precompact-dump.py`（圧縮前の退避指示。SPEC-022）を起動する。三つとも `.docs-level` に依らず動く（ADR-030）。
 - 縮小構成 `hooks/hooks.level2.json` は、全構成から SessionEnd の `docs-audit.py` と、PostToolUse の `policy-guard.py`・`review-nudge.py` を外し、PostToolUse を `docs-linter.py` だけにしたものである。監査と依存グラフは Level 3 以降に置く。起動後のブロックには依存グラフが要るからである `[R5]`。
-- 段差の実現は配線の差し替えではなく自主停止である（ADR-019）: 配線は常に全構成 `hooks.json` とし、SessionEnd の監査・PostToolUse の `policy-guard.py`・`review-nudge.py` が `doctrine_docs/_system/.docs-level` を読み、Level 2 では静かに済ませる。`hooks.level2.json` は、プラグインを使わず手で配線する場合の代替として同梱を続ける。
+- 段差の実現は配線の差し替えではなく自主停止である（ADR-019）: 配線は常に全構成 `hooks.json` とし、SessionEnd の監査・PostToolUse の `policy-guard.py`・`review-nudge.py` が `doctrine_docs/_system/.docs-level` を読み、Level 2 では静かに済ませる。`hooks.level2.json` は、プラグインを使わず手で配線する場合の代替として同梱を続ける。手で配線するときは、`${CLAUDE_PLUGIN_ROOT}/scripts/` を実際のスクリプトの場所（退避配置なら `.claude/scripts`）へ書き換えること。書き換えないと変数が未定義のため各 `command` が失敗し、予防が黙って無効になる（fail-open）。手順は `docs-system-init` の `references/fallback.md` に置く（#75）。
 - Hook 設定はセッション開始時にスナップショットして固定する。配線を変えても、そのセッションには反映されず、新しいセッションから反映する。
 
 ## エラー時挙動

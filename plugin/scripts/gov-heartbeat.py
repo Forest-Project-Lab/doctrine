@@ -113,6 +113,11 @@ def _audit_summary(docs_root):
             continue
         if not isinstance(data, dict):
             continue
+        # スキーマを照合する(#77)。注入(inject-contract)と読者間で判定を揃える。
+        # 未知のスキーマ(将来の docs-audit/2 や別ツールの出力)は読まない — 形が
+        # 違えば today の解釈も誤りうる。読まない=「前回監査なし」へ安全側に倒す。
+        if data.get("schema") != "docs-audit/1":
+            continue
         root = data.get("root")
         if not isinstance(root, str) or not os.path.isabs(root):
             continue
