@@ -6,7 +6,7 @@ domain: packaging
 status: current
 owner: doctrine-maintainers
 created: 2026-07-26
-updated: 2026-07-26
+updated: 2026-07-27
 sources: [plugin/tests/test_packaging.py]
 depends_on: [SPEC-025]
 llm_context: task
@@ -29,4 +29,4 @@ SPEC-025 の受入である `[R11][R9]`。
 
 ## 合否基準
 
-test_packaging の該当テストが緑で、本表に空白セルが無いこと。
+test_packaging の該当テスト(`test_has_all_seven_events`・`test_coverage_matrix_has_no_empty_cell`)が緑で、本表の R1〜R12 の全行が 5 列を空白なく埋めること(#94。Level 2 での担保の列を含む)。
