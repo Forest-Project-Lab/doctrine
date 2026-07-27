@@ -28,11 +28,11 @@ ICD・正本・投影・現行・依存・参照は用語辞書（`_system/gloss
 
 このドメインだけが正本となる事実を挙げる（frontmatter の `canonical_for` と一致する）。
 
-- `corpus-audit`: 全件監査の検査群（19 検査）と、各検査の重大度。
+- `corpus-audit`: 全件監査の検査群（24 検査）と、各検査の重大度。
 - `intake-ledger-format`: 分類の記録（`_system/.md-intake`）の書式の正本。一行一項目 `パス: 非文書|投影|保留 [YYYY-MM-DD]`（保留は期限必須。末尾 `/` は配下全体）。読み取りは共有コア `_intake.py`（IMPL-018）に一本化する。
 - `audit-summary-schema`: 監査の要約スキーマ `docs-audit/1` の形。
 
-19 検査と重大度（固定）:
+24 検査と重大度（固定）:
 
 | 検査名 | 重大度 |
 |---|---|
@@ -55,6 +55,11 @@ ICD・正本・投影・現行・依存・参照は用語辞書（`_system/gloss
 | glossary_seed_drift（辞書シードの退行） | warn |
 | ext_anchor_broken（外部アンカーの存在。ADR-026） | error（対象なし）／warn（対象の行なし） |
 | memory_shadow（メモリの影。ADR-035） | advisory |
+| trace_mark_error（印の対応付けの誤り。ADR-056） | error |
+| trace_broken_ref（注釈が実在しない id を指す） | error |
+| trace_deprecated_ref（注釈が廃止・置換済みの id を指す） | warn |
+| trace_stale（記録した指紋と導出した指紋の食い違い） | warn |
+| trace_missing_impl（指紋を記録した仕様に対応する範囲が無い） | warn |
 
 ## データ契約
 

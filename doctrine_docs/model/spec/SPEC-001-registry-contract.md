@@ -6,7 +6,7 @@ domain: model
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-26
+updated: 2026-07-27
 sources: [DOCTRINE-001]
 depends_on: [REQ-001, DATA-001]
 llm_context: task
@@ -27,6 +27,7 @@ llm_context: task
 - `is_current(status)`: `status` が current または accepted なら真を返す。
 - `effective_llm_context(meta)`: フロントマターの `llm_context` を優先して返し、無ければ型の既定を返す。
 - `required_keys(level, type)`: 必須キーの列を返す。DECIDED と WATCH には `review_by` を加える。
+- `resolve_duplicate_id(paths)`: 同じ id を持つ複数のパスから、採用する一つを返す。整列した順の最初を採る（先勝ち。ADR-049）。空なら None を返す。「どれが正本か」の答えを体系内で一つにするための規則であり、グラフ・注入・監査はこれを呼び、自前の整列規則を持たない。
 
 ## 制約
 
@@ -41,10 +42,17 @@ llm_context: task
 - 未知の入力（不正な `id` や未知の型）に対しては例外を投げず、None・空集合・空リストのいずれかを返す。違反の報告はリンタ・ガード・監査に委ねる。
 - `required_keys(level, ...)` の level が {2,3,4} 以外なら ValueError を投げる。
 
+## 実装の指紋
+
+この節がある文書だけが、コードとの追跡の対象になる（ADR-056 の opt-in）。指紋は位置を含まないので、コードを別のファイルへ移しても古びと判じない。更新は `trace-index.py --id SPEC-001` が返す行を写す。
+
+- sha256:8e46d9e2c01fc94a6aa0fe35f043cea0894c568304123d4050f749f03710cee6
+
 ## 受入基準
 
 - 20 型の登録簿、`status` の許可表、型ごとの既定値、置き場所、既定点検周期（ADR-025）、archived の置き場所（ADR-027）が、DATA-001 と一致する。
 - 返したコレクションを書き換えても、登録簿は変わらない。
+- `resolve_duplicate_id` は、与える順序に依らず整列した順の最初を返す。空の入力には None を返し、例外を投げない。
 - accepted は ADR だけで、draft は RESEARCH だけで許可される。
 - 対応するテストは TEST-001 が確認する。
 

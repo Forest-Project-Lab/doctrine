@@ -1138,6 +1138,122 @@ class DetectedFallbackTest(AuditBase):
 
 # --- registration completeness (unregistered / shadowed, R1/R8) -----------
 
+# --- コードと仕様の追跡 (trace_*, ADR-056) -------------------------------
+
+def _tmark(kind, doc_id, lead="# "):
+    """印の行を組み立てる(原文に印そのものを書かない)。"""
+    return "%sdoctrine:%s %s" % (lead, kind, doc_id)
+
+
+def _spec_with_fingerprints(doc_id, fingerprints):
+    body = "## 入出力\nx\n\n## 制約\nx\n\n## エラー時挙動\nx\n"
+    if fingerprints is not None:
+        body += "\n## 実装の指紋\n\n"
+        body += "".join("- %s\n" % fp for fp in fingerprints)
+    body += "\n## 受入基準\nx\n"
+    return _util.fm_block(_fm(doc_id, "SPEC", "app")) + body
+
+
+class CodeTraceTest(AuditBase):
+    """ADR-056: 追跡の検査は、仕様が指紋を記録したときだけ効く。
+
+    これが緩むと、導入初日に全ての現行 SPEC へ警告が飛ぶ(近縁の道具が繰り返し
+    踏んでいる失敗)。逆に、記録したのに何も検査しない状態は「黙って通る検証器」
+    であり、R11 が禁じる沈黙する故障そのものである。両側をここで凍らせる。
+    """
+
+    def test_no_opt_in_means_no_findings_at_all(self):
+        """節を持つ仕様が無ければ、追跡の所見は一件も出ない(導入初日の静けさ)。"""
+        root = _util.make_repo({
+            "docs/app/spec/SPEC-900.md": _spec_with_fingerprints("SPEC-900", None),
+            "src/a.py": "\n".join([_tmark("begin", "SPEC-900"), "x=1",
+                                   _tmark("end", "SPEC-900")]),
+        })
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        data, _ = self.audit_json(os.path.join(root, "docs"))
+        for check in ("trace_stale", "trace_missing_impl", "trace_broken_ref",
+                      "trace_mark_error", "trace_deprecated_ref"):
+            self.assertEqual(self.checks_for(data, check), [], check)
+
+    def test_recorded_fingerprint_that_matches_is_silent(self):
+        root = _util.make_repo({"src/a.py": ""})
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        code = "\n".join([_tmark("begin", "SPEC-900"), "x=1",
+                          _tmark("end", "SPEC-900")])
+        with open(os.path.join(root, "src", "a.py"), "w", encoding="utf-8") as fh:
+            fh.write(code)
+        tracescan = _util.load_core("_tracescan")
+        ranges, _ = tracescan.scan_text(code, "src/a.py")
+        os.makedirs(os.path.join(root, "docs", "app", "spec"), exist_ok=True)
+        with open(os.path.join(root, "docs", "app", "spec", "SPEC-900.md"),
+                  "w", encoding="utf-8") as fh:
+            fh.write(_spec_with_fingerprints(
+                "SPEC-900", [ranges[0]["fingerprint"]]))
+        data, _ = self.audit_json(os.path.join(root, "docs"))
+        self.assertEqual(self.checks_for(data, "trace_stale"), [])
+        self.assertEqual(self.checks_for(data, "trace_missing_impl"), [])
+
+    def test_content_change_raises_trace_stale(self):
+        """記録した確認と、いまのコードが食い違えば古びとして挙げる。"""
+        root = _util.make_repo({
+            "docs/app/spec/SPEC-900.md": _spec_with_fingerprints(
+                "SPEC-900", ["sha256:" + "0" * 64]),
+            "src/a.py": "\n".join([_tmark("begin", "SPEC-900"), "x=1",
+                                   _tmark("end", "SPEC-900")]),
+        })
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        data, _ = self.audit_json(os.path.join(root, "docs"))
+        s = self.checks_for(data, "trace_stale")
+        self.assertEqual(len(s), 1)
+        self.assertEqual(s[0]["severity"], "warn")
+
+    def test_recorded_but_no_range_raises_missing_impl(self):
+        root = _util.make_repo({
+            "docs/app/spec/SPEC-900.md": _spec_with_fingerprints(
+                "SPEC-900", ["sha256:" + "0" * 64]),
+            "src/a.py": "print(1)\n",
+        })
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        data, _ = self.audit_json(os.path.join(root, "docs"))
+        self.assertEqual(len(self.checks_for(data, "trace_missing_impl")), 1)
+
+    def test_annotation_to_unknown_id_is_error(self):
+        root = _util.make_repo({
+            "docs/app/spec/SPEC-900.md": _spec_with_fingerprints(
+                "SPEC-900", ["sha256:" + "0" * 64]),
+            "src/a.py": "\n".join([_tmark("begin", "SPEC-999"), "x=1",
+                                   _tmark("end", "SPEC-999")]),
+        })
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        data, _ = self.audit_json(os.path.join(root, "docs"))
+        b = self.checks_for(data, "trace_broken_ref")
+        self.assertEqual(len(b), 1)
+        self.assertEqual(b[0]["severity"], "error")
+
+    def test_unclosed_mark_is_error(self):
+        """印の対応付けの誤りは error。機械で判じきれる欠陥だから(ADR-056)。"""
+        root = _util.make_repo({
+            "docs/app/spec/SPEC-900.md": _spec_with_fingerprints(
+                "SPEC-900", ["sha256:" + "0" * 64]),
+            "src/a.py": "\n".join([_tmark("begin", "SPEC-900"), "x=1"]),
+        })
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        data, _ = self.audit_json(os.path.join(root, "docs"))
+        m = self.checks_for(data, "trace_mark_error")
+        self.assertEqual(len(m), 1)
+        self.assertEqual(m[0]["severity"], "error")
+
+    def test_trace_checks_are_declared_in_checks_run(self):
+        """走った検査集合に載ること(黙って消えた検査を見つけられるように)。"""
+        root = _util.make_repo({"docs/_system/glossary.md": "x"})
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        data, _ = self.audit_json(os.path.join(root, "docs"))
+        for check in ("trace_mark_error", "trace_broken_ref",
+                      "trace_deprecated_ref", "trace_stale",
+                      "trace_missing_impl"):
+            self.assertIn(check, data["checks_run"], check)
+
+
 class UnregisteredTest(AuditBase):
     def test_frontmatterless_file_is_unregistered(self):
         """docs/ 内の frontmatter/id 無し .md -> unregistered_document error。

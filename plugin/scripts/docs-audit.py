@@ -33,6 +33,7 @@ import _frontmatter
 import _intake
 import _registry
 import _termcheck
+import _tracescan
 
 
 SCHEMA = "docs-audit/1"
@@ -41,6 +42,7 @@ SCHEMA = "docs-audit/1"
 # checks_run として載せ、読み手(注入・生存性)が期待する検査集合を知れるようにする。
 # 検査を足す・消すときは本一覧を同じ変更で更新する(TEST が凍結する)。ある検査が
 # 黙って消えても、この一覧と要約の差で見えるようにする(沈黙する検証器の禁止。R11)。
+# doctrine:begin SPEC-011
 AUDIT_CHECKS = (
     "dead_link", "dep_cycle", "review_by_overrun", "stale_draft", "orphan",
     "reverse_orphan_req_no_spec", "reverse_orphan_spec_no_test",
@@ -48,7 +50,10 @@ AUDIT_CHECKS = (
     "projection_drift", "unregistered_document", "shadowed_document",
     "stray_document", "stale_current", "source_drift", "archive_integrity",
     "adr_not_landed", "glossary_seed_drift", "ext_anchor_broken", "memory_shadow",
+    "trace_mark_error", "trace_broken_ref", "trace_deprecated_ref",
+    "trace_stale", "trace_missing_impl",
 )
+# doctrine:end SPEC-011
 
 # 既定の調整値(仕様に数値が無い。すべて --config で上書きできる。slice 05 C.6)。
 DEFAULT_DRAFT_STALE_DAYS = 90       # draft 放置の閾値
@@ -636,6 +641,101 @@ def _check_ext_hash(doc_id, node, body, target, abspath):
     return []
 
 
+_TRACE_SECTION_RE = re.compile(r"(?m)^#{1,6}\s*実装の指紋\s*$")
+_TRACE_FP_RE = re.compile(r"(?m)^\s*-\s*(sha256:[0-9a-fA-F]{64})\s*$")
+
+# 印の対応付けの誤り(走査が返す code)。すべて error に畳む(ADR-056)。
+_TRACE_MARK_CODES = frozenset({
+    "trace_nested", "trace_id_mismatch", "trace_unclosed",
+    "trace_unopened", "trace_empty_range"})
+
+
+def _recorded_fingerprints(body):
+    """本文の `## 実装の指紋` 節から、記録された指紋の集合を読む。
+
+    節が無ければ None を返す(= その仕様は追跡の対象外。ADR-056 の opt-in)。
+    節はあるが指紋の行が無ければ空集合を返す(= 対象だが記録が空)。
+    """
+    m = _TRACE_SECTION_RE.search(body or "")
+    if m is None:
+        return None
+    tail = body[m.end():]
+    nxt = re.search(r"(?m)^#{1,6}\s", tail)
+    section = tail[:nxt.start()] if nxt else tail
+    return {fp.lower() for fp in _TRACE_FP_RE.findall(section)}
+
+
+def _check_code_traces(g, root):
+    """20-24. コードと仕様の追跡(ADR-056、SPEC-026)。
+
+    仕様の文書が `## 実装の指紋` の節を持つときだけ効く。節を持つ文書が一つも
+    無ければ、コードの走査そのものを行わない(使っていない機能の費用を払わせ
+    ない)。「根拠を持たないコード」は挙げない — 注釈は任意であり、原理的に
+    判じられない(ADR-054 の既知の限界)。
+    """
+    expect = {}     # doc_id -> 記録された指紋の集合
+    for doc_id in sorted(g.nodes):
+        node = g.nodes[doc_id]
+        if not _registry.is_current(node.get("status", "")):
+            continue
+        fps = _recorded_fingerprints(node.get("_body") or "")
+        if fps is not None:
+            expect[doc_id] = fps
+    if not expect:
+        return []   # 誰も opt-in していない → 走査しない
+
+    scan_root = os.path.dirname(os.path.abspath(root))
+    try:
+        ranges, scan_findings = _tracescan.scan_tree(scan_root, docs_root=root)
+    except Exception:
+        return []   # 走査で監査を落とさない
+
+    out = []
+    for f in scan_findings:
+        if f["code"] in _TRACE_MARK_CODES:
+            out.append(_finding(
+                "trace_mark_error", SEV_ERROR, "", f["path"],
+                "%s(%d 行目)。印の対を直す(SPEC-026)" % (f["message"], f["line"])))
+
+    by_id = {}
+    for r in ranges:
+        by_id.setdefault(r["id"], []).append(r)
+
+    # 注釈が指す先の不備(上向き)。
+    for doc_id in sorted(by_id):
+        where = by_id[doc_id][0]["path"]
+        node = g.nodes.get(doc_id)
+        if node is None:
+            out.append(_finding(
+                "trace_broken_ref", SEV_ERROR, doc_id, where,
+                "注釈が実在しない id %s を指している。id を直すか印を消す" % doc_id))
+        elif not _registry.is_current(node.get("status", "")):
+            out.append(_finding(
+                "trace_deprecated_ref", SEV_WARN, doc_id, where,
+                "注釈が %s の id %s を指している。後継へ張り替えるか印を消す"
+                % (node.get("status", "?"), doc_id)))
+
+    # 記録した確認との照合(下向き)。
+    for doc_id in sorted(expect):
+        recorded = expect[doc_id]
+        found = by_id.get(doc_id, [])
+        node = g.nodes[doc_id]
+        if not found:
+            out.append(_finding(
+                "trace_missing_impl", SEV_WARN, doc_id, node["path"],
+                "実装の指紋を記録しているが、対応する範囲がコードに一つも無い。"
+                "印を打つか、節を消して追跡の対象から外す(ADR-056)"))
+            continue
+        actual = {r["fingerprint"].lower() for r in found}
+        if actual != recorded:
+            out.append(_finding(
+                "trace_stale", SEV_WARN, doc_id, node["path"],
+                "記録した実装の指紋と、いまのコードの指紋が食い違う(%s)。"
+                "変更を確かめ、確認したら節の指紋を更新する"
+                % ", ".join(sorted(r["path"] for r in found))))
+    return out
+
+
 def _check_memory_shadow(g, root):
     """18. メモリの影(R8, ADR-035)。ハーネスのメモリが統治文書に言及していたら点検を促す。
 
@@ -1031,6 +1131,7 @@ def run_audit(root, today, knobs):
     findings += _check_glossary_seed(root)
     findings += _check_ext_anchors(g, root)
     findings += _check_memory_shadow(g, root)
+    findings += _check_code_traces(g, root)
 
     findings.sort(key=lambda f: (f["check"], f["doc_id"], f["message"]))
     return findings
