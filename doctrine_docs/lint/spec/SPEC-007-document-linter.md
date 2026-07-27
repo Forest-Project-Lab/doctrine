@@ -20,6 +20,7 @@ llm_context: task
 
 - 入力: PostToolUse の Hook（編集などのイベントで起動するスクリプト）が渡す JSON を標準入力で受け取る。点検する対象パスは、`tool_input.file_path`、`tool_input.path`、`tool_response.filePath`、最上位の `file_path` の順に探し、どれも無ければ `argv[1]` を使う。
 - 返す値: 何か見つかれば、`hookSpecificOutput.additionalContext` に `[severity] CODE: message` の行を並べた助言 JSON を返す。何も無ければ空を返す。終了コードは常に 0 にする。
+- CI 用バッチモード（`--batch <root>`。#91）: 統治木の全 .md に per-file の点検を当て、ERROR があれば ERROR を一覧して終了コード 1 を返す（ERROR なしは 0）。フックを迂回した経路（GitHub の Web UI・別エージェント・一括スクリプト）で入った不正文書を、マージ前に止める。点検ロジックは per-file と同一で、規則の正本（登録簿）は一つのまま。統治木が無ければ点検対象なしとして 0（素の docs/ を CI で誤って落とさない）。CI はフックのスナップショットに依らず走るので、この経路だけがマージ前の schema 検査を担う。
 
 ## 制約
 

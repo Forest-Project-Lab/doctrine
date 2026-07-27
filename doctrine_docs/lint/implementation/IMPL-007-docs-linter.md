@@ -28,6 +28,6 @@ llm_context: task
 
 ## 対象部品
 
-`plugin/scripts/docs-linter.py`。`_registry`・`_frontmatter`・`_intake`・`_termcheck`・`_depgraph` を import する。
+`plugin/scripts/docs-linter.py`。`_registry`・`_frontmatter`・`_intake`・`_termcheck`・`_depgraph` を import する。 CI 用の `--batch <root>` は `_run_batch` が統治木の全 .md に `lint_text` を当て、ERROR で終了コード 1(#91)。
 
 <!-- 入れない: 仕様の正本 -->

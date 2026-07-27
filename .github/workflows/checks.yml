@@ -33,6 +33,16 @@ jobs:
       - name: Docs audit (doctrine_docs/ corpus)
         run: CLAUDE_PLUGIN_ROOT="$PWD/plugin" python3 plugin/scripts/docs-audit.py --root doctrine_docs --fail-on error
 
+      # Schema gate (#91): the SessionEnd audit covers cross-document integrity,
+      # but per-file schema checks (missing keys, bad status, id/filename
+      # mismatch, banned synonyms) only ran in the PostToolUse hook — so a
+      # document entering through a hook-bypassing path (GitHub web UI, another
+      # agent, a bulk script) reached main uninspected. This runs the exact
+      # per-file linter over the whole corpus and fails on any ERROR, reusing the
+      # single rule source (_registry) — no duplication.
+      - name: Docs linter schema gate (batch)
+        run: CLAUDE_PLUGIN_ROOT="$PWD/plugin" python3 plugin/scripts/docs-linter.py --batch doctrine_docs
+
       - name: Projection drift (overview / icd-index / context-map)
         run: python3 plugin/scripts/render-projection.py all --check --docs-root doctrine_docs
 

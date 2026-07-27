@@ -668,6 +668,52 @@ def build_response(path, findings):
     }
 
 
+def _resolve_tree(root):
+    """--batch の root から統治木を解決する(ADR-022)。無ければ None。"""
+    if _registry.is_doctrine_tree(root):
+        return root
+    return _registry.locate_docs_root(root)
+
+
+def _run_batch(root):
+    """統治木の全 .md を点検し、ERROR があれば終了コード 1(#91)。
+
+    per-file の lint_text をそのまま各文書に当てる(規則の二重定義をしない)。
+    ERROR を stderr でなく stdout に一覧し、件数を末尾に出す。統治木が無ければ
+    点検対象なしとして 0(CI で素の docs/ を誤って落とさない)。
+    """
+    tree = _resolve_tree(root)
+    if not tree or not os.path.isdir(tree):
+        sys.stdout.write("docs-linter --batch: 統治木が無い(%s)。点検対象なし。\n" % root)
+        return 0
+    error_docs = 0
+    error_count = 0
+    for dirpath, dirnames, filenames in os.walk(tree):
+        dirnames.sort()
+        for fn in sorted(filenames):
+            if not fn.endswith(".md"):
+                continue
+            path = os.path.join(dirpath, fn)
+            try:
+                text = _read_text(path)
+            except Exception:
+                continue
+            findings = [f for f in lint_text(text, path) if f.severity == ERROR]
+            if findings:
+                error_docs += 1
+                rel = os.path.relpath(path, tree)
+                for f in findings:
+                    error_count += 1
+                    sys.stdout.write("[ERROR] %s: %s (%s)\n"
+                                     % (rel, f.message, f.code))
+    if error_count:
+        sys.stdout.write("docs-linter --batch: %d 文書に %d 件の ERROR。\n"
+                         % (error_docs, error_count))
+        return 1
+    sys.stdout.write("docs-linter --batch: ERROR なし。\n")
+    return 0
+
+
 def main(argv=None):
     """Entry point (PostToolUse). Advisory only. Exit ALWAYS 0.
 
@@ -676,6 +722,15 @@ def main(argv=None):
     """
     if argv is None:
         argv = sys.argv[1:]
+
+    # CI 用バッチモード(#91): 統治木の全 .md を一括点検し、ERROR があれば終了
+    # コード 1 を返す。per-file の点検ロジック(lint_text)をそのまま再利用するので、
+    # 規則の正本は一つ(_registry)のまま。フックを迂回した経路(GitHub Web UI・
+    # 別エージェント・一括スクリプト)で入った不正文書を、マージ前に止められる。
+    if argv and argv[0] == "--batch":
+        root = argv[1] if len(argv) > 1 else "."
+        return _run_batch(root)
+
     try:
         stdin_text = ""
         try:
