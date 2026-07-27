@@ -145,6 +145,37 @@ class TestSessionStartShape(InjectBase):
         json.loads(out)  # parses
 
 
+class TestContractCarriesFacts(InjectBase):
+    """ADR-043 / #88: 契約は DECIDED/NONGOAL/WATCH の本文の要点行(事実)を運ぶ。
+    1文書1行の headline だけでは復唱が空洞化し注入上限が死文化していた。"""
+
+    def _decided_with_facts(self):
+        fm = {"id": "DECIDED-001", "title": "横断の確定方針", "type": "DECIDED",
+              "domain": "_system", "status": "current", "owner": "team",
+              "updated": "2026-07-01", "review_by": "2026-12-01", "sources": []}
+        body = ("## 確定方針\n"
+                "1. 構造規則は _registry に一度だけ正本化する。\n"
+                "2. 必須キーはちょうど8個とする。\n"
+                "3. 常時投入の上限は既定 12000 トークンとする。\n")
+        return _util.fm_block(fm) + body
+
+    def test_decided_facts_are_injected(self):
+        root = self._repo({"docs/_system/decided-facts.md":
+                           self._decided_with_facts()})
+        ctx = self._ctx(self._run_json(os.path.join(root, "docs")))
+        self.assertIn("必須キーはちょうど8個", ctx)
+        self.assertIn("常時投入の上限は既定", ctx)
+
+    def test_cap_trims_facts_but_keeps_decided_header(self):
+        root = self._repo({"docs/_system/decided-facts.md":
+                           self._decided_with_facts()})
+        ctx = self._ctx(self._run_json(os.path.join(root, "docs"),
+                                       extra=["--cap", "60"]))
+        # 見出しは protect_first で残り、事実は削れ、超過通知が出る。
+        self.assertIn("DECIDED-001", ctx)
+        self.assertNotIn("必須キーはちょうど8個", ctx)
+
+
 class TestInjectionHardening(InjectBase):
     """ADR-040 / #96: 文書内容・ファイル名は攻撃者制御になりうる。注入境界へ
     届く各フィールドは sanitize_inline を通し、改行によるセクション捏造や巨大値に
