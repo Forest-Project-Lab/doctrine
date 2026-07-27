@@ -18,7 +18,7 @@ sources: []
 |---|---|---|---|
 | GLOSSARY-001 | GLOSSARY | _system | 用語辞書の正本 |
 | DECIDED-001 | DECIDED | _system | 横断の確定方針（10事実） |
-| NONGOAL-001 | NONGOAL | _system | 横断のやらないこと（9項） |
+| NONGOAL-001 | NONGOAL | _system | 横断のやらないこと（10項） |
 | WATCH-001 | WATCH | _system | 横断の退行監視（6項） |
 | ICD-005 | ICD | audit | audit のインターフェース（全件監査の境界） |
 | REQ-008 | REQ | audit | 最小性の監査（過剰と不足の両側を全件検出） |
@@ -131,6 +131,7 @@ sources: []
 | ADR-033 | ADR | model | 必須キーはちょうど 8 個とする(追認) |
 | ADR-035 | ADR | model | ハーネスのメモリは環境と個人の事実に限り、影の正本化を見張る |
 | ADR-049 | ADR | model | 重複 id の採用規則を登録簿に一本化し、先勝ちに統一する |
+| ADR-057 | ADR | model | 統治はリポジトリ一つの内側に閉じ、組織を横断する統治は引き受けない |
 | IMPL-001 | IMPL | model | `_registry.py` の実装メモ |
 | IMPL-002 | IMPL | model | `_frontmatter.py` の実装メモ |
 | TEST-001 | TEST | model | 登録簿契約のテスト計画 |
