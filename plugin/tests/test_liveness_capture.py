@@ -98,6 +98,21 @@ class TestHeartbeat(LivenessBase):
         self.assertIn("前回監査から", ctx)
         self.assertIn("R11", ctx)
 
+    def test_unknown_schema_summary_is_not_read(self):
+        """#77: 未知スキーマ(docs-audit/2 等)の要約は読まない。注入と読者間で
+        判定を揃える(形が違えば today の解釈も誤りうる)。前回監査なし扱い。"""
+        _write(os.path.join(self.plugin_root, ".cache", "last-audit.json"),
+               json.dumps({"schema": "docs-audit/2",
+                           "root": os.path.abspath(self.root),
+                           "today": "2020-01-01", "totals": {}}))
+        self._put_state("last_cadence_review: 2026-07-20\n")
+        out, code = self._hb("2026-07-26", "s2b")
+        self.assertEqual(code, 0)
+        ctx = json.loads(out)["hookSpecificOutput"]["additionalContext"]
+        # 巨大な鮮度超過(2020)を読んでいない=schema で弾いた。要約なし扱いになる。
+        self.assertNotIn("2020", ctx)
+        self.assertIn("見つからない", ctx)
+
     def test_missing_audit_with_state_warns(self):
         self._put_state("last_cadence_review: 2026-07-20\n")
         out, _ = self._hb("2026-07-26", "s3")
