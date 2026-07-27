@@ -188,6 +188,36 @@ class TestTypeOf(unittest.TestCase):
             self.assertEqual(R.type_of(t + "-7"), t, t)
 
 
+class TestResolveDuplicateId(unittest.TestCase):
+    """resolve_duplicate_id: 重複 id の採用規則の単一正本(ADR-049)。
+
+    先勝ち(整列した順の最初)。後から来た衝突が、既に id を持つ文書からそれを
+    奪わない。グラフ・注入・監査はこの一つの答えを共有する。
+    """
+
+    def test_first_by_sorted_order_wins(self):
+        self.assertEqual(
+            R.resolve_duplicate_id(["zulu/DUP-1.md", "alpha/DUP-1.md"]),
+            "alpha/DUP-1.md")
+
+    def test_order_of_arguments_does_not_matter(self):
+        paths = ["b/x.md", "a/x.md", "c/x.md"]
+        for perm in ([paths[0], paths[1], paths[2]],
+                     [paths[2], paths[1], paths[0]],
+                     [paths[1], paths[2], paths[0]]):
+            self.assertEqual(R.resolve_duplicate_id(perm), "a/x.md", perm)
+
+    def test_single_path_returns_it(self):
+        self.assertEqual(R.resolve_duplicate_id(["only/x.md"]), "only/x.md")
+
+    def test_empty_is_none_and_never_raises(self):
+        for bad in ([], None, (), [None], [3, None]):
+            self.assertIsNone(R.resolve_duplicate_id(bad), bad)
+
+    def test_non_str_entries_are_ignored(self):
+        self.assertEqual(R.resolve_duplicate_id([None, "a/x.md", 7]), "a/x.md")
+
+
 class TestIsKnownType(unittest.TestCase):
     def test_known(self):
         for t in EXPECTED_TYPES:

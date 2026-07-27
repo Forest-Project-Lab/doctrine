@@ -6,7 +6,7 @@ domain: model
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-26
+updated: 2026-07-27
 sources: [DOCTRINE-001]
 depends_on: [SPEC-001]
 llm_context: task
@@ -29,9 +29,10 @@ SPEC-001 の登録簿契約を実装するときの制約と、はまりやす�
 - `domain_of` をここに足さないこと。`id` だけではドメインを決められないため、その解決は graph に委ねる。
 - `effective_llm_context` は、meta が辞書でないときや型が不明のとき None を返す。こうした入力でも壊れないようにする。R5（never を渡さない）は、この解決のあとの値に対して適用する。
 - `required_keys` の level は {2,3,4} だけを許し、それ以外なら ValueError を投げる。
+- `resolve_duplicate_id` は整列した順の最初を返す（先勝ち。ADR-049）。呼び出す側が自前で `sorted(...)[0]` や `[-1]` を書かないこと。ここが二つに割れると、監査が「採用」と告げる文書と、注入が実際に運ぶ文書が食い違う。文字列でない要素は無視し、空なら None を返す（例外を投げない）。
 
 ## 対象部品
 
-`plugin/scripts/_registry.py`。定数は TYPES（型コード一覧）・TYPE_DEFAULT_STATUS・TYPE_DEFAULT_LLM_CONTEXT・TYPE_LOCATION・ALL_STATUSES・CURRENT_STATUSES。関数は `status_allowed`・`is_current`・`required_keys`・`type_of`・`is_known_type`・`default_status`・`default_llm_context`・`effective_llm_context`・`allowed_locations`・`is_projection`。
+`plugin/scripts/_registry.py`。定数は TYPES（型コード一覧）・TYPE_DEFAULT_STATUS・TYPE_DEFAULT_LLM_CONTEXT・TYPE_LOCATION・ALL_STATUSES・CURRENT_STATUSES。関数は `status_allowed`・`is_current`・`required_keys`・`type_of`・`is_known_type`・`default_status`・`default_llm_context`・`effective_llm_context`・`allowed_locations`・`is_projection`・`resolve_duplicate_id`。
 
 <!-- 入れない: 仕様の正本 -->

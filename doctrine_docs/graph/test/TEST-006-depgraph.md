@@ -23,6 +23,7 @@ llm_context: task
 - 端が intra_domain / cross_domain_icd / cross_domain_violation / cross_domain_impact / dangling に正しく分類されること、および分類できない id の扱い（TC-069..072・TC-117・TC-123・TC-083）。[R7]
 - 逆孤児を二種類（仕様の無い要求と、テストの無い仕様）に分けること（TC-093..095）。
 - `resolve` の戻り値が `{path, domain, type, status}` のキーを持つこと。
+- 重複 `id` のとき、ノードになるのは登録簿の `resolve_duplicate_id` が返す一件（整列した順の最初）であり、`resolve` の答えがそれと一致すること（ADR-049）。
 - CLI の終了コードが 0/2/3 になること、`--reverse-refs` が既定で現行文書のみを返すこと。
 
 ## 退行観点

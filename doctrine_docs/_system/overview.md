@@ -122,6 +122,7 @@ sources: []
 | ADR-027 | ADR | model | status archived の文書は型に依らず倉庫に置き、状態でも不変にする |
 | ADR-033 | ADR | model | 必須キーはちょうど 8 個とする(追認) |
 | ADR-035 | ADR | model | ハーネスのメモリは環境と個人の事実に限り、影の正本化を見張る |
+| ADR-049 | ADR | model | 重複 id の採用規則を登録簿に一本化し、先勝ちに統一する |
 | IMPL-001 | IMPL | model | `_registry.py` の実装メモ |
 | IMPL-002 | IMPL | model | `_frontmatter.py` の実装メモ |
 | TEST-001 | TEST | model | 登録簿契約のテスト計画 |

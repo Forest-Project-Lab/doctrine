@@ -6,7 +6,7 @@ domain: model
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-26
+updated: 2026-07-27
 sources: [DOCTRINE-001]
 depends_on: [SPEC-001]
 llm_context: task
@@ -23,12 +23,14 @@ SPEC-001 の登録簿契約を検証する。実装テストは `plugin/tests/te
 - `type_of` が接頭辞を正しく読み取り、接頭辞が未知のとき、`id` が不正のとき、文字列でないときに None を返す。
 - `effective_llm_context` が上書きを優先して解決し、型が不明のときや辞書でないときに None を返す。
 - `required_keys` が DECIDED と WATCH に `review_by` を加え、level が不正なら ValueError を投げる。
+- `resolve_duplicate_id` が、与える順序に依らず整列した順の最初を返す。空・None・文字列でない要素に例外を投げない（ADR-049）。
 
 ## 退行観点
 
 - 規則をほかのスクリプトが二重定義していないこと（WATCH-001 の「term-check 登録簿を二重定義しない」と整合する）。
 - 返した集合やリストを書き換えても、登録簿が変わらないこと（複製を返すこと）。
 - `domain_of` が登録簿に復活していないこと。
+- 重複 `id` の採用規則を、グラフ・注入・監査が自前で持ち直していないこと。三者の答えが食い違う状態（監査が告げる採用先と、契約が運ぶ文書が別）に戻らないこと（ADR-049）。
 
 ## 合否基準
 
