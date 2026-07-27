@@ -83,6 +83,7 @@ sources: []
 | ADR-054 | ADR | graph | 統治対象に「注釈が囲むコードの範囲」を加え、言語ごとに手段を分けない |
 | ADR-055 | ADR | graph | トレース索引はファイルに置かず毎回導出し、記録するのは人の確認だけとする |
 | ADR-058 | ADR | graph | 走査は勘定を返し、触れた対象を必ず分類する（保存則） |
+| ADR-059 | ADR | graph | 印に見えるが読めない行を疑いとして挙げる（打ったつもりの無音を塞ぐ） |
 | IMPL-006 | IMPL | graph | `_depgraph.py`＋`dep-graph.py` の実装メモ |
 | IMPL-021 | IMPL | graph | `_tracescan.py`（コード注釈の走査）の実装メモ |
 | TEST-006 | TEST | graph | 依存グラフのテスト計画 |
