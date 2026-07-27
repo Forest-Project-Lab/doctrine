@@ -4,6 +4,8 @@
 保証限界:
 - 予防: 何も予防しない(ガードの役目)。
 - 検出: 何も検出しない。判断層(doc-review)を著述・編集のたびに促すだけ。
+  追跡を使う体系では、印の無いコードの編集に紐づけの促しをセッションに
+  一度だけ足す(ADR-063。読むのは編集された一ファイルと監査の要約だけ)。
   あわせて、会話知識の捕捉(R12)のために「このセッションで統治文書を編集した」
   「記録の文書(ADR/DECIDED/WATCH/CHANGE、またはセッションメモ)に触れた」という
   セッション別の印を残す(Stop の capture-nudge が読む)。印は検出でも拒否でもない。
@@ -37,6 +39,8 @@ _NUDGE = (
 # 記録に数える型(これらへの書き込みは「決定を記録した」とみなす。R12)。
 _RECORD_TYPES = frozenset({"ADR", "DECIDED", "WATCH", "CHANGE"})
 _SESSION_NOTES_NAME = ".session-notes"
+
+_CODE_NUDGE_MAX_BYTES = 1024 * 1024   # 紐づけ促しで読む一ファイルの上限
 
 
 def _read_stdin_json():
@@ -143,6 +147,72 @@ def _mark_session(data, path, type_code):
         _touch_flag(flag_dir, "recorded-%s" % sid)
 
 
+def _maybe_code_trace_nudge(data, path):
+    """印の無いコードへの紐づけ促し(ADR-063)。条件を欠けば静かに 0。
+
+    読むのは編集された一ファイルと、直近の監査の要約だけ(統治木の走査は
+    しない。NONGOAL 第5項)。追跡を使っている体系(要約に勘定がある)でだけ、
+    セッションに一度だけ出す。決して例外を外へ出さない。
+    """
+    try:
+        if not path or not os.path.isfile(path):
+            return 0
+        name = os.path.basename(path)
+        if name.startswith(".") or name.endswith(".md"):
+            return 0   # 走査の対象にならないファイル(SPEC-026 の規則と同じ)。
+        proj = os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()
+        docs_root = _registry.locate_docs_root(proj)
+        if not docs_root:
+            return 0
+        real = os.path.realpath(path)
+        droot = os.path.realpath(docs_root)
+        if real == droot or real.startswith(droot + os.sep):
+            return 0   # 文書は追跡の終点にならない。
+        if _registry.docs_level(docs_root) < 3:
+            return 0   # 段差ゲート(ADR-019 と同じ線)。
+        import _auditcache
+        summary = _auditcache.load(docs_root)
+        if not isinstance(summary, dict) or "trace_coverage" not in summary:
+            return 0   # 追跡を使っていない体系では黙る(ADR-063)。
+        # セッションに一度だけ。id が無ければ沈黙より重複が安全の側(鼓動と同じ)。
+        sid = _safe_sid(data)
+        flag_dir = session_flag_dir()
+        flag = "trace-nudge-%s" % sid if sid else None
+        if flag and flag_dir and os.path.isfile(os.path.join(flag_dir, flag)):
+            return 0
+        try:
+            if os.path.getsize(path) > _CODE_NUDGE_MAX_BYTES:
+                return 0
+            with open(path, "rb") as fh:
+                blob = fh.read()
+        except OSError:
+            return 0
+        if b"\x00" in blob[:8192]:
+            return 0   # バイナリは対象外。
+        import _tracescan
+        try:
+            text = blob.decode("utf-8-sig")
+        except UnicodeError:
+            return 0
+        if _tracescan.parse_marks(text):
+            return 0   # 既に印がある(維持は監査の照合が見る)。
+        if flag:
+            _touch_flag(flag_dir, flag)
+        mark = _tracescan.MARKER_WORD
+        msg = ("trace: このコードには追跡の印が無い(仕様と結ばれていない)。"
+               "仕様(SPEC)に基づく実装なら、範囲を「" + mark + "begin <id>」と"
+               "「" + mark + "end <id>」の対で囲み、仕様の『実装の指紋』へ指紋を"
+               "記録する(SPEC-026)。意図して結ばないなら、仕様側に"
+               "『コード対応なし』を宣言できる(ADR-061)。この促しはセッションに"
+               "一度だけ出る。印なしの全量は trace-index --coverage が示す。")
+        out = {"hookSpecificOutput": {
+            "hookEventName": "PostToolUse", "additionalContext": msg}}
+        sys.stdout.write(json.dumps(out, ensure_ascii=False))
+        return 0
+    except Exception:
+        return 0   # 促しは助言。失敗しても Hook を落とさない。
+
+
 def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
@@ -152,7 +222,9 @@ def main(argv=None):
         base = os.path.basename(path or "")
         type_code = _typed_doc_type(path)
         if type_code is None and base != _SESSION_NOTES_NAME:
-            return 0  # 文書でなければ静かに通す。
+            # 文書でない編集。追跡を使っている体系なら、印の無いコードへ
+            # 紐づけの促しをセッションに一度だけ出す(ADR-063)。
+            return _maybe_code_trace_nudge(data, path)
         # 統治木の無いプロジェクト(doctrine 未導入の土地)では、type: SPEC 等の
         # frontmatter を持つ他体系の .md を編集しても、捕捉の印も助言も出さない
         # (ADR-036: ガードの体系外無発火と同じ境界)。存在しない _system/ への
