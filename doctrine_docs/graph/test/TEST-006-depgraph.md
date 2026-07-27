@@ -6,7 +6,7 @@ domain: graph
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-26
+updated: 2026-07-27
 sources: [plugin/tests/test_depgraph.py]
 depends_on: [SPEC-006]
 llm_context: task
@@ -33,4 +33,4 @@ llm_context: task
 
 ## 合否基準
 
-`DepGraphCoreTest` と `DepGraphCLITest` のすべてのケースが合格すること。
+`DepGraphCoreTest` と `DepGraphCLITest` のすべてのケースが合格すること。`find_cycles` は自己依存・多頂点循環を検出し、非循環と dangling 端は空を返す（ADR-038）。

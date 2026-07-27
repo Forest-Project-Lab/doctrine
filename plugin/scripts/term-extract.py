@@ -189,17 +189,32 @@ def _domain_of_relpath(relpath):
     return segs[0]
 
 
+def _resolve_docs_dir(root):
+    """統治木を解決する(ADR-022、#92)。既定名は doctrine_docs。
+
+    `--root` が統治木そのもの(doctrine_docs、または _system を持つ docs)なら
+    それを使う。プロジェクト根なら直下の統治木を登録簿の解決で引く。他の全
+    スクリプトと同じ `_registry` の解決に一本化し、旧既定名 docs/ の直書きを
+    やめる(直書きは doctrine_docs 既定の全導入で候補ゼロの沈黙死を招いていた)。
+    無ければ None。
+    """
+    if _registry.is_doctrine_tree(root):
+        return root
+    return _registry.locate_docs_root(root)
+
+
 def scan_corpus(root, include_system, include_all):
-    """Walk docs/ under `root`; return (classes, warnings).
+    """Walk the governance tree under `root`; return (classes, warnings).
 
     classes: dict[domain] -> list of token lists (one per included doc).
     warnings: list[str] (skipped/odd files; never aborts the run).
     """
-    docs_dir = os.path.join(root, "docs")
+    docs_dir = _resolve_docs_dir(root)
     classes = {}
     warnings = []
-    if not os.path.isdir(docs_dir):
-        warnings.append("docs/ が無い: %s" % docs_dir)
+    if not docs_dir or not os.path.isdir(docs_dir):
+        warnings.append("統治木が無い(doctrine_docs も _system を持つ docs も): %s"
+                        % root)
         return classes, warnings
 
     for dirpath, dirnames, filenames in os.walk(docs_dir):
@@ -313,7 +328,7 @@ def _format_text(result, classes, num_classes, warnings, single_domain):
         lines.append("警告: %s" % w)
     lines.append("")
     if not result:
-        lines.append("(候補なし。docs/ にドメインの文書が無い。)")
+        lines.append("(候補なし。統治木にドメインの文書が無い。)")
         lines.append(HUMAN_NOTE)
         return "\n".join(lines) + "\n"
 

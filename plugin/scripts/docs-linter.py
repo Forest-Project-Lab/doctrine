@@ -524,7 +524,9 @@ def _check_trace(meta, body, findings):
                 return
     findings.append(Finding(
         "MISSING_TRACE", ERROR,
-        "%s は要求([R番号]/REQ-id)か depends_on を持たねばならない。" % type_code,
+        "%s は要求への追跡を持たねばならない。本文に [R番号] を書くか、depends_on に "
+        "REQ の id を載せる(title の [R番号] は数えない。本文か depends_on に置く)。"
+        % type_code,
         "§4.2/§6"))
 
 

@@ -348,7 +348,39 @@ class DepGraphCoreTest(unittest.TestCase):
         ])
         r = g.reverse_orphans()
         self.assertIn("SPEC-01", r["spec_without_test"])
-        self.assertEqual(r["req_without_spec"], [])   # REQ-01 has SPEC-01
+
+    # -- find_cycles (ADR-038 / #89) ---------------------------------------
+
+    def test_no_cycles_in_acyclic_chain(self):
+        g, _ = self._build([
+            _node("REQ-01", "REQ", "billing"),
+            _node("SPEC-01", "SPEC", "billing", depends_on=["REQ-01"]),
+            _node("TEST-01", "TEST", "billing", depends_on=["SPEC-01"]),
+        ])
+        self.assertEqual(g.find_cycles(), [])
+
+    def test_self_dependency_is_a_cycle(self):
+        g, _ = self._build([
+            _node("SPEC-01", "SPEC", "billing", depends_on=["SPEC-01"]),
+        ])
+        self.assertEqual(g.find_cycles(), [["SPEC-01"]])
+
+    def test_multi_node_cycle_detected(self):
+        g, _ = self._build([
+            _node("SPEC-01", "SPEC", "billing", depends_on=["SPEC-02"]),
+            _node("SPEC-02", "SPEC", "billing", depends_on=["SPEC-03"]),
+            _node("SPEC-03", "SPEC", "billing", depends_on=["SPEC-01"]),
+        ])
+        cycles = g.find_cycles()
+        self.assertEqual(len(cycles), 1)
+        self.assertEqual(cycles[0], ["SPEC-01", "SPEC-02", "SPEC-03"])
+
+    def test_dangling_edge_is_not_a_cycle(self):
+        # 索引に無い依存先はたどらない(実在ノード間の循環だけ)。
+        g, _ = self._build([
+            _node("SPEC-01", "SPEC", "billing", depends_on=["SPEC-99"]),
+        ])
+        self.assertEqual(g.find_cycles(), [])
 
     def test_reverse_orphans_current_only(self):
         """Deprecated REQ/SPEC are excluded from reverse-orphan (current only)."""

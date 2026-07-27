@@ -200,6 +200,79 @@ class Graph(object):
             return False
         return _registry.is_current(node["status"])
 
+    # -- 依存の循環(R3 / R8) ----------------------------------------------
+
+    def find_cycles(self):
+        """depends_on 端の循環(自己依存と多頂点循環)を列挙する。ADR-038 / #89。
+
+        追跡性(要求→仕様→実装→テスト→決定)の階層に循環は本来あり得ず、循環の
+        存在はモデル化誤りの兆候である。循環の全構成員は「現行の依存が残る」と
+        判定され続けて降格できなくなる論理的デッドロックを生む。
+
+        返り値: list[list[str]]。各要素は一つの循環の、id を整列した list。
+        自己依存 A→A は [A] の 1 要素として返す。索引に無い(dangling)端は
+        たどらない(実在するノード間の循環だけを見る)。決定的(整列)。
+        Tarjan の強連結成分。グラフサイズに対し線形で、サイクル安全。
+        """
+        index = {}
+        low = {}
+        on_stack = {}
+        stack = []
+        counter = [0]
+        components = []
+
+        def out_edges(v):
+            return [w for w in self._dep_out.get(v, []) if w in self.nodes]
+
+        def strongconnect(v):
+            # 再帰でなく明示スタックで回す(深い連鎖でも RecursionError にしない)。
+            work = [(v, 0)]
+            while work:
+                node, pi = work[-1]
+                if pi == 0:
+                    index[node] = low[node] = counter[0]
+                    counter[0] += 1
+                    stack.append(node)
+                    on_stack[node] = True
+                succ = out_edges(node)
+                if pi < len(succ):
+                    work[-1] = (node, pi + 1)
+                    w = succ[pi]
+                    if w not in index:
+                        work.append((w, 0))
+                    elif on_stack.get(w):
+                        low[node] = min(low[node], index[w])
+                    continue
+                # node の後続を処理し終えた。
+                if low[node] == index[node]:
+                    comp = []
+                    while True:
+                        w = stack.pop()
+                        on_stack[w] = False
+                        comp.append(w)
+                        if w == node:
+                            break
+                    components.append(comp)
+                work.pop()
+                if work:
+                    parent = work[-1][0]
+                    low[parent] = min(low[parent], low[node])
+
+        for v in sorted(self.nodes):
+            if v not in index:
+                strongconnect(v)
+
+        cycles = []
+        for comp in components:
+            if len(comp) > 1:
+                cycles.append(sorted(comp))
+            elif len(comp) == 1:
+                v = comp[0]
+                if v in self._dep_out.get(v, []):  # 自己依存 A→A
+                    cycles.append([v])
+        cycles.sort()
+        return cycles
+
     # -- 端の分類(R7) -----------------------------------------------------
 
     def classify_edges(self):

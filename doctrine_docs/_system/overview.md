@@ -27,6 +27,7 @@ sources: []
 | ADR-020 | ADR | audit | テスト不能記述の判定は監査でなく doc-review が担う |
 | ADR-021 | ADR | audit | 体系外 .md は分類の記録と突き合わせ、未分類だけを監査が挙げる |
 | ADR-034 | ADR | audit | 移行の台帳は分類の記録から導出し、二重の台帳を持たない |
+| ADR-039 | ADR | audit | EXT の hash 検査を実装し、hash 指定を沈黙で素通りさせない |
 | IMPL-011 | IMPL | audit | docs-audit.py の実装メモ |
 | IMPL-018 | IMPL | audit | _intake.py（分類の記録の共有コア）の実装メモ |
 | TEST-011 | TEST | audit | 監査の検査群テスト計画 |
@@ -70,6 +71,7 @@ sources: []
 | REQ-003 | REQ | graph | 変更耐性（影響集合を依存から列挙する） |
 | SPEC-006 | SPEC | graph | 依存グラフの契約（forward/reverse/classify/reverse-orphans） |
 | ADR-006 | ADR | graph | cross_domain_violation は depends_on 端のみに付ける |
+| ADR-038 | ADR | graph | 依存の循環を監査が検出する（自己依存と多頂点循環） |
 | IMPL-006 | IMPL | graph | `_depgraph.py`＋`dep-graph.py` の実装メモ |
 | TEST-006 | TEST | graph | 依存グラフのテスト計画 |
 | ICD-003 | ICD | guard | guard のインターフェース（三ガードの公開境界） |

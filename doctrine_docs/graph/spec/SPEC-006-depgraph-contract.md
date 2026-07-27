@@ -6,7 +6,7 @@ domain: graph
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-26
+updated: 2026-07-27
 sources: [plugin/scripts/_depgraph.py]
 depends_on: [REQ-002, REQ-003, ICD-001]
 llm_context: task
@@ -25,6 +25,7 @@ llm_context: task
 - `resolve(id)` → `{path, domain, type, status}` か None。
 - `classify_edges()` → `Edge{src, dst, field, kind}` の整列リスト。
 - `reverse_orphans()` → `{req_without_spec, spec_without_test}`。
+- `find_cycles()` → `depends_on` 端の循環の整列リスト（各要素は id の整列 list。自己依存 A→A は `[A]`）。索引に無い端はたどらない。Tarjan の強連結成分でサイクル安全。[R3]（ADR-038）
 
 ## 制約
 
