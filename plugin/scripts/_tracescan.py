@@ -32,6 +32,14 @@ import stat as _stat
 # 印の綴り。走査対象の判定にも使う(この語を含まないファイルは早期に飛ばす)。
 MARKER_WORD = "doctrine:"
 
+# 走査が発する所見コードの正本(ADR-060)。産出側に一覧が無く消費側の集合だけが
+# あると、コードを足したときに読み手が黙って取りこぼす。消費側(docs-audit)の
+# 畳み込み集合がこの一覧の部分集合であることを、試験が両側から検べる。
+FINDING_CODES = (
+    "trace_nested", "trace_id_mismatch", "trace_unclosed", "trace_unopened",
+    "trace_empty_range", "trace_marker_suspect", "trace_scan_truncated",
+)
+
 # 行から前後の空白と非語文字を落とした残りが印そのものであること。
 # 先頭に語文字があれば一致しない(コードの途中の文字列は印にならない)。
 _MARK_RE = re.compile(

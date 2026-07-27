@@ -1154,6 +1154,123 @@ def _spec_with_fingerprints(doc_id, fingerprints):
     return _util.fm_block(_fm(doc_id, "SPEC", "app")) + body
 
 
+# ICD-005 / SPEC-011 から独立に転記した検査名の並び(モジュールのリテラルの
+# 読み直しではない。ADR-060)。検査を足す・消すときは、この転記表を同じ変更で
+# 更新する。ここを AUDIT_CHECKS から生成したら凍結の意味が消える。
+EXPECTED_AUDIT_CHECKS = (
+    "dead_link", "dep_cycle", "review_by_overrun", "stale_draft", "orphan",
+    "reverse_orphan_req_no_spec", "reverse_orphan_spec_no_test",
+    "canonical_conflict", "near_duplicate", "icd_dependency_violation",
+    "projection_drift", "unregistered_document", "shadowed_document",
+    "stray_document", "stale_current", "source_drift", "archive_integrity",
+    "adr_not_landed", "glossary_seed_drift", "ext_anchor_broken", "memory_shadow",
+    "trace_mark_error", "trace_broken_ref", "trace_deprecated_ref",
+    "trace_stale", "trace_missing_impl", "trace_marker_suspect",
+    "trace_scan_truncated",
+)
+
+
+class AuditChecksFreezeTest(AuditBase):
+    """検査名の一覧の凍結(ADR-060)。「TEST が凍結する」という宣言を実在させる。
+
+    以前は宣言だけがあって凍結する試験が無く、名前を一つ足しても全試験が通った
+    (「文書上の宣言に留まる」欠陥類型のコード内注釈版)。
+    """
+
+    def test_audit_checks_matches_the_transcribed_table(self):
+        audit = _util.load_script("docs-audit")
+        self.assertEqual(tuple(audit.AUDIT_CHECKS), EXPECTED_AUDIT_CHECKS,
+                         "検査を足した/消したら、転記表と ICD-005 を同じ変更で更新すること")
+
+    def test_checks_run_equals_the_declared_list_exactly(self):
+        root = self.build([(_fm("REQ-1", "REQ", "billing"), "本文")])
+        data, _ = self.audit_json(root)
+        self.assertEqual(tuple(data["checks_run"]), EXPECTED_AUDIT_CHECKS)
+
+    def test_scanner_codes_have_a_producer_side_canon(self):
+        """産出側の所見コード正本と、消費側の畳み込み集合の包含(ADR-060)。"""
+        tracescan = _util.load_core("_tracescan")
+        audit = _util.load_script("docs-audit")
+        codes = set(tracescan.FINDING_CODES)
+        self.assertTrue(set(audit._TRACE_MARK_CODES) <= codes,
+                        "消費側だけにあるコードは産出されない死文である")
+        self.assertIn("trace_marker_suspect", codes)
+        self.assertIn("trace_scan_truncated", codes)
+
+
+class TraceStatusMatrixTest(AuditBase):
+    """状態×指紋の全マス期待表(ADR-060)。添字は正本 ALL_STATUSES から列挙する。
+
+    期待表は手書きで、生成で埋めない(「期待を決めていないマス」が消えるため)。
+    状態が増えたら、期待を書き足すまでこの試験は通らない。以前は 16 マス中
+    2 マスしか発火せず、しかも発火が他の現行 opt-in の併存に依存していた。
+    """
+
+    # (status, 指紋一致か) -> 発火する trace 検査名の集合。
+    EXPECTED = {
+        ("proposed", True): {"trace_deprecated_ref"},
+        ("proposed", False): {"trace_deprecated_ref"},
+        ("accepted", True): set(),
+        ("accepted", False): {"trace_stale"},
+        ("current", True): set(),
+        ("current", False): {"trace_stale"},
+        ("deprecated", True): {"trace_deprecated_ref"},
+        ("deprecated", False): {"trace_deprecated_ref"},
+        ("superseded", True): {"trace_deprecated_ref"},
+        ("superseded", False): {"trace_deprecated_ref"},
+        ("archived", True): {"trace_deprecated_ref"},
+        ("archived", False): {"trace_deprecated_ref"},
+        ("open", True): {"trace_deprecated_ref"},
+        ("open", False): {"trace_deprecated_ref"},
+        ("draft", True): {"trace_deprecated_ref"},
+        ("draft", False): {"trace_deprecated_ref"},
+    }
+
+    def test_expected_keys_match_the_registry_both_ways(self):
+        reg = _util.load_core("_registry")
+        self.assertEqual(
+            set(self.EXPECTED),
+            {(s, m) for s in reg.ALL_STATUSES for m in (True, False)},
+            "状態の列挙と期待表のキー集合が食い違う。"
+            "状態を足したら、期待を決めてこの表へ書き足すこと")
+
+    def _cell(self, status, fp_match):
+        root = _util.make_repo({"src/a.py": ""})
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        code = "\n".join([_tmark("begin", "SPEC-900"), "x=1",
+                          _tmark("end", "SPEC-900")])
+        with open(os.path.join(root, "src", "a.py"), "w", encoding="utf-8") as fh:
+            fh.write(code)
+        tracescan = _util.load_core("_tracescan")
+        good = tracescan.scan_text(code, "src/a.py")[0][0]["fingerprint"]
+        recorded = good if fp_match else "sha256:" + "0" * 64
+        body = ("## 入出力\nx\n\n## 制約\nx\n\n## エラー時挙動\nx\n"
+                "\n## 実装の指紋\n\n- %s\n\n## 受入基準\nx\n" % recorded)
+        doc = _util.fm_block(_fm("SPEC-900", "SPEC", "app", status=status)) + body
+        os.makedirs(os.path.join(root, "docs", "app", "spec"), exist_ok=True)
+        with open(os.path.join(root, "docs", "app", "spec", "SPEC-900.md"),
+                  "w", encoding="utf-8") as fh:
+            fh.write(doc)
+        data, _ = self.audit_json(os.path.join(root, "docs"))
+        return {f["check"] for f in data["findings"]
+                if f["check"].startswith("trace")}
+
+    def test_every_cell_matches_the_expected_table(self):
+        reg = _util.load_core("_registry")
+        for status in reg.ALL_STATUSES:
+            for fp_match in (True, False):
+                with self.subTest(status=status, fp_match=fp_match):
+                    self.assertIn(
+                        (status, fp_match), self.EXPECTED,
+                        "期待値の無いマス: status=%r fp一致=%r。"
+                        "期待を決めて EXPECTED へ書き足すこと" % (status, fp_match))
+                    got = self._cell(status, fp_match)
+                    self.assertEqual(
+                        self.EXPECTED[(status, fp_match)], got,
+                        "マス status=%r fp一致=%r の期待と実測が食い違う"
+                        % (status, fp_match))
+
+
 class CodeTraceTest(AuditBase):
     """ADR-056: 追跡の検査は、仕様が指紋を記録したときだけ効く。
 
