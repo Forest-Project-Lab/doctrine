@@ -215,9 +215,10 @@ def _same_docs_root(summary_root, docs_root):
 # コーパス読み込み
 # ---------------------------------------------------------------------------
 class _Doc(object):
-    """注入に必要な最小の文書情報。本文全量は決して持たない(headline だけ抽出)。"""
+    """注入に必要な最小の文書情報。本文全量は決して持たない(要点行だけ抽出)。"""
     __slots__ = ("id", "type", "domain", "status", "title", "updated",
-                 "review_by", "superseded_by", "llm_context", "headline", "relpath")
+                 "review_by", "superseded_by", "llm_context", "headline",
+                 "facts", "relpath")
 
     def __init__(self):
         self.id = ""
@@ -230,6 +231,7 @@ class _Doc(object):
         self.superseded_by = ""
         self.llm_context = ""
         self.headline = ""
+        self.facts = []       # 本文の要点行(番号付き/箇条書き項目)。各行サニタイズ済み。
         self.relpath = ""
 
 
@@ -273,6 +275,44 @@ def _truncate(s, limit):
     if len(s) <= limit:
         return s
     return s[:limit].rstrip() + "…(切り詰め)"
+
+
+# 本文の要点行として拾う項目(番号付き 1. / 箇条書き - * )。見出し・空行・
+# コメント・引用は除く。最初の見出しの前(導入段落)も本文の事実として拾わない
+# ため、最初の該当リストの項目だけを集める。
+_LIST_ITEM_RE = re.compile(r"^\s*(?:\d+[.)]|[-*])\s+(.*\S)\s*$")
+
+
+def _fact_lines(body, max_facts=12, limit_each=180):
+    """本文から要点行(確定事実・非目標・退行監視の各項目)を抽出する(ADR-043)。
+
+    番号付き/箇条書きの項目を上から max_facts 件まで拾い、各行を sanitize_inline で
+    サニタイズし limit_each で切る。本文全量は運ばない(要点行だけ、上限つき)。
+    契約の復唱が空洞化しないよう、SessionStart 契約が実際の事実を運ぶための土台。
+    見出し行(#)は事実に数えない。
+    """
+    if not body:
+        return []
+    out = []
+    started = False
+    for raw in body.splitlines():
+        s = raw.rstrip()
+        if s.lstrip().startswith("#"):
+            # 見出し。要点を拾い始めた後の見出しは、二つ目のリスト(根拠表・日付表など)
+            # の始まりなので、そこで止める(主たる要点だけを運ぶ)。
+            if started:
+                break
+            continue
+        m = _LIST_ITEM_RE.match(s)
+        if not m:
+            continue
+        started = True
+        item = _frontmatter.sanitize_inline(m.group(1), limit_each)
+        if item:
+            out.append(item)
+        if len(out) >= max_facts:
+            break
+    return out
 
 
 def _load_corpus(docs_root, warn):
@@ -325,6 +365,10 @@ def _load_corpus(docs_root, warn):
         d.llm_context = _coerce_str(fm.get("llm_context")).strip()
         d.relpath = relpath
         d.headline = _frontmatter.sanitize_inline(_first_fact_line(body))
+        # 確定事実・非目標・退行監視は、本文の要点行を運ぶ(ADR-043、#88)。
+        # 契約の復唱が空洞化せず、注入上限が実際に効くようにする。
+        if d.type in ("DECIDED", "NONGOAL", "WATCH"):
+            d.facts = _fact_lines(body)
         docs.append(d)
     return docs
 
@@ -399,6 +443,28 @@ def _deprecated_facts(docs):
             out.append(d)
     out.sort(key=lambda d: (d.updated, d.id), reverse=True)
     return out
+
+
+def _facts_lines(docs):
+    """DECIDED/NONGOAL/WATCH の各文書を、見出し行 + 要点行の並びに描く(ADR-043)。
+
+    見出し行は `〔id〕title`。続けて本文の要点行を `  - <事実>` として一行ずつ置く。
+    各事実が独立した行なので、注入上限のトリムが余分な事実だけを落とせる(見出しは
+    protect_first で最新分を残す)。要点行が無い文書は従来どおり headline を添える。
+    本文全量は運ばない(要点行は _fact_lines で上限つきに抽出済み)。
+    """
+    lines = []
+    for d in docs:
+        header = "〔%s〕%s" % (d.id, d.title or d.id)
+        if d.review_by:
+            header += "（review_by %s）" % d.review_by
+        lines.append(header)
+        if d.facts:
+            for fact in d.facts:
+                lines.append("  - %s" % fact)
+        elif d.headline and d.headline != d.title:
+            lines.append("  - %s" % d.headline)
+    return lines
 
 
 def _headline_of(d):
@@ -746,9 +812,9 @@ def _build_sections(docs, audit_summary, config, today=None,
             "protected": False,
         })
 
-    # 4. DECIDED(現行)
+    # 4. DECIDED(現行)。要点行(確定事実)を運ぶ(ADR-043、#88)。
     if decided:
-        dlines = [_headline_of(d) for d in decided]
+        dlines = _facts_lines(decided)
         sections.append({
             "key": "decided",
             "title": "## 確定事実（現行 DECIDED）",
@@ -759,14 +825,14 @@ def _build_sections(docs, audit_summary, config, today=None,
             "protect_first": True,
         })
 
-    # 5. NONGOAL
+    # 5. NONGOAL。要点行(やらないこと)を運ぶ(ADR-043、#88)。
     if nongoals:
         sections.append({
             "key": "nongoal",
             "title": "## 非目標（NONGOAL）",
-            "lines": [_headline_of(d) for d in nongoals],
+            "lines": _facts_lines(nongoals),
             "tier": 1,
-            "protected": True,  # 全 NONGOAL 見出しは落とさない
+            "protected": True,  # 非目標の要点は落とさない
         })
 
     # 6. 廃止事実(対の DECIDED 残滓。本文は決して載せない)
@@ -779,12 +845,12 @@ def _build_sections(docs, audit_summary, config, today=None,
             "protected": False,
         })
 
-    # 7. WATCH の要点
+    # 7. WATCH の要点。戻してはならない各項を運ぶ(ADR-043、#88)。
     if watches:
         sections.append({
             "key": "watch",
             "title": "## 戻してはならない事項（WATCH 要点）",
-            "lines": [_headline_of(d) for d in watches],
+            "lines": _facts_lines(watches),
             "tier": 7,
             "protected": False,
         })
