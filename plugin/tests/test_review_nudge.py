@@ -30,6 +30,99 @@ class ReviewNudgeBase(unittest.TestCase):
         return _util.invoke("review-nudge", stdin_obj=stdin)
 
 
+class TestCodeTraceNudge(ReviewNudgeBase):
+    """印の無いコードへの紐づけ促し(ADR-063)。追跡を使う体系でだけ、一度だけ。"""
+
+    def setUp(self):
+        super().setUp()
+        for k in ("CLAUDE_PROJECT_DIR", "CLAUDE_PLUGIN_ROOT"):
+            old = os.environ.get(k)
+            self.addCleanup(
+                (lambda key, val: (lambda: (
+                    os.environ.__setitem__(key, val) if val is not None
+                    else os.environ.pop(key, None))))(k, old))
+        os.environ["CLAUDE_PROJECT_DIR"] = self.root
+        os.environ.pop("CLAUDE_PLUGIN_ROOT", None)
+        os.makedirs(os.path.join(self.root, "doctrine_docs", "_system"),
+                    exist_ok=True)
+
+    def _put_summary(self, with_coverage=True):
+        payload = {
+            "schema": "docs-audit/1", "today": "2026-07-27",
+            "generated_at": "2026-07-27T00:00:00Z",
+            "root": os.path.join(self.root, "doctrine_docs"),
+            "totals": {"error": 0, "warn": 0, "advisory": 0},
+            "counts_by_check": {}, "checks_run": [], "top_findings": [],
+            "findings": [],
+        }
+        if with_coverage:
+            payload["trace_coverage"] = {"reached_files": 1}
+        cache = os.path.join(self.root, ".claude", ".cache")
+        os.makedirs(cache, exist_ok=True)
+        with open(os.path.join(cache, "last-audit.json"), "w",
+                  encoding="utf-8") as fh:
+            json.dump(payload, fh)
+
+    def _code(self, rel="src/app.py", body="print(1)\n"):
+        p = os.path.join(self.root, rel)
+        os.makedirs(os.path.dirname(p), exist_ok=True)
+        with open(p, "w", encoding="utf-8") as fh:
+            fh.write(body)
+        return p
+
+    def _nudge_sid(self, file_path, sid):
+        stdin = _util.hook_stdin(
+            "PostToolUse", tool_name="Edit",
+            tool_input={"file_path": file_path})
+        stdin["session_id"] = sid
+        return _util.invoke("review-nudge", stdin_obj=stdin)
+
+    def test_unmarked_code_gets_the_nudge_when_tracing_is_active(self):
+        self._put_summary(with_coverage=True)
+        p = self._code()
+        out, code = self._nudge_sid(p, "sid-a1")
+        self.assertEqual(code, 0)
+        ctx = json.loads(out)["hookSpecificOutput"]["additionalContext"]
+        self.assertIn("追跡の印が無い", ctx)
+        self.assertIn("コード対応なし", ctx, "宣言の道(ADR-061)も示す")
+
+    def test_silent_when_summary_has_no_trace_coverage(self):
+        self._put_summary(with_coverage=False)
+        p = self._code()
+        out, code = self._nudge_sid(p, "sid-a2")
+        self.assertEqual((out.strip(), code), ("", 0))
+
+    def test_silent_without_any_summary(self):
+        p = self._code()
+        out, code = self._nudge_sid(p, "sid-a3")
+        self.assertEqual((out.strip(), code), ("", 0))
+
+    def test_only_once_per_session(self):
+        self._put_summary(with_coverage=True)
+        p = self._code()
+        first, _ = self._nudge_sid(p, "sid-once")
+        second, _ = self._nudge_sid(p, "sid-once")
+        self.assertTrue(first.strip())
+        self.assertEqual(second.strip(), "")
+
+    def test_marked_code_is_silent(self):
+        self._put_summary(with_coverage=True)
+        body = ("# doctrine:" + "begin SPEC-900\nx=1\n"
+                "# doctrine:" + "end SPEC-900\n")
+        p = self._code(body=body)
+        out, code = self._nudge_sid(p, "sid-a4")
+        self.assertEqual((out.strip(), code), ("", 0))
+
+    def test_md_and_docs_tree_files_are_out_of_scope(self):
+        self._put_summary(with_coverage=True)
+        md = self._code(rel="README2.md")
+        out, _ = self._nudge_sid(md, "sid-a5")
+        self.assertEqual(out.strip(), "")
+        inner = self._code(rel="doctrine_docs/app/notes.txt")
+        out, _ = self._nudge_sid(inner, "sid-a6")
+        self.assertEqual(out.strip(), "")
+
+
 class TestNudgesTypedDoc(ReviewNudgeBase):
     def test_typed_doc_gets_nudge(self):
         """A typed governance doc -> additionalContext nudge mentioning doc-review."""
