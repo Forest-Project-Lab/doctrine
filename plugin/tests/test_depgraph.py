@@ -440,13 +440,15 @@ class DepGraphCoreTest(unittest.TestCase):
         import json
         json.loads(json.dumps(j, ensure_ascii=False))
 
-    def test_duplicate_id_path_sorted_last_wins(self):
-        """同じ id の別ファイルはパス整列の最後が後勝ちでノードになる。
+    def test_duplicate_id_path_sorted_first_wins(self):
+        """同じ id の別ファイルはパス整列の最初が先勝ちでノードになる(ADR-049)。
 
-        docs-audit の shadowed_document が『採用 paths[-1]』と報告する事実と
-        resolve() の答え(guard/linter が読む domain/type/status)が一致しな
-        ければならない(slice 05 A.3.2 の決定的後勝ち)。"""
+        docs-audit の shadowed_document が報告する採用先と、resolve() の答え
+        (guard/linter が読む domain/type/status)と、inject-contract が契約へ
+        運ぶ文書は、一致しなければならない。採用規則の正本は登録簿の
+        resolve_duplicate_id ただ一つで、ここは自前の整列規則を持たない。"""
         _depgraph = _util.load_core("_depgraph")
+        _registry = _util.load_core("_registry")
         fa = _node("DUP-1", "RESEARCH", "alpha")
         fz = _node("DUP-1", "RESEARCH", "zulu")
         root = _util.make_repo({
@@ -455,10 +457,13 @@ class DepGraphCoreTest(unittest.TestCase):
         })
         self.addCleanup(shutil.rmtree, root, ignore_errors=True)
         g = _depgraph.build_graph(os.path.join(root, "docs"))
-        self.assertEqual(g.nodes["DUP-1"]["path"], "zulu/research/DUP-1.md")
-        self.assertEqual(g.resolve("DUP-1")["domain"], "zulu")
+        self.assertEqual(g.nodes["DUP-1"]["path"], "alpha/research/DUP-1.md")
+        self.assertEqual(g.resolve("DUP-1")["domain"], "alpha")
         self.assertEqual(sorted(g.dup_ids["DUP-1"]),
                          ["alpha/research/DUP-1.md", "zulu/research/DUP-1.md"])
+        # 採用先はグラフが独自に決めず、登録簿の規則と同じ答えになる。
+        self.assertEqual(g.nodes["DUP-1"]["path"],
+                         _registry.resolve_duplicate_id(g.dup_ids["DUP-1"]))
 
     def test_no_frontmatter_file_not_a_node(self):
         """A .md without frontmatter is a parse_warning, never a graph node."""

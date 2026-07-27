@@ -79,8 +79,8 @@ class Graph(object):
             # 重複 id(別ファイルが同じ id)。両方残すが曖昧として記録(slice 05 A.3.2)。
             self.dup_ids.setdefault(doc_id, [self.nodes[doc_id]["path"]])
             self.dup_ids[doc_id].append(node["path"])
-            # 後勝ち(決定的: パスで整列して最後を採用)。
-            keep = sorted(self.dup_ids[doc_id])[-1]
+            # 採用先は登録簿が一度だけ定める(先勝ち。ADR-049)。自前の整列規則を持たない。
+            keep = _registry.resolve_duplicate_id(self.dup_ids[doc_id])
             if node["path"] == keep:
                 self.nodes[doc_id] = node
             return

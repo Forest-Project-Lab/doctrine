@@ -977,8 +977,8 @@ def _check_unregistered(g):
     見えない。build_graph が既に埋めている二つのリストを読むだけで、新たな走査は
     しない(スケール無依存・決定的)。
     - parse_warnings: frontmatter か id が無く、どのノードにもならなかった .md。
-    - dup_ids: 同じ id を持つ別ファイル。後勝ちで一つだけがノードになり、
-      残りは影に隠れて見えない(_add_node と同じ後勝ち: パス整列の最後を採用)。
+    - dup_ids: 同じ id を持つ別ファイル。一つだけがノードになり、残りは影に隠れて
+      見えない(採用先は _registry.resolve_duplicate_id が定める。先勝ち。ADR-049)。
     どちらも取り除きではなく、型を与えて登録するか archive/ へ退避する候補。
     未登録は登録簿に id が無いので doc_id は空文字にする(整列キーが str のため)。
     """
@@ -990,8 +990,10 @@ def _check_unregistered(g):
             "型を与えて登録するか archive/ へ退避する。"))
     for doc_id in sorted(g.dup_ids):
         paths = sorted(g.dup_ids[doc_id])
-        keep = paths[-1]
-        for shadowed in paths[:-1]:
+        # 採用先は登録簿の規則から引く(ADR-049)。案内が告げる採用先と、グラフ・注入が
+        # 実際に採る文書を一致させる。
+        keep = _registry.resolve_duplicate_id(paths)
+        for shadowed in [p for p in paths if p != keep]:
             out.append(_finding(
                 "shadowed_document", SEV_ERROR, doc_id, shadowed,
                 "id %s が既存文書と衝突し、登録されず影に隠れている(採用 %s)。"

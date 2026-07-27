@@ -145,6 +145,35 @@ class TestSessionStartShape(InjectBase):
         json.loads(out)  # parses
 
 
+class TestDuplicateIdAgreesWithGraph(InjectBase):
+    """ADR-049: 重複 id の採用先は、注入・グラフ・登録簿で一つの答えになる。
+
+    以前は注入が先勝ち、グラフと監査が後勝ちで、監査が「採用」と告げた文書とは
+    別の文書の要点が契約に載っていた。「どれが正本か」の答えが体系内で二つある
+    状態に戻らないことを、ここで凍らせる。
+    """
+
+    def test_injection_carries_the_registry_adopted_document(self):
+        root = self._repo({
+            "docs/_system/decided-facts.md":
+                _decided("DECIDED-001", "採用されるべき事実"),
+            "docs/zulu/decided-facts.md":
+                _decided("DECIDED-001", "影に隠れるべき事実"),
+        })
+        docs_root = os.path.join(root, "docs")
+        ctx = self._ctx(self._run_json(docs_root))
+
+        _registry = _util.load_core("_registry")
+        _depgraph = _util.load_core("_depgraph")
+        g = _depgraph.build_graph(docs_root)
+        adopted = _registry.resolve_duplicate_id(g.dup_ids["DECIDED-001"])
+        self.assertEqual(adopted, "_system/decided-facts.md")
+        self.assertEqual(g.nodes["DECIDED-001"]["path"], adopted)
+        # 契約が運ぶのは採用された側だけ。影の側の題は載らない。
+        self.assertIn("採用されるべき事実", ctx)
+        self.assertNotIn("影に隠れるべき事実", ctx)
+
+
 class TestContractCarriesFacts(InjectBase):
     """ADR-043 / #88: 契約は DECIDED/NONGOAL/WATCH の本文の要点行(事実)を運ぶ。
     1文書1行の headline だけでは復唱が空洞化し注入上限が死文化していた。"""

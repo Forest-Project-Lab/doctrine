@@ -350,6 +350,24 @@ def is_known_type(type_code):
     return type_code in TYPE_DEFAULT_STATUS
 
 
+def resolve_duplicate_id(paths):
+    """Pick the one adopted document when several files share an id (ADR-049).
+
+    First by sorted order wins. The rule lives here once (DECIDED-001 fact 1):
+    dep-graph, the SessionStart injection and the audit all call this, so
+    "which one is canonical" has a single answer across the system. First-wins
+    means a newly added colliding file cannot steal the id from the document
+    that already holds it — the newcomer is the one that must be renamed, and
+    that is where the audit points its remediation.
+
+    Non-string entries are ignored. Returns None for an empty/None input.
+    """
+    if not paths:
+        return None
+    usable = sorted(p for p in paths if isinstance(p, str))
+    return usable[0] if usable else None
+
+
 def default_status(type_code):
     """Default status for a type (§3.2). None for an unknown/non-string type."""
     if not isinstance(type_code, str):

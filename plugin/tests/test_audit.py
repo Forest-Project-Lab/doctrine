@@ -1169,7 +1169,9 @@ class UnregisteredTest(AuditBase):
         self.assertEqual(len(s), 1)  # 2 ファイル中 1 つが影
         self.assertEqual(s[0]["severity"], "error")
         self.assertEqual(s[0]["doc_id"], "DUP-1")
-        self.assertEqual(s[0]["path"], "a/research/DUP-1.md")  # 後勝ちで b を採用
+        self.assertEqual(s[0]["path"], "b/research/DUP-1.md")  # 先勝ちで a を採用
+        # 案内が告げる採用先は、グラフ・注入が実際に採る文書と同じ(ADR-049)。
+        self.assertIn("採用 a/research/DUP-1.md", s[0]["message"])
 
     def test_clean_corpus_has_neither(self):
         """全ファイルが一意 id で登録済み -> unregistered/shadowed ゼロ。"""
