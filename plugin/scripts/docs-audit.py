@@ -667,23 +667,31 @@ def _recorded_fingerprints(body):
 
 
 def _check_code_traces(g, root):
-    """20-24. コードと仕様の追跡(ADR-056、SPEC-026)。
+    """コードと仕様の追跡(ADR-056、SPEC-026)。
 
-    仕様の文書が `## 実装の指紋` の節を持つときだけ効く。節を持つ文書が一つも
-    無ければ、コードの走査そのものを行わない(使っていない機能の費用を払わせ
-    ない)。「根拠を持たないコード」は挙げない — 注釈は任意であり、原理的に
-    判じられない(ADR-054 の既知の限界)。
+    `## 実装の指紋` の節を持つ文書が一つでもあるときだけ効く。門は節の有無だけで
+    判じ、状態を問わない(ADR-060)。節を持つ文書が一つも無ければ、コードの走査
+    そのものを行わない(使っていない機能の費用を払わせない)。上向きの検査
+    (注釈→文書)は走査が走れば常に効き、下向きの照合(記録した指紋)は現行の
+    文書だけに掛ける。「根拠を持たないコード」は挙げない — 注釈は任意であり、
+    原理的に判じられない(ADR-054 の既知の限界)。
     """
-    expect = {}     # doc_id -> 記録された指紋の集合
+    # 走査の門は「節の有無」だけで判じ、状態を問わない(ADR-060)。廃止された
+    # 仕様だけが opt-in している木でも、上向きの検査(注釈への warn)は生きる。
+    # 以前は現行の opt-in に門を掛けており、opt-in した仕様の廃止が「廃止を
+    # 指す注釈」の検査そのものを殺す自己矛盾があった。
+    sections = {}   # doc_id -> 記録された指紋の集合(状態を問わない)
     for doc_id in sorted(g.nodes):
         node = g.nodes[doc_id]
-        if not _registry.is_current(node.get("status", "")):
-            continue
         fps = _recorded_fingerprints(node.get("_body") or "")
         if fps is not None:
-            expect[doc_id] = fps
-    if not expect:
-        return [], None   # 誰も opt-in していない → 走査しない
+            sections[doc_id] = fps
+    if not sections:
+        return [], None   # 節を持つ文書が無い → 走査しない(ADR-056 の静けさ)
+
+    # 下向きの照合は現行の文書だけに掛ける(現行でない記録は歴史。ADR-060)。
+    expect = {doc_id: fps for doc_id, fps in sections.items()
+              if _registry.is_current(g.nodes[doc_id].get("status", ""))}
 
     scan_root = os.path.dirname(os.path.abspath(root))
     try:

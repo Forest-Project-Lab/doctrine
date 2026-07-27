@@ -598,6 +598,16 @@ class MarkerSuspectTest(unittest.TestCase):
         sus = self._suspects(src)
         self.assertEqual([s["line"] for s in sus], [2])
 
+    def test_finding_codes_match_the_transcribed_table(self):
+        """所見コードの正本の凍結(ADR-060)。転記表と全量一致する。"""
+        expected = (
+            "trace_nested", "trace_id_mismatch", "trace_unclosed",
+            "trace_unopened", "trace_empty_range", "trace_marker_suspect",
+            "trace_scan_truncated",
+        )
+        self.assertEqual(T.FINDING_CODES, expected,
+                         "コードを足した/消したら転記表を同じ変更で更新すること")
+
     def test_self_scan_of_this_repository_has_no_suspects(self):
         """自己適用: 実装・試験の原文が疑いに一致しない(規律の凍結。ADR-059)。"""
         repo = os.path.dirname(os.path.dirname(os.path.dirname(
