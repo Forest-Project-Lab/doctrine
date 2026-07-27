@@ -731,6 +731,14 @@ def main(argv=None):
         root = argv[1] if len(argv) > 1 else "."
         return _run_batch(root)
 
+    # 発火の印(ADR-062)。Hook 経路のときだけ残す(CI のバッチは上で戻っている)。
+    # 最善努力であり、失敗しても本務(点検)を妨げない。
+    try:
+        import _auditcache
+        _auditcache.write_stamp("hook_docs_linter")
+    except Exception:
+        pass
+
     try:
         stdin_text = ""
         try:

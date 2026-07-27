@@ -29,6 +29,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import _depgraph
+import _auditcache
 import _frontmatter
 import _intake
 import _registry
@@ -53,6 +54,7 @@ AUDIT_CHECKS = (
     "trace_mark_error", "trace_broken_ref", "trace_deprecated_ref",
     "trace_stale", "trace_missing_impl", "trace_marker_suspect",
     "trace_scan_truncated", "trace_unexpected_impl", "trace_undeclared_impl",
+    "guard_liveness_gap",
 )
 # doctrine:end SPEC-011
 
@@ -674,6 +676,23 @@ def _trace_declaration(body):
             "fps": {fp.lower() for fp in _TRACE_FP_RE.findall(section)}}
 
 
+def _check_guard_liveness(root):
+    """拒否経路の欠落の疑い(ADR-062)。判定は _auditcache に一度だけ在る。
+
+    ガード(PreToolUse)とリンタ(PostToolUse)の発火の印の食い違いを見る。
+    印が無ければ何も出さない(CI や、古い版からの更新直後は印が育つまで沈黙
+    する — 前方寛容)。advisory に留める(印は間接の証跡であり、拒否できない
+    ことの直接の証明ではない)。
+    """
+    proj = os.path.dirname(os.path.abspath(root))
+    gap = _auditcache.liveness_gap(_auditcache.read_stamps(proj))
+    if gap is None:
+        return []
+    return [_finding(
+        "guard_liveness_gap", SEV_ADVISORY, "",
+        ".claude/.cache/" + _auditcache.STAMPS_NAME, gap)]
+
+
 def _check_code_traces(g, root):
     """コードと仕様の追跡(ADR-056、SPEC-026)。
 
@@ -1207,6 +1226,7 @@ def run_audit(root, today, knobs):
     findings += _check_glossary_seed(root)
     findings += _check_ext_anchors(g, root)
     findings += _check_memory_shadow(g, root)
+    findings += _check_guard_liveness(root)
     trace_findings, trace_coverage = _check_code_traces(g, root)
     findings += trace_findings
 

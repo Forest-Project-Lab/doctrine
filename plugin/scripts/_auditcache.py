@@ -176,3 +176,124 @@ def load(docs_root=None):
             continue
         return data
     return None
+
+
+# ---------------------------------------------------------------------------
+# フックの発火の印(ADR-062)。書き手はフック、読み手は鼓動と監査。
+# 判定はここに一度だけ置く(ADR-053 と同じ原理。読み手ごとに答えを割らない)。
+# ---------------------------------------------------------------------------
+
+STAMPS_NAME = "hook-stamps"
+
+# ガード(PreToolUse)とリンタ(PostToolUse)は同じ編集の出来事に対で発火する。
+# この猶予を超えてリンタだけが新しければ、編集がガードを通っていない疑い。
+GUARD_LINTER_SKEW_SECONDS = 60
+
+_TS_RE = re.compile(r"^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})Z$")
+
+
+def stamps_path(proj=None):
+    """印のファイルの置き場(git の追跡外。監査の要約と同じ .claude/.cache)。
+
+    proj を与えなければ CLAUDE_PROJECT_DIR、無ければ作業ディレクトリ。監査は
+    監査対象の木の親を渡す(試験と CI で決定的にするため)。
+    """
+    if not proj:
+        proj = os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()
+    return os.path.join(proj, ".claude", ".cache", STAMPS_NAME)
+
+
+def _parse_ts(value):
+    """UTC の ISO-8601(秒精度) を datetime で返す。読めなければ None。"""
+    if not isinstance(value, str):
+        return None
+    m = _TS_RE.match(value.strip())
+    if not m:
+        return None
+    try:
+        return datetime.datetime(
+            int(m.group(1)), int(m.group(2)), int(m.group(3)),
+            int(m.group(4)), int(m.group(5)), int(m.group(6)),
+            tzinfo=datetime.timezone.utc)
+    except ValueError:
+        return None
+
+
+def write_stamp(key, now=None, proj=None):
+    """鍵の印を現在時刻で上書きする。最善努力(決して例外を投げない)。
+
+    フックの本務を妨げない。置き場が無ければ作り、書けなければ黙って諦める。
+    知らない鍵の行はそのまま残す(ADR-042 の寛容と同じ形)。
+    """
+    try:
+        if now is None:
+            now = datetime.datetime.now(datetime.timezone.utc)
+        stamp = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+        path = stamps_path(proj)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        lines = []
+        try:
+            with open(path, "r", encoding="utf-8-sig") as fh:
+                lines = fh.read().splitlines()
+        except (OSError, UnicodeError):
+            lines = []
+        out, seen = [], False
+        for line in lines:
+            m = _STATE_LINE_RE.match(line)
+            if m and m.group(1) == key:
+                out.append("%s: %s" % (key, stamp))
+                seen = True
+            else:
+                out.append(line)
+        if not seen:
+            out.append("%s: %s" % (key, stamp))
+        tmp = path + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as fh:
+            fh.write("\n".join(out) + "\n")
+        os.replace(tmp, path)
+    except Exception:
+        pass
+
+
+def read_stamps(proj=None):
+    """印を {鍵: datetime} で返す。無ければ空。決して例外を投げない。"""
+    out = {}
+    try:
+        with open(stamps_path(proj), "r", encoding="utf-8-sig") as fh:
+            for line in fh:
+                m = _STATE_LINE_RE.match(line)
+                if not m:
+                    continue
+                ts = _parse_ts(m.group(2))
+                if ts is not None:
+                    out[m.group(1)] = ts
+    except (OSError, UnicodeError):
+        return {}
+    return out
+
+
+def liveness_gap(stamps, skew_seconds=GUARD_LINTER_SKEW_SECONDS):
+    """拒否経路の欠落の疑い(ADR-062)。疑いが無ければ None、あれば説明の文字列。
+
+    規則: リンタ(PostToolUse)の印があるのに、ガード(PreToolUse)の印が無い、
+    またはリンタよりガードが skew_seconds 超古い。両者は全段階の配線で同じ
+    編集の出来事に対で結ばれ、同じ包みで配られる(版が揃う)ので、この食い
+    違いは古い版の名残ではなく配線の欠落を意味する。リンタの印が無ければ
+    判じない(信号が無いだけで、欠落が無いことの証明ではない — 前方寛容)。
+    """
+    if not isinstance(stamps, dict):
+        return None
+    linter = stamps.get("hook_docs_linter")
+    if linter is None:
+        return None
+    guard = stamps.get("hook_policy_guard_pre")
+    if guard is None:
+        return ("リンタ(PostToolUse)は発火しているのに、ガード(PreToolUse)の"
+                "印が無い。拒否経路の配線が欠けている疑い。hooks の設定を"
+                "確かめる(ADR-062)")
+    if (linter - guard).total_seconds() > skew_seconds:
+        return ("リンタの印(%s)よりガードの印(%s)が古い。編集がガードを"
+                "通っていない疑い。hooks の設定を確かめる(ADR-062)"
+                % (linter.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                   guard.strftime("%Y-%m-%dT%H:%M:%SZ")))
+    return None

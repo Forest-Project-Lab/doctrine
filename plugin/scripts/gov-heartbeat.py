@@ -251,6 +251,10 @@ def main(argv=None):
             return 0  # 統治木が無いプロジェクトでは黙る。
         config = _load_config(docs_root)
         msg = build_message(docs_root, today, config)
+        # 拒否経路の欠落の疑い(ADR-062)。判定は _auditcache に一度だけ在る。
+        gap = _auditcache.liveness_gap(_auditcache.read_stamps())
+        if gap:
+            msg = (msg + "\n" if msg else "") + "【拒否経路の疑い】" + gap
         if not msg:
             return 0
         sid = data.get("session_id")

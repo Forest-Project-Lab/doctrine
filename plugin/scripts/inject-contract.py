@@ -979,6 +979,9 @@ def main(argv=None):
         pass
 
     try:
+        # 発火の印(ADR-062)。注入の面が生きている証跡を残す。最善努力。
+        _auditcache.write_stamp("hook_inject_contract")
+
         opts = _parse_args(list(argv))
         docs_root = _resolve_docs_root(opts["docs_root"])
         had_docs_root = bool(docs_root) and os.path.isdir(docs_root)

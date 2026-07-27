@@ -1167,6 +1167,7 @@ EXPECTED_AUDIT_CHECKS = (
     "trace_mark_error", "trace_broken_ref", "trace_deprecated_ref",
     "trace_stale", "trace_missing_impl", "trace_marker_suspect",
     "trace_scan_truncated", "trace_unexpected_impl", "trace_undeclared_impl",
+    "guard_liveness_gap",
 )
 
 
@@ -1196,6 +1197,40 @@ class AuditChecksFreezeTest(AuditBase):
                         "消費側だけにあるコードは産出されない死文である")
         self.assertIn("trace_marker_suspect", codes)
         self.assertIn("trace_scan_truncated", codes)
+
+
+class GuardLivenessTest(AuditBase):
+    """拒否経路の欠落の疑い(ADR-062)。印が無ければ沈黙、対の食い違いで advisory。"""
+
+    def test_silent_without_stamps(self):
+        root = self.build([(_fm("REQ-1", "REQ", "billing"), "本文")])
+        data, _ = self.audit_json(root)
+        self.assertEqual(self.checks_for(data, "guard_liveness_gap"), [])
+
+    def test_linter_stamp_without_guard_stamp_is_advisory(self):
+        root = self.build([(_fm("REQ-1", "REQ", "billing"), "本文")])
+        proj = os.path.dirname(root)
+        cache = os.path.join(proj, ".claude", ".cache")
+        os.makedirs(cache, exist_ok=True)
+        with open(os.path.join(cache, "hook-stamps"), "w",
+                  encoding="utf-8") as fh:
+            fh.write("hook_docs_linter: 2026-06-29T10:00:00Z\n")
+        data, _ = self.audit_json(root)
+        hits = self.checks_for(data, "guard_liveness_gap")
+        self.assertEqual(len(hits), 1)
+        self.assertEqual(hits[0]["severity"], "advisory")
+
+    def test_fresh_pair_is_silent(self):
+        root = self.build([(_fm("REQ-1", "REQ", "billing"), "本文")])
+        proj = os.path.dirname(root)
+        cache = os.path.join(proj, ".claude", ".cache")
+        os.makedirs(cache, exist_ok=True)
+        with open(os.path.join(cache, "hook-stamps"), "w",
+                  encoding="utf-8") as fh:
+            fh.write("hook_docs_linter: 2026-06-29T10:00:10Z\n"
+                     "hook_policy_guard_pre: 2026-06-29T10:00:00Z\n")
+        data, _ = self.audit_json(root)
+        self.assertEqual(self.checks_for(data, "guard_liveness_gap"), [])
 
 
 class TraceStatusMatrixTest(AuditBase):
