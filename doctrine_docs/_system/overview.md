@@ -75,6 +75,7 @@ sources: []
 | ADR-006 | ADR | graph | cross_domain_violation は depends_on 端のみに付ける |
 | ADR-038 | ADR | graph | 依存の循環を監査が検出する（自己依存と多頂点循環） |
 | ADR-045 | ADR | graph | 本文の要求タグは自己適用の約束であり、追跡の正路は depends_on の REQ である |
+| ADR-048 | ADR | graph | コードと仕様の双方向トレースは、条件を満たす段階拡張として採る |
 | IMPL-006 | IMPL | graph | `_depgraph.py`＋`dep-graph.py` の実装メモ |
 | TEST-006 | TEST | graph | 依存グラフのテスト計画 |
 | ICD-003 | ICD | guard | guard のインターフェース（三ガードの公開境界） |
