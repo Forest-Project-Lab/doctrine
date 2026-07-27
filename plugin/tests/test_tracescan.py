@@ -151,7 +151,7 @@ class FingerprintStabilityTest(unittest.TestCase):
             fh.write(block.encode("utf-8"))
         with open(os.path.join(root, "withbom.py"), "wb") as fh:
             fh.write(b"\xef\xbb\xbf" + block.encode("utf-8"))
-        r, f = T.scan_tree(root)
+        r, f, _ = T.scan_tree(root)
         self.assertEqual(len(r), 2, f)
         self.assertEqual(r[0]["fingerprint"], r[1]["fingerprint"])
 
@@ -243,13 +243,13 @@ class TreeScanTest(unittest.TestCase):
             "docs/notes.txt": _block("SPEC-014", ["y"]),
             "src/a.py": _block("SPEC-015", ["z"]),
         })
-        r, f = T.scan_tree(root, docs_root=os.path.join(root, "docs"))
+        r, f, _ = T.scan_tree(root, docs_root=os.path.join(root, "docs"))
         self.assertEqual([x["id"] for x in r], ["SPEC-015"])
 
     def test_markdown_is_not_scanned(self):
         """この書式を説明する文書自身の印を読まない(自己言及を断つ)。"""
         root = self._repo({"README.md": _block("SPEC-014", ["x"])})
-        r, f = T.scan_tree(root)
+        r, f, _ = T.scan_tree(root)
         self.assertEqual(r, [])
 
     def test_binary_is_skipped(self):
@@ -257,17 +257,17 @@ class TreeScanTest(unittest.TestCase):
         p = os.path.join(root, "blob.bin")
         with open(p, "wb") as fh:
             fh.write(b"\x00\x01" + _block("SPEC-014", ["x"]).encode("utf-8"))
-        r, f = T.scan_tree(root)
+        r, f, _ = T.scan_tree(root)
         self.assertEqual(r, [])
 
     def test_dot_directories_are_skipped(self):
         root = self._repo({".git/hooks/x.py": _block("SPEC-014", ["x"])})
-        r, f = T.scan_tree(root)
+        r, f, _ = T.scan_tree(root)
         self.assertEqual(r, [])
 
     def test_paths_are_relative_posix_and_carry_no_absolute_path(self):
         root = self._repo({"src/pkg/a.py": _block("SPEC-014", ["x"])})
-        r, f = T.scan_tree(root)
+        r, f, _ = T.scan_tree(root)
         self.assertEqual(len(r), 1)
         self.assertEqual(r[0]["path"], "src/pkg/a.py")
         self.assertNotIn(root, str(r))
@@ -277,8 +277,8 @@ class TreeScanTest(unittest.TestCase):
             "b.py": _block("SPEC-015", ["x"]),
             "a.py": _block("SPEC-014", ["y"]),
         })
-        first, _ = T.scan_tree(root)
-        second, _ = T.scan_tree(root)
+        first, _, _cov1 = T.scan_tree(root)
+        second, _, _cov2 = T.scan_tree(root)
         self.assertEqual(first, second)
         self.assertEqual([x["path"] for x in first], ["a.py", "b.py"])
 
@@ -286,34 +286,34 @@ class TreeScanTest(unittest.TestCase):
         """上限を超えたら黙って切り詰めず、飛ばした事実を告げる。"""
         files = {"f%03d.py" % i: _block("SPEC-014", ["x"]) for i in range(8)}
         root = self._repo(files)
-        r, f = T.scan_tree(root, max_files=3)
+        r, f, _ = T.scan_tree(root, max_files=3)
         self.assertTrue(any(x["code"] == "trace_scan_truncated" for x in f),
                         "切り詰めを黙って行ってはならない")
 
     def test_oversize_file_is_announced(self):
         root = self._repo({"big.py": _block("SPEC-014", ["x" * 100])})
-        r, f = T.scan_tree(root, max_file_bytes=10)
+        r, f, _ = T.scan_tree(root, max_file_bytes=10)
         self.assertTrue(any(x["code"] == "trace_scan_truncated" for x in f))
         self.assertEqual(r, [])
 
     def test_files_without_the_marker_are_ignored(self):
         root = self._repo({"a.py": "print(1)\n", "b.py": _block("SPEC-014", ["x"])})
-        r, f = T.scan_tree(root)
+        r, f, _ = T.scan_tree(root)
         self.assertEqual([x["path"] for x in r], ["b.py"])
 
     def test_undecodable_file_does_not_stop_the_scan(self):
         root = self._repo({"good.py": _block("SPEC-014", ["x"])})
         with open(os.path.join(root, "bad.py"), "wb") as fh:
             fh.write(b"# doctrine:begin SPEC-015\n\xff\xfe not utf8\n")
-        r, f = T.scan_tree(root)
+        r, f, _ = T.scan_tree(root)
         self.assertEqual([x["id"] for x in r], ["SPEC-014"])
 
     def test_missing_root_returns_empty(self):
-        r, f = T.scan_tree("/nonexistent/path/xyz")
+        r, f, _ = T.scan_tree("/nonexistent/path/xyz")
         self.assertEqual((r, f), ([], []))
 
     def test_none_root_returns_empty(self):
-        r, f = T.scan_tree(None)
+        r, f, _ = T.scan_tree(None)
         self.assertEqual((r, f), ([], []))
 
 
@@ -378,6 +378,217 @@ class TraceIndexCLITest(unittest.TestCase):
         first, _ = self._run(["--root", root, "--format", "json"])
         second, _ = self._run(["--root", root, "--format", "json"])
         self.assertEqual(first, second)
+
+
+class CoverageAccountingTest(unittest.TestCase):
+    """5. 勘定と保存則(ADR-058)。触れたものは必ずどれか一つに数えられる。"""
+
+    def _repo(self, files):
+        root = _util.make_repo(files)
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        return root
+
+    def _assert_identity(self, cov):
+        """保存則: reached = annotated + unmarked + Σexcluded。"""
+        self.assertEqual(
+            cov["reached_files"],
+            cov["annotated_files"] + cov["unmarked_files"]
+            + sum(cov["excluded"].values()),
+            "保存則が破れている: %r" % (cov,))
+
+    def test_all_rule_slots_present_even_at_zero(self):
+        """全規則の枠が 0 件でも在る(空欄を許さない。SPEC-025 と同じ原則)。"""
+        root = self._repo({})
+        _, _, cov = T.scan_tree(root)
+        file_rules = {rid for rid, kind in T.EXCLUSION_RULES if kind == "file"}
+        dir_rules = {rid for rid, kind in T.EXCLUSION_RULES if kind == "dir"}
+        # 両方向: 表に在る規則は枠を持ち、枠に在る規則は表に在る。
+        self.assertEqual(set(cov["excluded"]), file_rules)
+        self.assertEqual(set(cov["pruned_dirs"]), dir_rules)
+        self._assert_identity(cov)
+
+    def test_identity_holds_across_file_rules(self):
+        """代表的な各規則を一つずつ踏んでも、勘定の和が合う。"""
+        root = self._repo({
+            "src/a.py": _block("SPEC-014", ["x"]),        # 寄与
+            "src/plain.py": "print(1)\n",                  # 印なし
+            ".env": "SECRET=1\n",                          # dot_file
+            "README.md": _block("SPEC-014", ["x"]),        # md_suffix
+        })
+        with open(os.path.join(root, "blob.bin"), "wb") as fh:
+            fh.write(b"\x00\x01data")                      # binary
+        with open(os.path.join(root, "bad.py"), "wb") as fh:
+            fh.write(b"# doctrine:begin SPEC-015\n\xff\xfe\n")  # undecodable
+        _, _, cov = T.scan_tree(root, max_file_bytes=1024)
+        self.assertEqual(cov["annotated_files"], 1)
+        self.assertEqual(cov["unmarked_files"], 1)
+        self.assertEqual(cov["excluded"]["dot_file"], 1)
+        self.assertEqual(cov["excluded"]["md_suffix"], 1)
+        self.assertEqual(cov["excluded"]["binary"], 1)
+        self.assertEqual(cov["excluded"]["undecodable"], 1)
+        self.assertEqual(cov["reached_files"], 6)
+        self._assert_identity(cov)
+
+    def test_no_marker_file_is_unmarked_not_excluded(self):
+        """印なしは除外ではない。入れ忘れが住む場所として数える。"""
+        root = self._repo({"a.py": "print(1)\n"})
+        _, _, cov = T.scan_tree(root)
+        self.assertEqual(cov["unmarked_files"], 1)
+        self.assertEqual(sum(cov["excluded"].values()), 0)
+
+    def test_marker_word_without_valid_range_is_unmarked(self):
+        """印の語はあるが対を成さない(綴りの揺れ)も印なしに数える。"""
+        root = self._repo({"a.py": "# doctrine: begin SPEC-014\nx = 1\n"})
+        r, _, cov = T.scan_tree(root)
+        self.assertEqual(r, [])
+        self.assertEqual(cov["unmarked_files"], 1)
+        self._assert_identity(cov)
+
+    def test_oversize_is_counted_and_announced(self):
+        root = self._repo({"big.py": _block("SPEC-014", ["x" * 100])})
+        _, f, cov = T.scan_tree(root, max_file_bytes=10)
+        self.assertEqual(cov["excluded"]["oversize"], 1)
+        self.assertTrue(any(x["code"] == "trace_scan_truncated" for x in f))
+        self._assert_identity(cov)
+
+    def test_truncation_counts_dropped_files_in_the_identity(self):
+        """上限打ち切りの既知の残りも勘定に載る(黙って消えない)。"""
+        files = {"f%03d.py" % i: _block("SPEC-014", ["x"]) for i in range(8)}
+        root = self._repo(files)
+        _, _, cov = T.scan_tree(root, max_files=3)
+        self.assertTrue(cov["truncated"])
+        self.assertGreater(cov["excluded"]["truncated"], 0)
+        self._assert_identity(cov)
+
+    def test_dir_pruning_is_counted_per_rule(self):
+        root = self._repo({
+            ".git/x.py": _block("SPEC-014", ["x"]),
+            "node_modules/pkg/y.py": _block("SPEC-014", ["y"]),
+            "docs/_system/glossary.md": "x",
+            "src/a.py": _block("SPEC-015", ["z"]),
+        })
+        _, _, cov = T.scan_tree(root, docs_root=os.path.join(root, "docs"))
+        self.assertEqual(cov["pruned_dirs"]["dot_dir"], 1)
+        self.assertEqual(cov["pruned_dirs"]["skip_dir_name"], 1)
+        self.assertEqual(cov["pruned_dirs"]["docs_root"], 1)
+        self._assert_identity(cov)
+
+    def test_symlinked_dir_is_counted_not_descended(self):
+        """降下しないシンボリックリンクを黙らず数える。"""
+        root = self._repo({"src/a.py": _block("SPEC-014", ["x"])})
+        outside = _util.make_repo({"b.py": _block("SPEC-015", ["y"])})
+        self.addCleanup(shutil.rmtree, outside, ignore_errors=True)
+        try:
+            os.symlink(outside, os.path.join(root, "linked"))
+        except OSError:
+            self.skipTest("symlink を作れない環境")
+        r, _, cov = T.scan_tree(root)
+        self.assertEqual([x["id"] for x in r], ["SPEC-014"])
+        self.assertEqual(cov["pruned_dirs"]["symlink_dir"], 1)
+        self._assert_identity(cov)
+
+    def test_fifo_is_classified_without_hanging(self):
+        """通常ファイル以外は開かない。名前付きパイプで走査が止まらない。"""
+        if not hasattr(os, "mkfifo"):
+            self.skipTest("mkfifo の無い環境")
+        root = self._repo({"src/a.py": _block("SPEC-014", ["x"])})
+        os.mkfifo(os.path.join(root, "pipe"))
+        r, _, cov = T.scan_tree(root)   # 以前はここで永久に戻らなかった
+        self.assertEqual([x["id"] for x in r], ["SPEC-014"])
+        self.assertEqual(cov["excluded"]["nonregular"], 1)
+        self._assert_identity(cov)
+
+    def test_unreadable_file_and_dir_are_counted(self):
+        if os.name != "posix" or os.geteuid() == 0:
+            self.skipTest("権限で読めない状態を作れない環境")
+        root = self._repo({
+            "src/a.py": _block("SPEC-014", ["x"]),
+            "locked.py": _block("SPEC-015", ["y"]),
+            "lockdir/z.py": _block("SPEC-016", ["z"]),
+        })
+        os.chmod(os.path.join(root, "locked.py"), 0)
+        os.chmod(os.path.join(root, "lockdir"), 0)
+        self.addCleanup(os.chmod, os.path.join(root, "lockdir"), 0o755)
+        _, _, cov = T.scan_tree(root)
+        self.assertEqual(cov["excluded"]["unreadable"], 1)
+        self.assertEqual(cov["pruned_dirs"]["unreadable_dir"], 1)
+        self._assert_identity(cov)
+
+    def test_docs_root_equal_to_scan_root_scans_nothing(self):
+        """根が統治木そのものでも、配下(サブディレクトリ含む)を走査しない。"""
+        root = self._repo({
+            "spec/a.txt": _block("SPEC-014", ["x"]),
+            "b.txt": _block("SPEC-015", ["y"]),
+        })
+        r, _, cov = T.scan_tree(root, docs_root=root)
+        self.assertEqual(r, [])
+        self.assertEqual(cov["reached_files"], 0)
+
+    def test_members_are_absent_by_default_and_sorted_on_request(self):
+        """一覧は求めに応じて導出する(既定は件数だけ。ADR-055/ADR-058)。"""
+        root = self._repo({
+            "b.py": "print(1)\n",
+            "a.py": "print(2)\n",
+            "src/m.py": _block("SPEC-014", ["x"]),
+        })
+        _, _, plain = T.scan_tree(root)
+        self.assertNotIn("members", plain)
+        _, _, cov = T.scan_tree(root, collect_members=True)
+        self.assertEqual(cov["members"]["unmarked"], ["a.py", "b.py"])
+        self.assertEqual(cov["members"]["annotated"], ["src/m.py"])
+
+
+class CoverageCLITest(unittest.TestCase):
+    """勘定の問い合わせ(ADR-058): 件数は常時、内訳は求めに応じて導出。"""
+
+    def _repo(self, files):
+        root = _util.make_repo(files)
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        return root
+
+    def _run(self, argv):
+        return _util.invoke("trace-index", argv)
+
+    def test_coverage_counts_in_json(self):
+        root = self._repo({
+            "a.py": _block("SPEC-014", ["x"]),
+            "plain.py": "print(1)\n",
+        })
+        out, code = self._run(["--root", root, "--coverage", "--format", "json"])
+        self.assertEqual(code, 0)
+        cov = json.loads(out)["coverage"]
+        self.assertEqual(cov["annotated_files"], 1)
+        self.assertEqual(cov["unmarked_files"], 1)
+        self.assertNotIn("members", cov, "既定で一覧を持たない")
+        file_rules = {rid for rid, kind in T.EXCLUSION_RULES if kind == "file"}
+        self.assertEqual(set(cov["excluded"]), file_rules,
+                         "全規則の枠が 0 件でも出る")
+
+    def test_term_drills_down_to_the_member_list(self):
+        root = self._repo({
+            "a.py": _block("SPEC-014", ["x"]),
+            "plain.py": "print(1)\n",
+            "sub/other.py": "print(2)\n",
+        })
+        out, code = self._run(["--root", root, "--coverage",
+                               "--term", "unmarked", "--format", "json"])
+        self.assertEqual(code, 0)
+        data = json.loads(out)
+        self.assertEqual(data["term"], "unmarked")
+        self.assertEqual(data["paths"], ["plain.py", "sub/other.py"])
+        self.assertEqual(data["count"], 2)
+        self.assertNotIn(root, out, "絶対パスが出てはならない")
+
+    def test_unknown_term_is_a_usage_error(self):
+        root = self._repo({})
+        out, code = self._run(["--root", root, "--coverage",
+                               "--term", "excluded:nope"])
+        self.assertEqual(code, 2)
+
+    def test_term_without_coverage_is_a_usage_error(self):
+        root = self._repo({})
+        out, code = self._run(["--root", root, "--term", "unmarked"])
+        self.assertEqual(code, 2)
 
 
 if __name__ == "__main__":

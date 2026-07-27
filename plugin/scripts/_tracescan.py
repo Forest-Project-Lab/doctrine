@@ -14,15 +14,18 @@ ADR-054 が定めた追跡の終点は「注釈の対が囲むコードのテキ
 - 予防: 何も予防しない。走査して集めるだけである。
 - 検出: 対応付けの誤り(入れ子・両端の id の不一致・閉じ忘れ・開いていない end)
   を四種に分けて挙げる。範囲の内容が変わったかは、指紋の照合に委ねる。
+  走査が触れた対象の勘定(寄与・印なし・規則 id ごとの除外と刈り)を返し、
+  何も黙って消えない(保存則。ADR-058)。
 - 委ねる: 印が意味の上で正しい場所に打たれているかは判定しない(NONGOAL 第1項と
-  同じ形で、判断は人に残す)。改名・移動は追わない(git の受け持ち)。印を打って
-  いないコードは追跡の外にある。
+  同じ形で、判断は人に残す)。改名・移動は追わない(git の受け持ち)。印なしの
+  ファイルのうち、どれが入れ忘れでどれが管理外の意思かの区別は人に残す。
 
 標準ライブラリのみ。決して例外を外へ出さない。
 """
 import hashlib
 import os
 import re
+import stat as _stat
 
 # 印の綴り。走査対象の判定にも使う(この語を含まないファイルは早期に飛ばす)。
 MARKER_WORD = "doctrine:"
@@ -42,6 +45,45 @@ SKIP_SUFFIXES = (".md",)
 DEFAULT_MAX_FILE_BYTES = 1024 * 1024      # 一ファイルの上限
 DEFAULT_MAX_FILES = 5000                  # 走査するファイル数の上限
 _NUL_PROBE_BYTES = 8192                   # バイナリ判定で覗く先頭のバイト数
+
+# 除外規則の正本(ADR-058)。除外はこの表の規則 id を経由してだけ起こる。
+# kind "dir" はディレクトリ単位の刈り(配下は未到達)、"file" はファイル単位の分類。
+# 規則を足す・消すときはこの表を同じ変更で更新する(TEST-026 が勘定の枠と共に凍結する)。
+EXCLUSION_RULES = (
+    ("dot_dir", "dir"),          # 名前が . で始まるディレクトリ
+    ("skip_dir_name", "dir"),    # SKIP_DIR_NAMES(node_modules ほか)
+    ("docs_root", "dir"),        # 統治木そのもの(文書は追跡の終点にならない)
+    ("symlink_dir", "dir"),      # ディレクトリへのシンボリックリンク(降下しない)
+    ("unreadable_dir", "dir"),   # 読めないディレクトリ(os.walk が握る誤り)
+    ("dot_file", "file"),        # 名前が . で始まるファイル
+    ("md_suffix", "file"),       # SKIP_SUFFIXES(自己言及の遮断)
+    ("nonregular", "file"),      # 名前付きパイプ・ソケット・デバイス(開かない)
+    ("oversize", "file"),        # 大きさの上限超過
+    ("unreadable", "file"),      # stat/open/read の OSError
+    ("binary", "file"),          # 先頭に値ゼロのバイト
+    ("undecodable", "file"),     # utf-8 として復号できない
+    ("truncated", "file"),       # ファイル数上限で分類せず落とした分
+)
+
+_FILE_RULES = tuple(rid for rid, kind in EXCLUSION_RULES if kind == "file")
+_DIR_RULES = tuple(rid for rid, kind in EXCLUSION_RULES if kind == "dir")
+
+
+def empty_coverage():
+    """勘定の空枠。全規則の枠を 0 件でも含める(空欄を許さない。SPEC-025 と同じ原則)。"""
+    return {
+        "reached_files": 0,      # 走査が触れたファイルの全数
+        "annotated_files": 0,    # 範囲を一つ以上返したファイル(寄与)
+        "unmarked_files": 0,     # 読めたが範囲を一つも返さないファイル(印なし)
+        "excluded": {rid: 0 for rid in _FILE_RULES},
+        "pruned_dirs": {rid: 0 for rid in _DIR_RULES},
+        "truncated": False,      # ファイル数上限で走査を打ち切ったか
+    }
+
+
+def _is_within(path, base):
+    """path が base と同一か、その配下にあるか。実体パスどうしで呼ぶこと。"""
+    return path == base or path.startswith(base + os.sep)
 
 
 def _finding(code, path, line, message):
@@ -154,34 +196,67 @@ def _should_skip_name(name):
 
 
 def scan_tree(root, docs_root=None, max_files=DEFAULT_MAX_FILES,
-              max_file_bytes=DEFAULT_MAX_FILE_BYTES):
-    """root 以下を走査し、(範囲の一覧, 所見の一覧) を返す。決定的(整列順)。
+              max_file_bytes=DEFAULT_MAX_FILE_BYTES, collect_members=False):
+    """root 以下を走査し、(範囲の一覧, 所見の一覧, 勘定) を返す。決定的(整列順)。
 
-    統治木(docs_root)の中は走査しない — 文書は追跡の終点にならない。
-    上限を超えたら、飛ばした事実を所見一つで正直に告げる(黙って切り詰めない。
-    SPEC-011 の語彙的酷似と同じ作法)。決して例外を外へ出さない。
+    保存則(ADR-058): 触れたファイルは必ず 寄与・印なし・規則による除外 の
+    どれか一つに数える。reached_files = annotated + unmarked + Σexcluded。
+    刈ったディレクトリは規則 id ごとに本数を数え、配下は未到達と明示する。
+    除外は EXCLUSION_RULES の規則 id を経由してだけ起こる(黙って切り詰めない)。
+
+    統治木(docs_root)の中は走査しない — 文書は追跡の終点にならない。根が統治木と
+    重なる呼び方でも包含で判じて刈る。通常ファイル以外(名前付きパイプ・ソケット・
+    デバイス)は開かない(開くと戻らないことがある)。決して例外を外へ出さない。
+
+    collect_members=True のときだけ、勘定に members(項ごとの相対パスの一覧)を
+    足す。既定では件数だけを返す(一覧は求めに応じて導出する。ADR-055/ADR-058)。
     """
     ranges, findings = [], []
+    cov = empty_coverage()
+    members = {}
+
+    def _member(term, relpath):
+        if collect_members:
+            members.setdefault(term, []).append(relpath)
+
     if not root or not os.path.isdir(root):
-        return ranges, findings
+        if collect_members:
+            cov["members"] = members
+        return ranges, findings, cov
     docs_abs = os.path.realpath(docs_root) if docs_root else None
+
+    def _on_walk_error(_err):
+        # 読めないディレクトリ。os.walk は既定で誤りを握るので、ここで数える。
+        cov["pruned_dirs"]["unreadable_dir"] += 1
 
     paths = []
     truncated = False
-    for dirpath, dirnames, filenames in os.walk(root):
-        dirnames[:] = sorted(
-            d for d in dirnames
-            if not d.startswith(".") and d not in SKIP_DIR_NAMES)
-        if docs_abs:
-            # 統治木そのものへは降りない。
-            dirnames[:] = [
-                d for d in dirnames
-                if os.path.realpath(os.path.join(dirpath, d)) != docs_abs]
-            if os.path.realpath(dirpath) == docs_abs:
-                continue
+    for dirpath, dirnames, filenames in os.walk(root, onerror=_on_walk_error):
+        if docs_abs and _is_within(os.path.realpath(dirpath), docs_abs):
+            # 根が統治木と重なる呼び方。ここから下へは降りず、ファイルも見ない。
+            dirnames[:] = []
+            continue
+        kept = []
+        for d in sorted(dirnames):
+            child = os.path.join(dirpath, d)
+            child_rel = _relposix(child, root)
+            if d.startswith("."):
+                cov["pruned_dirs"]["dot_dir"] += 1
+                _member("pruned:dot_dir", child_rel)
+            elif d in SKIP_DIR_NAMES:
+                cov["pruned_dirs"]["skip_dir_name"] += 1
+                _member("pruned:skip_dir_name", child_rel)
+            elif docs_abs and _is_within(os.path.realpath(child), docs_abs):
+                cov["pruned_dirs"]["docs_root"] += 1
+                _member("pruned:docs_root", child_rel)
+            elif os.path.islink(child):
+                # os.walk は既定でシンボリックリンクを降りない。黙らず数える。
+                cov["pruned_dirs"]["symlink_dir"] += 1
+                _member("pruned:symlink_dir", child_rel)
+            else:
+                kept.append(d)
+        dirnames[:] = kept
         for name in sorted(filenames):
-            if name.startswith(".") or _should_skip_name(name):
-                continue
             paths.append(os.path.join(dirpath, name))
             if len(paths) > max_files:
                 truncated = True
@@ -190,7 +265,13 @@ def scan_tree(root, docs_root=None, max_files=DEFAULT_MAX_FILES,
             break
     paths.sort()
     if truncated:
+        dropped = paths[max_files:]
         paths = paths[:max_files]
+        cov["truncated"] = True
+        cov["excluded"]["truncated"] += len(dropped)
+        cov["reached_files"] += len(dropped)
+        for p in dropped:
+            _member("excluded:truncated", _relposix(p, root))
         findings.append(_finding(
             "trace_scan_truncated", "", 0,
             "走査するファイル数の上限 %d を超えたため、以降を見ていない。"
@@ -198,29 +279,71 @@ def scan_tree(root, docs_root=None, max_files=DEFAULT_MAX_FILES,
 
     for path in paths:
         rel = _relposix(path, root)
+        cov["reached_files"] += 1
+        name = os.path.basename(path)
+        if name.startswith("."):
+            cov["excluded"]["dot_file"] += 1
+            _member("excluded:dot_file", rel)
+            continue
+        if _should_skip_name(name):
+            cov["excluded"]["md_suffix"] += 1
+            _member("excluded:md_suffix", rel)
+            continue
         try:
-            if os.path.getsize(path) > max_file_bytes:
-                findings.append(_finding(
-                    "trace_scan_truncated", rel, 0,
-                    "ファイルの大きさが上限 %d バイトを超えるため見ていない"
-                    % max_file_bytes))
-                continue
+            st = os.stat(path)
+        except OSError:
+            cov["excluded"]["unreadable"] += 1
+            _member("excluded:unreadable", rel)
+            continue
+        if not _stat.S_ISREG(st.st_mode):
+            # 通常ファイル以外は開かない(名前付きパイプは open が戻らない)。
+            cov["excluded"]["nonregular"] += 1
+            _member("excluded:nonregular", rel)
+            continue
+        if st.st_size > max_file_bytes:
+            cov["excluded"]["oversize"] += 1
+            _member("excluded:oversize", rel)
+            findings.append(_finding(
+                "trace_scan_truncated", rel, 0,
+                "ファイルの大きさが上限 %d バイトを超えるため見ていない"
+                % max_file_bytes))
+            continue
+        try:
             with open(path, "rb") as fh:
                 data = fh.read()
         except OSError:
+            cov["excluded"]["unreadable"] += 1
+            _member("excluded:unreadable", rel)
             continue
         if b"\x00" in data[:_NUL_PROBE_BYTES]:
+            cov["excluded"]["binary"] += 1
+            _member("excluded:binary", rel)
             continue                      # バイナリは読まない
         if MARKER_WORD.encode("utf-8") not in data:
-            continue                      # 印を含まない(読んで確かめてから飛ばす)
+            cov["unmarked_files"] += 1    # 印なし(入れ忘れが住む場所)
+            _member("unmarked", rel)
+            continue
         try:
             text = data.decode("utf-8-sig")
         except UnicodeError:
+            cov["excluded"]["undecodable"] += 1
+            _member("excluded:undecodable", rel)
             continue                      # 復号できないファイルは飛ばす
         r, f = scan_text(text, rel)
+        if r:
+            cov["annotated_files"] += 1
+            _member("annotated", rel)
+        else:
+            # 印の語はあるが範囲を一つも返さない(対応付けの誤りは所見が別に指す)。
+            cov["unmarked_files"] += 1
+            _member("unmarked", rel)
         ranges.extend(r)
         findings.extend(f)
 
     ranges.sort(key=lambda x: (x["path"], x["begin_line"], x["id"]))
     findings.sort(key=lambda x: (x["path"], x["line"], x["code"]))
-    return ranges, findings
+    if collect_members:
+        for term in members:
+            members[term].sort()
+        cov["members"] = members
+    return ranges, findings, cov

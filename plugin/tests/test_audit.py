@@ -1193,6 +1193,47 @@ class CodeTraceTest(AuditBase):
         self.assertEqual(self.checks_for(data, "trace_stale"), [])
         self.assertEqual(self.checks_for(data, "trace_missing_impl"), [])
 
+    def test_summary_carries_trace_coverage_when_opted_in(self):
+        """走査が走ったとき、要約に勘定が載り、保存則の和が合う(ADR-058)。
+
+        所見は増やさない(既存の緑は緑のまま)。何を見て何を見なかったかを、
+        数として毎回の監査に残すのが勘定の役目である。
+        """
+        root = _util.make_repo({"src/a.py": "", "src/plain.py": "print(1)\n"})
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        code = "\n".join([_tmark("begin", "SPEC-900"), "x=1",
+                          _tmark("end", "SPEC-900")])
+        with open(os.path.join(root, "src", "a.py"), "w", encoding="utf-8") as fh:
+            fh.write(code)
+        tracescan = _util.load_core("_tracescan")
+        ranges, _ = tracescan.scan_text(code, "src/a.py")
+        os.makedirs(os.path.join(root, "docs", "app", "spec"), exist_ok=True)
+        with open(os.path.join(root, "docs", "app", "spec", "SPEC-900.md"),
+                  "w", encoding="utf-8") as fh:
+            fh.write(_spec_with_fingerprints(
+                "SPEC-900", [ranges[0]["fingerprint"]]))
+        data, _ = self.audit_json(os.path.join(root, "docs"))
+        self.assertIn("trace_coverage", data)
+        cov = data["trace_coverage"]
+        self.assertEqual(cov["annotated_files"], 1)
+        self.assertGreaterEqual(cov["unmarked_files"], 1)
+        self.assertEqual(
+            cov["reached_files"],
+            cov["annotated_files"] + cov["unmarked_files"]
+            + sum(cov["excluded"].values()),
+            "保存則が破れている: %r" % (cov,))
+        self.assertNotIn("members", cov, "要約に一覧を載せない(件数だけ)")
+
+    def test_summary_has_no_trace_coverage_without_opt_in(self):
+        """opt-in が無ければ走査せず、勘定も載らない(ADR-056 の静けさを保つ)。"""
+        root = _util.make_repo({
+            "docs/app/spec/SPEC-900.md": _spec_with_fingerprints("SPEC-900", None),
+            "src/a.py": "print(1)\n",
+        })
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        data, _ = self.audit_json(os.path.join(root, "docs"))
+        self.assertNotIn("trace_coverage", data)
+
     def test_content_change_raises_trace_stale(self):
         """記録した確認と、いまのコードが食い違えば古びとして挙げる。"""
         root = _util.make_repo({
