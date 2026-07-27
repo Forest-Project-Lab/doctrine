@@ -24,6 +24,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import _frontmatter  # noqa: E402
 import _intake  # noqa: E402
 import _registry  # noqa: E402
 
@@ -197,7 +198,9 @@ def migration_line(docs_root, summary):
     entries, _bad = _intake.load_ledger(docs_root)
     done = len(entries)
     total = done + len(strays)
-    nxt = strays[0]
+    # ファイル名は攻撃者制御になりうる(改行で偽の統治指示を捏造できる。#96)。
+    # 注入境界へ届く前にサニタイズする(ADR-040)。
+    nxt = _frontmatter.sanitize_inline(strays[0], 120)
     return ("【移行 %d/%d】統治木の外の .md が %d 件未分類。次の1件: %s — "
             "「これを分類して」と言えば docs-curate で進める(取り込む=doc-author で"
             "型を与える／参照=EXT アンカー／非文書=期限付きで台帳へ)。分類のたびに"

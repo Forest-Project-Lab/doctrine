@@ -30,4 +30,4 @@ SPEC-012 を実装する、注入スクリプトの実装メモである `[R5]`�
 
 ## 対象部品
 
-`plugin/scripts/inject-contract.py`（`estimate_tokens`・`_build_sections`・`_assemble`・`_trim_to_fit`・`_load_audit_summary`・`_plugin_root_cache_candidates`）。共有の `_registry`・`_frontmatter` を import する。監査要約の候補順はプロジェクトスコープ先・旧プラグインroot配置は後方互換の最後（ADR-037、#69）。`gov-heartbeat.py` の `_audit_summary` と同じ順序に揃える。
+`plugin/scripts/inject-contract.py`（`estimate_tokens`・`_build_sections`・`_assemble`・`_trim_to_fit`・`_load_audit_summary`・`_plugin_root_cache_candidates`・`_frontmatter.sanitize_inline`（ADR-040 注入境界サニタイズ））。共有の `_registry`・`_frontmatter` を import する。監査要約の候補順はプロジェクトスコープ先・旧プラグインroot配置は後方互換の最後（ADR-037、#69）。`gov-heartbeat.py` の `_audit_summary` と同じ順序に揃える。

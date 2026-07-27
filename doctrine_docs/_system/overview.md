@@ -18,7 +18,7 @@ sources: []
 |---|---|---|---|
 | GLOSSARY-001 | GLOSSARY | _system | 用語辞書の正本 |
 | DECIDED-001 | DECIDED | _system | 横断の確定方針（9事実） |
-| NONGOAL-001 | NONGOAL | _system | 横断のやらないこと（7項） |
+| NONGOAL-001 | NONGOAL | _system | 横断のやらないこと（8項） |
 | WATCH-001 | WATCH | _system | 横断の退行監視（6項） |
 | ICD-005 | ICD | audit | audit のインターフェース（全件監査の境界） |
 | REQ-008 | REQ | audit | 最小性の監査（過剰と不足の両側を全件検出） |
@@ -60,6 +60,7 @@ sources: []
 | ADR-014 | ADR | context | DECIDED へ写すのは横断の確定事実だけとする |
 | ADR-016 | ADR | context | 投影を正本から描画し直せる派生表示に限り、刊行物は投影一覧に含めない |
 | ADR-037 | ADR | context | 監査要約キャッシュはプロジェクトスコープを先に読み、旧プラグインroot配置は後方互換のフォールバックに限る |
+| ADR-040 | ADR | context | 注入境界のフィールドをサニタイズし、引用データと指示を分ける |
 | IMPL-012 | IMPL | context | `inject-contract.py` の実装メモ |
 | IMPL-013 | IMPL | context | `collect-context.py` の実装メモ |
 | IMPL-014 | IMPL | context | `render-projection.py` の実装メモ |
