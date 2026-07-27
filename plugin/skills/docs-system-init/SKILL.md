@@ -32,6 +32,7 @@ description: 'Sets up the document governance system in a repository: creates th
 - `references/fallback.md` — プラグイン配置と `.claude/` 退避配置、`${CLAUDE_PLUGIN_ROOT}` の解決。
 - `references/hook-snapshot.md` — Hook 設定がセッション開始時にだけ取り込まれる前提。
 - `references/ci-example.md` — 導入先に置ける `CI` 監査ステップの雛形（任意）。
+- `references/portability.md` — フック無しのエージェント（Codex・Cursor 等）で pre-commit / CI により同じ検査を回す（#83）。
 
 ## 保証限界
 
