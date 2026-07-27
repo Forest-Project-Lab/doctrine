@@ -52,7 +52,7 @@ AUDIT_CHECKS = (
     "adr_not_landed", "glossary_seed_drift", "ext_anchor_broken", "memory_shadow",
     "trace_mark_error", "trace_broken_ref", "trace_deprecated_ref",
     "trace_stale", "trace_missing_impl", "trace_marker_suspect",
-    "trace_scan_truncated",
+    "trace_scan_truncated", "trace_unexpected_impl", "trace_undeclared_impl",
 )
 # doctrine:end SPEC-011
 
@@ -651,11 +651,16 @@ _TRACE_MARK_CODES = frozenset({
     "trace_unopened", "trace_empty_range"})
 
 
-def _recorded_fingerprints(body):
-    """本文の `## 実装の指紋` 節から、記録された指紋の集合を読む。
+_TRACE_NOCODE_RE = re.compile(r"(?m)^\s*-\s*コード対応なし\s*[:：]")
 
-    節が無ければ None を返す(= その仕様は追跡の対象外。ADR-056 の opt-in)。
-    節はあるが指紋の行が無ければ空集合を返す(= 対象だが記録が空)。
+
+def _trace_declaration(body):
+    """本文の `## 実装の指紋` 節から、コードとの関係の宣言を読む(ADR-056/ADR-061)。
+
+    節が無ければ None(未宣言。追跡の対象外)。`- コード対応なし: <理由>` の行が
+    あれば {"kind": "none"}(意図してコードと結ばない明示宣言)。それ以外は
+    {"kind": "fps", "fps": 指紋の集合}(節はあるが指紋の行が無ければ空集合 =
+    対象だが記録が空)。
     """
     m = _TRACE_SECTION_RE.search(body or "")
     if m is None:
@@ -663,7 +668,10 @@ def _recorded_fingerprints(body):
     tail = body[m.end():]
     nxt = re.search(r"(?m)^#{1,6}\s", tail)
     section = tail[:nxt.start()] if nxt else tail
-    return {fp.lower() for fp in _TRACE_FP_RE.findall(section)}
+    if _TRACE_NOCODE_RE.search(section):
+        return {"kind": "none"}
+    return {"kind": "fps",
+            "fps": {fp.lower() for fp in _TRACE_FP_RE.findall(section)}}
 
 
 def _check_code_traces(g, root):
@@ -680,17 +688,17 @@ def _check_code_traces(g, root):
     # 仕様だけが opt-in している木でも、上向きの検査(注釈への warn)は生きる。
     # 以前は現行の opt-in に門を掛けており、opt-in した仕様の廃止が「廃止を
     # 指す注釈」の検査そのものを殺す自己矛盾があった。
-    sections = {}   # doc_id -> 記録された指紋の集合(状態を問わない)
+    sections = {}   # doc_id -> 宣言(状態を問わない)
     for doc_id in sorted(g.nodes):
         node = g.nodes[doc_id]
-        fps = _recorded_fingerprints(node.get("_body") or "")
-        if fps is not None:
-            sections[doc_id] = fps
+        decl = _trace_declaration(node.get("_body") or "")
+        if decl is not None:
+            sections[doc_id] = decl
     if not sections:
         return [], None   # 節を持つ文書が無い → 走査しない(ADR-056 の静けさ)
 
     # 下向きの照合は現行の文書だけに掛ける(現行でない記録は歴史。ADR-060)。
-    expect = {doc_id: fps for doc_id, fps in sections.items()
+    expect = {doc_id: decl for doc_id, decl in sections.items()
               if _registry.is_current(g.nodes[doc_id].get("status", ""))}
 
     scan_root = os.path.dirname(os.path.abspath(root))
@@ -737,9 +745,21 @@ def _check_code_traces(g, root):
 
     # 記録した確認との照合(下向き)。
     for doc_id in sorted(expect):
-        recorded = expect[doc_id]
+        decl = expect[doc_id]
         found = by_id.get(doc_id, [])
         node = g.nodes[doc_id]
+        if decl["kind"] == "none":
+            # 「コード対応なし」の宣言と実態の矛盾(ADR-061)。宣言した文書に
+            # しか発火しないので、版を上げただけの利用者には何も起きない。
+            if found:
+                out.append(_finding(
+                    "trace_unexpected_impl", SEV_WARN, doc_id, node["path"],
+                    "「コード対応なし」と宣言しているが、この仕様を指す範囲が"
+                    "コードにある(%s)。宣言が古いか注釈が誤り。宣言を指紋の"
+                    "記録に替えるか、印を消す(ADR-061)"
+                    % ", ".join(sorted(r["path"] for r in found))))
+            continue
+        recorded = decl["fps"]
         if not found:
             out.append(_finding(
                 "trace_missing_impl", SEV_WARN, doc_id, node["path"],
@@ -753,6 +773,42 @@ def _check_code_traces(g, root):
                 "記録した実装の指紋と、いまのコードの指紋が食い違う(%s)。"
                 "変更を確かめ、確認したら節の指紋を更新する"
                 % ", ".join(sorted(r["path"] for r in found))))
+
+    # 欠陥D(ADR-061): 節の無い現行の SPEC を、コードの範囲が指している。
+    # 節を消して注釈だけ残った/節を書かずに注釈だけ打った紐の可視化。合否は
+    # 変えない(advisory)。現行でない文書は上の trace_deprecated_ref が指す。
+    for doc_id in sorted(by_id):
+        if doc_id in sections:
+            continue
+        node = g.nodes.get(doc_id)
+        if node is None or not _registry.is_current(node.get("status", "")):
+            continue
+        if node.get("type") != "SPEC":
+            continue
+        out.append(_finding(
+            "trace_undeclared_impl", SEV_ADVISORY, doc_id, node["path"],
+            "コードの範囲(%s)がこの仕様を指しているが、仕様は実装の指紋の節を"
+            "持たない。指紋を記録して追跡を結ぶか、「コード対応なし」を宣言する"
+            "(ADR-061)" % ", ".join(sorted(r["path"] for r in by_id[doc_id]))))
+
+    # 仕様側の三分類(ADR-061)。現行の SPEC がコードとの関係を宣言しているかを
+    # 数える。無宣言は数えるだけで所見にしない(義務化は別の ADR)。
+    if coverage is not None:
+        spec_cov = {"traced": 0, "no_code": 0, "undeclared": 0}
+        for doc_id in sorted(g.nodes):
+            node = g.nodes[doc_id]
+            if node.get("type") != "SPEC":
+                continue
+            if not _registry.is_current(node.get("status", "")):
+                continue
+            decl = sections.get(doc_id)
+            if decl is None:
+                spec_cov["undeclared"] += 1
+            elif decl["kind"] == "none":
+                spec_cov["no_code"] += 1
+            else:
+                spec_cov["traced"] += 1
+        coverage["spec_coverage"] = spec_cov
     return out, coverage
 
 

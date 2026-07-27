@@ -32,7 +32,7 @@ ICD・正本・投影・現行・依存・参照は用語辞書（`_system/gloss
 - `intake-ledger-format`: 分類の記録（`_system/.md-intake`）の書式の正本。一行一項目 `パス: 非文書|投影|保留 [YYYY-MM-DD]`（保留は期限必須。末尾 `/` は配下全体）。読み取りは共有コア `_intake.py`（IMPL-018）に一本化する。
 - `audit-summary-schema`: 監査の要約スキーマ `docs-audit/1` の形。
 
-26 検査と重大度（固定）:
+28 検査と重大度（固定）:
 
 | 検査名 | 重大度 |
 |---|---|
@@ -62,6 +62,8 @@ ICD・正本・投影・現行・依存・参照は用語辞書（`_system/gloss
 | trace_missing_impl（指紋を記録した仕様に対応する範囲が無い） | warn |
 | trace_marker_suspect（印に見えるが読めない行。綴りの揺れの兆候。ADR-059） | advisory |
 | trace_scan_truncated（走査が告げた切り詰めの転記。ADR-059） | advisory |
+| trace_unexpected_impl（「コード対応なし」の宣言に反して範囲がある。ADR-061） | warn |
+| trace_undeclared_impl（節の無い現行 SPEC をコードの範囲が指す。ADR-061） | advisory |
 
 ## データ契約
 
