@@ -209,6 +209,26 @@ class SkillBodyTest(unittest.TestCase):
                 self.assertIn("## 保証限界", body,
                               "%s: missing `## 保証限界` (R9 prevent/detect/defer)" % name)
 
+    def test_change_impact_grades_by_decision_not_by_size(self):
+        """ADR-051: 段数は決定の有無で分ける。規模では分けない。
+
+        全変更に14段を課すと、誤字の直しにも ADR が要り、統治を迂回する動機に
+        なる(NONGOAL 第4項の穴を体系自身が広げる)。逆に「小さいから省く」で
+        分けると、一行の既定値の変更(=決定)が記録されずに通る。どちらの退行も
+        ここで止める。
+        """
+        _text, _meta, body = _load("change-impact")
+        self.assertIn("決定を含むか否か", body,
+                      "change-impact: 経路の分け方(決定の有無)が本文にない")
+        self.assertIn("規模", body,
+                      "change-impact: 規模で分けないことを本文が言っていない")
+        # 軽い経路でも残す二つ(影響の列挙と更新順序)が本文にあること。
+        self.assertIn("影響の列挙", body)
+        # 強制はどちらの経路でも変わらない、という但し書きを落とさない。
+        for token in ("削除安全ガード", "ICD 依存ガード", "全件監査"):
+            self.assertIn(token, body,
+                          "change-impact: 軽い経路でも強制が変わらない旨に %s がない" % token)
+
     def test_assurance_limit_declares_the_three_tiers(self):
         """The 保証限界 section names all three tiers (予防 / 検出 / 委ねる, R9)."""
         for name in SKILL_NAMES:

@@ -42,6 +42,7 @@ sources: []
 | SPEC-022 | SPEC | authoring | 会話知識の捕捉（終端の確認・圧縮前の退避・次セッションの選別） |
 | ADR-010 | ADR | authoring | 作成・初期化の設計判断（7技能固定・遅延生成・テンプレが語彙符号化） |
 | ADR-029 | ADR | authoring | CLAUDE.md と AGENTS.md は投影ではなく案内と定める |
+| ADR-051 | ADR | authoring | 変更フローの段数は、規模ではなく決定を含むか否かで分ける |
 | IMPL-015 | IMPL | authoring | scaffold/term-extract の実装注記 |
 | IMPL-016 | IMPL | authoring | skills/templates の実装注記 |
 | IMPL-020 | IMPL | authoring | capture-nudge.py / precompact-dump.py（捕捉）の実装メモ |

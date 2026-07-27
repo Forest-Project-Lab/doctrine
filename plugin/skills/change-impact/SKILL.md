@@ -1,6 +1,6 @@
 ---
 name: change-impact
-description: 'Runs the 14-step change flow for a proposed change: traces dependencies to enumerate every document, implementation, and test affected, then drives the updates in the mandated order — decision (ADR) first, then current spec (SPEC), then implementation, then test, then LLM context, then deprecation cleanup — keeping "what changed" (CHANGE/git) separate from "why decided" (ADR). Use this skill when the user wants to "assess the impact of a change", "what does changing X break", "plan a change", "run the change flow", "trace impact", "what needs updating if I change this spec/ICD", "影響範囲を洗い出して", "この変更で何が壊れるか", "変更フローを回して", "この仕様を変えたらどこを直すか", or "propose and roll out a change".'
+description: 'Runs the 14-step change flow for a proposed change: traces dependencies to enumerate every document, implementation, and test affected, then drives the updates in the mandated order — decision (ADR) first, then current spec (SPEC), then implementation, then test, then LLM context, then deprecation cleanup — keeping "what changed" (CHANGE/git) separate from "why decided" (ADR). Grades the flow by whether the change contains a decision, never by its size: a change with no decision (typo, wording, formatting, link repair, projection re-render) keeps only the impact enumeration and the update order, and needs no CHANGE/IMPACT/ADR. Use this skill when the user wants to "assess the impact of a change", "what does changing X break", "plan a change", "run the change flow", "trace impact", "what needs updating if I change this spec/ICD", "影響範囲を洗い出して", "この変更で何が壊れるか", "変更フローを回して", "この仕様を変えたらどこを直すか", or "propose and roll out a change".'
 ---
 
 # change-impact
@@ -13,6 +13,16 @@ description: 'Runs the 14-step change flow for a proposed change: traces depende
 
 - `${CLAUDE_PLUGIN_ROOT}/scripts/dep-graph.py` — 依存の有向グラフ。前向きに波及先（`impacts`）を、逆向きに依存元（逆参照）を列挙する。ドメイン跨ぎの境界を分類する。逆向きで逆孤児を出す。
 - `doc-author`（順序どおりの編集を作る）・`regression-guard`（廃止の段で突き合わせる）・`llm-context-pack`（LLM（大規模言語モデル）へ渡す情報の更新の段で使う）。
+
+## 経路を選ぶ（最初にここで分ける。ADR-051）
+
+段数は変更の規模ではなく、**決定を含むか否か**で分ける。
+
+- **決定を含む** → 下の14ステップを全て回す。規模は問わない。選べる案が複数あり、その一つを選んだなら決定である。既定値・上限・順序・型・境界の変更は、一行でも決定を含む。
+- **決定を含まない**（誤字・言い回し・書式・リンクの張り替え・投影の描き直し・`updated` の更新）→ 軽い経路を通る。ステップ 2・3（影響の列挙）と、更新の順序（現行 `SPEC` → 実装 → テスト → 投影）だけを守る。`CHANGE`・`IMPACT`・`ADR` は要らない。
+- 途中で決定を含むと分かったら、その場で14ステップへ戻す。軽い経路を通ったこと自体は記録しない。
+
+どちらの経路でも、不変条件の強制は変わらない（削除安全ガード・ICD 依存ガード・全件監査はフックと CI の層にあり、経路を見ていない）。軽い経路が省くのは記録の段であって、強制ではない。
 
 ## 更新の順序（§3.8、必ず守る）
 
@@ -46,4 +56,4 @@ description: 'Runs the 14-step change flow for a proposed change: traces depende
 
 - **予防**: 降格の不変条件は削除安全ガード（Hook）が強制する。このスキルは作業を並べ、ガードが発火せずに済むようにする。
 - **検出**: 前向きの影響集合と逆向きの依存を dep-graph で出す。逆孤児（要求に対応する仕様の不在、受入基準に対応するテストの不在）を表に出す。dead link と全件の逆方向の追跡性は全件走査が要るので監査に委ねる（§4.2）。
-- **委ねる**: 工数見積。順序を省けるか（省けない。順序は必須）。ドメイン間の ICD 合意（人間）。
+- **委ねる**: 工数見積。その変更が決定を含むかの判定（意味の判断であり、機械では閉じない。ADR-051）。ドメイン間の ICD 合意（人間）。なお、決定を含む変更で順序を省けるかは委ねない（省けない。順序は必須）。
