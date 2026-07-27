@@ -6,9 +6,9 @@ domain: guard
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-26
+updated: 2026-07-27
 sources: [spec/doctrine.ja.md §4.2]
-depends_on: [REQ-004, ICD-001, ICD-002]
+depends_on: [REQ-004, ICD-001, ICD-002, ADR-036]
 llm_context: task
 ---
 
@@ -30,6 +30,7 @@ llm_context: task
 - 削除安全（Guard3, `[R4]`）: 現行（current/accepted）から deprecated/superseded/archived への降格、本文を空にする編集、Bash の `rm`・`git rm`・`mv` を対象とする。その文書を指す現行の逆依存が残っているとき、これらを拒否する。逆依存は graph の `reverse_current_dependents(id)` で引く。
 
 ## 制約
+- 統治木の無いプロジェクト（doctrine 未導入の土地。`walkup_docs_root` が木を一つも解決できない）では、ICD依存・削除安全の二ガードは発火しない（ADR-036）。`depends_on` 風のキーを持つ他体系（Obsidian 等）の Write/Edit を誤って deny/block しない。判定は「このファイルのプロジェクトに木が在るか」であって「この文書が木の中か」ではない。木が在れば、木の外の stray 文書に対しても以下の規則を従来どおり当てる。この境界は、リンタの体系外無発火（ADR-024）をガードへ一貫適用したものである。
 - 三ガードを不変→ICD依存→削除安全の順で当て、最初に拒否したガードで止める。不変を当てた後、対象を realpath で解決した実体が doctrine_docs/ の木の外にあり、かつ ICD依存・削除安全のどちらも発火しえない（content がフロントマターを持たない Write、または on-disk に `id` を持たない Edit/MultiEdit）ときは、依存グラフを組まずに allow してよい。これは判定を変えない早期通過であり、上の削除安全規則を弱めない。`id` を持つ文書（非 doctrine_docs/ パスやリンク経由を含む）は早期通過せず、逆依存が残る降格は従来どおり拒否する。
 - ICD依存ガードは `status` を見ない（C12）。構造、すなわちドメインと、型が ICD かどうかだけを見る。
 - R7 の拒否文は spec §4.2 を一字一句なぞる: `<dep> は <相手ドメイン> の内部です。<相手ドメイン> の ICD 宛にしてください。`

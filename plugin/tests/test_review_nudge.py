@@ -33,7 +33,7 @@ class ReviewNudgeBase(unittest.TestCase):
 class TestNudgesTypedDoc(ReviewNudgeBase):
     def test_typed_doc_gets_nudge(self):
         """A typed governance doc -> additionalContext nudge mentioning doc-review."""
-        p = _util.write_doc(self.root, "billing/spec/SPEC-001-x.md", {
+        p = _util.write_doc(self.root, "doctrine_docs/billing/spec/SPEC-001-x.md", {
             "id": "SPEC-001", "title": "x", "type": "SPEC", "domain": "billing",
             "status": "current", "owner": "a", "updated": "2026-06-30",
             "sources": [],
@@ -49,7 +49,7 @@ class TestNudgesTypedDoc(ReviewNudgeBase):
     def test_each_known_type_nudges(self):
         reg = _util.load_core("_registry")
         for tc in ("REQ", "ADR", "ICD", "TEST", "DECIDED"):
-            p = _util.write_doc(self.root, "billing/%s-9-x.md" % tc, {
+            p = _util.write_doc(self.root, "doctrine_docs/billing/%s-9-x.md" % tc, {
                 "id": "%s-9" % tc, "title": "x", "type": tc, "domain": "billing",
                 "status": reg.default_status(tc) or "current", "owner": "a",
                 "updated": "2026-06-30", "sources": [],
@@ -125,6 +125,34 @@ class TestSilentForNonDocs(ReviewNudgeBase):
         out, code = _util.invoke("review-nudge", stdin_obj="")
         self.assertEqual(code, 0)
         self.assertEqual(out.strip(), "")
+
+
+class TestSilentWithoutTree(ReviewNudgeBase):
+    """ADR-036 境界: 統治木の無いプロジェクトでは、type を持つ他体系の .md を
+    編集しても、印も助言も出さない(#68。存在しない _system への書き戻し指示や
+    無関係セッションの Stop 差し止めを防ぐ)。"""
+
+    def test_typed_doc_outside_any_tree_is_silent(self):
+        # doctrine_docs も docs/_system も無い、素の .md(Obsidian 等を模す)。
+        p = _util.write_doc(self.root, "vault/SPEC-001-x.md", {
+            "id": "SPEC-001", "title": "x", "type": "SPEC", "domain": "billing",
+            "status": "current", "owner": "a", "updated": "2026-06-30",
+            "sources": [],
+        }, "## 入出力\n本文。\n")
+        out, code = self._nudge(p)
+        self.assertEqual(code, 0)
+        self.assertEqual(out.strip(), "")
+
+    def test_typed_doc_in_doctrine_tree_still_nudges(self):
+        # 対照: 同じ型付き文書でも doctrine_docs/ の木の中なら従来どおり助言する。
+        p = _util.write_doc(self.root, "doctrine_docs/billing/SPEC-003-x.md", {
+            "id": "SPEC-003", "title": "x", "type": "SPEC", "domain": "billing",
+            "status": "current", "owner": "a", "updated": "2026-06-30",
+            "sources": [],
+        }, "## 入出力\n本文。\n")
+        out, code = self._nudge(p)
+        self.assertEqual(code, 0)
+        self.assertIn("doc-review", out)
 
 
 if __name__ == "__main__":

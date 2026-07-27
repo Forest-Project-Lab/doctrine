@@ -153,6 +153,13 @@ def main(argv=None):
         type_code = _typed_doc_type(path)
         if type_code is None and base != _SESSION_NOTES_NAME:
             return 0  # 文書でなければ静かに通す。
+        # 統治木の無いプロジェクト(doctrine 未導入の土地)では、type: SPEC 等の
+        # frontmatter を持つ他体系の .md を編集しても、捕捉の印も助言も出さない
+        # (ADR-036: ガードの体系外無発火と同じ境界)。存在しない _system/ への
+        # 書き戻し指示や、無関係なセッションの Stop 差し止めを防ぐ。
+        # 木が在れば(木の外の stray 文書でも)従来どおり印と助言を出す。
+        if _docs_root_for(path) is None:
+            return 0
         # 捕捉の印は Level に依らず残す(R12 / ADR-030)。
         _mark_session(data, path, type_code)
         if type_code is None:

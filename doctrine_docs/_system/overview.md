@@ -5,7 +5,7 @@ type: OVERVIEW
 domain: _system
 status: current
 owner: render-projection
-updated: 2026-07-26
+updated: 2026-07-27
 llm_context: always
 sources: []
 ---
@@ -76,6 +76,7 @@ sources: []
 | SPEC-003 | SPEC | guard | 三ガードの判定規則（不変・ICD依存・削除安全） |
 | ADR-003 | ADR | guard | C13 の分岐（dangling 許容／分類不能 拒否） |
 | ADR-004 | ADR | guard | PostToolUse の事前状態を raw 全文で復元する |
+| ADR-036 | ADR | guard | 統治木の無いプロジェクトでは二・三ガードとナッジ・退避を発火させない |
 | IMPL-003 | IMPL | guard | `policy-guard.py` の実装メモ |
 | TEST-003 | TEST | guard | 三ガードの受入試験 |
 | ICD-004 | ICD | lint | lint のインターフェース（リンタと用語チェッカーの公開契約） |
