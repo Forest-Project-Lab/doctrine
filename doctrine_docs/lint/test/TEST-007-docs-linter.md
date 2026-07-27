@@ -36,5 +36,6 @@ llm_context: task
 ## 合否基準
 
 - `tests/test_linter.py` が全観点で合格すること。各点検が期待どおりのコードと重大度で発火し、誤検出が無いことを合格とする。
+- `BatchModeTest`(#91): `--batch` が clean な木で 0、ERROR を含む木で 1、統治木なしで 0 を返す。
 
 <!-- 入れない: 無関係な要求 -->

@@ -6,7 +6,7 @@ domain: model
 status: current
 owner: doctrine-maintainers
 created: 2026-07-26
-updated: 2026-07-26
+updated: 2026-07-27
 sources: [spec/doctrine.ja.md]
 review_by: 2026-10-26
 llm_context: task
@@ -24,7 +24,7 @@ llm_context: task
 
 - 対象: `spec/doctrine.ja.md`
 - 検査: exists(存在)
-- 期待する状態: 在ること。加えて、決定(ADR)が上位設計書の記述を変えるとき、同じ変更で上位設計書も更新される(上位が下位 SPEC より古い逆転を作らない。過去に ADR-023/024 で 16 日の逆転が起きた)
+- 期待する状態: 在ること。加えて、決定(ADR)が上位設計書の記述を変えるとき、同じ変更で上位設計書も更新される(上位が下位 SPEC より古い逆転を作らない。以前 ADR-023/024 で 16 日の逆転が起きた)
 
 ## 動いたら何が壊れるか
 

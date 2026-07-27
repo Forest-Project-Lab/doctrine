@@ -98,6 +98,44 @@ class _Base(unittest.TestCase):
 # ---------------------------------------------------------------------------
 # Valid doc + advisory-only contract (critique gap)
 # ---------------------------------------------------------------------------
+class BatchModeTest(_Base):
+    """#91: --batch は統治木の全 .md を点検し、ERROR で終了コード 1 を返す(CI ゲート)。"""
+
+    def _batch(self):
+        return _util.invoke(DL, argv=["--batch",
+                            os.path.join(self.root, "doctrine_docs")])
+
+    def _valid_spec(self, doc_id):
+        return ({"id": doc_id, "title": "t", "type": "SPEC", "domain": "billing",
+                 "status": "current", "owner": "o", "updated": "2026-07-01",
+                 "sources": [], "depends_on": ["REQ-1"]},
+                "## 入出力\na\n## 制約\nb\n## エラー時挙動\nc\n## 受入基準\nd\n")
+
+    def test_clean_tree_exits_0(self):
+        fm, body = self._valid_spec("SPEC-1")
+        self._write("doctrine_docs/billing/spec/SPEC-1-x.md", fm, body)
+        out, code = self._batch()
+        self.assertEqual(code, 0, out)
+        self.assertIn("ERROR なし", out)
+
+    def test_bad_doc_exits_1(self):
+        # 必須キー owner 欠落 + status 不正。
+        self._write("doctrine_docs/billing/spec/SPEC-2-x.md",
+                    {"id": "SPEC-2", "title": "t", "type": "SPEC",
+                     "domain": "billing", "status": "draft",
+                     "updated": "2026-07-01", "sources": []},
+                    "## 入出力\na [R1]\n## 制約\nb\n## エラー時挙動\nc\n## 受入基準\nd\n")
+        out, code = self._batch()
+        self.assertEqual(code, 1, out)
+        self.assertIn("[ERROR]", out)
+
+    def test_no_tree_exits_0(self):
+        # 統治木が無いプロジェクトは CI で落とさない(点検対象なし)。
+        out, code = _util.invoke(DL, argv=["--batch", self.root])
+        self.assertEqual(code, 0)
+        self.assertIn("点検対象なし", out)
+
+
 class ValidAndAdvisoryTest(_Base):
     """Critique gap: valid doc -> no findings; linter NEVER emits 'decision'."""
 
