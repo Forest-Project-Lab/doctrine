@@ -74,6 +74,7 @@ sources: []
 | SPEC-006 | SPEC | graph | 依存グラフの契約（forward/reverse/classify/reverse-orphans） |
 | ADR-006 | ADR | graph | cross_domain_violation は depends_on 端のみに付ける |
 | ADR-038 | ADR | graph | 依存の循環を監査が検出する（自己依存と多頂点循環） |
+| ADR-045 | ADR | graph | 本文の要求タグは自己適用の約束であり、追跡の正路は depends_on の REQ である |
 | IMPL-006 | IMPL | graph | `_depgraph.py`＋`dep-graph.py` の実装メモ |
 | TEST-006 | TEST | graph | 依存グラフのテスト計画 |
 | ICD-003 | ICD | guard | guard のインターフェース（三ガードの公開境界） |
@@ -82,6 +83,7 @@ sources: []
 | ADR-003 | ADR | guard | C13 の分岐（dangling 許容／分類不能 拒否） |
 | ADR-004 | ADR | guard | PostToolUse の事前状態を raw 全文で復元する |
 | ADR-036 | ADR | guard | 統治木の無いプロジェクトでは二・三ガードとナッジ・退避を発火させない |
+| ADR-044 | ADR | guard | 不変の ADR に誤りを見つけたときの正規の直し方 |
 | IMPL-003 | IMPL | guard | `policy-guard.py` の実装メモ |
 | TEST-003 | TEST | guard | 三ガードの受入試験 |
 | ICD-004 | ICD | lint | lint のインターフェース（リンタと用語チェッカーの公開契約） |
@@ -140,6 +142,7 @@ sources: []
 | ADR-032 | ADR | packaging | Hook 設定はセッション開始時に固定される前提で運用する(追認) |
 | ADR-041 | ADR | packaging | 導入直後を警告で始めない（状態の種蒔き・Level 昇格・初日の中立案内） |
 | ADR-042 | ADR | packaging | 監査要約のスキーマは全読者が照合する・状態ファイルの書式は前方寛容とする |
+| ADR-046 | ADR | packaging | 既定 Level 2 では全件検査を CI に委ね、初回監査前は警告でなく案内を出す |
 | IMPL-017 | IMPL | packaging | パッケージ・Hook配線の実装注記 |
 | IMPL-019 | IMPL | packaging | gov-heartbeat.py（統治ハートビート）の実装メモ |
 | TEST-019 | TEST | packaging | Hook配線・e2e連鎖の受入 |

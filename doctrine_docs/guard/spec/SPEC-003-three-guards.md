@@ -25,7 +25,7 @@ llm_context: task
 
 各ガードの規則:
 
-- 不変（Guard1, `[R8]`）: `<domain>/archive/` 下の編集を拒否する。加えて、置き場所に依らず、ディスク上の実効 `status` が archived の既存文書の編集も拒否する（ADR-027。パス判定だけでは倉庫の外に居る archived 文書が編集自由になる）。現行から archived への遷移の書き込み自体は対象外とする（それは降格の操作であり、削除安全ガードが逆参照ゼロを守る）。既存の `type:ADR` ファイルの改変も拒否する。ただし carve-out だけは許す。carve-out とは、`status` を proposed→accepted・accepted→superseded・accepted→deprecated の範囲で動かし、`superseded_by` と `updated` を付ける編集をいう。
+- 不変（Guard1, `[R8]`）: `<domain>/archive/` 下の編集を拒否する。加えて、置き場所に依らず、ディスク上の実効 `status` が archived の既存文書の編集も拒否する（ADR-027。パス判定だけでは倉庫の外に居る archived 文書が編集自由になる）。現行から archived への遷移の書き込み自体は対象外とする（それは降格の操作であり、削除安全ガードが逆参照ゼロを守る）。既存の `type:ADR` ファイルの改変も拒否する。ただし carve-out だけは許す。carve-out とは、`status` を proposed→accepted・accepted→superseded・accepted→deprecated の範囲で動かし、`superseded_by` と `updated` を付ける編集をいう。ADR に誤りを見つけたときの正規の直し方は ADR-044 が定める（未コミットは削除して作り直す・マージ済みは後継で置換する。作成時に用語とフロントマターを正すのが第一）。
 - ICD依存（Guard2, `[R7]`）: Write の content からフロントマターを読み、`depends_on` の各 dep を調べる。相手のドメインが自ドメインと異なり、しかも相手の型が ICD でなければ拒否する。dep の `status` は見ない（C12: 整合判断id）。Edit・MultiEdit は書き込む前に全文を組み立てられないため、PostToolUse の block に回す。
 - 削除安全（Guard3, `[R4]`）: 現行（current/accepted）から deprecated/superseded/archived への降格、本文を空にする編集、Bash の `rm`・`git rm`・`mv` を対象とする。その文書を指す現行の逆依存が残っているとき、これらを拒否する。逆依存は graph の `reverse_current_dependents(id)` で引く。
 
