@@ -20,6 +20,7 @@ generated_at は決定的に注入できる(--today か固定値)。テストが
 標準ライブラリだけを使う。pip も通信も使わない。出力は決定的(整列済み)。
 """
 import datetime
+import hashlib
 import json
 import os
 import re
@@ -233,6 +234,34 @@ def _check_dead_link(g):
                 out.append(_finding(
                     "dead_link", SEV_ERROR, doc_id, node["path"],
                     "参照先 %s が存在しない(dead link)" % t, refs=[t]))
+    return out
+
+
+def _check_dep_cycle(g):
+    """依存の循環(R3/R8)。ADR-038 / #89。
+
+    depends_on の循環(自己依存 A→A、多頂点循環 A→B→C→A)を warn で挙げる。
+    循環の全構成員は「現行の依存が残る」と判定され続けて降格できなくなる論理的
+    デッドロックを生む。追跡性の階層に循環は本来あり得ないため、存在は
+    モデル化誤りの兆候である。
+    """
+    out = []
+    for cycle in g.find_cycles():
+        if len(cycle) == 1:
+            v = cycle[0]
+            node = g.nodes.get(v, {})
+            out.append(_finding(
+                "dep_cycle", SEV_WARN, v, node.get("path", ""),
+                "自己依存(depends_on が自分自身 %s を指す)。循環を断つこと" % v,
+                refs=[v]))
+        else:
+            joined = " → ".join(cycle + [cycle[0]])
+            head = cycle[0]
+            node = g.nodes.get(head, {})
+            out.append(_finding(
+                "dep_cycle", SEV_WARN, head, node.get("path", ""),
+                "depends_on の循環(%s)。全構成員が降格不能になる。循環を断つこと"
+                % joined, refs=list(cycle)))
     return out
 
 
@@ -535,18 +564,63 @@ def _check_ext_anchors(g, root):
         target = m.group(1).strip()
         cm = _EXT_CHECK_RE.search(body)
         check = cm.group(1) if cm else "exists"
-        if "exists" not in check:
-            continue  # review_by のみ / hash(未実装) は機械検査しない。
+        wants_exists = "exists" in check
+        wants_hash = "hash" in check
+        if not wants_exists and not wants_hash:
+            continue  # review_by のみ は機械検査しない(期限は review_by 検査)。
         if target.startswith("http://") or target.startswith("https://"):
             continue  # 通信はしない(ADR-031)。URL は review_by で見る。
         abspath = target if os.path.isabs(target) else os.path.join(proj, target)
         if not os.path.exists(abspath):
+            # exists でも hash でも、対象の不在は最も重い(error)。
             out.append(_finding(
                 "ext_anchor_broken", SEV_ERROR, doc_id, node["path"],
                 "外部アンカーの対象 %s が実在しない。依存先が消えたか動いた。"
                 "対象を直すか、依存元とともに整理する(ADR-026)" % target,
                 refs=[]))
+            continue
+        if wants_hash:
+            out.extend(_check_ext_hash(doc_id, node, body, target, abspath))
     return out
+
+
+_EXT_HASH_RE = re.compile(r"指紋[:：]\s*sha256:([0-9a-fA-F]{64})")
+
+
+def _check_ext_hash(doc_id, node, body, target, abspath):
+    """EXT の hash 検査(ADR-039, #70)。対象の sha256 を本文の期待値と照合する。
+
+    本文に `- 指紋: sha256:<64桁>` があれば、対象ファイルの sha256 を計算して
+    照合する。一致すれば無言、不一致は warn(内容が変わった。依存文書の追随を
+    確かめよ)。期待値の行が無ければ warn(hash 指定だが期待値が無い=検査できない)。
+    決して沈黙して素通りしない(旧実装は hash 指定を警告なく飛ばし、exists すら
+    無効化していた)。
+    """
+    hm = _EXT_HASH_RE.search(body)
+    if hm is None:
+        return [_finding(
+            "ext_anchor_broken", SEV_WARN, doc_id, node["path"],
+            "EXT の検査に hash を指定したが、本文に期待値『- 指紋: sha256:<64桁>』"
+            "が無い。期待値を書くか、検査を exists にする(ADR-039)")]
+    expected = hm.group(1).lower()
+    try:
+        h = hashlib.sha256()
+        with open(abspath, "rb") as fh:
+            for chunk in iter(lambda: fh.read(65536), b""):
+                h.update(chunk)
+        actual = h.hexdigest()
+    except OSError:
+        return [_finding(
+            "ext_anchor_broken", SEV_WARN, doc_id, node["path"],
+            "外部アンカーの対象 %s を読めず指紋を計算できない" % target)]
+    if actual != expected:
+        return [_finding(
+            "ext_anchor_broken", SEV_WARN, doc_id, node["path"],
+            "外部アンカーの対象 %s の内容が期待の指紋と一致しない(変わった)。"
+            "依存文書が追随すべきか確かめ、確認後に指紋を更新する(ADR-039)。"
+            "期待 sha256:%s… 実際 sha256:%s…"
+            % (target, expected[:12], actual[:12]), refs=[])]
+    return []
 
 
 def _check_memory_shadow(g, root):
@@ -924,6 +998,7 @@ def run_audit(root, today, knobs):
 
     findings = []
     findings += _check_dead_link(g)
+    findings += _check_dep_cycle(g)
     findings += _check_review_by(g, today)
     findings += _check_stale_draft(g, today, knobs["draft_stale_days"])
     findings += _check_orphan(g, today, knobs["orphan_stale_days"])

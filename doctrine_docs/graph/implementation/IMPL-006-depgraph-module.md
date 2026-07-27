@@ -6,7 +6,7 @@ domain: graph
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-26
+updated: 2026-07-27
 sources: [plugin/scripts/_depgraph.py]
 depends_on: [SPEC-006]
 llm_context: task
@@ -29,4 +29,4 @@ llm_context: task
 
 ## 対象部品
 
-`plugin/scripts/_depgraph.py`（`Graph`・`build_graph`・`classify_edges`・`reverse_orphans`）と、`plugin/scripts/dep-graph.py`（CLI のモード・終了コード・`_emit`）を対象とする。
+`plugin/scripts/_depgraph.py`（`Graph`・`build_graph`・`classify_edges`・`reverse_orphans`・`find_cycles`（ADR-038、Tarjan の強連結成分・明示スタック））と、`plugin/scripts/dep-graph.py`（CLI のモード・終了コード・`_emit`）を対象とする。

@@ -114,6 +114,98 @@ class DeadLinkTest(AuditBase):
         self.assertTrue(all(f["severity"] == "error" for f in dl))
 
 
+# --- ext_anchor hash (ADR-039 / #70) --------------------------------------
+
+class ExtHashTest(AuditBase):
+    def _ext_body(self, target, check, digest=None):
+        body = ("# ext\n## 期待\n- 対象: `%s`\n- 検査: %s\n" % (target, check))
+        if digest is not None:
+            body += "- 指紋: sha256:%s\n" % digest
+        return body
+
+    def _repo_with_target(self, ext_body, target_rel, target_bytes):
+        import hashlib as _hl
+        fm = _fm("EXT-1", "EXT", "billing")
+        docs_root = self.build([(fm, ext_body)])
+        root = os.path.dirname(docs_root)
+        tgt = os.path.join(root, target_rel)
+        os.makedirs(os.path.dirname(tgt), exist_ok=True)
+        with open(tgt, "wb") as fh:
+            fh.write(target_bytes)
+        digest = _hl.sha256(target_bytes).hexdigest()
+        return docs_root, digest
+
+    def test_hash_match_is_silent(self):
+        data_bytes = b"a,b\n1,2\n"
+        # 先に digest を計算し、その値を埋めた EXT で作り直す。
+        import hashlib as _hl
+        digest = _hl.sha256(data_bytes).hexdigest()
+        body = self._ext_body("data/x.csv", "hash", digest)
+        docs_root, _ = self._repo_with_target(body, "data/x.csv", data_bytes)
+        data, _ = self.audit_json(docs_root)
+        self.assertEqual(self.checks_for(data, "ext_anchor_broken"), [])
+
+    def test_hash_mismatch_warns(self):
+        import hashlib as _hl
+        digest = _hl.sha256(b"OLD").hexdigest()
+        body = self._ext_body("data/x.csv", "hash", digest)
+        docs_root, _ = self._repo_with_target(body, "data/x.csv", b"NEW-CONTENT")
+        data, _ = self.audit_json(docs_root)
+        f = self.checks_for(data, "ext_anchor_broken")
+        self.assertEqual(len(f), 1)
+        self.assertEqual(f[0]["severity"], "warn")
+        self.assertIn("一致しない", f[0]["message"])
+
+    def test_hash_without_digest_warns_not_silent(self):
+        body = self._ext_body("data/x.csv", "hash")  # 指紋の行なし
+        docs_root, _ = self._repo_with_target(body, "data/x.csv", b"x")
+        data, _ = self.audit_json(docs_root)
+        f = self.checks_for(data, "ext_anchor_broken")
+        self.assertEqual(len(f), 1)
+        self.assertEqual(f[0]["severity"], "warn")
+
+    def test_hash_missing_target_is_error(self):
+        body = self._ext_body("data/gone.csv", "hash", "0" * 64)
+        docs_root = self.build([(_fm("EXT-1", "EXT", "billing"), body)])
+        data, _ = self.audit_json(docs_root)
+        f = self.checks_for(data, "ext_anchor_broken")
+        self.assertTrue(any(x["severity"] == "error" for x in f))
+
+
+# --- dep_cycle (ADR-038 / #89) --------------------------------------------
+
+class DepCycleTest(AuditBase):
+    def test_no_cycle_no_finding(self):
+        root = self.build([
+            (_fm("SPEC-1", "SPEC", "billing", depends_on=["REQ-1"]), "本文"),
+            (_fm("REQ-1", "REQ", "billing"), "本文"),
+        ])
+        data, _ = self.audit_json(root)
+        self.assertEqual(self.checks_for(data, "dep_cycle"), [])
+
+    def test_self_dependency_warned(self):
+        root = self.build([
+            (_fm("SPEC-1", "SPEC", "billing", depends_on=["SPEC-1"]), "本文"),
+        ])
+        data, _ = self.audit_json(root)
+        cyc = self.checks_for(data, "dep_cycle")
+        self.assertEqual(len(cyc), 1)
+        self.assertEqual(cyc[0]["severity"], "warn")
+        self.assertIn("自己依存", cyc[0]["message"])
+
+    def test_multi_node_cycle_warned(self):
+        root = self.build([
+            (_fm("SPEC-1", "SPEC", "billing", depends_on=["SPEC-2"]), "本文"),
+            (_fm("SPEC-2", "SPEC", "billing", depends_on=["SPEC-3"]), "本文"),
+            (_fm("SPEC-3", "SPEC", "billing", depends_on=["SPEC-1"]), "本文"),
+        ])
+        data, _ = self.audit_json(root)
+        cyc = self.checks_for(data, "dep_cycle")
+        self.assertEqual(len(cyc), 1)
+        self.assertEqual(cyc[0]["severity"], "warn")
+        self.assertIn("循環", cyc[0]["message"])
+
+
 # --- review_by overrun (TC-084/085/086, R2) -------------------------------
 
 class ReviewByTest(AuditBase):

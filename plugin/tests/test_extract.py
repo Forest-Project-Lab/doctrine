@@ -40,6 +40,10 @@ class ExtractBase(unittest.TestCase):
     def setUp(self):
         self.root = _util.mkdtemp()
         self.addCleanup(shutil.rmtree, self.root, ignore_errors=True)
+        # ADR-022/#92: docs/ が統治木として認められるには _system の印が要る。
+        # term-extract は他スクリプトと同じ登録簿の解決を使う(素の docs/ は他所の
+        # 土地として走査しない)。fixtures は docs/ を使うので印を置いておく。
+        os.makedirs(os.path.join(self.root, "docs", "_system"), exist_ok=True)
 
     def write(self, relpath, content):
         abspath = os.path.join(self.root, relpath)
@@ -326,16 +330,31 @@ class TestRobustness(ExtractBase):
     """B.8-10 / B.7: empty docs, unknown --domain, no docs/ -> exit 0, no crash."""
 
     def test_empty_docs_dir_exits_0(self):
-        os.makedirs(os.path.join(self.root, "docs"))
+        # setUp が docs/_system を作るので統治木は在るが、ドメイン文書は無い。
         out, code = self.run_extract("--min-df", "1")
         self.assertEqual(code, 0)
         self.assertIn("候補なし", out)
 
-    def test_no_docs_dir_exits_0_with_warning(self):
+    def test_no_tree_exits_0_with_warning(self):
+        # 統治木の印(_system)を消すと、素の docs/ は他所の土地。走査しない(#92)。
+        import shutil as _sh
+        _sh.rmtree(os.path.join(self.root, "docs"), ignore_errors=True)
         out, code = self.run_extract("--min-df", "1", "--format", "json")
         self.assertEqual(code, 0)
         data = json.loads(out)
-        self.assertTrue(any("docs/" in w for w in data["warnings"]))
+        self.assertTrue(any("統治木が無い" in w for w in data["warnings"]))
+
+    def test_doctrine_docs_default_tree_is_scanned(self):
+        # #92: 既定名 doctrine_docs/ を走査できる(旧実装は docs/ 直書きで沈黙死)。
+        self.write("doctrine_docs/billing/spec/SPEC-001.md",
+                   _doc("billing", "SPEC", "current", "refund"))
+        self.write("doctrine_docs/identity/spec/SPEC-002.md",
+                   _doc("identity", "SPEC", "current", "login"))
+        out, code = self.run_extract("--min-df", "1", "--format", "json")
+        self.assertEqual(code, 0)
+        data = json.loads(out)
+        self.assertIn("billing", data["domains"])
+        self.assertIn("identity", data["domains"])
 
     def test_unknown_domain_warns_exits_0(self):
         self.write("docs/billing/spec/SPEC-001.md",

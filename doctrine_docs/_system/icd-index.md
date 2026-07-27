@@ -5,7 +5,7 @@ type: OVERVIEW
 domain: _system
 status: current
 owner: render-projection
-updated: 2026-07-26
+updated: 2026-07-27
 llm_context: always
 sources: []
 ---
@@ -16,7 +16,7 @@ sources: []
 
 | domain | ICD id | title | canonical_for | updated |
 |---|---|---|---|---|
-| audit | ICD-005 | audit のインターフェース（全件監査の境界） | corpus-audit, audit-summary-schema, intake-ledger-format | 2026-07-26 |
+| audit | ICD-005 | audit のインターフェース（全件監査の境界） | corpus-audit, audit-summary-schema, intake-ledger-format | 2026-07-27 |
 | authoring | ICD-007 | authoring のインターフェース（作成・初期化・支援） | scaffolding, term-extraction, skills, templates | 2026-07-26 |
 | context | ICD-006 | context のインターフェース（注入・パック・投影描画の契約） | context-injection, context-pack, projection-render | 2026-07-26 |
 | graph | ICD-002 | graph のインターフェース（依存グラフ問い合わせ契約） | dependency-graph-api | 2026-06-30 |

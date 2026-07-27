@@ -6,7 +6,7 @@ domain: packaging
 status: current
 owner: doctrine-maintainers
 created: 2026-07-26
-updated: 2026-07-26
+updated: 2026-07-27
 sources: [plugin/scripts/gov-heartbeat.py]
 depends_on: [SPEC-021]
 llm_context: task

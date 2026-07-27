@@ -6,7 +6,7 @@ domain: audit
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-26
+updated: 2026-07-27
 sources: [spec/doctrine.ja.md#4.2]
 canonical_for: [corpus-audit, audit-summary-schema, intake-ledger-format]
 llm_context: task
@@ -28,15 +28,16 @@ ICD・正本・投影・現行・依存・参照は用語辞書（`_system/gloss
 
 このドメインだけが正本となる事実を挙げる（frontmatter の `canonical_for` と一致する）。
 
-- `corpus-audit`: 全件監査の検査群（18 検査）と、各検査の重大度。
+- `corpus-audit`: 全件監査の検査群（19 検査）と、各検査の重大度。
 - `intake-ledger-format`: 分類の記録（`_system/.md-intake`）の書式の正本。一行一項目 `パス: 非文書|投影|保留 [YYYY-MM-DD]`（保留は期限必須。末尾 `/` は配下全体）。読み取りは共有コア `_intake.py`（IMPL-018）に一本化する。
 - `audit-summary-schema`: 監査の要約スキーマ `docs-audit/1` の形。
 
-18 検査と重大度（固定）:
+19 検査と重大度（固定）:
 
 | 検査名 | 重大度 |
 |---|---|
 | dead_link | error |
+| dep_cycle（依存の循環。自己依存・多頂点循環。ADR-038） | warn |
 | review_by_overrun（DECIDED/WATCH の不在も含む） | warn（不在は error） |
 | stale_draft | warn |
 | orphan | error |

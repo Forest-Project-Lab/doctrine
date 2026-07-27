@@ -6,7 +6,7 @@ domain: audit
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-26
+updated: 2026-07-27
 sources: [plugin/scripts/docs-audit.py]
 depends_on: [SPEC-011]
 llm_context: task
@@ -30,4 +30,4 @@ llm_context: task
 
 ## 対象部品
 
-対象は `plugin/scripts/docs-audit.py` である。各 `_check_*` は `plugin/scripts/_depgraph.py`（依存グラフ）と `plugin/scripts/_registry.py`（登録簿）を使う。
+対象は `plugin/scripts/docs-audit.py` である。各 `_check_*` は `plugin/scripts/_depgraph.py`（依存グラフ）と `plugin/scripts/_registry.py`（登録簿）を使う。`_check_dep_cycle` は `find_cycles` を呼び循環を warn で挙げる（ADR-038、#89）。

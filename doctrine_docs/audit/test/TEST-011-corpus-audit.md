@@ -6,7 +6,7 @@ domain: audit
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-26
+updated: 2026-07-27
 sources: [plugin/tests/test_audit.py]
 depends_on: [SPEC-011]
 llm_context: task
@@ -40,4 +40,4 @@ WATCH と突き合わせ、後退させてはならない事項を挙げる。
 
 ## 合否基準
 
-`plugin/tests/test_audit.py` の全クラス（DeadLinkTest・ReviewByTest・StaleDraftTest・OrphanTest・ReverseOrphanTest・CanonicalConflictTest・IcdViolationTest・ProjectionDriftTest・IcdIndexDriftTest・CtxmapDriftTest・NearDuplicateTest・SummaryHandshakeTest・DeterminismTest・DetectedFallbackTest・UnregisteredTest）が通れば合格とする。
+`plugin/tests/test_audit.py` の全クラス（DeadLinkTest・ReviewByTest・StaleDraftTest・OrphanTest・ReverseOrphanTest・CanonicalConflictTest・IcdViolationTest・ProjectionDriftTest・IcdIndexDriftTest・CtxmapDriftTest・DepCycleTest（ADR-038: 循環なし・自己依存 warn・多頂点循環 warn）・ExtHashTest（ADR-039: hash 一致=無言・不一致 warn・期待値なし warn・対象なし error）・NearDuplicateTest・SummaryHandshakeTest・DeterminismTest・DetectedFallbackTest・UnregisteredTest）が通れば合格とする。
