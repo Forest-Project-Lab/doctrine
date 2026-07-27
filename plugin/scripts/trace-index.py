@@ -26,13 +26,24 @@ import _tracescan  # noqa: E402
 
 SCHEMA = "trace-index/1"
 USAGE = ("trace-index.py [--root PATH] [--docs-root PATH] [--id ID] "
-         "[--format json|text] [--max-files N]")
+         "[--coverage] [--term TERM] [--format json|text] [--max-files N]")
+
+
+def _valid_terms():
+    """--term に許す項の一覧(ADR-058)。勘定の枠と同じ正本から導く。"""
+    terms = ["annotated", "unmarked"]
+    terms += ["excluded:%s" % rid
+              for rid, kind in _tracescan.EXCLUSION_RULES if kind == "file"]
+    terms += ["pruned:%s" % rid
+              for rid, kind in _tracescan.EXCLUSION_RULES if kind == "dir"]
+    return terms
 
 
 def _parse_args(argv):
     """最小の引数解析。誤りがあれば (None, 理由) を返す。"""
     opts = {"root": None, "docs_root": None, "doc_id": None,
-            "format": "text", "max_files": _tracescan.DEFAULT_MAX_FILES}
+            "format": "text", "max_files": _tracescan.DEFAULT_MAX_FILES,
+            "coverage": False, "term": None}
     i = 0
     while i < len(argv):
         a = argv[i]
@@ -42,6 +53,14 @@ def _parse_args(argv):
             opts["docs_root"] = argv[i + 1]; i += 2
         elif a == "--id" and i + 1 < len(argv):
             opts["doc_id"] = argv[i + 1].strip(); i += 2
+        elif a == "--coverage":
+            opts["coverage"] = True; i += 1
+        elif a == "--term" and i + 1 < len(argv):
+            term = argv[i + 1].strip()
+            if term not in _valid_terms():
+                return None, ("不明な項: %s(許す項: %s)"
+                              % (term, ", ".join(_valid_terms())))
+            opts["term"] = term; i += 2
         elif a == "--format" and i + 1 < len(argv):
             if argv[i + 1] not in ("json", "text"):
                 return None, "不明な形式: %s" % argv[i + 1]
@@ -54,6 +73,8 @@ def _parse_args(argv):
             i += 2
         else:
             return None, "不明な引数: %s" % a
+    if opts["term"] and not opts["coverage"]:
+        return None, "--term は --coverage と共に使う"
     return opts, None
 
 
@@ -98,10 +119,46 @@ def main(argv=None):
         sys.stderr.write("走査の根が見つからない\n")
         return 3
 
-    ranges, findings = _tracescan.scan_tree(
-        root, docs_root=docs_root, max_files=opts["max_files"])
+    ranges, findings, coverage = _tracescan.scan_tree(
+        root, docs_root=docs_root, max_files=opts["max_files"],
+        collect_members=bool(opts["term"]))
     if opts["doc_id"]:
         ranges = [r for r in ranges if r["id"] == opts["doc_id"]]
+
+    if opts["coverage"]:
+        # 勘定の問い合わせ(ADR-058)。既定は件数、--term で当該の一覧をその場で
+        # 導出する(保存しない。ADR-055 と同じ原理)。
+        if opts["term"]:
+            names = coverage.get("members", {}).get(opts["term"], [])
+            if opts["format"] == "json":
+                payload = {"schema": SCHEMA, "root": os.path.basename(
+                    os.path.abspath(root)), "term": opts["term"],
+                    "count": len(names), "paths": names}
+                sys.stdout.write(
+                    json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
+            else:
+                out = ["# trace-index coverage", "項: %s" % opts["term"],
+                       "件数: %d" % len(names)]
+                out += ["  %s" % p for p in names]
+                sys.stdout.write("\n".join(out) + "\n")
+            return 0
+        cov = {k: v for k, v in coverage.items() if k != "members"}
+        if opts["format"] == "json":
+            payload = {"schema": SCHEMA, "root": os.path.basename(
+                os.path.abspath(root)), "coverage": cov}
+            sys.stdout.write(
+                json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
+        else:
+            out = ["# trace-index coverage",
+                   "到達: %d / 寄与: %d / 印なし: %d / 打ち切り: %s"
+                   % (cov["reached_files"], cov["annotated_files"],
+                      cov["unmarked_files"], cov["truncated"])]
+            for rid in sorted(cov["excluded"]):
+                out.append("  除外 %-12s %d" % (rid, cov["excluded"][rid]))
+            for rid in sorted(cov["pruned_dirs"]):
+                out.append("  刈り %-12s %d" % (rid, cov["pruned_dirs"][rid]))
+            sys.stdout.write("\n".join(out) + "\n")
+        return 0
 
     if opts["format"] == "json":
         # root は名前だけを載せる。絶対パスを外へ出さない(機械をまたいで

@@ -32,14 +32,17 @@ SPEC-026 を実装するときの制約と、はまりやすい落とし穴を�
 - **字下げは落とさない**。行頭の空白は意味を持つ（Python）。落としてよいのは行末だけである。
 - **BOM の除去は復号側の責務**（`utf-8-sig` で開く）。正規化の側で触らない。二箇所で剥がすと、片方を直したときにもう片方が残る。
 - **一ファイルの誤りで走査を止めないこと**。誤りは集めて返す。止めると、一つの閉じ忘れが他のファイルの範囲を全て消す。
-- **上限を超えたら黙って切り詰めないこと**。飛ばした事実を所見で告げる（SPEC-011 の語彙的酷似と同じ作法）。
+- **上限を超えたら黙って切り詰めないこと**。飛ばした事実を所見で告げ、勘定にも数える（SPEC-011 の語彙的酷似と同じ作法）。
+- **除外は必ず規則 id を経由すること**（ADR-058）。`continue` を書くときは、その前に勘定のどれか一つを増やしているかを確かめる。増やしていない `continue` は「黙って消える」経路の復活である。保存則の試験がこれを捕まえる。
+- **通常ファイル以外は開かないこと**。名前付きパイプは `open` がブロックし、走査全体が永久に戻らなくなる（実測）。`os.stat` して `S_ISREG` でないものは開かずに除外へ数える。
+- **勘定の一覧（members）は既定で集めないこと**。監査の要約は件数だけを持つ。一覧は `trace-index --coverage --term` の求めに応じてその場で導出する（ADR-055/ADR-058）。
 - **統治木と `.md` を走査しないこと**。この書式を説明する文書自身が印として読まれる（自己言及）。実リポジトリに対して走らせて、範囲ゼロ・所見ゼロであることを確かめられる。
 - **試験の原文に印そのものを書かないこと**。`tests/test_tracescan.py` は `_mark(...)` で印を組み立てる。原文に直接書くと、リポジトリ自身を走査したときに試験の原文が範囲として拾われる。
 
 ## 対象部品
 
-`plugin/scripts/_tracescan.py`。関数は `parse_marks`・`scan_text`・`scan_tree`・`normalize_lines`・`fingerprint`。定数は `MARKER_WORD`・`SKIP_DIR_NAMES`・`SKIP_SUFFIXES`・`DEFAULT_MAX_FILES`・`DEFAULT_MAX_FILE_BYTES`。
+`plugin/scripts/_tracescan.py`。関数は `parse_marks`・`scan_text`・`scan_tree`・`normalize_lines`・`fingerprint`・`empty_coverage`。定数は `MARKER_WORD`・`SKIP_DIR_NAMES`・`SKIP_SUFFIXES`・`DEFAULT_MAX_FILES`・`DEFAULT_MAX_FILE_BYTES`・`EXCLUSION_RULES`（除外規則の正本表）。
 
-現時点では、この部品を呼ぶ経路はまだ無い（索引の導出と監査の検査が入るまで）。段を分けた実装であり、呼び出し側は次の版で足す。
+呼ぶ経路は監査（`docs-audit._check_code_traces`）と問い合わせ（`trace-index.py`）と試験の三つで、いずれもプラグインの中にある。`scan_tree` の返り値は ADR-058 で 2 要素から 3 要素（範囲・所見・勘定）へ変わった。外部の契約ではないので互換の段は置かない。版を上げる利用者への影響は、監査の要約に `trace_coverage` のキーが増えることだけである（読み手は未知のキーを無視する）。
 
 <!-- 入れない: 仕様の正本 -->

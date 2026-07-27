@@ -682,13 +682,14 @@ def _check_code_traces(g, root):
         if fps is not None:
             expect[doc_id] = fps
     if not expect:
-        return []   # 誰も opt-in していない → 走査しない
+        return [], None   # 誰も opt-in していない → 走査しない
 
     scan_root = os.path.dirname(os.path.abspath(root))
     try:
-        ranges, scan_findings = _tracescan.scan_tree(scan_root, docs_root=root)
+        ranges, scan_findings, coverage = _tracescan.scan_tree(
+            scan_root, docs_root=root)
     except Exception:
-        return []   # 走査で監査を落とさない
+        return [], None   # 走査で監査を落とさない
 
     out = []
     for f in scan_findings:
@@ -733,7 +734,7 @@ def _check_code_traces(g, root):
                 "記録した実装の指紋と、いまのコードの指紋が食い違う(%s)。"
                 "変更を確かめ、確認したら節の指紋を更新する"
                 % ", ".join(sorted(r["path"] for r in found))))
-    return out
+    return out, coverage
 
 
 def _check_memory_shadow(g, root):
@@ -1131,10 +1132,11 @@ def run_audit(root, today, knobs):
     findings += _check_glossary_seed(root)
     findings += _check_ext_anchors(g, root)
     findings += _check_memory_shadow(g, root)
-    findings += _check_code_traces(g, root)
+    trace_findings, trace_coverage = _check_code_traces(g, root)
+    findings += trace_findings
 
     findings.sort(key=lambda f: (f["check"], f["doc_id"], f["message"]))
-    return findings
+    return findings, trace_coverage
 
 
 # ---------------------------------------------------------------------------
@@ -1268,8 +1270,14 @@ def _attach_bodies(g):
         node["_body"] = _read_body(os.path.join(g.root, node["path"]))
 
 
-def build_summary(root, findings, today, knobs, generated_at=None):
-    """docs-audit/1 スキーマの要約 dict を組み立てる。決定的。"""
+def build_summary(root, findings, today, knobs, generated_at=None,
+                  trace_coverage=None):
+    """docs-audit/1 スキーマの要約 dict を組み立てる。決定的。
+
+    trace_coverage は走査が走ったときだけ渡る勘定(ADR-058)。None なら載せない
+    (opt-in が無く走査していない)。キーの追加であり schema は据え置く — 読み手
+    (注入・鼓動)は未知のキーを無視する前方寛容を持つ。
+    """
     totals = {SEV_ERROR: 0, SEV_WARN: 0, SEV_ADVISORY: 0}
     counts_by_check = {}
     for f in findings:
@@ -1285,7 +1293,7 @@ def build_summary(root, findings, today, knobs, generated_at=None):
         # 決定的: today の真夜中(UTC)を ISO-8601 で。壁時計の時刻は使わない。
         generated_at = today.isoformat() + "T00:00:00Z"
 
-    return {
+    out = {
         "schema": SCHEMA,
         "generated_at": generated_at,
         "today": today.isoformat(),
@@ -1303,6 +1311,10 @@ def build_summary(root, findings, today, knobs, generated_at=None):
         "top_findings": top,
         "findings": findings,
     }
+    if trace_coverage is not None:
+        # 走査の勘定(ADR-058)。何を見て何を見なかったかを数として毎回残す。
+        out["trace_coverage"] = trace_coverage
+    return out
 
 
 def _top_findings(findings, cap):
@@ -1418,8 +1430,9 @@ def main(argv=None):
         return 2
 
     try:
-        findings = run_audit(root, today, knobs)
-        summary = build_summary(root, findings, today, knobs)
+        findings, trace_coverage = run_audit(root, today, knobs)
+        summary = build_summary(root, findings, today, knobs,
+                                trace_coverage=trace_coverage)
     except Exception as exc:  # 監査自身のクラッシュ。Hook 連鎖を壊さない。
         sys.stderr.write("docs-audit: internal error: %r\n" % (exc,))
         # SessionEnd は teardown を壊さないために 0。CI(fail-on error)でも
