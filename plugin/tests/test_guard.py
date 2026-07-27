@@ -1042,6 +1042,69 @@ class TestBashOutputGrammar(GuardTestBase):
 # Routing / robustness — W2/W3/W4
 # ---------------------------------------------------------------------------
 
+class TestTreelessProjectBoundary(GuardTestBase):
+    """ADR-036: 統治木の無いプロジェクト(doctrine 未導入の土地)では、二・三
+    ガードは発火しない(#67)。リンタの体系外無発火 ADR-024 と同じ境界を
+    ガードにも一貫適用する。depends_on 風のキーを持つ他体系(Obsidian 等)の
+    Write/Edit を誤って deny/block しない。木が在れば従来どおり(stray も点検)。"""
+
+    def _treeless_repo(self, files):
+        # make_repo は docs/ に _system を補うので使わない。素の土地を作る。
+        root = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        for rel, content in files.items():
+            ap = os.path.join(root, rel)
+            os.makedirs(os.path.dirname(ap) or root, exist_ok=True)
+            with open(ap, "w", encoding="utf-8", newline="") as fh:
+                fh.write(content)
+        return root
+
+    def test_treeless_write_with_depends_on_is_allowed(self):
+        """統治木の無い土地で depends_on を持つ .md を Write → allow(#67)。"""
+        root = self._treeless_repo({"README.md": "# repo\n"})
+        content = ("---\nid: note\ntitle: t\ndepends_on: [FOO-1]\n---\n本文。\n")
+        tin = {"file_path": os.path.join(root, "vault", "x.md"), "content": content}
+        # cwd=root: 実運用の Hook は cwd=プロジェクト。テストの in-process 実行が
+        # doctrine リポジトリの木を拾わないよう、木の無い土地を cwd に固定する。
+        out, code = _util.invoke(
+            "policy-guard",
+            stdin_obj=_util.hook_stdin("PreToolUse", "Write", tin, cwd=root))
+        self.assertEqual(code, 0)
+        decision, _ = _pre(json.loads(out))
+        self.assertEqual(decision, "allow")
+
+    def test_treeless_path_style_dep_no_type_is_allowed(self):
+        """型を持たない素のメモ + パス形式の依存でも allow(擬陽性を出さない)。"""
+        root = self._treeless_repo({"README.md": "# repo\n"})
+        content = ("---\ntitle: t\ndepends_on: [docs/design.md]\n---\n本文。\n")
+        tin = {"file_path": os.path.join(root, "n.md"), "content": content}
+        out, code = _util.invoke(
+            "policy-guard",
+            stdin_obj=_util.hook_stdin("PreToolUse", "Write", tin, cwd=root))
+        self.assertEqual(code, 0)
+        decision, _ = _pre(json.loads(out))
+        self.assertEqual(decision, "allow")
+
+    def test_tree_present_stray_doc_still_denied(self):
+        """対照: 木が在れば、木の外の stray 文書の越境依存は従来どおり deny。"""
+        root = self._repo({
+            "docs/identity/ICD.md": _util.fm_block(_doc(
+                "identity", doc_id="ICD-09", type_code="ICD")) + "ICD本文。\n",
+        })
+        # FOO-1 は登録簿の型として解決できない → C13 fail-closed deny。
+        new = _util.fm_block(_doc("billing", doc_id="SPEC-30",
+                                  fm_extra={"depends_on": ["FOO-1"]}))
+        # 木(docs/)の外の notes/ に置く stray。木は解決できる。
+        tin = {"file_path": os.path.join(root, "notes", "SPEC-30-x.md"),
+               "content": new + "本文。\n"}
+        out, code = _util.invoke(
+            "policy-guard",
+            stdin_obj=_util.hook_stdin("PreToolUse", "Write", tin, cwd=root))
+        self.assertEqual(code, 0)
+        decision, _ = _pre(json.loads(out))
+        self.assertEqual(decision, "deny")
+
+
 class TestEarlyOutNonDocs(GuardTestBase):
     """G1: a target whose RESOLVED realpath is OUTSIDE the docs/ tree and that
     cannot trip Guard2 or Guard3 is allowed WITHOUT building the dependency

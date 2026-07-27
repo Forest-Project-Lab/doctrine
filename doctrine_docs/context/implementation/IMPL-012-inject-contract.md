@@ -6,7 +6,7 @@ domain: context
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-26
+updated: 2026-07-27
 sources: [plugin/scripts/inject-contract.py]
 depends_on: [SPEC-012]
 llm_context: task
@@ -30,4 +30,4 @@ SPEC-012 を実装する、注入スクリプトの実装メモである `[R5]`�
 
 ## 対象部品
 
-`plugin/scripts/inject-contract.py`（`estimate_tokens`・`_build_sections`・`_assemble`・`_trim_to_fit`・`_load_audit_summary`）。共有の `_registry`・`_frontmatter` を import する。
+`plugin/scripts/inject-contract.py`（`estimate_tokens`・`_build_sections`・`_assemble`・`_trim_to_fit`・`_load_audit_summary`・`_plugin_root_cache_candidates`）。共有の `_registry`・`_frontmatter` を import する。監査要約の候補順はプロジェクトスコープ先・旧プラグインroot配置は後方互換の最後（ADR-037、#69）。`gov-heartbeat.py` の `_audit_summary` と同じ順序に揃える。

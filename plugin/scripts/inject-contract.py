@@ -145,22 +145,26 @@ def _load_config(docs_root, config_path):
 
 
 def _plugin_root_cache_candidates():
-    """前回監査の要約成果物の候補パスを優先順で返す(C3)。
+    """前回監査の要約成果物の候補パスを優先順で返す(C3、ADR-037)。
 
-    第一は ${CLAUDE_PLUGIN_ROOT}/.cache/last-audit.json。CLAUDE_PLUGIN_ROOT は Hook 実行時に
-    Claude Code がプラグインの絶対パスとして注入する環境変数である。フォールバックは
-    .claude/.cache/last-audit.json(CLAUDE_PROJECT_DIR 基準、無ければ cwd 基準)。
-    docs-audit.py が SessionEnd でここへ docs-audit/1 スキーマで書き、inject-contract が
-    次の SessionStart でちょうどこのパスから読む(両者の握手)。
+    第一はプロジェクトスコープ .claude/.cache/last-audit.json(CLAUDE_PROJECT_DIR
+    基準、無ければ cwd 基準)。docs-audit.py が SessionEnd で書く現行の場所であり、
+    inject-contract が次の SessionStart でここから読む(両者の握手)。
+    ${CLAUDE_PLUGIN_ROOT}/.cache は v0.3.0 以前の旧配置で、**後方互換の読み取り
+    フォールバックとしてのみ**最後に見る(ADR-037)。旧配置を先に見ると、同じ
+    プロジェクトに残った移行前のキャッシュ(root は一致するが古い)が、新しい
+    プロジェクトスコープの要約を恒久的に影で隠し、偽の R11 警報を毎セッション
+    出す(#69)。フレッシュな書き込み先を先に読むことでこれを断つ。
     """
     cands = []
-    plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT")
-    if plugin_root:
-        cands.append(os.path.join(plugin_root, ".cache", "last-audit.json"))
     proj = os.environ.get("CLAUDE_PROJECT_DIR")
     if proj:
         cands.append(os.path.join(proj, ".claude", ".cache", "last-audit.json"))
     cands.append(os.path.join(os.getcwd(), ".claude", ".cache", "last-audit.json"))
+    plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT")
+    if plugin_root:
+        # 旧配置(v0.3.0 以前)。後方互換のためだけに最後に見る。
+        cands.append(os.path.join(plugin_root, ".cache", "last-audit.json"))
     return cands
 
 

@@ -139,6 +139,22 @@ def _is_under_docs(file_path):
     return norm.startswith(rootn + "/")
 
 
+def _project_has_tree(file_path, cwd=None):
+    """このファイルのプロジェクトに統治木が在るか(ADR-036 の境界)。
+
+    統治木が一つも解決できないプロジェクト(素の Obsidian/Jekyll 等、
+    doctrine を導入していない土地)では、ドメイン/ICD の規範も削除安全の
+    不変条件も意味を持たない。二・三ガードはその外では発火しない
+    (リンタの体系外無発火 ADR-024 と同じ境界を、ガードにも一貫適用する)。
+    木が在れば、木の外の stray 文書に対しても従来どおり点検する。
+    決して例外を投げない(解決不能は「木なし」に倒す=安全側で沈黙)。
+    """
+    try:
+        return _registry.walkup_docs_root(file_path, cwd) is not None
+    except Exception:
+        return False
+
+
 # ---------------------------------------------------------------------------
 # Guard 1 — 不変(アーカイブ + 既存ADR)  [R8, §3.8]
 # ---------------------------------------------------------------------------
@@ -803,6 +819,13 @@ def _handle_pre_edit_write(tool, tin, cwd):
     if reason is not None:
         return _pre_deny(reason)
 
+    # 統治木の無いプロジェクト(doctrine 未導入の土地)では、二・三ガードは
+    # 発火しない(ADR-036: リンタの体系外無発火 ADR-024 と同じ境界)。
+    # depends_on 風のキーを持つ他体系(Obsidian 等)の Write/Edit を誤って
+    # deny/block しない。木が在れば従来どおり(stray 文書も点検する)。
+    if not _project_has_tree(file_path, cwd):
+        return _pre_allow()
+
     # docs/ の木の外の、二・三ガードが発火しえない対象は、グラフ構築(全 .md
     # 走査)を省いて通す(G1: レイテンシ早期通過)。判定は変わらない。
     if _pre_target_is_guard_inert(file_path, tool, tin):
@@ -915,10 +938,15 @@ def _handle_post_edit(tool, tin, cwd):
     if not file_path or not os.path.isfile(file_path):
         return _post_quiet()
 
+    # 統治木の無いプロジェクトでは起動後ガードも発火しない(ADR-036 の境界)。
+    # PreToolUse と同じく、木が一つも解決できなければ静かに通す。
+    _lvl_root = _find_docs_root(file_path, cwd)
+    if _lvl_root is None:
+        return _post_quiet()
+
     # 段差ゲート(ADR-019): Level 2 は起動後ガード(block)を持たない縮小構成。
     # .docs-level を読んで自主的に静かに通す。PreToolUse の予防は残る。
-    _lvl_root = _find_docs_root(file_path, cwd)
-    if _lvl_root is not None and _registry.docs_level(_lvl_root) < 3:
+    if _registry.docs_level(_lvl_root) < 3:
         return _post_quiet()
 
     try:

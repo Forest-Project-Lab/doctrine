@@ -6,7 +6,7 @@ domain: context
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-26
+updated: 2026-07-27
 sources: [plugin/tests/test_inject.py]
 depends_on: [SPEC-012]
 llm_context: task
@@ -20,7 +20,7 @@ SPEC-012 の受入基準を `plugin/tests/test_inject.py` で確かめる `[R5]`
 
 - 節が定めた順（要点復唱 → … → 超過通知）どおりに描画されること。
 - 上限を超えたときは要点まで切り詰め、それでも超過通知を必ず出すこと。超過の判定は、切り詰める前の推定値で行うこと。
-- 監査要約の受け渡しが `${CLAUDE_PLUGIN_ROOT}/.cache/last-audit.json`（スキーマ `docs-audit/1`）を介して成り立つこと。監査要約が無いときは「前回監査なし」を出すこと。
+- 監査要約の受け渡しが `${CLAUDE_PROJECT_DIR}/.claude/.cache/last-audit.json`（スキーマ `docs-audit/1`、プロジェクトスコープ）を介して成り立つこと。監査要約が無いときは「前回監査なし」を出すこと。読み取りの候補順はプロジェクトスコープが先、旧 `${CLAUDE_PLUGIN_ROOT}/.cache` は後方互換の最後の候補（ADR-037）。同じ root を指す旧残骸が在っても新しいプロジェクトスコープの要約が勝ち、偽の死活警報を出さないこと（`test_project_scope_cache_wins_over_stale_plugin_root`）。
 
 ## 退行観点
 

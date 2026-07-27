@@ -6,9 +6,9 @@ domain: context
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-26
+updated: 2026-07-27
 sources: [plugin/scripts/inject-contract.py]
-depends_on: [REQ-010, ICD-001, ICD-005]
+depends_on: [REQ-010, ICD-001, ICD-005, ADR-037]
 impacts: [SPEC-021]
 llm_context: task
 ---
@@ -46,6 +46,6 @@ llm_context: task
 
 ## 受入基準
 
-TEST-012 に対応する。次の三つを合否とする。上限を超えたときは要点まで切り詰め、それでも超過通知を必ず出すこと。never 群の本文がどの節にも現れないこと。監査要約の受け渡しが `${CLAUDE_PROJECT_DIR}/.claude/.cache/last-audit.json`（スキーマ `docs-audit/1`。プロジェクトスコープ: プラグインの更新で失われず、同じプラグインを使う別プロジェクトと衝突しない。読み手はプラグイン側の cache も後方互換の候補として読む）を介して成り立つこと。
+TEST-012 に対応する。次の三つを合否とする。上限を超えたときは要点まで切り詰め、それでも超過通知を必ず出すこと。never 群の本文がどの節にも現れないこと。監査要約の受け渡しが `${CLAUDE_PROJECT_DIR}/.claude/.cache/last-audit.json`（スキーマ `docs-audit/1`。プロジェクトスコープ: プラグインの更新で失われず、同じプラグインを使う別プロジェクトと衝突しない）を介して成り立つこと。読み取りの候補順はプロジェクトスコープを先に、旧 `${CLAUDE_PLUGIN_ROOT}/.cache` は後方互換のフォールバックとして最後に見る（ADR-037）。これにより、移行前の残骸が同じ root を指して残っても、フレッシュな要約が勝ち、偽の死活警報を出さない。
 
 <!-- 入れない: 廃止、検討、実装コードの写し -->

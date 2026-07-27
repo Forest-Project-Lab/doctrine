@@ -17,6 +17,8 @@ import json
 import os
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 _INSTRUCTION = (
     "【統治・圧縮前の退避】この会話はまもなく圧縮され、詳細は失われる。"
     "未記録の決定・撤回・新しい用語・重要な根拠がこの会話にあるなら、圧縮の前に"
@@ -27,12 +29,30 @@ _INSTRUCTION = (
 )
 
 
+def _project_has_tree():
+    """このプロジェクトに統治木が在るか(ADR-036 の境界)。決して例外を投げない。
+
+    PreCompact はファイルパスを持たないため、CLAUDE_PROJECT_DIR と作業ディレクトリ
+    から統治木を解決する。統治木の無いプロジェクト(doctrine 未導入の土地)では、
+    存在しない `_system/.session-notes` への退避を指示しない。
+    """
+    try:
+        import _registry
+        proj = os.environ.get("CLAUDE_PROJECT_DIR")
+        return _registry.walkup_docs_root(proj or os.getcwd(), os.getcwd()) is not None
+    except Exception:
+        return False
+
+
 def main(argv=None):
     try:
         try:
             sys.stdin.read()
         except Exception:
             pass
+        # 統治木の無いプロジェクトでは退避指示を出さない(ADR-036 の境界)。
+        if not _project_has_tree():
+            return 0
         out = {
             "hookSpecificOutput": {
                 "hookEventName": "PreCompact",

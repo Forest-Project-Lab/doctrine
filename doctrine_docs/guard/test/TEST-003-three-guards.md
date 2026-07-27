@@ -6,7 +6,7 @@ domain: guard
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-26
+updated: 2026-07-27
 sources: [plugin/tests/test_guard.py]
 depends_on: [SPEC-003]
 llm_context: task
@@ -22,6 +22,7 @@ SPEC-003 の受入基準を `plugin/tests/test_guard.py` の各クラスで確�
 - `TestImmutability`: TC-075（無関係な現行文書の編集=許可）・TC-076（archive 下の Write/Edit=拒否）・TC-077（既存ADRの改変=拒否、carve-out の `status` 遷移=許可・本文変更=拒否）。
 - `TestDeleteSafety`・`TestPostDeleteSafetyTransition`: TC-078..081（降格・本文消し・Bash rm/git rm/mv=拒否、逆参照ゼロ=許可）・TC-118（block→張り替え→許可）・既存 deprecated や既存空本文の無関係な編集は誤って block しない。
 - `TestBashOutputGrammar`: TC-132（Bash deny に additionalContext も block も無い）。
+- `TestTreelessProjectBoundary`（ADR-036）: 統治木の無いプロジェクトで depends_on を持つ他体系の Write=許可、型を持たない素のメモ+パス形式の依存=許可、対照として木が在れば木の外の stray 文書の越境依存=拒否。
 - `TestEarlyOutNonDocs`: doctrine_docs/ の外の純粋な非文書（.py/.txt）の編集は依存グラフを組まずに allow し（グラフ構築の呼び出し回数がゼロ）、doctrine_docs/ 内の編集はグラフを組んで全ガードを当てる。フロントマターを持つ doctrine_docs/外の Write は早期通過せず Guard2（ICD依存ガード） が拒否する。doctrine_docs/ 外のパス（external/…）やシンボリックリンク経由で `id` を持つ統治文書を降格する Edit は早期通過せず Guard3（削除安全ガード） が拒否する。`id` を持たないが `domain`＋越境 `depends_on` を持つ doctrine_docs/外の文書型を編集した PostToolUse は早期通過せず Guard2 が block する。
 
 ## 退行観点

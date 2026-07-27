@@ -89,15 +89,19 @@ def _knob(config, key, default):
 
 
 def _audit_summary(docs_root):
-    """前回監査の要約。inject-contract と同じ候補順・同じ root 照合。無ければ None。"""
+    """前回監査の要約。inject-contract と同じ候補順・同じ root 照合。無ければ None。
+
+    プロジェクトスコープを先に、旧 ${CLAUDE_PLUGIN_ROOT}/.cache を後方互換の
+    フォールバックとして最後に見る(ADR-037、#69)。inject-contract と一致させる。
+    """
     cands = []
-    plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT")
-    if plugin_root:
-        cands.append(os.path.join(plugin_root, ".cache", "last-audit.json"))
     proj = os.environ.get("CLAUDE_PROJECT_DIR")
     if proj:
         cands.append(os.path.join(proj, ".claude", ".cache", "last-audit.json"))
     cands.append(os.path.join(os.getcwd(), ".claude", ".cache", "last-audit.json"))
+    plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT")
+    if plugin_root:
+        cands.append(os.path.join(plugin_root, ".cache", "last-audit.json"))
     for path in cands:
         if not os.path.isfile(path):
             continue

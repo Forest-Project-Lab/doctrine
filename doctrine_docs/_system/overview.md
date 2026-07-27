@@ -5,7 +5,7 @@ type: OVERVIEW
 domain: _system
 status: current
 owner: render-projection
-updated: 2026-07-26
+updated: 2026-07-27
 llm_context: always
 sources: []
 ---
@@ -58,6 +58,7 @@ sources: []
 | ADR-009 | ADR | context | 注入とパックで二つの別上限を持つ（C10） |
 | ADR-014 | ADR | context | DECIDED へ写すのは横断の確定事実だけとする |
 | ADR-016 | ADR | context | 投影を正本から描画し直せる派生表示に限り、刊行物は投影一覧に含めない |
+| ADR-037 | ADR | context | 監査要約キャッシュはプロジェクトスコープを先に読み、旧プラグインroot配置は後方互換のフォールバックに限る |
 | IMPL-012 | IMPL | context | `inject-contract.py` の実装メモ |
 | IMPL-013 | IMPL | context | `collect-context.py` の実装メモ |
 | IMPL-014 | IMPL | context | `render-projection.py` の実装メモ |
@@ -76,6 +77,7 @@ sources: []
 | SPEC-003 | SPEC | guard | 三ガードの判定規則（不変・ICD依存・削除安全） |
 | ADR-003 | ADR | guard | C13 の分岐（dangling 許容／分類不能 拒否） |
 | ADR-004 | ADR | guard | PostToolUse の事前状態を raw 全文で復元する |
+| ADR-036 | ADR | guard | 統治木の無いプロジェクトでは二・三ガードとナッジ・退避を発火させない |
 | IMPL-003 | IMPL | guard | `policy-guard.py` の実装メモ |
 | TEST-003 | TEST | guard | 三ガードの受入試験 |
 | ICD-004 | ICD | lint | lint のインターフェース（リンタと用語チェッカーの公開契約） |
