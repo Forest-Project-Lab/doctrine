@@ -410,6 +410,48 @@ class TestAuditInjectHandshake(unittest.TestCase):
         # The rendered summary must reflect the audit's real error total.
         self.assertIn("error %d" % cached["totals"]["error"], out)
 
+    def test_reinstalled_tree_does_not_inherit_previous_generation_health(self):
+        """再導入: 前の世代の要約を、新しい木の健全さとして注入しない(ADR-053)。
+
+        実配線で凍らせる。共有コア `_auditcache` が正しいことと、SessionStart の
+        フックが実際にそれを通ることは別の主張であり、後者をここで押さえる。
+
+        筋書き: 木を一度使って監査が通り(要約が cache に残る)、木を消して同じ場所へ
+        作り直す。root は同じ絶対パスなので照合を通ってしまう。統治木の
+        `initialized` が要約より後なら、その要約は前の世代のものとして捨てる。
+        """
+        self._run_audit()
+        self.assertTrue(os.path.isfile(self.cache))
+
+        # 再導入: 新しい木の初期化日を、残っている要約より後にする。
+        state_dir = os.path.join(self.root, "docs", "_system")
+        os.makedirs(state_dir, exist_ok=True)
+        with open(os.path.join(state_dir, ".governance-state"),
+                  "w", encoding="utf-8") as fh:
+            fh.write("initialized: 2026-06-30\nlast_cadence_review: 2026-06-30\n")
+
+        proc = run_script(
+            "inject-contract.py",
+            ["--docs-root", "docs", "--format", "text", "--today", "2026-06-30"],
+            stdin_obj=_util.hook_stdin("SessionStart", source="startup"),
+            cwd=self.root,
+            plugin_root=self.plugin_root,
+        )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertIn("前回監査なし", proc.stdout,
+                      "前の世代の要約を捨てたら『前回監査なし』へ倒れること")
+        self.assertNotIn("error %d" % 0, proc.stdout.split("前回監査")[-1][:80])
+
+        # 鼓動も同じ答えであること(読み手をまたいで判定が割れない)。
+        hb = run_script(
+            "gov-heartbeat.py", ["--today", "2026-06-30"],
+            stdin_obj=_util.hook_stdin("UserPromptSubmit", session_id="e2e-reinstall"),
+            cwd=self.root, plugin_root=self.plugin_root,
+        )
+        self.assertEqual(hb.returncode, 0, hb.stderr)
+        self.assertNotIn("error 0", hb.stdout,
+                         "鼓動が前の世代の健全さを告げないこと")
+
     def test_inject_contract_says_no_audit_when_cache_absent(self):
         # A fresh plugin root with NO .cache/last-audit.json.
         empty_plugin = _util.mkdtemp()
