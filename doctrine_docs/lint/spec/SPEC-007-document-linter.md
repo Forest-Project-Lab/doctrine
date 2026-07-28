@@ -6,7 +6,7 @@ domain: lint
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-27
+updated: 2026-07-28
 sources: [plugin/scripts/docs-linter.py]
 depends_on: [REQ-005, REQ-006, REQ-007, ICD-001, ICD-002, ICD-005]
 llm_context: task
@@ -25,14 +25,14 @@ llm_context: task
 ## 制約
 
 - 標準ライブラリだけを使う。文書は編集された一つだけを読み、全件は走査しない。`decision` は決して返さず、助言だけを出す[R7]。
-- 各点検の重大度は次のとおり。`MISSING_KEY`・`EMPTY_KEY`・`BAD_STATUS`・`UNKNOWN_TYPE`・`ID_FILENAME_MISMATCH`・`BAD_FILENAME`・`TYPE_LOCATION_MISMATCH`・`DOMAIN_PATH_MISMATCH`は ERROR（重大度・誤り）。`BAD_LLM_CONTEXT`は、値が不正なら ERROR、既定値の上書きなら WARN（重大度・警告）。`RESEARCH_HAS_DECISION`は WARN。`SPEC_MISSING_SECTION`・`SPEC_EMPTY_SECTION`・`MISSING_TRACE`は ERROR。（本文の `[R番号]` タグは doctrine 自己適用の約束で、上位設計書 §2 を引く。追跡の正路は REQ への `depends_on` である。ADR-045、#87）`STRAY_DOCUMENT`（登録簿の型を持つ文書が doctrine_docs/ の木の外に在る。ADR-021）は ERROR。`ARCHIVED_LOCATION_MISMATCH`（`status`==archived なのに `<domain>/archive/` の外に在る。ADR-027。archived ではこの規則が型の置き場所規則より優先する）は ERROR。型なしの .md には出さない（README 等の非文書の分類は external-md-intake に委ねる）。点検の前にまず統治木を探し、根に到達できない体系外のファイルは点検しない。型なしで intake（`_system/.md-intake`）に『非文書』『投影』と登録されたファイルは、schema/frontmatter の点検を飛ばし、用語助言だけを WARN で残す（ADR-024）。intake の読み取りは監査と同じ共有コア（`_intake`。書式の正本は audit の ICD-005）を使い、同じファイルへの分類が食い違わないようにする。
+- 各点検の重大度は次のとおり。`MISSING_KEY`・`EMPTY_KEY`・`BAD_STATUS`・`UNKNOWN_TYPE`・`ID_FILENAME_MISMATCH`・`BAD_FILENAME`・`TYPE_LOCATION_MISMATCH`・`DOMAIN_PATH_MISMATCH`は ERROR（重大度・誤り）。`BAD_LLM_CONTEXT`は、値が不正なら ERROR、既定値の上書きなら WARN（重大度・警告）。`RESEARCH_HAS_DECISION`は WARN。`SPEC_MISSING_SECTION`・`SPEC_EMPTY_SECTION`・`MISSING_TRACE`は ERROR。（本文の `[R番号]` タグは doctrine 自己適用の約束で、上位設計書 §2 を引く。追跡の正路は REQ への `depends_on` である。ADR-045、#87）`STRAY_DOCUMENT`（登録簿の型を持つ文書が doctrine_docs/ の木の外に在る。ADR-021）は ERROR。`ARCHIVED_LOCATION_MISMATCH`（`status`==archived なのに `<domain>/archive/` の外に在る。ADR-027。archived ではこの規則が型の置き場所規則より優先する）は ERROR。型なしの .md には出さない（README 等の非文書の分類は external-md-intake に委ねる）。点検の前にまず統治木を探し、根に到達できない体系外のファイルは点検しない。型なしで intake（`_system/.md-intake`）に『非文書』『投影』『ビュー』と登録されたファイルは、schema/frontmatter の点検を飛ばし、用語助言だけを WARN で残す（ADR-024）。『ビュー』のファイルに刻印（書式の正本は audit の ICD-005 の `view-stamp-format`）が無ければ、`VIEW_MISSING_STAMP`（WARN）で刻印を促す（ADR-073。助言のみ。拒否はしない）。intake の読み取りは監査と同じ共有コア（`_intake`。書式の正本は audit の ICD-005）を使い、同じファイルへの分類が食い違わないようにする。
 - 必須キーの 8 つも、`status` の型別許可表も、登録簿（model）に問い合わせる。`_system` の固定ファイル名は、`id` とファイル名の一致点検を免除する。
 - 依存先がどのドメインに属するかは dep-graph に解決を委ねる。解決できない依存は、ERROR で止めず `ICD_DEP_UNVERIFIED`（WARN）に落とす。別ドメインの ICD 以外を横断して依存していれば `ICD_DEP_VIOLATION`（助言の ERROR）を出すが、それでも編集は拒否しない[R7]。
 
 ## エラー時挙動
 
 - 例外は投げない。内部で例外が起きたときは、その旨の注記を助言に出し、終了コード 0 を返す。こうして後続の Hook の連鎖を壊さない。
-- 統治木の根に到達できない体系外のファイル、および intake に『非文書』『投影』と登録された型なしファイルには、`MISSING_FRONTMATTER` を出さない（前者は何も出さず、後者は用語助言のみ WARN。ADR-024）。それ以外で、フロントマターが無い、または読み取れないときは、`MISSING_FRONTMATTER`（ERROR）一件だけを出して止める。他の点検はいずれも型の情報を要するためである。
+- 統治木の根に到達できない体系外のファイル、および intake に『非文書』『投影』『ビュー』と登録された型なしファイルには、`MISSING_FRONTMATTER` を出さない（前者は何も出さず、後者は用語助言のみ WARN（『ビュー』は刻印の欠落の WARN も出す）。ADR-024・ADR-073）。それ以外で、フロントマターが無い、または読み取れないときは、`MISSING_FRONTMATTER`（ERROR）一件だけを出して止める。他の点検はいずれも型の情報を要するためである。
 - 既に削除されてディスク上に無いファイルには、何も出さない。
 
 ## 実装の指紋

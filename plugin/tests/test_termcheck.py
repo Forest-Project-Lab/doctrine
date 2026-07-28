@@ -457,7 +457,7 @@ class TemplateContentTest(unittest.TestCase):
     def test_seeds_both_tables_and_lines(self):
         g = tc.parse_glossary(self.body)
         self.assertIsNotNone(g)
-        self.assertEqual(len(g.approved_terms), 20)     # spec §1 table = 20 rows
+        self.assertEqual(len(g.approved_terms), 22)     # spec §1 table = 22 rows
         self.assertEqual(len(g.calque_table), 9)        # 9-row calque table
         self.assertEqual(set(g.wordtrap), {"status", "native", "robust", "leverage"})
         # 定着した借用語: §1 の データ・リスク に、定着した外部の略語を加える

@@ -6,7 +6,7 @@ domain: packaging
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-26
+updated: 2026-07-28
 sources: [plugin/.claude-plugin/plugin.json]
 depends_on: [REQ-013]
 llm_context: task
@@ -45,6 +45,6 @@ llm_context: task
 
 ## 受入基準
 
-`plugin.json` が妥当な JSON で最小キーを満たし、`name` が `doctrine` であること。`plugin/scripts/` の全 `.py` が、標準ライブラリと兄弟コアだけを import すること。README（案内ファイル）が存在し、索引項目（install 経路・7 つの技能・Hook の各イベント・スクリプト名・段）を含むこと。対応テストは TEST-020。
+`plugin.json` が妥当な JSON で最小キーを満たし、`name` が `doctrine` であること。`plugin/scripts/` の全 `.py` が、標準ライブラリと兄弟コアだけを import すること。README（ビュー。ADR-073）が存在し、索引項目（install 経路・7 つの技能・Hook の各イベント・スクリプト名・段）と刻印（書式の正本は ICD-005 の `view-stamp-format`）を含むこと。対応テストは TEST-020。
 
 <!-- 入れない: 廃止、検討、実装コードの写し -->

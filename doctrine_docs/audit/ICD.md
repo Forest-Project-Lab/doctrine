@@ -6,9 +6,9 @@ domain: audit
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-27
+updated: 2026-07-28
 sources: [spec/doctrine.ja.md#4.2]
-canonical_for: [corpus-audit, audit-summary-schema, intake-ledger-format]
+canonical_for: [corpus-audit, audit-summary-schema, intake-ledger-format, view-stamp-format]
 llm_context: task
 ---
 
@@ -28,11 +28,12 @@ ICD・正本・投影・現行・依存・参照は用語辞書（`_system/gloss
 
 このドメインだけが正本となる事実を挙げる（frontmatter の `canonical_for` と一致する）。
 
-- `corpus-audit`: 全件監査の検査群（24 検査）と、各検査の重大度。
-- `intake-ledger-format`: 分類の記録（`_system/.md-intake`）の書式の正本。一行一項目 `パス: 非文書|投影|保留 [YYYY-MM-DD]`（保留は期限必須。末尾 `/` は配下全体）。読み取りは共有コア `_intake.py`（IMPL-018）に一本化する。
+- `corpus-audit`: 全件監査の検査群と、各検査の重大度。
+- `intake-ledger-format`: 分類の記録（`_system/.md-intake`）の書式の正本。一行一項目 `パス: 非文書|投影|保留|ビュー [YYYY-MM-DD]`（保留は期限必須。末尾 `/` は配下全体）。照合は完全一致をプレフィクスより優先する（ADR-073。一括分類の配下から一件だけを別分類に取り出せる）。ビューと分類した文書は刻印を必ず持つ。読み取りは共有コア `_intake.py`（IMPL-018）に一本化する。
+- `view-stamp-format`: 刻印（ビューが記す参照時点。ADR-073）の書式の正本。ファイル内の一行 `<!-- doctrine:view src=<出所> as-of=<版> date=<YYYY-MM-DD> refs=<id,…> -->`。`src`（出所のリポジトリ名）と `date` は必須。`as-of`（出所の版。本リポジトリでは plugin.json の version）と `refs`（参照した文書 id のカンマ区切り）は任意。HTML コメントの外の同形の行も受理する。
 - `audit-summary-schema`: 監査の要約スキーマ `docs-audit/1` の形。
 
-30 検査と重大度（固定）:
+32 検査と重大度（固定）:
 
 | 検査名 | 重大度 |
 |---|---|
@@ -48,6 +49,7 @@ ICD・正本・投影・現行・依存・参照は用語辞書（`_system/gloss
 | projection_drift | error（Context Map のラベル差のみ warn） |
 | unregistered_document / shadowed_document（doctrine_docs/ 内で登録簿ノードにならない .md） | error |
 | stray_document（doctrine_docs/ の外の .md。ADR-021） | warn（型付き・期限切れ保留）／advisory（未分類・記録の掃除） |
+| view_stale（ビューの刻印。ADR-073） | warn（刻印の欠落・読めない刻印）／advisory（`refs` の古び・現行でない/実在しない `refs`・`refs` 無しで正本が刻印より新しい） |
 | stale_current（型既定周期の超過。ADR-025） | warn |
 | source_drift（上流更新の伝播） | advisory |
 | archive_integrity（status⇔置き場所。ADR-027） | error（倉庫の外）／advisory（superseded_by なし） |

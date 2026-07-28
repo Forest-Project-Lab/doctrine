@@ -6,7 +6,7 @@ domain: packaging
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-27
+updated: 2026-07-28
 sources: [plugin/hooks/hooks.json]
 depends_on: [ICD-008, ICD-001, ICD-002, ICD-003, ICD-004, ICD-005, ICD-006, ICD-007]
 llm_context: task

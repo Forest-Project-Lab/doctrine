@@ -46,6 +46,62 @@ def _make_repo(tmp, version="1.2.3", changelog=None):
         f.write(changelog)
 
 
+def _add_views(tmp, as_of="1.2.3", skip=(), break_src=()):
+    """公開ビュー3件を刻印つきで置く。skip は刻印なし、break_src は src 欠落。"""
+    for rel in rc.PUBLIC_VIEWS:
+        path = os.path.join(tmp, rel)
+        os.makedirs(os.path.dirname(path) or tmp, exist_ok=True)
+        if rel in skip:
+            body = "# %s\n" % rel
+        elif rel in break_src:
+            body = "# %s\n<!-- doctrine:view as-of=%s date=2026-07-28 -->\n" % (
+                rel, as_of)
+        else:
+            body = ("# %s\n<!-- doctrine:view src=doctrine as-of=%s "
+                    "date=2026-07-28 -->\n" % (rel, as_of))
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(body)
+
+
+class ViewStampTest(unittest.TestCase):
+    """公開ビューの刻印 — as-of と版番号の正本の一致(ADR-073)。"""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp(prefix="relcheck-")
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        _make_repo(self.tmp)
+
+    def test_all_stamped_and_matching_is_clean(self):
+        _add_views(self.tmp)
+        self.assertEqual(rc.check_view_stamps(self.tmp), [])
+
+    def test_missing_stamp_is_violation(self):
+        _add_views(self.tmp, skip=("README.md",))
+        violations = rc.check_view_stamps(self.tmp)
+        self.assertEqual(len(violations), 1)
+        self.assertIn("刻印の欠落", violations[0])
+        self.assertIn("README.md", violations[0])
+
+    def test_as_of_lag_is_violation(self):
+        _add_views(self.tmp, as_of="1.2.2")
+        violations = rc.check_view_stamps(self.tmp)
+        self.assertEqual(len(violations), len(rc.PUBLIC_VIEWS))
+        self.assertTrue(all("刻印の版の遅れ" in v for v in violations))
+
+    def test_unreadable_stamp_is_violation(self):
+        _add_views(self.tmp, break_src=("CONTRIBUTING.md",))
+        violations = rc.check_view_stamps(self.tmp)
+        self.assertEqual(len(violations), 1)
+        self.assertIn("刻印が読めない", violations[0])
+
+    def test_missing_view_file_is_violation(self):
+        _add_views(self.tmp)
+        os.remove(os.path.join(self.tmp, "plugin", "README.md"))
+        violations = rc.check_view_stamps(self.tmp)
+        self.assertEqual(len(violations), 1)
+        self.assertIn("読めない", violations[0])
+
+
 class VersionIntegrityTest(unittest.TestCase):
     """版の整合 — 先頭の版付き節の版と日付。"""
 
@@ -169,6 +225,10 @@ class SelfApplicationTest(unittest.TestCase):
                            capture_output=True, text=True, timeout=60)
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertIn("整合", r.stdout)
+
+    def test_this_repo_passes_view_stamps(self):
+        """公開ビュー3件の刻印が版番号の正本と一致している(ADR-073)。"""
+        self.assertEqual(rc.check_view_stamps(_REPO), [])
 
     def test_usage_error_exits_2(self):
         r = subprocess.run([sys.executable, _SCRIPT, "--nonsense"],

@@ -6,7 +6,7 @@ domain: context
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-27
+updated: 2026-07-28
 sources: [plugin/scripts/inject-contract.py]
 depends_on: [SPEC-012]
 llm_context: task

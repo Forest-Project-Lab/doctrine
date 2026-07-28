@@ -885,6 +885,35 @@ class RobustnessTest(_Base):
         self.assertNotIn("MISSING_FRONTMATTER", codes)
         self.assertNotIn("[ERROR]", ctx)
 
+    def test_registered_view_without_stamp_warns(self):
+        """ADR-073: intake に「ビュー」と登録された型なし .md に刻印が無ければ
+        VIEW_MISSING_STAMP(WARN)を助言する。schema 強制はしない。"""
+        os.makedirs(os.path.join(self.root, "docs", "_system"), exist_ok=True)
+        with open(os.path.join(self.root, "docs", "_system", ".md-intake"),
+                  "w", encoding="utf-8") as fh:
+            fh.write("V.md: ビュー\n")
+        path = os.path.join(self.root, "V.md")
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write("# ビューの本文\n")
+        codes, ctx = self._codes(path)
+        self.assertIn("VIEW_MISSING_STAMP", codes)
+        self.assertNotIn("MISSING_FRONTMATTER", codes)
+        self.assertNotIn("[ERROR]", ctx)
+
+    def test_registered_view_with_stamp_silent(self):
+        """刻印を持つビューには VIEW_MISSING_STAMP を出さない。"""
+        os.makedirs(os.path.join(self.root, "docs", "_system"), exist_ok=True)
+        with open(os.path.join(self.root, "docs", "_system", ".md-intake"),
+                  "w", encoding="utf-8") as fh:
+            fh.write("V.md: ビュー\n")
+        path = os.path.join(self.root, "V.md")
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write("# ビューの本文\n\n"
+                     "<!-- doctrine:view src=repo as-of=1.0.0 "
+                     "date=2026-07-28 refs=SPEC-1 -->\n")
+        codes, _ = self._codes(path)
+        self.assertNotIn("VIEW_MISSING_STAMP", codes)
+
     def test_unknown_string_type_flagged(self):
         """§3.2: 登録簿に無い文字列型 -> UNKNOWN_TYPE(ミューテーション監査の穴埋め)。"""
         self._write("docs/billing/REQ-2-refunds.md", _req_fm(), "本文。\n")

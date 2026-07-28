@@ -596,8 +596,9 @@ def lint_text(text, path):
 
     ADR-024: 判定の前に統治木を探す。①統治木が無ければ(体系外)何も出さない。
     ②型付きは従来どおり全点検(統治木外なら STRAY)。③型なしで intake に
-    「非文書/投影」と登録されたファイルは schema 強制を飛ばし、用語助言だけを
-    WARN で残す。④それ以外は従来どおり。intake の読み取りは監査と同じ共有コア
+    「非文書/投影/ビュー」と登録されたファイルは schema 強制を飛ばし、用語助言
+    だけを WARN で残す(「ビュー」は刻印の欠落の助言 VIEW_MISSING_STAMP も出す。
+    ADR-073)。④それ以外は従来どおり。intake の読み取りは監査と同じ共有コア
     (_intake)を使い、同じファイルへの分類が食い違わないようにする。
     """
     findings = []
@@ -611,15 +612,26 @@ def lint_text(text, path):
     type_code = meta.get("type") if meta else None
     typed = isinstance(type_code, str) and _registry.is_known_type(type_code)
 
-    # ③ 型なしで intake に「非文書/投影」と登録 → schema 強制せず用語助言のみ。
+    # ③ 型なしで intake に「非文書/投影/ビュー」と登録 → schema 強制せず
+    # 用語助言のみ。「ビュー」は刻印の欠落も助言する(ADR-073)。
     # 型付きは統治木外で STRAY を出したいので、この分岐に入れない(②)。
     if not typed:
         disp = _intake.disposition_for(path, docs_root)
-        if disp in ("非文書", "投影"):
+        if disp in ("非文書", "投影", "ビュー"):
             _check_term_check(meta or {}, body, path, findings)
             for f in findings:
                 if f.severity == ERROR:
                     f.severity = WARN
+            if disp == "ビュー":
+                stamp, err = _intake.parse_view_stamp(text)
+                if stamp is None or err is not None:
+                    findings.append(Finding(
+                        "VIEW_MISSING_STAMP", WARN,
+                        "ビューに刻印が無い、または読めない(%s)。ファイル内に "
+                        "<!-- doctrine:view src=<出所> as-of=<版> "
+                        "date=YYYY-MM-DD refs=<id,…> --> の一行を打つ"
+                        "(書式の正本は ICD-005)。" % (err or "刻印の行なし"),
+                        "ADR-073"))
             return findings
 
     # ④ 従来フロー(型付き、または型なし・未登録)。

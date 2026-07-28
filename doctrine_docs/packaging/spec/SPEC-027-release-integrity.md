@@ -8,7 +8,7 @@ owner: doctrine-maintainers
 created: 2026-07-28
 updated: 2026-07-28
 sources: [scripts/release-check.py, .github/workflows/checks.yml, CHANGELOG.md]
-depends_on: [SPEC-020]
+depends_on: [SPEC-020, ICD-005]
 llm_context: task
 ---
 
@@ -30,6 +30,12 @@ llm_context: task
   同じ差分が CHANGELOG.md も含むこと。環境変数 `RELEASE_CHECK_PR_TITLE` に
   `[no-changelog]` が含まれれば、この検査だけを免除し、免除した旨を告げる
   （版の整合は免除しない）。
+- あわせて**公開ビューの刻印**を検める（ADR-073）— 公開ビュー3件
+  （`README.md`・`plugin/README.md`・`CONTRIBUTING.md`）が刻印（書式の正本は
+  ICD-005 の `view-stamp-format`）を持ち、その `as-of` が版番号の正本
+  （plugin.json の version）と一致すること。刻印が無い・読めない・版が
+  食い違うのは違反とする。版を上げるときは、公開ビューの内容を検めてから
+  刻印を打ち直す（リリースごとの再確認の義務）。
 - marketplace.json との一致は検めない（TEST-020 が強制済み。二重定義しない）。
 
 ## 制約
@@ -49,7 +55,7 @@ llm_context: task
 対象は契約の要約（モジュール冒頭）。更新は `trace-index.py --id SPEC-027` が
 返す行を写す（ADR-061）。
 
-- sha256:f611318b0cd7cf006a31cdd7939e534243ee89fbdc15bdb7b6b579e6f890d056
+- sha256:ae8ee73ac423f56603419d0687486b37cf6fa42356594153de70b7b43737ed2c
 
 ## 受入基準
 
@@ -57,6 +63,9 @@ llm_context: task
   一致し日付があれば緑（0）。
 - 記録の義務: 差分が `plugin/` を含み CHANGELOG.md を含まなければ赤。両方
   含めば緑。`[no-changelog]` の印があれば緑（免除の旨を告げる）。
+- 公開ビューの刻印: 3件のどれかが刻印を欠く・読めない・`as-of` が plugin.json
+  の version と食い違えば赤。3件とも一致すれば緑（`[no-changelog]` では
+  免除しない）。
 - 前提が読めなければ 2 で止まる（0 で通らない）。
 - 受入は TEST-027 が凍結する。
 
