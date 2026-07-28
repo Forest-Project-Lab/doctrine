@@ -37,7 +37,7 @@ import _registry
 import _termcheck
 
 
-SCHEMA = "docs-audit/1"
+SCHEMA = _auditcache.SCHEMA   # 要約 schema の正本は共有コア(ADR-053)
 
 # この版の監査が走らせる検査の名前の一覧(#95。検証器の実行証跡)。要約に
 # checks_run として載せ、読み手(注入・生存性)が期待する検査集合を知れるようにする。
@@ -897,8 +897,8 @@ def _check_projection_drift(g):
     return out
 
 
-_CTX_BEGIN = "<!-- BEGIN PROJECTION:context-map-skeleton -->"
-_CTX_END = "<!-- END PROJECTION:context-map-skeleton -->"
+_CTX_BEGIN = _registry.CTXMAP_BEGIN
+_CTX_END = _registry.CTXMAP_END
 _CTX_DOMAIN_RE = re.compile(r"^- (\S+): (.+)$")
 _CTX_EDGE_RE = re.compile(r"^- (\S+) --depends_on--> (\S+?)( \(境界違反\))?$")
 

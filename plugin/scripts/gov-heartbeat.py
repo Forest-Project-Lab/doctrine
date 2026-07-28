@@ -36,7 +36,7 @@ DEFAULT_CADENCE_DAYS = 30
 
 _DATE_RE = re.compile(r"^(\d{4})-(\d{2})-(\d{2})$")
 _STATE_LINE_RE = re.compile(r"^\s*([A-Za-z0-9_]+)\s*[:：]\s*(\S+)\s*$")
-STATE_NAME = ".governance-state"
+STATE_NAME = _auditcache.STATE_NAME   # 正本は共有コア(ADR-053)
 
 
 def _parse_date(s):
