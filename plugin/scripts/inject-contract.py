@@ -997,6 +997,10 @@ def main(argv=None):
     try:
         # 発火の印(ADR-062)。注入の面が生きている証跡を残す。最善努力。
         _auditcache.write_stamp("hook_inject_contract")
+        # 版の印(ADR-066)。セッション冒頭の版を刻み、鼓動が途中の切替を検める。
+        _ver = _auditcache.plugin_version()
+        if _ver:
+            _auditcache.write_stamp("hook_inject_version", value=_ver)
 
         opts = _parse_args(list(argv))
         docs_root = _resolve_docs_root(opts["docs_root"])

@@ -154,6 +154,41 @@ class TestHeartbeat(LivenessBase):
         self.assertIn("【移行", out, "移行キャンペーンが先に出る")
         self.assertNotIn("紐づけ整理", out)
 
+    def test_version_drift_is_announced_every_session(self):
+        """版の切替(ADR-066): 冒頭と今の版が違えば、再起動を促す行が付く。"""
+        self._put_summary("2026-07-25")
+        self._put_state("last_cadence_review: 2026-07-20\n")
+        _write(os.path.join(self.base, ".claude", ".cache", "hook-stamps"),
+               "hook_inject_version: 0.0.1\n")
+        out, code = self._hb("2026-07-26", "s-ver1")
+        self.assertEqual(code, 0)
+        self.assertIn("版の切替", out)
+        self.assertIn("新しいセッション", out)
+
+    def test_no_version_drift_without_the_stamp(self):
+        """印が無ければ黙る(古い版からの更新直後を騒がせない)。"""
+        self._put_summary("2026-07-25")
+        self._put_state("last_cadence_review: 2026-07-20\n")
+        out, _ = self._hb("2026-07-26", "s-ver2")
+        self.assertNotIn("版の切替", out)
+
+    def test_level_hint_appears_once_for_a_level2_tree_with_audit_record(self):
+        """段階の案内(ADR-066): Level 2 + 監査の実績で一度だけ。以後は黙る。"""
+        _write(os.path.join(self.root, "_system", ".docs-level"), "level: 2\n")
+        self._put_summary("2026-07-25")
+        self._put_state("last_cadence_review: 2026-07-20\n")
+        first, _ = self._hb("2026-07-26", "s-lv1")
+        self.assertIn("Level 3", first)
+        self.assertIn("一度だけ", first)
+        second, _ = self._hb("2026-07-26", "s-lv2")
+        self.assertNotIn("Level 3", second, "案内は一度きり(印で黙る)")
+
+    def test_no_level_hint_without_an_audit_record(self):
+        _write(os.path.join(self.root, "_system", ".docs-level"), "level: 2\n")
+        self._put_state("last_cadence_review: 2026-07-20\n")
+        out, _ = self._hb("2026-07-26", "s-lv3")
+        self.assertNotIn("Level 3", out)
+
     def test_guard_liveness_gap_is_announced(self):
         """拒否経路の欠落の疑い(ADR-062)を、他が健全でも鼓動が告げる。"""
         self._put_summary("2026-07-25")

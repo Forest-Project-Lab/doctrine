@@ -294,6 +294,42 @@ class HookStampsTest(unittest.TestCase):
             "hook_policy_guard_pre": self._ts("2026-07-27T10:00:00Z"),
         }))
 
+    def test_value_stamp_roundtrips_via_raw_reader(self):
+        """値付きの印(ADR-066)。時刻の読み手には混ざらず、生の読み手で読める。"""
+        A.write_stamp("hook_inject_version", value="0.4.0", proj=self.proj)
+        raw = A.read_stamp_values(self.proj)
+        self.assertEqual(raw.get("hook_inject_version"), "0.4.0")
+        self.assertNotIn("hook_inject_version", A.read_stamps(self.proj),
+                         "時刻でない値は時刻の読み手に混ざらない")
+
+    def test_value_with_whitespace_is_not_written(self):
+        A.write_stamp("bad_key", value="has space", proj=self.proj)
+        self.assertNotIn("bad_key", A.read_stamp_values(self.proj),
+                         "状態行の文法に収まらない値は書かない")
+
+    def test_plugin_version_matches_the_packaged_manifest(self):
+        import json as _json
+        here = os.path.dirname(os.path.abspath(_util.__file__))
+        manifest = os.path.join(here, "..", ".claude-plugin", "plugin.json")
+        with open(manifest, "r", encoding="utf-8-sig") as fh:
+            expected = _json.load(fh)["version"]
+        self.assertEqual(A.plugin_version(), expected)
+
+    def test_version_drift_detects_a_mid_session_switch(self):
+        gap = A.version_drift({"hook_inject_version": "0.0.1"}, current="0.4.0")
+        self.assertIsNotNone(gap)
+        self.assertIn("0.0.1", gap)
+        self.assertIn("0.4.0", gap)
+        self.assertIn("新しいセッション", gap)
+
+    def test_version_drift_is_silent_when_equal_or_unknown(self):
+        self.assertIsNone(A.version_drift(
+            {"hook_inject_version": "0.4.0"}, current="0.4.0"))
+        self.assertIsNone(A.version_drift({}, current="0.4.0"),
+                          "印が無ければ判じない(前方寛容)")
+        self.assertIsNone(A.version_drift(
+            {"hook_inject_version": "0.4.0"}, current=None))
+
     def test_writers_leave_stamps_via_the_hook_entrypoints(self):
         """統合: リンタとガードの入口が印を残す(ADR-062 の書き手)。"""
         old = os.environ.get("CLAUDE_PROJECT_DIR")

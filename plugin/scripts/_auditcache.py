@@ -219,16 +219,23 @@ def _parse_ts(value):
         return None
 
 
-def write_stamp(key, now=None, proj=None):
-    """鍵の印を現在時刻で上書きする。最善努力(決して例外を投げない)。
+def write_stamp(key, now=None, proj=None, value=None):
+    """鍵の印を上書きする。最善努力(決して例外を投げない)。
 
-    フックの本務を妨げない。置き場が無ければ作り、書けなければ黙って諦める。
-    知らない鍵の行はそのまま残す(ADR-042 の寛容と同じ形)。
+    既定は現在時刻。value を与えるとその文字列を書く(版の印など。ADR-066)。
+    値は状態行の文法(空白を含まない一語)に収まるものだけ書く。フックの本務を
+    妨げない。置き場が無ければ作り、書けなければ黙って諦める。知らない鍵の
+    行はそのまま残す(ADR-042 の寛容と同じ形)。
     """
     try:
-        if now is None:
-            now = datetime.datetime.now(datetime.timezone.utc)
-        stamp = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+        if value is not None:
+            stamp = str(value).strip()
+            if not stamp or any(c.isspace() for c in stamp):
+                return
+        else:
+            if now is None:
+                now = datetime.datetime.now(datetime.timezone.utc)
+            stamp = now.strftime("%Y-%m-%dT%H:%M:%SZ")
         path = stamps_path(proj)
         os.makedirs(os.path.dirname(path), exist_ok=True)
         lines = []
@@ -253,6 +260,68 @@ def write_stamp(key, now=None, proj=None):
         os.replace(tmp, path)
     except Exception:
         pass
+
+
+def read_stamp_values(proj=None):
+    """印を {鍵: 生の文字列} で返す。無ければ空。決して例外を投げない。
+
+    read_stamps(時刻に読めた鍵だけ)と分けるのは、版の印(ADR-066)のように
+    時刻でない値を持つ鍵があるためである。
+    """
+    out = {}
+    try:
+        with open(stamps_path(proj), "r", encoding="utf-8-sig") as fh:
+            for line in fh:
+                m = _STATE_LINE_RE.match(line)
+                if m:
+                    out[m.group(1)] = m.group(2)
+    except (OSError, UnicodeError):
+        return {}
+    return out
+
+
+def plugin_version():
+    """自分が属する包みの版(plugin.json の version)。読めなければ None。
+
+    実行中のコードの版であって、導入済みの何かの版ではない。フックはこの
+    ファイルと同じ包みから起動されるので、これが「今走っているコードの版」に
+    なる(ADR-066)。
+    """
+    try:
+        path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                            "..", ".claude-plugin", "plugin.json")
+        with open(path, "r", encoding="utf-8-sig") as fh:
+            data = json.load(fh)
+        ver = data.get("version") if isinstance(data, dict) else None
+        if isinstance(ver, str) and ver.strip():
+            return ver.strip()
+    except Exception:
+        pass
+    return None
+
+
+def version_drift(raw_stamps, current=None):
+    """版の食い違い(ADR-066)。無ければ None、あれば説明の文字列。
+
+    セッション冒頭に注入が刻んだ版(hook_inject_version)と、今の自分の版を
+    比べる。どちらかが読めなければ判じない(古い版からの更新直後は印が無い —
+    前方寛容)。配線と契約はセッション開始時に固定される(DECIDED-001 事実8)
+    ため、食い違いは「新しいセッションを開始する」が唯一の解になる。
+    """
+    if not isinstance(raw_stamps, dict):
+        return None
+    started = raw_stamps.get("hook_inject_version")
+    if current is None:
+        current = plugin_version()
+    if (not isinstance(started, str) or not started.strip()
+            or not isinstance(current, str) or not current.strip()):
+        return None
+    if started.strip() == current.strip():
+        return None
+    return ("プラグインの版がセッションの途中で切り替わった(開始時 %s → 今 %s)。"
+            "配線と契約はセッション開始時に固定されるため、古いまま動いている。"
+            "新しいセッションを開始する(ADR-066)"
+            % (started.strip(), current.strip()))
 
 
 def read_stamps(proj=None):

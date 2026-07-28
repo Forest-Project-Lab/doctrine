@@ -234,7 +234,31 @@ def build_message(docs_root, today, config):
         return line
     # 4) 紐づけキャンペーン(ADR-065)。体系外 .md の整理が出す物を持たない体系で
     #    だけ順番が回る(位相: 文書の整理 → 紐づけの整理)。枠は増やさない。
-    return trace_campaign_line(summary)
+    line = trace_campaign_line(summary)
+    if line:
+        return line
+    # 5) Level 昇格の一度きりの案内(ADR-066)。全ての促しが静かなときだけ。
+    return level_hint_line(summary, level)
+
+
+def level_hint_line(summary, level):
+    """Level 昇格の判断材料を一度だけ示す(ADR-066)。以後は印を残して黙る。
+
+    Level 2 のままで全件監査の実績(読める要約)が確認できたときだけ。昇格する
+    かは人の判断のまま(自動化しない。繰り返し促さない)。
+    """
+    if level >= 3:
+        return ""
+    if not isinstance(summary, dict):
+        return ""   # 実績(要約)が無ければ案内の根拠が無い。
+    shown = _auditcache.read_stamp_values().get("level_hint_shown")
+    if shown:
+        return ""
+    _auditcache.write_stamp("level_hint_shown", value="shown")
+    return ("【段階】Level 2 のまま、全件監査の実績(読める要約)を確認した。"
+            "常時の SessionEnd 監査と督促が要るなら Level 3 へ上げられる — "
+            "_system/.docs-level に「level: 3」と書き、新しいセッションで効く"
+            "(ADR-066)。上げるかは運用の判断で、この案内は一度だけ出す。")
 
 
 # 文中に運ぶ id の書式(登録簿の <TYPE>-<NNN>)。要約は攻撃者制御になりうるため、
@@ -299,6 +323,10 @@ def main(argv=None):
         gap = _auditcache.liveness_gap(_auditcache.read_stamps())
         if gap:
             msg = (msg + "\n" if msg else "") + "【拒否経路の疑い】" + gap
+        # 版の切替(ADR-066)。配線と契約が古いまま動いている状態を毎回検める。
+        drift = _auditcache.version_drift(_auditcache.read_stamp_values())
+        if drift:
+            msg = (msg + "\n" if msg else "") + "【版の切替】" + drift
         if not msg:
             return 0
         sid = data.get("session_id")

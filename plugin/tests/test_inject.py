@@ -184,6 +184,27 @@ class TestTraceCoverageLine(InjectBase):
         self.assertNotIn("動いていない", ctx)
 
 
+class TestVersionStamp(InjectBase):
+    """注入は版の印を刻む(ADR-066)。鼓動が途中の切替を検める前提になる。"""
+
+    def test_inject_writes_the_version_stamp(self):
+        root = self._repo({"docs/_system/decided-facts.md":
+                           _decided("DECIDED-001", "確定A")})
+        old = os.environ.get("CLAUDE_PROJECT_DIR")
+        os.environ["CLAUDE_PROJECT_DIR"] = root
+        try:
+            self._run_json(os.path.join(root, "docs"))
+        finally:
+            if old is None:
+                os.environ.pop("CLAUDE_PROJECT_DIR", None)
+            else:
+                os.environ["CLAUDE_PROJECT_DIR"] = old
+        cache = _util.load_core("_auditcache")
+        raw = cache.read_stamp_values(root)
+        self.assertEqual(raw.get("hook_inject_version"),
+                         cache.plugin_version())
+
+
 class TestSessionStartShape(InjectBase):
     """TC-101 baseline: output is a valid SessionStart additionalContext JSON,
     exit 0 always."""
