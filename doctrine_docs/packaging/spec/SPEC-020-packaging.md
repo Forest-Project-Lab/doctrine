@@ -39,6 +39,10 @@ llm_context: task
 - `plugin.json` の JSON が壊れていれば、読み込みで失敗し、弾く。
 - 第三者モジュールを import するスクリプトは、標準ライブラリ点検で失敗とする。
 
+## 実装の指紋
+
+- コード対応なし: 実装は配布の構成(plugin.json と配置)であり、単一のコード範囲を持たない
+
 ## 受入基準
 
 `plugin.json` が妥当な JSON で最小キーを満たし、`name` が `doctrine` であること。`plugin/scripts/` の全 `.py` が、標準ライブラリと兄弟コアだけを import すること。README（案内ファイル）が存在し、索引項目（install 経路・7 つの技能・Hook の各イベント・スクリプト名・段）を含むこと。対応テストは TEST-020。

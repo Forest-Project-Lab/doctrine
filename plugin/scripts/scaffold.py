@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# doctrine:begin SPEC-015
 """docs-system-init の足場づくり。_system の最小配置とルートの案内だけを置く(非破壊)。
 
 保証限界:
@@ -30,6 +31,7 @@ overview には決して触れない(非破壊)。導出に失敗しても足場
 
 標準ライブラリのみ。pip も通信も使わない。決定的(実行日は --today で上書き可)。
 """
+# doctrine:end SPEC-015
 import os
 import re
 import sys

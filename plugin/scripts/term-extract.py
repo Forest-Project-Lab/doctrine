@@ -69,6 +69,7 @@ _FENCE_RE = re.compile(r"^[ \t]*(`{3,}|~{3,})", re.MULTILINE)
 
 # A SHORT, conservative stoplist (B.2). c-TF-IDF already de-weights cross-class
 # common terms; a heavy list risks dropping real domain terms.
+# doctrine:begin SPEC-018
 _STOP_ASCII = frozenset({
     "the", "and", "of", "to", "is", "for", "in", "on", "at", "by", "with",
     "as", "an", "or", "be", "this", "that", "it", "are", "from", "was",
@@ -77,6 +78,7 @@ _STOP_JP_BIGRAMS = frozenset({
     "こと", "する", "ため", "など", "より", "から", "また", "その", "この",
     "れる", "られ", "という", "ある", "なる", "いる",
 })
+# doctrine:end SPEC-018
 
 
 def _strip_code_fences(text):

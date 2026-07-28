@@ -48,11 +48,13 @@ COERCE_BOOL = True  # only unquoted true/false coerce to bool (never yes/no/on/o
 # Closed set of error codes (MASTER §1). `missing_open` is reserved for strict
 # callers (e.g. the linter, which DOES require frontmatter per §3.4); parse()
 # never emits it because absence of frontmatter is legal/empty.
+# doctrine:begin SPEC-002
 _ERROR_CODES = frozenset({
     "missing_open", "missing_close", "bad_line", "empty_key",
     "orphan_list_item", "unterminated_quote", "unterminated_flow",
     "bad_flow_list", "duplicate_key",
 })
+# doctrine:end SPEC-002
 
 _BOM = "﻿"
 

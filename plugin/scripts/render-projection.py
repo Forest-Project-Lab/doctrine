@@ -39,7 +39,9 @@ OVERVIEW_REL = "_system/overview.md"
 ICD_INDEX_REL = "_system/icd-index.md"
 CTXMAP_REL = "_system/context-map.md"
 
+# doctrine:begin SPEC-014
 MODES = ("overview", "icd-index", "context-map-skeleton", "all")
+# doctrine:end SPEC-014
 
 
 # ---------------------------------------------------------------------------

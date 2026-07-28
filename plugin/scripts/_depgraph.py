@@ -27,11 +27,13 @@ import _registry
 
 
 # 端の種類(MASTER §5.2 / slice 05 A.2)。cross_domain_violation は depends_on 端だけに付く。
+# doctrine:begin SPEC-006
 KIND_INTRA = "intra_domain"
 KIND_CROSS_ICD = "cross_domain_icd"
 KIND_CROSS_VIOLATION = "cross_domain_violation"
 KIND_CROSS_IMPACT = "cross_domain_impact"
 KIND_DANGLING = "dangling"
+# doctrine:end SPEC-006
 
 UNKNOWN = "UNKNOWN"
 

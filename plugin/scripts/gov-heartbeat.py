@@ -29,8 +29,10 @@ import _frontmatter  # noqa: E402
 import _intake  # noqa: E402
 import _registry  # noqa: E402
 
+# doctrine:begin SPEC-021
 DEFAULT_AUDIT_STALE_DAYS = 7
 DEFAULT_CADENCE_DAYS = 30
+# doctrine:end SPEC-021
 
 _DATE_RE = re.compile(r"^(\d{4})-(\d{2})-(\d{2})$")
 _STATE_LINE_RE = re.compile(r"^\s*([A-Za-z0-9_]+)\s*[:：]\s*(\S+)\s*$")

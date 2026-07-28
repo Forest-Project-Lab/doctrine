@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# doctrine:begin SPEC-013
 """タスク別の最小コンテキストを集める道具(llm-context-pack, R5)。
 
 保証限界:
@@ -21,6 +22,7 @@ TASKSPEC は自由記述のタスク文、またはタスクを書いたファ�
 
 標準ライブラリだけを使う。pip も通信も使わない。出力は決定的(整列済み)。
 """
+# doctrine:end SPEC-013
 import json
 import math
 import os

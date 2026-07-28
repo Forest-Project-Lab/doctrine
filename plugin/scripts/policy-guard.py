@@ -160,6 +160,7 @@ def _project_has_tree(file_path, cwd=None):
 # ---------------------------------------------------------------------------
 
 # ADR の唯一許される lifecycle 変化(D0.8 / §3.6.2 carve-out)。
+# doctrine:begin SPEC-003
 _ADR_CARVEOUT_STATUS = {
     ("proposed", "accepted"),
     ("accepted", "superseded"),
@@ -167,6 +168,7 @@ _ADR_CARVEOUT_STATUS = {
 }
 # carve-out で触ってよいキー(status 遷移に伴うもの)。
 _ADR_CARVEOUT_KEYS = frozenset({"status", "superseded_by", "updated"})
+# doctrine:end SPEC-003
 
 
 def guard_immutability(file_path, tool, tin):
