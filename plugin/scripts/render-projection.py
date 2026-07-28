@@ -31,8 +31,8 @@ HEADER_LINE = "描画される。手で編集しない。"
 
 # Context Map 骨組みの差し替え区間を囲む印(slice 06 §3.5)。この印の外側の散文は
 # 再描画でも保つ。docs-curate は印の内側を手で触らない。
-CTXMAP_BEGIN = "<!-- BEGIN PROJECTION:context-map-skeleton -->"
-CTXMAP_END = "<!-- END PROJECTION:context-map-skeleton -->"
+CTXMAP_BEGIN = _registry.CTXMAP_BEGIN
+CTXMAP_END = _registry.CTXMAP_END
 
 # 投影の置き場所(§3.7 / C8)。ファイル名は固定。
 OVERVIEW_REL = "_system/overview.md"

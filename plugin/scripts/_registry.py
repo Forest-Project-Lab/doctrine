@@ -236,6 +236,12 @@ def required_keys(level, type_code):
 # 投影 (描画) files — rendered projections, fixed names (§3.9 / C8).
 PROJECTION_FILES = frozenset({"overview.md", "icd-index.md", "context-map.md"})
 
+# Context Map 骨組みの差し替え区間を囲む印(§3.9/slice 06 §3.5)。描き手
+# (render-projection)と読み手(docs-audit の投影ドリフト検査)が同じ印で
+# 区間を判じるため、正本はここ一つ(DECIDED-001 事実1)。
+CTXMAP_BEGIN = "<!-- BEGIN PROJECTION:context-map-skeleton -->"
+CTXMAP_END = "<!-- END PROJECTION:context-map-skeleton -->"
+
 # 正本 (canonical) + the overview projection seeded by scaffold.py (§3.7 / §5.8).
 # watchlist.md is the spec-mandated fixed path for the WATCH 正本 (§3.7 layout):
 # its filename does NOT encode the id (WATCH-N), so id<->filename matching must
