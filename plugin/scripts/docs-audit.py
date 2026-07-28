@@ -29,12 +29,12 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import _depgraph
+import _audit_trace
 import _auditcache
 import _frontmatter
 import _intake
 import _registry
 import _termcheck
-import _tracescan
 
 
 SCHEMA = "docs-audit/1"
@@ -644,38 +644,6 @@ def _check_ext_hash(doc_id, node, body, target, abspath):
     return []
 
 
-_TRACE_SECTION_RE = re.compile(r"(?m)^#{1,6}\s*実装の指紋\s*$")
-_TRACE_FP_RE = re.compile(r"(?m)^\s*-\s*(sha256:[0-9a-fA-F]{64})\s*$")
-
-# 印の対応付けの誤り(走査が返す code)。すべて error に畳む(ADR-056)。
-_TRACE_MARK_CODES = frozenset({
-    "trace_nested", "trace_id_mismatch", "trace_unclosed",
-    "trace_unopened", "trace_empty_range"})
-
-
-_TRACE_NOCODE_RE = re.compile(r"(?m)^\s*-\s*コード対応なし\s*[:：]")
-
-
-def _trace_declaration(body):
-    """本文の `## 実装の指紋` 節から、コードとの関係の宣言を読む(ADR-056/ADR-061)。
-
-    節が無ければ None(未宣言。追跡の対象外)。`- コード対応なし: <理由>` の行が
-    あれば {"kind": "none"}(意図してコードと結ばない明示宣言)。それ以外は
-    {"kind": "fps", "fps": 指紋の集合}(節はあるが指紋の行が無ければ空集合 =
-    対象だが記録が空)。
-    """
-    m = _TRACE_SECTION_RE.search(body or "")
-    if m is None:
-        return None
-    tail = body[m.end():]
-    nxt = re.search(r"(?m)^#{1,6}\s", tail)
-    section = tail[:nxt.start()] if nxt else tail
-    if _TRACE_NOCODE_RE.search(section):
-        return {"kind": "none"}
-    return {"kind": "fps",
-            "fps": {fp.lower() for fp in _TRACE_FP_RE.findall(section)}}
-
-
 def _check_guard_liveness(root):
     """拒否経路の欠落の疑い(ADR-062)。判定は _auditcache に一度だけ在る。
 
@@ -693,155 +661,6 @@ def _check_guard_liveness(root):
         ".claude/.cache/" + _auditcache.STAMPS_NAME, gap)]
 
 
-def _check_code_traces(g, root):
-    """コードと仕様の追跡(ADR-056、SPEC-026)。
-
-    `## 実装の指紋` の節を持つ文書が一つでもあるときだけ効く。門は節の有無だけで
-    判じ、状態を問わない(ADR-060)。節を持つ文書が一つも無ければ、コードの走査
-    そのものを行わない(使っていない機能の費用を払わせない)。上向きの検査
-    (注釈→文書)は走査が走れば常に効き、下向きの照合(記録した指紋)は現行の
-    文書だけに掛ける。「根拠を持たないコード」は挙げない — 注釈は任意であり、
-    原理的に判じられない(ADR-054 の既知の限界)。
-    """
-    # 走査の門は「節の有無」だけで判じ、状態を問わない(ADR-060)。廃止された
-    # 仕様だけが opt-in している木でも、上向きの検査(注釈への warn)は生きる。
-    # 以前は現行の opt-in に門を掛けており、opt-in した仕様の廃止が「廃止を
-    # 指す注釈」の検査そのものを殺す自己矛盾があった。
-    sections = {}   # doc_id -> 宣言(状態を問わない)
-    for doc_id in sorted(g.nodes):
-        node = g.nodes[doc_id]
-        decl = _trace_declaration(node.get("_body") or "")
-        if decl is not None:
-            sections[doc_id] = decl
-    if not sections:
-        return [], None   # 節を持つ文書が無い → 走査しない(ADR-056 の静けさ)
-
-    # 下向きの照合は現行の文書だけに掛ける(現行でない記録は歴史。ADR-060)。
-    expect = {doc_id: decl for doc_id, decl in sections.items()
-              if _registry.is_current(g.nodes[doc_id].get("status", ""))}
-
-    scan_root = os.path.dirname(os.path.abspath(root))
-    try:
-        ranges, scan_findings, coverage = _tracescan.scan_tree(
-            scan_root, docs_root=root)
-    except Exception:
-        return [], None   # 走査で監査を落とさない
-
-    out = []
-    for f in scan_findings:
-        if f["code"] in _TRACE_MARK_CODES:
-            out.append(_finding(
-                "trace_mark_error", SEV_ERROR, "", f["path"],
-                "%s(%d 行目)。印の対を直す(SPEC-026)" % (f["message"], f["line"])))
-        elif f["code"] == "trace_marker_suspect":
-            # 打ったつもりの印の兆候(ADR-059)。誤検出がありうるので advisory。
-            out.append(_finding(
-                "trace_marker_suspect", SEV_ADVISORY, "", f["path"],
-                "%s(%d 行目)" % (f["message"], f["line"])))
-        elif f["code"] == "trace_scan_truncated":
-            # 走査が告げた切り詰めを読み手が握らない(ADR-059)。
-            out.append(_finding(
-                "trace_scan_truncated", SEV_ADVISORY, "", f["path"],
-                f["message"]))
-        elif f["code"] == "trace_exempt_conflict":
-            # 統治外の宣言と実態の矛盾(ADR-067)。宣言したファイルにしか
-            # 発火しない(版を上げただけの利用者には何も起きない)。
-            out.append(_finding(
-                "trace_exempt_conflict", SEV_WARN, "", f["path"],
-                "%s(%d 行目)" % (f["message"], f["line"])))
-
-    by_id = {}
-    for r in ranges:
-        by_id.setdefault(r["id"], []).append(r)
-
-    # 注釈が指す先の不備(上向き)。
-    for doc_id in sorted(by_id):
-        where = by_id[doc_id][0]["path"]
-        node = g.nodes.get(doc_id)
-        if node is None:
-            out.append(_finding(
-                "trace_broken_ref", SEV_ERROR, doc_id, where,
-                "注釈が実在しない id %s を指している。id を直すか印を消す" % doc_id))
-        elif not _registry.is_current(node.get("status", "")):
-            out.append(_finding(
-                "trace_deprecated_ref", SEV_WARN, doc_id, where,
-                "注釈が %s の id %s を指している。後継へ張り替えるか印を消す"
-                % (node.get("status", "?"), doc_id)))
-
-    # 記録した確認との照合(下向き)。
-    for doc_id in sorted(expect):
-        decl = expect[doc_id]
-        found = by_id.get(doc_id, [])
-        node = g.nodes[doc_id]
-        if decl["kind"] == "none":
-            # 「コード対応なし」の宣言と実態の矛盾(ADR-061)。宣言した文書に
-            # しか発火しないので、版を上げただけの利用者には何も起きない。
-            if found:
-                out.append(_finding(
-                    "trace_unexpected_impl", SEV_WARN, doc_id, node["path"],
-                    "「コード対応なし」と宣言しているが、この仕様を指す範囲が"
-                    "コードにある(%s)。宣言が古いか注釈が誤り。宣言を指紋の"
-                    "記録に替えるか、印を消す(ADR-061)"
-                    % ", ".join(sorted(r["path"] for r in found))))
-            continue
-        recorded = decl["fps"]
-        if not found:
-            out.append(_finding(
-                "trace_missing_impl", SEV_WARN, doc_id, node["path"],
-                "実装の指紋を記録しているが、対応する範囲がコードに一つも無い。"
-                "印を打つか、節を消して追跡の対象から外す(ADR-056)"))
-            continue
-        actual = {r["fingerprint"].lower() for r in found}
-        if actual != recorded:
-            out.append(_finding(
-                "trace_stale", SEV_WARN, doc_id, node["path"],
-                "記録した実装の指紋と、いまのコードの指紋が食い違う(%s)。"
-                "変更を確かめ、確認したら節の指紋を更新する"
-                % ", ".join(sorted(r["path"] for r in found))))
-
-    # 欠陥D(ADR-061): 節の無い現行の SPEC を、コードの範囲が指している。
-    # 節を消して注釈だけ残った/節を書かずに注釈だけ打った紐の可視化。合否は
-    # 変えない(advisory)。現行でない文書は上の trace_deprecated_ref が指す。
-    for doc_id in sorted(by_id):
-        if doc_id in sections:
-            continue
-        node = g.nodes.get(doc_id)
-        if node is None or not _registry.is_current(node.get("status", "")):
-            continue
-        if node.get("type") != "SPEC":
-            continue
-        out.append(_finding(
-            "trace_undeclared_impl", SEV_ADVISORY, doc_id, node["path"],
-            "コードの範囲(%s)がこの仕様を指しているが、仕様は実装の指紋の節を"
-            "持たない。指紋を記録して追跡を結ぶか、「コード対応なし」を宣言する"
-            "(ADR-061)" % ", ".join(sorted(r["path"] for r in by_id[doc_id]))))
-
-    # 仕様側の三分類(ADR-061)。現行の SPEC がコードとの関係を宣言しているかを
-    # 数える。無宣言は数えるだけで所見にしない(義務化は別の ADR)。
-    if coverage is not None:
-        spec_cov = {"traced": 0, "no_code": 0, "undeclared": 0}
-        next_undeclared = None
-        for doc_id in sorted(g.nodes):
-            node = g.nodes[doc_id]
-            if node.get("type") != "SPEC":
-                continue
-            if not _registry.is_current(node.get("status", "")):
-                continue
-            decl = sections.get(doc_id)
-            if decl is None:
-                spec_cov["undeclared"] += 1
-                if next_undeclared is None:
-                    # キャンペーン(ADR-065)が運ぶ「次の一件」。整列順の先頭で
-                    # 決定的。一覧は載せない(要約を肥やさない)。
-                    next_undeclared = doc_id
-            elif decl["kind"] == "none":
-                spec_cov["no_code"] += 1
-            else:
-                spec_cov["traced"] += 1
-        if next_undeclared is not None:
-            spec_cov["next_undeclared"] = next_undeclared
-        coverage["spec_coverage"] = spec_cov
-    return out, coverage
 
 
 def _check_memory_shadow(g, root):
@@ -1240,44 +1059,11 @@ def run_audit(root, today, knobs):
     findings += _check_ext_anchors(g, root)
     findings += _check_memory_shadow(g, root)
     findings += _check_guard_liveness(root)
-    trace_findings, trace_coverage = _check_code_traces(g, root)
+    trace_findings, trace_coverage = _audit_trace.collect(g, root, _finding)
     findings += trace_findings
 
-    # 停滞の勘定(ADR-065)。直前の要約と比べ、印なし+未宣言の和が動かない監査が
-    # 続いた回数を数える。読むのは監査自身の前回成果物だけで、環境変数に依存
-    # しない(試験と CI で決定的にするため、パスは監査対象の木の親から導く)。
-    if trace_coverage is not None:
-        prev = None
-        try:
-            ppath = os.path.join(
-                os.path.dirname(os.path.abspath(root)),
-                ".claude", ".cache", "last-audit.json")
-            with open(ppath, "r", encoding="utf-8-sig") as fh:
-                cand = json.load(fh)
-            if (isinstance(cand, dict)
-                    and cand.get("schema") == _auditcache.SCHEMA
-                    and _auditcache.same_root(cand.get("root"), root)):
-                prev = cand
-        except Exception:
-            prev = None
-
-        def _open_total(cov):
-            sc = cov.get("spec_coverage")
-            und = sc.get("undeclared", 0) if isinstance(sc, dict) else 0
-            unm = cov.get("unmarked_files", 0)
-            try:
-                return int(unm) + int(und)
-            except (TypeError, ValueError):
-                return 0
-
-        streak = 0
-        prev_cov = prev.get("trace_coverage") if isinstance(prev, dict) else None
-        if isinstance(prev_cov, dict):
-            cur = _open_total(trace_coverage)
-            if cur > 0 and cur == _open_total(prev_cov):
-                ps = prev_cov.get("stagnation_streak")
-                streak = (ps if isinstance(ps, int) and ps >= 0 else 0) + 1
-        trace_coverage["stagnation_streak"] = streak
+    # 停滞の勘定(ADR-065)は追跡系モジュールに在る(ADR-069 の移送)。
+    _audit_trace.apply_stagnation(root, trace_coverage)
 
     findings.sort(key=lambda f: (f["check"], f["doc_id"], f["message"]))
     return findings, trace_coverage

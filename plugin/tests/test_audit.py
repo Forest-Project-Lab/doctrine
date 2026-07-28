@@ -1191,9 +1191,9 @@ class AuditChecksFreezeTest(AuditBase):
     def test_scanner_codes_have_a_producer_side_canon(self):
         """産出側の所見コード正本と、消費側の畳み込み集合の包含(ADR-060)。"""
         tracescan = _util.load_core("_tracescan")
-        audit = _util.load_script("docs-audit")
+        trace_mod = _util.load_core("_audit_trace")
         codes = set(tracescan.FINDING_CODES)
-        self.assertTrue(set(audit._TRACE_MARK_CODES) <= codes,
+        self.assertTrue(set(trace_mod._TRACE_MARK_CODES) <= codes,
                         "消費側だけにあるコードは産出されない死文である")
         self.assertIn("trace_marker_suspect", codes)
         self.assertIn("trace_scan_truncated", codes)
