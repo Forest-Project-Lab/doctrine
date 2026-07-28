@@ -125,7 +125,7 @@ class InjectBase(unittest.TestCase):
 class TestTraceCoverageLine(InjectBase):
     """勘定の冒頭表示(ADR-058)。追跡を使う体系でだけ、件数の一行を足す。"""
 
-    def _summary_obj(self, docs_root, with_coverage):
+    def _summary_obj(self, docs_root, with_coverage, streak=0):
         obj = {
             "schema": "docs-audit/1",
             "generated_at": "2026-07-27T00:00:00Z", "today": "2026-07-27",
@@ -137,10 +137,11 @@ class TestTraceCoverageLine(InjectBase):
             obj["trace_coverage"] = {
                 "unmarked_files": 71,
                 "spec_coverage": {"traced": 2, "no_code": 0, "undeclared": 20},
+                "stagnation_streak": streak,
             }
         return obj
 
-    def _render_with_summary(self, with_coverage):
+    def _render_with_summary(self, with_coverage, streak=0):
         plugin_root = _util.mkdtemp()
         self.addCleanup(shutil.rmtree, plugin_root, ignore_errors=True)
         cache_dir = os.path.join(plugin_root, ".cache")
@@ -150,7 +151,7 @@ class TestTraceCoverageLine(InjectBase):
         docs_root = os.path.join(root, "docs")
         with open(os.path.join(cache_dir, "last-audit.json"), "w",
                   encoding="utf-8") as fh:
-            json.dump(self._summary_obj(docs_root, with_coverage), fh,
+            json.dump(self._summary_obj(docs_root, with_coverage, streak), fh,
                       ensure_ascii=False)
         old = os.environ.get("CLAUDE_PLUGIN_ROOT")
         os.environ["CLAUDE_PLUGIN_ROOT"] = plugin_root
@@ -172,6 +173,15 @@ class TestTraceCoverageLine(InjectBase):
     def test_no_line_without_coverage(self):
         ctx = self._render_with_summary(with_coverage=False)
         self.assertNotIn("印なし", ctx)
+
+    def test_stagnation_is_called_out_at_three(self):
+        """停滞の名指し(ADR-065)。streak が 3 以上のときだけ添える。"""
+        ctx = self._render_with_summary(with_coverage=True, streak=5)
+        self.assertIn("進捗が 5 回の監査で動いていない", ctx)
+
+    def test_fresh_progress_has_no_stagnation_note(self):
+        ctx = self._render_with_summary(with_coverage=True, streak=2)
+        self.assertNotIn("動いていない", ctx)
 
 
 class TestSessionStartShape(InjectBase):

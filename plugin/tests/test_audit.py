@@ -1482,8 +1482,60 @@ class CodeTraceTest(AuditBase):
         hits = self.checks_for(data, "trace_undeclared_impl")
         self.assertEqual([h["doc_id"] for h in hits], ["SPEC-900"])
         self.assertEqual(hits[0]["severity"], "advisory")
-        self.assertEqual(data["trace_coverage"]["spec_coverage"],
-                         {"traced": 1, "no_code": 0, "undeclared": 1})
+        self.assertEqual(
+            data["trace_coverage"]["spec_coverage"],
+            {"traced": 1, "no_code": 0, "undeclared": 1,
+             "next_undeclared": "SPEC-900"},
+            "キャンペーン(ADR-065)が運ぶ「次の一件」は整列順の先頭")
+
+    def _traced_repo(self, extra_files=None):
+        """走査が走る最小 fixture(SPEC-900 traced・一致)。docs root を返す。"""
+        files = {"src/a.py": ""}
+        files.update(extra_files or {})
+        root = _util.make_repo(files)
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        code = "\n".join([_tmark("begin", "SPEC-900"), "x=1",
+                          _tmark("end", "SPEC-900")])
+        with open(os.path.join(root, "src", "a.py"), "w", encoding="utf-8") as fh:
+            fh.write(code)
+        tracescan = _util.load_core("_tracescan")
+        fp = tracescan.scan_text(code, "src/a.py")[0][0]["fingerprint"]
+        os.makedirs(os.path.join(root, "docs", "app", "spec"), exist_ok=True)
+        with open(os.path.join(root, "docs", "app", "spec", "SPEC-900.md"),
+                  "w", encoding="utf-8") as fh:
+            fh.write(_spec_with_fingerprints("SPEC-900", [fp]))
+        return os.path.join(root, "docs")
+
+    def test_stagnation_streak_counts_unchanged_audits(self):
+        """停滞の勘定(ADR-065): 印なし+未宣言の和が動かない監査を数え、動けば戻る。"""
+        docs_root = self._traced_repo(extra_files={"src/plain.py": "print(1)\n"})
+        proj = os.path.dirname(docs_root)
+        cache = os.path.join(proj, ".claude", ".cache")
+        os.makedirs(cache, exist_ok=True)
+
+        first, _ = self.audit_json(docs_root)
+        self.assertEqual(first["trace_coverage"]["stagnation_streak"], 0,
+                         "直前の要約が無ければ 0")
+        with open(os.path.join(cache, "last-audit.json"), "w",
+                  encoding="utf-8") as fh:
+            json.dump(first, fh, ensure_ascii=False)
+
+        second, _ = self.audit_json(docs_root)
+        self.assertEqual(second["trace_coverage"]["stagnation_streak"], 1)
+        with open(os.path.join(cache, "last-audit.json"), "w",
+                  encoding="utf-8") as fh:
+            json.dump(second, fh, ensure_ascii=False)
+
+        third, _ = self.audit_json(docs_root)
+        self.assertEqual(third["trace_coverage"]["stagnation_streak"], 2,
+                         "続けば積み上がる")
+
+        # 値が動けば 0 に戻る(ファイルを一つ足して印なしを増やす)。
+        with open(os.path.join(proj, "src", "newone.py"), "w",
+                  encoding="utf-8") as fh:
+            fh.write("print(2)\n")
+        moved, _ = self.audit_json(docs_root)
+        self.assertEqual(moved["trace_coverage"]["stagnation_streak"], 0)
 
     def test_exempt_conflict_surfaces_as_warn_for_declarers_only(self):
         """統治外の宣言と実態の矛盾(ADR-067)。宣言したファイルにしか発火しない。"""

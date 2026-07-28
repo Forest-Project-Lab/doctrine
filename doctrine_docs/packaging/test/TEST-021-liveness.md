@@ -23,6 +23,7 @@ SPEC-021 の受入を `plugin/tests/test_liveness_capture.py` が機械で確認
 - 使い始めの前・統治木の外 → 無音(test_brand_new_tree_is_silent / test_no_tree_is_silent)。
 - 定例の記録なし・周期超過 → 実行と記録先を含む督促(test_missing_cadence_record_with_audit_prompts / test_cadence_overdue_warns)。
 - セッションに一度だけ(test_once_per_session)。
+- 紐づけキャンペーン(ADR-065) → 未宣言の先頭一件を三つの出口つきで促し(test_trace_campaign_prompts_the_next_undeclared_spec)、停滞に触れ(test_trace_campaign_mentions_stagnation)、書式に合わない id を文面に載せず(test_trace_campaign_rejects_a_malformed_id)、移行キャンペーンが出す間は順番を待つ(test_trace_campaign_waits_for_md_migration)。
 - 発火の印の対の食い違い(ADR-062) → 他が健全でも「拒否経路の疑い」を告げる(test_guard_liveness_gap_is_announced)。印の書き読み・欠落/古さの判定・新鮮な対の無音・書き手の入口(リンタ/ガード)は `test_auditcache.py` の HookStampsTest が、監査側の advisory は `test_audit.py` の GuardLivenessTest が凍結する。
 - 注入側の鮮度警告と未選別メモ節(TestInjectLiveness)。
 - Level 2 で監査の死活を誤報しない(test_level2_missing_audit_is_not_flagged)。

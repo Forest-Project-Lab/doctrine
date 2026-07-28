@@ -229,7 +229,51 @@ def build_message(docs_root, today, config):
                 % (last.isoformat(), (today - last).days, cadence_days, STATE_NAME))
 
     # 3) 移行キャンペーン(1鼓動1件。ADR-034)。上の義務がすべて静かなときだけ出す。
-    return migration_line(docs_root, summary)
+    line = migration_line(docs_root, summary)
+    if line:
+        return line
+    # 4) 紐づけキャンペーン(ADR-065)。体系外 .md の整理が出す物を持たない体系で
+    #    だけ順番が回る(位相: 文書の整理 → 紐づけの整理)。枠は増やさない。
+    return trace_campaign_line(summary)
+
+
+# 文中に運ぶ id の書式(登録簿の <TYPE>-<NNN>)。要約は攻撃者制御になりうるため、
+# 一致しない値は文面に載せない(ADR-040 の境界と同じ扱い。ADR-065)。
+_CAMPAIGN_ID_RE = re.compile(r"^[A-Z]+-\d+$")
+
+
+def trace_campaign_line(summary):
+    """紐づけキャンペーン(ADR-065)。未宣言の仕様の先頭一件を自己完結文で促す。
+
+    読むのは監査の要約だけ(全木の走査はしない。SPEC-021 の制約)。要約が
+    「次の一件」(spec_coverage.next_undeclared)を運ぶ。無ければ黙る。
+    """
+    if not isinstance(summary, dict):
+        return ""
+    cov = summary.get("trace_coverage")
+    if not isinstance(cov, dict):
+        return ""
+    sc = cov.get("spec_coverage")
+    if not isinstance(sc, dict):
+        return ""
+    try:
+        undeclared = int(sc.get("undeclared") or 0)
+    except (TypeError, ValueError):
+        return ""
+    if undeclared <= 0:
+        return ""
+    nid = sc.get("next_undeclared")
+    if not isinstance(nid, str) or not _CAMPAIGN_ID_RE.match(nid):
+        return ""
+    tail = ""
+    streak = cov.get("stagnation_streak")
+    if isinstance(streak, int) and streak >= 3:
+        tail = "進捗が %d 回の監査で動いていない。" % streak
+    return ("【紐づけ整理】%s はコードとの関係が未宣言(残り %d 件)。この一件だけ"
+            "片づける: 実装があるなら範囲を印の対で囲み『実装の指紋』へ指紋を"
+            "記録する(SPEC-026)。意図して結ばないなら『- コード対応なし: <理由>』"
+            "を節に書く(ADR-061)。関係するコードが使い捨てなら、そのファイルに"
+            "exempt を宣言する(ADR-067)。%s" % (nid, undeclared, tail))
 
 
 def main(argv=None):
