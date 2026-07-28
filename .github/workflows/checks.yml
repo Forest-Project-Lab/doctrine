@@ -68,3 +68,22 @@ jobs:
             echo "::error::term-check found banned-synonym/calque ERRORs in root docs"
             exit 1
           fi
+
+      # Release integrity gate (ADR-071 / SPEC-027): the CHANGELOG's top
+      # versioned section must match the canonical version (plugin.json) and
+      # carry a date. On pull requests, a diff touching plugin/ must also touch
+      # CHANGELOG.md — escape hatch: "[no-changelog]" in the PR title (explicit,
+      # visible; no silent bypass). scripts/release-check.py is repo-local
+      # self-application, stdlib-only, not part of the distributed plugin.
+      - name: Release integrity (version ↔ CHANGELOG)
+        if: github.event_name != 'pull_request'
+        run: python3 scripts/release-check.py
+
+      - name: Release integrity (version ↔ CHANGELOG + record duty)
+        if: github.event_name == 'pull_request'
+        env:
+          RELEASE_CHECK_PR_TITLE: ${{ github.event.pull_request.title }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git fetch --no-tags --depth=1 origin "$BASE_SHA"
+          python3 scripts/release-check.py --diff-base "$BASE_SHA"

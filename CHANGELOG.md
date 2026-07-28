@@ -1,6 +1,12 @@
 # 変更履歴
 
-本ファイルは doctrine プラグインのリリースごとの変更を記録する。「なぜ」の根拠は各 ADR に、詳細な差分は git 履歴にある。版番号の正本は `plugin/.claude-plugin/plugin.json`。
+本ファイルは doctrine プラグインのリリースごとの変更を記録する。「なぜ」の根拠は各 ADR に、詳細な差分は git 履歴にある。版番号の正本は `plugin/.claude-plugin/plugin.json`。開発中の変更は「未リリース」節へ積み、リリース時に版番号と日付を付ける。整合は CI の門(`scripts/release-check.py`。SPEC-027)が検める。
+
+## [未リリース]
+
+### 追加
+
+- リリース整合の門(ADR-071): CI が、本ファイル先頭の版付き節と版番号の正本(plugin.json)の一致・日付の存在を毎回検め、pull request の差分が `plugin/` に触れるなら本ファイルにも触れることを検める(記録に値しない変更は題名の `[no-changelog]` で明示的に免除)。「未リリース」節を常設し、リリース手順を PROC-001 に正本化した。検査は自己適用の `scripts/release-check.py`(SPEC-027。配布物に含めない)。
 
 ## [0.5.1] — 2026-07-28
 

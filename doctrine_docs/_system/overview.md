@@ -153,6 +153,7 @@ sources: []
 | SPEC-020 | SPEC | packaging | パッケージ配布（plugin.json／install／.claude フォールバック／標準ライブラリ） |
 | SPEC-021 | SPEC | packaging | 統治ハートビート（監査の鮮度・定例の期限・外部アンカーの存在） |
 | SPEC-025 | SPEC | packaging | 被覆マトリクス（統治要求×発火経路×証跡） |
+| SPEC-027 | SPEC | packaging | リリース整合の門（release-check — 版の整合と記録の義務） |
 | ADR-011 | ADR | packaging | 段階導入とBash matcherの拒否限定 |
 | ADR-019 | ADR | packaging | 段差は .docs-level をスクリプト自身が読んで自主停止で実現する |
 | ADR-022 | ADR | packaging | 統治木の既定名を doctrine_docs にし、素の docs は他所の土地として触れない |
@@ -170,8 +171,11 @@ sources: []
 | ADR-066 | ADR | packaging | 体系は段階と版を自己認知する — 版の切替の検出と Level 昇格の一度きりの案内 |
 | ADR-068 | ADR | packaging | 開発方法論の機械化残差 — コード層の検算三点と開発規範の正本化 |
 | ADR-070 | ADR | packaging | 導入済みの複製の遅れを鼓動が検める — 正本の版との照合 |
+| ADR-071 | ADR | packaging | リリースの整合を CI の門で検める — 変更履歴の書き忘れの構造的な防止 |
 | CHANGE-001 | CHANGE | packaging | 導入済みプラグインの版の遅れを生存性として照合する |
+| CHANGE-002 | CHANGE | packaging | リリースの整合を CI の門で検める — 変更履歴の書き忘れを止める |
 | IMPACT-001 | IMPACT | packaging | 版の遅れの照合 — 影響の列挙 |
+| IMPACT-002 | IMPACT | packaging | リリース整合の門 — 影響の列挙 |
 | IMPL-017 | IMPL | packaging | パッケージ・Hook配線の実装注記 |
 | IMPL-019 | IMPL | packaging | gov-heartbeat.py（統治ハートビート）の実装メモ |
 | PROC-001 | PROC | packaging | 開発規範 — 方法論の採用範囲と、機械の検算・人の査読の分担 |
@@ -179,6 +183,7 @@ sources: []
 | TEST-020 | TEST | packaging | 配布・標準ライブラリの受入 |
 | TEST-021 | TEST | packaging | 統治ハートビートと死活警告の受入 |
 | TEST-025 | TEST | packaging | 被覆マトリクスの受入 |
+| TEST-027 | TEST | packaging | リリース整合の門の受入 |
 | EXT-001 | EXT | packaging | Claude Code の Hook 仕様とツール名への依存 |
 | EXT-002 | EXT | packaging | 自己適用の設定（.claude/settings.json のマーケットプレイス登録）への依存 |
 | EXT-004 | EXT | packaging | 継続的結合の定義（.github/workflows/checks.yml）への依存 |

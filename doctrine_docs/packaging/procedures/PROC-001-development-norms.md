@@ -7,14 +7,14 @@ status: current
 owner: doctrine-maintainers
 created: 2026-07-28
 updated: 2026-07-28
-sources: [doctrine_docs/packaging/decisions/ADR-047-methodology-performance-noimpact.md, doctrine_docs/packaging/decisions/ADR-068-code-audit-residues.md]
+sources: [doctrine_docs/packaging/decisions/ADR-047-methodology-performance-noimpact.md, doctrine_docs/packaging/decisions/ADR-068-code-audit-residues.md, doctrine_docs/packaging/decisions/ADR-071-release-integrity-gate.md]
 depends_on: [ICD-008]
 llm_context: task
 ---
 
 # 開発規範 — 方法論の採用範囲と、機械の検算・人の査読の分担
 
-doctrine 本体を開発するときの規範の正本である。寄稿の案内（CONTRIBUTING.md）はこの文書を指す（規範を二重定義しない）。`[R8]`
+doctrine 本体を開発するときの規範の正本である。寄稿の案内 CONTRIBUTING（リポジトリ直下の CONTRIBUTING.md）はこの文書を指す（規範を二重定義しない）。`[R8]`
 
 ## 方法論の採用範囲（ADR-047 の再掲でなく参照）
 
@@ -42,6 +42,20 @@ per-turn の性能は受入の門で凍結する: 合成 1,500 文書で 1 編�
 1. 変更は変更フロー（change-impact。決定の有無で段数が変わる。ADR-051）に載せる。
 2. コードを触ったら、CI の前に手元で `python3 plugin/scripts/code-audit.py` を走らせてよい（任意。CI が最終の門）。
 3. advisory（重複・肥大）は放置してよいが、同じ箇所へ三度目の指摘が出たら分割・統合を検討する（判断は人）。
+
+## リリース手順（ADR-071）
+
+1. 変更のたびに、CHANGELOG（リリースごとの変更を利用者向けに記す変更履歴
+   ファイル。実体は CHANGELOG.md）の常設「未リリース」節へ一行を積む。
+   `plugin/` に触れる pull request が積んでいないと、CI の門
+   （`scripts/release-check.py`。SPEC-027）が止める。記録に値しない変更は、
+   pull request の題名に `[no-changelog]` を書いて明示的に免れる。
+2. リリースでは、「未リリース」節へ版番号と日付を付けて版付き節にし、版番号の
+   正本（`plugin/.claude-plugin/plugin.json`）と `.claude-plugin/marketplace.json`
+   の版を同じ値へ上げる。二つの一致は TEST-020 が、CHANGELOG との整合は
+   同じ門が検める。
+3. リリースの pull request の題名は `release: vX.Y.Z — 概要 (semver patch|minor|major)`
+   の形に揃える（git 履歴が「何を変えたか」の正本。§3.8 の分担どおり）。
 
 ## 保証限界
 
