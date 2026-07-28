@@ -530,8 +530,13 @@ def _render_audit_summary(summary, today=None, stale_days=DEFAULT_AUDIT_STALE_DA
         spec_cov = cov.get("spec_coverage")
         if isinstance(spec_cov, dict):
             parts.append("未宣言 SPEC %s" % _num(spec_cov.get("undeclared")))
-        lines.append("、".join(parts)
-                     + "（内訳は trace-index --coverage で導出）")
+        line = ("、".join(parts)
+                + "（内訳は trace-index --coverage で導出）")
+        # 停滞の名指し(ADR-065)。数字が景色になったことを体系自身が言う。
+        streak = cov.get("stagnation_streak")
+        if isinstance(streak, int) and streak >= 3:
+            line += " ⚠ 進捗が %d 回の監査で動いていない" % streak
+        lines.append(line)
     # 鮮度の照合(R11)。today が与えられないときだけ壁時計に退避する(監査と同じ規約)。
     # Level 2 では SessionEnd が書かないため、古さは死活の兆候にならない(照合しない)。
     audit_day = _parse_date(summary.get("today")) if docs_level >= 3 else None

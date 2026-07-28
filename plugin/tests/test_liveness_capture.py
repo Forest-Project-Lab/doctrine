@@ -89,6 +89,71 @@ class TestHeartbeat(LivenessBase):
         out, code = self._hb("2026-07-26", "s1")
         self.assertEqual((out, code), ("", 0))
 
+    def _put_summary_with_trace(self, today, undeclared, next_id,
+                                streak=0, unmarked=10):
+        obj = json.loads(_summary_json(self.root, today))
+        sc = {"traced": 1, "no_code": 0, "undeclared": undeclared}
+        if next_id is not None:
+            sc["next_undeclared"] = next_id
+        obj["trace_coverage"] = {
+            "unmarked_files": unmarked, "exempt_files": 0,
+            "spec_coverage": sc, "stagnation_streak": streak,
+        }
+        _write(os.path.join(self.plugin_root, ".cache", "last-audit.json"),
+               json.dumps(obj))
+
+    def test_trace_campaign_prompts_the_next_undeclared_spec(self):
+        """紐づけキャンペーン(ADR-065): 未宣言の先頭一件を三つの出口つきで促す。"""
+        self._put_state("last_cadence_review: 2026-07-20\n")
+        self._put_summary_with_trace("2026-07-25", undeclared=2,
+                                     next_id="SPEC-006")
+        out, code = self._hb("2026-07-26", "s-camp1")
+        self.assertEqual(code, 0)
+        self.assertIn("紐づけ整理", out)
+        self.assertIn("SPEC-006", out)
+        self.assertIn("残り 2 件", out)
+        self.assertIn("コード対応なし", out)
+        self.assertIn("exempt", out)
+
+    def test_trace_campaign_mentions_stagnation(self):
+        self._put_state("last_cadence_review: 2026-07-20\n")
+        self._put_summary_with_trace("2026-07-25", undeclared=1,
+                                     next_id="SPEC-006", streak=5)
+        out, _ = self._hb("2026-07-26", "s-camp2")
+        self.assertIn("5 回の監査で動いていない", out)
+
+    def test_trace_campaign_rejects_a_malformed_id(self):
+        """要約は攻撃者制御になりうる。書式に合わない id は文面に載せない。"""
+        self._put_state("last_cadence_review: 2026-07-20\n")
+        self._put_summary_with_trace("2026-07-25", undeclared=1,
+                                     next_id="../evil\nSPEC-1")
+        out, code = self._hb("2026-07-26", "s-camp3")
+        self.assertEqual((out.strip(), code), ("", 0))
+
+    def test_trace_campaign_waits_for_md_migration(self):
+        """位相: 体系外 .md の整理が先。移行キャンペーンが出す間は順番を待つ。
+
+        移行キャンペーンの種は要約の所見(stray_document の「未分類」)から導く
+        設計(ADR-034)なので、fixture も所見で与える。
+        """
+        self._put_state("last_cadence_review: 2026-07-20\n")
+        obj = json.loads(_summary_json(self.root, "2026-07-25"))
+        obj["trace_coverage"] = {
+            "unmarked_files": 10, "exempt_files": 0,
+            "spec_coverage": {"traced": 1, "no_code": 0, "undeclared": 1,
+                              "next_undeclared": "SPEC-006"},
+            "stagnation_streak": 0,
+        }
+        obj["findings"] = [{
+            "check": "stray_document", "severity": "advisory", "doc_id": "",
+            "path": "notes/old.md", "message": "未分類の体系外 .md", "refs": [],
+        }]
+        _write(os.path.join(self.plugin_root, ".cache", "last-audit.json"),
+               json.dumps(obj))
+        out, _ = self._hb("2026-07-26", "s-camp4")
+        self.assertIn("【移行", out, "移行キャンペーンが先に出る")
+        self.assertNotIn("紐づけ整理", out)
+
     def test_guard_liveness_gap_is_announced(self):
         """拒否経路の欠落の疑い(ADR-062)を、他が健全でも鼓動が告げる。"""
         self._put_summary("2026-07-25")

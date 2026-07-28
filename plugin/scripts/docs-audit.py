@@ -820,6 +820,7 @@ def _check_code_traces(g, root):
     # 数える。無宣言は数えるだけで所見にしない(義務化は別の ADR)。
     if coverage is not None:
         spec_cov = {"traced": 0, "no_code": 0, "undeclared": 0}
+        next_undeclared = None
         for doc_id in sorted(g.nodes):
             node = g.nodes[doc_id]
             if node.get("type") != "SPEC":
@@ -829,10 +830,16 @@ def _check_code_traces(g, root):
             decl = sections.get(doc_id)
             if decl is None:
                 spec_cov["undeclared"] += 1
+                if next_undeclared is None:
+                    # キャンペーン(ADR-065)が運ぶ「次の一件」。整列順の先頭で
+                    # 決定的。一覧は載せない(要約を肥やさない)。
+                    next_undeclared = doc_id
             elif decl["kind"] == "none":
                 spec_cov["no_code"] += 1
             else:
                 spec_cov["traced"] += 1
+        if next_undeclared is not None:
+            spec_cov["next_undeclared"] = next_undeclared
         coverage["spec_coverage"] = spec_cov
     return out, coverage
 
@@ -1235,6 +1242,42 @@ def run_audit(root, today, knobs):
     findings += _check_guard_liveness(root)
     trace_findings, trace_coverage = _check_code_traces(g, root)
     findings += trace_findings
+
+    # 停滞の勘定(ADR-065)。直前の要約と比べ、印なし+未宣言の和が動かない監査が
+    # 続いた回数を数える。読むのは監査自身の前回成果物だけで、環境変数に依存
+    # しない(試験と CI で決定的にするため、パスは監査対象の木の親から導く)。
+    if trace_coverage is not None:
+        prev = None
+        try:
+            ppath = os.path.join(
+                os.path.dirname(os.path.abspath(root)),
+                ".claude", ".cache", "last-audit.json")
+            with open(ppath, "r", encoding="utf-8-sig") as fh:
+                cand = json.load(fh)
+            if (isinstance(cand, dict)
+                    and cand.get("schema") == _auditcache.SCHEMA
+                    and _auditcache.same_root(cand.get("root"), root)):
+                prev = cand
+        except Exception:
+            prev = None
+
+        def _open_total(cov):
+            sc = cov.get("spec_coverage")
+            und = sc.get("undeclared", 0) if isinstance(sc, dict) else 0
+            unm = cov.get("unmarked_files", 0)
+            try:
+                return int(unm) + int(und)
+            except (TypeError, ValueError):
+                return 0
+
+        streak = 0
+        prev_cov = prev.get("trace_coverage") if isinstance(prev, dict) else None
+        if isinstance(prev_cov, dict):
+            cur = _open_total(trace_coverage)
+            if cur > 0 and cur == _open_total(prev_cov):
+                ps = prev_cov.get("stagnation_streak")
+                streak = (ps if isinstance(ps, int) and ps >= 0 else 0) + 1
+        trace_coverage["stagnation_streak"] = streak
 
     findings.sort(key=lambda f: (f["check"], f["doc_id"], f["message"]))
     return findings, trace_coverage
