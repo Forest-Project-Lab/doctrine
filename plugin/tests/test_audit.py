@@ -786,6 +786,128 @@ class StrayDocumentTest(AuditBase):
         self.assertEqual(self.checks_for(data, "stray_document"), [])
 
 
+class ViewStaleTest(AuditBase):
+    """ビューの刻印(view_stale, ADR-073): 「ビュー」と分類された体系外 .md の
+    刻印を検める。欠落・読めないは warn、古びは advisory。"""
+
+    def _proj(self, ledger):
+        root = self.build([(_fm("SPEC-1", "SPEC", "billing"), "x")])
+        proj = os.path.dirname(root)
+        os.makedirs(os.path.join(root, "_system"), exist_ok=True)
+        with open(os.path.join(root, "_system", ".md-intake"), "w",
+                  encoding="utf-8") as fh:
+            fh.write(ledger)
+        return root, proj
+
+    def _write(self, proj, rel, text):
+        path = os.path.join(proj, rel)
+        os.makedirs(os.path.dirname(path) or proj, exist_ok=True)
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(text)
+
+    @staticmethod
+    def _stamp(date="2026-06-29", refs="", src="repo", as_of="1.0.0"):
+        line = "<!-- doctrine:view src=%s as-of=%s date=%s" % (src, as_of, date)
+        if refs:
+            line += " refs=%s" % refs
+        return line + " -->\n"
+
+    def test_missing_stamp_is_warn(self):
+        root, proj = self._proj("V.md: ビュー\n")
+        self._write(proj, "V.md", "# v\n")
+        data, _ = self.audit_json(root)
+        vs = self.checks_for(data, "view_stale")
+        self.assertTrue(any(f["severity"] == "warn" and f["path"] == "V.md"
+                            and "刻印が無い" in f["message"] for f in vs), vs)
+
+    def test_unreadable_stamp_is_warn(self):
+        """必須欄(src)が欠ける刻印は warn(黙って素通りしない)。"""
+        root, proj = self._proj("V.md: ビュー\n")
+        self._write(proj, "V.md",
+                    "# v\n<!-- doctrine:view date=2026-06-29 -->\n")
+        data, _ = self.audit_json(root)
+        vs = self.checks_for(data, "view_stale")
+        self.assertTrue(any(f["severity"] == "warn" and
+                            "読めない" in f["message"] for f in vs), vs)
+
+    def test_fresh_stamp_with_refs_is_silent(self):
+        """refs の updated(2026-06-01) が date 以前 → 何も挙げない。"""
+        root, proj = self._proj("V.md: ビュー\n")
+        self._write(proj, "V.md",
+                    "# v\n" + self._stamp(date="2026-06-29", refs="SPEC-1"))
+        data, _ = self.audit_json(root)
+        self.assertEqual(self.checks_for(data, "view_stale"), [])
+
+    def test_ref_newer_than_stamp_is_advisory(self):
+        root, proj = self._proj("V.md: ビュー\n")
+        self._write(proj, "V.md",
+                    "# v\n" + self._stamp(date="2026-05-01", refs="SPEC-1"))
+        data, _ = self.audit_json(root)
+        vs = self.checks_for(data, "view_stale")
+        self.assertTrue(any(f["severity"] == "advisory" and
+                            "SPEC-1" in f["message"] and
+                            "新しい" in f["message"] for f in vs), vs)
+
+    def test_ref_missing_is_advisory(self):
+        root, proj = self._proj("V.md: ビュー\n")
+        self._write(proj, "V.md",
+                    "# v\n" + self._stamp(refs="SPEC-404"))
+        data, _ = self.audit_json(root)
+        vs = self.checks_for(data, "view_stale")
+        self.assertTrue(any(f["severity"] == "advisory" and
+                            "実在しない" in f["message"] for f in vs), vs)
+
+    def test_ref_not_current_is_advisory(self):
+        root = self.build([
+            (_fm("SPEC-1", "SPEC", "billing"), "x"),
+            (_fm("SPEC-2", "SPEC", "billing", status="deprecated"), "y"),
+        ])
+        proj = os.path.dirname(root)
+        os.makedirs(os.path.join(root, "_system"), exist_ok=True)
+        with open(os.path.join(root, "_system", ".md-intake"), "w",
+                  encoding="utf-8") as fh:
+            fh.write("V.md: ビュー\n")
+        self._write(proj, "V.md", "# v\n" + self._stamp(refs="SPEC-2"))
+        data, _ = self.audit_json(root)
+        vs = self.checks_for(data, "view_stale")
+        self.assertTrue(any(f["severity"] == "advisory" and
+                            "現行でない" in f["message"] for f in vs), vs)
+
+    def test_no_refs_stale_is_advisory(self):
+        """refs 無し: 正本の updated 最大値(2026-06-01) > date → advisory。"""
+        root, proj = self._proj("V.md: ビュー\n")
+        self._write(proj, "V.md", "# v\n" + self._stamp(date="2026-05-01"))
+        data, _ = self.audit_json(root)
+        vs = self.checks_for(data, "view_stale")
+        self.assertTrue(any(f["severity"] == "advisory" and
+                            "正本が刻印" in f["message"] for f in vs), vs)
+
+    def test_no_refs_fresh_is_silent(self):
+        root, proj = self._proj("V.md: ビュー\n")
+        self._write(proj, "V.md", "# v\n" + self._stamp(date="2026-06-29"))
+        data, _ = self.audit_json(root)
+        self.assertEqual(self.checks_for(data, "view_stale"), [])
+
+    def test_prefix_view_entry_not_checked(self):
+        """プレフィクス項目(末尾 /)のビューは view_stale の対象にしない。"""
+        root, proj = self._proj("notes/: ビュー\n")
+        self._write(proj, "notes/a.md", "# a\n")
+        data, _ = self.audit_json(root)
+        self.assertEqual(self.checks_for(data, "view_stale"), [])
+
+    def test_exact_entry_overrides_prefix(self):
+        """完全一致はプレフィクスに勝つ(ADR-073): vendor/ 一括の非文書の
+        配下でも、vendor/V.md: ビュー は刻印の義務を負う。"""
+        root, proj = self._proj("vendor/V.md: ビュー\nvendor/: 非文書\n")
+        self._write(proj, "vendor/V.md", "# v\n")
+        self._write(proj, "vendor/other.md", "# o\n")
+        data, _ = self.audit_json(root)
+        vs = self.checks_for(data, "view_stale")
+        self.assertTrue(any(f["path"] == "vendor/V.md" and
+                            f["severity"] == "warn" for f in vs), vs)
+        self.assertFalse(any(f["path"] == "vendor/other.md" for f in vs), vs)
+
+
 # --- near_duplicate advisory (TC-126, R8) ---------------------------------
 
 class NearDuplicateTest(AuditBase):
@@ -1163,7 +1285,8 @@ EXPECTED_AUDIT_CHECKS = (
     "reverse_orphan_req_no_spec", "reverse_orphan_spec_no_test",
     "canonical_conflict", "near_duplicate", "icd_dependency_violation",
     "projection_drift", "unregistered_document", "shadowed_document",
-    "stray_document", "stale_current", "source_drift", "archive_integrity",
+    "stray_document", "view_stale", "stale_current", "source_drift",
+    "archive_integrity",
     "adr_not_landed", "glossary_seed_drift", "ext_anchor_broken", "memory_shadow",
     "trace_mark_error", "trace_broken_ref", "trace_deprecated_ref",
     "trace_stale", "trace_missing_impl", "trace_marker_suspect",

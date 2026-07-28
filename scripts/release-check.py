@@ -10,6 +10,10 @@
        が plugin/ 配下を含むなら、同じ差分が CHANGELOG.md も含むこと。
        環境変数 RELEASE_CHECK_PR_TITLE に [no-changelog] が含まれれば
        この検査だけを免除し、免除した旨を告げる(版の整合は免除しない)。
+    3. 公開ビューの刻印(常時。ADR-073): README.md・plugin/README.md・
+       CONTRIBUTING.md が刻印(書式の正本は ICD-005 の view-stamp-format。
+       解析は共有コア _intake)を持ち、その as-of が版番号の正本と一致する
+       こと。[no-changelog] では免除しない。
 
 marketplace.json との一致は検めない(TEST-020 が強制済み。二重定義しない)。
 終了コード: 0 一致 / 1 違反 / 2 前提が読めない。決定的。標準ライブラリのみ。
@@ -24,8 +28,15 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
 
+# 刻印の解析は共有コア _intake に一本化する(ICD-005。二重定義しない)。
+sys.path.insert(0, os.path.join(REPO, "plugin", "scripts"))
+import _intake  # noqa: E402
+
 SKIP_MARKER = "[no-changelog]"
 PR_TITLE_ENV = "RELEASE_CHECK_PR_TITLE"
+
+# 公開ビュー(ADR-073)。リリースごとに内容を検めてから刻印を打ち直す。
+PUBLIC_VIEWS = ("README.md", "plugin/README.md", "CONTRIBUTING.md")
 
 # 版付き節の見出し。日付の区切りは — (em dash) と - (hyphen) を受ける。
 _SECTION_RE = re.compile(r"^## \[(\d+\.\d+\.\d+)\](?:\s*[—-]\s*(\S.*))?$")
@@ -87,6 +98,34 @@ def check_version_integrity(repo):
     return violations
 
 
+def check_view_stamps(repo):
+    """公開ビューの刻印の違反を列挙して返す(空なら整合)。ADR-073。"""
+    violations = []
+    version = canonical_version(repo)
+    for rel in PUBLIC_VIEWS:
+        path = os.path.join(repo, rel)
+        try:
+            with open(path, encoding="utf-8") as f:
+                text = f.read()
+        except OSError:
+            violations.append("公開ビューが読めない: %s" % rel)
+            continue
+        stamp, err = _intake.parse_view_stamp(text)
+        if stamp is None:
+            violations.append(
+                "刻印の欠落: %s に doctrine:view の刻印が無い(ICD-005)" % rel)
+            continue
+        if err is not None:
+            violations.append("刻印が読めない: %s (%s)" % (rel, err))
+            continue
+        if stamp["as_of"] != version:
+            violations.append(
+                "刻印の版の遅れ: %s の as-of は %s、正本(plugin.json)は %s。"
+                "内容を検めてから刻印を打ち直す"
+                % (rel, stamp["as_of"] or "(無し)", version))
+    return violations
+
+
 def changed_files(repo, base):
     """git diff --name-only base HEAD の一覧を返す。失敗は ReleaseCheckError。"""
     try:
@@ -129,6 +168,7 @@ def main(argv):
             return 2
     try:
         violations = check_version_integrity(REPO)
+        violations += check_view_stamps(REPO)
         if base is not None:
             violations += check_record_duty(
                 REPO, base, os.environ.get(PR_TITLE_ENV, ""))
@@ -139,7 +179,7 @@ def main(argv):
         for v in violations:
             print("[ERROR] %s" % v)
         return 1
-    print("release-check: 整合(版の整合%sを確認)"
+    print("release-check: 整合(版の整合と公開ビューの刻印%sを確認)"
           % ("と記録の義務" if base is not None else ""))
     return 0
 

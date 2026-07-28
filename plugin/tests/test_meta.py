@@ -176,6 +176,12 @@ class TestReadme(unittest.TestCase):
         self.assertTrue(os.path.isfile(self.path), "plugin/README.md must exist")
         self.text = _util.read(self.path)
 
+    def test_has_view_stamp(self):
+        """ADR-073: README はビューであり、刻印(参照時点)を持つ。
+        as-of と版の一致は release-check(SPEC-027)が検める。"""
+        self.assertIn("doctrine:view", self.text)
+        self.assertIn("as-of=", self.text)
+
     def test_has_guarantee_limits_section(self):
         """§7 / R9: README carries a `## 保証限界` section (予防/検出/委ねる)."""
         self.assertIn("保証限界", self.text)

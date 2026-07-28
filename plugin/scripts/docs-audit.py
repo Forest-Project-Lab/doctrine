@@ -49,7 +49,8 @@ AUDIT_CHECKS = (
     "reverse_orphan_req_no_spec", "reverse_orphan_spec_no_test",
     "canonical_conflict", "near_duplicate", "icd_dependency_violation",
     "projection_drift", "unregistered_document", "shadowed_document",
-    "stray_document", "stale_current", "source_drift", "archive_integrity",
+    "stray_document", "view_stale", "stale_current", "source_drift",
+    "archive_integrity",
     "adr_not_landed", "glossary_seed_drift", "ext_anchor_broken", "memory_shadow",
     "trace_mark_error", "trace_broken_ref", "trace_deprecated_ref",
     "trace_stale", "trace_missing_impl", "trace_marker_suspect",
@@ -1052,7 +1053,7 @@ def run_audit(root, today, knobs):
     findings += _check_icd_violation(g)
     findings += _check_projection_drift(g)
     findings += _check_unregistered(g)
-    findings += _audit_stray.collect(root, today, _finding, _parse_date)
+    findings += _audit_stray.collect(root, today, _finding, _parse_date, graph=g)
     findings += _check_stale_current(g, today)
     findings += _check_source_drift(g)
     findings += _check_archive_integrity(g)

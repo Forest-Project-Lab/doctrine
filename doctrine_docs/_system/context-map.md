@@ -67,4 +67,5 @@ sources: []
 - SPEC-022 --depends_on--> ICD-004
 - SPEC-022 --depends_on--> ICD-006
 - SPEC-023 --depends_on--> ICD-005
+- SPEC-027 --depends_on--> ICD-005
 <!-- END PROJECTION:context-map-skeleton -->

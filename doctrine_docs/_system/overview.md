@@ -17,9 +17,9 @@ sources: []
 | id | type | domain | title |
 |---|---|---|---|
 | GLOSSARY-001 | GLOSSARY | _system | 用語辞書の正本 |
-| DECIDED-001 | DECIDED | _system | 横断の確定方針（10事実） |
+| DECIDED-001 | DECIDED | _system | 横断の確定方針（11事実） |
 | NONGOAL-001 | NONGOAL | _system | 横断のやらないこと（14項） |
-| WATCH-001 | WATCH | _system | 横断の退行監視（6項） |
+| WATCH-001 | WATCH | _system | 横断の退行監視（7項） |
 | ICD-005 | ICD | audit | audit のインターフェース（全件監査の境界） |
 | REQ-008 | REQ | audit | 最小性の監査（過剰と不足の両側を全件検出） |
 | SPEC-011 | SPEC | audit | 全件監査の検査群・要約スキーマ・決定性 |
@@ -30,6 +30,9 @@ sources: []
 | ADR-039 | ADR | audit | EXT の hash 検査を実装し、hash 指定を沈黙で素通りさせない |
 | ADR-056 | ADR | audit | 追跡の検査は、仕様が指紋を記録したときだけ効く（黙って始まり、黙って終わる） |
 | ADR-069 | ADR | audit | 監査の検査群を枠と検査モジュールへ分割する — 方針と、分割で変えないものの凍結 |
+| ADR-073 | ADR | audit | 体系外の解釈文書はビューと定め、刻印で参照時点を義務づける |
+| CHANGE-004 | CHANGE | audit | 体系外の解釈文書をビューと定め、刻印で古びを見えるようにする |
+| IMPACT-004 | IMPACT | audit | ビューと刻印 — 影響の列挙 |
 | IMPL-011 | IMPL | audit | docs-audit.py の実装メモ |
 | IMPL-018 | IMPL | audit | _intake.py（分類の記録の共有コア）の実装メモ |
 | TEST-011 | TEST | audit | 監査の検査群テスト計画 |

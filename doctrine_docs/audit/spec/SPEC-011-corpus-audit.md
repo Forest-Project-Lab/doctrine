@@ -26,7 +26,7 @@ llm_context: task
 
 - 標準ライブラリだけを使う。pip での外部パッケージ取得も、ネットワーク通信もしない。返す値は毎回同じになる（所見を check・doc_id・message の順で整列する）。
 - 実装の分割（枠＋検査モジュール群）の方針と、分割で変えないもの（検査の名前と重大度・`checks_run` の契約・決定性・本仕様の指紋が結ぶ範囲）は ADR-069 が凍結する。
-- 31 検査の重大度は固定とする（ICD-005 の表のとおり。`AUDIT_CHECKS` の名前は 33 個で、逆孤児の二種と未登録/影がそれぞれ一つの検査を二つの名前で持つ）。`top_findings` は error を優先し、上限 20 件とする。
+- 32 検査の重大度は固定とする（ICD-005 の表のとおり。`AUDIT_CHECKS` の名前は 34 個で、逆孤児の二種と未登録/影がそれぞれ一つの検査を二つの名前で持つ）。`top_findings` は error を優先し、上限 20 件とする。
 - 要約に `checks_run`（この版が走らせた検査名の一覧。`AUDIT_CHECKS`）を載せる（#95）。`counts_by_check` は所見のある検査しか載らないため、0 件の検査と走らなかった検査を区別できない。`checks_run` で走った検査集合を明示し、黙って消えた検査を読み手が見つけられるようにする（沈黙する検証器の禁止。`[R11]`）。
 - 依存の循環（dep_cycle、ADR-038）: `depends_on` 端の循環（自己依存 A→A、多頂点循環 A→B→C→A）を graph の `find_cycles`（Tarjan、サイクル安全）で求め、warn で挙げる。循環の全構成員は削除安全ガードの「現行の依存が残る」判定に永久に該当し降格できなくなる論理的デッドロックになる。dead link 検査の自己参照除外はそのまま（自己依存は dep_cycle が受け持つ）。`[R3][R8]`
 - 語彙的酷似（near_duplicate）の対走査は O(n^2) であり、規模上限 `near_dup_max_docs`（既定 800、`--config` で上書き）を設ける。現行文書数がこの上限を超えた場合は対走査を省き、省いた事実を near_duplicate の助言一つで正直に告げる（黙って切り詰めない）。重大度は advisory のまま（ICD-005 不変）。`[R8]`
@@ -38,6 +38,7 @@ llm_context: task
 - 投影ドリフトは三つの投影を対象とする。Overview と ICD-index は id 集合の差（error）。Context Map は印の区間の骨格を内部で再導出して突き合わせ、構造の差（ドメインの過不足・ドメイン越え依存端の過不足・印の区間が無い）を error、ラベルの差（ドメイン行の ICD 列挙・境界違反マーク）を warn とする（ICD-005 の表のとおり）。`[R1][R8]`
 - テスト不能記述は検査しない。意味の判断であり、doc-review が担う（ADR-020）。
 - 体系外 .md（stray_document、ADR-021）: 統治木のルートの親から .md を整列走査し（dot ディレクトリ・node_modules・監査対象の統治木自身は見ない）、`doctrine_docs/_system/.md-intake`（分類の記録。`パス: 非文書|投影|保留 日付`、末尾 `/` は配下全体。書式の正本は ICD-005）と突き合わせる。登録簿の型を持つ .md は warn、記録に無い .md は advisory（上限 50 件で正直に切り詰める）、期限を過ぎた保留は warn、実在しないパスを指す記録の項目と読めない行は advisory。記録の分類の当否は判断であり docs-curate に委ねる。`[R1][R8]`
+- ビューの刻印（view_stale、ADR-073）: 分類の記録で「ビュー」とされた体系外 .md（stray_document と同じ走査の入口。実在する記録の項目だけが対象で、プレフィクス項目は対象にしない）について、刻印（書式の正本は ICD-005 の `view-stamp-format`）を照合する。刻印が無い・読めない（`src` か `date` の欠落・日付が解釈できない）は warn。刻印があるときは古びを見る — `refs` の各 id について、実在しなければ advisory、現行（current/accepted）でなければ advisory、参照先の `updated` が刻印の `date` より新しければ advisory。`refs` の無い刻印は、現行文書の `updated` の最大値と比べ、刻印の `date` より新しければ advisory（正本が動いた合図）。刻印は内容の正しさを保証しない。古びだけを見る（DECIDED-001 事実10 と同じ規律）。`[R2][R8]`
 - 陳腐化の疑い（stale_current、ADR-025）: 明示の `review_by` を持たない現行文書に、型の既定点検周期（登録簿の `TYPE_REVIEW_CYCLE_DAYS`）で実効期限を張り、`updated`＋周期の超過を warn で挙げる。明示の `review_by` は既定より優先し、review_by_overrun 検査が見る。周期の無い型（投影・ADR・DECIDED・WATCH・CHANGE・IMPACT・RESEARCH・ARCHIVE）は対象外。`[R2]`
 - 上流更新の伝播（source_drift）: 現行文書（ADR と投影を除く）の `depends_on` 先の `updated` が自分の `updated` より新しいとき、追随の疑いとして advisory で挙げる。確かめたら自分の `updated` を上げれば消える。`[R2][R4]`
 - アーカイブ整合（archive_integrity、ADR-027）: `status`==archived なのに `<domain>/archive/` の外に在る文書を error で挙げる。archived の非 RESEARCH に `superseded_by` が無ければ advisory。`[R8]`
@@ -53,7 +54,7 @@ llm_context: task
 この節がある文書だけが、コードとの追跡の対象になる（ADR-056 の opt-in、ADR-061 の宣言）。対象は検査一覧（`AUDIT_CHECKS`）を囲む範囲。更新は `trace-index.py --id SPEC-011` が返す行を写す。
 
 - sha256:4eb3dc41cc5060e9bd2ff155d37a6facd0fb4ea9ba87b0594f03f9d063e8788f
-- sha256:bab694afdb6c0e1915db8ec3702470ff467c11219eb9167b34b198ff8dda10a6
+- sha256:7feb2a690035957f949bf3b52e52b1c47ed62cfb1b96b050d6a0c1e4cce195eb
 
 ## エラー時挙動
 

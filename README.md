@@ -4,7 +4,7 @@ LLM 支援開発で生成される文書に、位置づけ・出所・依存・�
 
 ## これは何か
 
-このリポジトリは、情報統治の単一仕様（[spec/doctrine.ja.md](spec/doctrine.ja.md)、文書 ID `DOCTRINE-001`）を公開する。仕様は、文書の位置づけ（現行・廃止・未決・根拠）を構造に書き込み、人間と LLM の双方が追跡できる状態を作る方法を、番号付き要求 `R1`〜`R10` として定義する。文書型のテンプレートは、仕様の付録 A・B に含む。
+このリポジトリは、情報統治の単一仕様（[spec/doctrine.ja.md](spec/doctrine.ja.md)、文書 ID `DOCTRINE-001`）を公開する。仕様は、文書の位置づけ（現行・廃止・未決・根拠）を構造に書き込み、人間と LLM の双方が追跡できる状態を作る方法を、番号付き要求 `R1`〜`R12` として定義する。文書型のテンプレートは、仕様の付録 A・B に含む。
 
 利用者は仕様を LLM（主に Claude）に渡し、自分のプロジェクトに合う形で実装するよう依頼する。実装形態はプロジェクトが選ぶ。プレーンな `doctrine_docs/` でも、CLAUDE.md / AGENTS.md の規約でも、Claude Code の Skills と Hooks でもよい。
 
@@ -65,12 +65,12 @@ doctrine/
 ├── CONTRIBUTING.md               # 寄稿の方針と文章規範
 ├── spec/
 │   └── doctrine.ja.md            # 単一仕様 DOCTRINE-001（正本。付録に文書型テンプレート）
-├── plugin/                       # 参照実装プラグイン（Skill 7・Hook 4イベント・スクリプト・テンプレート）
+├── plugin/                       # 参照実装プラグイン（Skill 7・Hook 7イベント・スクリプト・テンプレート）
 ├── .claude-plugin/
 │   └── marketplace.json          # /plugin install で導入するための marketplace 登録
 ├── doctrine_docs/                         # プラグイン自身の設計を統治した設計コーパス（dogfood）
-├── CLAUDE.md                     # 投影：Claude 向けの最小の入口
-└── AGENTS.md                     # 投影：エージェント向けの最小の入口
+├── CLAUDE.md                     # 案内：Claude 向けの最小の入口
+└── AGENTS.md                     # 案内：エージェント向けの最小の入口
 ```
 
 ## 保証できること、できないこと
@@ -104,3 +104,5 @@ MIT License。[LICENSE](LICENSE) を参照。商用利用・改変・再配布�
 ## 出典
 
 仕様の基盤となる出典は、[spec/doctrine.ja.md](spec/doctrine.ja.md) の付録C に示す（ASD-STE100・S1000D・DO-178C・MBSE/SysML・c-TF-IDF・JTCA ほか）。常時投入を最小に保つ根拠は、入力が長いほどモデルの成功率が下がるという知見（ETH Zürich & LogicStar.ai, arXiv:2602.11988, 2026）に基づく。あわせて本 README は、記録管理（ISO 15489）、要求工学（ISO/IEC/IEEE 29148）、ADR（Michael Nygard）、Diátaxis、C4 モデルも参照する。
+
+<!-- doctrine:view src=doctrine as-of=0.6.0 date=2026-07-28 refs=SPEC-011,SPEC-019,SPEC-020 -->
