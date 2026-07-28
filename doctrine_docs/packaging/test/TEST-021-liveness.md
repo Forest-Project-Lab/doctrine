@@ -24,7 +24,9 @@ SPEC-021 の受入を `plugin/tests/test_liveness_capture.py` が機械で確認
 - 定例の記録なし・周期超過 → 実行と記録先を含む督促(test_missing_cadence_record_with_audit_prompts / test_cadence_overdue_warns)。
 - セッションに一度だけ(test_once_per_session)。
 - 紐づけキャンペーン(ADR-065) → 未宣言の先頭一件を三つの出口つきで促し(test_trace_campaign_prompts_the_next_undeclared_spec)、停滞に触れ(test_trace_campaign_mentions_stagnation)、書式に合わない id を文面に載せず(test_trace_campaign_rejects_a_malformed_id)、移行キャンペーンが出す間は順番を待つ(test_trace_campaign_waits_for_md_migration)。
-- 発火の印の対の食い違い(ADR-062) → 他が健全でも「拒否経路の疑い」を告げる(test_guard_liveness_gap_is_announced)。印の書き読み・欠落/古さの判定・新鮮な対の無音・書き手の入口(リンタ/ガード)は `test_auditcache.py` の HookStampsTest が、監査側の advisory は `test_audit.py` の GuardLivenessTest が凍結する。
+- 発火の印の対の食い違い(ADR-062) → 他が健全でも「拒否経路の疑い」を告げる(test_guard_liveness_gap_is_announced)。
+- 版の切替(ADR-066) → 冒頭の版と今の版が違えば毎セッション再起動を促し(test_version_drift_is_announced_every_session)、印が無ければ黙る(test_no_version_drift_without_the_stamp)。注入が版の印を刻むこと・判定の規則は `test_inject.py` の TestVersionStamp と `test_auditcache.py` が凍結する。
+- Level 昇格の案内(ADR-066) → Level 2 + 監査の実績で一度だけ出て、印で以後黙り(test_level_hint_appears_once_for_a_level2_tree_with_audit_record)、実績が無ければ出ない(test_no_level_hint_without_an_audit_record)。印の書き読み・欠落/古さの判定・新鮮な対の無音・書き手の入口(リンタ/ガード)は `test_auditcache.py` の HookStampsTest が、監査側の advisory は `test_audit.py` の GuardLivenessTest が凍結する。
 - 注入側の鮮度警告と未選別メモ節(TestInjectLiveness)。
 - Level 2 で監査の死活を誤報しない(test_level2_missing_audit_is_not_flagged)。
 - 移行キャンペーン: 未分類ありで統治率つきの1件を促し、ゼロなら無音(TestMigrationCampaign)。

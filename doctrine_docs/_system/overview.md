@@ -18,7 +18,7 @@ sources: []
 |---|---|---|---|
 | GLOSSARY-001 | GLOSSARY | _system | 用語辞書の正本 |
 | DECIDED-001 | DECIDED | _system | 横断の確定方針（10事実） |
-| NONGOAL-001 | NONGOAL | _system | 横断のやらないこと（13項） |
+| NONGOAL-001 | NONGOAL | _system | 横断のやらないこと（14項） |
 | WATCH-001 | WATCH | _system | 横断の退行監視（6項） |
 | ICD-005 | ICD | audit | audit のインターフェース（全件監査の境界） |
 | REQ-008 | REQ | audit | 最小性の監査（過剰と不足の両側を全件検出） |
@@ -166,6 +166,7 @@ sources: []
 | ADR-050 | ADR | packaging | ガードが拒否できる状態かは検出しないと明記し、機能カナリアを次の版に分ける |
 | ADR-052 | ADR | packaging | 編集画面の表示層は統治判断を持たず、索引が無ければ黙る |
 | ADR-062 | ADR | packaging | フックは発火の印を残し、対の食い違いから拒否経路の欠落を疑う |
+| ADR-066 | ADR | packaging | 体系は段階と版を自己認知する — 版の切替の検出と Level 昇格の一度きりの案内 |
 | IMPL-017 | IMPL | packaging | パッケージ・Hook配線の実装注記 |
 | IMPL-019 | IMPL | packaging | gov-heartbeat.py（統治ハートビート）の実装メモ |
 | TEST-019 | TEST | packaging | Hook配線・e2e連鎖の受入 |
