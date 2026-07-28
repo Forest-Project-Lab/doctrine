@@ -5,7 +5,7 @@ type: OVERVIEW
 domain: _system
 status: current
 owner: render-projection
-updated: 2026-07-27
+updated: 2026-07-28
 llm_context: always
 sources: []
 ---
@@ -87,6 +87,7 @@ sources: []
 | ADR-060 | ADR | graph | 走査の門を「節の有無」に揃え、検査の挙動を正本の列挙で添字づけた試験が凍結する |
 | ADR-061 | ADR | graph | 仕様はコードとの関係を宣言できる — 明示の「対応なし」と、宣言と実態の矛盾の検査 |
 | ADR-063 | ADR | graph | 印の無いコードを編集したとき、セッションに一度だけ紐づけを促す |
+| ADR-067 | ADR | graph | ファイルは統治外の意思を自分の中に宣言できる — exempt の印と勘定の第四項 |
 | IMPL-006 | IMPL | graph | `_depgraph.py`＋`dep-graph.py` の実装メモ |
 | IMPL-021 | IMPL | graph | `_tracescan.py`（コード注釈の走査）の実装メモ |
 | TEST-006 | TEST | graph | 依存グラフのテスト計画 |

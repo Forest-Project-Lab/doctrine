@@ -30,8 +30,8 @@ USAGE = ("trace-index.py [--root PATH] [--docs-root PATH] [--id ID] "
 
 
 def _valid_terms():
-    """--term に許す項の一覧(ADR-058)。勘定の枠と同じ正本から導く。"""
-    terms = ["annotated", "unmarked"]
+    """--term に許す項の一覧(ADR-058/ADR-067)。勘定の枠と同じ正本から導く。"""
+    terms = ["annotated", "unmarked", "exempt"]
     terms += ["excluded:%s" % rid
               for rid, kind in _tracescan.EXCLUSION_RULES if kind == "file"]
     terms += ["pruned:%s" % rid
@@ -150,9 +150,10 @@ def main(argv=None):
                 json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
         else:
             out = ["# trace-index coverage",
-                   "到達: %d / 寄与: %d / 印なし: %d / 打ち切り: %s"
+                   "到達: %d / 寄与: %d / 印なし: %d / 明示管理外: %d / 打ち切り: %s"
                    % (cov["reached_files"], cov["annotated_files"],
-                      cov["unmarked_files"], cov["truncated"])]
+                      cov["unmarked_files"], cov.get("exempt_files", 0),
+                      cov["truncated"])]
             for rid in sorted(cov["excluded"]):
                 out.append("  除外 %-12s %d" % (rid, cov["excluded"][rid]))
             for rid in sorted(cov["pruned_dirs"]):
