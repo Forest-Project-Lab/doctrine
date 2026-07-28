@@ -329,6 +329,11 @@ def main(argv=None):
         drift = _auditcache.version_drift(_auditcache.read_stamp_values())
         if drift:
             msg = (msg + "\n" if msg else "") + "【版の切替】" + drift
+        # 版の遅れ(ADR-070)。導入済みの複製が正本より古いまま動き続ける状態を
+        # 検める。マニフェストを持たない導入先では黙る(自己適用だけの照合)。
+        lag = _auditcache.version_lag()
+        if lag:
+            msg = (msg + "\n" if msg else "") + "【版の遅れ】" + lag
         if not msg:
             return 0
         sid = data.get("session_id")

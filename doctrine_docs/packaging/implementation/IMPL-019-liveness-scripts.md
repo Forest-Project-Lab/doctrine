@@ -6,7 +6,7 @@ domain: packaging
 status: current
 owner: doctrine-maintainers
 created: 2026-07-26
-updated: 2026-07-27
+updated: 2026-07-28
 sources: [plugin/scripts/gov-heartbeat.py]
 depends_on: [SPEC-021]
 llm_context: task
@@ -22,6 +22,7 @@ SPEC-021 の実装注記である `[R11]`。
 - `read_state(docs_root)`: `_system/.governance-state`(`キー: 値` の平文)の読み取り。
 - `_audit_summary(docs_root)`: 前回監査の要約。inject-contract と同じ候補順(plugin cache → `.claude/.cache`)と同じ root 照合(越境注入の防止)を使う。
 - `_once_per_session(sid)`: セッション別の印(`hb-<セッションid>`)で一度きりを守る。
+- 助言へ足す行(main の終盤): 拒否経路の疑い(ADR-062)・版の切替(ADR-066)・版の遅れ(ADR-070)。判定はいずれも共有コア(`_auditcache.liveness_gap`/`version_drift`/`version_lag`)に一度だけ在り、鼓動は呼んで一行を足すだけ。
 
 ## 実装制約
 

@@ -280,6 +280,22 @@ def read_stamp_values(proj=None):
     return out
 
 
+def _read_plugin_json(dirpath):
+    """<dirpath>/.claude-plugin/plugin.json を dict で返す。読めなければ None。"""
+    try:
+        path = os.path.join(dirpath, ".claude-plugin", "plugin.json")
+        with open(path, "r", encoding="utf-8-sig") as fh:
+            data = json.load(fh)
+        return data if isinstance(data, dict) else None
+    except Exception:
+        return None
+
+
+def _own_package_dir():
+    """自分が属する包みのディレクトリ(scripts/ の一つ上)。"""
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+
+
 def plugin_version():
     """自分が属する包みの版(plugin.json の version)。読めなければ None。
 
@@ -287,16 +303,10 @@ def plugin_version():
     ファイルと同じ包みから起動されるので、これが「今走っているコードの版」に
     なる(ADR-066)。
     """
-    try:
-        path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                            "..", ".claude-plugin", "plugin.json")
-        with open(path, "r", encoding="utf-8-sig") as fh:
-            data = json.load(fh)
-        ver = data.get("version") if isinstance(data, dict) else None
-        if isinstance(ver, str) and ver.strip():
-            return ver.strip()
-    except Exception:
-        pass
+    data = _read_plugin_json(_own_package_dir())
+    ver = data.get("version") if data else None
+    if isinstance(ver, str) and ver.strip():
+        return ver.strip()
     return None
 
 
@@ -322,6 +332,67 @@ def version_drift(raw_stamps, current=None):
             "配線と契約はセッション開始時に固定されるため、古いまま動いている。"
             "新しいセッションを開始する(ADR-066)"
             % (started.strip(), current.strip()))
+
+
+def version_lag(proj=None, current=None):
+    """導入済みの複製の遅れ(ADR-070)。無ければ None、あれば説明の文字列。
+
+    実行中の包みの版と、プロジェクト自身のマーケットプレイスのマニフェスト
+    (.claude-plugin/marketplace.json)が同名のプラグインに宣言する版を比べる。
+    正本の版は、項目の source が指す先の plugin.json を優先し、読めなければ
+    項目の version に退避する。どれかが読めなければ判じない(前方寛容)。
+    マニフェストを持たない通常の導入先では None — この照合は、統治対象の
+    リポジトリ自身がマーケットプレイスの正本である自己適用のときだけ成立する。
+    版の大小は仮定しない。不一致だけを判じ、向きは言わない(version_drift と
+    同じ規則)。
+    """
+    try:
+        if proj is None:
+            proj = os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()
+        own = _read_plugin_json(_own_package_dir())
+        name = own.get("name") if own else None
+        if current is None:
+            current = plugin_version()
+        if (not isinstance(name, str) or not name.strip()
+                or not isinstance(current, str) or not current.strip()):
+            return None
+        mpath = os.path.join(proj, ".claude-plugin", "marketplace.json")
+        with open(mpath, "r", encoding="utf-8-sig") as fh:
+            manifest = json.load(fh)
+        if not isinstance(manifest, dict):
+            return None
+        entries = manifest.get("plugins")
+        entry = None
+        if isinstance(entries, list):
+            for cand in entries:
+                if isinstance(cand, dict) and cand.get("name") == name.strip():
+                    entry = cand
+                    break
+        if entry is None:
+            return None
+        canonical = None
+        src = entry.get("source")
+        if isinstance(src, str) and src.strip():
+            meta = _read_plugin_json(
+                os.path.normpath(os.path.join(proj, src.strip())))
+            v = meta.get("version") if meta else None
+            if isinstance(v, str) and v.strip():
+                canonical = v.strip()
+        if canonical is None:
+            v = entry.get("version")
+            if isinstance(v, str) and v.strip():
+                canonical = v.strip()
+        if canonical is None or canonical == current.strip():
+            return None
+        mkt = manifest.get("name")
+        target = ("%s@%s" % (name.strip(), mkt.strip())
+                  if isinstance(mkt, str) and mkt.strip() else name.strip())
+        return ("実行中のプラグインの版(%s)が、このリポジトリが正本として宣言"
+                "する版(%s)と食い違う。導入済みの複製が遅れている。"
+                "「claude plugin update %s」で更新し、新しいセッションを"
+                "開始する(ADR-070)" % (current.strip(), canonical, target))
+    except Exception:
+        return None
 
 
 def read_stamps(proj=None):

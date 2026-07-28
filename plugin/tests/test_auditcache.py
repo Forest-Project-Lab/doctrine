@@ -354,5 +354,71 @@ class HookStampsTest(unittest.TestCase):
         self.assertIn("hook_policy_guard_pre", stamps)
 
 
+class VersionLagTest(unittest.TestCase):
+    """導入済みの複製の遅れの判定(ADR-070)。
+
+    照合が成立するのは、プロジェクト自身がマーケットプレイスの正本である
+    (自己適用の)ときだけ。マニフェストを持たない導入先では黙る。正本の版は
+    項目の source が指す先の plugin.json を優先し、項目の version は退避先。
+    """
+
+    def setUp(self):
+        self.proj = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.proj, ignore_errors=True)
+        here = os.path.dirname(os.path.abspath(_util.__file__))
+        with open(os.path.join(here, "..", ".claude-plugin", "plugin.json"),
+                  "r", encoding="utf-8-sig") as fh:
+            self.name = json.load(fh)["name"]
+
+    def _manifest(self, entry, mkt="mkt"):
+        d = os.path.join(self.proj, ".claude-plugin")
+        os.makedirs(d, exist_ok=True)
+        with open(os.path.join(d, "marketplace.json"), "w",
+                  encoding="utf-8") as fh:
+            json.dump({"name": mkt, "plugins": [entry]}, fh)
+
+    def _source_plugin(self, version):
+        d = os.path.join(self.proj, "plugin", ".claude-plugin")
+        os.makedirs(d, exist_ok=True)
+        with open(os.path.join(d, "plugin.json"), "w", encoding="utf-8") as fh:
+            json.dump({"name": self.name, "version": version}, fh)
+
+    def test_silent_without_a_manifest(self):
+        self.assertIsNone(A.version_lag(proj=self.proj, current="0.4.0"),
+                          "マニフェストの無い導入先では黙る")
+
+    def test_silent_when_versions_agree(self):
+        self._manifest({"name": self.name, "version": "0.4.0"})
+        self.assertIsNone(A.version_lag(proj=self.proj, current="0.4.0"))
+
+    def test_advises_update_on_mismatch(self):
+        self._manifest({"name": self.name, "version": "0.5.0"})
+        msg = A.version_lag(proj=self.proj, current="0.4.0")
+        self.assertIsNotNone(msg)
+        self.assertIn("0.4.0", msg)
+        self.assertIn("0.5.0", msg)
+        self.assertIn("claude plugin update %s@mkt" % self.name, msg)
+        self.assertIn("新しいセッション", msg)
+
+    def test_source_manifest_wins_over_entry_version(self):
+        self._source_plugin("0.4.0")
+        self._manifest({"name": self.name, "version": "9.9.9",
+                        "source": "./plugin"})
+        self.assertIsNone(A.version_lag(proj=self.proj, current="0.4.0"),
+                          "正本は source の plugin.json(項目の version は退避先)")
+
+    def test_falls_back_to_entry_version_when_source_unreadable(self):
+        self._manifest({"name": self.name, "version": "0.5.0",
+                        "source": "./no-such-dir"})
+        msg = A.version_lag(proj=self.proj, current="0.4.0")
+        self.assertIsNotNone(msg)
+        self.assertIn("0.5.0", msg)
+
+    def test_silent_for_a_foreign_plugin_name(self):
+        self._manifest({"name": "someone-else", "version": "9.9.9"})
+        self.assertIsNone(A.version_lag(proj=self.proj, current="0.4.0"),
+                          "同名の項目が無ければ判じない")
+
+
 if __name__ == "__main__":
     unittest.main()
