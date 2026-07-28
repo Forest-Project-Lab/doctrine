@@ -439,3 +439,94 @@ def liveness_gap(stamps, skew_seconds=GUARD_LINTER_SKEW_SECONDS):
                 % (linter.strftime("%Y-%m-%dT%H:%M:%SZ"),
                    guard.strftime("%Y-%m-%dT%H:%M:%SZ")))
     return None
+
+
+# ---------------------------------------------------------------------------
+# エラージャーナル(ADR-074)。書式の正本は SPEC-021。
+# ---------------------------------------------------------------------------
+
+ERRORS_NAME = "doctrine-errors.jsonl"
+_ERRORS_CAP = 20
+
+
+def errors_path(proj=None):
+    """エラージャーナルの置き場(git の追跡外。発火の印と同じ .claude/.cache)。"""
+    if not proj:
+        proj = os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()
+    return os.path.join(proj, ".claude", ".cache", ERRORS_NAME)
+
+
+def _error_location(exc):
+    """例外の plugin 内の発生位置を「<ファイル名>:<行>」で返す。無ければ ""。
+
+    許可制(ADR-074): 例外の自由文(str(exc))は写さない。OSError 等の例外文には
+    統治対象のパスが混入するためで、ここで捨てることが構造的な安全の要である。
+    位置は plugin のスクリプト配下のフレームだけから採る(基底名のみ)。
+    """
+    here = os.path.dirname(os.path.abspath(__file__))
+    best = ""
+    try:
+        tb = getattr(exc, "__traceback__", None)
+        while tb is not None:
+            frame_file = tb.tb_frame.f_code.co_filename
+            try:
+                if os.path.dirname(os.path.abspath(frame_file)) == here:
+                    best = "%s:%d" % (os.path.basename(frame_file), tb.tb_lineno)
+            except (OSError, ValueError):
+                pass
+            tb = tb.tb_next
+    except Exception:
+        return best
+    return best
+
+
+def record_error(component, exc, proj=None, now=None):
+    """実行時例外の要約をジャーナルへ最善努力で追記する(ADR-074)。
+
+    記録するのは 部品名・例外の型・plugin 内の発生位置・版・時刻 だけ
+    (許可制。例外の自由文は写さない)。上限を保ち、決して例外を投げない。
+    フックの本務を妨げない。書けなければ黙って諦める。
+    """
+    try:
+        if now is None:
+            now = datetime.datetime.now(datetime.timezone.utc)
+        name = type(exc).__name__ if isinstance(exc, BaseException) else "Error"
+        loc = _error_location(exc) if isinstance(exc, BaseException) else ""
+        entry = {
+            "ts": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "component": str(component)[:40],
+            "error": ("%s at %s" % (name, loc)) if loc else name,
+            "version": plugin_version() or "?",
+        }
+        path = errors_path(proj)
+        entries = read_errors(proj)
+        entries.append(entry)
+        entries = entries[-_ERRORS_CAP:]
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as fh:
+            for e in entries:
+                fh.write(json.dumps(e, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
+
+
+def read_errors(proj=None):
+    """ジャーナルの項目を古い順の list で返す。無ければ空。決して例外を投げない。"""
+    out = []
+    try:
+        with open(errors_path(proj), "r", encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    obj = json.loads(line)
+                except ValueError:
+                    continue
+                if isinstance(obj, dict):
+                    out.append(obj)
+    except (OSError, UnicodeError):
+        return out
+    except Exception:
+        return out
+    return out[-_ERRORS_CAP:]

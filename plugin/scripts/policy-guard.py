@@ -1166,6 +1166,11 @@ def main(argv=None):
     except Exception as exc:
         # 最後の砦。経路判定で落ちたら、Edit/Write/MultiEdit/Bash は fail-closed deny、
         # それ以外(PostToolUse/未知)は静かに通す。
+        try:
+            import _auditcache
+            _auditcache.record_error("policy-guard", exc)
+        except Exception:
+            pass
         event = obj.get("hook_event_name") if isinstance(obj, dict) else None
         if event == "PreToolUse":
             response = _pre_deny("ガード異常: %r。手で確認してください。" % (exc,))

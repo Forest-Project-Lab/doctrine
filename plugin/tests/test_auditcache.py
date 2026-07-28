@@ -421,5 +421,63 @@ class VersionLagTest(unittest.TestCase):
                           "同名の項目が無ければ判じない")
 
 
+class ErrorJournalTest(unittest.TestCase):
+    """エラージャーナル(ADR-074): 許可制・上限・決して例外を投げない。"""
+
+    def setUp(self):
+        self.proj = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.proj, ignore_errors=True)
+
+    def test_records_only_whitelisted_fields(self):
+        """例外の自由文(統治対象のパスが混入しうる)は決して写さない。"""
+        try:
+            raise ValueError("secret: /home/user/repo/SPEC-999.md の内容")
+        except ValueError as exc:
+            A.record_error("docs-audit", exc, proj=self.proj)
+        entries = A.read_errors(proj=self.proj)
+        self.assertEqual(len(entries), 1)
+        e = entries[0]
+        self.assertEqual(sorted(e.keys()),
+                         ["component", "error", "ts", "version"])
+        self.assertEqual(e["component"], "docs-audit")
+        self.assertTrue(e["error"].startswith("ValueError"), e)
+        raw = open(A.errors_path(self.proj), encoding="utf-8").read()
+        self.assertNotIn("secret", raw)
+        self.assertNotIn("SPEC-999", raw)
+
+    def test_location_is_plugin_internal_basename_only(self):
+        """発生位置は plugin 内フレームの基底名:行だけ(このテストのパスは載らない)。"""
+        try:
+            A._parse_ts(object())   # コア内で TypeError にならず None — 実際に投げさせる
+            raise RuntimeError("x")
+        except Exception as exc:
+            A.record_error("t", exc, proj=self.proj)
+        e = A.read_errors(proj=self.proj)[0]
+        self.assertNotIn("test_auditcache", e["error"])
+
+    def test_cap_keeps_the_newest_20(self):
+        for i in range(25):
+            A.record_error("c%d" % i, ValueError(), proj=self.proj)
+        entries = A.read_errors(proj=self.proj)
+        self.assertEqual(len(entries), 20)
+        self.assertEqual(entries[-1]["component"], "c24")
+        self.assertEqual(entries[0]["component"], "c5")
+
+    def test_read_missing_is_empty(self):
+        self.assertEqual(A.read_errors(proj=self.proj), [])
+
+    def test_unreadable_lines_are_skipped(self):
+        path = A.errors_path(self.proj)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write("not json\n{\"component\": \"ok\"}\n[1,2]\n")
+        entries = A.read_errors(proj=self.proj)
+        self.assertEqual([e.get("component") for e in entries], ["ok"])
+
+    def test_record_never_raises(self):
+        """書けない置き場でも黙って諦める(フックの本務を妨げない)。"""
+        A.record_error("t", ValueError(), proj="/nonexistent/readonly")
+
+
 if __name__ == "__main__":
     unittest.main()

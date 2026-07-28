@@ -35,7 +35,9 @@ sources: []
 - ADR-021 --depends_on--> ICD-006
 - ADR-022 --depends_on--> ICD-001
 - ADR-072 --depends_on--> ICD-005
+- ADR-074 --depends_on--> ICD-005
 - CHANGE-003 --depends_on--> ICD-005
+- CHANGE-005 --depends_on--> ICD-005
 - ICD-004 --depends_on--> ICD-001
 - ICD-004 --depends_on--> ICD-002
 - SPEC-003 --depends_on--> ICD-001

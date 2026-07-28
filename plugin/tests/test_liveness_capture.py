@@ -662,6 +662,60 @@ class TestMemoryShadow(AuditChecksBase):
         self.assertFalse(self._codes(summary, "memory_shadow"))
 
 
+class TestErrorReportPrompt(LivenessBase):
+    """不具合の兆候の促し(ADR-074): 記録があれば承認ゲートと感謝つきの手順を
+    促し、無ければ黙り、記録ファイルの削除で消える。死活の警告が勝つ。"""
+
+    def _put_errors(self, n=1):
+        lines = "".join(
+            json.dumps({"ts": "2026-07-26T00:00:00Z", "component": "docs-audit",
+                        "error": "ValueError at docs-audit.py:12",
+                        "version": "0.6.0"}) + "\n"
+            for _ in range(n))
+        _write(os.path.join(self.base, ".claude", ".cache",
+                            "doctrine-errors.jsonl"), lines)
+
+    def test_journal_prompts_consented_report_with_thanks(self):
+        self._put_summary("2026-07-25")
+        self._put_state("last_cadence_review: 2026-07-20\n")
+        self._put_errors(2)
+        out, code = self._hb("2026-07-26", "s-err1")
+        self.assertEqual(code, 0)
+        self.assertIn("不具合の疑い", out)
+        self.assertIn("2 件", out)
+        self.assertIn("承認", out)
+        self.assertIn("gh issue create --repo Forest-Project-Lab/doctrine", out)
+        self.assertIn("決して入れない", out)
+        self.assertIn("ありがとうございます", out)
+        self.assertIn("任意", out)
+
+    def test_no_journal_is_silent(self):
+        self._put_summary("2026-07-25")
+        self._put_state("last_cadence_review: 2026-07-20\n")
+        out, _ = self._hb("2026-07-26", "s-err2")
+        self.assertEqual(out, "")
+
+    def test_deleting_the_journal_silences(self):
+        self._put_summary("2026-07-25")
+        self._put_state("last_cadence_review: 2026-07-20\n")
+        self._put_errors()
+        out, _ = self._hb("2026-07-26", "s-err3")
+        self.assertIn("不具合の疑い", out)
+        os.remove(os.path.join(self.base, ".claude", ".cache",
+                               "doctrine-errors.jsonl"))
+        out, _ = self._hb("2026-07-26", "s-err4")
+        self.assertEqual(out, "")
+
+    def test_audit_liveness_beats_the_error_report(self):
+        """梯子の優先: 監査の死活(R11)が不具合の促しより重い。"""
+        self._put_summary("2026-07-01")   # 鮮度超過
+        self._put_state("last_cadence_review: 2026-07-20\n")
+        self._put_errors()
+        out, _ = self._hb("2026-07-26", "s-err5")
+        self.assertIn("前回監査から", out)
+        self.assertNotIn("不具合の疑い", out)
+
+
 class TestMigrationCampaign(LivenessBase):
     def _summary_with_strays(self, n):
         fs = [{"check": "stray_document", "severity": "advisory", "doc_id": "",

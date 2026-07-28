@@ -217,6 +217,12 @@ def build_message(docs_root, today, config):
                     "動いていない可能性がある。「監査を実行して」と言えば確かめる(R11)。"
                     % ((today - audit_day).days, audit_day.isoformat()))
 
+    # 1.5) 不具合の兆候(ADR-074)。エラージャーナルに記録があるときだけ、
+    #      報告の手順(許可制の下書き→承認→gh→感謝)を自己完結文で促す。
+    line = error_report_line()
+    if line:
+        return line
+
     # 2) doc-review 定例の周期(運用契約、§7)。
     last = _parse_date(state.get("last_cadence_review"))
     if last is None:
@@ -246,6 +252,33 @@ def build_message(docs_root, today, config):
         return line
     # 6) 悉皆モードの一度きりの案内(ADR-072)。仕様側の悉皆が済んだ体系だけ。
     return trace_mode_hint_line(summary, config)
+
+
+def error_report_line():
+    """不具合の兆候の促し(ADR-074)。ジャーナルが空なら空文字列。
+
+    報告は任意。下書きの承認ゲートと感謝までを一つの自己完結文で指示する。
+    鎮静の仕掛けは記録ファイルの削除(新しい状態キーを増やさない)。
+    """
+    entries = _auditcache.read_errors()
+    if not entries:
+        return ""
+    latest = entries[-1]
+    comp = _frontmatter.sanitize_inline(str(latest.get("component") or "?"), 40)
+    err = _frontmatter.sanitize_inline(str(latest.get("error") or "?"), 80)
+    return ("【不具合の疑い】doctrine の部品が実行時に倒れた記録が %d 件ある"
+            "(最新: %s の %s。記録: .claude/.cache/%s)。よければ issue への報告を"
+            "手伝ってほしい — ①事象だけの下書きを作る(入れてよいのは、部品名・"
+            "エラーの種類と plugin 内の発生位置・プラグインの版・OS と Python の"
+            "版だけ。このリポジトリの名前・パス・文書の内容は決して入れない) "
+            "②下書きの全文を利用者に見せ、投稿してよいか確認する ③承認を得て"
+            "から gh issue create --repo Forest-Project-Lab/doctrine で投稿する"
+            "(gh が無ければ本文を渡して "
+            "https://github.com/Forest-Project-Lab/doctrine/issues/new/choose "
+            "を案内する) ④投稿できたら利用者に「報告ありがとうございます」と"
+            "感謝を伝える。報告は任意 — 済んだら・不要なら記録ファイルを削除"
+            "すればこの促しは消える(ADR-074)。"
+            % (len(entries), comp, err, _auditcache.ERRORS_NAME))
 
 
 def trace_mode_hint_line(summary, config):
@@ -383,7 +416,8 @@ def main(argv=None):
             "additionalContext": msg}}
         sys.stdout.write(json.dumps(out, ensure_ascii=False))
         return 0
-    except Exception:
+    except Exception as exc:
+        _auditcache.record_error("gov-heartbeat", exc)
         return 0
 
 

@@ -1251,6 +1251,8 @@ def main(argv=None):
                                 trace_coverage=trace_coverage)
     except Exception as exc:  # 監査自身のクラッシュ。Hook 連鎖を壊さない。
         sys.stderr.write("docs-audit: internal error: %r\n" % (exc,))
+        _auditcache.record_error(
+            "docs-audit", exc, proj=os.path.dirname(os.path.abspath(root)))
         # SessionEnd は teardown を壊さないために 0。CI(fail-on error)でも
         # 監査が壊れたこと自体は所見ではないので、ここでは 0 を返さず安全側に倒す。
         return 0
