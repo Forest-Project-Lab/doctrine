@@ -1,0 +1,9 @@
+{
+  "trace_mode": "exhaustive",
+  "trace_exempt": {
+    "LICENSE": "署名済みの法的文書は統治の対象にしない(NONGOAL)。改変もしない",
+    "plugin/templates/": "生成の種。注釈を書けば scaffold の生成先へ写り込む。統治は生成先の木で行う",
+    "plugin/hooks/hooks.json": "JSON は注釈を持てない。配線の正本は SPEC-019 が sources で指す",
+    "plugin/hooks/hooks.level2.json": "JSON は注釈を持てない。配線の正本は SPEC-019 が sources で指す"
+  }
+}

@@ -1,3 +1,4 @@
+# doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
 """Packaging tests (§6 meta; MASTER §4, §9; BRIEF2 packaging).
 
 Covers the critique gaps "Level-2 trimmed hooks.json", "§6 meta (stdlib-only,

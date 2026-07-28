@@ -13,10 +13,12 @@
 import os
 import re
 
+# doctrine:begin IMPL-018
 LEDGER_NAME = ".md-intake"
 _LINE_RE = re.compile(
     r"^(?P<path>[^:#][^:]*?)\s*[:：]\s*(?P<kind>非文書|投影|保留)"
     r"(?:\s+(?P<due>\d{4}-\d{2}-\d{2}))?\s*$")
+# doctrine:end IMPL-018
 
 
 def load_ledger(docs_root):

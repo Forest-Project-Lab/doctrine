@@ -1,3 +1,4 @@
+# doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
 """Tests for review-nudge.py (PostToolUse doc-review nudge).
 
 §4.1/§4.2: doc-review runs on authoring via doc-author, and on manual edits via

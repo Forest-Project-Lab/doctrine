@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
 """Tests for scripts/_frontmatter.py — the shared frontmatter parser.
 
 Covers MASTER §1 (the frozen `_frontmatter` API) and the slice-02 27-case

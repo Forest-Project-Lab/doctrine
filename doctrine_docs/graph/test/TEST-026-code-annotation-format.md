@@ -6,7 +6,7 @@ domain: graph
 status: current
 owner: doctrine-maintainers
 created: 2026-07-27
-updated: 2026-07-27
+updated: 2026-07-28
 sources: [doctrine_docs/graph/spec/SPEC-026-code-annotation-format.md]
 depends_on: [SPEC-026]
 llm_context: task
@@ -39,6 +39,7 @@ SPEC-026 の走査と指紋を検証する。実装テストは `plugin/tests/te
 - 正しい印・印の語だけの散文・照合の原文の形が、疑いにならないこと。監査で疑いが advisory に留まり、合否（error/warn）を変えないこと。
 - 監査が走査の切り詰め所見（`trace_scan_truncated`）を捨てず advisory で転記すること。
 - リポジトリ自身の走査で疑いがゼロであること（原文に印の形を書かない規律。自己適用）。
+- 設定の適用除外（ADR-072）: 完全一致と前置きの一致（末尾 `/`）が明示管理外へ分類され、保存則が保たれること。文字列でない・空の項目が捨てられること。未指定と空指定が同じ答えになること。一覧が求めに応じて導出されること（ConfigExemptTest が凍結する）。
 
 ## 実装の指紋
 

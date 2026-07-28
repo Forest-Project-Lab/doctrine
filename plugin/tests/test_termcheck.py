@@ -1,3 +1,4 @@
+# doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
 """Tests for the 用語チェッカー core + CLI + glossary template.
 
 Covers MASTER §6 and design/10-scenarios.md TCs targeting term-check (R6/R10):

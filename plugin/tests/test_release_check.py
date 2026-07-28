@@ -1,3 +1,4 @@
+# doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
 """リリース整合の門の受入 (SPEC-027 / TEST-027 / ADR-071)。
 
 対象はリポジトリ直下 scripts/release-check.py(自己適用。配布物に含めない)。

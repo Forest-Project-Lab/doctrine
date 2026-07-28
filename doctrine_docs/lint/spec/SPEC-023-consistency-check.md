@@ -36,6 +36,7 @@ llm_context: task
 対象は契約の要約(モジュール冒頭)。更新は `trace-index.py --id SPEC-023` が返す行を写す（ADR-061）。
 
 - sha256:978f6aa196acf4d9b98c79f4f40c74b995ce3140c30aea6e516e36ea9c764b02
+- sha256:a4fd6eb3d2a9eab88c083ec2f677bbefb83746bfdce38cf8bf785ddb0fb63622
 
 ## 受入基準
 

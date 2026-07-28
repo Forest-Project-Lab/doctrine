@@ -240,7 +240,43 @@ def build_message(docs_root, today, config):
     if line:
         return line
     # 5) Level 昇格の一度きりの案内(ADR-066)。全ての促しが静かなときだけ。
-    return level_hint_line(summary, level)
+    line = level_hint_line(summary, level)
+    if line:
+        return line
+    # 6) 悉皆モードの一度きりの案内(ADR-072)。仕様側の悉皆が済んだ体系だけ。
+    return trace_mode_hint_line(summary, config)
+
+
+def trace_mode_hint_line(summary, config):
+    """悉皆モードの判断材料を一度だけ示す(ADR-072)。以後は印を残して黙る。
+
+    仕様側の悉皆が済み(未宣言 0)、印なしが残り、モードが未設定のときだけ。
+    入れるかは人の判断のまま(自動化しない。繰り返し促さない)。
+    """
+    if not isinstance(summary, dict):
+        return ""
+    if isinstance(config, dict) and config.get("trace_mode") == "exhaustive":
+        return ""   # 既に入れている体系に案内は要らない。
+    cov = summary.get("trace_coverage")
+    sc = cov.get("spec_coverage") if isinstance(cov, dict) else None
+    if not isinstance(sc, dict):
+        return ""
+    try:
+        undeclared = int(sc.get("undeclared") or 0)
+        unmarked = int(cov.get("unmarked_files") or 0)
+    except (TypeError, ValueError):
+        return ""
+    if undeclared != 0 or unmarked <= 0:
+        return ""
+    shown = _auditcache.read_stamp_values().get("trace_mode_hint_shown")
+    if shown:
+        return ""
+    _auditcache.write_stamp("trace_mode_hint_shown", value="shown")
+    return ("【悉皆】仕様側の紐づけは出揃った(未宣言 0)が、印なしのコードが "
+            "%d 件残っている。追跡を可視化や被覆の主張に使うなら、悉皆モードで"
+            "残高にできる — _system/.context-config.json に「\"trace_mode\": "
+            "\"exhaustive\"」と書くと、監査が残高を warn 一件で告げる"
+            "(ADR-072)。入れるかは人の判断のまま。" % unmarked)
 
 
 def level_hint_line(summary, level):

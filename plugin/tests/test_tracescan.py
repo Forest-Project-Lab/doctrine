@@ -749,5 +749,58 @@ class CoverageCLITest(unittest.TestCase):
         self.assertEqual(code, 2)
 
 
+class ConfigExemptTest(unittest.TestCase):
+    """設定の適用除外(ADR-072)。注釈を持てない媒体の第二の道。
+
+    読む前に明示管理外へ分類し、保存則の枠は変えない。宣言なき除外を作らない
+    (文字列でない・空の項目は捨てる)。
+    """
+
+    def _repo(self, files):
+        root = _util.make_repo(files)
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        return root
+
+    def _assert_identity(self, cov):
+        self.assertEqual(
+            cov["reached_files"],
+            cov["annotated_files"] + cov["unmarked_files"]
+            + cov["exempt_files"] + sum(cov["excluded"].values()),
+            "保存則が破れている: %r" % (cov,))
+
+    def test_exact_path_and_prefix_both_classify_as_exempt(self):
+        root = self._repo({
+            "LICENSE": "MIT License\n",
+            "templates/a.tmpl": "seed\n",
+            "templates/b.tmpl": "seed\n",
+            "src/plain.py": "print(1)\n",
+        })
+        _, _, cov = T.scan_tree(
+            root, exempt_paths=("LICENSE", "templates/"))
+        self.assertEqual(cov["exempt_files"], 3, "完全一致1 + 前置き一致2")
+        self.assertEqual(cov["unmarked_files"], 1, "対象外の plain.py は印なしのまま")
+        self._assert_identity(cov)
+
+    def test_members_list_exempt_paths_on_demand(self):
+        root = self._repo({"LICENSE": "MIT License\n"})
+        _, _, cov = T.scan_tree(
+            root, exempt_paths=("LICENSE",), collect_members=True)
+        self.assertIn("LICENSE", cov["members"].get("exempt", []))
+
+    def test_invalid_entries_are_dropped(self):
+        root = self._repo({"src/plain.py": "print(1)\n"})
+        _, _, cov = T.scan_tree(
+            root, exempt_paths=(None, "", 3, b"x"))
+        self.assertEqual(cov["exempt_files"], 0, "文字列でない・空の項目は捨てる")
+        self.assertEqual(cov["unmarked_files"], 1)
+        self._assert_identity(cov)
+
+    def test_no_exempt_paths_changes_nothing(self):
+        root = self._repo({"src/plain.py": "print(1)\n"})
+        base = T.scan_tree(root)
+        with_arg = T.scan_tree(root, exempt_paths=())
+        self.assertEqual(base[2], with_arg[2], "未指定と空は同じ答え")
+
+
 if __name__ == "__main__":
     unittest.main()

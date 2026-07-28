@@ -13,7 +13,9 @@ import json
 import os
 import sys
 
+# doctrine:begin SPEC-023
 INTERVAL = 10
+# doctrine:end SPEC-023
 
 
 def main():

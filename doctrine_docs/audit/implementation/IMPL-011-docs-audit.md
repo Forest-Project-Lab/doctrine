@@ -6,7 +6,7 @@ domain: audit
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-27
+updated: 2026-07-28
 sources: [plugin/scripts/docs-audit.py]
 depends_on: [SPEC-011]
 llm_context: task
@@ -30,4 +30,4 @@ llm_context: task
 
 ## 対象部品
 
-対象は `plugin/scripts/docs-audit.py` である。各 `_check_*` は `plugin/scripts/_depgraph.py`（依存グラフ）と `plugin/scripts/_registry.py`（登録簿）を使う。`_check_dep_cycle` は `find_cycles` を呼び循環を warn で挙げる（ADR-038、#89）。`build_summary` は `AUDIT_CHECKS`（この版が走らせる検査名の一覧）を `checks_run` として要約へ載せる（#95）。
+対象は `plugin/scripts/docs-audit.py` である。各 `_check_*` は `plugin/scripts/_depgraph.py`（依存グラフ）と `plugin/scripts/_registry.py`（登録簿）を使う。`_check_dep_cycle` は `find_cycles` を呼び循環を warn で挙げる（ADR-038、#89）。`build_summary` は `AUDIT_CHECKS`（この版が走らせる検査名の一覧）を `checks_run` として要約へ載せる（#95）。設定（`trace_mode`・`trace_exempt`）は監査対象の木の `_system/.context-config.json` から既定で読み（明示の `--config` が優先）、追跡系の検査（`_audit_trace.collect`）へ渡す（ADR-072）。

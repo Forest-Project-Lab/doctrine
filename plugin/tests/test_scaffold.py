@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
 """Tests for scaffold.py (docs-system-init engine, non-destructive).
 
 Covers MASTER §5.8 + slice 07 §A and the critique gaps assigned to this

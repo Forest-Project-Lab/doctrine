@@ -1,3 +1,4 @@
+# doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
 """Tests for the dependency-graph core (_depgraph) and CLI (dep-graph.py).
 
 Covers MASTER §5.2 frozen API and slice-05 PART A:

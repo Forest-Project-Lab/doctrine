@@ -381,8 +381,23 @@ def _classify_scanned(text, rel, cov, member):
     return r, f
 
 
+def _config_exempt_match(rel, exempt_paths):
+    """設定の適用除外(ADR-072)との照合。rel は / 区切りの相対パス。
+
+    末尾が / のパスは前置きの一致(配下すべて)、それ以外は完全一致。
+    """
+    for p in exempt_paths:
+        if p.endswith("/"):
+            if rel.startswith(p):
+                return True
+        elif rel == p:
+            return True
+    return False
+
+
 def scan_tree(root, docs_root=None, max_files=DEFAULT_MAX_FILES,
-              max_file_bytes=DEFAULT_MAX_FILE_BYTES, collect_members=False):
+              max_file_bytes=DEFAULT_MAX_FILE_BYTES, collect_members=False,
+              exempt_paths=None):
     """root 以下を走査し、(範囲の一覧, 所見の一覧, 勘定) を返す。決定的(整列順)。
 
     保存則(ADR-058/ADR-067): 触れたファイルは必ず 寄与・印なし・明示管理外・
@@ -395,12 +410,18 @@ def scan_tree(root, docs_root=None, max_files=DEFAULT_MAX_FILES,
     重なる呼び方でも包含で判じて刈る。通常ファイル以外(名前付きパイプ・ソケット・
     デバイス)は開かない(開くと戻らないことがある)。決して例外を外へ出さない。
 
+    exempt_paths は設定側の統治外宣言(ADR-072)。注釈をファイルに書き込めない
+    媒体のための第二の道で、該当ファイルは読む前に明示管理外(exempt)へ分類する。
+    文字列でない・空の項目は捨てる(宣言なき除外を作らない)。
+
     collect_members=True のときだけ、勘定に members(項ごとの相対パスの一覧)を
     足す。既定では件数だけを返す(一覧は求めに応じて導出する。ADR-055/ADR-058)。
     """
     ranges, findings = [], []
     cov = empty_coverage()
     members = {}
+    exempts = tuple(p for p in (exempt_paths or ())
+                    if isinstance(p, str) and p)
 
     def _member(term, relpath):
         if collect_members:
@@ -416,6 +437,10 @@ def scan_tree(root, docs_root=None, max_files=DEFAULT_MAX_FILES,
     for path in paths:
         rel = _relposix(path, root)
         cov["reached_files"] += 1
+        if exempts and _config_exempt_match(rel, exempts):
+            cov["exempt_files"] += 1
+            _member("exempt", rel)
+            continue
         text = _read_scannable(path, rel, cov, _member, findings, max_file_bytes)
         if text is None:
             continue

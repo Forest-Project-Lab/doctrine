@@ -15,9 +15,11 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+# doctrine:begin IMPL-009
 import _frontmatter
 import _registry
 import _termcheck
+# doctrine:end IMPL-009
 
 
 def _resolve_docs_root(file_path, explicit):

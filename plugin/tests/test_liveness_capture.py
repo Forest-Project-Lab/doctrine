@@ -1,3 +1,4 @@
+# doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
 """Tests for R11 (統治の生存性) / R12 (会話知識の捕捉) and the ADR-025/026/027 checks.
 
 Covers:
@@ -196,6 +197,48 @@ class TestHeartbeat(LivenessBase):
         self._put_state("last_cadence_review: 2026-07-20\n")
         out, _ = self._hb("2026-07-26", "s-lag2")
         self.assertNotIn("版の遅れ", out)
+
+    def _put_trace_summary(self, today, undeclared, unmarked, next_id=None):
+        """trace_coverage 入りの要約(悉皆の案内の条件を組むための道具)。"""
+        obj = json.loads(_summary_json(self.root, today))
+        sc = {"traced": 1, "no_code": 0, "undeclared": undeclared}
+        if next_id:
+            sc["next_undeclared"] = next_id
+        obj["trace_coverage"] = {
+            "unmarked_files": unmarked, "spec_coverage": sc}
+        _write(os.path.join(self.plugin_root, ".cache", "last-audit.json"),
+               json.dumps(obj))
+
+    def test_trace_mode_hint_appears_once_when_specs_are_done(self):
+        """悉皆の案内(ADR-072): 未宣言0+印なし残で一度だけ。以後は印で黙る。"""
+        _write(os.path.join(self.root, "_system", ".docs-level"), "level: 3\n")
+        self._put_state("last_cadence_review: 2026-07-20\n")
+        self._put_trace_summary("2026-07-25", undeclared=0, unmarked=5)
+        first, code = self._hb("2026-07-26", "s-exh1")
+        self.assertEqual(code, 0)
+        self.assertIn("悉皆", first)
+        self.assertIn("trace_mode", first)
+        second, _ = self._hb("2026-07-26", "s-exh2")
+        self.assertNotIn("悉皆", second, "案内は一度だけ(印で黙る)")
+
+    def test_no_trace_mode_hint_when_already_on(self):
+        """モードを既に入れた体系に案内は出ない。"""
+        _write(os.path.join(self.root, "_system", ".docs-level"), "level: 3\n")
+        _write(os.path.join(self.root, "_system", ".context-config.json"),
+               json.dumps({"trace_mode": "exhaustive"}))
+        self._put_state("last_cadence_review: 2026-07-20\n")
+        self._put_trace_summary("2026-07-25", undeclared=0, unmarked=5)
+        out, _ = self._hb("2026-07-26", "s-exh3")
+        self.assertNotIn("悉皆", out)
+
+    def test_no_trace_mode_hint_while_undeclared_remain(self):
+        """未宣言が残る間は出ない(位相: 仕様側の悉皆が先)。"""
+        _write(os.path.join(self.root, "_system", ".docs-level"), "level: 3\n")
+        self._put_state("last_cadence_review: 2026-07-20\n")
+        self._put_trace_summary("2026-07-25", undeclared=1, unmarked=5,
+                                next_id="SPEC-900")
+        out, _ = self._hb("2026-07-26", "s-exh4")
+        self.assertNotIn("悉皆", out)
 
     def test_level_hint_appears_once_for_a_level2_tree_with_audit_record(self):
         """段階の案内(ADR-066): Level 2 + 監査の実績で一度だけ。以後は黙る。"""

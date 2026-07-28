@@ -65,6 +65,7 @@ ICD・正本・投影・現行・依存・参照は用語辞書（`_system/gloss
 | trace_unexpected_impl（「コード対応なし」の宣言に反して範囲がある。ADR-061） | warn |
 | trace_undeclared_impl（節の無い現行 SPEC をコードの範囲が指す。ADR-061） | advisory |
 | trace_exempt_conflict（統治外の宣言と範囲の印の同居。ADR-067） | warn |
+| trace_unmarked_backlog（悉皆モードの体系で、印なしの残高が残る。ADR-072） | warn |
 | guard_liveness_gap（発火の印の対の食い違い。拒否経路の欠落の疑い。ADR-062） | advisory |
 
 ## データ契約

@@ -1,3 +1,4 @@
+# doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
 """Validate all 7 skills against the §4.1 / MASTER §7 contract.
 
 Reads every plugin/skills/<name>/SKILL.md from disk at suite time and checks the

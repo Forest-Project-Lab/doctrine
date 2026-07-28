@@ -1,3 +1,4 @@
+# doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
 """§6 meta-condition acceptance (critique gap "§6 meta").
 
 Spec §6 lists the plugin's META conditions (not bound to a single R-id):

@@ -1,3 +1,4 @@
+# doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
 """Permanent end-to-end regression test: the REAL scripts run as Claude Code hooks.
 
 Unlike the per-script unit tests (which import each script in-process via

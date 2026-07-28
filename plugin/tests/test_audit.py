@@ -1,3 +1,4 @@
+# doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
 """Tests for docs-audit.py (full-corpus audit, SessionEnd/CI) — MASTER §5.5, slice 05 PART B.
 
 Covers every §4.2 audit finding plus the audit↔inject handshake (critique gap C3):
@@ -1167,7 +1168,7 @@ EXPECTED_AUDIT_CHECKS = (
     "trace_mark_error", "trace_broken_ref", "trace_deprecated_ref",
     "trace_stale", "trace_missing_impl", "trace_marker_suspect",
     "trace_scan_truncated", "trace_unexpected_impl", "trace_undeclared_impl",
-    "trace_exempt_conflict", "guard_liveness_gap",
+    "trace_exempt_conflict", "trace_unmarked_backlog", "guard_liveness_gap",
 )
 
 
@@ -1682,6 +1683,67 @@ class UnregisteredTest(AuditBase):
         data, code = self.audit_json(os.path.join(root, "docs"))
         self.assertEqual(self.checks_for(data, "unregistered_document"), [])
         self.assertEqual(self.checks_for(data, "shadowed_document"), [])
+
+
+class ExhaustiveTraceTest(AuditBase):
+    """ADR-072: 悉皆モードは opt-in。印なしは残高 warn 一件で挙がる。
+
+    既定では何も変わらない(通常の導入先の静けさ)。設定除外は明示管理外へ
+    分類され、理由の無い宣言は成立しない。
+    """
+
+    def _repo(self, config=None):
+        root = _util.make_repo({"src/a.py": "", "src/plain.py": "print(1)\n"})
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        code = "\n".join([_tmark("begin", "SPEC-900"), "x=1",
+                          _tmark("end", "SPEC-900")])
+        with open(os.path.join(root, "src", "a.py"), "w", encoding="utf-8") as fh:
+            fh.write(code)
+        tracescan = _util.load_core("_tracescan")
+        ranges, _ = tracescan.scan_text(code, "src/a.py")
+        os.makedirs(os.path.join(root, "docs", "app", "spec"), exist_ok=True)
+        with open(os.path.join(root, "docs", "app", "spec", "SPEC-900.md"),
+                  "w", encoding="utf-8") as fh:
+            fh.write(_spec_with_fingerprints(
+                "SPEC-900", [ranges[0]["fingerprint"]]))
+        if config is not None:
+            os.makedirs(os.path.join(root, "docs", "_system"), exist_ok=True)
+            with open(os.path.join(root, "docs", "_system",
+                                   ".context-config.json"), "w",
+                      encoding="utf-8") as fh:
+                json.dump(config, fh)
+        return root
+
+    def test_backlog_warn_fires_only_in_exhaustive_mode(self):
+        root = self._repo({"trace_mode": "exhaustive"})
+        data, _ = self.audit_json(os.path.join(root, "docs"))
+        hits = self.checks_for(data, "trace_unmarked_backlog")
+        self.assertEqual(len(hits), 1,
+                         "残高は一件で告げる(ファイルごとに鳴らさない)")
+        self.assertEqual(hits[0]["severity"], "warn")
+        self.assertIn("件", hits[0]["message"])
+
+    def test_no_backlog_by_default(self):
+        root = self._repo(None)
+        data, _ = self.audit_json(os.path.join(root, "docs"))
+        self.assertEqual(self.checks_for(data, "trace_unmarked_backlog"), [],
+                         "モード未設定の既定では現状のまま")
+
+    def test_config_exempt_clears_the_backlog(self):
+        root = self._repo({"trace_mode": "exhaustive",
+                           "trace_exempt": {"src/plain.py": "使い捨ての補助"}})
+        data, _ = self.audit_json(os.path.join(root, "docs"))
+        self.assertEqual(self.checks_for(data, "trace_unmarked_backlog"), [],
+                         "設定除外で印なしが尽きれば残高は出ない")
+        self.assertGreaterEqual(data["trace_coverage"]["exempt_files"], 1)
+
+    def test_exempt_without_reason_does_not_count(self):
+        root = self._repo({"trace_mode": "exhaustive",
+                           "trace_exempt": {"src/plain.py": ""}})
+        data, _ = self.audit_json(os.path.join(root, "docs"))
+        self.assertEqual(
+            len(self.checks_for(data, "trace_unmarked_backlog")), 1,
+            "理由の無い宣言は成立しない(宣言なき除外を作らない)")
 
 
 if __name__ == "__main__":

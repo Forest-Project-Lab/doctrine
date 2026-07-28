@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
 """per-turn 性能の受入基準(ADR-047 の予告の実装)。
 
 ADR-047: 「1 編集あたりのフック合計を 1 秒以内(1500 文書規模)とし、これを
