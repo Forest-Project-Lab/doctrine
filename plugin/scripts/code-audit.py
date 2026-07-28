@@ -24,6 +24,7 @@ import json
 import os
 import sys
 
+# doctrine:begin ADR-068
 SCHEMA = "code-audit/1"
 
 # 検査名の正本(ADR-068)。足す・消すときは転記表の試験を同じ変更で更新する。
@@ -42,6 +43,7 @@ LIMITS = {
     "min_str_len": 10,         # 二重定義とみなす文字列定数の最小長
     "min_collection_len": 2,   # 二重定義とみなすタプル/集合の最小要素数
 }
+# doctrine:end ADR-068
 
 SEV_ERROR = "error"
 SEV_ADVISORY = "advisory"

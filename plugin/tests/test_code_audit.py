@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
 """code-audit — コード層の検算(ADR-068)の単体試験。
 
 凍らせる不変条件:

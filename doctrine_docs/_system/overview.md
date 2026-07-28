@@ -90,6 +90,9 @@ sources: []
 | ADR-063 | ADR | graph | 印の無いコードを編集したとき、セッションに一度だけ紐づけを促す |
 | ADR-065 | ADR | graph | 紐づけの整理をキャンペーンで駆動し、進捗の停滞を名指しする |
 | ADR-067 | ADR | graph | ファイルは統治外の意思を自分の中に宣言できる — exempt の印と勘定の第四項 |
+| ADR-072 | ADR | graph | 悉皆トレースモード — 「未分類」を残高にする opt-in |
+| CHANGE-003 | CHANGE | graph | 悉皆トレース — 印なしゼロを選べる体系にする |
+| IMPACT-003 | IMPACT | graph | 悉皆トレース — 影響の列挙 |
 | IMPL-006 | IMPL | graph | `_depgraph.py`＋`dep-graph.py` の実装メモ |
 | IMPL-021 | IMPL | graph | `_tracescan.py`（コード注釈の走査）の実装メモ |
 | TEST-006 | TEST | graph | 依存グラフのテスト計画 |

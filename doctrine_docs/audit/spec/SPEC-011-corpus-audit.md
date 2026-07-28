@@ -6,7 +6,7 @@ domain: audit
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-27
+updated: 2026-07-28
 sources: [spec/doctrine.ja.md#4.2]
 depends_on: [REQ-008, ICD-008, ICD-001, ICD-002]
 llm_context: task
@@ -26,7 +26,7 @@ llm_context: task
 
 - 標準ライブラリだけを使う。pip での外部パッケージ取得も、ネットワーク通信もしない。返す値は毎回同じになる（所見を check・doc_id・message の順で整列する）。
 - 実装の分割（枠＋検査モジュール群）の方針と、分割で変えないもの（検査の名前と重大度・`checks_run` の契約・決定性・本仕様の指紋が結ぶ範囲）は ADR-069 が凍結する。
-- 30 検査の重大度は固定とする（ICD-005 の表のとおり。`AUDIT_CHECKS` の名前は 32 個で、逆孤児の二種と未登録/影がそれぞれ一つの検査を二つの名前で持つ）。`top_findings` は error を優先し、上限 20 件とする。
+- 31 検査の重大度は固定とする（ICD-005 の表のとおり。`AUDIT_CHECKS` の名前は 33 個で、逆孤児の二種と未登録/影がそれぞれ一つの検査を二つの名前で持つ）。`top_findings` は error を優先し、上限 20 件とする。
 - 要約に `checks_run`（この版が走らせた検査名の一覧。`AUDIT_CHECKS`）を載せる（#95）。`counts_by_check` は所見のある検査しか載らないため、0 件の検査と走らなかった検査を区別できない。`checks_run` で走った検査集合を明示し、黙って消えた検査を読み手が見つけられるようにする（沈黙する検証器の禁止。`[R11]`）。
 - 依存の循環（dep_cycle、ADR-038）: `depends_on` 端の循環（自己依存 A→A、多頂点循環 A→B→C→A）を graph の `find_cycles`（Tarjan、サイクル安全）で求め、warn で挙げる。循環の全構成員は削除安全ガードの「現行の依存が残る」判定に永久に該当し降格できなくなる論理的デッドロックになる。dead link 検査の自己参照除外はそのまま（自己依存は dep_cycle が受け持つ）。`[R3][R8]`
 - 語彙的酷似（near_duplicate）の対走査は O(n^2) であり、規模上限 `near_dup_max_docs`（既定 800、`--config` で上書き）を設ける。現行文書数がこの上限を超えた場合は対走査を省き、省いた事実を near_duplicate の助言一つで正直に告げる（黙って切り詰めない）。重大度は advisory のまま（ICD-005 不変）。`[R8]`
@@ -44,7 +44,7 @@ llm_context: task
 - 決定の着地（adr_not_landed）: accepted の ADR を、現行の文書（ADR と投影を除く）の `depends_on`・`impacts`・`superseded_by`・本文の id 参照のどれも指していないとき、「文書上の宣言に留まる」欠陥類型の疑いとして warn で挙げる（WATCH-001 第6項の機械化）。`[R3][R8]`
 - 辞書シードの退行（glossary_seed_drift、ADR-005）: 運用正本（`_system/glossary.md`）が同梱シードの承認語・カルク行を落としていたら warn（シードからの成長は正しい。欠落は退行）。運用正本が無ければ検査しない。`[R6]`
 - 外部アンカーの存在（ext_anchor_broken、ADR-026）: 現行 EXT の「対象」のうち検査が exists または hash のものについて、プロジェクト根からの相対で実在を確かめ、無ければ error。「対象」の行が無い EXT は warn。URL と「review_by のみ」は機械検査しない（通信はしない）。検査が hash のとき（ADR-039）: 本文の `- 指紋: sha256:<64桁>` と対象の `sha256` を照合し、不一致は warn、指紋の行が無ければ warn（沈黙で素通りしない。hash は exists を無効化しない）。指紋の期待値の更新は人手。`[R11]`
-- コードと仕様の追跡（trace_*、ADR-056）: `## 実装の指紋` の節に `- sha256:<64桁>` を持つ文書が一つでもあるときだけ効く。門は節の有無だけで判じ、状態を問わない（ADR-060。廃止された仕様だけが opt-in する木でも、その注釈への warn は生きる）。節を持つ文書が一つも無ければ、コードの走査そのものを行わない（使っていない機能の費用を払わせない）。上向きの検査（注釈→文書）は走査が走れば常に効き、下向きの照合（記録した指紋）は現行の文書だけに掛ける。走査は `_tracescan`（SPEC-026）に委ね、統治木の親を根とする。挙げるのは十 — 印の対応付けの誤り（error）・実在しない id を指す注釈（error）・現行でない id を指す注釈（warn）・記録した指紋との食い違い（warn）・記録があるのに範囲が無い（warn）・「コード対応なし」の宣言に反して範囲がある（warn。ADR-061）・統治外（exempt）の宣言と範囲の印の同居（warn。ADR-067）・節の無い現行 SPEC を範囲が指す（advisory。欠陥Dの可視化。ADR-061）・印に見えるが読めない行（advisory。綴りの揺れの兆候。ADR-059）・走査が告げた切り詰めの転記（advisory。走査の所見を読み手が握らない。ADR-059）。節には指紋の記録の代わりに `- コード対応なし: <理由>` の明示宣言を書ける（ADR-061。宣言した仕様は下向きの照合の対象にしない）。あわせて、走査が走ったときは勘定（`trace_coverage`。ADR-058）と現行 SPEC の三分類（`spec_coverage`: traced・no_code・undeclared。ADR-061）を要約に載せる。未宣言があるときは整列順の先頭一件を `spec_coverage.next_undeclared` として運ぶ（キャンペーンの種。一覧は載せない。ADR-065）。直前の要約（監査対象の木の親の `.claude/.cache/last-audit.json`。schema と root を検めてから読む）と比べ、印なしと未宣言の和が動かない監査の連続回数を `trace_coverage.stagnation_streak` に載せる（値が動けば 0。所見にはしない。ADR-065）。「根拠を持たないコード」は挙げない（注釈は任意であり原理的に判じられない。ADR-054 の既知の限界）。`[R3][R4]`
+- コードと仕様の追跡（trace_*、ADR-056）: `## 実装の指紋` の節に `- sha256:<64桁>` を持つ文書が一つでもあるときだけ効く。門は節の有無だけで判じ、状態を問わない（ADR-060。廃止された仕様だけが opt-in する木でも、その注釈への warn は生きる）。節を持つ文書が一つも無ければ、コードの走査そのものを行わない（使っていない機能の費用を払わせない）。上向きの検査（注釈→文書）は走査が走れば常に効き、下向きの照合（記録した指紋）は現行の文書だけに掛ける。走査は `_tracescan`（SPEC-026）に委ね、統治木の親を根とする。挙げるのは十 — 印の対応付けの誤り（error）・実在しない id を指す注釈（error）・現行でない id を指す注釈（warn）・記録した指紋との食い違い（warn）・記録があるのに範囲が無い（warn）・「コード対応なし」の宣言に反して範囲がある（warn。ADR-061）・統治外（exempt）の宣言と範囲の印の同居（warn。ADR-067）・節の無い現行 SPEC を範囲が指す（advisory。欠陥Dの可視化。ADR-061）・印に見えるが読めない行（advisory。綴りの揺れの兆候。ADR-059）・走査が告げた切り詰めの転記（advisory。走査の所見を読み手が握らない。ADR-059）。節には指紋の記録の代わりに `- コード対応なし: <理由>` の明示宣言を書ける（ADR-061。宣言した仕様は下向きの照合の対象にしない）。あわせて、走査が走ったときは勘定（`trace_coverage`。ADR-058）と現行 SPEC の三分類（`spec_coverage`: traced・no_code・undeclared。ADR-061）を要約に載せる。未宣言があるときは整列順の先頭一件を `spec_coverage.next_undeclared` として運ぶ（キャンペーンの種。一覧は載せない。ADR-065）。直前の要約（監査対象の木の親の `.claude/.cache/last-audit.json`。schema と root を検めてから読む）と比べ、印なしと未宣言の和が動かない監査の連続回数を `trace_coverage.stagnation_streak` に載せる（値が動けば 0。所見にはしない。ADR-065）。「根拠を持たないコード」は挙げない（注釈は任意であり原理的に判じられない。ADR-054 の既知の限界）。悉皆モード（設定 `trace_mode: "exhaustive"`。ADR-072）の体系でだけ、印なしが 1 件以上のとき残高を warn 一件（trace_unmarked_backlog）で挙げる — 件数と三つの出口（範囲を張る／ファイル内の exempt 宣言／設定の適用除外）と一覧の導出を告げ、ファイルごとには鳴らさない。設定 `trace_exempt`（`{パス: 理由}`）は走査へ渡し、注釈を持てない媒体を明示管理外へ分類する（書式と分類は SPEC-026）。設定は監査対象の木の `_system/.context-config.json` から既定で読む（明示の `--config` が優先。ADR-072）。`[R3][R4]`
 - 拒否経路の欠落の疑い（guard_liveness_gap、ADR-062）: フックの発火の印（`.claude/.cache/hook-stamps`）を読み、リンタ（PostToolUse）の印があるのにガード（PreToolUse）の印が無い・60 秒超古いとき advisory で挙げる。判定は `_auditcache.liveness_gap` に一度だけ在り、鼓動（SPEC-021）と同じ答えになる。印が無ければ黙る（CI・更新直後の前方寛容）。`[R11]`
 - メモリの影（memory_shadow、ADR-035）: ハーネスのメモリ（`CLAUDE_CONFIG_DIR`（無ければ `~/.claude`）`/projects/<プロジェクト根の絶対パスの / を - に置換した名前>/memory/` の .md。索引 `MEMORY.md` を除く）が統治文書の id に言及していたら advisory で挙げ、正本との矛盾の点検を促す。置き場が無ければ検査しない（CI では通常無い）。中身の真偽・矛盾は判定しない（§7）。`[R8]`
 
@@ -52,7 +52,8 @@ llm_context: task
 
 この節がある文書だけが、コードとの追跡の対象になる（ADR-056 の opt-in、ADR-061 の宣言）。対象は検査一覧（`AUDIT_CHECKS`）を囲む範囲。更新は `trace-index.py --id SPEC-011` が返す行を写す。
 
-- sha256:918bb46b81d603c89411c57178276605f17fb518983f0b7401322fc154651563
+- sha256:4eb3dc41cc5060e9bd2ff155d37a6facd0fb4ea9ba87b0594f03f9d063e8788f
+- sha256:bab694afdb6c0e1915db8ec3702470ff467c11219eb9167b34b198ff8dda10a6
 
 ## エラー時挙動
 

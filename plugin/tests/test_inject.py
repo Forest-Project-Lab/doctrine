@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
 """Unit tests for scripts/inject-contract.py — SessionStart minimal contract (R5).
 
 Encodes the slice-06 / MASTER §5.4 obligations and the 10-scenarios cases that

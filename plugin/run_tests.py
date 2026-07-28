@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# doctrine:exempt 試験の入口。方法論の正本は ADR-047/PROC-001(ADR-067)
 """Discover and run the plugin's unittest suite.
 
 Runs `tests/test_*.py` via unittest's TestLoader.discover, prints a pass/fail

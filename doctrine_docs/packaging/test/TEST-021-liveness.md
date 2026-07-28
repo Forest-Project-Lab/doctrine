@@ -27,7 +27,8 @@ SPEC-021 の受入を `plugin/tests/test_liveness_capture.py` が機械で確認
 - 発火の印の対の食い違い(ADR-062) → 他が健全でも「拒否経路の疑い」を告げる(test_guard_liveness_gap_is_announced)。
 - 版の切替(ADR-066) → 冒頭の版と今の版が違えば毎セッション再起動を促し(test_version_drift_is_announced_every_session)、印が無ければ黙る(test_no_version_drift_without_the_stamp)。注入が版の印を刻むこと・判定の規則は `test_inject.py` の TestVersionStamp と `test_auditcache.py` が凍結する。
 - 版の遅れ(ADR-070) → マニフェストの宣言と実行中の版が食い違えば更新の言い方まで含めて促し(test_version_lag_advises_update_in_a_self_marketplace_repo)、マニフェストの無い導入先では黙る(test_no_version_lag_without_a_manifest)。判定の規則(正本は source の先を優先・同名の項目だけ・不一致のみで向きを言わない)は `test_auditcache.py` の VersionLagTest が凍結する。
-- Level 昇格の案内(ADR-066) → Level 2 + 監査の実績で一度だけ出て、印で以後黙り(test_level_hint_appears_once_for_a_level2_tree_with_audit_record)、実績が無ければ出ない(test_no_level_hint_without_an_audit_record)。印の書き読み・欠落/古さの判定・新鮮な対の無音・書き手の入口(リンタ/ガード)は `test_auditcache.py` の HookStampsTest が、監査側の advisory は `test_audit.py` の GuardLivenessTest が凍結する。
+- Level 昇格の案内(ADR-066) → Level 2 + 監査の実績で一度だけ出て、印で以後黙り(test_level_hint_appears_once_for_a_level2_tree_with_audit_record)、実績が無ければ出ない(test_no_level_hint_without_an_audit_record)。
+- 悉皆モードの案内(ADR-072) → 未宣言 0+印なし残で一度だけ出て印で黙り(test_trace_mode_hint_appears_once_when_specs_are_done)、モードを入れた体系(test_no_trace_mode_hint_when_already_on)と未宣言が残る体系(test_no_trace_mode_hint_while_undeclared_remain)では出ない。印の書き読み・欠落/古さの判定・新鮮な対の無音・書き手の入口(リンタ/ガード)は `test_auditcache.py` の HookStampsTest が、監査側の advisory は `test_audit.py` の GuardLivenessTest が凍結する。
 - 注入側の鮮度警告と未選別メモ節(TestInjectLiveness)。
 - Level 2 で監査の死活を誤報しない(test_level2_missing_audit_is_not_flagged)。
 - 移行キャンペーン: 未分類ありで統治率つきの1件を促し、ゼロなら無音(TestMigrationCampaign)。

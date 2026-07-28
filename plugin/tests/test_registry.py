@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
 """Unit tests for scripts/_registry.py — the single in-code copy of §3.2/§3.3/§3.4.
 
 Covers the synthesis gap "_registry.py itself has no test cases" (MASTER §10.1):

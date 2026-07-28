@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
 """Tests for term-extract.py (c-TF-IDF candidate generator, read-only).
 
 Covers MASTER §5.7 + slice 07 §B and the critique gap assigned to this

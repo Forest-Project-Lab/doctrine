@@ -1,3 +1,4 @@
+# doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
 """Template validation suite (slice 09 / MASTER §8).
 
 Validates ALL 20 shipped templates under plugin/templates/:

@@ -41,6 +41,8 @@ llm_context: task
 対象は記録に数える型(R12)。更新は `trace-index.py --id SPEC-022` が返す行を写す（ADR-061）。
 
 - sha256:aa8a749aed0be9930fc0e8830d6d83165f68dd451ca4190ced352dfda42e4138
+- sha256:e1897521264fbda1388f6dfcbe6fb222600ee6dfa4bfa68ce7ce9193084832d3
+- sha256:3bf2d6e21ffef8d3b4b244bc42e59cf227df08af67fe1554679c00cdbc8350da
 
 ## 受入基準
 

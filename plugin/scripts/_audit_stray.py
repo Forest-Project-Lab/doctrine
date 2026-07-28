@@ -18,9 +18,11 @@ _WARN, _ADVISORY = "warn", "advisory"
 
 # 記録の読み取り・照合は共有コア _intake に一本化する(ADR-024)。リンタと
 # 同じコードで読むことで、同じファイルへの分類が食い違うのを構造的に防ぐ。
+# doctrine:begin SPEC-011
 _INTAKE_LEDGER = _intake.LEDGER_NAME
 _STRAY_SKIP_DIRS = ("node_modules", "__pycache__")
 _STRAY_LIST_CAP = 50
+# doctrine:end SPEC-011
 
 
 def _load_intake_ledger(root):

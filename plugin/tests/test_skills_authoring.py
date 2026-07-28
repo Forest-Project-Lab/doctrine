@@ -1,3 +1,4 @@
+# doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
 """Content-contract tests for the four authoring/flow skills this component owns.
 
 `test_skills.py` (owned by the other skills agent) is the cross-cutting gate for

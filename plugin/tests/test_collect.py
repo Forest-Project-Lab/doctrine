@@ -1,3 +1,4 @@
+# doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
 """Tests for collect-context.py — task-scoped minimal context pack (R5).
 
 Component: collect-context.py (llm-context-pack task min-set), MASTER §5.4, C10.

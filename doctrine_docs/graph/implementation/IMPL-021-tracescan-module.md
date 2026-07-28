@@ -6,7 +6,7 @@ domain: graph
 status: current
 owner: doctrine-maintainers
 created: 2026-07-27
-updated: 2026-07-27
+updated: 2026-07-28
 sources: [plugin/scripts/_tracescan.py]
 depends_on: [SPEC-026]
 llm_context: task
@@ -44,7 +44,7 @@ SPEC-026 を実装するときの制約と、はまりやすい落とし穴を�
 
 ## 対象部品
 
-`plugin/scripts/_tracescan.py`。関数は `parse_marks`・`scan_text`・`scan_tree`・`normalize_lines`・`fingerprint`・`empty_coverage`。定数は `MARKER_WORD`・`SKIP_DIR_NAMES`・`SKIP_SUFFIXES`・`DEFAULT_MAX_FILES`・`DEFAULT_MAX_FILE_BYTES`・`EXCLUSION_RULES`（除外規則の正本表）。
+`plugin/scripts/_tracescan.py`。関数は `parse_marks`・`scan_text`・`scan_tree`・`normalize_lines`・`fingerprint`・`empty_coverage`・`_config_exempt_match`（設定の適用除外の照合。ADR-072）。定数は `MARKER_WORD`・`SKIP_DIR_NAMES`・`SKIP_SUFFIXES`・`DEFAULT_MAX_FILES`・`DEFAULT_MAX_FILE_BYTES`・`EXCLUSION_RULES`（除外規則の正本表）。`scan_tree` の `exempt_paths` は読む前に明示管理外へ分類する（保存則の枠は不変）。
 
 呼ぶ経路は監査（`docs-audit._check_code_traces`）と問い合わせ（`trace-index.py`）と試験の三つで、いずれもプラグインの中にある。`scan_tree` の返り値は ADR-058 で 2 要素から 3 要素（範囲・所見・勘定）へ変わった。外部の契約ではないので互換の段は置かない。版を上げる利用者への影響は、監査の要約に `trace_coverage` のキーが増えることだけである（読み手は未知のキーを無視する）。
 

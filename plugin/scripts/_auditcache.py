@@ -25,8 +25,10 @@ import json
 import os
 import re
 
+# doctrine:begin ADR-053
 SCHEMA = "docs-audit/1"
 STATE_NAME = ".governance-state"
+# doctrine:end ADR-053
 _DATE_RE = re.compile(r"(\d{4})-(\d{2})-(\d{2})")
 # 状態ファイルの行。gov-heartbeat の読みと同じ寛容度にする(全角コロンも許す。
 # ADR-042: 知らないキー・読めない行は無視し、読めた範囲で判じる)。

@@ -22,7 +22,9 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+# doctrine:begin SPEC-022
 _FLAG_STALE_SECONDS = 7 * 24 * 3600   # 印の掃除(7日より古い印は消す)
+# doctrine:end SPEC-022
 
 _REASON = (
     "【統治・記録の確認】このセッションで統治文書を編集したが、決定の記録"

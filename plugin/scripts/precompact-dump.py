@@ -19,6 +19,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+# doctrine:begin SPEC-022
 _INSTRUCTION = (
     "【統治・圧縮前の退避】この会話はまもなく圧縮され、詳細は失われる。"
     "未記録の決定・撤回・新しい用語・重要な根拠がこの会話にあるなら、圧縮の前に"
@@ -27,6 +28,7 @@ _INSTRUCTION = (
     "このメモを ADR・DECIDED へ選別する義務が自動で出る(R12)。"
     "記録すべきものが無ければ何もしなくてよい。"
 )
+# doctrine:end SPEC-022
 
 
 def _project_has_tree():

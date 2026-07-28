@@ -21,6 +21,7 @@ import _tracescan
 
 _ERROR, _WARN, _ADVISORY = "error", "warn", "advisory"
 
+# doctrine:begin SPEC-026
 _TRACE_SECTION_RE = re.compile(r"(?m)^#{1,6}\s*実装の指紋\s*$")
 _TRACE_FP_RE = re.compile(r"(?m)^\s*-\s*(sha256:[0-9a-fA-F]{64})\s*$")
 
@@ -30,6 +31,7 @@ _TRACE_MARK_CODES = frozenset({
     "trace_unopened", "trace_empty_range"})
 
 _TRACE_NOCODE_RE = re.compile(r"(?m)^\s*-\s*コード対応なし\s*[:：]")
+# doctrine:end SPEC-026
 
 
 def trace_declaration(body):
@@ -181,12 +183,43 @@ def _spec_coverage(g, sections, coverage):
     coverage["spec_coverage"] = spec_cov
 
 
-def collect(g, root, make_finding):
+def _exempt_paths_from(trace_exempt):
+    """設定 trace_exempt({パス: 理由})から走査へ渡すパスの列を作る(ADR-072)。
+
+    理由の無い・文字列でない項目は宣言として成立しない(読み飛ばす)。
+    """
+    if not isinstance(trace_exempt, dict):
+        return ()
+    return tuple(sorted(
+        p for p, reason in trace_exempt.items()
+        if isinstance(p, str) and p
+        and isinstance(reason, str) and reason.strip()))
+
+
+def _backlog_finding(trace_mode, coverage, mk):
+    """悉皆モードの残高(ADR-072)。warn 一件だけ。ファイルごとには鳴らさない。"""
+    if trace_mode != "exhaustive" or not isinstance(coverage, dict):
+        return []
+    unmarked = coverage.get("unmarked_files")
+    if not isinstance(unmarked, int) or unmarked <= 0:
+        return []
+    return [mk(
+        "trace_unmarked_backlog", _WARN, "", "",
+        "印なしが %d 件残っている(悉皆モード)。出口は三つ — 範囲を印の対で"
+        "囲み仕様の『実装の指紋』へ記録する(SPEC-026)、ファイルに統治外"
+        "(exempt)を宣言する(ADR-067)、注釈を持てない媒体は設定の "
+        "trace_exempt へ理由と共に載せる(ADR-072)。一覧は trace-index "
+        "--coverage --term unmarked で導出する" % unmarked)]
+
+
+def collect(g, root, make_finding, trace_mode=None, trace_exempt=None):
     """コードと仕様の追跡(ADR-056、SPEC-026)。(所見, 勘定) を返す。
 
     `## 実装の指紋` の節を持つ文書が一つでもあるときだけ効く。門は節の有無だけで
     判じ、状態を問わない(ADR-060)。「根拠を持たないコード」は挙げない — 注釈は
-    任意であり、原理的に判じられない(ADR-054 の既知の限界)。
+    任意であり、原理的に判じられない(ADR-054 の既知の限界)。悉皆モード
+    (trace_mode="exhaustive"。ADR-072)のときだけ、印なしの残高を warn 一件で
+    挙げる。trace_exempt は設定側の統治外宣言で、走査へ渡す。
     """
     sections = _gate_sections(g)
     if not sections:
@@ -198,7 +231,8 @@ def collect(g, root, make_finding):
     scan_root = os.path.dirname(os.path.abspath(root))
     try:
         ranges, scan_findings, coverage = _tracescan.scan_tree(
-            scan_root, docs_root=root)
+            scan_root, docs_root=root,
+            exempt_paths=_exempt_paths_from(trace_exempt))
     except Exception:
         return [], None   # 走査で監査を落とさない
 
@@ -210,6 +244,7 @@ def collect(g, root, make_finding):
     out += _upward(by_id, g, make_finding)
     out += _downward(expect, by_id, g, make_finding)
     out += _undeclared(by_id, sections, g, make_finding)
+    out += _backlog_finding(trace_mode, coverage, make_finding)
     if coverage is not None:
         _spec_coverage(g, sections, coverage)
     return out, coverage

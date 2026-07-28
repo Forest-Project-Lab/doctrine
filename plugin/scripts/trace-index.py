@@ -24,9 +24,11 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import _registry  # noqa: E402
 import _tracescan  # noqa: E402
 
+# doctrine:begin SPEC-026
 SCHEMA = "trace-index/1"
 USAGE = ("trace-index.py [--root PATH] [--docs-root PATH] [--id ID] "
          "[--coverage] [--term TERM] [--format json|text] [--max-files N]")
+# doctrine:end SPEC-026
 
 
 def _valid_terms():

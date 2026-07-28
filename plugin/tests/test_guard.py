@@ -1,3 +1,4 @@
+# doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
 """policy-guard.py — the three guards (PreToolUse + PostToolUse).
 
 R7 (the ICD cross-domain dependency boundary) is the central self-test, proved

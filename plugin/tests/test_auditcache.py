@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
 """_auditcache — 前回監査の要約を読む共有コアの単体試験(ADR-053)。
 
 凍らせる不変条件は二つ。

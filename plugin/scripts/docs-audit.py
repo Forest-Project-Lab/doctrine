@@ -54,7 +54,7 @@ AUDIT_CHECKS = (
     "trace_mark_error", "trace_broken_ref", "trace_deprecated_ref",
     "trace_stale", "trace_missing_impl", "trace_marker_suspect",
     "trace_scan_truncated", "trace_unexpected_impl", "trace_undeclared_impl",
-    "trace_exempt_conflict", "guard_liveness_gap",
+    "trace_exempt_conflict", "trace_unmarked_backlog", "guard_liveness_gap",
 )
 # doctrine:end SPEC-011
 
@@ -162,6 +162,8 @@ def _load_config(path):
         "near_dup_cap": DEFAULT_NEAR_DUP_CAP,
         "near_dup_max_docs": DEFAULT_NEAR_DUP_MAX_DOCS,
         "today": None,
+        "trace_mode": None,        # 悉皆モード(ADR-072)。"exhaustive" だけが効く
+        "trace_exempt": {},        # 設定側の統治外宣言 {パス: 理由}(ADR-072)
     }
     if not path:
         return knobs
@@ -1059,7 +1061,10 @@ def run_audit(root, today, knobs):
     findings += _check_ext_anchors(g, root)
     findings += _check_memory_shadow(g, root)
     findings += _check_guard_liveness(root)
-    trace_findings, trace_coverage = _audit_trace.collect(g, root, _finding)
+    trace_findings, trace_coverage = _audit_trace.collect(
+        g, root, _finding,
+        trace_mode=knobs.get("trace_mode"),
+        trace_exempt=knobs.get("trace_exempt"))
     findings += trace_findings
 
     # 停滞の勘定(ADR-065)は追跡系モジュールに在る(ADR-069 の移送)。
@@ -1222,7 +1227,11 @@ def main(argv=None):
         sys.stdout.write("docs-level 2: 全件監査は Level 3 から。飛ばした。\n")
         return 0
 
-    knobs = _load_config(opts["config"])
+    # 設定は監査対象の木の _system/.context-config.json を既定で読む(ADR-072)。
+    # 明示の --config が優先。無ければ既定値のまま(前方寛容)。
+    config_path = opts["config"] or os.path.join(
+        root, "_system", ".context-config.json")
+    knobs = _load_config(config_path)
     # today の解決は監査本体の前に行う。供給された today が解せないのは使用法エラー
     # (壁時計に黙って退避しない、§日付ユーティリティの保証)→ 終了コード 2。
     try:
