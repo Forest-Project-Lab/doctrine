@@ -328,7 +328,8 @@ class HookStampsTest(unittest.TestCase):
         self.assertIsNone(A.version_drift({}, current="0.4.0"),
                           "印が無ければ判じない(前方寛容)")
         self.assertIsNone(A.version_drift(
-            {"hook_inject_version": "0.4.0"}, current=None))
+            {"hook_inject_version": "0.4.0"}, current=""),
+            "今の版が読めなければ判じない")
 
     def test_writers_leave_stamps_via_the_hook_entrypoints(self):
         """統合: リンタとガードの入口が印を残す(ADR-062 の書き手)。"""
