@@ -234,6 +234,153 @@ def _should_skip_name(name):
     return name.endswith(SKIP_SUFFIXES)
 
 
+def _prune_dirs(dirpath, dirnames, root, docs_abs, cov, member):
+    """ディレクトリの刈り(規則 id ごとに数える。ADR-058)。dirnames を書き換える。"""
+    kept = []
+    for d in sorted(dirnames):
+        child = os.path.join(dirpath, d)
+        child_rel = _relposix(child, root)
+        if d.startswith("."):
+            cov["pruned_dirs"]["dot_dir"] += 1
+            member("pruned:dot_dir", child_rel)
+        elif d in SKIP_DIR_NAMES:
+            cov["pruned_dirs"]["skip_dir_name"] += 1
+            member("pruned:skip_dir_name", child_rel)
+        elif docs_abs and _is_within(os.path.realpath(child), docs_abs):
+            cov["pruned_dirs"]["docs_root"] += 1
+            member("pruned:docs_root", child_rel)
+        elif os.path.islink(child):
+            # os.walk は既定でシンボリックリンクを降りない。黙らず数える。
+            cov["pruned_dirs"]["symlink_dir"] += 1
+            member("pruned:symlink_dir", child_rel)
+        else:
+            kept.append(d)
+    dirnames[:] = kept
+
+
+def _walk_paths(root, docs_abs, cov, member, findings, max_files):
+    """走査対象のパスを集める(整列・上限つき)。打ち切りも勘定に載せる。"""
+    def _on_walk_error(_err):
+        # 読めないディレクトリ。os.walk は既定で誤りを握るので、ここで数える。
+        cov["pruned_dirs"]["unreadable_dir"] += 1
+
+    paths = []
+    truncated = False
+    for dirpath, dirnames, filenames in os.walk(root, onerror=_on_walk_error):
+        if docs_abs and _is_within(os.path.realpath(dirpath), docs_abs):
+            # 根が統治木と重なる呼び方。ここから下へは降りず、ファイルも見ない。
+            dirnames[:] = []
+            continue
+        _prune_dirs(dirpath, dirnames, root, docs_abs, cov, member)
+        for name in sorted(filenames):
+            paths.append(os.path.join(dirpath, name))
+            if len(paths) > max_files:
+                truncated = True
+                break
+        if truncated:
+            break
+    paths.sort()
+    if truncated:
+        dropped = paths[max_files:]
+        paths = paths[:max_files]
+        cov["truncated"] = True
+        cov["excluded"]["truncated"] += len(dropped)
+        cov["reached_files"] += len(dropped)
+        for p in dropped:
+            member("excluded:truncated", _relposix(p, root))
+        findings.append(_finding(
+            "trace_scan_truncated", "", 0,
+            "走査するファイル数の上限 %d を超えたため、以降を見ていない。"
+            "上限を上げるか対象を絞って走らせ直す" % max_files))
+    return paths
+
+
+def _read_scannable(path, rel, cov, member, findings, max_file_bytes):
+    """ファイル規則の梯子(ADR-058)。走査できる本文か、None(分類済み)を返す。"""
+    name = os.path.basename(path)
+    if name.startswith("."):
+        cov["excluded"]["dot_file"] += 1
+        member("excluded:dot_file", rel)
+        return None
+    if _should_skip_name(name):
+        cov["excluded"]["md_suffix"] += 1
+        member("excluded:md_suffix", rel)
+        return None
+    try:
+        st = os.stat(path)
+    except OSError:
+        cov["excluded"]["unreadable"] += 1
+        member("excluded:unreadable", rel)
+        return None
+    if not _stat.S_ISREG(st.st_mode):
+        # 通常ファイル以外は開かない(名前付きパイプは open が戻らない)。
+        cov["excluded"]["nonregular"] += 1
+        member("excluded:nonregular", rel)
+        return None
+    if st.st_size > max_file_bytes:
+        cov["excluded"]["oversize"] += 1
+        member("excluded:oversize", rel)
+        findings.append(_finding(
+            "trace_scan_truncated", rel, 0,
+            "ファイルの大きさが上限 %d バイトを超えるため見ていない"
+            % max_file_bytes))
+        return None
+    try:
+        with open(path, "rb") as fh:
+            data = fh.read()
+    except (OSError, MemoryError):
+        # MemoryError は OSError の子ではない。通常ファイル判定と大きさの
+        # 上限で実質は起きないが、保証(例外を外へ出さない)の破れを塞ぐ。
+        cov["excluded"]["unreadable"] += 1
+        member("excluded:unreadable", rel)
+        return None
+    if b"\x00" in data[:_NUL_PROBE_BYTES]:
+        cov["excluded"]["binary"] += 1
+        member("excluded:binary", rel)
+        return None                       # バイナリは読まない
+    if MARKER_WORD.encode("utf-8") not in data:
+        cov["unmarked_files"] += 1        # 印なし(入れ忘れが住む場所)
+        member("unmarked", rel)
+        return None
+    try:
+        return data.decode("utf-8-sig")
+    except UnicodeError:
+        cov["excluded"]["undecodable"] += 1
+        member("excluded:undecodable", rel)
+        return None                       # 復号できないファイルは飛ばす
+
+
+def _classify_scanned(text, rel, cov, member):
+    """印の語を含む本文の分類(寄与/明示管理外/印なし。ADR-058/067)。"""
+    r, f = scan_text(text, rel)
+    # 統治外の宣言(ADR-067)。exempt の行は必ず印の語を含むので、この分岐に
+    # 来るファイルだけを見れば全数を尽くす。
+    exempt_line = None
+    for i, ln in enumerate(
+            text.replace("\r\n", "\n").replace("\r", "\n").split("\n"),
+            start=1):
+        if _EXEMPT_RE.match(ln):
+            exempt_line = i
+            break
+    if exempt_line is not None and parse_marks(text):
+        f = f + [_finding(
+            "trace_exempt_conflict", rel, exempt_line,
+            "統治外(exempt)を宣言したファイルに範囲の印がある。宣言が"
+            "古いか印が誤り。どちらかを消す(ADR-067)。範囲は実態として"
+            "生かして数える")]
+    if r:
+        cov["annotated_files"] += 1
+        member("annotated", rel)
+    elif exempt_line is not None:
+        cov["exempt_files"] += 1
+        member("exempt", rel)
+    else:
+        # 印の語はあるが範囲を一つも返さない(対応付けの誤りは所見が別に指す)。
+        cov["unmarked_files"] += 1
+        member("unmarked", rel)
+    return r, f
+
+
 def scan_tree(root, docs_root=None, max_files=DEFAULT_MAX_FILES,
               max_file_bytes=DEFAULT_MAX_FILE_BYTES, collect_members=False):
     """root 以下を走査し、(範囲の一覧, 所見の一覧, 勘定) を返す。決定的(整列順)。
@@ -265,138 +412,14 @@ def scan_tree(root, docs_root=None, max_files=DEFAULT_MAX_FILES,
         return ranges, findings, cov
     docs_abs = os.path.realpath(docs_root) if docs_root else None
 
-    def _on_walk_error(_err):
-        # 読めないディレクトリ。os.walk は既定で誤りを握るので、ここで数える。
-        cov["pruned_dirs"]["unreadable_dir"] += 1
-
-    paths = []
-    truncated = False
-    for dirpath, dirnames, filenames in os.walk(root, onerror=_on_walk_error):
-        if docs_abs and _is_within(os.path.realpath(dirpath), docs_abs):
-            # 根が統治木と重なる呼び方。ここから下へは降りず、ファイルも見ない。
-            dirnames[:] = []
-            continue
-        kept = []
-        for d in sorted(dirnames):
-            child = os.path.join(dirpath, d)
-            child_rel = _relposix(child, root)
-            if d.startswith("."):
-                cov["pruned_dirs"]["dot_dir"] += 1
-                _member("pruned:dot_dir", child_rel)
-            elif d in SKIP_DIR_NAMES:
-                cov["pruned_dirs"]["skip_dir_name"] += 1
-                _member("pruned:skip_dir_name", child_rel)
-            elif docs_abs and _is_within(os.path.realpath(child), docs_abs):
-                cov["pruned_dirs"]["docs_root"] += 1
-                _member("pruned:docs_root", child_rel)
-            elif os.path.islink(child):
-                # os.walk は既定でシンボリックリンクを降りない。黙らず数える。
-                cov["pruned_dirs"]["symlink_dir"] += 1
-                _member("pruned:symlink_dir", child_rel)
-            else:
-                kept.append(d)
-        dirnames[:] = kept
-        for name in sorted(filenames):
-            paths.append(os.path.join(dirpath, name))
-            if len(paths) > max_files:
-                truncated = True
-                break
-        if truncated:
-            break
-    paths.sort()
-    if truncated:
-        dropped = paths[max_files:]
-        paths = paths[:max_files]
-        cov["truncated"] = True
-        cov["excluded"]["truncated"] += len(dropped)
-        cov["reached_files"] += len(dropped)
-        for p in dropped:
-            _member("excluded:truncated", _relposix(p, root))
-        findings.append(_finding(
-            "trace_scan_truncated", "", 0,
-            "走査するファイル数の上限 %d を超えたため、以降を見ていない。"
-            "上限を上げるか対象を絞って走らせ直す" % max_files))
-
+    paths = _walk_paths(root, docs_abs, cov, _member, findings, max_files)
     for path in paths:
         rel = _relposix(path, root)
         cov["reached_files"] += 1
-        name = os.path.basename(path)
-        if name.startswith("."):
-            cov["excluded"]["dot_file"] += 1
-            _member("excluded:dot_file", rel)
+        text = _read_scannable(path, rel, cov, _member, findings, max_file_bytes)
+        if text is None:
             continue
-        if _should_skip_name(name):
-            cov["excluded"]["md_suffix"] += 1
-            _member("excluded:md_suffix", rel)
-            continue
-        try:
-            st = os.stat(path)
-        except OSError:
-            cov["excluded"]["unreadable"] += 1
-            _member("excluded:unreadable", rel)
-            continue
-        if not _stat.S_ISREG(st.st_mode):
-            # 通常ファイル以外は開かない(名前付きパイプは open が戻らない)。
-            cov["excluded"]["nonregular"] += 1
-            _member("excluded:nonregular", rel)
-            continue
-        if st.st_size > max_file_bytes:
-            cov["excluded"]["oversize"] += 1
-            _member("excluded:oversize", rel)
-            findings.append(_finding(
-                "trace_scan_truncated", rel, 0,
-                "ファイルの大きさが上限 %d バイトを超えるため見ていない"
-                % max_file_bytes))
-            continue
-        try:
-            with open(path, "rb") as fh:
-                data = fh.read()
-        except (OSError, MemoryError):
-            # MemoryError は OSError の子ではない。通常ファイル判定と大きさの
-            # 上限で実質は起きないが、保証(例外を外へ出さない)の破れを塞ぐ。
-            cov["excluded"]["unreadable"] += 1
-            _member("excluded:unreadable", rel)
-            continue
-        if b"\x00" in data[:_NUL_PROBE_BYTES]:
-            cov["excluded"]["binary"] += 1
-            _member("excluded:binary", rel)
-            continue                      # バイナリは読まない
-        if MARKER_WORD.encode("utf-8") not in data:
-            cov["unmarked_files"] += 1    # 印なし(入れ忘れが住む場所)
-            _member("unmarked", rel)
-            continue
-        try:
-            text = data.decode("utf-8-sig")
-        except UnicodeError:
-            cov["excluded"]["undecodable"] += 1
-            _member("excluded:undecodable", rel)
-            continue                      # 復号できないファイルは飛ばす
-        r, f = scan_text(text, rel)
-        # 統治外の宣言(ADR-067)。exempt の行は必ず印の語を含むので、この分岐に
-        # 来るファイルだけを見れば全数を尽くす。
-        exempt_line = None
-        for i, ln in enumerate(
-                text.replace("\r\n", "\n").replace("\r", "\n").split("\n"),
-                start=1):
-            if _EXEMPT_RE.match(ln):
-                exempt_line = i
-                break
-        if exempt_line is not None and parse_marks(text):
-            f = f + [_finding(
-                "trace_exempt_conflict", rel, exempt_line,
-                "統治外(exempt)を宣言したファイルに範囲の印がある。宣言が"
-                "古いか印が誤り。どちらかを消す(ADR-067)。範囲は実態として"
-                "生かして数える")]
-        if r:
-            cov["annotated_files"] += 1
-            _member("annotated", rel)
-        elif exempt_line is not None:
-            cov["exempt_files"] += 1
-            _member("exempt", rel)
-        else:
-            # 印の語はあるが範囲を一つも返さない(対応付けの誤りは所見が別に指す)。
-            cov["unmarked_files"] += 1
-            _member("unmarked", rel)
+        r, f = _classify_scanned(text, rel, cov, _member)
         ranges.extend(r)
         findings.extend(f)
 
