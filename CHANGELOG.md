@@ -6,6 +6,7 @@
 
 ### 内部
 
+- ADR-069 の移送(4/4): 肥大関数2本を分解 — `scan_tree`(173行)を刈り/収集/規則の梯子/分類の4補助+司令部へ、`_build_sections`(129行)を知識系/状態系の2補助へ(挙動・順序・tier は不変)。**code-audit advisory 8→0 — ADR-069 の進捗計が完走**。分解の途中、置換の終端が旧関数内の早期 return に部分一致して旧本体が死にコードとして残る誤りを code-audit 自身が検出し(193行と名指し)、切除した。
 - ADR-069 の移送(3/4): 二重定義リテラル4件を正本一つへ — 要約 schema と状態ファイル名は共有コア `_auditcache` を参照、Context Map 投影の差し替え印は構造規則の家 `_registry`(CTXMAP_BEGIN/END)へ新設し描き手(render-projection)と読み手(docs-audit)の双方が参照(DECIDED-001 事実1)。advisory 6→2。
 - ADR-069 の移送(2/4): 体系外 .md 系の検査を `_audit_stray.py` へ移送(docs-audit 1,397→1,273 行 — 上限 1,300 を切り、肥大 advisory が消えた。advisory 7→6)。整合点検スクリプトの台帳読取は共有コア `_intake` 直参照へ(ADR-024 の単一正本に沿う)。
 - ADR-069 の移送(1/4): 追跡系の検査群と停滞計を `_audit_trace.py` へ移し、149 行の検査関数を 6 つの小関数に分解(docs-audit 1,611→1,397 行。code-audit の advisory 8→7)。検査の名前・重大度・checks_run・決定性は不変(凍結どおり)。

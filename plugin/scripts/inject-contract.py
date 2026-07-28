@@ -732,21 +732,9 @@ def _count_session_notes(docs_root):
         return 0
 
 
-def _build_sections(docs, audit_summary, config, today=None,
-                    stale_days=DEFAULT_AUDIT_STALE_DAYS, notes_pending=0,
-                    docs_level=4, tree_initialized=False):
-    """全ブロックを (タイトル, [行...], tier) の順序付きリストで返す。
-
-    tier はトリム時の落とす順(大きいほど先に詳細を落とす)。RECAP・最新 DECIDED・全 NONGOAL
-    見出し・監査要約・未選別メモは保護(tier 0)で、節は残し詳細だけ削る。本文全量はどこにも入れない。
-    """
-    decided = _decided_current(docs)
-    nongoals = _nongoals(docs)
-    watches = _watches(docs)
-    glossary = _glossary_headings(docs)
-    deprecated = _deprecated_facts(docs)
-    pinned = _priority_headlines(docs, config)
-
+def _knowledge_sections(decided, nongoals, watches, glossary,
+                        deprecated, pinned):
+    """統治木の知識から組む節(1〜7)。順序と tier は据え置き(ADR-069 の分解)。"""
     sections = []
 
     # 1. RECAP(保護)
@@ -826,6 +814,13 @@ def _build_sections(docs, audit_summary, config, today=None,
             "protected": False,
         })
 
+    return sections
+
+
+def _status_sections(audit_summary, config_unused, today, stale_days,
+                     docs_level, tree_initialized, notes_pending, pinned):
+    """運用の状態から組む節(8〜9)。順序と tier は据え置き(ADR-069 の分解)。"""
+    sections = []
     # 8. 前回監査の要約(保護)
     sections.append({
         "key": "audit",
@@ -861,6 +856,28 @@ def _build_sections(docs, audit_summary, config, today=None,
         })
 
     return sections
+
+
+def _build_sections(docs, audit_summary, config, today=None,
+                    stale_days=DEFAULT_AUDIT_STALE_DAYS, notes_pending=0,
+                    docs_level=4, tree_initialized=False):
+    """全ブロックを (タイトル, [行...], tier) の順序付きリストで返す。
+
+    tier はトリム時の落とす順(大きいほど先に詳細を落とす)。RECAP・最新 DECIDED・全 NONGOAL
+    見出し・監査要約・未選別メモは保護(tier 0)で、節は残し詳細だけ削る。本文全量はどこにも入れない。
+    """
+    decided = _decided_current(docs)
+    nongoals = _nongoals(docs)
+    watches = _watches(docs)
+    glossary = _glossary_headings(docs)
+    deprecated = _deprecated_facts(docs)
+    pinned = _priority_headlines(docs, config)
+
+    return (_knowledge_sections(decided, nongoals, watches, glossary,
+                                deprecated, pinned)
+            + _status_sections(audit_summary, config, today, stale_days,
+                               docs_level, tree_initialized, notes_pending,
+                               pinned))
 
 
 def _render_sections(sections):
