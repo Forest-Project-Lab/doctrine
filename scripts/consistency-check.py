@@ -74,6 +74,7 @@ def main():
     sys.path.insert(0, PLUGIN_SCRIPTS)
     registry = _load("_registry", "_registry.py")
     audit = _load("_docs_audit", "docs-audit.py")
+    intake = _load("_intake", "_intake.py")
 
     docs_root = registry.walkup_docs_root(os.getcwd())
     if not docs_root:
@@ -81,7 +82,7 @@ def main():
         return 2
     proj = os.path.dirname(os.path.abspath(docs_root))
 
-    entries, bad = audit._load_intake_ledger(docs_root)
+    entries, bad = intake.load_ledger(docs_root)
     skip_dirs = set(getattr(audit, "_STRAY_SKIP_DIRS", ("node_modules", "__pycache__")))
     pointers = getattr(registry, "ROOT_POINTER_FILES", set())
 
@@ -99,7 +100,7 @@ def main():
             rel = os.path.relpath(abspath, proj).replace(os.sep, "/")
             if rel in pointers:
                 continue
-            entry = audit._ledger_entry_for(rel, entries)
+            entry = intake.entry_for(rel, entries)
             if entry and entry[1] in ("非文書", "投影"):
                 registered.append((rel, abspath, entry[1]))
 
