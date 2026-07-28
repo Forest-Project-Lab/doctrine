@@ -51,6 +51,10 @@ llm_context: task
 
 - hooks.json のイベント集合が本表とずれたら、受入(TEST-025)が赤になる。配線か本表のどちらかを直す。
 
+## 実装の指紋
+
+- コード対応なし: 本文書の表そのものが実装である
+
 ## 受入基準
 
 - hooks.json のイベント集合 = {SessionStart, UserPromptSubmit, PreToolUse, PostToolUse, Stop, PreCompact, SessionEnd}。

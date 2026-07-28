@@ -49,6 +49,7 @@ _REQ_TAG_RE = re.compile(r"^R\d+$")
 # ---------------------------------------------------------------------------
 
 # 定着した借用語(§1「擬陽性を避ける」). Never flagged as calque/undefined.
+# doctrine:begin SPEC-008
 _DEFAULT_LOANWORD_ALLOWLIST = ("データ", "リスク")
 
 # 一語訳の罠(§1). English source word appearing in JP prose -> JP fix. WARN.
@@ -58,6 +59,7 @@ _DEFAULT_WORDTRAP = {
     "robust": "壊れにくい",
     "leverage": "活かす",
 }
+# doctrine:end SPEC-008
 
 # Path of the plugin-shipped §1 seed (single encoding of the tables).
 _TEMPLATE_GLOSSARY = os.path.join(

@@ -40,6 +40,12 @@ sources, depends_on, impacts, canonical_for などリスト型のキーは、Non
 - 閉じの `---` が無ければ、残り全行を解析し、body は空とし、`missing_close` を記録する。
 - `parse_file` は、読み書きや復号に失敗したとき（不在・ディレクトリ・権限・復号失敗）だけ例外を投げる。
 
+## 実装の指紋
+
+対象は解析エラーコードの閉集合。更新は `trace-index.py --id SPEC-002` が返す行を写す（ADR-061）。
+
+- sha256:204eb702620546620c3b6eaa2d9f458878155d6f49e5e90c1a9502a9a3fde8f1
+
 ## 受入基準
 
 - `parse` がどの入力でも例外を投げない。

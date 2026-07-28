@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# doctrine:begin TEST-026
 """_tracescan — コード注釈の走査(SPEC-026 / TEST-026)の単体試験。
 
 凍らせる不変条件:
@@ -15,6 +16,7 @@
 注意: この試験の原文に、印として読まれる行を置かない(`_mark` で組み立てる)。
 リポジトリ自身を走査したときに、試験の原文が範囲として拾われるのを防ぐ。
 """
+# doctrine:end TEST-026
 import json
 import os
 import shutil

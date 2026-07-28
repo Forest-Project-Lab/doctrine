@@ -43,6 +43,7 @@ FINDING_CODES = (
 
 # 行から前後の空白と非語文字を落とした残りが印そのものであること。
 # 先頭に語文字があれば一致しない(コードの途中の文字列は印にならない)。
+# doctrine:begin SPEC-026
 _MARK_RE = re.compile(
     r"^[^\w]*doctrine:(begin|end)\s+([A-Z]+-\d+)[^\w]*$")
 
@@ -58,6 +59,7 @@ _MARK_SUSPECT_RE = re.compile(r"doctrine:\s*(begin|end|exempt)\b")
 # 綴りを連結で組み立てるのは、この原文自身が疑いの照合に反応しないため
 # (原文に印の形を直に書かない規律。ADR-059)。
 _EXEMPT_RE = re.compile(r"^[^\w]*" + MARKER_WORD + r"exempt(\b.*)?$")
+# doctrine:end SPEC-026
 
 # 走査しないディレクトリ名(監査の体系外 .md 走査と同じ規約。SPEC-011)。
 SKIP_DIR_NAMES = frozenset({"node_modules", "__pycache__"})

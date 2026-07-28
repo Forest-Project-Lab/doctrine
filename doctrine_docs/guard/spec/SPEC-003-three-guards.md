@@ -47,6 +47,12 @@ llm_context: task
 - 展開できない glob を含む削除コマンドは、安全側に倒して拒否する。
 - Hook 事象では main から例外を投げない。判定は JSON に載せ、終了コードは常に 0 を返す。
 
+## 実装の指紋
+
+対象はADR の許可遷移と許可キー。更新は `trace-index.py --id SPEC-003` が返す行を写す（ADR-061）。
+
+- sha256:734cc0bb328183c4b8a99e351bf58eb9c6a43c704b718f1aff4adfb425504293
+
 ## 受入基準
 TEST-003 が次を確認する: 受入シナリオ TC（番号は次のとおり）。TC-070..072（越境ICD許可・非ICD拒否・同ドメイン許可）、TC-117（相手 `status` 無関係）、TC-123（分類不能=拒否）、dangling 連れ合い（=許可）、TC-075..077（不変）、TC-078..081（削除安全）、TC-118（block→張り替え→許可）、TC-119（Write deny と Edit block が同一違反）、TC-132（Bash deny に additionalContext も block も無い）。加えて、`mv` の宛先が既存の被依存文書なら deny、新パスへの改名なら allow。archived の不変（倉庫の外でも deny、現行→archived の遷移は allow）は `plugin/tests/test_liveness_capture.py` が確認する（ADR-027）。
 

@@ -46,6 +46,10 @@ llm_context: task
 - 各スクリプトは、通常の運用では終了コード 0 を返し、判定は JSON に載せる。スクリプト自身が異常を起こしたときだけ、非ゼロを返す。
 - `Bash` matcher の枝は deny だけを返す（ADR-011）。`additionalContext` も `decision:block` もモデルへ届かないからである。段階導入の縮小構成の由来も ADR-011 が定める。
 
+## 実装の指紋
+
+- コード対応なし: 実装は JSON の配線(hooks.json)であり、注釈の行を持てない
+
 ## 受入基準
 
 `hooks.json` が 7 つのイベント（SessionStart・UserPromptSubmit・PreToolUse・PostToolUse・Stop・PreCompact・SessionEnd。ADR-028）を持ち、各 `command` が `${CLAUDE_PLUGIN_ROOT}/scripts/` 配下の `.py` を指し、PostToolUse が `policy-guard.py` → `docs-linter.py` → `review-nudge.py` の順であり、`hooks.level2.json` が縮小差分であること。空白を含むパスへ置換しても `command` の語数が変わらないこと。全スクリプトが実行ビットとシバンを持つこと。イベント集合と要求の対応は被覆マトリクス（SPEC-025）が持つ。対応テストは TEST-019 と TEST-020 と TEST-025。

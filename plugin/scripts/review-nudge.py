@@ -28,6 +28,7 @@ import json  # noqa: E402
 import _frontmatter  # noqa: E402
 import _registry  # noqa: E402
 
+# doctrine:begin SPEC-024
 _NUDGE = (
     "doc-review: この文書を変更した。文章規範・一覧外カルク(逆翻訳テル)・"
     "位置づけを doc-review で見直すこと。定例3点(canonical_for 未付与・"
@@ -35,10 +36,13 @@ _NUDGE = (
     "(_system/glossary.md)のカルク表へ、新しい承認語は ADR と用語辞書へ"
     "書き戻す(§4.1)。"
 )
+# doctrine:end SPEC-024
 
 # 記録に数える型(これらへの書き込みは「決定を記録した」とみなす。R12)。
+# doctrine:begin SPEC-022
 _RECORD_TYPES = frozenset({"ADR", "DECIDED", "WATCH", "CHANGE"})
 _SESSION_NOTES_NAME = ".session-notes"
+# doctrine:end SPEC-022
 
 _CODE_NUDGE_MAX_BYTES = 1024 * 1024   # 紐づけ促しで読む一ファイルの上限
 

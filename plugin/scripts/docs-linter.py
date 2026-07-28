@@ -442,7 +442,9 @@ def _check_research_decision(meta, body, findings):
 
 
 # The four mandatory SPEC headings (§3.2 / §4.2 / 付録B).
+# doctrine:begin SPEC-007
 _SPEC_SECTIONS = ("入出力", "制約", "エラー時挙動", "受入基準")
+# doctrine:end SPEC-007
 _HEADING_RE = re.compile(r"(?m)^(#{1,6})\s*(.*?)\s*$")
 
 

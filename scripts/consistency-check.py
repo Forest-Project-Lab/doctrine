@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# doctrine:begin SPEC-023
 """linter と audit の整合点検 — 支え③の最初の一本。
 
 不変条件(これが破れたら赤):
@@ -17,6 +18,7 @@ audit(全体を見る)と linter(一件を見る)は、同じファイルへの�
 
 食い違いが 1 件でもあれば終了コード 1、無ければ 0。決定的。標準ライブラリのみ。
 """
+# doctrine:end SPEC-023
 import importlib.util
 import json
 import os
