@@ -54,7 +54,7 @@ AUDIT_CHECKS = (
     "trace_mark_error", "trace_broken_ref", "trace_deprecated_ref",
     "trace_stale", "trace_missing_impl", "trace_marker_suspect",
     "trace_scan_truncated", "trace_unexpected_impl", "trace_undeclared_impl",
-    "guard_liveness_gap",
+    "trace_exempt_conflict", "guard_liveness_gap",
 )
 # doctrine:end SPEC-011
 
@@ -743,6 +743,12 @@ def _check_code_traces(g, root):
             out.append(_finding(
                 "trace_scan_truncated", SEV_ADVISORY, "", f["path"],
                 f["message"]))
+        elif f["code"] == "trace_exempt_conflict":
+            # 統治外の宣言と実態の矛盾(ADR-067)。宣言したファイルにしか
+            # 発火しない(版を上げただけの利用者には何も起きない)。
+            out.append(_finding(
+                "trace_exempt_conflict", SEV_WARN, "", f["path"],
+                "%s(%d 行目)" % (f["message"], f["line"])))
 
     by_id = {}
     for r in ranges:

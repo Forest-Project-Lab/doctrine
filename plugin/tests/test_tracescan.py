@@ -398,11 +398,11 @@ class CoverageAccountingTest(unittest.TestCase):
         return root
 
     def _assert_identity(self, cov):
-        """保存則: reached = annotated + unmarked + Σexcluded。"""
+        """保存則: reached = annotated + unmarked + exempt + Σexcluded(ADR-067)。"""
         self.assertEqual(
             cov["reached_files"],
             cov["annotated_files"] + cov["unmarked_files"]
-            + sum(cov["excluded"].values()),
+            + cov["exempt_files"] + sum(cov["excluded"].values()),
             "保存則が破れている: %r" % (cov,))
 
     def test_all_rule_slots_present_even_at_zero(self):
@@ -549,6 +549,74 @@ class CoverageAccountingTest(unittest.TestCase):
         self.assertEqual(cov["members"]["annotated"], ["src/m.py"])
 
 
+class ExemptDeclarationTest(unittest.TestCase):
+    """統治外の宣言(ADR-067)。勘定の第四項・矛盾の検出・疑いの拡張。
+
+    原文に印の形を直に書かない(実行時に連結して作る。ADR-059 の規律)。
+    """
+
+    def _repo(self, files):
+        root = _util.make_repo(files)
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        return root
+
+    def _exempt(self, reason=""):
+        line = "# doctrine:" + "exempt"
+        if reason:
+            line += " " + reason
+        return line
+
+    def test_exempt_file_counts_in_the_fourth_slot(self):
+        root = self._repo({
+            "tools/oneoff.py": self._exempt("使い捨ての移行スクリプト") + "\nx=1\n",
+            "src/plain.py": "print(1)\n",
+        })
+        r, f, cov = T.scan_tree(root)
+        self.assertEqual(r, [])
+        self.assertEqual(cov["exempt_files"], 1)
+        self.assertEqual(cov["unmarked_files"], 1)
+        self.assertEqual(
+            cov["reached_files"],
+            cov["annotated_files"] + cov["unmarked_files"]
+            + cov["exempt_files"] + sum(cov["excluded"].values()))
+
+    def test_reason_is_optional(self):
+        root = self._repo({"a.py": self._exempt() + "\n"})
+        _, f, cov = T.scan_tree(root)
+        self.assertEqual(cov["exempt_files"], 1)
+        self.assertEqual([x for x in f
+                          if x["code"] == "trace_marker_suspect"], [],
+                         "厳密な exempt 行は疑いにならない")
+
+    def test_exempt_with_ranges_is_a_conflict_and_reality_wins(self):
+        """矛盾は所見で指し、範囲は実態として生かす(寄与に数える)。"""
+        body = "\n".join([self._exempt("古い宣言"),
+                          _block("SPEC-014", ["x = 1"])])
+        root = self._repo({"a.py": body})
+        r, f, cov = T.scan_tree(root)
+        self.assertEqual([x["id"] for x in r], ["SPEC-014"], "範囲は生かす")
+        self.assertEqual(cov["annotated_files"], 1)
+        self.assertEqual(cov["exempt_files"], 0)
+        codes = [x["code"] for x in f]
+        self.assertIn("trace_exempt_conflict", codes)
+
+    def test_exempt_typo_is_a_suspect(self):
+        """コロンの後の空白などの揺れは疑いとして挙がる(ADR-059 の拡張)。"""
+        src = "# doctrine:" + " exempt 理由\nx=1\n"
+        root = self._repo({"a.py": src})
+        _, f, cov = T.scan_tree(root)
+        self.assertIn("trace_marker_suspect", [x["code"] for x in f])
+        self.assertEqual(cov["exempt_files"], 0, "揺れた宣言は成立しない")
+
+    def test_members_list_exempt_paths_on_request(self):
+        root = self._repo({
+            "b.py": self._exempt("理由b") + "\n",
+            "a.py": self._exempt("理由a") + "\n",
+        })
+        _, _, cov = T.scan_tree(root, collect_members=True)
+        self.assertEqual(cov["members"]["exempt"], ["a.py", "b.py"])
+
+
 class MarkerSuspectTest(unittest.TestCase):
     """6. 打ったつもりの印を無音にしない(ADR-059)。
 
@@ -603,7 +671,7 @@ class MarkerSuspectTest(unittest.TestCase):
         expected = (
             "trace_nested", "trace_id_mismatch", "trace_unclosed",
             "trace_unopened", "trace_empty_range", "trace_marker_suspect",
-            "trace_scan_truncated",
+            "trace_scan_truncated", "trace_exempt_conflict",
         )
         self.assertEqual(T.FINDING_CODES, expected,
                          "コードを足した/消したら転記表を同じ変更で更新すること")
@@ -658,6 +726,14 @@ class CoverageCLITest(unittest.TestCase):
         self.assertEqual(data["paths"], ["plain.py", "sub/other.py"])
         self.assertEqual(data["count"], 2)
         self.assertNotIn(root, out, "絶対パスが出てはならない")
+
+    def test_exempt_term_drills_down(self):
+        root = self._repo({"tool.py": "# doctrine:" + "exempt 理由\n"})
+        out, code = self._run(["--root", root, "--coverage",
+                               "--term", "exempt", "--format", "json"])
+        self.assertEqual(code, 0)
+        data = json.loads(out)
+        self.assertEqual(data["paths"], ["tool.py"])
 
     def test_unknown_term_is_a_usage_error(self):
         root = self._repo({})

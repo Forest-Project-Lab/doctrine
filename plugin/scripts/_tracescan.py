@@ -38,6 +38,7 @@ MARKER_WORD = "doctrine:"
 FINDING_CODES = (
     "trace_nested", "trace_id_mismatch", "trace_unclosed", "trace_unopened",
     "trace_empty_range", "trace_marker_suspect", "trace_scan_truncated",
+    "trace_exempt_conflict",
 )
 
 # 行から前後の空白と非語文字を落とした残りが印そのものであること。
@@ -45,11 +46,18 @@ FINDING_CODES = (
 _MARK_RE = re.compile(
     r"^[^\w]*doctrine:(begin|end)\s+([A-Z]+-\d+)[^\w]*$")
 
-# 疑いの照合(ADR-059)。厳密な形に一致しない行のうち、印の語の直後(空白を許す)に
-# begin/end の語が続くものは「打ったつもりの印」の兆候として挙げる。厳密な照合は
-# 変えない(緩めると文字列を印として拾う)。この正規表現の原文自身が疑いに一致
-# しないのは、コロンの直後に来るのが空白でも begin/end でもないからである。
-_MARK_SUSPECT_RE = re.compile(r"doctrine:\s*(begin|end)\b")
+# 疑いの照合(ADR-059/ADR-067)。厳密な形に一致しない行のうち、印の語の直後
+# (空白を許す)に begin/end/exempt の語が続くものは「打ったつもりの印」の兆候と
+# して挙げる。厳密な照合は変えない(緩めると文字列を印として拾う)。この正規表現
+# の原文自身が疑いに一致しないのは、コロンの直後に来るのが空白でも語でもない
+# からである。
+_MARK_SUSPECT_RE = re.compile(r"doctrine:\s*(begin|end|exempt)\b")
+
+# 統治外の宣言の印(ADR-067)。行から前後の空白と非語文字を落とした残りが
+# 「印の語 + exempt(以降は任意の理由)」に一致する行。理由は機械が解釈しない。
+# 綴りを連結で組み立てるのは、この原文自身が疑いの照合に反応しないため
+# (原文に印の形を直に書かない規律。ADR-059)。
+_EXEMPT_RE = re.compile(r"^[^\w]*" + MARKER_WORD + r"exempt(\b.*)?$")
 
 # 走査しないディレクトリ名(監査の体系外 .md 走査と同じ規約。SPEC-011)。
 SKIP_DIR_NAMES = frozenset({"node_modules", "__pycache__"})
@@ -91,6 +99,7 @@ def empty_coverage():
         "reached_files": 0,      # 走査が触れたファイルの全数
         "annotated_files": 0,    # 範囲を一つ以上返したファイル(寄与)
         "unmarked_files": 0,     # 読めたが範囲を一つも返さないファイル(印なし)
+        "exempt_files": 0,       # 統治外の意思を宣言したファイル(ADR-067)
         "excluded": {rid: 0 for rid in _FILE_RULES},
         "pruned_dirs": {rid: 0 for rid in _DIR_RULES},
         "truncated": False,      # ファイル数上限で走査を打ち切ったか
@@ -162,9 +171,9 @@ def scan_text(text, relpath):
     raw = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
     open_mark = None   # (行番号, id)
 
-    # 疑いの照合(ADR-059)。厳密な印に一致しない行だけを見る。
+    # 疑いの照合(ADR-059)。厳密な印にも exempt の宣言にも一致しない行だけを見る。
     for i, line in enumerate(raw, start=1):
-        if _MARK_RE.match(line):
+        if _MARK_RE.match(line) or _EXEMPT_RE.match(line):
             continue
         if _MARK_SUSPECT_RE.search(line):
             # 書式の綴りを原文へ直に書かない(この行自身が疑いに一致するため)。
@@ -227,8 +236,9 @@ def scan_tree(root, docs_root=None, max_files=DEFAULT_MAX_FILES,
               max_file_bytes=DEFAULT_MAX_FILE_BYTES, collect_members=False):
     """root 以下を走査し、(範囲の一覧, 所見の一覧, 勘定) を返す。決定的(整列順)。
 
-    保存則(ADR-058): 触れたファイルは必ず 寄与・印なし・規則による除外 の
-    どれか一つに数える。reached_files = annotated + unmarked + Σexcluded。
+    保存則(ADR-058/ADR-067): 触れたファイルは必ず 寄与・印なし・明示管理外・
+    規則による除外 のどれか一つに数える。
+    reached_files = annotated + unmarked + exempt + Σexcluded。
     刈ったディレクトリは規則 id ごとに本数を数え、配下は未到達と明示する。
     除外は EXCLUSION_RULES の規則 id を経由してだけ起こる(黙って切り詰めない)。
 
@@ -360,9 +370,27 @@ def scan_tree(root, docs_root=None, max_files=DEFAULT_MAX_FILES,
             _member("excluded:undecodable", rel)
             continue                      # 復号できないファイルは飛ばす
         r, f = scan_text(text, rel)
+        # 統治外の宣言(ADR-067)。exempt の行は必ず印の語を含むので、この分岐に
+        # 来るファイルだけを見れば全数を尽くす。
+        exempt_line = None
+        for i, ln in enumerate(
+                text.replace("\r\n", "\n").replace("\r", "\n").split("\n"),
+                start=1):
+            if _EXEMPT_RE.match(ln):
+                exempt_line = i
+                break
+        if exempt_line is not None and parse_marks(text):
+            f = f + [_finding(
+                "trace_exempt_conflict", rel, exempt_line,
+                "統治外(exempt)を宣言したファイルに範囲の印がある。宣言が"
+                "古いか印が誤り。どちらかを消す(ADR-067)。範囲は実態として"
+                "生かして数える")]
         if r:
             cov["annotated_files"] += 1
             _member("annotated", rel)
+        elif exempt_line is not None:
+            cov["exempt_files"] += 1
+            _member("exempt", rel)
         else:
             # 印の語はあるが範囲を一つも返さない(対応付けの誤りは所見が別に指す)。
             cov["unmarked_files"] += 1

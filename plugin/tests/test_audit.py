@@ -1167,7 +1167,7 @@ EXPECTED_AUDIT_CHECKS = (
     "trace_mark_error", "trace_broken_ref", "trace_deprecated_ref",
     "trace_stale", "trace_missing_impl", "trace_marker_suspect",
     "trace_scan_truncated", "trace_unexpected_impl", "trace_undeclared_impl",
-    "guard_liveness_gap",
+    "trace_exempt_conflict", "guard_liveness_gap",
 )
 
 
@@ -1372,7 +1372,7 @@ class CodeTraceTest(AuditBase):
         self.assertEqual(
             cov["reached_files"],
             cov["annotated_files"] + cov["unmarked_files"]
-            + sum(cov["excluded"].values()),
+            + cov["exempt_files"] + sum(cov["excluded"].values()),
             "保存則が破れている: %r" % (cov,))
         self.assertNotIn("members", cov, "要約に一覧を載せない(件数だけ)")
 
@@ -1484,6 +1484,33 @@ class CodeTraceTest(AuditBase):
         self.assertEqual(hits[0]["severity"], "advisory")
         self.assertEqual(data["trace_coverage"]["spec_coverage"],
                          {"traced": 1, "no_code": 0, "undeclared": 1})
+
+    def test_exempt_conflict_surfaces_as_warn_for_declarers_only(self):
+        """統治外の宣言と実態の矛盾(ADR-067)。宣言したファイルにしか発火しない。"""
+        root = _util.make_repo({"src/a.py": "", "src/free.py": ""})
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        code = "\n".join([_tmark("begin", "SPEC-900"), "x=1",
+                          _tmark("end", "SPEC-900")])
+        conflicted = ("# doctrine:" + "exempt 古い宣言\n") + code
+        with open(os.path.join(root, "src", "a.py"), "w", encoding="utf-8") as fh:
+            fh.write(conflicted)
+        with open(os.path.join(root, "src", "free.py"), "w",
+                  encoding="utf-8") as fh:
+            fh.write("print(1)\n")
+        tracescan = _util.load_core("_tracescan")
+        ranges, _ = tracescan.scan_text(conflicted, "src/a.py")
+        os.makedirs(os.path.join(root, "docs", "app", "spec"), exist_ok=True)
+        with open(os.path.join(root, "docs", "app", "spec", "SPEC-900.md"),
+                  "w", encoding="utf-8") as fh:
+            fh.write(_spec_with_fingerprints(
+                "SPEC-900", [ranges[0]["fingerprint"]]))
+        data, _ = self.audit_json(os.path.join(root, "docs"))
+        hits = self.checks_for(data, "trace_exempt_conflict")
+        self.assertEqual(len(hits), 1)
+        self.assertEqual(hits[0]["severity"], "warn")
+        # 実態を優先: 範囲は生きるので指紋照合は無音のまま。
+        self.assertEqual(self.checks_for(data, "trace_stale"), [])
+        self.assertEqual(data["trace_coverage"]["exempt_files"], 0)
 
     def test_summary_has_no_trace_coverage_without_opt_in(self):
         """opt-in が無ければ走査せず、勘定も載らない(ADR-056 の静けさを保つ)。"""
