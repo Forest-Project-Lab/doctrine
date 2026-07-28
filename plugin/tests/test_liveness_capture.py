@@ -172,6 +172,31 @@ class TestHeartbeat(LivenessBase):
         out, _ = self._hb("2026-07-26", "s-ver2")
         self.assertNotIn("版の切替", out)
 
+    def test_version_lag_advises_update_in_a_self_marketplace_repo(self):
+        """版の遅れ(ADR-070): 正本の宣言と実行中の版が食い違えば更新を促す。"""
+        self._put_summary("2026-07-25")
+        self._put_state("last_cadence_review: 2026-07-20\n")
+        here = os.path.dirname(os.path.abspath(_util.__file__))
+        with open(os.path.join(here, "..", ".claude-plugin", "plugin.json"),
+                  "r", encoding="utf-8-sig") as fh:
+            name = json.load(fh)["name"]
+        _write(os.path.join(self.base, ".claude-plugin", "marketplace.json"),
+               json.dumps({"name": "mkt",
+                           "plugins": [{"name": name,
+                                        "version": "9999.0.0"}]}))
+        out, code = self._hb("2026-07-26", "s-lag1")
+        self.assertEqual(code, 0)
+        self.assertIn("版の遅れ", out)
+        self.assertIn("claude plugin update", out)
+        self.assertIn("新しいセッション", out)
+
+    def test_no_version_lag_without_a_manifest(self):
+        """マニフェストの無い導入先では黙る(通常の利用者を騒がせない)。"""
+        self._put_summary("2026-07-25")
+        self._put_state("last_cadence_review: 2026-07-20\n")
+        out, _ = self._hb("2026-07-26", "s-lag2")
+        self.assertNotIn("版の遅れ", out)
+
     def test_level_hint_appears_once_for_a_level2_tree_with_audit_record(self):
         """段階の案内(ADR-066): Level 2 + 監査の実績で一度だけ。以後は黙る。"""
         _write(os.path.join(self.root, "_system", ".docs-level"), "level: 2\n")

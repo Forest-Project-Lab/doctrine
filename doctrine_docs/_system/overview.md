@@ -169,6 +169,9 @@ sources: []
 | ADR-062 | ADR | packaging | フックは発火の印を残し、対の食い違いから拒否経路の欠落を疑う |
 | ADR-066 | ADR | packaging | 体系は段階と版を自己認知する — 版の切替の検出と Level 昇格の一度きりの案内 |
 | ADR-068 | ADR | packaging | 開発方法論の機械化残差 — コード層の検算三点と開発規範の正本化 |
+| ADR-070 | ADR | packaging | 導入済みの複製の遅れを鼓動が検める — 正本の版との照合 |
+| CHANGE-001 | CHANGE | packaging | 導入済みプラグインの版の遅れを生存性として照合する |
+| IMPACT-001 | IMPACT | packaging | 版の遅れの照合 — 影響の列挙 |
 | IMPL-017 | IMPL | packaging | パッケージ・Hook配線の実装注記 |
 | IMPL-019 | IMPL | packaging | gov-heartbeat.py（統治ハートビート）の実装メモ |
 | PROC-001 | PROC | packaging | 開発規範 — 方法論の採用範囲と、機械の検算・人の査読の分担 |
