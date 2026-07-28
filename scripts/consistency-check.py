@@ -3,8 +3,9 @@
 """linter と audit の整合点検 — 支え③の最初の一本。
 
 不変条件(これが破れたら赤):
-    audit が「登録済みの非文書」(.md-intake に 非文書/投影 として記録)と
-    見なすファイルに、linter が ERROR を出してはならない。
+    audit が「登録済みの非文書」(.md-intake に 非文書/投影/ビュー として記録)と
+    見なすファイルに、linter が ERROR を出してはならない(ビューの刻印の欠落は
+    WARN 助言であり ERROR ではない。ADR-073)。
 
 audit(全体を見る)と linter(一件を見る)は、同じファイルへの判定が
 食い違ってはいけない。食い違えば、それは 2026-07 に見つけた欠陥クラス
@@ -13,7 +14,7 @@ audit(全体を見る)と linter(一件を見る)は、同じファイルへの�
 やること:
     1. 統治木(doctrine_docs)を見つけ、その親(プロジェクト根)を走査する。
     2. .md-intake を読む(audit の実ロジックをそのまま再利用)。
-    3. 「非文書/投影」と登録された各 .md に linter を実際に走らせる。
+    3. 「非文書/投影/ビュー」と登録された各 .md に linter を実際に走らせる。
     4. linter が ERROR を出したら食い違いとして挙げる。
 
 食い違いが 1 件でもあれば終了コード 1、無ければ 0。決定的。標準ライブラリのみ。
@@ -86,7 +87,7 @@ def main():
     skip_dirs = set(getattr(audit, "_STRAY_SKIP_DIRS", ("node_modules", "__pycache__")))
     pointers = getattr(registry, "ROOT_POINTER_FILES", set())
 
-    # プロジェクト根を走査し、「非文書/投影」登録の .md を集める。
+    # プロジェクト根を走査し、「非文書/投影/ビュー」登録の .md を集める。
     registered = []
     for dirpath, dirnames, filenames in os.walk(proj):
         dirnames[:] = sorted(
@@ -101,7 +102,7 @@ def main():
             if rel in pointers:
                 continue
             entry = intake.entry_for(rel, entries)
-            if entry and entry[1] in ("非文書", "投影"):
+            if entry and entry[1] in ("非文書", "投影", "ビュー"):
                 registered.append((rel, abspath, entry[1]))
 
     # 各登録ファイルに linter を走らせ、ERROR を食い違いとして挙げる。
@@ -115,7 +116,7 @@ def main():
     print("=" * 60)
     print("整合点検: linter ⇔ audit(登録済み非文書への ERROR)")
     print("統治木: %s" % os.path.relpath(docs_root, proj))
-    print("対象(非文書/投影 登録): %d 件" % len(registered))
+    print("対象(非文書/投影/ビュー 登録): %d 件" % len(registered))
     print("=" * 60)
     if not disagreements:
         print("食い違いなし。linter と audit は一致している。")

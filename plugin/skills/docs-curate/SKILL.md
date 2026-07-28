@@ -21,7 +21,7 @@ description: "Curates the document set one item at a time: inspects, then merges
 
 ## doctrine_docs/ の外の .md ファイル（手順の前に）
 
-手順に入る前に、統治木の外の .md ファイルを一度だけ見る。まず統治木の名前を解決する（既定は `doctrine_docs/`。`_system/` を持つ `docs/` も後方互換で統治木。ADR-022）。次に `git ls-files '*.md' ':!:<統治木>/**'` で追跡下の .md を出す（git は .gitignore を尊ぶ。git が無い・使えない、または git 管理でないときは非 git の代替を使う）。各ファイルを投影・出所・非文書の三つに分け、出所は doc-author で取り込む。doctrine_docs/ の外のファイルは自動で消さない。退避・取り込み・そのまま残すの三つだけを行う。要否は各ファイルごとに人間が判断する。詳細は `references/external-md-intake.md`。
+手順に入る前に、統治木の外の .md ファイルを一度だけ見る。まず統治木の名前を解決する（既定は `doctrine_docs/`。`_system/` を持つ `docs/` も後方互換で統治木。ADR-022）。次に `git ls-files '*.md' ':!:<統治木>/**'` で追跡下の .md を出す（git は .gitignore を尊ぶ。git が無い・使えない、または git 管理でないときは非 git の代替を使う）。各ファイルを投影・出所・ビュー・非文書に分け、出所は doc-author で取り込み、ビューには刻印(ADR-073)を打つ。doctrine_docs/ の外のファイルは自動で消さない。退避・取り込み・そのまま残すの三つだけを行う。要否は各ファイルごとに人間が判断する。詳細は `references/external-md-intake.md`。
 
 ## 手順（一片ずつ）
 
@@ -46,7 +46,7 @@ description: "Curates the document set one item at a time: inspects, then merges
 - `references/reverse-ref-check.md` — `dep-graph.py` 逆方向の使い方、依存元の付け替え。
 - `references/projections.md` — §3.9 の決定論の投影と意味の投影、ドリフトの検出。
 - `references/shrink-always-set.md` — §3.9 の上限との対、一本化と期限切れの片づけ、何を残すかは人間に委ねること。
-- `references/external-md-intake.md` — doctrine_docs/ の外の .md の検出・分類・取り込み、doc-author との連携、投影／出所／非文書の判断。
+- `references/external-md-intake.md` — doctrine_docs/ の外の .md の検出・分類・取り込み、doc-author との連携、投影／出所／ビュー／非文書の判断と刻印の義務。
 
 ## 保証限界
 

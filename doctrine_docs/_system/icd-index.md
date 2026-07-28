@@ -21,6 +21,6 @@ sources: []
 | context | ICD-006 | context のインターフェース（注入・パック・投影描画の契約） | context-injection, context-pack, projection-render | 2026-07-26 |
 | graph | ICD-002 | graph のインターフェース（依存グラフ問い合わせ契約） | dependency-graph-api | 2026-06-30 |
 | guard | ICD-003 | guard のインターフェース（三ガードの公開境界） | policy-guards | 2026-06-30 |
-| lint | ICD-004 | lint のインターフェース（リンタと用語チェッカーの公開契約） | document-lint, term-check | 2026-07-26 |
+| lint | ICD-004 | lint のインターフェース（リンタと用語チェッカーの公開契約） | document-lint, term-check | 2026-07-28 |
 | model | ICD-001 | model のインターフェース（登録簿と解析の公開契約） | type-registry, status-vocabulary, frontmatter-schema, frontmatter-parser, llm-context-policy | 2026-07-26 |
 | packaging | ICD-008 | packaging のインターフェース（配布物の形・Hook配線・段差） | plugin-packaging, hook-wiring, level-staging | 2026-07-26 |

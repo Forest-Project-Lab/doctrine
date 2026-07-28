@@ -6,7 +6,7 @@ domain: authoring
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-26
+updated: 2026-07-28
 sources: [spec/doctrine.ja.md §4.1]
 depends_on: [REQ-012, ICD-001, ICD-004, ICD-006]
 llm_context: task
@@ -25,7 +25,7 @@ llm_context: task
 - `doc-review`（R6・R10）: 文章の規範と位置づけを点検し、その傍らで用語チェッカー（リンタ ICD-004）を走らせる。一覧に無いカルクは逆翻訳テルで判定する。
 - `change-impact`（R3・R4）: 変更の手順を14段階で進める。依存をたどって影響を列挙し、決められた更新順を守る。段数は変更の規模ではなく、決定を含むか否かで分ける（ADR-051）。決定を含まない変更（誤字・言い回し・書式・リンクの張り替え・投影の描き直し）は、影響の列挙と更新順だけを残し、`CHANGE`・`IMPACT`・`ADR` を要さない。判定は意味の判断であり、機械では閉じないので人とモデルに委ねる。
 - `regression-guard`（R5）: 一度廃止したものの復活や、撤回した方針の再採用を防ぐ。DECIDED・WATCH と突き合わせる。
-- `llm-context-pack`（R5）: タスクごとに、必要な文書を過不足なく集めたまとまりを作る。`llm_context:never` の文書は除き、各文書の出所を示す（`collect-context.py`、ICD-006）。
+- `llm-context-pack`（R5）: タスクごとに、必要な文書を過不足なく集めたまとまりを作る。`llm_context:never` の文書は除き、各文書の出所を示す（`collect-context.py`、ICD-006）。組んだ文脈から体系外の .md を生成して保存するときは、刻印（参照時点の一行。ICD-005）を打たせる（ADR-073）。
 - `docs-curate`（R8）: 点検・統合・降格・削除を一つずつ進める。どこからも依存されていないかを確かめ、投影を作り直す。
 
 ## 制約

@@ -18,7 +18,9 @@ llm_context: task
 
 ## 対象部品
 
-- `load_ledger(docs_root)`: `_system/.md-intake` を読み、(entries, bad_lines) を返す。書式は一行一項目 `パス: 非文書|投影|保留 [YYYY-MM-DD]`(保留は期限必須。末尾 `/` は配下全体)。決して例外を投げない。
+- `load_ledger(docs_root)`: `_system/.md-intake` を読み、(entries, bad_lines) を返す。書式は一行一項目 `パス: 非文書|投影|保留|ビュー [YYYY-MM-DD]`(保留は期限必須。末尾 `/` は配下全体)。決して例外を投げない。
+- `entry_for(relpath, entries)`: 完全一致をプレフィクス(末尾 `/`)より優先して照合する(ADR-073。一括分類の配下から一件だけを別分類に取り出せる)。
+- `parse_view_stamp(text)`: 刻印(`doctrine:view src=… as-of=… date=… refs=…`。書式の正本は ICD-005)を解いて (stamp, error) を返す。リンタ・監査・リリースの門が同じ解析を共有する。決して例外を投げない。
 - `entry_for(relpath, entries)`: 末尾 `/` はプレフィクス一致、それ以外は完全一致。
 - `disposition_for(abspath, docs_root)`: リンタが一件のファイルの分類を引く入口。
 
