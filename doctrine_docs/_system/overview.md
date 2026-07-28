@@ -29,6 +29,7 @@ sources: []
 | ADR-034 | ADR | audit | 移行の台帳は分類の記録から導出し、二重の台帳を持たない |
 | ADR-039 | ADR | audit | EXT の hash 検査を実装し、hash 指定を沈黙で素通りさせない |
 | ADR-056 | ADR | audit | 追跡の検査は、仕様が指紋を記録したときだけ効く（黙って始まり、黙って終わる） |
+| ADR-069 | ADR | audit | 監査の検査群を枠と検査モジュールへ分割する — 方針と、分割で変えないものの凍結 |
 | IMPL-011 | IMPL | audit | docs-audit.py の実装メモ |
 | IMPL-018 | IMPL | audit | _intake.py（分類の記録の共有コア）の実装メモ |
 | TEST-011 | TEST | audit | 監査の検査群テスト計画 |
