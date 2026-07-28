@@ -57,7 +57,7 @@ per-turn（毎ターン）のHookは単一文書だけを点検する。全件�
 
 ---
 
-## スクリプト（19個）
+## スクリプト
 
 外部 pip 依存を作らない。標準ライブラリだけで動く。`scripts/` にある。
 
@@ -67,7 +67,11 @@ per-turn（毎ターン）のHookは単一文書だけを点検する。全件�
 | `_registry.py` | 共有 | 型・状態・`llm_context`・必須キー・置き場所の登録簿（単一の出所） |
 | `_depgraph.py` | 共有 | 依存グラフの中核（`dep-graph.py`・監査が読み込む） |
 | `_termcheck.py` | 共有 | 用語チェックの中核（辞書の解析・照合。`term-check.py`・リンタが読み込む） |
-| `_intake.py` | 共有 | 分類の記録（`.md-intake`）の読み取り（監査・リンタ・整合点検が共有） |
+| `_intake.py` | 共有 | 分類の記録（`.md-intake`）の読み取りと刻印の解析（監査・リンタ・整合点検・リリースの門が共有） |
+| `_auditcache.py` | 共有 | 監査要約・発火の印・エラージャーナルの読み書き（注入・鼓動・監査・ガード・リンタが共有） |
+| `_audit_stray.py` | 共有 | 体系外 .md 系の検査（`stray_document`・`view_stale`。監査が読み込む） |
+| `_audit_trace.py` | 共有 | 追跡系の検査と勘定（監査が読み込む） |
+| `_tracescan.py` | 共有 | コード注釈の走査の中核（`trace-index.py`・監査が読み込む） |
 | `docs-linter.py` | `PostToolUse` | 単一文書の点検（助言のみ） |
 | `review-nudge.py` | `PostToolUse` | 型付き文書の編集時に doc-review を促す助言（`decision` は出さない） |
 | `term-check.py` | リンタ | 禁止同義語・カルク・未定義語の照合 |
@@ -82,8 +86,10 @@ per-turn（毎ターン）のHookは単一文書だけを点検する。全件�
 | `term-extract.py` | `docs-curate` | ドメイン特徴語の候補を出す（採否は人間） |
 | `collect-context.py` | `llm-context-pack` | 被覆を満たす最少集合に絞り、各事実の出所を表示する |
 | `scaffold.py` | `docs-system-init` | `_system` の最小配置（非破壊）。`--level` で能動 Level を `.docs-level` に記録する |
+| `trace-index.py` | 手動・技能 | 仕様の側から実装コードの範囲と指紋を引く問い合わせ |
+| `code-audit.py` | `CI` | コード層の検算（import 境界・二重定義・肥大・解析不能） |
 
-`_` で始まる5つ（`_frontmatter.py`・`_registry.py`・`_depgraph.py`・`_termcheck.py`・`_intake.py`）は、二つ以上の入口が共有する中核である。ハイフン名の入口スクリプトから読み込む。
+`_` で始まるものは、二つ以上の入口が共有する中核である。ハイフン名の入口スクリプトから読み込む（一覧の数はここに書かない — 数はレジストリと実体が正本で、書いた数は古びる）。
 
 ---
 
@@ -126,4 +132,4 @@ per-turn（毎ターン）のHookは単一文書だけを点検する。全件�
 
 「100%の予防」は構造上できない。本プラグインの効果は、適切に運用された場合に、特定の失敗類型を検出・早期発見できることに限る。
 
-<!-- doctrine:view src=doctrine as-of=0.6.0 date=2026-07-28 refs=ICD-005,SPEC-016,SPEC-019,SPEC-020 -->
+<!-- doctrine:view src=doctrine as-of=0.7.0 date=2026-07-28 refs=ICD-005,SPEC-016,SPEC-019,SPEC-020 -->
