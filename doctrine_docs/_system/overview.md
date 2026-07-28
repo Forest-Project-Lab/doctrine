@@ -167,8 +167,10 @@ sources: []
 | ADR-052 | ADR | packaging | 編集画面の表示層は統治判断を持たず、索引が無ければ黙る |
 | ADR-062 | ADR | packaging | フックは発火の印を残し、対の食い違いから拒否経路の欠落を疑う |
 | ADR-066 | ADR | packaging | 体系は段階と版を自己認知する — 版の切替の検出と Level 昇格の一度きりの案内 |
+| ADR-068 | ADR | packaging | 開発方法論の機械化残差 — コード層の検算三点と開発規範の正本化 |
 | IMPL-017 | IMPL | packaging | パッケージ・Hook配線の実装注記 |
 | IMPL-019 | IMPL | packaging | gov-heartbeat.py（統治ハートビート）の実装メモ |
+| PROC-001 | PROC | packaging | 開発規範 — 方法論の採用範囲と、機械の検算・人の査読の分担 |
 | TEST-019 | TEST | packaging | Hook配線・e2e連鎖の受入 |
 | TEST-020 | TEST | packaging | 配布・標準ライブラリの受入 |
 | TEST-021 | TEST | packaging | 統治ハートビートと死活警告の受入 |

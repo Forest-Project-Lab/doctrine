@@ -33,6 +33,13 @@ jobs:
       - name: Docs audit (doctrine_docs/ corpus)
         run: CLAUDE_PLUGIN_ROOT="$PWD/plugin" python3 plugin/scripts/docs-audit.py --root doctrine_docs --fail-on error
 
+      # Methodology residues (ADR-068): import boundaries between entry
+      # scripts and shared cores, duplicated literal definitions, oversize
+      # functions/files, unparseable targets. Errors gate the merge;
+      # advisories are printed for humans to weigh (PROC-001).
+      - name: Code audit (methodology residues)
+        run: python3 plugin/scripts/code-audit.py --fail-on error
+
       # Schema gate (#91): the SessionEnd audit covers cross-document integrity,
       # but per-file schema checks (missing keys, bad status, id/filename
       # mismatch, banned synonyms) only ran in the PostToolUse hook — so a
