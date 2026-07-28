@@ -776,6 +776,11 @@ def main(argv=None):
             sys.stdout.write(json.dumps(response, ensure_ascii=False))
     except Exception as exc:  # never raise out of a PostToolUse hook
         try:
+            import _auditcache
+            _auditcache.record_error("docs-linter", exc)
+        except Exception:
+            pass
+        try:
             note = {
                 "hookSpecificOutput": {
                     "hookEventName": "PostToolUse",

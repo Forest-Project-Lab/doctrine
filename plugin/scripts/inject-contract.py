@@ -1081,6 +1081,7 @@ def main(argv=None):
 
     except Exception as exc:  # noqa: BLE001 — セッションを決して落とさない
         sys.stderr.write("inject-contract: internal error: %r\n" % (exc,))
+        _auditcache.record_error("inject-contract", exc)
         # フェイルオープン: 最小の有効な SessionStart 応答を返す。
         fallback = {
             "hookSpecificOutput": {

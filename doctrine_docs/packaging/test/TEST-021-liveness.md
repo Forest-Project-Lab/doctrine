@@ -33,6 +33,7 @@ SPEC-021 の受入を `plugin/tests/test_liveness_capture.py` が機械で確認
 - Level 2 で監査の死活を誤報しない(test_level2_missing_audit_is_not_flagged)。
 - 移行キャンペーン: 未分類ありで統治率つきの1件を促し、ゼロなら無音(TestMigrationCampaign)。
 - メモリの影: 統治文書へ言及するメモリを advisory で挙げ、索引と無言及・置き場なしは無音(TestMemoryShadow)。
+- 不具合の兆候の促し(ADR-074): エラージャーナルに記録があれば、報告の手順(下書き→承認→gh→感謝)を含む促しが出て、記録が無ければ出ず、記録ファイルの削除で消える。監査の死活の警告があるときはそちらが勝つ。ジャーナルの読み書き(許可制 — 例外の自由文を写さない・上限20件・決して例外を投げない)は ErrorJournalTest が凍結する(TestErrorReportPrompt / ErrorJournalTest)。
 - 世代の照合(ADR-053): 統治木を作り直したとき、前の世代の要約を読まない。読み手(注入と鼓動)が同じ答えを返す。印を持たない木では判じない。tests/test_auditcache.py が凍らせる。
 
 ## 退行観点

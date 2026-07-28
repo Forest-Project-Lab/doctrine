@@ -23,6 +23,7 @@ SPEC-021 の実装注記である `[R11]`。
 - `_audit_summary(docs_root)`: 前回監査の要約。inject-contract と同じ候補順(plugin cache → `.claude/.cache`)と同じ root 照合(越境注入の防止)を使う。
 - `_once_per_session(sid)`: セッション別の印(`hb-<セッションid>`)で一度きりを守る。
 - 助言へ足す行(main の終盤): 拒否経路の疑い(ADR-062)・版の切替(ADR-066)・版の遅れ(ADR-070)。判定はいずれも共有コア(`_auditcache.liveness_gap`/`version_drift`/`version_lag`)に一度だけ在り、鼓動は呼んで一行を足すだけ。
+- 不具合の兆候の促し(ADR-074): 梯子の一項(`error_report_line`)。エラージャーナルの読み書きは共有コア(`_auditcache.record_error`/`read_errors`。許可制・上限20件)に一度だけ在り、鼓動は読んで報告の手順(下書き→承認→gh→感謝)の自己完結文を出すだけ。記録は入口5本(ガード・リンタ・注入・鼓動・監査)の例外処理が書く。
 
 ## 実装制約
 

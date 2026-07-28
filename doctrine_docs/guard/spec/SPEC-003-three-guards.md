@@ -6,7 +6,7 @@ domain: guard
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-27
+updated: 2026-07-28
 sources: [spec/doctrine.ja.md §4.2]
 depends_on: [REQ-004, ICD-001, ICD-002]
 llm_context: task
@@ -45,7 +45,7 @@ llm_context: task
 - 不変ガードと削除安全ガードが落ちたら、安全側に倒して deny する（「ガード異常、手で確認」）。
 - ICD依存ガードは、doctrine_docs/ の外にある、フロントマターを持たない純粋な非文書の Write のときだけ、安全側に通して allow する。それ以外の例外は安全側に倒して deny する。
 - 展開できない glob を含む削除コマンドは、安全側に倒して拒否する。
-- Hook 事象では main から例外を投げない。判定は JSON に載せ、終了コードは常に 0 を返す。
+- Hook 事象では main から例外を投げない。判定は JSON に載せ、終了コードは常に 0 を返す。経路判定で落ちたときは、実行時例外の要約をエラージャーナル（書式の正本は SPEC-021）へ最善努力で残す（ADR-074）。
 
 ## 実装の指紋
 

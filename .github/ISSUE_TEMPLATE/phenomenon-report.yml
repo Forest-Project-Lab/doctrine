@@ -1,0 +1,57 @@
+name: 不具合の報告（事象レポート）
+description: doctrine プラグインの不具合・その兆候の報告。報告ありがとうございます 🙏 事象だけをお書きください — あなたのリポジトリの名前・パス・文書の内容は書かないでください。
+title: "[bug] "
+labels: ["phenomenon-report"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **報告ありがとうございます！** この報告が doctrine を直します 🙏
+
+        このフォームは「事象だけ」を集めます。あなたのリポジトリの機密（リポジトリ名・ファイルパス・文書の内容・会話の内容）は**書かないでください**。エラージャーナル（`.claude/.cache/doctrine-errors.jsonl`）の行は、設計上この安全な項目だけを含みます。
+  - type: input
+    id: version
+    attributes:
+      label: プラグインの版
+      description: エラージャーナルの `version`、または plugin.json の version
+      placeholder: "0.6.0"
+    validations:
+      required: true
+  - type: input
+    id: component
+    attributes:
+      label: 部品名
+      description: エラージャーナルの `component`（例 docs-audit / docs-linter / policy-guard / inject-contract / gov-heartbeat）、または症状の出た検査・フック名
+      placeholder: "docs-audit"
+    validations:
+      required: true
+  - type: input
+    id: error
+    attributes:
+      label: エラーの種類と発生位置（plugin 内）
+      description: エラージャーナルの `error`（例 `ValueError at docs-audit.py:123`）。plugin の外のパスは書かない
+      placeholder: "ValueError at docs-audit.py:123"
+    validations:
+      required: false
+  - type: input
+    id: environment
+    attributes:
+      label: OS と Python の版
+      placeholder: "Linux / Python 3.12"
+    validations:
+      required: false
+  - type: textarea
+    id: phenomenon
+    attributes:
+      label: 事象の抽象的な説明
+      description: 何をしたら・何が起きたか。固有名（リポジトリ名・パス・文書の題名や本文）は抽象化して書く（例「約800文書の統治木で SessionEnd の監査が…」）
+      placeholder: 統治木のあるリポジトリで文書を編集したところ、…
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: 機密の確認
+      options:
+        - label: この報告に、自分のリポジトリの名前・パス・文書や会話の内容が含まれていないことを確認した
+          required: true
