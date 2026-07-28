@@ -181,7 +181,8 @@ def migration_line(docs_root, summary):
     nxt = _frontmatter.sanitize_inline(strays[0], 120)
     return ("【移行 %d/%d】統治木の外の .md が %d 件未分類。次の1件: %s — "
             "「これを分類して」と言えば docs-curate で進める(取り込む=doc-author で"
-            "型を与える／参照=EXT アンカー／非文書=期限付きで台帳へ)。分類のたびに"
+            "型を与える／参照=EXT アンカー／ビュー=刻印を打って台帳へ／"
+            "非文書=期限付きで台帳へ)。分類のたびに"
             "この数は減り、台帳(_system/.md-intake)が進捗の正本になる。"
             % (done, total, len(strays), nxt))
 

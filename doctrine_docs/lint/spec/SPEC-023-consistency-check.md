@@ -18,7 +18,7 @@ llm_context: task
 
 ## 入出力
 
-- `scripts/consistency-check.py`: 入力なし(統治木を walkup で解決)。`.md-intake` に「非文書/投影」と登録された各 .md に リンタ(ICD-004)を実際に走らせ、ERROR が出たものを食い違いとして列挙する。食い違いが 1 件でもあれば終了コード 1、無ければ 0。読み取りは監査(ICD-005)と同じ共有コア(`plugin/scripts/_intake.py`)を使う。
+- `scripts/consistency-check.py`: 入力なし(統治木を walkup で解決)。`.md-intake` に「非文書/投影/ビュー」と登録された各 .md に リンタ(ICD-004)を実際に走らせ、ERROR が出たものを食い違いとして列挙する(ビューの刻印の欠落は警告の助言であり食い違いではない。ADR-073)。食い違いが 1 件でもあれば終了コード 1、無ければ 0。読み取りは監査(ICD-005)と同じ共有コア(`plugin/scripts/_intake.py`)を使う。
 - `scripts/consistency-reminder.py`: UserPromptSubmit のエンベロープを読み捨て、`.claude/.consistency-counter` の会話カウンタを 1 増やす。10 回ごとに、整合点検の実行(`/consistency-check` またはスクリプト直接)を促す助言を注入する。点検自体は実行しない。
 
 ## 制約
@@ -35,7 +35,7 @@ llm_context: task
 
 対象は契約の要約(モジュール冒頭)。更新は `trace-index.py --id SPEC-023` が返す行を写す（ADR-061）。
 
-- sha256:978f6aa196acf4d9b98c79f4f40c74b995ce3140c30aea6e516e36ea9c764b02
+- sha256:0ae10986ff71977e790ffaad3cb1e174055efd09a4019c2d8ee3a7d282c92ce1
 - sha256:a4fd6eb3d2a9eab88c083ec2f677bbefb83746bfdce38cf8bf785ddb0fb63622
 
 ## 受入基準

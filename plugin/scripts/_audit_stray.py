@@ -105,7 +105,7 @@ def collect(root, today, make_finding, parse_date, graph=None):
                 out.append(make_finding(
                     "stray_document", _ADVISORY, "", rel,
                     "統治木の外の .md が未分類。docs-curate(external-md-intake)"
-                    "で三分類し %s/_system/%s へ記録する"
+                    "で分類し %s/_system/%s へ記録する"
                     % (os.path.basename(docs_root), _INTAKE_LEDGER)))
                 listed += 1
             continue

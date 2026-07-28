@@ -6,7 +6,7 @@ domain: authoring
 status: current
 owner: doctrine-maintainers
 created: 2026-07-26
-updated: 2026-07-26
+updated: 2026-07-28
 sources: [plugin/scripts/capture-nudge.py, plugin/scripts/precompact-dump.py]
 depends_on: [SPEC-022]
 llm_context: task

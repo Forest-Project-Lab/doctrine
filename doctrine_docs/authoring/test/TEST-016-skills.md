@@ -6,7 +6,7 @@ domain: authoring
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-26
+updated: 2026-07-28
 sources: [plugin/tests/test_skills.py, plugin/tests/test_skills_authoring.py]
 depends_on: [SPEC-016]
 llm_context: task
