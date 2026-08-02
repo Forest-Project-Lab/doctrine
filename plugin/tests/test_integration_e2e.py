@@ -339,7 +339,7 @@ class TestLinterSpecMissingSections(unittest.TestCase):
             self.assertIn(
                 section, ac,
                 "additionalContext must mention missing section %r" % section)
-        self.assertIn("SPEC_MISSING_SECTION", ac)
+        self.assertIn("MISSING_SECTION", ac)
 
 
 # ===========================================================================

@@ -156,7 +156,8 @@ class ValidAndAdvisoryTest(_Base):
             "domain": "billing", "status": "current", "owner": "a",
             "updated": "2026-01-01", "canonical_for": ["billing"],
             "sources": [],
-        }, "公開する用語とデータ契約。\n")
+        }, "## 公開する用語\nx\n## 正本である事実\ny\n"
+           "## データ契約\n公開する用語とデータ契約。\n## 依存してよい入口\nz\n")
         out, code = self._lint(p)
         self.assertEqual(out, "")
         self.assertEqual(code, 0)
@@ -167,7 +168,7 @@ class ValidAndAdvisoryTest(_Base):
             "id": "ADR-3", "title": "Refund ADR", "type": "ADR",
             "domain": "billing", "status": "accepted", "owner": "a",
             "updated": "2026-01-01", "sources": [],
-        }, "決定の記録。\n")
+        }, "## 背景\nx\n## 却下した選択肢\ny\n## 決定\n決定の記録。\n## 帰結\nz\n")
         out, _ = self._lint(p)
         self.assertEqual(out, "")
 
@@ -598,21 +599,21 @@ class SpecSectionsTest(_Base):
         self._write("docs/billing/REQ-2-x.md", _req_fm(), "本文。\n")
 
     def test_tc060_missing_section(self):
-        """TC-060: SPEC missing エラー時挙動 -> SPEC_MISSING_SECTION."""
+        """TC-060: SPEC missing エラー時挙動 -> MISSING_SECTION."""
         body = "## 入出力\nx\n## 制約\nx\n## 受入基準\nx\n"
         p = self._write("docs/billing/spec/SPEC-014-x.md",
                         _valid_spec_fm(), body)
         codes, ctx = self._codes(p)
-        self.assertIn("SPEC_MISSING_SECTION", codes)
+        self.assertIn("MISSING_SECTION", codes)
         self.assertIn("エラー時挙動", ctx)
 
     def test_tc061_empty_section(self):
-        """TC-061: 受入基準 heading present but empty body -> SPEC_EMPTY_SECTION."""
+        """TC-061: 受入基準 heading present but empty body -> EMPTY_SECTION."""
         body = ("## 入出力\nx\n## 制約\nx\n## エラー時挙動\nx\n## 受入基準\n\n")
         p = self._write("docs/billing/spec/SPEC-014-x.md",
                         _valid_spec_fm(), body)
         codes, ctx = self._codes(p)
-        self.assertIn("SPEC_EMPTY_SECTION", codes)
+        self.assertIn("EMPTY_SECTION", codes)
         self.assertIn("受入基準", ctx)
 
     def test_tc059_all_four_present(self):
@@ -620,8 +621,8 @@ class SpecSectionsTest(_Base):
         p = self._write("docs/billing/spec/SPEC-014-x.md",
                         _valid_spec_fm(), _SPEC_BODY_4)
         codes, _ = self._codes(p)
-        self.assertNotIn("SPEC_MISSING_SECTION", codes)
-        self.assertNotIn("SPEC_EMPTY_SECTION", codes)
+        self.assertNotIn("MISSING_SECTION", codes)
+        self.assertNotIn("EMPTY_SECTION", codes)
 
 
 # ---------------------------------------------------------------------------
@@ -723,7 +724,7 @@ class TermCheckIntegrationTest(_Base):
         ctx = obj["hookSpecificOutput"]["additionalContext"]
         self.assertIn("CALQUE", ctx)
         # structural codes absent
-        self.assertNotIn("SPEC_MISSING_SECTION", ctx)
+        self.assertNotIn("MISSING_SECTION", ctx)
         self.assertNotIn("BAD_STATUS", ctx)
 
     def test_tc063_banned_synonym_surfaced(self):
@@ -1000,3 +1001,100 @@ class RobustnessTest(_Base):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# 型ごとの必須節を手で書き写した表(ADR-060 の様式。test_audit の AUDIT_CHECKS と同じ)。
+# 正本は _registry.REQUIRED_SECTIONS。節を足す・消すときは**両方**を同じ変更で更新する。
+# **ここを正本から生成したら凍結の意味が消える。**
+#
+# 一覧は実態を測って決めた(ADR-090): 統治木 203 文書で雛形と本文を突き合わせ、ある型の
+# 文書が 100% ずれているなら雛形が誤りと判じた。CHANGE は六件すべてが『理由』と『要求元』を
+# 一節に統合しており、RESEARCH は四件すべてが主題ごとの見出しで書かれていた。
+EXPECTED_REQUIRED_SECTIONS = {
+    "ADR": ("背景", "却下した選択肢", "決定", "帰結"),
+    "API": ("エンドポイント", "入出力", "エラー"),
+    "ARCHIVE": ("アーカイブ理由", "アーカイブ日", "後継ID"),
+    "CHANGE": ("変更内容", "理由（要求元）", "影響の初期見積"),
+    "DATA": ("エンティティ", "保存方針", "保持期間"),
+    "DECIDED": ("確定方針", "決定日", "根拠ADR", "再点検期限"),
+    "EXT": ("何に依存しているか", "期待", "動いたら何が壊れるか"),
+    "ICD": ("公開する用語", "正本である事実", "データ契約", "依存してよい入口"),
+    "IMPACT": ("影響する文書", "影響する実装", "影響するテスト", "工数見積"),
+    "IMPL": ("実装制約", "注意点", "対象部品"),
+    "NONGOAL": ("やらないこと", "理由"),
+    "PROC": ("目的と発動条件", "前提", "手順", "切り戻し"),
+    "REQ": ("要求文", "優先度", "受入基準参照", "出所"),
+    "SPEC": ("入出力", "制約", "エラー時挙動", "受入基準"),
+    "TEST": ("受入基準への対応", "退行観点", "合否基準"),
+    "WATCH": ("戻してはならない事項", "撤回日", "根拠", "再点検期限"),
+}
+
+
+class RequiredSectionsFreezeTest(unittest.TestCase):
+    """必須節の一覧を手書きの表で凍らせる(ADR-060 の様式。ADR-090)。"""
+
+    def test_table_matches_the_transcription(self):
+        reg = _util.load_core("_registry")
+        self.assertEqual(
+            {k: tuple(v) for k, v in reg.REQUIRED_SECTIONS.items()},
+            EXPECTED_REQUIRED_SECTIONS,
+            "必須節が変わった。正本(_registry.REQUIRED_SECTIONS)と手書きの表の両方を"
+            "同じ変更で更新すること(片方だけ直すと、節を足しても黙って通る状態へ戻る)")
+
+    def test_research_and_projections_are_not_charged(self):
+        """形を課さない型(ADR-090)。調査は探索であり、投影は機械が描く。"""
+        reg = _util.load_core("_registry")
+        for t in ("RESEARCH", "OVERVIEW", "CTXMAP", "GLOSSARY"):
+            self.assertEqual(reg.required_sections(t), (), t)
+
+
+class GeneralSectionCheckTest(_Base):
+    """ADR-090 / #154: 雛形が定める節を全型で検める。
+
+    以前は SPEC の四節だけが検められ、他の 15 型は雛形が定めるのに誰も咎めなかった。
+    実測: この検査が無いあいだに TEST-028（2026-08-02 に書かれた文書）が
+    退行観点・合否基準 を欠いたまま通っていた。
+    """
+
+    def _write_typed(self, type_code, body, subdir, fname):
+        return self._write("docs/billing/%s/%s" % (subdir, fname), {
+            "id": fname.split("-")[0] + "-9", "title": "t", "type": type_code,
+            "domain": "billing", "status": "current", "owner": "a",
+            "updated": "2026-01-01", "sources": [],
+        }, body)
+
+    def test_adr_missing_section_is_an_error(self):
+        p = self._write_typed(
+            "ADR", "## 背景\nx\n## 決定\ny\n## 帰結\nz\n", "decisions", "ADR-9-x.md")
+        codes, _ = self._codes(p)
+        self.assertIn("MISSING_SECTION", codes, "却下した選択肢 を欠くので咎めるはず")
+
+    def test_adr_with_all_sections_is_clean(self):
+        p = self._write_typed(
+            "ADR", "## 背景\nx\n## 却下した選択肢\nw\n## 決定\ny\n## 帰結\nz\n",
+            "decisions", "ADR-9-x.md")
+        codes, _ = self._codes(p)
+        self.assertNotIn("MISSING_SECTION", codes)
+        self.assertNotIn("EMPTY_SECTION", codes)
+
+    def test_empty_section_is_an_error(self):
+        p = self._write_typed(
+            "ADR", "## 背景\nx\n## 却下した選択肢\n\n## 決定\ny\n## 帰結\nz\n",
+            "decisions", "ADR-9-x.md")
+        codes, _ = self._codes(p)
+        self.assertIn("EMPTY_SECTION", codes)
+
+    def test_research_is_not_charged(self):
+        """RESEARCH は節を課さない。何を書いても節では咎めない(ADR-090)。"""
+        p = self._write_typed("RESEARCH", "## 好きな見出し\nx\n", "research",
+                              "RESEARCH-9-x.md")
+        codes, _ = self._codes(p)
+        self.assertNotIn("MISSING_SECTION", codes)
+
+    def test_message_names_the_type(self):
+        """SPEC 専用だった時代の文言を残さない。型を名指す。"""
+        p = self._write_typed("ADR", "## 背景\nx\n## 決定\ny\n## 帰結\nz\n",
+                              "decisions", "ADR-9-x.md")
+        out, _ = self._lint(p)
+        ctx = json.loads(out)["hookSpecificOutput"]["additionalContext"]
+        self.assertIn("ADR の必須節", ctx)

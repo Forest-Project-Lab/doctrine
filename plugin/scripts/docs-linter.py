@@ -452,20 +452,27 @@ def _check_research_decision(meta, body, findings):
             "RESEARCH に『決定』見出しがある。決定は ADR に移す。", "§3.2/§4.2"))
 
 
-# The four mandatory SPEC headings (§3.2 / §4.2 / 付録B).
-# doctrine:begin SPEC-007
-_SPEC_SECTIONS = ("入出力", "制約", "エラー時挙動", "受入基準")
-# doctrine:end SPEC-007
+# 型ごとの必須節の正本は登録簿が持つ(確定事実1。ADR-090)。ここには持たない ——
+# 以前は SPEC の四節だけがこのファイルに在り、他の型は雛形が定めるのに誰も検めて
+# いなかった。
 _HEADING_RE = re.compile(r"(?m)^(#{1,6})\s*(.*?)\s*$")
 
 
+# doctrine:begin SPEC-007
 def _check_spec_sections(meta, body, findings):
-    """§3.7 SPEC_MISSING_SECTION / SPEC_EMPTY_SECTION (ERROR)."""
-    if meta.get("type") != "SPEC":
+    """§3.7 MISSING_SECTION / EMPTY_SECTION (ERROR)。全型を検める(ADR-090)。
+
+    節の一覧は `_registry.required_sections(type)` から取る。課さない型
+    (RESEARCH・投影)では空が返り、何も検めない。
+    """
+    sections = _registry.required_sections(meta.get("type"))
+    if not sections:
         return
+    raw_type = meta.get("type")
+    type_code = raw_type.strip().upper() if isinstance(raw_type, str) else ""
     headings = list(_HEADING_RE.finditer(body or ""))
     # Map each required token to the heading match that contains it (first one).
-    for token in _SPEC_SECTIONS:
+    for token in sections:
         match_idx = None
         for i, h in enumerate(headings):
             if token in h.group(2):
@@ -473,12 +480,12 @@ def _check_spec_sections(meta, body, findings):
                 break
         if match_idx is None:
             findings.append(Finding(
-                "SPEC_MISSING_SECTION", ERROR,
-                "SPEC の必須節『%s』が無い。" % token, "§3.2/§4.2"))
+                "MISSING_SECTION", ERROR,
+                "%s の必須節『%s』が無い。" % (type_code, token), "§3.2/§4.2"))
             continue
         # 節の中身は、同レベル以下の次の見出しまで(ADR-075)。以前は階層を見ず
         # 「次の見出し」で切っていたため、`## 入出力` の直後に `### 受け取る値`
-        # を置くと中身が空と読まれ、正しい文書が SPEC_EMPTY_SECTION(ERROR)で
+        # を置くと中身が空と読まれ、正しい文書が EMPTY_SECTION(ERROR)で
         # 落ちて --batch が exit 1 になった。
         start = headings[match_idx].end()
         level = len(headings[match_idx].group(1))
@@ -490,8 +497,9 @@ def _check_spec_sections(meta, body, findings):
         section = (body or "")[start:end]
         if _section_is_empty(section):
             findings.append(Finding(
-                "SPEC_EMPTY_SECTION", ERROR,
-                "SPEC の必須節『%s』が空。" % token, "§4.2"))
+                "EMPTY_SECTION", ERROR,
+                "%s の必須節『%s』が空。" % (type_code, token), "§4.2"))
+# doctrine:end SPEC-007
 
 
 def _section_is_empty(section):
