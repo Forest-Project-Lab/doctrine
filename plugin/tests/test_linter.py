@@ -552,6 +552,32 @@ class ResearchDecisionTest(_Base):
             if "RESEARCH_HAS_DECISION" in line:
                 self.assertIn("[WARN]", line)
 
+    def test_suffix_that_makes_another_word_not_flagged(self):
+        """ADR-082 / #169: 『決定的』『決定論』は『決定』ではない。見出しに『決定』を
+        含むだけで咎めていたため、`## 決定的な一点：…` が決定を書いたものとして扱われた。
+        2026-08-02 に実測した誤検出である。"""
+        for heading in ("## 決定的な一点：検証とは証拠の提示である",
+                        "## 決定論との違い"):
+            p = self._write("docs/billing/research/RESEARCH-1-x.md", {
+                "id": "RESEARCH-1", "title": "r", "type": "RESEARCH",
+                "domain": "billing", "status": "draft", "owner": "a",
+                "updated": "2026-01-01", "sources": [],
+            }, "%s\n本文。\n" % heading)
+            codes, _ = self._codes(p)
+            self.assertNotIn("RESEARCH_HAS_DECISION", codes, heading)
+
+    def test_decision_heading_with_qualifier_still_flagged(self):
+        """除くのは語を別語にする二つの接尾だけである。『決定』を主題にした見出しは
+        引き続き咎める(精度を上げただけで、検査をやめたのではない)。"""
+        for heading in ("## 決定", "## 決定の背景", "## 我々の決定事項"):
+            p = self._write("docs/billing/research/RESEARCH-1-x.md", {
+                "id": "RESEARCH-1", "title": "r", "type": "RESEARCH",
+                "domain": "billing", "status": "draft", "owner": "a",
+                "updated": "2026-01-01", "sources": [],
+            }, "%s\n本文。\n" % heading)
+            codes, _ = self._codes(p)
+            self.assertIn("RESEARCH_HAS_DECISION", codes, heading)
+
     def test_decision_in_prose_only_not_flagged(self):
         """§3.6: 決定 only in prose (not a heading) -> not flagged."""
         p = self._write("docs/billing/research/RESEARCH-1-x.md", {

@@ -1,6 +1,6 @@
 ---
 id: WATCH-001
-title: 横断の退行監視（9項）
+title: 横断の退行監視（10項）
 type: WATCH
 domain: _system
 status: current
@@ -12,14 +12,14 @@ review_by: 2026-09-28
 llm_context: always
 ---
 
-# 横断の退行監視（7項）
+# 横断の退行監視（10項）
 
 本文書は、一度直した欠陥を再び戻さないための正本である（[R5]）。各項は、撤回した実装方針を要点だけで残し、根拠となる実コードの位置をIDで示す。同じ方針の再採用を防ぐ。
 
 ## 戻してはならない事項
 
 1. PostToolUse（編集後に起動するHook）で削除してよいかを、編集後の状態だけを見て決めてはならない。`_invert_edits` で編集前の全文を復元し、編集前から編集後への遷移で判じる。これは `plugin/scripts/policy-guard.py` の `_handle_post_edit` と `_post_delete_safety`（`_reconstruct_pre_edit_state`・`_invert_edits`）が担う。根拠: ADR-004。
-2. 用語チェッカーは、承認複合語『入出力』に含まれる部分文字列を、投影（モデルから描画した派生表示）の禁止同義語と取り違えてはならない。`plugin/scripts/_termcheck.py` の `_mask_approved_compounds` が、承認複合語を長さを保ったまま覆って取り違えを防ぐ。
+2. 用語チェッカーは、長い語に含まれる部分文字列を禁止同義語と取り違えてはならない。承認複合語『入出力』の一部を投影（モデルから描画した派生表示）の禁止同義語と読む取り違えに加え、**本プラグインの雛形が定める節見出しの語『選択肢』も同じく覆う**（ADR の構成「背景・却下した選択肢・決定・帰結」が使う語。前半を禁止同義語に持つ体系では雛形どおりの ADR が全て咎められていた。ADR-082）。`plugin/scripts/_termcheck.py` の `_mask_approved_compounds` が、長さを保ったまま覆って取り違えを防ぐ。覆いへ加えてよいのは本プラグインの雛形・仕様が定める語だけである。
 3. 用語チェッカーの承認辞書を、モジュールの中で二重定義してはならない。`plugin/scripts/_termcheck.py` の `load_glossary`／`parse_glossary` が、GLOSSARY 正本（または同梱テンプレート）から読み込む。
 4. リンタ（`plugin/scripts/docs-linter.py`）は、decision／permissionDecision を出してはならない。助言（additionalContext）だけを返し、拒否はガードに委ねる。
 5. リンタ（`plugin/scripts/docs-linter.py`）は、監査が『非文書／投影／ビュー』と認めたファイル、および統治木の根に到達できない体系外のファイルに、schema/frontmatter の ERROR（`MISSING_FRONTMATTER` ほか）を出してはならない（ビューの刻印の欠落も警告の助言まで。ADR-073）。判定の前に統治木を探し、intake の読み取りは監査と共有する `plugin/scripts/_intake.py` を使う。監査（全体を見る）とリンタ（一件を見る）の判定が食い違わないことは、リポジトリ直下の `scripts/consistency-check.py`（SPEC-023。配布物の `plugin/scripts/` とは別の場所）が守る。根拠: ADR-024。
@@ -27,6 +27,7 @@ llm_context: always
 7. ビュー（正本を解釈した体系外の文書）を「非文書」へ再分類して刻印の義務を逃れさせてはならない。正本から導かれた主張を含む .md はビューとする（外部レビューが README の主張3件の古びを指した実害が根拠。ADR-073）。再分類の当否は機械では判定できず、docs-curate の定例が分類の見直しで守る。公開ビュー3件（README.md・plugin/README.md・CONTRIBUTING.md）の刻印は `scripts/release-check.py`（SPEC-027）が門で強制する。この一覧から公開ビューを外すときは ADR を要する。
 8. per-turn の Hook に、兄弟文書を読む経路を戻してはならない。リンタの ICD 依存検査は依存グラフを丸ごと組んでおり、木 8000 文書で O(N)（0.53 秒）だった。ドメインは置き場所の名前だけから解く（`plugin/scripts/docs-linter.py` の `_domain_of_dep`）。受入は時間ではなく「開いた統治文書の件数」で凍結する（`plugin/tests/test_perf_gate.py`）。時間の門は機械の速さに隠れる。根拠: ADR-075。
 9. 実行時の状態を `${CLAUDE_PLUGIN_ROOT}` の下へ書いてはならない。版ごとに別ディレクトリなので更新のたび失われ、ディレクトリ配布ではそのまま利用者へ複製される（別ワークスペースの監査要約が実際に配られた）。書き先は `${CLAUDE_PROJECT_DIR}/.claude/.cache` に限り、旧配置は読み口としてだけ残す。リリースの門（`scripts/release-check.py`）が配布物の衛生を検める。根拠: ADR-037・ADR-075。
+10. リンタの見出し照合は、語を別語にする接尾を巻き込んではならない。`RESEARCH_HAS_DECISION` は見出しに『決定』を含むかで判ずるが、『決定的』『決定論』は『決定』ではない（`## 決定的な一点：…` を決定を書いたものとして咎めた実測がある。ADR-082）。`plugin/scripts/docs-linter.py` の `_DECISION_HEADING_RE` が否定の先読みで除く。除くのは二語だけで、『決定』を主題にした見出しは引き続き咎める。**門が正しいものを咎める型は、見逃しより害が大きい** —— 門が信用されなくなれば本物の指摘も届かなくなる。
 
 ## 撤回日
 
