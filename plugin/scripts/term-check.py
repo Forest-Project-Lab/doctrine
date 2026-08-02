@@ -62,12 +62,16 @@ def _parse_args(argv):
 def check_file(path, docs_root_opt):
     """Check one file; return (findings, rendered_text). Never raises."""
     try:
-        meta, body, _errs = _frontmatter.parse_file(path)
+        # 全文を読んでから分ける。行番号をファイルの行へ換算するのに全文が要る
+        # (ADR-083)。換算の値は共有の body_start_line から取り、ここで数えない。
+        text = _frontmatter.read_text(path)
+        meta, body, _errs = _frontmatter.parse(text)
     except (OSError, UnicodeError):
         return [], ""
     docs_root = _resolve_docs_root(path, docs_root_opt)
     glossary = _termcheck.load_glossary(docs_root)
-    findings = _termcheck.check(body, meta, glossary)
+    findings = _termcheck.check(
+        body, meta, glossary, _frontmatter.body_start_line(text, body))
     return findings, _termcheck.render_findings(findings, path)
 
 

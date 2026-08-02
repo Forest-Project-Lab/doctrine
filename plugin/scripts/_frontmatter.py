@@ -163,6 +163,25 @@ def parse_frontmatter(text):
     return fm
 
 
+def body_start_line(text, body):
+    """本文が元のテキストの何行目から始まるか(1 起点)。決して例外を投げない。
+
+    助言の行番号をファイルの行番号へ換算する**唯一の権限**である(ADR-083)。
+    呼び手(リンタと CLI)は自分で数えない —— 二つある呼び手が別々に数えれば、
+    片方だけ直したときに同じファイルへ別の行を言う状態が生まれる。
+
+    `parse` は本文を元のテキストの末尾から切り出すので、長さの差が本文の開始位置に
+    なる。フロントマターが無ければ本文＝全文なので 1 を返す(いまと同じ挙動)。
+    BOM の除去は先頭行の中で起きるため、行数には影響しない。
+    """
+    if not isinstance(text, str) or not isinstance(body, str):
+        return 1
+    offset = len(text) - len(body)
+    if offset <= 0:
+        return 1
+    return text.count("\n", 0, offset) + 1
+
+
 def as_list(value):
     """Coerce a frontmatter value to a list of non-empty strings. Never raises.
 
