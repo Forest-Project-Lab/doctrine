@@ -159,6 +159,7 @@ sources: []
 | ADR-057 | ADR | model | 統治はリポジトリ一つの内側に閉じ、組織を横断する統治は引き受けない |
 | ADR-064 | ADR | model | 三つの保証限界（サブエージェント注入・id の改名・採番の衝突）を非目標として明文化する |
 | ADR-091 | ADR | model | 製品の粒度の要求を _system の棚へ置く。棚の上の要求は辺で指されない |
+| ADR-092 | ADR | model | ドメインの種類は語彙だけを正本に持つ。投資の判断は決定と非目標が持ち続ける |
 | IMPL-001 | IMPL | model | `_registry.py` の実装メモ |
 | IMPL-002 | IMPL | model | `_frontmatter.py` の実装メモ |
 | TEST-001 | TEST | model | 登録簿契約のテスト計画 |

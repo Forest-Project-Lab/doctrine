@@ -346,6 +346,29 @@ class TestRequiredKeys(unittest.TestCase):
         self.assertEqual(R.LEVEL3_KEYS, ("depends_on", "impacts", "review_by"))
         self.assertEqual(R.LEVEL4_KEYS, ("canonical_for",))
 
+    def test_subdomain_kinds_frozen(self):
+        """ADR-092: ドメインの種類の語彙。出所の本 1.2 から手で書き写した三語。
+
+        正本から生成しない(ADR-060 の様式)。語を増やす・減らす・並びを変えるときは
+        ADR で決めてからこの表を直す。呼び手はこの三語を自分の実装へ写さない。
+        """
+        self.assertEqual(R.SUBDOMAIN_KINDS, ("core", "supporting", "generic"))
+        self.assertEqual(len(R.SUBDOMAIN_KINDS), 3)
+        self.assertEqual(len(set(R.SUBDOMAIN_KINDS)), 3, "no duplicate kinds")
+
+    def test_subdomain_has_no_default_and_no_review_cycle(self):
+        """ADR-092: 種類に既定は無く、再点検の周期も review_by の要求も持たない。
+
+        項の上書きは機械に見えないので、期限を課しても守られたことを確かめられない
+        (提案B を却下した理由)。この試験は、後からそれを足したときに落ちる。
+        """
+        self.assertNotIn("subdomain", R.REQUIRED_KEYS_L2)
+        self.assertNotIn("subdomain", R.LEVEL3_KEYS)
+        self.assertNotIn("subdomain", R.LEVEL4_KEYS)
+        for t in EXPECTED_TYPES:
+            self.assertNotIn("subdomain", R.required_keys(2, t))
+            self.assertNotIn("subdomain", R.required_keys(4, t))
+
 
 class TestIsCurrent(unittest.TestCase):
     """is_current: current/accepted -> True, others -> False (§1 glossary)."""

@@ -526,6 +526,73 @@ class LlmContextTest(_Base):
                 self.assertIn("[WARN]", line)
 
 
+class SubdomainTest(_Base):
+    """ADR-092: ドメインの種類の語彙を検める。省略は未分類で咎めない。"""
+
+    def _spec_with(self, **extra):
+        self._write("docs/billing/REQ-2-x.md", _req_fm(), "本文。\n")
+        fm = _valid_spec_fm()
+        fm.update(extra)
+        return self._write("docs/billing/spec/SPEC-014-x.md", fm, _SPEC_BODY_4)
+
+    def test_absent_is_unclassified(self):
+        """省略 -> 所見なし。既存の木で所見が一件も増えないことの根拠。"""
+        codes, _ = self._codes(self._spec_with())
+        self.assertNotIn("BAD_SUBDOMAIN", codes)
+
+    def test_empty_is_unclassified(self):
+        """空文字 -> 省略と同じに扱う(未分類)。"""
+        codes, _ = self._codes(self._spec_with(subdomain=""))
+        self.assertNotIn("BAD_SUBDOMAIN", codes)
+
+    def test_each_kind_accepted(self):
+        """三語はいずれも通る。"""
+        for kind in ("core", "supporting", "generic"):
+            codes, _ = self._codes(self._spec_with(subdomain=kind))
+            self.assertNotIn("BAD_SUBDOMAIN", codes, kind)
+
+    def test_bogus_value_is_error(self):
+        """語彙に無い値 -> BAD_SUBDOMAIN (ERROR)。門そのものが落ちることの実測。"""
+        out, _ = self._lint(self._spec_with(subdomain="CORE_DOMAIN"))
+        ctx = json.loads(out)["hookSpecificOutput"]["additionalContext"]
+        self.assertIn("BAD_SUBDOMAIN", ctx)
+        for line in ctx.splitlines():
+            if "BAD_SUBDOMAIN" in line:
+                self.assertIn("[ERROR]", line)
+
+    def test_non_string_value_is_unclassified(self):
+        """真偽値・一覧は未分類として黙る(解析器が str 以外に解す値。判定を書けない)。
+
+        数の見た目の値は解析器が文字列にするので(`subdomain: 3` -> '3')、
+        語彙に無い値として咎める。下の試験がそれを凍らせる。
+        """
+        for bad in (True, ["core"]):
+            codes, _ = self._codes(self._spec_with(subdomain=bad))
+            self.assertNotIn("BAD_SUBDOMAIN", codes, repr(bad))
+
+    def test_numeric_looking_value_is_reported(self):
+        """`subdomain: 3` は文字列 '3' に解されるので、語彙に無い値として咎める。"""
+        codes, _ = self._codes(self._spec_with(subdomain=3))
+        self.assertIn("BAD_SUBDOMAIN", codes)
+
+    def test_same_domain_may_hold_different_kinds(self):
+        """ADR-092: 同じ domain の中に種類が同居してよい(一貫性の検査を入れない)。
+
+        呼び手の木はドメインが一つで三種類を含む。検査を足せばこの試験が落ちる。
+        """
+        self._write("docs/billing/REQ-2-x.md", _req_fm(), "本文。\n")
+        fm1 = _valid_spec_fm()
+        fm1["subdomain"] = "core"
+        p1 = self._write("docs/billing/spec/SPEC-014-x.md", fm1, _SPEC_BODY_4)
+        fm2 = _valid_spec_fm()
+        fm2["id"] = "SPEC-015"
+        fm2["subdomain"] = "generic"
+        p2 = self._write("docs/billing/spec/SPEC-015-x.md", fm2, _SPEC_BODY_4)
+        for p in (p1, p2):
+            codes, _ = self._codes(p)
+            self.assertNotIn("BAD_SUBDOMAIN", codes, p)
+
+
 # ---------------------------------------------------------------------------
 # RESEARCH 決定 heading (§3.6 — TC-109/110)
 # ---------------------------------------------------------------------------
