@@ -31,7 +31,7 @@ llm_context: task
 | R6 用語統一 | PostToolUse(リンタ)・CI | term-check(_termcheck)・glossary_seed_drift(監査) | リンタ助言・CI ログ | 在席(リンタ)＋シード退行は CI 委任 | test_termcheck・test_audit |
 | R7 境界明瞭 | PreToolUse(ガード)・PostToolUse(block)・SessionEnd/CI(監査) | policy-guard(ICD 依存)・docs-audit(ICD 違反) | deny/block 理由・監査要約 | 在席(予防)＋事後 block・違反検出は CI 委任 | test_guard・test_audit |
 | R8 最小性 | SessionEnd/CI(監査)・docs-curate | docs-audit(孤児・canonical 衝突・未登録/影・体系外 .md) | 監査要約・.md-intake | CI 委任(全件監査) | test_audit |
-| R9 保証限界 | CI(受入) | run_tests(保証限界節の存在) | テスト結果 | CI 委任 | test_meta |
+| R9 保証限界 | CI(受入) | run_tests(保証限界節の存在・走行の証跡。SPEC-028) | テスト結果・走行の証跡(PROVENANCE) | CI 委任 | test_meta |
 | R10 明快な日本語 | PostToolUse(リンタ+ナッジ)・doc-review 定例 | term-check(カルク)・review-nudge・gov-heartbeat(定例督促) | リンタ助言・governance-state | 在席(リンタ)＋ナッジは Level 3 以降 | test_termcheck・test_review_nudge・test_liveness_capture |
 | R11 統治の生存性 | UserPromptSubmit(毎会話)・SessionStart(注入)・CI | gov-heartbeat(鮮度)・inject-contract(死活警告)・docs-audit(EXT 存在) | 督促・警告・監査要約 | CI 委任(死活は Level 3 以降。ADR-046) | test_liveness_capture・test_inject・test_audit |
 | R12 会話知識の捕捉 | Stop(終端)・PreCompact(圧縮の印)・SessionStart(圧縮後の合図・選別義務)・PostToolUse(印) | capture-nudge・precompact-dump(印のみ)・inject-contract(圧縮後の節・未選別節)・review-nudge(印) | 差し止め理由・圧縮の印・.session-notes・印 | 在席(段差に依らず動く。ADR-030) | test_liveness_capture・test_review_nudge |
