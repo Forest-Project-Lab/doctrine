@@ -496,7 +496,13 @@ def check(body, meta, glossary):
 # preservingly BEFORE substring matching, so a standalone『出力』/『ビュー』/『漏れ』
 # in ordinary prose is still caught. Japanese has no word boundaries, so this
 # approved-compound mask is the only way to avoid the false positive.
-_APPROVED_COMPOUNDS = ("入出力", "現在形", "レビュー", "記述漏れ")
+# 『選択肢』は本プラグインの雛形が定める ADR の節見出し「却下した選択肢」の語である
+# (change-flow・term-addition・revival-rules がいずれも「背景・却下した選択肢・決定・
+# 帰結」と定める)。前半を禁止同義語に持つ体系(doctrine-lens は『起点』の同義語として
+# 持つ)では、雛形どおりに書いた ADR が全て咎められていた。『入出力』と同じ扱いにする
+# (ADR-082)。覆いへ加えてよいのは本プラグインの雛形・仕様が使うよう定めている語だけで、
+# 利用者の文章に出てくる普通の語をこちらの都合で覆わない。
+_APPROVED_COMPOUNDS = ("入出力", "現在形", "レビュー", "記述漏れ", "選択肢")
 
 
 def _mask_approved_compounds(masked, glossary=None):

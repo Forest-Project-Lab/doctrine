@@ -88,6 +88,30 @@ class BannedSynonymTest(unittest.TestCase):
             bs = [f for f in fs if f.code == "BANNED_SYNONYM"]
             self.assertEqual(bs, [], compound)
 
+    def test_template_heading_vocabulary_not_flagged(self):
+        """ADR-082 / #169: 『選択肢』は本プラグインの雛形が定める ADR の節見出し
+        「却下した選択肢」の語である。その前半を禁止同義語に持つ体系(doctrine-lens は
+        『起点』の同義語として持つ)で、雛形どおりに書いた ADR が全て咎められていた。
+        実在の欠陥であり、既存の lens の ADR-012・ADR-013 も咎められていた。"""
+        root = _util.make_repo({"docs/_system/glossary.md": (
+            "---\nid: GLOSSARY-001\ntitle: t\ntype: GLOSSARY\ndomain: _system\n"
+            "status: current\nowner: o\nupdated: 2026-06-01\nsources: []\n---\n\n"
+            "# 用語辞書\n\n"
+            "| 承認語 | 唯一の意味 | 禁止する同義語 |\n|---|---|---|\n"
+            "| 起点 | いま開いている位置から決まる文書 | 基点、選択、フォーカス |\n")})
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        g = tc.load_glossary(os.path.join(root, "docs"))
+        self.assertIn("選択", [syn for syn, _a in g.banned_synonyms],
+                      "この見本の辞書は『選択』を禁止しているはず")
+        fs = tc.check("## 却下した選択肢\n本文。\n", {"type": "ADR"}, g)
+        bs = [f for f in fs if f.code == "BANNED_SYNONYM"]
+        self.assertEqual(bs, [], "雛形の節見出しを咎めてはならない")
+        # 単独で現れたときは引き続き咎める(覆いは出現ごとで、語全体を免除しない)。
+        fs2 = tc.check("これは選択だ。", {"type": "ADR"}, g)
+        bs2 = [f for f in fs2 if f.code == "BANNED_SYNONYM"]
+        self.assertTrue(bs2, "単独の『選択』は引き続き咎める")
+        self.assertIn("起点", bs2[0].message)
+
     def test_standalone_synonym_still_caught(self):
         """#03/#09: masking the approved compound must NOT suppress a standalone
         banned synonym in ordinary prose (出力 -> 投影, 現在 -> 現行)."""

@@ -436,7 +436,10 @@ def _check_llm_context(meta, findings):
 # Markdown heading whose text mentions 決定.
 # 行内の空白だけを見る(ADR-075)。\s は改行を跨ぐため `.*` と組んで二次の
 # バックトラックを生み、同一行に空白 20 万字を置くと 14 秒かかった。
-_DECISION_HEADING_RE = re.compile(r"(?m)^#{1,6}[ \t]*.*決定")
+# 『決定』を延ばして別語にする接尾は除く(ADR-082)。『決定的な一点』のような見出しは
+# 決定を書いたものではない。否定の先読みは後戻りを増やさないので、上の性能の実測
+# (長い空白行で 14 秒)を悪くしない。二語だけに限る —— 『決定木』は引き続き咎める。
+_DECISION_HEADING_RE = re.compile(r"(?m)^#{1,6}[ \t]*.*決定(?![的論])")
 
 
 def _check_research_decision(meta, body, findings):
