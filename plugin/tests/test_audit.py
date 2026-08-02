@@ -1287,7 +1287,9 @@ EXPECTED_AUDIT_CHECKS = (
     "projection_drift", "unregistered_document", "shadowed_document",
     "stray_document", "view_stale", "stale_current", "source_drift",
     "archive_integrity",
-    "adr_not_landed", "glossary_seed_drift", "ext_anchor_broken", "memory_shadow",
+    "adr_not_landed", "glossary_seed_drift", "ext_anchor_broken",
+    # ADR-086: 唯一の見張りである期限の二段(不在は error、緩さは warn)。
+    "ext_sole_guard_missing", "ext_sole_guard_loose", "memory_shadow",
     "trace_mark_error", "trace_broken_ref", "trace_deprecated_ref",
     "trace_stale", "trace_missing_impl", "trace_marker_suspect",
     "trace_scan_truncated", "trace_unexpected_impl", "trace_undeclared_impl",
