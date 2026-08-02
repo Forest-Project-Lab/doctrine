@@ -544,3 +544,50 @@ class TestReviewCycle(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# 置き場所の規則を手で書き写した表(ADR-060 の様式。EXPECTED_TYPES と同じ)。
+# 正本は _registry.TYPE_LOCATION。規則を変えるときは**両方**を同じ変更で更新する。
+# **ここを TYPE_LOCATION から生成したら凍結の意味が消える。**
+#
+# 以前この凍結は無く、置き場所を変えても黙って通った(2026-08-02 に ADR-091 で REQ へ
+# `_system/` を足したとき、何も落ちなかったことで判明した)。TYPES・既定 status・既定
+# llm_context は凍結済みだったのに、置き場所だけが抜けていた。
+EXPECTED_TYPE_LOCATION = {
+    "ADR": ("<domain>/decisions/",),
+    "API": ("<domain>/spec/",),
+    "ARCHIVE": ("<domain>/archive/",),
+    "CHANGE": ("<domain>/decisions/",),
+    "CTXMAP": ("_system/",),
+    "DATA": ("<domain>/spec/",),
+    "DECIDED": ("_system/",),
+    "EXT": ("<domain>/external/",),
+    "GLOSSARY": ("_system/",),
+    "ICD": ("<domain>/",),
+    "IMPACT": ("<domain>/decisions/",),
+    "IMPL": ("<domain>/implementation/",),
+    "NONGOAL": ("_system/",),
+    "OVERVIEW": ("_system/",),
+    "PROC": ("<domain>/procedures/",),
+    # REQ は製品の粒度を _system/ に置ける(ADR-091)。粒度は置き場所が言う。
+    "REQ": ("<domain>/", "_system/"),
+    "RESEARCH": ("<domain>/research/",),
+    "SPEC": ("<domain>/spec/",),
+    "TEST": ("<domain>/test/",),
+    "WATCH": ("_system/", "<domain>/test/"),
+}
+
+
+class TypeLocationFreezeTest(unittest.TestCase):
+    """置き場所の規則を手書きの表で凍らせる(ADR-060 の様式。ADR-091)。"""
+
+    def test_locations_match_the_transcribed_table(self):
+        self.assertEqual(
+            {k: tuple(v) for k, v in R.TYPE_LOCATION.items()},
+            EXPECTED_TYPE_LOCATION,
+            "置き場所が変わった。正本(_registry.TYPE_LOCATION)と手書きの表の両方を"
+            "同じ変更で更新すること(片方だけ直すと、規則を変えても黙って通る状態へ戻る)")
+
+    def test_every_type_has_a_location(self):
+        """全型が置き場所を持つ(空欄を許さない)。"""
+        self.assertEqual(set(R.TYPE_LOCATION), set(EXPECTED_TYPES))

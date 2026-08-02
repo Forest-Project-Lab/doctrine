@@ -716,3 +716,57 @@ class MirroredEdgeTest(unittest.TestCase):
         imp = {key(e) for e in edges if e["field"] == "impacts"}
         marked = [e for e in edges if e["mirrored"]]
         self.assertEqual(len(marked), len(dep & imp) * 2)
+
+
+class SystemShelfRequirementTest(unittest.TestCase):
+    """ADR-091 / #153: 横断の棚(_system/)に在る要求は逆孤児の対象にしない。
+
+    実装して分かった事実に合わせた設計である。当初は「要求は要求が実現してよい」と
+    して判定を広げようとしたが、**ドメインの文書が _system の文書を depends_on で
+    指すことは、この体系ではできない** —— 越境依存のガードが「_system の ICD 宛に
+    してください」と拒み、_system に ICD は無い。実測でも、_system の正本
+    (DECIDED・NONGOAL・WATCH)を frontmatter で指している文書は一件も無かった。
+    横断の正本は本文で参照され、辺では指されない。
+    """
+
+    def _graph(self, files):
+        root = _util.make_repo(files)
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        return _util.load_core("_depgraph").build_graph(os.path.join(root, "docs"))
+
+    def _doc(self, doc_id, type_code, domain="billing", extra=None):
+        meta = {"id": doc_id, "title": "t", "type": type_code, "domain": domain,
+                "status": "current", "owner": "o", "updated": "2026-06-01",
+                "sources": []}
+        if extra:
+            meta.update(extra)
+        return _util.fm_block(meta) + "本文。\n"
+
+    def test_system_shelf_req_is_not_a_reverse_orphan(self):
+        g = self._graph({
+            "docs/_system/REQ-0-x.md": self._doc("REQ-0", "REQ", "_system"),
+        })
+        self.assertNotIn("REQ-0", g.reverse_orphans()["req_without_spec"],
+                         "横断の棚に在る要求は辺で指されないので、逆孤児にしない")
+
+    def test_domain_req_without_spec_is_still_a_reverse_orphan(self):
+        """広げただけで緩めていない。ドメインの要求は引き続き立つ。"""
+        g = self._graph({
+            "docs/billing/REQ-1-x.md": self._doc("REQ-1", "REQ"),
+        })
+        self.assertIn("REQ-1", g.reverse_orphans()["req_without_spec"])
+
+    def test_domain_req_with_a_spec_is_clean(self):
+        g = self._graph({
+            "docs/billing/REQ-1-x.md": self._doc("REQ-1", "REQ"),
+            "docs/billing/spec/SPEC-1-x.md": self._doc(
+                "SPEC-1", "SPEC", extra={"depends_on": ["REQ-1"]}),
+        })
+        self.assertNotIn("REQ-1", g.reverse_orphans()["req_without_spec"])
+
+    def test_spec_without_test_is_unchanged(self):
+        """仕様→試験の側は触っていない。"""
+        g = self._graph({
+            "docs/billing/spec/SPEC-1-x.md": self._doc("SPEC-1", "SPEC"),
+        })
+        self.assertIn("SPEC-1", g.reverse_orphans()["spec_without_test"])

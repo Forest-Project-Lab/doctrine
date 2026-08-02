@@ -61,6 +61,13 @@ class Edge(dict):
             raise AttributeError(name) from exc
 
 
+def _is_under_system(relpath):
+    """統治木の横断の棚(_system/)に在るか(ADR-091)。決して例外を投げない。"""
+    if not isinstance(relpath, str):
+        return False
+    return relpath.replace("\\", "/").startswith("_system/")
+
+
 class Graph(object):
     """docs ルート配下の全 .md から組み立てた依存グラフ。
 
@@ -335,6 +342,8 @@ class Graph(object):
 
         {"req_without_spec": [...], "spec_without_test": [...]}(ID整列)。
         - req_without_spec: 現行 REQ r で、r を depends_on に持つ現行 SPEC が一つも無い。
+          ただし横断の棚(_system/)に在る要求は除く(ADR-091。_system の正本は辺で
+          指されない規約であり、指させようとすると越境依存のガードが拒む)。
         - spec_without_test: 現行 SPEC s で、s を depends_on に持つ現行 TEST が一つも無い。
         たどるリンクは depends_on のみ(決定的, slice 05 A.5)。
         """
@@ -357,7 +366,13 @@ class Graph(object):
                 continue
             t = node["type"]
             if t == "REQ" and doc_id not in spec_targets:
-                req_without_spec.append(doc_id)
+                # 横断の棚(_system/)に在る要求は、辺で指されない(ADR-091)。
+                # この体系の規約では _system の正本(DECIDED・NONGOAL・WATCH)は本文で
+                # 参照され、frontmatter の depends_on では指されない(実測: 一件も無い。
+                # _system に ICD が無いため、越境依存のガードがそもそも拒む)。
+                # 製品の粒度の要求も同じ棚に在るので、逆孤児の対象にしない。
+                if not _is_under_system(node["path"]):
+                    req_without_spec.append(doc_id)
             elif t == "SPEC" and doc_id not in test_targets:
                 spec_without_test.append(doc_id)
         return {
