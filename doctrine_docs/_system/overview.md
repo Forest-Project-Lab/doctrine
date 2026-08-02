@@ -187,6 +187,7 @@ sources: []
 | ADR-078 | ADR | packaging | Hook 事象の集合を数で凍らせず、能力で検める |
 | ADR-079 | ADR | packaging | サブエージェントへ注入しない理由を「届かない」から「呼び出し側が組む」へ置き換える |
 | ADR-080 | ADR | packaging | Hook 設定は固定されない。settings 由来は live reload される前提へ置き換える |
+| ADR-084 | ADR | packaging | 被覆の各行は実効を示す試験を名指す。示せないなら未証と明示する |
 | CHANGE-001 | CHANGE | packaging | 導入済みプラグインの版の遅れを生存性として照合する |
 | CHANGE-002 | CHANGE | packaging | リリースの整合を CI の門で検める — 変更履歴の書き忘れを止める |
 | CHANGE-005 | CHANGE | packaging | 不具合の兆候を記録し、承認を経た issue 報告を促す |

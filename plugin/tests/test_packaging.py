@@ -127,10 +127,13 @@ class TestHooksFullProfile(unittest.TestCase):
         missing = required - events
         self.assertFalse(missing, "必要な配線が欠けている: %s" % sorted(missing))
 
-    def test_coverage_matrix_has_no_empty_cell(self):
-        """#94 / SPEC-025: 被覆マトリクスの R1〜R12 の全行が、発火経路・実行する
-        もの・証跡・Level 2 での担保の各列を空白なく埋めていること(保証マトリクスの
-        空欄を許さない原則)。表を機械で読み、空セルを凍結する。"""
+    # ADR-084: 実効を示せない行の集合を凍らせる。**未証は黙って増やせない** ——
+    # 増やすならこの集合の編集が要る(減らすのも同じく明示の変更である)。
+    # 現時点では空。全 12 行がこちら側の効果を示す試験を名指せる。実行環境の側が
+    # 約束を守るかは別の話で、それは NONGOAL-001 が引き受けないと定めている(ADR-050)。
+    _UNPROVEN_ROWS = frozenset()
+
+    def _coverage_rows(self):
         repo = _util.require_repo_root(self)
         spec = os.path.join(repo, "doctrine_docs", "packaging", "spec",
                             "SPEC-025-coverage-matrix.md")
@@ -139,14 +142,50 @@ class TestHooksFullProfile(unittest.TestCase):
             for line in fh:
                 s = line.strip()
                 if s.startswith("| R") and s.endswith("|"):
-                    cells = [c.strip() for c in s.strip("|").split("|")]
-                    rows.append(cells)
-        # R1〜R12 の 12 行。各行はちょうど 5 列で、どのセルも空でない。
+                    rows.append([c.strip() for c in s.strip("|").split("|")])
+        return rows
+
+    def test_coverage_matrix_has_no_empty_cell(self):
+        """#94 / SPEC-025: 被覆マトリクスの R1〜R12 の全行が、発火経路・実行する
+        もの・証跡・Level 2 での担保・実効の証の各列を空白なく埋めていること
+        (保証マトリクスの空欄を許さない原則)。表を機械で読み、空セルを凍結する。"""
+        rows = self._coverage_rows()
+        # R1〜R12 の 12 行。各行はちょうど 6 列で、どのセルも空でない(ADR-084)。
         self.assertEqual(len(rows), 12, "expected R1..R12 rows, got %d" % len(rows))
         for cells in rows:
-            self.assertEqual(len(cells), 5, "row must have 5 columns: %r" % cells)
+            self.assertEqual(len(cells), 6, "row must have 6 columns: %r" % cells)
             for c in cells:
                 self.assertTrue(c, "empty cell in coverage matrix row: %r" % cells)
+
+    def test_coverage_matrix_demonstrations_exist(self):
+        """ADR-084 / #167: 「実効の証」の欄が名指す試験が実在すること。
+
+        以前この門は文字の有無しか見ておらず、R12 の「圧縮前の促し」は欄が埋まった
+        まま一度も届いていなかった(ADR-077)。これは実効の証明ではない —— 機械が
+        検めるのは腐り(消えた試験を指し続ける行)だけで、効くのは著述の時点で
+        「実効を示す試験はどれか」と問いが立つことである。
+        """
+        tests_dir = os.path.join(_util.PLUGIN_ROOT, "tests")
+        unproven = set()
+        for cells in self._coverage_rows():
+            req = cells[0].split()[0]
+            demo = cells[5]
+            if demo.startswith("未証"):
+                # 理由を空にはできない(ADR-084)。
+                self.assertRegex(demo, r"^未証[(（].+[)）]$",
+                                 "未証 は理由を添える: %r (%s)" % (demo, req))
+                unproven.add(req)
+                continue
+            names = [n.strip() for n in demo.replace("・", ",").split(",") if n.strip()]
+            self.assertTrue(names, "実効の証が空: %s" % req)
+            for name in names:
+                self.assertTrue(
+                    os.path.isfile(os.path.join(tests_dir, name + ".py")),
+                    "%s が名指す試験 %s が実在しない(腐り)" % (req, name))
+        self.assertEqual(
+            unproven, set(self._UNPROVEN_ROWS),
+            "未証の行が変わった。黙って増やさない —— 受入の _UNPROVEN_ROWS を"
+            "明示的に編集し、なぜ示せないのかを SPEC-025 の欄に書くこと(ADR-084)")
 
     def test_every_command_is_a_plugin_script(self):
         for event, matcher, command in _commands(self.hooks):
