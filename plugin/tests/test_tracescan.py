@@ -411,6 +411,8 @@ class CoverageAccountingTest(unittest.TestCase):
         """全規則の枠が 0 件でも在る(空欄を許さない。SPEC-025 と同じ原則)。"""
         root = self._repo({})
         _, _, cov = T.scan_tree(root)
+        # 枠の対応は定数から導いてよい(これは「勘定の枠が規則の表と一致するか」の検査)。
+        # 規則の一覧そのものは下の EXPECTED_EXCLUSION_RULES が手書きで凍らせる。
         file_rules = {rid for rid, kind in T.EXCLUSION_RULES if kind == "file"}
         dir_rules = {rid for rid, kind in T.EXCLUSION_RULES if kind == "dir"}
         # 両方向: 表に在る規則は枠を持ち、枠に在る規則は表に在る。
@@ -804,3 +806,119 @@ class ConfigExemptTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# 除外規則の一覧を手で書き写した表(ADR-060 の様式。test_audit の AUDIT_CHECKS と同じ)。
+# 規則を足す・消すときは、正本(_tracescan.EXCLUSION_RULES)と**この表の両方**を同じ変更で
+# 更新する。**ここを EXCLUSION_RULES から生成したら凍結の意味が消える。**
+#
+# 以前この凍結は無く、枠の対応(勘定の鍵 == 定数)だけを見ていた。規則を足しても黙って
+# 通る状態であり、SPEC-026 の「TEST-026 が凍結する」は枠の一致を指すに過ぎなかった
+# (2026-08-02 に ADR-089 で二規則を足したとき、何も落ちなかったことで判明した)。
+EXPECTED_EXCLUSION_RULES = (
+    ("dot_dir", "dir"),
+    ("skip_dir_name", "dir"),
+    ("docs_root", "dir"),
+    ("symlink_dir", "dir"),
+    ("unreadable_dir", "dir"),
+    ("gitignored_dir", "dir"),       # ADR-089
+    ("dot_file", "file"),
+    ("md_suffix", "file"),
+    ("nonregular", "file"),
+    ("oversize", "file"),
+    ("unreadable", "file"),
+    ("binary", "file"),
+    ("undecodable", "file"),
+    ("gitignored_file", "file"),     # ADR-089
+    ("truncated", "file"),
+)
+
+
+class ExclusionRulesFreezeTest(unittest.TestCase):
+    """除外規則の一覧を手書きの表で凍らせる(ADR-060 の様式)。"""
+
+    def test_rules_match_the_transcribed_table(self):
+        self.assertEqual(
+            tuple(T.EXCLUSION_RULES), EXPECTED_EXCLUSION_RULES,
+            "除外規則が変わった。正本と手書きの表の両方を同じ変更で更新すること"
+            "(片方だけ直すと、規則を足しても黙って通る状態へ戻る)")
+
+
+class GitignoreTest(unittest.TestCase):
+    """ADR-089 / #150: 無視される物は走査しない。判定は git に訊く。
+
+    実測（呼び手のリポジトリ）: 修正前は範囲 30 件のうち 12 件（40%）が `.gitignore`
+    配下の写しだった。修正後は 0 件になり、`trace_exempt` から out/・dist/ を外しても
+    同じだった —— **同じ事実を二箇所に持つ形が消えた**。
+    """
+
+    def _repo(self, files, gitignore=None, init=True):
+        import subprocess
+        root = _util.make_repo(files)
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        if gitignore is not None:
+            with open(os.path.join(root, ".gitignore"), "w", encoding="utf-8") as fh:
+                fh.write(gitignore)
+        if init:
+            for args in (["init", "--quiet", "-b", "main"],
+                         ["config", "user.email", "t@example.invalid"],
+                         ["config", "user.name", "t"]):
+                subprocess.run(["git"] + args, cwd=root, capture_output=True,
+                               timeout=30, check=False)
+        return root
+
+    # 印は _mark で組む(原文に印の形を直に書かない規律。ADR-059。自己走査が
+    # この試験ファイルを「綴りの揺れ」として咎めるのを避ける)。
+    _MARKED = "\n".join([_mark("begin", "SPEC-014"), "x",
+                         _mark("end", "SPEC-014")]) + "\n"
+
+    def test_ignored_directory_is_pruned_and_counted(self):
+        root = self._repo({"src/a.ts": self._MARKED, "out/a.js": self._MARKED},
+                          gitignore="out/\n")
+        ranges, _f, cov = T.scan_tree(root)
+        paths = {r["path"] for r in ranges}
+        self.assertIn("src/a.ts", paths)
+        self.assertNotIn("out/a.js", paths, "無視されるものを範囲に返してはならない")
+        self.assertEqual(cov["gitignore"], "read")
+        # 黙って切り詰めない。規則 id を経由して数える(ADR-058 の保存則)。
+        self.assertEqual(cov["pruned_dirs"]["gitignored_dir"], 1)
+
+    def test_ignored_single_file_is_excluded_and_counted(self):
+        root = self._repo({"src/a.ts": self._MARKED, "src/b.gen.ts": self._MARKED},
+                          gitignore="*.gen.ts\n")
+        ranges, _f, cov = T.scan_tree(root)
+        paths = {r["path"] for r in ranges}
+        self.assertIn("src/a.ts", paths)
+        self.assertNotIn("src/b.gen.ts", paths)
+        self.assertEqual(cov["excluded"]["gitignored_file"], 1)
+
+    def test_tracked_file_is_scanned_even_if_the_pattern_matches(self):
+        """git が追跡しているファイルは走査する。git がそう扱うので、こちらもそう扱う。"""
+        import subprocess
+        root = self._repo({"src/a.ts": self._MARKED}, gitignore="*.ts\n")
+        subprocess.run(["git", "add", "-f", "src/a.ts"], cwd=root,
+                       capture_output=True, timeout=30, check=False)
+        ranges, _f, _cov = T.scan_tree(root)
+        self.assertIn("src/a.ts", {r["path"] for r in ranges})
+
+    def test_no_repo_degrades_to_the_old_behaviour_without_scolding(self):
+        """git を使わない木では、いまと同じ挙動へ退く。勘定に状態を残すが所見にしない。"""
+        root = self._repo({"src/a.ts": self._MARKED, "out/a.js": self._MARKED},
+                          gitignore="out/\n", init=False)
+        ranges, findings, cov = T.scan_tree(root)
+        self.assertIn(cov["gitignore"], ("not_a_repo", "error", "no_git"), cov)
+        # 退いた挙動: .gitignore を見ないので写しも返る(いまと同じ)。
+        self.assertIn("out/a.js", {r["path"] for r in ranges})
+        # 責めない —— 所見は出さない。
+        self.assertEqual([f for f in findings if "gitignore" in str(f)], [])
+
+    def test_conservation_law_still_holds(self):
+        """保存則を壊さない: reached = annotated + unmarked + exempt + Σexcluded。"""
+        root = self._repo({"src/a.ts": self._MARKED, "out/a.js": self._MARKED,
+                           "src/b.gen.ts": self._MARKED},
+                          gitignore="out/\n*.gen.ts\n")
+        _r, _f, cov = T.scan_tree(root)
+        self.assertEqual(
+            cov["reached_files"],
+            cov["annotated_files"] + cov["unmarked_files"]
+            + cov["exempt_files"] + sum(cov["excluded"].values()))

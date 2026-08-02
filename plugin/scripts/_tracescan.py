@@ -81,6 +81,7 @@ EXCLUSION_RULES = (
     ("docs_root", "dir"),        # 統治木そのもの(文書は追跡の終点にならない)
     ("symlink_dir", "dir"),      # ディレクトリへのシンボリックリンク(降下しない)
     ("unreadable_dir", "dir"),   # 読めないディレクトリ(os.walk が握る誤り)
+    ("gitignored_dir", "dir"),   # git が無視するディレクトリ(ADR-089。git に訊く)
     ("dot_file", "file"),        # 名前が . で始まるファイル
     ("md_suffix", "file"),       # SKIP_SUFFIXES(自己言及の遮断)
     ("nonregular", "file"),      # 名前付きパイプ・ソケット・デバイス(開かない)
@@ -88,6 +89,7 @@ EXCLUSION_RULES = (
     ("unreadable", "file"),      # stat/open/read の OSError
     ("binary", "file"),          # 先頭に値ゼロのバイト
     ("undecodable", "file"),     # utf-8 として復号できない
+    ("gitignored_file", "file"),  # git が無視するファイル(ADR-089。git に訊く)
     ("truncated", "file"),       # ファイル数上限で分類せず落とした分
 )
 
@@ -105,7 +107,69 @@ def empty_coverage():
         "excluded": {rid: 0 for rid in _FILE_RULES},
         "pruned_dirs": {rid: 0 for rid in _DIR_RULES},
         "truncated": False,      # ファイル数上限で走査を打ち切ったか
+        # git へ無視の判定を訊けたか(ADR-089)。黙らないが責めない —— git を使わない
+        # 木でも走査は成り立つので、所見にはせず勘定に状態だけ残す。
+        # "read" / "no_git" / "not_a_repo" / "error" / "not_asked"
+        "gitignore": "not_asked",
     }
+
+
+def gitignored_paths(root):
+    """git が無視する道(root からの相対、posix 区切り)と、問いの結果を返す(ADR-089)。
+
+    **`.gitignore` を自前で解釈しない。** 否定・`**`・アンカー・ディレクトリ限定・
+    親からの継承・`.git/info/exclude`・大域の設定 —— 再実装すれば必ずどこかで git と
+    違う判定を出す。それは「見ているつもりで見ていない」欠陥であり、正本を再実装しない。
+
+    `git ls-files -o -i --exclude-standard --directory` は、無視されている**未追跡**の
+    道を返し、丸ごと無視されるディレクトリを `dir/` に畳む。追跡下のファイルは
+    `.gitignore` に一致しても返らない —— git がそう扱うので、こちらもそう扱う。
+
+    一度の子プロセスで済ませる。決して例外を投げない。
+    返り値: (frozenset[str], 状態) の対。状態は "read"/"no_git"/"not_a_repo"/"error"。
+    """
+    try:
+        import subprocess
+    except Exception:
+        return frozenset(), "error"
+    try:
+        out = subprocess.run(
+            ["git", "ls-files", "-o", "-i", "--exclude-standard", "--directory", "-z"],
+            cwd=root, capture_output=True, timeout=30, check=False)
+    except FileNotFoundError:
+        return frozenset(), "no_git"
+    except Exception:
+        return frozenset(), "error"
+    if out.returncode != 0:
+        err = b""
+        try:
+            err = out.stderr or b""
+        except Exception:
+            err = b""
+        if b"not a git repository" in err.lower():
+            return frozenset(), "not_a_repo"
+        return frozenset(), "error"
+    try:
+        raw = out.stdout.decode("utf-8", "replace")
+    except Exception:
+        return frozenset(), "error"
+    paths = frozenset(p for p in raw.split("\0") if p)
+    return paths, "read"
+
+
+def _is_gitignored(rel, ignored):
+    """rel(posix、ディレクトリは末尾 / 無し)が無視の集合に当たるか。
+
+    git は丸ごと無視されるディレクトリを `dir/` で返すので、前置きの一致も見る。
+    """
+    if not ignored:
+        return False
+    if rel in ignored or (rel + "/") in ignored:
+        return True
+    for entry in ignored:
+        if entry.endswith("/") and rel.startswith(entry):
+            return True
+    return False
 
 
 def _is_within(path, base):
@@ -234,13 +298,17 @@ def _should_skip_name(name):
     return name.endswith(SKIP_SUFFIXES)
 
 
-def _prune_dirs(dirpath, dirnames, root, docs_abs, cov, member):
+def _prune_dirs(dirpath, dirnames, root, docs_abs, cov, member, ignored=None):
     """ディレクトリの刈り(規則 id ごとに数える。ADR-058)。dirnames を書き換える。"""
     kept = []
     for d in sorted(dirnames):
         child = os.path.join(dirpath, d)
         child_rel = _relposix(child, root)
-        if d.startswith("."):
+        if ignored and _is_gitignored(child_rel, ignored):
+            # git が無視するディレクトリ。配下へ降りない(ADR-089)。
+            cov["pruned_dirs"]["gitignored_dir"] += 1
+            member("pruned:gitignored_dir", child_rel)
+        elif d.startswith("."):
             cov["pruned_dirs"]["dot_dir"] += 1
             member("pruned:dot_dir", child_rel)
         elif d in SKIP_DIR_NAMES:
@@ -258,7 +326,7 @@ def _prune_dirs(dirpath, dirnames, root, docs_abs, cov, member):
     dirnames[:] = kept
 
 
-def _walk_paths(root, docs_abs, cov, member, findings, max_files):
+def _walk_paths(root, docs_abs, cov, member, findings, max_files, ignored=None):
     """走査対象のパスを集める(整列・上限つき)。打ち切りも勘定に載せる。"""
     def _on_walk_error(_err):
         # 読めないディレクトリ。os.walk は既定で誤りを握るので、ここで数える。
@@ -271,7 +339,7 @@ def _walk_paths(root, docs_abs, cov, member, findings, max_files):
             # 根が統治木と重なる呼び方。ここから下へは降りず、ファイルも見ない。
             dirnames[:] = []
             continue
-        _prune_dirs(dirpath, dirnames, root, docs_abs, cov, member)
+        _prune_dirs(dirpath, dirnames, root, docs_abs, cov, member, ignored)
         for name in sorted(filenames):
             paths.append(os.path.join(dirpath, name))
             if len(paths) > max_files:
@@ -433,10 +501,19 @@ def scan_tree(root, docs_root=None, max_files=DEFAULT_MAX_FILES,
         return ranges, findings, cov
     docs_abs = os.path.realpath(docs_root) if docs_root else None
 
-    paths = _walk_paths(root, docs_abs, cov, _member, findings, max_files)
+    # 無視される物は走査しない。判定は git に訊く(ADR-089)。一度きりの問いで、
+    # 刈りとファイルの分類の両方に使う。git が使えなければ、いまと同じ挙動へ退く
+    # (勘定に状態だけ残す。黙らないが責めない)。
+    ignored, cov["gitignore"] = gitignored_paths(root)
+
+    paths = _walk_paths(root, docs_abs, cov, _member, findings, max_files, ignored)
     for path in paths:
         rel = _relposix(path, root)
         cov["reached_files"] += 1
+        if _is_gitignored(rel, ignored):
+            cov["excluded"]["gitignored_file"] += 1
+            _member("excluded:gitignored_file", rel)
+            continue
         if exempts and _config_exempt_match(rel, exempts):
             cov["exempt_files"] += 1
             _member("exempt", rel)

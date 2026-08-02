@@ -99,6 +99,7 @@ sources: []
 | ADR-081 | ADR | graph | 検証は証拠の提示である。証跡の形だけを採り、ハザード層と過程適合は採らない |
 | ADR-087 | ADR | graph | 問い合わせの節点は隠さない。組み立てた項をそのまま返す |
 | ADR-088 | ADR | graph | 両端から書かれた同じ事実に印を付ける。畳み方を読み手に決めさせない |
+| ADR-089 | ADR | graph | 無視される物は走査しない。その判定は git に訊く |
 | CHANGE-003 | CHANGE | graph | 悉皆トレース — 印なしゼロを選べる体系にする |
 | IMPACT-003 | IMPACT | graph | 悉皆トレース — 影響の列挙 |
 | IMPL-006 | IMPL | graph | `_depgraph.py`＋`dep-graph.py` の実装メモ |
