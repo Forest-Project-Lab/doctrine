@@ -165,6 +165,7 @@ sources: []
 | SPEC-021 | SPEC | packaging | 統治ハートビート（監査の鮮度・定例の期限・外部アンカーの存在） |
 | SPEC-025 | SPEC | packaging | 被覆マトリクス（統治要求×発火経路×証跡） |
 | SPEC-027 | SPEC | packaging | リリース整合の門（release-check — 版の整合と記録の義務） |
+| SPEC-028 | SPEC | packaging | 試験走行の証跡 |
 | ADR-011 | ADR | packaging | 段階導入とBash matcherの拒否限定 |
 | ADR-019 | ADR | packaging | 段差は .docs-level をスクリプト自身が読んで自主停止で実現する |
 | ADR-022 | ADR | packaging | 統治木の既定名を doctrine_docs にし、素の docs は他所の土地として触れない |
@@ -188,6 +189,7 @@ sources: []
 | ADR-079 | ADR | packaging | サブエージェントへ注入しない理由を「届かない」から「呼び出し側が組む」へ置き換える |
 | ADR-080 | ADR | packaging | Hook 設定は固定されない。settings 由来は live reload される前提へ置き換える |
 | ADR-084 | ADR | packaging | 被覆の各行は実効を示す試験を名指す。示せないなら未証と明示する |
+| ADR-085 | ADR | packaging | 試験走行は判定の依り所を刷る。証跡は保存せず、走らせた場が持つ |
 | CHANGE-001 | CHANGE | packaging | 導入済みプラグインの版の遅れを生存性として照合する |
 | CHANGE-002 | CHANGE | packaging | リリースの整合を CI の門で検める — 変更履歴の書き忘れを止める |
 | CHANGE-005 | CHANGE | packaging | 不具合の兆候を記録し、承認を経た issue 報告を促す |
@@ -204,6 +206,7 @@ sources: []
 | TEST-021 | TEST | packaging | 統治ハートビートと死活警告の受入 |
 | TEST-025 | TEST | packaging | 被覆マトリクスの受入 |
 | TEST-027 | TEST | packaging | リリース整合の門の受入 |
+| TEST-028 | TEST | packaging | 試験走行の証跡の受入 |
 | EXT-001 | EXT | packaging | Claude Code の Hook 仕様とツール名への依存 |
 | EXT-002 | EXT | packaging | 自己適用の設定（.claude/settings.json のマーケットプレイス登録）への依存 |
 | EXT-004 | EXT | packaging | 継続的結合の定義（.github/workflows/checks.yml）への依存 |

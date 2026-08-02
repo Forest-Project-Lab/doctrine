@@ -38,6 +38,73 @@ for path in (TESTS_DIR, SCRIPTS_DIR):
         sys.path.insert(0, path)
 
 
+def _run(args):
+    """外部コマンドの標準の刷りを一行で返す。取れなければ None。決して例外を投げない。
+
+    証跡の取得は試験の本務ではない(SPEC-028 の制約4)。git が無い・リポジトリでない・
+    どんな例外でも、走行を落とさず None を返す。
+    """
+    try:
+        import subprocess
+        out = subprocess.run(args, cwd=PLUGIN_ROOT, capture_output=True,
+                             timeout=10, check=False)
+    except Exception:
+        return None
+    if out.returncode != 0:
+        return None
+    try:
+        text = out.stdout.decode("utf-8", "replace").strip()
+    except Exception:
+        return None
+    return text or None
+
+
+def _plugin_version():
+    """同梱の plugin.json の版。取れなければ None。決して例外を投げない。"""
+    try:
+        import json
+        path = os.path.join(PLUGIN_ROOT, ".claude-plugin", "plugin.json")
+        with open(path, encoding="utf-8-sig") as fh:
+            value = json.load(fh).get("version")
+        return str(value) if value else None
+    except Exception:
+        return None
+
+
+_UNKNOWN = "（取れなかった）"
+
+
+def print_provenance():
+    """判定の依り所を刷る(SPEC-028)。決して例外を外へ出さない。
+
+    刷るのは「判定を変えうるもの」だけで、統治対象の内容(パス・文書の内容・
+    リポジトリの名前・作業ディレクトリ)は入れない(ADR-074 の許可制と同じ形)。
+    保存しない —— 走行のログが持つ(ADR-055)。
+
+    `core.fileMode` が並ぶ理由: 2026-08-02、この一つの差で同じ commit が手元で
+    1036 件すべて緑、CI で落ちた(ディスクは 755 でも git の索引が 644)。
+    網羅は主張しない。次に驚かされる性質は、驚いてから足す。
+    """
+    try:
+        import platform
+        rows = [
+            ("python", "%s %s" % (platform.python_implementation(),
+                                  platform.python_version())),
+            ("platform", "%s %s" % (platform.system() or _UNKNOWN,
+                                    platform.release() or _UNKNOWN)),
+            ("plugin", _plugin_version() or _UNKNOWN),
+            ("core.fileMode", _run(["git", "config", "--get", "core.fileMode"])
+             or _UNKNOWN),
+            ("commit", _run(["git", "rev-parse", "HEAD"]) or _UNKNOWN),
+        ]
+        print("PROVENANCE:")
+        for key, value in rows:
+            print("  %s: %s" % (key, value))
+    except Exception:
+        # 証跡が取れないことで走行を落とさない(SPEC-028 の制約5)。
+        pass
+
+
 def main(argv=None):
     verbosity = 2
     loader = unittest.TestLoader()
@@ -63,6 +130,9 @@ def main(argv=None):
         print("NO TESTS RAN: %s に test_*.py が無い。探索先が壊れている"
               % TESTS_DIR)
     print("RESULT: %s" % ("PASS" if ok else "FAIL"))
+    # 判定の依り所を刷る(SPEC-028)。「試験が通った」が、どの環境の話なのかを読める
+    # ようにする。合否には影響しない。
+    print_provenance()
     print("=" * 60)
 
     return 0 if ok else 1

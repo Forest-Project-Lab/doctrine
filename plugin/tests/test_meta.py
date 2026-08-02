@@ -399,3 +399,92 @@ class TestDeliverableDogfood(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestRunProvenance(unittest.TestCase):
+    """SPEC-028 / ADR-085 / #166: 試験走行が判定の依り所を刷る。
+
+    「試験が通った」という主張が、どの環境の話なのかを読めるようにする。
+    2026-08-02 に同じ試験・同じ commit が手元で 1036 件すべて緑、CI で落ちた
+    (core.fileMode=false により git の索引の mode が 644)。そのとき主張は環境を
+    持っていなかった。
+    """
+
+    KEYS = ("python", "platform", "plugin", "core.fileMode", "commit")
+    UNKNOWN = "（取れなかった）"
+
+    def _capture(self, cwd=None):
+        """走者の証跡だけを別プロセスで刷らせて拾う(全件を回さない)。"""
+        import subprocess
+        code = (
+            "import sys; sys.path.insert(0, %r); sys.dont_write_bytecode = True\n"
+            "import importlib.util as u\n"
+            "s = u.spec_from_file_location('rt', %r); m = u.module_from_spec(s)\n"
+            "s.loader.exec_module(m); m.print_provenance()\n"
+            % (_util.PLUGIN_ROOT, os.path.join(_util.PLUGIN_ROOT, "run_tests.py"))
+        )
+        out = subprocess.run([sys.executable, "-c", code], cwd=cwd,
+                             capture_output=True, timeout=60, check=False)
+        return out.returncode, out.stdout.decode("utf-8", "replace")
+
+    def _rows(self, text):
+        rows = {}
+        seen_header = False
+        for line in text.splitlines():
+            if line.strip() == "PROVENANCE:":
+                seen_header = True
+                continue
+            if seen_header and line.startswith("  ") and ":" in line:
+                key, _, value = line.strip().partition(":")
+                rows[key.strip()] = value.strip()
+        return rows
+
+    def test_block_has_the_five_items_in_order(self):
+        rc, text = self._capture()
+        self.assertEqual(rc, 0, text)
+        self.assertIn("PROVENANCE:", text)
+        rows = self._rows(text)
+        self.assertEqual(tuple(rows.keys()), self.KEYS, text)
+
+    def test_environment_items_carry_real_values(self):
+        """python・platform・plugin は必ず取れる(取れなければ環境が壊れている)。"""
+        _rc, text = self._capture()
+        rows = self._rows(text)
+        for key in ("python", "platform", "plugin"):
+            self.assertNotEqual(rows[key], self.UNKNOWN, key)
+            self.assertTrue(rows[key].strip(), key)
+
+    def test_no_git_degrades_without_crashing(self):
+        """git の届かない場所でも走行は落ちず、該当項目が明示的に未取得になる。
+
+        cwd を git の外へ置いても _run は PLUGIN_ROOT で走るため、ここでは
+        PATH から git を外して同じ状態を作る。
+        """
+        import subprocess
+        code = (
+            "import os, sys; os.environ['PATH'] = %r\n"
+            "sys.path.insert(0, %r); sys.dont_write_bytecode = True\n"
+            "import importlib.util as u\n"
+            "s = u.spec_from_file_location('rt', %r); m = u.module_from_spec(s)\n"
+            "s.loader.exec_module(m); m.print_provenance()\n"
+            % ("/nonexistent-bin", _util.PLUGIN_ROOT,
+               os.path.join(_util.PLUGIN_ROOT, "run_tests.py"))
+        )
+        out = subprocess.run([sys.executable, "-c", code], capture_output=True,
+                             timeout=60, check=False)
+        text = out.stdout.decode("utf-8", "replace")
+        self.assertEqual(out.returncode, 0, text)
+        rows = self._rows(text)
+        self.assertEqual(rows["commit"], self.UNKNOWN, text)
+        self.assertEqual(rows["core.fileMode"], self.UNKNOWN, text)
+        # 環境の項目は git に依らないので、引き続き取れる。
+        self.assertNotEqual(rows["python"], self.UNKNOWN)
+
+    def test_no_governed_content_is_printed(self):
+        """統治対象の内容(パス・作業ディレクトリ・リポジトリ名)を刷らない。"""
+        _rc, text = self._capture()
+        block = text[text.index("PROVENANCE:"):]
+        self.assertNotIn(_util.PLUGIN_ROOT, block)
+        self.assertNotIn(os.getcwd(), block)
+        self.assertNotIn("doctrine_docs", block)
+        self.assertNotIn(os.sep + "workspaces", block)
