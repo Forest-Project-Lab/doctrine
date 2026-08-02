@@ -584,3 +584,55 @@ class CliTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class FileLineNumberTest(unittest.TestCase):
+    """ADR-083 / #170: 助言の行番号はファイルの行番号である。
+
+    以前は本文内の行を返しており、フロントマターの行数だけずれていた。報告された行を
+    開くと無関係な文が在るため、書き手は「誤検出だ」と判断して助言を捨てる。
+    doctrine-lens の実在の ADR で実測した(実在 85 行 / 報告 72 行、ずれ 13)。
+    **単体試験では出なかった欠陥である** —— 見本のフロントマターが短く、行番号を
+    検めていなかった。
+    """
+
+    FM = ("---\nid: SPEC-9\ntitle: t\ntype: SPEC\ndomain: billing\n"
+          "status: current\nowner: o\nupdated: 2026-06-01\nsources: []\n---\n")
+
+    def _doc(self, blank_lines=0):
+        """フロントマターの後ろに空行を挟んで、本文の開始行を動かした文書。"""
+        return self.FM + "\n" * blank_lines + "\n## 入出力\n本文。\nこれはドキュメントだ。\n"
+
+    def test_reported_line_is_the_file_line(self):
+        for blanks in (0, 1, 5):
+            text = self._doc(blanks)
+            meta, body, _e = fm.parse(text)
+            start = fm.body_start_line(text, body)
+            fs = tc.check(body, meta, tc.load_glossary(None), start)
+            bs = [f for f in fs if f.code == "BANNED_SYNONYM"]
+            self.assertTrue(bs, blanks)
+            line = bs[0].line
+            # 報告された行を開くと、そこに咎めた語が在る(これが直したかったこと)。
+            self.assertEqual(text.splitlines()[line - 1], "これはドキュメントだ。",
+                             "blanks=%d 報告 %d 行" % (blanks, line))
+
+    def test_no_frontmatter_keeps_line_one_base(self):
+        """フロントマターの無い文書では換算しない(いまと同じ挙動)。"""
+        text = "これはドキュメントだ。\n"
+        meta, body, _e = fm.parse(text)
+        self.assertEqual(fm.body_start_line(text, body), 1)
+        fs = tc.check(body, meta, tc.load_glossary(None),
+                      fm.body_start_line(text, body))
+        bs = [f for f in fs if f.code == "BANNED_SYNONYM"]
+        self.assertEqual(bs[0].line, 1)
+
+    def test_findings_without_a_line_are_untouched(self):
+        """行を持たない助言(辞書の解析失敗など)は None のまま返る。"""
+        root = _util.make_repo({"docs/_system/glossary.md": "no table at all\n"})
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        g = tc.load_glossary(os.path.join(root, "docs"))
+        self.assertTrue(g.parse_error)
+        fs = tc.check("本文。", {"type": "SPEC"}, g, 14)
+        pe = [f for f in fs if f.code == "GLOSSARY_PARSE_ERROR"]
+        self.assertTrue(pe)
+        self.assertIsNone(pe[0].line)

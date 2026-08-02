@@ -501,18 +501,24 @@ def _section_is_empty(section):
     return stripped.strip() == ""
 
 
-def _check_term_check(meta, body, path, findings):
+def _check_term_check(meta, body, path, findings, text=None):
     """§3.8 delegate to _termcheck.check. Codes pass through verbatim.
 
     The spec-mandated SPEC/API compounds that contain a banned synonym
     (『入出力』⊃『出力』, 『現在形』⊃『現在』) are masked inside the shared core
     (_termcheck._mask_approved_compounds), so EVERY caller (this linter, the
     term-check CLI, doc-review) benefits — no linter-only neutralization here.
+
+    行番号はファイルの行へ換算する(ADR-083)。換算に要る本文の開始行は共有の
+    `_frontmatter.body_start_line` から取り、ここで数えない —— 呼び手は二つ
+    (このリンタと term-check の CLI)あり、別々に数えれば片方だけ直したときに
+    同じファイルへ別の行を言う状態が生まれる。
     """
     docs_root = _docs_root_of(path)
+    start = _frontmatter.body_start_line(text, body) if text is not None else 1
     try:
         glossary = _termcheck.load_glossary(docs_root)
-        tfindings = _termcheck.check(body, meta, glossary)
+        tfindings = _termcheck.check(body, meta, glossary, start)
     except Exception:  # never break the hook chain on a term-check error
         return
     for tf in tfindings:
@@ -700,7 +706,7 @@ def lint_text(text, path):
     if not typed:
         disp = _intake.disposition_for(path, docs_root)
         if disp in ("非文書", "投影", "ビュー"):
-            _check_term_check(meta or {}, body, path, findings)
+            _check_term_check(meta or {}, body, path, findings, text)
             for f in findings:
                 if f.severity == ERROR:
                     f.severity = WARN
@@ -737,7 +743,7 @@ def lint_text(text, path):
     _check_llm_context(meta, findings)
     _check_research_decision(meta, body, findings)
     _check_spec_sections(meta, body, findings)
-    _check_term_check(meta, body, path, findings)
+    _check_term_check(meta, body, path, findings, text)
     _check_icd_dep(meta, path, findings)
     _check_trace(meta, body, findings)
     return findings

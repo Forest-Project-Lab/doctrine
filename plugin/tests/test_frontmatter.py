@@ -568,3 +568,34 @@ class TestVersionConstant(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class BodyStartLineTest(unittest.TestCase):
+    """ADR-083: 助言の行番号をファイルの行へ換算する唯一の権限。"""
+
+    def test_counts_the_frontmatter(self):
+        text = ("---\nid: SPEC-9\ntitle: t\ntype: SPEC\ndomain: b\n"
+                "status: current\nowner: o\nupdated: 2026-06-01\nsources: []\n"
+                "---\n\n## 入出力\n本文。\n")
+        _fm, body, _e = _frontmatter.parse(text)
+        # 本文は終端フェンス(10行目)の直後から始まる。
+        self.assertEqual(_frontmatter.body_start_line(text, body), 11)
+        # 報告された行がファイルの行として使えることを直に確かめる。
+        self.assertEqual(text.splitlines()[_frontmatter.body_start_line(text, body) - 1], "")
+
+    def test_no_frontmatter_is_line_one(self):
+        text = "本文だけ。\n"
+        _fm, body, _e = _frontmatter.parse(text)
+        self.assertEqual(_frontmatter.body_start_line(text, body), 1)
+
+    def test_longer_frontmatter_shifts_further(self):
+        base = ("---\nid: SPEC-9\ntitle: t\ntype: SPEC\ndomain: b\n"
+                "status: current\nowner: o\nupdated: 2026-06-01\nsources: []\n")
+        for extra in (0, 3, 10):
+            text = base + "".join("x%d: v\n" % i for i in range(extra)) + "---\n本文。\n"
+            _fm, body, _e = _frontmatter.parse(text)
+            self.assertEqual(_frontmatter.body_start_line(text, body), 10 + extra + 1)
+
+    def test_never_raises_on_bad_input(self):
+        for bad in ((None, None), ("text", None), (None, "body"), (5, 5)):
+            self.assertEqual(_frontmatter.body_start_line(*bad), 1)

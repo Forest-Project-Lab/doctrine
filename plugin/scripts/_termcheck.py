@@ -437,13 +437,17 @@ def _is_defined_at(masked, orig, term, start):
 # The checks
 # ---------------------------------------------------------------------------
 
-def check(body, meta, glossary):
+def check(body, meta, glossary, body_start_line=1):
     """Run the four term-check rules over `body`. Returns list[Finding].
 
     - body:     the document body (NOT including frontmatter).
     - meta:     parsed frontmatter dict (used to skip GLOSSARY正本 / projections).
     - glossary: a Glossary (from load_glossary). If None, only structural skips
                 apply and an empty list is returned.
+    - body_start_line: 本文がファイルの何行目から始まるか(1 起点)。返す助言の行を
+                ファイルの行番号へ換算する(ADR-083)。値は `_frontmatter.body_start_line`
+                から取る —— 呼び手は自分で数えない。既定の 1 はフロントマター無しに
+                当たり、換算しないのと同じである。
 
     Skips entirely (returns []):
       - the GLOSSARY 正本 body (type == GLOSSARY): it *contains* the banned words.
@@ -484,7 +488,23 @@ def check(body, meta, glossary):
     findings.extend(_check_calque(masked, glossary))
     findings.extend(_check_wordtrap(masked, glossary))
     findings.extend(_check_undefined(masked, glossary))
-    return findings
+    return _to_file_lines(findings, body_start_line)
+
+
+def _to_file_lines(findings, body_start_line):
+    """本文内の行を、ファイルの行へ換算する(ADR-083)。決して例外を投げない。
+
+    行を持たない助言(line is None。辞書の解析失敗など)はそのまま返す。
+    開始行が 1 のとき(フロントマター無し)は何も変えない。
+    """
+    try:
+        shift = int(body_start_line) - 1
+    except (TypeError, ValueError):
+        return findings
+    if shift <= 0:
+        return findings
+    return [f if f.line is None else f._replace(line=f.line + shift)
+            for f in findings]
 
 
 # Approved compounds that LITERALLY CONTAIN a banned synonym but are themselves

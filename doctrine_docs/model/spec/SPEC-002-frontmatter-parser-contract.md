@@ -22,6 +22,7 @@ llm_context: task
 - `parse_file(path) -> (fm, body, errors)`: utf-8-sig で読み、改行は変換しない。解析は `parse` に委ねる。
 - `parse_frontmatter(text) -> dict`: 写像だけを返す。
 - `as_list(value) -> list`: 値が None か空文字なら空リストを、スカラ `x` なら `['x']` を返す。リストはそのまま返す。
+- `body_start_line(text, body) -> int`: 本文が元のテキストの何行目から始まるかを 1 起点で返す。助言の行番号をファイルの行番号へ換算する**唯一の権限**であり、呼び手は自分で数えない（ADR-083）。`parse` は本文を元のテキストの末尾から切り出すので、長さの差から求まる。フロントマターが無ければ 1 を返す。BOM の除去は先頭行の中で起きるため行数に影響しない。決して例外を投げない（文字列でない入力には 1 を返す）。
 
 sources, depends_on, impacts, canonical_for などリスト型のキーは、None やスカラで返ることがある。そのため呼び出し側は必ず `as_list` を通して読む。
 

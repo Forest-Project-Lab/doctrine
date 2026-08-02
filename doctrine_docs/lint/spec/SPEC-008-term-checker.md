@@ -18,9 +18,9 @@ llm_context: task
 
 ## 入出力
 
-- 入力: `check(body, meta, glossary) -> Finding[]`。`glossary` には `load_glossary(docs_root)` の戻り値を渡す。
+- 入力: `check(body, meta, glossary, body_start_line=1) -> Finding[]`。`glossary` には `load_glossary(docs_root)` の戻り値を渡す。`body_start_line` は本文がファイルの何行目から始まるかで、`_frontmatter.body_start_line(text, body)` から取る（ADR-083）。**呼び手は自分で数えない。**
 - 辞書の探し順: まず運用版（対象リポジトリの `doctrine_docs/_system/glossary.md`）を読む。無ければ同梱の `templates/glossary.md.tmpl` を種子として使う。運用版はあるが解析できないときは、種子に切り替えたうえで `GLOSSARY_PARSE_ERROR`（警告）を添える。
-- 返す値: `Finding(code, severity, message, line)` の一覧。
+- 返す値: `Finding(code, severity, message, line)` の一覧。**`line` はファイルの行番号である**（ADR-083）。本文内の位置から求めた行に `body_start_line - 1` を返す直前に足す。換算は共有コアの中で一度だけ起き、呼び手は足し算をしない。行を持たない助言（辞書の解析失敗など）は `None` のまま返す。既定の 1 はフロントマターの無い文書に当たり、換算しないのと同じ挙動になる。
 
 ## 制約
 
