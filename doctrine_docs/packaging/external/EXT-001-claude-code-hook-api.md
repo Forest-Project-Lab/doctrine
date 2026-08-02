@@ -32,9 +32,14 @@ llm_context: task
 | matcher でツールを絞れる | `Edit`・`Write`・`MultiEdit`・`Bash` |
 
 `additionalContext` を運ぶ事象は限られており、`PreCompact` は含まれない(ADR-077)。
-`SubagentStart` は運ぶ(ADR-079。配線するかは未決)。設定がセッション開始時に固定される
-挙動は ADR-032 が前提に置いていたが、**settings 由来の hooks は live reload される**
-(#157 で扱う)。
+`SubagentStart` は運ぶ(ADR-079。配線するかは未決)。
+
+設定の反映は**層で違う**(ADR-080。ADR-032 を置換):
+
+| 層 | 挙動 |
+|---|---|
+| settings 由来の hooks(user・project・local・managed) | セッション中に live reload される。変更ごとに `ConfigChange` が発火する |
+| インストール済み plugin の hooks | セッション中は保持され、`/reload-plugins` で再読込される |
 
 ## 期待
 

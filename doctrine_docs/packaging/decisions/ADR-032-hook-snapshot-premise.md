@@ -3,10 +3,11 @@ id: ADR-032
 title: Hook 設定はセッション開始時に固定される前提で運用する(追認)
 type: ADR
 domain: packaging
-status: accepted
+status: superseded
+superseded_by: ADR-080
 owner: doctrine-maintainers
 created: 2026-07-26
-updated: 2026-07-26
+updated: 2026-08-02
 sources: [spec/doctrine.ja.md §5, SPEC-019]
 depends_on: [ICD-008]
 ---
