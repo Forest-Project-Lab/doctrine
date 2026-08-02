@@ -39,14 +39,20 @@ UNKNOWN = "UNKNOWN"
 
 
 class Edge(dict):
-    """一つの端。{src, dst, field, kind} を持つ素朴な dict 部分型。
+    """一つの端。{src, dst, field, kind, mirrored} を持つ素朴な dict 部分型。
 
     dict なので to_json/JSON 化がそのまま通る。属性風アクセスも許す。
     field は "depends_on" か "impacts"。kind は上の KIND_* のどれか。
+
+    mirrored は「反対向きの相手が居るか」(ADR-088)。`A --depends_on--> B` に対して
+    `B --impacts--> A` が在れば真、逆も同じ。**同じ事実を両端から書いたという意味で
+    あって、循環という意味ではない**(循環は find_cycles が返す)。kind とは別の軸なので
+    別の欄に持つ —— 一つの端が同時に「越境違反」かつ「両端書き」でありうる。
     """
 
-    def __init__(self, src, dst, field, kind):
-        super().__init__(src=src, dst=dst, field=field, kind=kind)
+    def __init__(self, src, dst, field, kind, mirrored=False):
+        super().__init__(src=src, dst=dst, field=field, kind=kind,
+                         mirrored=bool(mirrored))
 
     def __getattr__(self, name):
         try:
@@ -290,29 +296,37 @@ class Graph(object):
         cross_domain_violation は depends_on 端だけに付く(MASTER §5.2 / A.2)。
         cross-domain な impacts は cross_domain_impact(助言)に分類する。
         """
+        # 両端書きの判定に使う対の集合(ADR-088)。読み手に畳み方を発明させないため、
+        # 上流が知っている事実をここで印にする。
+        dep_pairs = {(s, d) for s in self.nodes for d in self._dep_out[s]}
+        imp_pairs = {(s, d) for s in self.nodes for d in self._imp_out[s]}
         edges = []
         for src in sorted(self.nodes):
             src_domain = self.nodes[src]["domain"] or UNKNOWN
             for dst in self._dep_out[src]:
-                edges.append(self._classify_one(src, dst, "depends_on", src_domain))
+                edges.append(self._classify_one(
+                    src, dst, "depends_on", src_domain,
+                    mirrored=(dst, src) in imp_pairs))
             for dst in self._imp_out[src]:
-                edges.append(self._classify_one(src, dst, "impacts", src_domain))
+                edges.append(self._classify_one(
+                    src, dst, "impacts", src_domain,
+                    mirrored=(dst, src) in dep_pairs))
         return edges
 
-    def _classify_one(self, src, dst, field, src_domain):
+    def _classify_one(self, src, dst, field, src_domain, mirrored=False):
         if dst not in self.nodes:
-            return Edge(src, dst, field, KIND_DANGLING)
+            return Edge(src, dst, field, KIND_DANGLING, mirrored)
         dst_domain = self.nodes[dst]["domain"] or UNKNOWN
         if dst_domain == src_domain:
-            return Edge(src, dst, field, KIND_INTRA)
+            return Edge(src, dst, field, KIND_INTRA, mirrored)
         # 別ドメイン。
         dst_type = self.type_of(dst)
         if field == "impacts":
             # impacts は ICD 境界の対象外(§3.6 は依存だけを縛る)。助言扱い。
-            return Edge(src, dst, field, KIND_CROSS_IMPACT)
+            return Edge(src, dst, field, KIND_CROSS_IMPACT, mirrored)
         if dst_type == "ICD":
-            return Edge(src, dst, field, KIND_CROSS_ICD)
-        return Edge(src, dst, field, KIND_CROSS_VIOLATION)
+            return Edge(src, dst, field, KIND_CROSS_ICD, mirrored)
+        return Edge(src, dst, field, KIND_CROSS_VIOLATION, mirrored)
 
     # -- 逆孤児(R3/R8) ----------------------------------------------------
 

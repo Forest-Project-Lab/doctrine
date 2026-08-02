@@ -31,9 +31,11 @@ llm_context: task
 - 越境した impacts 端を、誤って `cross_domain_violation` に分類しないこと（WATCH の項目と照らし合わせて確かめる）。
 - 逆依存と逆孤児の対象を、現行文書より外まで広げないこと。
 - 所見が見つかっても CLI を非ゼロ終了にしないこと。問い合わせ用の CLI を、違反を止めるゲートと混同しない。
+- 両端から書かれた同じ事実に印が付くこと（ADR-088）。`MirroredEdgeTest` が確認する —— 両端書きは印が付き、片方だけは付かず、`kind` は据え置き、**両端書きを循環として返さず**、本当の循環は引き続き `find_cycles` が返すこと。読み手が自前の鍵で畳んだ結果と印が一致することも見る。
+  実物で確かめてある（2026-08-02）: 呼び手の木で 10 対 = 20 本（辺の 28%）が印を持ち、自前の鍵で数えた結果と完全に一致した。issue の実例（`IMPL-001 → SPEC-001` ほか）を再現している。
 - 直列化が項を隠さないこと（ADR-087）。`title` と鮮度の項（`updated`・`review_by`・`llm_context`・`superseded_by`）が返り、**組み立てが節点へ入れた項と直列化が返す項が一致する**こと。後者が本当の歯止めである —— 正本を書いても、一致を機械が見ていなければまたずれる。
   `JsonNodeShapeTest` が確認する。**歯止め自身の実効を実測してある**（2026-08-02）: 白名簿を復活させると一致の検査が落ち、組み立てから題名を外すと題名の検査が落ち、復元すると全て通った。
 
 ## 合否基準
 
-`DepGraphCoreTest`・`DepGraphCLITest`・`JsonNodeShapeTest` のすべてのケースが合格すること。`find_cycles` は自己依存・多頂点循環を検出し、非循環と dangling 端は空を返す（ADR-038）。
+`DepGraphCoreTest`・`DepGraphCLITest`・`JsonNodeShapeTest`・`MirroredEdgeTest` のすべてのケースが合格すること。`find_cycles` は自己依存・多頂点循環を検出し、非循環と dangling 端は空を返す（ADR-038）。

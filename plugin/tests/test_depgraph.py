@@ -629,3 +629,90 @@ class JsonNodeShapeTest(unittest.TestCase):
         by_id = {n["id"]: n for n in g.to_json()["nodes"]}
         for field in ("depends_on", "impacts"):
             self.assertIsInstance(by_id["SPEC-1"][field], list, field)
+
+
+class MirroredEdgeTest(unittest.TestCase):
+    """ADR-088 / #151: 両端から書かれた同じ事実に印を付ける。
+
+    `A impacts B` と `B depends_on A` は同じ一つの事実を両端から書いたものだが、
+    印が無いため読み手が図に描くと**循環に見えた**。利用者の実際の指摘 ——
+    「依存しあっているものは異常？」。本当の循環は 0 件だった。
+    画面が作った嘘を、利用者が正しく読んだ。
+    """
+
+    def _graph(self, files):
+        root = _util.make_repo(files)
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        return _util.load_core("_depgraph").build_graph(os.path.join(root, "docs"))
+
+    def _doc(self, doc_id, type_code, extra=None):
+        meta = {"id": doc_id, "title": "t", "type": type_code, "domain": "billing",
+                "status": "current", "owner": "o", "updated": "2026-06-01",
+                "sources": []}
+        if extra:
+            meta.update(extra)
+        return _util.fm_block(meta) + "本文。\n"
+
+    def _both_ends(self):
+        """SPEC-1 impacts IMPL-1 と IMPL-1 depends_on SPEC-1 の両方が書かれた木。"""
+        return self._graph({
+            "docs/billing/spec/SPEC-1-x.md": self._doc(
+                "SPEC-1", "SPEC", {"impacts": ["IMPL-1"]}),
+            "docs/billing/implementation/IMPL-1-x.md": self._doc(
+                "IMPL-1", "IMPL", {"depends_on": ["SPEC-1"]}),
+        })
+
+    def test_both_ends_written_are_marked(self):
+        edges = self._both_ends().classify_edges()
+        self.assertEqual(len(edges), 2, edges)
+        self.assertTrue(all(e["mirrored"] for e in edges), edges)
+
+    def test_one_end_only_is_not_marked(self):
+        """片方だけの宣言は正当である。印は事実の報告に留め、咎めない。"""
+        g = self._graph({
+            "docs/billing/spec/SPEC-1-x.md": self._doc("SPEC-1", "SPEC"),
+            "docs/billing/implementation/IMPL-1-x.md": self._doc(
+                "IMPL-1", "IMPL", {"depends_on": ["SPEC-1"]}),
+        })
+        edges = g.classify_edges()
+        self.assertEqual(len(edges), 1, edges)
+        self.assertFalse(edges[0]["mirrored"])
+
+    def test_marker_does_not_replace_kind(self):
+        """軸を混ぜない。kind は越境と dangling の分類のままである。"""
+        edges = self._both_ends().classify_edges()
+        for e in edges:
+            self.assertEqual(e["kind"], "intra_domain", e)
+            self.assertIn("mirrored", e)
+
+    def test_marker_is_not_a_cycle(self):
+        """**印は循環ではない。** 両端書きの木に循環は無い(強連結成分は空)。"""
+        g = self._both_ends()
+        self.assertTrue(all(e["mirrored"] for e in g.classify_edges()))
+        self.assertEqual(g.find_cycles(), [],
+                         "両端書きを循環として返してはならない(ADR-088)")
+
+    def test_real_cycle_is_still_found(self):
+        """本当の循環は引き続き find_cycles が返す。二つを混同しない。"""
+        g = self._graph({
+            "docs/billing/spec/SPEC-1-x.md": self._doc(
+                "SPEC-1", "SPEC", {"depends_on": ["SPEC-2"]}),
+            "docs/billing/spec/SPEC-2-x.md": self._doc(
+                "SPEC-2", "SPEC", {"depends_on": ["SPEC-1"]}),
+        })
+        self.assertTrue(g.find_cycles(), "本当の循環は返るはず")
+        # depends_on だけの往復なので、両端書きの印は付かない。
+        self.assertFalse(any(e["mirrored"] for e in g.classify_edges()))
+
+    def test_marker_agrees_with_the_readers_own_folding(self):
+        """読み手が自前の鍵(src/dst を昇順)で畳んだ結果と、上流の印が一致すること。
+
+        実物で確かめてある(2026-08-02): 呼び手の木で 10 対 = 20 本（辺の 28%）が
+        印を持ち、自前の鍵で数えた結果と完全に一致した。
+        """
+        edges = self._both_ends().classify_edges()
+        key = lambda e: "|".join(sorted([e["src"], e["dst"]]))
+        dep = {key(e) for e in edges if e["field"] == "depends_on"}
+        imp = {key(e) for e in edges if e["field"] == "impacts"}
+        marked = [e for e in edges if e["mirrored"]]
+        self.assertEqual(len(marked), len(dep & imp) * 2)
