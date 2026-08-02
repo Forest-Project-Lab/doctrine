@@ -2,11 +2,11 @@
 # doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
 """Unit tests for scripts/_registry.py — the single in-code copy of §3.2/§3.3/§3.4.
 
-Covers the synthesis gap "_registry.py itself has no test cases" (MASTER §10.1):
-registry parity (the 19 types with correct default status & llm_context),
+Covers the synthesis gap "_registry.py itself has no test cases" (仕様 §10.1):
+registry parity (every type with correct default status & llm_context),
 status_allowed per type (ADR exact set, RESEARCH draft carve-out, non-ADR excludes
 'accepted'), type_of prefix parsing, is_projection, effective_llm_context override,
-required_keys gating, is_current. Asserts against the MASTER §2 tables as the
+required_keys gating, is_current. Asserts against the 仕様 §2 tables as the
 authoritative source.
 """
 import os
@@ -22,7 +22,7 @@ if SCRIPTS not in sys.path:
 import _registry as R  # noqa: E402
 
 
-# Expected tables transcribed independently from MASTER §2 / spec §3.2 so the
+# Expected tables transcribed independently from 仕様 §2 / spec §3.2 so the
 # test is a true parity check, not a re-read of the module's own literals.
 EXPECTED_TYPES = (
     "ICD", "OVERVIEW", "GLOSSARY", "CTXMAP", "DECIDED", "NONGOAL", "WATCH",
@@ -51,10 +51,10 @@ EXPECTED_DEFAULT_LLM_CONTEXT = {
 
 
 class TestTypeRegistryParity(unittest.TestCase):
-    """All 19 types present, in registry order, with correct default tables (MASTER §2.1 + ADR-013)."""
+    """All types present, in registry order, with correct default tables (仕様 §2.1 + ADR-013)."""
 
     def test_20_types_in_order(self):
-        # 19 types (MASTER §2.1 + ADR-013) + EXT (ADR-026 外部アンカー).
+        # 仕様 §2.1 + ADR-013 の型 + EXT(ADR-026 外部アンカー)。数は下で凍結する。
         self.assertEqual(R.TYPES, EXPECTED_TYPES)
         self.assertEqual(len(R.TYPES), 20)
         self.assertEqual(len(set(R.TYPES)), 20, "no duplicate type codes")
@@ -90,7 +90,7 @@ class TestTypeRegistryParity(unittest.TestCase):
 
 
 class TestTypeLocation(unittest.TestCase):
-    """置き場所 table (MASTER §2.1) — allowed_locations + WATCH dual location."""
+    """置き場所 table (仕様 §2.1) — allowed_locations + WATCH dual location."""
 
     def test_all_types_have_a_location(self):
         self.assertEqual(set(R.TYPE_LOCATION), set(EXPECTED_TYPES))
@@ -164,7 +164,7 @@ class TestStatusAllowed(unittest.TestCase):
 
 
 class TestTypeOf(unittest.TestCase):
-    """type_of prefix parsing (MASTER §2.5): returns str|None, never raises."""
+    """type_of prefix parsing (仕様 §2.5): returns str|None, never raises."""
 
     def test_known_prefix(self):
         self.assertEqual(R.type_of("SPEC-014"), "SPEC")
@@ -263,7 +263,7 @@ class TestIsProjection(unittest.TestCase):
 
 
 class TestEffectiveLlmContext(unittest.TestCase):
-    """Frontmatter override wins, else per-type default (MASTER §2.5)."""
+    """Frontmatter override wins, else per-type default (仕様 §2.5)."""
 
     def test_override_wins(self):
         # SPEC default is 'task'; an explicit 'never' override must win.
@@ -305,7 +305,7 @@ class TestEffectiveLlmContext(unittest.TestCase):
 
 
 class TestRequiredKeys(unittest.TestCase):
-    """required_keys gating (MASTER §2.4 / C11): base 8, +review_by for DECIDED/WATCH."""
+    """required_keys gating (仕様 §2.4 / C11): base 8, +review_by for DECIDED/WATCH."""
 
     def test_base_eight_no_created(self):
         self.assertEqual(
@@ -368,7 +368,7 @@ class TestIsCurrent(unittest.TestCase):
 
 
 class TestFixedSystemFiles(unittest.TestCase):
-    """Fixed _system filenames (01-registry §5.3, consistent with MASTER C8/§5.8)."""
+    """Fixed _system filenames (01-registry §5.3, consistent with 仕様 C8/§5.8)."""
 
     def test_projection_files(self):
         self.assertEqual(
@@ -415,7 +415,7 @@ class TestConstants(unittest.TestCase):
         )
 
     def test_domain_of_not_present(self):
-        # domain_of lives in _depgraph.resolve, NOT in the registry (MASTER §2.5).
+        # domain_of lives in _depgraph.resolve, NOT in the registry (仕様 §2.5).
         self.assertFalse(hasattr(R, "domain_of"))
 
 

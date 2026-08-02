@@ -19,6 +19,11 @@ import json
 import os
 import sys
 
+# 作業木にバイトコードを残さない(ADR-075)。フックは一回きりの短命な
+# プロセスで、__pycache__ の利得はほぼ無い。一方、marketplace の source が
+# ディレクトリのとき、ここに書いた物はそのまま利用者へ複製される。
+sys.dont_write_bytecode = True
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import _registry  # noqa: E402
@@ -85,11 +90,36 @@ def _resolve_roots(opts):
     docs_root = opts["docs_root"]
     if not docs_root:
         proj = os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()
-        docs_root = _registry.locate_docs_root(proj)
+        docs_root = (_registry.locate_docs_root(proj)
+                     or _registry.walkup_docs_root(proj))
     root = opts["root"]
     if not root:
         root = os.path.dirname(os.path.abspath(docs_root)) if docs_root else None
     return root, docs_root
+
+
+def _exempt_paths(docs_root):
+    """設定 `_system/.context-config.json` の trace_exempt を読む(ADR-075)。
+
+    監査は同じ設定を読んで「印なし」を数えるのに、この問い合わせ CLI は読んで
+    いなかった。そのため監査が「印なし 0 / exempt 51」と告げる木で、監査自身が
+    是正の案内として指す `trace-index --coverage --term unmarked` が 24 件を
+    並べるという食い違いが起きていた。同じ設定を読み、同じ答えを返す。
+    """
+    if not docs_root:
+        return []
+    path = os.path.join(docs_root, "_system", ".context-config.json")
+    try:
+        with open(path, encoding="utf-8-sig") as fh:
+            cfg = json.load(fh)
+    except (OSError, ValueError):
+        return []
+    exempt = cfg.get("trace_exempt")
+    if not isinstance(exempt, dict):
+        return []
+    return [p for p, reason in exempt.items()
+            if isinstance(p, str) and p.strip()
+            and isinstance(reason, str) and reason.strip()]
 
 
 def _render_text(ranges, findings, doc_id):
@@ -123,7 +153,8 @@ def main(argv=None):
 
     ranges, findings, coverage = _tracescan.scan_tree(
         root, docs_root=docs_root, max_files=opts["max_files"],
-        collect_members=bool(opts["term"]))
+        collect_members=bool(opts["term"]),
+        exempt_paths=_exempt_paths(docs_root))
     if opts["doc_id"]:
         ranges = [r for r in ranges if r["id"] == opts["doc_id"]]
 

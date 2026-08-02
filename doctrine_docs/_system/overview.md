@@ -5,7 +5,7 @@ type: OVERVIEW
 domain: _system
 status: current
 owner: render-projection
-updated: 2026-07-28
+updated: 2026-07-29
 llm_context: always
 sources: []
 ---
@@ -17,9 +17,9 @@ sources: []
 | id | type | domain | title |
 |---|---|---|---|
 | GLOSSARY-001 | GLOSSARY | _system | 用語辞書の正本 |
-| DECIDED-001 | DECIDED | _system | 横断の確定方針（11事実） |
+| DECIDED-001 | DECIDED | _system | 横断の確定方針（12事実） |
 | NONGOAL-001 | NONGOAL | _system | 横断のやらないこと（15項） |
-| WATCH-001 | WATCH | _system | 横断の退行監視（7項） |
+| WATCH-001 | WATCH | _system | 横断の退行監視（9項） |
 | ICD-005 | ICD | audit | audit のインターフェース（全件監査の境界） |
 | REQ-008 | REQ | audit | 最小性の監査（過剰と不足の両側を全件検出） |
 | SPEC-011 | SPEC | audit | 全件監査の検査群・要約スキーマ・決定性 |
@@ -179,12 +179,15 @@ sources: []
 | ADR-070 | ADR | packaging | 導入済みの複製の遅れを鼓動が検める — 正本の版との照合 |
 | ADR-071 | ADR | packaging | リリースの整合を CI の門で検める — 変更履歴の書き忘れの構造的な防止 |
 | ADR-074 | ADR | packaging | 不具合の報告は「検出は機械・送信は人」の二層に分ける |
+| ADR-075 | ADR | packaging | フック境界は沈黙して開かない — 読み手・書き出し・経路解決・配布の四点を実行環境に対して堅くする |
 | CHANGE-001 | CHANGE | packaging | 導入済みプラグインの版の遅れを生存性として照合する |
 | CHANGE-002 | CHANGE | packaging | リリースの整合を CI の門で検める — 変更履歴の書き忘れを止める |
 | CHANGE-005 | CHANGE | packaging | 不具合の兆候を記録し、承認を経た issue 報告を促す |
+| CHANGE-006 | CHANGE | packaging | フック境界と実行環境の堅牢化 — 何を変えたか |
 | IMPACT-001 | IMPACT | packaging | 版の遅れの照合 — 影響の列挙 |
 | IMPACT-002 | IMPACT | packaging | リリース整合の門 — 影響の列挙 |
 | IMPACT-005 | IMPACT | packaging | 不具合の記録と報告 — 影響の列挙 |
+| IMPACT-006 | IMPACT | packaging | フック境界と実行環境の堅牢化 — 影響の列挙 |
 | IMPL-017 | IMPL | packaging | パッケージ・Hook配線の実装注記 |
 | IMPL-019 | IMPL | packaging | gov-heartbeat.py（統治ハートビート）の実装メモ |
 | PROC-001 | PROC | packaging | 開発規範 — 方法論の採用範囲と、機械の検算・人の査読の分担 |

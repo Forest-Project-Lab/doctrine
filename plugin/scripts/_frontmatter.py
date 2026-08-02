@@ -15,6 +15,7 @@ MASTER §1 の API をそのまま実装する。仕様 §3.4 のフロントマ
 """
 import os
 import re
+import stat
 
 FRONTMATTER_VERSION = 1  # bump if parse semantics change
 
@@ -114,6 +115,32 @@ def parse(text):
     return (fm, body, errors)
 
 
+def ensure_regular(path):
+    """通常ファイルでなければ OSError。開く前に必ず通す門(ADR-075)。
+
+    名前付きパイプ・デバイス・ソケットを open すると書き手を待って戻らない。
+    統治の読み手は per-turn の Hook から呼ばれるため、一つの非通常ファイルが
+    ガード・リンタ・注入・監査を無言で止める(拒否が届かない fail-open)。
+    走査層(_tracescan)にだけ在った種別の検査を、共有の読み手へ一本化する。
+    """
+    p = os.fspath(path)
+    st = os.stat(p)          # 追跡しないリンクは stat が解決する。壊れた先は OSError。
+    if not stat.S_ISREG(st.st_mode):
+        raise OSError("通常ファイルではない(統治の読み手は開かない): %s" % p)
+    return p
+
+
+def read_text(path, newline=""):
+    """統治対象を UTF-8(utf-8-sig)で読む。種別の門を通す唯一の入口(ADR-075)。
+
+    parse_file を経由しない読み手(--batch・体系外 .md・辞書・コード層)も、
+    ここを通ることで同じ守りを受ける。例外は I/O と復号の失敗だけ。
+    """
+    with open(ensure_regular(path), "r", encoding="utf-8-sig",
+              newline=newline) as fh:
+        return fh.read()
+
+
 def parse_file(path):
     """Read 'path' (str | os.PathLike) as UTF-8 (utf-8-sig) and delegate to parse().
 
@@ -121,13 +148,12 @@ def parse_file(path):
     newline='' (no newline translation, so CRLF survives into the body).
 
     Raises ONLY on I/O / decoding failure (FileNotFoundError, IsADirectoryError,
-    PermissionError, UnicodeDecodeError). NEVER raises on content; content
-    malformation flows through the errors list. No latin-1 fallback.
+    PermissionError, UnicodeDecodeError, OSError). NEVER raises on content;
+    content malformation flows through the errors list. No latin-1 fallback.
+
+    通常ファイルでなければ開かずに OSError を送出する(ensure_regular。ADR-075)。
     """
-    p = os.fspath(path)
-    with open(p, "r", encoding="utf-8-sig", newline="") as fh:
-        text = fh.read()
-    return parse(text)
+    return parse(read_text(path))
 
 
 def parse_frontmatter(text):

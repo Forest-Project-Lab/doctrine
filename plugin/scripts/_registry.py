@@ -14,9 +14,11 @@ from __future__ import annotations
 
 import os
 import re
+import stat
 
 # ---------------------------------------------------------------------------
-# §3.2 型登録簿 — 19 types, registry order (= spec table row order)
+# §3.2 型登録簿 — registry order (= spec table row order)。件数は書かない
+# (ADR-075: 「19 types」と書いたまま 20 になっていた)。数は len(TYPES) が持つ。
 # ---------------------------------------------------------------------------
 
 # doctrine:begin SPEC-001
@@ -103,6 +105,18 @@ TYPE_LOCATION = {
 # status:archived の文書は、型に依らず <domain>/archive/ 配下に置く(ADR-027)。
 # §3.2(型で置き場所)と §3.8(アーカイブは倉庫へ移す)の衝突をこの一行で解く。
 ARCHIVED_LOCATION = ["<domain>/archive/"]
+# 置き場所の名前の正本。判定の実体もここに置く(ADR-075)。監査が
+# `"archive" not in parts[:-1]` と独自に持っており、規則の二重定義だった。
+ARCHIVE_DIR_NAME = "archive"
+
+
+def is_archived_path(dir_parts):
+    """統治木からの相対の途中経路が <domain>/archive/ 配下か。
+
+    dir_parts は docs_root からの相対のディレクトリ列(ファイル名は含めない)。
+    深さは問わない(<domain>/archive/<年>/ のような年別の棚も倉庫の中と見る)。
+    """
+    return ARCHIVE_DIR_NAME in list(dir_parts or [])
 
 # 投影 (projections) — rendered, "手で編集しない". ICD-index reuses type OVERVIEW (C8),
 # so it is NOT a separate type here ("空の型を先に作らない", §3.2).
@@ -257,6 +271,41 @@ SYSTEM_CANONICAL_FILES = frozenset({
 # stray-document scanning (ADR-021) must not report them as unclassified.
 ROOT_POINTER_FILES = frozenset({"CLAUDE.md", "AGENTS.md"})
 
+# 走査から外すディレクトリ名。dot ディレクトリ(.claude/ .github/ .devcontainer/)
+# はハーネスと道具の領分であり、統治の対象ではない。
+_DOT_PREFIX = "."
+
+
+def is_outside_governance(path, proj=None):
+    """統治の点検を当ててはいけないファイルか(ADR-075)。決して例外を投げない。
+
+    二つを見る。(1) 根の案内(CLAUDE.md/AGENTS.md)は仕様が根に置くと定める入口で
+    あり、フロントマターを持たない(ADR-029)。(2) dot ディレクトリの配下は
+    ハーネスと道具の設定であり、統治の走査対象でない。
+
+    この判定はこれまで監査(_audit_stray)にしか無く、リンタは同じ範囲を知らな
+    かった。その結果 CLAUDE.md に MISSING_FRONTMATTER、`.claude/commands/*.md` に
+    MISSING_KEY を出し続け、指示に従えば ADR-029 に反しスラッシュコマンドが壊れる
+    という、構造的に修正不能な要求になっていた。判定をここへ一本化する。
+    """
+    if not path:
+        return False
+    try:
+        norm = os.path.abspath(path).replace("\\", "/")
+    except Exception:
+        return False
+    base = os.path.basename(norm)
+    if base in ROOT_POINTER_FILES:
+        return True
+    rel = norm
+    if proj:
+        try:
+            rel = os.path.relpath(norm, os.path.abspath(proj)).replace("\\", "/")
+        except Exception:
+            rel = norm
+    return any(seg.startswith(_DOT_PREFIX) and seg not in (".", "..")
+               for seg in rel.split("/")[:-1])
+
 # 統治木のディレクトリ名 — 優先順(ADR-022)。既定は doctrine_docs。docs は
 # doctrine が初期化した印(_system)を持つ場合だけ統治木と認める(後方互換)。
 # _system を持たない素の docs/ は他所の土地であり、決して統治木として扱わない。
@@ -347,7 +396,7 @@ def type_of(doc_id):
 
 
 def is_known_type(type_code):
-    """True iff `type_code` is one of the 19 registry types.
+    """True iff `type_code` is one of the registry types (see TYPES).
 
     Non-string values (e.g. a YAML-list typo `type: [SPEC]`) are simply
     unknown — they must not raise, or a single malformed frontmatter key
@@ -453,6 +502,8 @@ def docs_level(docs_root):
         return 4
     path = os.path.join(docs_root, "_system", ".docs-level")
     try:
+        if not stat.S_ISREG(os.stat(path).st_mode):
+            return None      # 通常ファイルでなければ開かない(ADR-075)
         with open(path, "r", encoding="utf-8-sig") as fh:
             for line in fh:
                 m = _DOCS_LEVEL_RE.match(line)

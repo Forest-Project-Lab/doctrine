@@ -152,8 +152,7 @@ def _check_view(rel, abspath, today, graph, make_finding, parse_date):
     """
     out = []
     try:
-        with open(abspath, "r", encoding="utf-8-sig") as fh:
-            text = fh.read()
+        text = _frontmatter.read_text(abspath, newline=None)
     except (OSError, UnicodeError):
         return out
     stamp, err = _intake.parse_view_stamp(text)

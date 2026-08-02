@@ -6,7 +6,7 @@ domain: context
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-26
+updated: 2026-07-29
 sources: [plugin/scripts/collect-context.py]
 depends_on: [SPEC-013]
 llm_context: task
@@ -28,6 +28,7 @@ SPEC-013 を実装する、パック・スクリプトの実装メモである `
 - 出所は、各事実に `source_id` と `source_path` で必ず付ける。語彙の近い文書を取り違えないためである。
 - `_enforce_cap` は、ある要求を唯一覆っている文書を落とさない。
 - 覆えなかった要求は uncovered として表に出し、その理由を `_uncovered_reasons` で添える。
+- ADR-075: 上限の強制は落とすたび一意被覆を数え直し、勘定は `_render_doc_md` の結果で行う。
 
 ## 対象部品
 

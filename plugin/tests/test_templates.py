@@ -1,5 +1,5 @@
 # doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
-"""Template validation suite (slice 09 / MASTER §8).
+"""Template validation suite (slice 09 / 仕様 §8).
 
 Validates ALL 20 shipped templates under plugin/templates/:
 the 18 single-type templates (icd, overview, ctxmap, decided, nongoal, watch,
@@ -43,7 +43,7 @@ _frontmatter = _util.load_core("_frontmatter")
 # --- The shipped template inventory ----------------------------------------
 # Maps template filename -> the type code its frontmatter MUST carry.
 # 19 single-type templates + glossary (sibling-owned) = 20 type templates
-# (18+glossary per MASTER §2.1 + ADR-013 PROC + ADR-026 EXT);
+# (18+glossary per 仕様 §2.1 + ADR-013 PROC + ADR-026 EXT);
 # icd-index is the +1 projection seed (type OVERVIEW, C8).
 TYPE_TEMPLATES = {
     "icd.md.tmpl": "ICD",
@@ -313,7 +313,7 @@ class IcdTemplateTest(unittest.TestCase):
 class SpecTemplateTest(unittest.TestCase):
     """spec.md.tmpl has all 4 mandatory headings non-trivially + depends_on.
 
-    Slice §2.9 / MASTER §8: 入出力・制約・エラー時挙動・受入基準 as headings,
+    Slice §2.9 / 仕様 §8: 入出力・制約・エラー時挙動・受入基準 as headings,
     each with non-empty guidance text under it.
     """
 

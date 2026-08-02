@@ -6,7 +6,7 @@ domain: lint
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-28
+updated: 2026-07-29
 sources: [plugin/scripts/docs-linter.py]
 depends_on: [REQ-005, REQ-006, REQ-007, ICD-001, ICD-002, ICD-005]
 llm_context: task
@@ -28,6 +28,11 @@ llm_context: task
 - 各点検の重大度は次のとおり。`MISSING_KEY`・`EMPTY_KEY`・`BAD_STATUS`・`UNKNOWN_TYPE`・`ID_FILENAME_MISMATCH`・`BAD_FILENAME`・`TYPE_LOCATION_MISMATCH`・`DOMAIN_PATH_MISMATCH`は ERROR（重大度・誤り）。`BAD_LLM_CONTEXT`は、値が不正なら ERROR、既定値の上書きなら WARN（重大度・警告）。`RESEARCH_HAS_DECISION`は WARN。`SPEC_MISSING_SECTION`・`SPEC_EMPTY_SECTION`・`MISSING_TRACE`は ERROR。（本文の `[R番号]` タグは doctrine 自己適用の約束で、上位設計書 §2 を引く。追跡の正路は REQ への `depends_on` である。ADR-045、#87）`STRAY_DOCUMENT`（登録簿の型を持つ文書が doctrine_docs/ の木の外に在る。ADR-021）は ERROR。`ARCHIVED_LOCATION_MISMATCH`（`status`==archived なのに `<domain>/archive/` の外に在る。ADR-027。archived ではこの規則が型の置き場所規則より優先する）は ERROR。型なしの .md には出さない（README 等の非文書の分類は external-md-intake に委ねる）。点検の前にまず統治木を探し、根に到達できない体系外のファイルは点検しない。型なしで intake（`_system/.md-intake`）に『非文書』『投影』『ビュー』と登録されたファイルは、schema/frontmatter の点検を飛ばし、用語助言だけを WARN で残す（ADR-024）。『ビュー』のファイルに刻印（書式の正本は audit の ICD-005 の `view-stamp-format`）が無ければ、`VIEW_MISSING_STAMP`（WARN）で刻印を促す（ADR-073。助言のみ。拒否はしない）。intake の読み取りは監査と同じ共有コア（`_intake`。書式の正本は audit の ICD-005）を使い、同じファイルへの分類が食い違わないようにする。
 - 必須キーの 8 つも、`status` の型別許可表も、登録簿（model）に問い合わせる。`_system` の固定ファイル名は、`id` とファイル名の一致点検を免除する。
 - 依存先がどのドメインに属するかは dep-graph に解決を委ねる。解決できない依存は、ERROR で止めず `ICD_DEP_UNVERIFIED`（WARN）に落とす。別ドメインの ICD 以外を横断して依存していれば `ICD_DEP_VIOLATION`（助言の ERROR）を出すが、それでも編集は拒否しない[R7]。
+- 統治の走査から外す範囲（根の案内と dot ディレクトリ配下）は `_registry.is_outside_governance` に一本化し、監査と共有する。ここへは何も出さない（ADR-075）。
+- 依存先のドメインは置き場所の名前だけから解く。兄弟文書を読まない（per-turn は編集された一件だけ。NONGOAL 第5項）。解けなければ未検証の助言へ落とす（ADR-075）。
+- 助言の描画は `sanitize_inline` を通す。パスと所見の文が攻撃者制御になりうる（ADR-040 の射程拡張。ADR-075）。
+- SPEC の必須節の中身は、同レベル以下の次の見出しまでとする。小見出しで途切れさせない（ADR-075）。
+- 発火の印は `hook_event_name` が PostToolUse のときだけ残す（ADR-075）。
 
 ## エラー時挙動
 

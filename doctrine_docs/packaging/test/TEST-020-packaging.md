@@ -6,7 +6,7 @@ domain: packaging
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-28
+updated: 2026-07-29
 sources: [plugin/tests/test_meta.py, plugin/tests/test_packaging.py]
 depends_on: [SPEC-020]
 llm_context: task
@@ -24,6 +24,8 @@ SPEC-020 と REQ-013 の受入基準を確認する。
 - `scripts/` の全 `.py` が実行ビットと `python3` のシバンを持つ（Hook が直接起動するため）。
 - 各エントリスクリプトが、`def main` と `sys.path.insert` のブートストラップを持つ。
 - README（ビュー。ADR-073）が存在し、索引項目（install 経路・`.claude/` への退避・7 つの技能・Hook の各イベント・スクリプト名・段）と `## 保証限界`（予防・検出・委ねる）と刻印（`doctrine:view` の一行。`as-of` の一致は TEST-027 の門が検める）を持つ。
+- ADR-075: `plugin/` の下に実行時の状態（`.cache`・`.claude`）が無いこと。
+- ADR-075: 同梱の試験が配布物の外を素で読まないこと。導入した複製で `run_tests.py` が通ること。
 
 ## 退行観点
 

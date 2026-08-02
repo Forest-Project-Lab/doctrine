@@ -6,7 +6,7 @@ domain: packaging
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-28
+updated: 2026-07-29
 sources: [plugin/.claude-plugin/plugin.json]
 depends_on: [REQ-013]
 llm_context: task
@@ -30,9 +30,11 @@ llm_context: task
 
 - `plugin.json` は最小キーだけを持つ。想定外の最上位キーを足さない。
 - スクリプトは、標準ライブラリと、兄弟の `_` コア（`_registry`・`_frontmatter` など）だけを import する。pip で入れる第三者依存を作らない（ADR-031）`[R5]`。
-- 配布物のほかに、リポジトリ直下の `scripts/`（整合点検の二本。SPEC-023）が在る。これは本リポジトリ専用の自己適用であり、配布物には含めない。「`scripts/`」と書くときは、`plugin/scripts/`（配布物）とリポジトリ直下 `scripts/`（自己適用）を必ず書き分ける。
+- 配布物のほかに、リポジトリ直下の `scripts/`（整合点検とリリース整合。SPEC-023・SPEC-027）が在る。これは本リポジトリ専用の自己適用であり、配布物には含めない。「`scripts/`」と書くときは、`plugin/scripts/`（配布物）とリポジトリ直下 `scripts/`（自己適用）を必ず書き分ける。
 - 各エントリスクリプトは `def main` を定義し、`sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))` のブートストラップを持つ。これで兄弟コアを解決する。
 - プラグインを配置できないときは、`.claude/` へ退避する（`scaffold.py --fallback`）。
+- 配布物に実行時の状態を含めない。marketplace の `source` がディレクトリのとき、配布は作業木の複製であり `.gitignore` は効かない。実行時の状態は `${CLAUDE_PROJECT_DIR}/.claude/.cache` に限る（ADR-075）。
+- 同梱の試験は配布物の外を素で読まない。導入したプラグインは自分のディレクトリの外を参照できない（ADR-075）。
 
 ## エラー時挙動
 

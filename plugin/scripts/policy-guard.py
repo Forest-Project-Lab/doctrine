@@ -28,8 +28,14 @@ import json
 import os
 import sys
 
+# 作業木にバイトコードを残さない(ADR-075)。フックは一回きりの短命な
+# プロセスで、__pycache__ の利得はほぼ無い。一方、marketplace の source が
+# ディレクトリのとき、ここに書いた物はそのまま利用者へ複製される。
+sys.dont_write_bytecode = True
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import _hookio
 import _depgraph
 import _frontmatter
 import _registry
@@ -115,11 +121,22 @@ def _is_under_archive(file_path):
     root = _registry.walkup_docs_root(file_path)
     if root is None:
         return False
-    norm = os.path.abspath(file_path).replace("\\", "/")
-    rootn = os.path.abspath(root).replace("\\", "/")
+    norm, rootn = _contained_pair(file_path, root)
     if not norm.startswith(rootn + "/"):
         return False
     return "archive" in norm[len(rootn) + 1:].split("/")
+
+
+def _contained_pair(file_path, root):
+    """包含判定に使う (対象, 木) の正規化パス。両方ともリンクを解決する(ADR-075)。
+
+    abspath だけではリンクを追わないため、archive/ を指すディレクトリリンクを
+    経由すると「木の外」と読まれて不変ガードが外れた。同じファイルの
+    _pre_target_is_guard_inert と _handle_post_edit は realpath を使っており、
+    包含の基準がガードの中で食い違っていた。厳しい側(realpath)へ揃える。
+    """
+    return (os.path.realpath(file_path).replace("\\", "/"),
+            os.path.realpath(root).replace("\\", "/"))
 
 
 def _is_under_docs(file_path):
@@ -134,8 +151,7 @@ def _is_under_docs(file_path):
     root = _registry.walkup_docs_root(file_path)
     if root is None:
         return False
-    norm = os.path.abspath(file_path).replace("\\", "/")
-    rootn = os.path.abspath(root).replace("\\", "/")
+    norm, rootn = _contained_pair(file_path, root)
     return norm.startswith(rootn + "/")
 
 
@@ -187,7 +203,7 @@ def guard_immutability(file_path, tool, tin):
     if not file_path or not os.path.isfile(file_path):
         return None
     try:
-        cur_fm, cur_body, _errs = _frontmatter.parse_file(file_path)
+        cur_fm, cur_body, cur_errs = _frontmatter.parse_file(file_path)
     except (OSError, UnicodeError):
         # 既存ファイルが読めない。fail-closed(Guard1 は安全側)。
         return ("ガード異常: 既存ファイル %s を読めません。手で確認してください。" % file_path)
@@ -205,24 +221,53 @@ def guard_immutability(file_path, tool, tin):
 
     # ここから先は既存 ADR の改変。carve-out だけかを判定する。
     doc_id = cur_fm.get("id") or file_path
-    if _adr_change_is_carveout_only(cur_fm, cur_body, tool, tin):
+    if _adr_change_is_carveout_only(cur_fm, cur_body, tool, tin, file_path,
+                                    cur_errs):
         return None
     return ("既存ADR %s は改変できません(status遷移とsuperseded_by付与のみ可)。" % doc_id)
 
 
-def _adr_change_is_carveout_only(cur_fm, cur_body, tool, tin):
-    """既存 ADR への変更が carve-out(status 遷移 + superseded_by/updated)だけか。"""
-    if tool == "Write":
-        new_text = tin.get("content", "")
-        new_fm, new_body, _e = _frontmatter.parse(new_text)
-        return _adr_delta_ok(cur_fm, cur_body, new_fm, new_body)
-    # Edit / MultiEdit: ディスク内容に編集を当てた結果を作って比べる。
-    new_text = _apply_edits(_render_doc(cur_fm, cur_body), tool, tin)
+def _adr_change_is_carveout_only(cur_fm, cur_body, tool, tin, file_path=None,
+                                 cur_errs=None):
+    """既存 ADR への変更が carve-out の範囲だけか。
+
+    carve-out は二つ。(1) status 遷移 + superseded_by/updated の付与。
+    (2) フロントマターの構文修復(ADR-075)。ADR は不変だが、構文が壊れた
+    フロントマターは値を黙って落とす。不変を理由に修復まで拒むと、壊れた ADR が
+    永久に直せず CI が赤のまま閉じる。修復だけを、本文不変と「誤りが消えること」で
+    機械的に見分けて許す。
+    """
+    new_text = _proposed_text(cur_fm, cur_body, tool, tin, file_path)
     if new_text is None:
         # 編集を確実に当てられない(old_string が一致しない等)→ 安全側で carve-out 否定。
         return False
-    new_fm, new_body, _e = _frontmatter.parse(new_text)
-    return _adr_delta_ok(cur_fm, cur_body, new_fm, new_body)
+    new_fm, new_body, new_errs = _frontmatter.parse(new_text)
+    if _adr_delta_ok(cur_fm, cur_body, new_fm, new_body):
+        return True
+    return _is_syntax_repair(cur_fm, cur_body, cur_errs,
+                             new_fm, new_body, new_errs)
+
+
+def _is_syntax_repair(cur_fm, cur_body, cur_errs, new_fm, new_body, new_errs):
+    """壊れたフロントマターの修復だけか(ADR-075)。
+
+    四つを全て満たすときだけ真。(1) 編集前に構文の誤りがある。(2) 編集後は無い。
+    (3) 本文が変わらない。(4) 誤りに関わらなかった鍵の値が変わらない。
+    誤りに関わった鍵だけが動くので、修復に見せかけて決定を書き換えることはできない。
+    """
+    if not cur_errs or new_errs:
+        return False
+    if (cur_body or "").strip() != (new_body or "").strip():
+        return False
+    broken = {e.get("key") for e in cur_errs if isinstance(e, dict) and e.get("key")}
+    if not broken:
+        return False          # 鍵を特定できない誤り(閉じ '---' 欠落等)は許さない。
+    for k in set(cur_fm) | set(new_fm):
+        if k in broken or k in _ADR_CARVEOUT_KEYS:
+            continue
+        if cur_fm.get(k) != new_fm.get(k):
+            return False
+    return True
 
 
 def _adr_delta_ok(cur_fm, cur_body, new_fm, new_body):
@@ -352,7 +397,7 @@ def guard_delete_safety_edit(file_path, tool, tin, graph):
         _coerce_type(cur_fm)) or ""
 
     # 新しい内容(全文)を作る。
-    new_text = _proposed_text(cur_fm, cur_body, tool, tin)
+    new_text = _proposed_text(cur_fm, cur_body, tool, tin, file_path)
     if new_text is None:
         return None  # 事前に確定できない → PostToolUse に回す。
     new_fm, new_body, _e2 = _frontmatter.parse(new_text)
@@ -376,16 +421,100 @@ def guard_delete_safety_edit(file_path, tool, tin, graph):
             % (doc_id, joined))
 
 
-def _proposed_text(cur_fm, cur_body, tool, tin):
-    """編集適用後の全文を作る。作れない(old_string 不一致等)なら None。"""
+def _proposed_text(cur_fm, cur_body, tool, tin, file_path=None):
+    """編集適用後の全文を作る。作れない(old_string 不一致等)なら None。
+
+    編集はディスクの生の全文へ当てる(ADR-075)。以前は _render_doc の正規化した
+    再構成へ当てていたため、生ファイルの整形(`status:  current` のような余分な
+    空白・引用符・コメント行)を old_string が含むと一致せず None になり、判定を
+    持たないまま allow へ倒れた。実測: 空白1つなら deny、2つなら allow。
+    生が読めないときだけ再構成へ退く。
+    """
     if tool == "Write":
         return tin.get("content", "")
-    return _apply_edits(_render_doc(cur_fm, cur_body), tool, tin)
+    base = None
+    if file_path:
+        try:
+            base = _frontmatter.read_text(file_path)
+        except (OSError, UnicodeError):
+            base = None
+    if base is None:
+        base = _render_doc(cur_fm, cur_body)
+    return _apply_edits(base, tool, tin)
 
 
 # ---------------------------------------------------------------------------
 # Guard 3 — Bash 経路(deny-only, §3.5)
 # ---------------------------------------------------------------------------
+
+
+def _apply_cd(segment, base):
+    """区切りが `cd DIR` なら基準を移す。(新しい base, 解決できたか) を返す。
+
+    `cd sub && rm x` の x は sub/x を指す。全区切りで基準を固定していたため、
+    実在しないパスに解決されて削除安全が丸ごと外れていた(ADR-075)。
+    宛先が変数・コマンド置換・`-` のときは静的に決められないので偽を返す。
+    """
+    tokens = _tokenize(segment)
+    if not tokens or tokens[0] not in ("cd", "pushd"):
+        return base, True
+    args = [t for t in _strip_redirections(tokens[1:]) if not t.startswith("-")]
+    if not args:
+        return base, True                 # 引数なしの cd は HOME。対象を持たない。
+    dst = args[0]
+    if dst == "-" or _looks_dynamic(dst):
+        return base, False
+    return os.path.normpath(_resolve_arg(dst, base)), True
+
+
+def _looks_dynamic(token):
+    """展開しないと決まらない文字を含むか($VAR・`cmd`・$(cmd)・~・glob)。"""
+    return any(ch in token for ch in ("$", "`", "~", "*", "?"))
+
+
+# git の大域オプションのうち、値を次のトークンに取るもの。
+_GIT_OPTS_WITH_VALUE = ("-C", "-c", "--git-dir", "--work-tree", "--namespace",
+                        "--exec-path", "--config-env")
+
+
+def _skip_git_global_opts(tokens, base):
+    """`git` の大域オプションを読み飛ばす。(部分コマンドの添字, 新 base) を返す。
+
+    -C DIR は以降の相対パスの基準を移す。`git -C dir rm PATH` を動詞なしと読むと
+    削除安全が丸ごと外れる(ADR-075)。解決できない -C は base に None を返し、
+    呼び手が安全側(拒否)へ倒せるようにする。
+    """
+    i = 1
+    while i < len(tokens):
+        tok = tokens[i]
+        if tok in _GIT_OPTS_WITH_VALUE:
+            if i + 1 >= len(tokens):
+                return None, base
+            val = tokens[i + 1]
+            if tok == "-C":
+                if _looks_dynamic(val):
+                    return None, None
+                base = os.path.normpath(_resolve_arg(val, base))
+            i += 2
+            continue
+        if tok.startswith("-"):
+            i += 1
+            continue
+        return i, base
+    return None, base
+
+
+def _has_delete_verb(segment):
+    """この区切りが rm / git rm / mv / git mv を含むか(先頭の動詞だけを見る)。"""
+    tokens = _tokenize(segment)
+    if not tokens:
+        return False
+    if tokens[0] in ("rm", "mv"):
+        return True
+    if tokens[0] != "git":
+        return False
+    sub_i, _base = _skip_git_global_opts(tokens, "")
+    return sub_i is not None and tokens[sub_i] in ("rm", "mv")
 
 
 def guard_delete_safety_bash(command, cwd, graph_cache):
@@ -396,8 +525,20 @@ def guard_delete_safety_bash(command, cwd, graph_cache):
     展開できない glob は fail-closed で拒否する。
     """
     segments = _split_command(command)
+    # 削除の動詞を一つも含まないコマンドには、このガードは何も言わない。
+    # `cd "$D" && ls` のような無害な経路まで「cd を解決できない」で拒むのは
+    # 過剰であり、統治と無関係な作業を止める(ADR-075)。
+    if not any(_has_delete_verb(seg) for seg in segments):
+        return None
+    base = os.path.abspath(cwd) if cwd else os.getcwd()
     for seg in segments:
-        targets, verb, had_glob_unexpandable = _extract_remove_targets(seg, cwd)
+        base, resolvable = _apply_cd(seg, base)
+        if not resolvable:
+            # cd の宛先を静的に決められない(変数・コマンド置換)。以降の相対パスの
+            # 意味が決まらないので、安全側で拒否する(展開不能な glob と同じ扱い)。
+            return ("削除安全: `cd` の宛先を静的に解決できないため、この経路の "
+                    "削除対象を確かめられません。絶対パスで書き直してください。")
+        targets, verb, had_glob_unexpandable = _extract_remove_targets(seg, base)
         if had_glob_unexpandable:
             return ("削除対象の glob を展開できません: %s。安全のため拒否します。"
                     % seg.strip())
@@ -455,8 +596,11 @@ def _bash_target_violation(target_path, graph_cache):
     info = graph.resolve(doc_id)
     if info is None:
         return None
-    if not _registry.is_current(info.get("status") or ""):
-        return None  # 現行でない文書の削除は不変条件に触れない。
+    # 対象自身の status は問わない(ADR-075)。降格は「現行からの遷移」なので現行性が
+    # 条件になるが、削除は状態に依らず現行の依存先を死リンクにする。DECIDED-001 事実5
+    # も「削除・降格してよいのは現行の逆依存がゼロのときだけ」と status を条件にしない。
+    # 同じ文書の「本文を空にする Write」は既に status を問わず拒否しており、
+    # 完全に消す rm だけが通るのは判定の非対称だった。
     dependents = sorted(graph.reverse_current_dependents(doc_id))
     if not dependents:
         return None
@@ -538,6 +682,31 @@ def _split_command(command):
     return [s for s in segments if s.strip() != ""]
 
 
+def _verb_of(tokens, base):
+    """先頭のトークン列から (動詞, 引数の開始位置, 基準, 解決不能か) を返す。
+
+    `git` は大域オプションを部分コマンドの前に取る。`git -C DIR rm PATH` を
+    動詞なしと読むと削除安全が丸ごと外れる(ADR-075)。-C は基準も動かす。
+    """
+    if tokens[0] == "rm":
+        return "rm", 1, base, False
+    if tokens[0] == "mv":
+        return "mv", 1, base, False
+    if tokens[0] != "git":
+        return None, 0, base, False
+    sub_i, git_base = _skip_git_global_opts(tokens, base)
+    if git_base is None:
+        return None, 0, base, True
+    if sub_i is None or sub_i >= len(tokens):
+        return None, 0, git_base, False
+    if tokens[sub_i] == "rm":
+        return "git rm", sub_i + 1, git_base, False
+    if tokens[sub_i] == "mv":
+        # git mv も mv と同じ移動/上書きの意味論で扱う(SPEC-003)。
+        return "mv", sub_i + 1, git_base, False
+    return None, 0, git_base, False
+
+
 def _extract_remove_targets(segment, cwd):
     """一区切りから rm/git rm/mv の対象パスを取り出す。
 
@@ -548,26 +717,15 @@ def _extract_remove_targets(segment, cwd):
     if not tokens:
         return [], None, False
 
-    verb = None
-    arg_start = 0
-    if tokens[0] == "rm":
-        verb = "rm"
-        arg_start = 1
-    elif tokens[0] == "git" and len(tokens) >= 2 and tokens[1] == "rm":
-        verb = "git rm"
-        arg_start = 2
-    elif tokens[0] == "git" and len(tokens) >= 2 and tokens[1] == "mv":
-        # git mv も mv と同じ移動/上書きの意味論で扱う(SPEC-003)。
-        verb = "mv"
-        arg_start = 2
-    elif tokens[0] == "mv":
-        verb = "mv"
-        arg_start = 1
-    else:
+    # cwd は呼び手が cd を織り込んだ基準ディレクトリである(ADR-075)。
+    base = os.path.abspath(cwd) if cwd else os.getcwd()
+    verb, arg_start, base, unresolvable = _verb_of(tokens, base)
+    if unresolvable:
+        return [], None, True            # -C の宛先を解決できない → 安全側。
+    if verb is None:
         return [], None, False
 
     arg_tokens = _strip_redirections(tokens[arg_start:])
-    base = os.path.abspath(cwd) if cwd else os.getcwd()
 
     # mv の -t/--target-directory は引数順を逆にする(-t DIR SRC…)。DIR が宛先で
     # 位置引数はすべて src。これを取り違えると宛先の上書き検査が誤対象になる(#71)。
@@ -1140,8 +1298,12 @@ def _invert_edits(text, tool, tin):
 def main(argv=None):
     """Hook 入口。stdin の JSON を読み、事象とツールで自己ルーティングする。
 
-    終了コードは常に 0(判定は JSON に載る、MASTER §3.6)。main から例外を投げない。
+    終了コードは通常 0(判定は JSON に載る)。例外は一つだけ: 判定を stdout へ
+    書けなかったときの PreToolUse で、exit 2(stderr が拒否理由になる仕様)へ倒す。
+    書けない拒否を exit 0 で返すと編集がそのまま通る(fail-open。ADR-075)。
+    main から例外を投げない。
     """
+    _hookio.harden_stdout()
     try:
         raw = sys.stdin.read()
     except Exception:
@@ -1177,8 +1339,10 @@ def main(argv=None):
         else:
             response = _post_quiet()
 
-    sys.stdout.write(json.dumps(response, ensure_ascii=False))
-    return 0
+    # 書けなければ PreToolUse は exit 2 で倒す(拒否を握り潰さない。ADR-075)。
+    blocking = (obj.get("hook_event_name") == "PreToolUse"
+                if isinstance(obj, dict) else False)
+    return _hookio.emit_or_block(response, blocking, component="policy-guard")
 
 
 def _route(obj):

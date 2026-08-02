@@ -6,7 +6,7 @@ domain: audit
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-28
+updated: 2026-07-29
 sources: [spec/doctrine.ja.md#4.2]
 canonical_for: [corpus-audit, audit-summary-schema, intake-ledger-format, view-stamp-format]
 llm_context: task
@@ -33,7 +33,9 @@ ICD・正本・投影・現行・依存・参照は用語辞書（`_system/gloss
 - `view-stamp-format`: 刻印（ビューが記す参照時点。ADR-073）の書式の正本。ファイル内の一行 `<!-- doctrine:view src=<出所> as-of=<版> date=<YYYY-MM-DD> refs=<id,…> -->`。`src`（出所のリポジトリ名）と `date` は必須。`as-of`（出所の版。本リポジトリでは plugin.json の version）と `refs`（参照した文書 id のカンマ区切り）は任意。HTML コメントの外の同形の行も受理する。
 - `audit-summary-schema`: 監査の要約スキーマ `docs-audit/1` の形。
 
-32 検査と重大度（固定）:
+検査と重大度（固定）。名前の正本は `docs-audit.py` の `AUDIT_CHECKS` であり、
+下表はその重大度を添えた対応表である。二行が二件ずつを束ねるため、行数（32）と
+検査名の件数（34）は一致しない。件数は数えず `checks_run` から導く（ADR-075）:
 
 | 検査名 | 重大度 |
 |---|---|

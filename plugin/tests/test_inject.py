@@ -2,7 +2,7 @@
 # doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
 """Unit tests for scripts/inject-contract.py — SessionStart minimal contract (R5).
 
-Encodes the slice-06 / MASTER §5.4 obligations and the 10-scenarios cases that
+Encodes the slice-06 / 仕様 §5.4 obligations and the 10-scenarios cases that
 target inject-contract:
   - TC-101/TC-102 (R5): never-group (RESEARCH/ARCHIVE, llm_context:never) is NOT
     injected; no full bodies of any doc leak.
@@ -13,7 +13,7 @@ target inject-contract:
   - TC-106/TC-107/TC-108 (R5): recap (要点復唱) present at head; important docs
     at HEAD and TAIL both.
   - TC-135 (R5, limit): cap is enforced but the optimal value is operational.
-Plus the MASTER §10.5 critique gap: the audit-summary handshake — inject-contract
+Plus the 仕様 §10.5 critique gap: the audit-summary handshake — inject-contract
 reads ${CLAUDE_PLUGIN_ROOT}/.cache/last-audit.json (docs-audit/1 schema) and
 summarizes it; missing -> 「前回監査なし」.
 
@@ -719,7 +719,7 @@ class TestGlossaryHeadings(InjectBase):
 
 
 class TestAuditHandshake(InjectBase):
-    """MASTER §10.5 / C3 gap: inject-contract reads the previous-audit summary at
+    """仕様 §10.5 / C3 gap: inject-contract reads the previous-audit summary at
     ${CLAUDE_PLUGIN_ROOT}/.cache/last-audit.json (docs-audit/1) and summarizes it;
     missing -> 「前回監査なし」. Round-trip with a docs-audit/1 artifact."""
 

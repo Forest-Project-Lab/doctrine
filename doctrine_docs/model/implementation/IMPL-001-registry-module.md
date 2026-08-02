@@ -6,7 +6,7 @@ domain: model
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-27
+updated: 2026-07-29
 sources: [DOCTRINE-001]
 depends_on: [SPEC-001]
 llm_context: task
@@ -30,6 +30,7 @@ SPEC-001 の登録簿契約を実装するときの制約と、はまりやす�
 - `effective_llm_context` は、meta が辞書でないときや型が不明のとき None を返す。こうした入力でも壊れないようにする。R5（never を渡さない）は、この解決のあとの値に対して適用する。
 - `required_keys` の level は {2,3,4} だけを許し、それ以外なら ValueError を投げる。
 - `resolve_duplicate_id` は整列した順の最初を返す（先勝ち。ADR-049）。呼び出す側が自前で `sorted(...)[0]` や `[-1]` を書かないこと。ここが二つに割れると、監査が「採用」と告げる文書と、注入が実際に運ぶ文書が食い違う。文字列でない要素は無視し、空なら None を返す（例外を投げない）。
+- ADR-075: 走査から外す範囲（`is_outside_governance`）と倉庫の判定（`is_archived_path`）をここに置く。監査とリンタが二重に持たない。
 
 ## 対象部品
 

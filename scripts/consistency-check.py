@@ -26,6 +26,10 @@ import os
 import subprocess
 import sys
 
+# plugin/scripts の共有コアを引くとき、配布される作業木に __pycache__ を
+# 残さない(ADR-075)。ディレクトリ配布では利用者へそのまま複製される。
+sys.dont_write_bytecode = True
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
 PLUGIN_SCRIPTS = os.path.join(REPO, "plugin", "scripts")
@@ -50,12 +54,14 @@ def _linter_errors(path):
         return ["(点検不能: %r)" % exc]
     out = (r.stdout or "").strip()
     if not out:
-        return []
+        return []          # linter の契約: 指摘なし = 空 stdout。正常。
     try:
         payload = json.loads(out)
         ctx = payload["hookSpecificOutput"]["additionalContext"]
     except Exception:
-        return []
+        # 解析できないのは「食い違い無し」ではなく「点検できていない」(ADR-075)。
+        # 黙って [] を返すと、linter の出力形式が壊れた日にこの門が緑のまま通る。
+        return ["(点検不能: linter の出力を解析できない)"]
     codes = []
     for line in ctx.splitlines():
         s = line.strip()

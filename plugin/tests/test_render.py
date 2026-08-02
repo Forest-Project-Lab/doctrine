@@ -1,7 +1,7 @@
 # doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
 """Tests for render-projection.py (deterministic projection renderer).
 
-Covers MASTER §5.6 and slice-06 §3 (render-projection). The TC matrix only
+Covers 仕様 §5.6 and slice-06 §3 (render-projection). The TC matrix only
 specified DRIFT DETECTION on the audit side (TC-042/098/099/100); this file
 encodes the CRITIQUE GAP the synthesis flagged: the RENDERER itself had no
 cases. Per BRIEF2 "render-projection determinism/idempotency/--check/headers/

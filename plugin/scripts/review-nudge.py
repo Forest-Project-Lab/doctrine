@@ -21,8 +21,14 @@ ADR-030)。ナッジの出力だけが Level 3 以上(ADR-019)。
 import os
 import sys
 
+# 作業木にバイトコードを残さない(ADR-075)。フックは一回きりの短命な
+# プロセスで、__pycache__ の利得はほぼ無い。一方、marketplace の source が
+# ディレクトリのとき、ここに書いた物はそのまま利用者へ複製される。
+sys.dont_write_bytecode = True
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import _hookio
 import json  # noqa: E402
 
 import _frontmatter  # noqa: E402
@@ -93,14 +99,18 @@ def _docs_root_for(path):
 
 
 def session_flag_dir():
-    """セッション別の印の置き場。plugin の cache → プロジェクトの .claude/.cache。
+    """セッション別の印の置き場。プロジェクトの .claude/.cache に限る(ADR-075)。
 
+    書き先に ${CLAUDE_PLUGIN_ROOT}/.cache は使わない。理由は三つ。
+    (1) 版ごとに別ディレクトリなので、プラグインを更新するたび印が失われ、
+        一度きりのはずの促しが再発する。
+    (2) 導入元がディレクトリの marketplace では、その実体がそのまま配布物へ
+        複製され、開発機のセッション印が利用者へ配られる(実在した)。
+    (3) 同じプラグインを使う別プロジェクトが印を共有してしまう。
+    ADR-037 が監査要約に対して同じ判断をしており、印だけが取り残されていた。
     決して例外を投げない。作れなければ None(印は諦める。助言層なので安全)。
     """
     cands = []
-    plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT")
-    if plugin_root:
-        cands.append(os.path.join(plugin_root, ".cache", "session-flags"))
     proj = os.environ.get("CLAUDE_PROJECT_DIR")
     if proj:
         cands.append(os.path.join(proj, ".claude", ".cache", "session-flags"))
@@ -211,13 +221,14 @@ def _maybe_code_trace_nudge(data, path):
                "一度だけ出る。印なしの全量は trace-index --coverage が示す。")
         out = {"hookSpecificOutput": {
             "hookEventName": "PostToolUse", "additionalContext": msg}}
-        sys.stdout.write(json.dumps(out, ensure_ascii=False))
+        _hookio.emit(out, component="review-nudge")
         return 0
     except Exception:
         return 0   # 促しは助言。失敗しても Hook を落とさない。
 
 
 def main(argv=None):
+    _hookio.harden_stdout()
     if argv is None:
         argv = sys.argv[1:]
     try:
@@ -250,7 +261,7 @@ def main(argv=None):
                 "additionalContext": _NUDGE,
             }
         }
-        sys.stdout.write(json.dumps(out, ensure_ascii=False))
+        _hookio.emit(out, component="review-nudge")
     except Exception:
         return 0  # ナッジは助言。失敗しても Hook を落とさない。
     return 0

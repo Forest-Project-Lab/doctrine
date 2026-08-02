@@ -256,7 +256,10 @@ def write_stamp(key, now=None, proj=None, value=None):
                 out.append(line)
         if not seen:
             out.append("%s: %s" % (key, stamp))
-        tmp = path + ".tmp"
+        # 一時名に pid を混ぜる(ADR-075)。固定名だと二つのフックが同時に
+        # 書いたとき互いの一時ファイルを上書きし、片方の鍵が消える
+        # (実測 60 回に 1 回)。docs-audit の要約書き出しは既に pid 付き。
+        tmp = "%s.%d.tmp" % (path, os.getpid())
         with open(tmp, "w", encoding="utf-8") as fh:
             fh.write("\n".join(out) + "\n")
         os.replace(tmp, path)

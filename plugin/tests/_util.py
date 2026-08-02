@@ -26,6 +26,21 @@ import os
 import sys
 import tempfile
 
+# 作業木にバイトコードを残さない(ADR-075)。run_tests.py だけでなく、
+# `python3 -m unittest tests.test_x` を直に叩いた場合もここを通る。
+# 環境変数も置くのは、試験が入口スクリプトを子プロセスで起こすため。
+sys.dont_write_bytecode = True
+os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
+
+# 実行時の状態の既定の行き先を、使い捨ての場所へ逃がす(ADR-075)。
+# スクリプトは CLAUDE_PROJECT_DIR → cwd の順で `.claude/.cache` を選ぶ。
+# 試験を作業木の中で走らせると、cwd 側の退避が働いて作業木に状態が残り、
+# ディレクトリ配布ではそれが利用者へ複製される。個別に環境を差し替える試験は
+# 自分で上書きするので、ここは「誰も指定しなかったとき」の既定にすぎない。
+os.environ.setdefault(
+    "CLAUDE_PROJECT_DIR",
+    tempfile.mkdtemp(prefix="ceb-test-projdir-"))
+
 # --- Frozen path constants -------------------------------------------------
 
 HERE = os.path.dirname(os.path.abspath(__file__))            # plugin/tests
@@ -37,6 +52,31 @@ TEMPLATES = os.path.join(PLUGIN_ROOT, "templates")         # plugin/templates
 # environment. Used for any data-parity checks. None when absent.
 _DESIGN_CANDIDATE = os.path.join(PLUGIN_ROOT, "..", "design")
 DESIGN_DIR = os.path.abspath(_DESIGN_CANDIDATE) if os.path.isdir(_DESIGN_CANDIDATE) else None
+
+# --- Repository root (development only) ------------------------------------
+# plugin/ は marketplace 経由で ~/.claude/plugins/cache/<市場>/<名>/<版>/ へ
+# 複製され、その外(リポジトリ直下の scripts/・doctrine_docs/・
+# .claude-plugin/marketplace.json)は複製されない。公式仕様が「導入した
+# プラグインは自分のディレクトリの外を参照できない」と明記している。
+# 同梱の試験がその外を無条件に読むと、利用者の導入先で run_tests.py が
+# 失敗する(実測 1 failure / 4 error)。開発木でだけ走る試験はここで見分ける。
+def _find_repo_root():
+    cand = os.path.dirname(PLUGIN_ROOT)
+    marker = os.path.join(cand, ".claude-plugin", "marketplace.json")
+    return cand if os.path.isfile(marker) else None
+
+
+REPO_ROOT = _find_repo_root()
+
+
+def require_repo_root(testcase):
+    """開発木でだけ意味を持つ試験の入口。導入先では skip する。"""
+    if REPO_ROOT is None:
+        testcase.skipTest(
+            "リポジトリ根が無い(導入されたプラグインの複製)。"
+            "この検査は開発木と CI でだけ走る")
+    return REPO_ROOT
+
 
 # Make the underscore cores and hyphenated entry scripts importable.
 if SCRIPTS not in sys.path:
@@ -130,7 +170,7 @@ def invoke(name, argv=None, stdin_obj=None):
 
 
 def hook_stdin(event, tool_name=None, tool_input=None, **extra):
-    """Build a hook stdin envelope (MASTER §3.1).
+    """Build a hook stdin envelope (仕様 §3.1).
 
     Always sets the common fields (session_id, transcript_path, cwd,
     hook_event_name). Adds tool_name/tool_input when given. Any extra keyword

@@ -24,6 +24,15 @@ import json
 import os
 import sys
 
+# 作業木にバイトコードを残さない(ADR-075)。フックは一回きりの短命な
+# プロセスで、__pycache__ の利得はほぼ無い。一方、marketplace の source が
+# ディレクトリのとき、ここに書いた物はそのまま利用者へ複製される。
+sys.dont_write_bytecode = True
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import _frontmatter          # noqa: E402  種別の門を通す共有の読み手(ADR-075)
+
 # doctrine:begin ADR-068
 SCHEMA = "code-audit/1"
 
@@ -80,8 +89,7 @@ def _stem(relpath):
 def _parse(root, rel):
     """(tree, 行数, 所見) を返す。読めない/解析できないときは tree が None。"""
     try:
-        with open(os.path.join(root, rel), "r", encoding="utf-8-sig") as fh:
-            src = fh.read()
+        src = _frontmatter.read_text(os.path.join(root, rel), newline=None)
         return ast.parse(src), src.count("\n") + 1, None
     except SyntaxError as exc:
         return None, 0, _finding(

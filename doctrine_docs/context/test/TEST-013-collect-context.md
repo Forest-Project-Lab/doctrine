@@ -6,7 +6,7 @@ domain: context
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-26
+updated: 2026-07-29
 sources: [plugin/tests/test_collect.py]
 depends_on: [SPEC-013]
 llm_context: task
@@ -22,6 +22,9 @@ SPEC-013 の受入基準を `plugin/tests/test_collect.py` で確かめる `[R5]
 - 貪欲法で覆い、後ろ向きにそぎ落とした結果が、決定的に再現すること。各事実に出所が付くこと。
 - depends_on をたどって ICD を多段に同梱し、never は引かないこと。
 - `task_pack_token_cap` が `injection_token_cap` と独立に効くこと（C10とは凍結した契約の整合を見る判断項目をいう）。
+- ADR-075: 上限を指定しても、要求を唯一覆う文書が落ちないこと（空のパックが「被覆済み」で返らないこと）。
+- ADR-075: 勘定が実際の描画結果と揃うこと（出所の付記と節の見出しを数えること）。
+- ADR-075: 現行でない依存先の本文が同梱されないこと。
 
 ## 退行観点
 

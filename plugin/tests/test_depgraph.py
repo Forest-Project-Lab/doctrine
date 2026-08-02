@@ -1,7 +1,7 @@
 # doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
 """Tests for the dependency-graph core (_depgraph) and CLI (dep-graph.py).
 
-Covers MASTER §5.2 frozen API and slice-05 PART A:
+Covers 仕様 §5.2 frozen API and slice-05 PART A:
 - forward transitive impacts (R4): TC-115, TC-116, and TC-113/TC-114 (the
   latter two re-annotated from R3: they walk IMPACTS, so they prove R4, #26).
 - depends_on traceability closure (R3): test_r3_depends_on_upstream_closure_full

@@ -6,7 +6,7 @@ domain: model
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-26
+updated: 2026-07-29
 sources: [DOCTRINE-001]
 depends_on: [SPEC-002]
 llm_context: task
@@ -23,6 +23,7 @@ SPEC-002 のフロントマター解析契約を検証する。実装テスト�
 - 真偽値（true/false だけ）・None・空文字・空リストを区別する。
 - 本文の CRLF をそのまま残す。重複キーは後のものを採り、`duplicate_key` を併記する。
 - フローリスト・引用・行内の注記を正しく扱う。`as_list` が None・スカラ・リストを正しく変換する。
+- ADR-075: 通常ファイルでないもの（名前付きパイプ・デバイス）を `parse_file`／`read_text` が開かず `OSError` を返すこと。呼び手が捕捉して黙って飛ばすこと。
 
 ## 退行観点
 

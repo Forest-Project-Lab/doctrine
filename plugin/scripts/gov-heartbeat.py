@@ -22,8 +22,14 @@ import os
 import re
 import sys
 
+# 作業木にバイトコードを残さない(ADR-075)。フックは一回きりの短命な
+# プロセスで、__pycache__ の利得はほぼ無い。一方、marketplace の source が
+# ディレクトリのとき、ここに書いた物はそのまま利用者へ複製される。
+sys.dont_write_bytecode = True
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import _hookio
 import _auditcache  # noqa: E402
 import _frontmatter  # noqa: E402
 import _intake  # noqa: E402
@@ -69,7 +75,7 @@ def _docs_root():
         found = _registry.locate_docs_root(proj)
         if found is not None:
             return found
-    return _registry.locate_docs_root(os.getcwd())
+    return _registry.walkup_docs_root(os.getcwd())
 
 
 def _load_config(docs_root):
@@ -129,13 +135,12 @@ def _once_per_session(sid):
     if not sid:
         return False
     cands = []
-    plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT")
-    if plugin_root:
-        cands.append(os.path.join(plugin_root, ".cache", "session-flags"))
     proj = os.environ.get("CLAUDE_PROJECT_DIR")
     if proj:
         cands.append(os.path.join(proj, ".claude", ".cache", "session-flags"))
     cands.append(os.path.join(os.getcwd(), ".claude", ".cache", "session-flags"))
+    # 書き先に ${CLAUDE_PLUGIN_ROOT}/.cache は使わない(ADR-075)。版ごとに別
+    # ディレクトリなので更新のたび印が消え、しかも配布実体へ複製される。
     for d in cands:
         try:
             os.makedirs(d, exist_ok=True)
@@ -373,6 +378,7 @@ def trace_campaign_line(summary):
 
 
 def main(argv=None):
+    _hookio.harden_stdout()
     if argv is None:
         argv = sys.argv[1:]
     try:
@@ -414,7 +420,7 @@ def main(argv=None):
         out = {"hookSpecificOutput": {
             "hookEventName": "UserPromptSubmit",
             "additionalContext": msg}}
-        sys.stdout.write(json.dumps(out, ensure_ascii=False))
+        _hookio.emit(out, component="gov-heartbeat")
         return 0
     except Exception as exc:
         _auditcache.record_error("gov-heartbeat", exc)

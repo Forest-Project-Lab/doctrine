@@ -16,6 +16,16 @@
 """
 import os
 import re
+import sys
+
+# 作業木にバイトコードを残さない(ADR-075)。フックは一回きりの短命な
+# プロセスで、__pycache__ の利得はほぼ無い。一方、marketplace の source が
+# ディレクトリのとき、ここに書いた物はそのまま利用者へ複製される。
+sys.dont_write_bytecode = True
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import _frontmatter          # noqa: E402  種別の門を通す共有の読み手(ADR-075)
 
 # doctrine:begin IMPL-018
 LEDGER_NAME = ".md-intake"
@@ -38,8 +48,7 @@ def load_ledger(docs_root):
     entries = []
     bad = []
     try:
-        with open(path, "r", encoding="utf-8-sig") as fh:
-            lines = fh.read().splitlines()
+        lines = _frontmatter.read_text(path, newline=None).splitlines()
     except (OSError, UnicodeError):
         return entries, bad
     for i, raw in enumerate(lines, 1):

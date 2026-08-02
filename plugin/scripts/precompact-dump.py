@@ -17,8 +17,14 @@ import json
 import os
 import sys
 
+# 作業木にバイトコードを残さない(ADR-075)。フックは一回きりの短命な
+# プロセスで、__pycache__ の利得はほぼ無い。一方、marketplace の source が
+# ディレクトリのとき、ここに書いた物はそのまま利用者へ複製される。
+sys.dont_write_bytecode = True
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import _hookio
 # doctrine:begin SPEC-022
 _INSTRUCTION = (
     "【統治・圧縮前の退避】この会話はまもなく圧縮され、詳細は失われる。"
@@ -47,6 +53,7 @@ def _project_has_tree():
 
 
 def main(argv=None):
+    _hookio.harden_stdout()
     try:
         try:
             sys.stdin.read()
@@ -61,7 +68,7 @@ def main(argv=None):
                 "additionalContext": _INSTRUCTION,
             }
         }
-        sys.stdout.write(json.dumps(out, ensure_ascii=False))
+        _hookio.emit(out, component="precompact-dump")
         return 0
     except Exception:
         return 0

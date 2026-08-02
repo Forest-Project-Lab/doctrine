@@ -21,8 +21,14 @@ import os
 import re
 import sys
 
+# 作業木にバイトコードを残さない(ADR-075)。フックは一回きりの短命な
+# プロセスで、__pycache__ の利得はほぼ無い。一方、marketplace の source が
+# ディレクトリのとき、ここに書いた物はそのまま利用者へ複製される。
+sys.dont_write_bytecode = True
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import _hookio
 import _auditcache
 import _frontmatter
 import _registry
@@ -125,7 +131,7 @@ def _resolve_docs_root(explicit):
         found = _registry.locate_docs_root(proj)
         if found is not None:
             return found
-    return _registry.locate_docs_root(os.getcwd())
+    return _registry.walkup_docs_root(os.getcwd())
 
 
 def _load_config(docs_root, config_path):
@@ -1003,6 +1009,7 @@ def main(argv=None):
     内容由来の例外は決して外へ出さない。最悪でも空でない有効な JSON を返し、セッションを
     落とさない。
     """
+    _hookio.harden_stdout()
     if argv is None:
         argv = sys.argv[1:]
 
@@ -1076,7 +1083,7 @@ def main(argv=None):
                 "additionalContext": context,
             }
         }
-        sys.stdout.write(json.dumps(payload, ensure_ascii=False))
+        _hookio.emit(payload, component="inject-contract")
         return 0
 
     except Exception as exc:  # noqa: BLE001 — セッションを決して落とさない
@@ -1091,7 +1098,7 @@ def main(argv=None):
             }
         }
         try:
-            sys.stdout.write(json.dumps(fallback, ensure_ascii=False))
+            _hookio.emit(fallback, component="inject-contract")
         except Exception:  # noqa: BLE001
             sys.stdout.write("{}")
         return 0

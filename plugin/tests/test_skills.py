@@ -1,5 +1,5 @@
 # doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
-"""Validate all 7 skills against the §4.1 / MASTER §7 contract.
+"""Validate all 7 skills against the §4.1 / 仕様 §7 contract.
 
 Reads every plugin/skills/<name>/SKILL.md from disk at suite time and checks the
 frozen properties that hold for ALL skills (not just the three this component
@@ -7,14 +7,14 @@ authors — the suite is the single gate for the skill set):
 
   - the 7 required skill directories exist, each with a SKILL.md;
   - each SKILL.md has a non-empty, third-person `description` in frontmatter;
-  - the description matches the MASTER §7 verbatim trigger string — asserted by
+  - the description matches the 仕様 §7 verbatim trigger string — asserted by
     requiring the distinctive trigger phrases of that skill to be present;
   - SKILL.md body is < 500 lines (§4.1 / slice 08 §0.1);
   - the body contains a `## 保証限界` section (critique R9 per-artifact gap);
   - the body uses approved vocabulary: running `_termcheck.check` over it yields
     NO ERROR-severity findings (skills must pass their own term-check, §1/R6).
 
-Maps to: spec §4.1, MASTER §7, design/08-skills.md §0 (cross-cutting rules),
+Maps to: spec §4.1, 仕様 §7, design/08-skills.md §0 (cross-cutting rules),
 and the critique gap "per-artifact 保証限界 (`## 保証限界` present in each
 SKILL.md)". The term-check assertion is the dogfooding requirement: the system
 obeys the rules it enforces.
@@ -43,7 +43,7 @@ SKILL_NAMES = (
     "docs-curate",
 )
 
-# Distinctive verbatim fragments from the MASTER §7 frozen description strings.
+# Distinctive verbatim fragments from the 仕様 §7 frozen description strings.
 # The on-disk description must contain every fragment for its skill: this both
 # proves the description is the verbatim §7 trigger and that the literal user
 # phrases ("起動を促す表現と実際に使う語句", §4.1) are present.
@@ -128,7 +128,7 @@ def _load(name):
 
 
 class SkillExistenceTest(unittest.TestCase):
-    """7 skill dirs exist, each with a SKILL.md (§4.1, MASTER §9 inventory)."""
+    """7 skill dirs exist, each with a SKILL.md (§4.1, 仕様 §9 inventory)."""
 
     def test_skills_dir_exists(self):
         self.assertTrue(os.path.isdir(SKILLS_DIR), "plugin/skills/ must exist")
@@ -155,7 +155,7 @@ class SkillExistenceTest(unittest.TestCase):
 
 class SkillFrontmatterTest(unittest.TestCase):
     """Each SKILL.md frontmatter carries a non-empty third-person description
-    that is the verbatim MASTER §7 trigger string (§4.1)."""
+    that is the verbatim 仕様 §7 trigger string (§4.1)."""
 
     def test_description_non_empty(self):
         for name in SKILL_NAMES:

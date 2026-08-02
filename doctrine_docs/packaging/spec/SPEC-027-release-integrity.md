@@ -6,7 +6,7 @@ domain: packaging
 status: current
 owner: doctrine-maintainers
 created: 2026-07-28
-updated: 2026-07-28
+updated: 2026-07-29
 sources: [scripts/release-check.py, .github/workflows/checks.yml, CHANGELOG.md]
 depends_on: [SPEC-020, ICD-005]
 llm_context: task
@@ -43,6 +43,7 @@ llm_context: task
 - 本リポジトリ専用の自己適用。プラグインの配布物には含めない。
 - 標準ライブラリのみ（ADR-031）。git の呼び出しは `--diff-base` のときだけ。
 - 「未リリース」節は常設だが、検査上は任意（節が無くても版の整合は判じる）。
+- 配布物の衛生（常時）: `plugin/` の下に `.cache`・`.claude`・`__pycache__` が無いこと。ディレクトリ配布ではそのまま利用者へ複製される（ADR-075）。
 
 ## エラー時挙動
 

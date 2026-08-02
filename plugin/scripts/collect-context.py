@@ -28,6 +28,11 @@ import math
 import os
 import sys
 
+# 作業木にバイトコードを残さない(ADR-075)。フックは一回きりの短命な
+# プロセスで、__pycache__ の利得はほぼ無い。一方、marketplace の source が
+# ディレクトリのとき、ここに書いた物はそのまま利用者へ複製される。
+sys.dont_write_bytecode = True
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import _depgraph
@@ -38,7 +43,12 @@ import _registry
 # --- トークン推定(inject-contract と同じ保守的な見積もり, MASTER §5.4) -------
 
 def estimate_tokens(text, chars_per_token=4.0):
-    """文字数ベースの保守的な推定。決定的。日本語では過大に見積もる側に倒れる。"""
+    """文字数ベースの推定。決定的。
+
+    4 文字/トークンは英語の近似であり、日本語では実トークンを下回りうる
+    (ADR-075: 以前「日本語では過大に見積もる=安全側」と書いていたが逆だった)。
+    較正が要る導入先は設定の model_chars_per_token を下げる。
+    """
     if not text:
         return 0
     return int(math.ceil(len(text) / float(chars_per_token)))
@@ -166,7 +176,8 @@ def resolve_docs_root(explicit):
         found = _registry.locate_docs_root(proj)
         if found is not None:
             return found
-    return _registry.locate_docs_root(os.getcwd()) or _registry.DOCS_DIR_NAMES[0]
+    return (_registry.walkup_docs_root(os.getcwd())
+            or _registry.DOCS_DIR_NAMES[0])
 
 
 def read_task_text(taskspec):
@@ -334,6 +345,17 @@ def dependency_closure(selected_ids, graph, dep_index, excluded_never, already):
         dep_node = graph.nodes.get(dep)
         if dep_node is None:
             continue              # 索引に無い(dangling)→ 同梱しない・たどらない
+        if not _registry.is_current(dep_node.get("status") or ""):
+            # 現行でない依存先の本文は渡さない(ADR-075)。仕様 §3.8 は「廃止。
+            # 方針を撤回。……本文は LLM に渡さない」と定める。起点(primary)は
+            # 現行で絞っていたのに、依存の閉包だけが status を見ておらず、
+            # 撤回済みの本文が「依存により同梱」として出所付きで出ていた。
+            # たどるのは可(先の現行文書へ届く)だが、同梱はしない。
+            for nxt in dep_index.get(dep, []):
+                if dep not in visited:
+                    stack.append((dep, nxt))
+            visited.add(dep)
+            continue
         # 境界違反の検出(ドメイン越え依存が ICD でない)。出所の domain で判定。
         src = graph.nodes.get(src_id)
         src_domain = src["domain"] if src else None
@@ -533,62 +555,94 @@ def _tokenize(text):
 def _enforce_cap(records, cap):
     """task_pack_token_cap を守る。要求を唯一覆う文書は決して落とさない。
 
-    返り値: (kept_records, trimmed:bool)。被覆の限界余剰が小さい(他で覆える)
-    文書から落とす。覆える要求がゼロになる落とし方はしない。
+    返り値: (kept_records, trimmed:bool, dropped_records)。被覆の限界余剰が
+    小さい(他で覆える)文書から落とす。覆える要求がゼロになる落とし方はしない。
+    落とした文書は呼び手へ返し、覆えなくなった要求を uncovered へ戻せるように
+    する(黙って切り詰めない。ADR-075)。
     """
     if cap is None or cap <= 0:
-        return records, False
-    # まず一意被覆(他に同じ要求を覆う文書が無い)を必須として守る。
-    all_covered = {}
-    for rec in records:
-        for r in rec["covers"]:
-            all_covered.setdefault(r, []).append(rec["id"])
-    unique_keepers = set()
-    for r, holders in all_covered.items():
-        if len(holders) == 1:
-            unique_keepers.add(holders[0])
+        return records, False, []
+
+    def unique_keepers_of(recs):
+        """いま残っている集合の中で、ある要求を唯一覆う文書の id 集合。
+
+        落とすたびに数え直す(ADR-075)。一度だけ数えて固定していたため、先に
+        別の覆い手を落とした結果あとから唯一の覆い手になった文書が『落として
+        よい』ままに残り、要求を誰も覆わない空のパックが「被覆済み」として
+        返っていた(docstring の約束と正反対)。
+        """
+        holders = {}
+        for rec in recs:
+            for r in rec["covers"]:
+                holders.setdefault(r, []).append(rec["id"])
+        return {ids[0] for ids in holders.values() if len(ids) == 1}
 
     def rec_tokens(rec):
-        text = rec["title"] + "".join(f["text"] for f in rec["facts"])
-        return estimate_tokens(text)
+        # 実際に描画される形で数える(ADR-075)。title と fact の text だけを
+        # 数えていたため、_render_doc_md が事実ごとに付ける〔出所: …〕と節見出しが
+        # 勘定から漏れ、指定した上限の約 2 倍が出ていた(実測 450 対 1019)。
+        buf = []
+        _render_doc_md(buf, rec)
+        return estimate_tokens("\n".join(buf))
 
     kept = list(records)
     trimmed = False
-    # 限界被覆の小さい(=他で覆える, dependency 役を優先的に)文書から落とす。
-    droppable = [
-        rec for rec in kept
-        if rec["id"] not in unique_keepers
-    ]
-    # 落とす順: dependency を先に、次に被覆数の少ない順、id 辞書順(決定的)。
-    droppable.sort(key=lambda r: (r["role"] != "dependency",
-                                  len(r["covers"]), r["id"]))
-    idx = 0
-    while idx < len(droppable):
+    dropped = []
+    while True:
         total = sum(rec_tokens(r) for r in kept)
         if total <= cap:
             break
-        victim = droppable[idx]
+        keepers = unique_keepers_of(kept)
+        # 落とす順: dependency を先に、次に被覆数の少ない順、id 辞書順(決定的)。
+        droppable = sorted(
+            (r for r in kept if r["id"] not in keepers),
+            key=lambda r: (r["role"] != "dependency", len(r["covers"]), r["id"]))
+        if not droppable:
+            break            # これ以上落とすと覆えない要求が出る。上限より被覆を守る。
+        victim = droppable[0]
         kept = [r for r in kept if r["id"] != victim["id"]]
+        dropped.append(victim)
         trimmed = True
-        idx += 1
-    return kept, trimmed
+    return kept, trimmed, dropped
 
 
 def render_json(pack, cap):
     primary = pack["primary_records"]
     dependency = pack["dependency_records"]
-    kept, trimmed = _enforce_cap(primary + dependency, cap)
+    kept, trimmed, dropped = _enforce_cap(primary + dependency, cap)
     kept_ids = {r["id"] for r in kept}
+    uncovered, reasons = _with_dropped(pack, kept, dropped)
     out = {
         "schema": "context-pack/1",
         "required": pack["required"],
         "docs": [r for r in (primary + dependency) if r["id"] in kept_ids],
-        "uncovered": pack["uncovered"],
-        "uncovered_reasons": _uncovered_reasons(pack),
+        "uncovered": uncovered,
+        "uncovered_reasons": reasons,
         "boundary_violations": sorted(pack["boundary"].keys()),
         "trimmed": trimmed,
     }
     return json.dumps(out, ensure_ascii=False, sort_keys=True, indent=2) + "\n"
+
+
+def _with_dropped(pack, kept, dropped):
+    """上限で落とした結果、誰も覆わなくなった要求を uncovered へ戻す(ADR-075)。
+
+    uncovered は被覆の計算時に確定するので、そのあと上限で文書を落としても
+    戻らなかった。覆えていない事実を「被覆済み」と告げるのは、黙って切り詰めない
+    という体系の約束に反する。理由も「上限のため除外」と明示する。
+    """
+    uncovered = set(pack["uncovered"])
+    reasons = dict(_uncovered_reasons(pack))
+    if dropped:
+        still = set()
+        for rec in kept:
+            still.update(rec["covers"])
+        for rec in dropped:
+            for r in rec["covers"]:
+                if r not in still and r not in uncovered:
+                    uncovered.add(r)
+                    reasons[r] = "上限のため除外(被覆していた文書を落とした)"
+    return sorted(uncovered), reasons
 
 
 def _uncovered_reasons(pack):
@@ -605,8 +659,9 @@ def _uncovered_reasons(pack):
 def render_md(pack, cap):
     primary = pack["primary_records"]
     dependency = pack["dependency_records"]
-    kept, trimmed = _enforce_cap(primary + dependency, cap)
+    kept, trimmed, dropped = _enforce_cap(primary + dependency, cap)
     kept_ids = {r["id"] for r in kept}
+    md_uncovered, md_reasons = _with_dropped(pack, kept, dropped)
 
     lines = []
     lines.append("# タスク・コンテキスト・パック")
@@ -629,12 +684,11 @@ def render_md(pack, cap):
         for rec in dep_kept:
             _render_doc_md(lines, rec)
 
-    if pack["uncovered"]:
+    if md_uncovered:
         lines.append("## 覆えなかった要求")
         lines.append("")
-        reasons = _uncovered_reasons(pack)
-        for r in pack["uncovered"]:
-            lines.append("- %s (%s)" % (r, reasons[r]))
+        for r in md_uncovered:
+            lines.append("- %s (%s)" % (r, md_reasons[r]))
         lines.append("")
 
     if trimmed:

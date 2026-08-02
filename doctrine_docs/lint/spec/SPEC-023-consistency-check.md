@@ -6,7 +6,7 @@ domain: lint
 status: current
 owner: doctrine-maintainers
 created: 2026-07-26
-updated: 2026-07-28
+updated: 2026-07-29
 sources: [scripts/consistency-check.py, scripts/consistency-reminder.py]
 depends_on: [ICD-004, ICD-005]
 llm_context: task

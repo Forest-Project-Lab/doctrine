@@ -6,7 +6,7 @@ domain: packaging
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-28
+updated: 2026-07-29
 sources: [plugin/tests/test_packaging.py, plugin/tests/test_integration_e2e.py]
 depends_on: [SPEC-019]
 llm_context: task
@@ -25,6 +25,8 @@ SPEC-019 の受入基準を確認する。
 - `hooks.level2.json` が、SessionEnd と、PostToolUse の `policy-guard.py`・`review-nudge.py` を外して `docs-linter.py` だけにした縮小差分である。
 - 変数を空白入りパスへ置換しても、各 `command` の語数が変わらない（二重引用符の検査）。
 - 実スクリプトを標準入力のエンベロープで起動し、scaffold→ガード→リンタ→監査→注入の連鎖がつながる `[R9]`。
+- ADR-075: 縮小構成のイベント集合が「全構成 −{SessionEnd}」であること。UserPromptSubmit・Stop・PreCompact が配線されていること。
+- ADR-075: 環境変数が欠け、作業ディレクトリが部分ディレクトリでも、統治木へ届くこと。
 
 ## 退行観点
 

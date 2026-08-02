@@ -2,7 +2,7 @@
 # doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
 """Tests for scaffold.py (docs-system-init engine, non-destructive).
 
-Covers MASTER §5.8 + slice 07 §A and the critique gaps assigned to this
+Covers 仕様 §5.8 + slice 07 §A and the critique gaps assigned to this
 component:
   - non-destructive / idempotent re-run (second run all-skip, zero diff)
   - existing files untouched (sentinel glossary survives)
@@ -11,7 +11,7 @@ component:
     context-map / icd-index (§3.7 / A.2)
   - .docs-level marker written (C9)
   - Level-2 default selection
-  - --fallback places under .claude/ (MASTER §9 / spec §5)
+  - --fallback places under .claude/ (仕様 §9 / spec §5)
   - seeded DECIDED carries a non-empty review_by (created + 90d)
   - seeded GLOSSARY carries the §1 approved-term + calque tables
 """

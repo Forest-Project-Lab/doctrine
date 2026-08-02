@@ -3,6 +3,9 @@
     "SessionStart": [
       { "hooks": [ { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/inject-contract.py\"" } ] }
     ],
+    "UserPromptSubmit": [
+      { "hooks": [ { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/gov-heartbeat.py\"" } ] }
+    ],
     "PreToolUse": [
       { "matcher": "Edit|Write|MultiEdit",
         "hooks": [ { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/policy-guard.py\"" } ] },
@@ -14,6 +17,12 @@
         "hooks": [
           { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/docs-linter.py\"" }
         ] }
+    ],
+    "Stop": [
+      { "hooks": [ { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/capture-nudge.py\"" } ] }
+    ],
+    "PreCompact": [
+      { "hooks": [ { "type": "command", "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/precompact-dump.py\"" } ] }
     ]
   }
 }

@@ -6,7 +6,7 @@ domain: lint
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-28
+updated: 2026-07-29
 sources: [plugin/tests/test_linter.py]
 depends_on: [SPEC-007]
 llm_context: task
@@ -18,6 +18,12 @@ llm_context: task
 
 - SPEC-007 の各点検を、発火すべき入力と発火すべきでない入力の両方で確認する[R2]。対象は、必須キー不足・空キー・`status` の型別許可・未知の型・`id` とファイル名の一致・型と置き場所の整合・ドメイン区画・`llm_context`・SPEC の 4 節・追跡性・ICD 依存（事後検出）である。
 - フロントマターが無いときは `MISSING_FRONTMATTER` 一件で止まること、`_system` の固定ファイル名が id とファイル名の一致点検を免除されることを確認する。
+- ADR-075: フロントマターの構文の誤りが `FRONTMATTER_SYNTAX`（ERROR）で表に出ること。
+- ADR-075: 根の案内（CLAUDE.md・AGENTS.md）と dot ディレクトリ配下へ何も出さないこと。
+- ADR-075: 依存先のドメインの解決で兄弟文書を開かないこと（開いた統治文書が編集対象の一件だけであること）。
+- ADR-075: 助言の描画が `sanitize_inline` を通ること（改行入りのファイル名で偽の所見行を作れないこと）。
+- ADR-075: 必須節の直後に小見出しを置いた SPEC が `SPEC_EMPTY_SECTION` にならないこと。
+- ADR-075: 発火の印が PostToolUse の経路のときだけ残ること。
 
 ## 退行観点
 

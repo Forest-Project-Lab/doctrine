@@ -6,7 +6,7 @@ domain: context
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-26
+updated: 2026-07-29
 sources: [plugin/scripts/collect-context.py]
 depends_on: [REQ-010, ICD-001]
 llm_context: task
@@ -28,6 +28,9 @@ llm_context: task
 - 最少集合の被覆は貪欲法で求め、そのうえで不要になった文書を後ろ向きにそぎ落とす。集合の大きさが同じなら、トークンの少ない方を採る。それも同じなら、id の辞書順で決める（決定的）。
 - depends_on をたどって ICD を多段に同梱する。ただし never 文書は、引かないしたどらない。
 - 上限は `task_pack_token_cap` を使う（C10とは凍結した契約の整合を見る判断項目をいう）。`injection_token_cap` は読まない。
+- 上限の強制は、文書を落とすたび一意被覆を数え直す。落とすと誰も覆わない要求が出るなら落とさない（上限より被覆を守る）。落とした結果覆えなくなった要求は uncovered へ戻す（ADR-075）。
+- 勘定は実際に描画される形で行う。出所の付記と節の見出しを含める（ADR-075）。
+- 依存の閉包は現行でない文書の本文を同梱しない。たどるのは可（仕様 §3.8「廃止の本文は渡さない」。ADR-075）。
 
 ## エラー時挙動
 

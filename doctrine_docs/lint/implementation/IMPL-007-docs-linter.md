@@ -6,7 +6,7 @@ domain: lint
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-28
+updated: 2026-07-29
 sources: [plugin/scripts/docs-linter.py]
 depends_on: [SPEC-007]
 llm_context: task
@@ -25,6 +25,7 @@ llm_context: task
 - 依存先がどのドメインに属するかは、`_build_graph_for` が `_depgraph.build_graph` を一度だけ呼んで解決する。`_depgraph` が無い環境では、止まらずに `ICD_DEP_UNVERIFIED`（WARN）へ落として動き続ける。
 - `_is_system_singleton` は、`_system` の固定ファイル名（投影と正本）を、id とファイル名の一致点検から外す。
 - `main` は、標準入力の読み取り・パスの解決・点検・助言文の組み立てをすべて例外処理で包み、終了コードは常に 0 を返す。
+- ADR-075: 依存先のドメインは `_domain_of_dep` が置き場所の名前だけから解く。依存グラフを組まない。
 
 ## 対象部品
 

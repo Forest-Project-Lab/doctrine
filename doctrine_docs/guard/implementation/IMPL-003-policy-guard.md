@@ -6,7 +6,7 @@ domain: guard
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-28
+updated: 2026-07-29
 sources: [plugin/scripts/policy-guard.py]
 depends_on: [SPEC-003]
 llm_context: task
@@ -25,6 +25,7 @@ llm_context: task
 - PostToolUse の削除安全は `_post_delete_safety` が PRE（書き込み前）から POST（書き込み後）への遷移で判じる。`_reconstruct_pre_edit_state` と `_invert_edits` が、POST の全文に編集を逆向きに当てて PRE を復元する。当て直しは生の全文（raw_post_text）に対して行う。組み直した近似に当てると、フロントマター内の編集で当て直しが外れることがあるからである。
 - Bash 経路は `_split_command`・`_tokenize`・`_strip_redirections`・`_expand_glob` で対象を取り出す。展開できない glob は安全側に倒して拒否する。リダイレクト先のファイルは削除対象に数えない。ディレクトリ対象は `_expand_dir_targets` が配下の `.md` を再帰列挙して検査する(#71)。`mv` の `-t`/`--target-directory` は `_extract_remove_targets` が引数逆転を解いて DIR を宛先として扱う(#71)。
 - 統治木の無いプロジェクトでは二・三ガードを発火させない（ADR-036）。`_project_has_tree` が `walkup_docs_root(file_path, cwd)` で木の有無を判じ、`_handle_pre_edit_write` は木が無ければ早期に allow、`_handle_post_edit` は木が無ければ静かに通す。木が在れば木の外の stray 文書にも従来どおり当てる。
+- ADR-075: 編集は生の全文へ当てる。`_render_doc` は生が読めないときの退避に限る。包含は realpath。Bash は `cd` を追い、`git` の大域オプションを読み飛ばす。
 
 ## 対象部品
 `plugin/scripts/policy-guard.py`。主な関数: `_route`・`_handle_pre_edit_write`・`_handle_pre_bash`・`_handle_post_edit`、`guard_immutability`・`_adr_delta_ok`、`guard_icd_dependency`・`_icd_judge_dep`・`_icd_message`、`guard_delete_safety_edit`・`guard_delete_safety_bash`・`_post_delete_safety`・`_invert_edits`。import 先は `plugin/scripts/_depgraph.py`・`plugin/scripts/_registry.py`・`plugin/scripts/_frontmatter.py`。

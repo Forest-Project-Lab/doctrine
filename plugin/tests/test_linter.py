@@ -1,7 +1,7 @@
 # doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
 """Tests for docs-linter.py (PostToolUse single-doc, advisory only).
 
-Covers MASTER §5.1 / §3.3 / §6 and design/10-scenarios.md TCs targeting the
+Covers 仕様 §5.1 / §3.3 / §6 and design/10-scenarios.md TCs targeting the
 linter:
   Status allow/deny per type: TC-001..038 (representative + the ADR/RESEARCH
     carve-outs TC-023/025/035).

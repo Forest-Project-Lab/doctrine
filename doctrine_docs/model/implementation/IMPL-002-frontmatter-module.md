@@ -6,7 +6,7 @@ domain: model
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-26
+updated: 2026-07-29
 sources: [DOCTRINE-001]
 depends_on: [SPEC-002]
 llm_context: task
@@ -30,6 +30,7 @@ SPEC-002 のフロントマター解析契約を実装するときの制約と�
 - 重複キーは後に出たものを採るが、`duplicate_key` を必ず併せて記録する。
 - `missing_open` は出さない。厳格な呼び出し側のために予約してある。フロントマターが無いのは誤りではなく、`({}, text, [])` を返す。
 - 値の中の `#` は、引用の外にあり、かつ直前が空白のときだけ注記とみなして落とす。`SPEC-014#3` のような `#` はそのまま残す。
+- ADR-075: `ensure_regular`／`read_text` が種別の門。統治対象を読む経路はすべてここを通す。
 
 ## 対象部品
 

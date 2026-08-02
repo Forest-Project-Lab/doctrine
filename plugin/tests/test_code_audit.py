@@ -173,8 +173,7 @@ class OversizeAndParseTest(CodeAuditBase):
 class SelfApplicationTest(unittest.TestCase):
     def test_own_repository_has_no_import_violations(self):
         """境界規律の実測凍結: 自分のリポジトリで error ゼロ。"""
-        repo = os.path.dirname(os.path.dirname(os.path.dirname(
-            os.path.abspath(__file__))))
+        repo = _util.require_repo_root(self)
         out, code = _util.invoke("code-audit", ["--root", repo, "--json",
                                                 "--fail-on", "error"])
         data = json.loads(out)

@@ -1,7 +1,7 @@
 # doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
 """Tests for the 用語チェッカー core + CLI + glossary template.
 
-Covers MASTER §6 and design/10-scenarios.md TCs targeting term-check (R6/R10):
+Covers 仕様 §6 and design/10-scenarios.md TCs targeting term-check (R6/R10):
   TC-062 approved word passes; TC-063 banned synonym 文書 family;
   TC-064 banned synonym ドメイン family; TC-065 clean prose passes;
   TC-066 calque 針を動かす/同じページにいる/深く潜る; TC-067 loanword/negation no FP;
@@ -234,7 +234,7 @@ class UndefinedTermTest(unittest.TestCase):
 
 
 class MaskingTest(unittest.TestCase):
-    """擬陽性回避: mask code fences / inline code / URLs (MASTER §6)."""
+    """擬陽性回避: mask code fences / inline code / URLs (仕様 §6)."""
 
     def setUp(self):
         self.g = _g()

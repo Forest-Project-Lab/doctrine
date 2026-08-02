@@ -2,7 +2,7 @@
 # doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
 """Tests for scripts/_frontmatter.py — the shared frontmatter parser.
 
-Covers MASTER §1 (the frozen `_frontmatter` API) and the slice-02 27-case
+Covers 仕様 §1 (the frozen `_frontmatter` API) and the slice-02 27-case
 matrix (T1..T27), plus dedicated `as_list` and `parse_frontmatter` tests, plus
 the cross-slice integration semantics (None vs [] vs "" distinct; list fields
 read via as_list).
@@ -29,10 +29,10 @@ def codes(errors):
 
 
 class TestMatrix(unittest.TestCase):
-    """Slice-02 T1..T27 matrix. Each maps to MASTER §1 frozen semantics."""
+    """Slice-02 T1..T27 matrix. Each maps to 仕様 §1 frozen semantics."""
 
     def test_T1_happy_path(self):
-        """T1 — happy path: scalar keys, body after closer (MASTER §1 string-by-default)."""
+        """T1 — happy path: scalar keys, body after closer (仕様 §1 string-by-default)."""
         fm, body, errs = _frontmatter.parse(
             "---\nid: SPEC-014\ntitle: Refund\ntype: SPEC\n---\n# Body\n"
         )
@@ -49,7 +49,7 @@ class TestMatrix(unittest.TestCase):
         self.assertEqual(errs, [])
 
     def test_T3_leading_bom(self):
-        """T3 — leading UTF-8 BOM stripped before processing (MASTER §1 BOM strip)."""
+        """T3 — leading UTF-8 BOM stripped before processing (仕様 §1 BOM strip)."""
         fm, body, errs = _frontmatter.parse("﻿---\nid: A\n---\nbody\n")
         self.assertEqual(fm, {"id": "A"})
         self.assertEqual(body, "body\n")
@@ -271,7 +271,7 @@ class TestMatrix(unittest.TestCase):
 
 
 class TestNeverRaises(unittest.TestCase):
-    """MASTER §1 — parse() NEVER raises on content."""
+    """仕様 §1 — parse() NEVER raises on content."""
 
     def test_unterminated_quote_double(self):
         """Unterminated double quote -> unterminated_quote, literal best-effort."""
@@ -322,7 +322,7 @@ class TestNeverRaises(unittest.TestCase):
 
 
 class TestDistinctEmpties(unittest.TestCase):
-    """MASTER §1 — None vs [] vs "" are distinct, intentional."""
+    """仕様 §1 — None vs [] vs "" are distinct, intentional."""
 
     def test_blank_is_none(self):
         """Blank key -> None."""
@@ -349,7 +349,7 @@ class TestDistinctEmpties(unittest.TestCase):
 
 
 class TestCoercionEdges(unittest.TestCase):
-    """MASTER §1 — only true/false coerce; yes/no/on/off stay strings; ints stay strings."""
+    """仕様 §1 — only true/false coerce; yes/no/on/off stay strings; ints stay strings."""
 
     def test_yes_no_on_off_stay_strings(self):
         fm, _, _ = _frontmatter.parse(
@@ -377,7 +377,7 @@ class TestCoercionEdges(unittest.TestCase):
 
 
 class TestBodyExtraction(unittest.TestCase):
-    """MASTER §1 — body newlines verbatim; single separator newline consumed."""
+    """仕様 §1 — body newlines verbatim; single separator newline consumed."""
 
     def test_body_preserves_trailing_whitespace(self):
         fm, body, _ = _frontmatter.parse("---\nid: A\n---\nline  \n\n")
@@ -406,7 +406,7 @@ class TestBodyExtraction(unittest.TestCase):
 
 
 class TestAsList(unittest.TestCase):
-    """MASTER §1 — as_list(None/''/'x'/['a','b']/scalar-int)."""
+    """仕様 §1 — as_list(None/''/'x'/['a','b']/scalar-int)."""
 
     def test_none(self):
         self.assertEqual(_frontmatter.as_list(None), [])
@@ -444,7 +444,7 @@ class TestAsList(unittest.TestCase):
 
 
 class TestParseFrontmatter(unittest.TestCase):
-    """MASTER §1 — parse_frontmatter(text) == parse(text)[0]."""
+    """仕様 §1 — parse_frontmatter(text) == parse(text)[0]."""
 
     def test_returns_dict_only(self):
         d = _frontmatter.parse_frontmatter("---\nid: A\ntitle: B\n---\nbody\n")
@@ -469,7 +469,7 @@ class TestParseFrontmatter(unittest.TestCase):
 
 
 class TestIntegrationAsListOnFields(unittest.TestCase):
-    """Cross-slice binding rule (MASTER §1): list fields may be None or scalar;
+    """Cross-slice binding rule (仕様 §1): list fields may be None or scalar;
     consumers MUST read them via as_list. Verify the rule holds end-to-end."""
 
     def test_blank_depends_on_via_as_list(self):
@@ -495,7 +495,7 @@ class TestIntegrationAsListOnFields(unittest.TestCase):
 
 
 class TestParseFile(unittest.TestCase):
-    """MASTER §1 — parse_file: utf-8-sig, newline=''; raises only on I/O/decode."""
+    """仕様 §1 — parse_file: utf-8-sig, newline=''; raises only on I/O/decode."""
 
     def setUp(self):
         import tempfile
@@ -560,7 +560,7 @@ class TestParseFile(unittest.TestCase):
 
 
 class TestVersionConstant(unittest.TestCase):
-    """MASTER §1 — FRONTMATTER_VERSION = 1."""
+    """仕様 §1 — FRONTMATTER_VERSION = 1."""
 
     def test_version(self):
         self.assertEqual(_frontmatter.FRONTMATTER_VERSION, 1)

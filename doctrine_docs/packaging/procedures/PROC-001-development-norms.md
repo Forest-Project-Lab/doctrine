@@ -6,8 +6,8 @@ domain: packaging
 status: current
 owner: doctrine-maintainers
 created: 2026-07-28
-updated: 2026-07-28
-sources: [doctrine_docs/packaging/decisions/ADR-047-methodology-performance-noimpact.md, doctrine_docs/packaging/decisions/ADR-068-code-audit-residues.md, doctrine_docs/packaging/decisions/ADR-071-release-integrity-gate.md]
+updated: 2026-07-29
+sources: [doctrine_docs/packaging/decisions/ADR-047-development-methodology.md, doctrine_docs/packaging/decisions/ADR-068-code-audit-residues.md, doctrine_docs/packaging/decisions/ADR-071-release-integrity-gate.md]
 depends_on: [ICD-008]
 llm_context: task
 ---

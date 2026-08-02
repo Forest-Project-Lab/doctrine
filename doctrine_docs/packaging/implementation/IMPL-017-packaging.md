@@ -6,7 +6,7 @@ domain: packaging
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-28
+updated: 2026-07-29
 sources: [plugin/hooks/hooks.json, plugin/scripts/scaffold.py]
 depends_on: [SPEC-019, SPEC-020]
 llm_context: task
@@ -28,6 +28,7 @@ llm_context: task
 - 段差ゲート（ADR-019）の読み取りは登録簿の `docs_level(docs_root)` に一度だけ実装する。読者は `docs-audit.py`（`--respect-docs-level` のとき）・`policy-guard.py` の PostToolUse・`review-nudge.py` の三つ。ここに読者を増やすときは ICD-008 の段マーカー契約も更新する。
 - PostToolUse の並び順を取り違えると、起動後に見つけた境界違反がブロックされず、助言だけで終わる。この配列順は退行監視の対象とする（WATCH を参照）。
 - Hook 設定はセッション開始時にスナップショットして固定するので、配線を変えたら、新しいセッションで検証する。
+- ADR-075: 実行時の状態はプロジェクトスコープに限る。作業木にバイトコードを残さない。
 
 ## 対象部品
 
