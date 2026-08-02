@@ -26,6 +26,10 @@ llm_context: task
 - `classify_edges()` → `Edge{src, dst, field, kind}` の整列リスト。
 - `reverse_orphans()` → `{req_without_spec, spec_without_test}`。
 - `find_cycles()` → `depends_on` 端の循環の整列リスト（各要素は id の整列 list。自己依存 A→A は `[A]`）。索引に無い端はたどらない。Tarjan の強連結成分でサイクル安全。[R3]（ADR-038）
+- `to_json()` → `{root, nodes, edges, dup_ids, parse_warnings}`。**節点は隠さない**（ADR-087）。組み立てが節点へ入れた項をすべて返す。白名簿を持たない —— 以前は八項に絞っており、正本がどこにも無いまま組み立てと別々に手で保つ形になっていて、実際にずれた（組み立てが四項を足した後も白名簿は八項のままで、必須項の `title` は最初から集められてさえいなかった）。
+  - 返る項: `id`・`title`・`path`・`type`・`domain`・`status`・`depends_on`・`impacts`・`canonical_for`・`superseded_by`・`updated`・`review_by`・`llm_context`・`reproducible`。組み立てが項を足せば、そのまま返る。
+  - **唯一の例外**: `depends_on` と `impacts` は、生のフロントマターの値ではなく**索引の値**（解決済みの端）を返す。読み手にはこちらが有用である。
+  - 組み立てと直列化の項が一致することは受入が凍らせる。正本を書いても、一致を機械が見ていなければまたずれる。
 
 ## 制約
 

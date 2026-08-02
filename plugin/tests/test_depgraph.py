@@ -571,3 +571,61 @@ class DepGraphCLITest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class JsonNodeShapeTest(unittest.TestCase):
+    """ADR-087 / #149: 問い合わせの節点は隠さない。
+
+    以前は直列化が八項の白名簿で絞っており、正本がどこにも無いまま組み立てと別々に
+    手で保つ形になっていた。そして実際にずれた —— 組み立てが四項を足した後も白名簿は
+    八項のままで、**必須項の題名は最初から集められてさえいなかった**。
+    """
+
+    def _graph(self):
+        root = _util.make_repo({
+            "docs/_system/glossary.md": _util.fm_block({
+                "id": "GLOSSARY-001", "title": "用語", "type": "GLOSSARY",
+                "domain": "_system", "status": "current", "owner": "o",
+                "updated": "2026-06-01", "sources": []}) + "本文。\n",
+            "docs/billing/spec/SPEC-1-x.md": _util.fm_block({
+                "id": "SPEC-1", "title": "請求の仕様", "type": "SPEC",
+                "domain": "billing", "status": "current", "owner": "o",
+                "updated": "2026-06-01", "sources": [], "review_by": "2026-12-01",
+                "llm_context": "task"}) + "本文。\n",
+        })
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        return _util.load_core("_depgraph").build_graph(os.path.join(root, "docs"))
+
+    def test_title_is_returned(self):
+        """題名は必須項なので、必ず返る(取れないのではなく返していなかった)。"""
+        data = self._graph().to_json()
+        by_id = {n["id"]: n for n in data["nodes"]}
+        self.assertEqual(by_id["SPEC-1"]["title"], "請求の仕様")
+
+    def test_lifecycle_fields_are_returned(self):
+        """鮮度と後継の項も返る。読み手が自分で判じられる。"""
+        by_id = {n["id"]: n for n in self._graph().to_json()["nodes"]}
+        node = by_id["SPEC-1"]
+        self.assertEqual(node["updated"], "2026-06-01")
+        self.assertEqual(node["review_by"], "2026-12-01")
+        self.assertEqual(node["llm_context"], "task")
+        self.assertIn("superseded_by", node)
+
+    def test_json_node_hides_nothing_from_the_builder(self):
+        """**これが本当の歯止めである。** 組み立てが節点へ入れた項と、直列化が返す項が
+        一致すること。正本を書いても、一致を機械が見ていなければまたずれる(ADR-087)。"""
+        g = self._graph()
+        data = g.to_json()
+        for node in data["nodes"]:
+            built = set(g.nodes[node["id"]].keys()) | {"id"}
+            self.assertEqual(
+                set(node.keys()), built,
+                "組み立てと直列化の項がずれた: %s(白名簿を復活させていないか。ADR-087)"
+                % node["id"])
+
+    def test_indexed_fields_carry_resolved_edges(self):
+        """唯一の例外。depends_on/impacts は生の値ではなく索引の値を返す。"""
+        g = self._graph()
+        by_id = {n["id"]: n for n in g.to_json()["nodes"]}
+        for field in ("depends_on", "impacts"):
+            self.assertIsInstance(by_id["SPEC-1"][field], list, field)

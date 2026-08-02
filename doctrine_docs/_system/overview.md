@@ -97,6 +97,7 @@ sources: []
 | ADR-067 | ADR | graph | ファイルは統治外の意思を自分の中に宣言できる — exempt の印と勘定の第四項 |
 | ADR-072 | ADR | graph | 悉皆トレースモード — 「未分類」を残高にする opt-in |
 | ADR-081 | ADR | graph | 検証は証拠の提示である。証跡の形だけを採り、ハザード層と過程適合は採らない |
+| ADR-087 | ADR | graph | 問い合わせの節点は隠さない。組み立てた項をそのまま返す |
 | CHANGE-003 | CHANGE | graph | 悉皆トレース — 印なしゼロを選べる体系にする |
 | IMPACT-003 | IMPACT | graph | 悉皆トレース — 影響の列挙 |
 | IMPL-006 | IMPL | graph | `_depgraph.py`＋`dep-graph.py` の実装メモ |

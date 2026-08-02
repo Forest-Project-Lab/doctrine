@@ -353,21 +353,27 @@ class Graph(object):
 
     # -- 直列化 -------------------------------------------------------------
 
+    # 直列化のときに索引の値へ差し替える項(ADR-087 の唯一の例外)。生のフロントマターの
+    # 値ではなく解決済みの端を返す。読み手にはこちらが有用である。
+    _INDEXED_FIELDS = ("depends_on", "impacts")
+
     def to_json(self):
-        """直列化できるグラフ表現。nodes + 分類済み edges + 重複/警告。決定的。"""
+        """直列化できるグラフ表現。nodes + 分類済み edges + 重複/警告。決定的。
+
+        **白名簿を持たない(ADR-087)。** 組み立てが節点へ入れた項をすべて返す。
+        以前は八項の白名簿で絞っており、正本がどこにも無いまま組み立てと別々に手で
+        保つ形になっていた。そして実際にずれた —— 組み立てが四項(superseded_by・
+        updated・review_by・llm_context)を足した後も白名簿は八項のままで、必須項の
+        題名は最初から集められてさえいなかった。項を足せば返る形にする。
+        受入が組み立てと直列化の項の一致を凍らせている(それが本当の歯止めである)。
+        """
         nodes = []
         for doc_id in sorted(self.nodes):
-            n = self.nodes[doc_id]
-            nodes.append({
-                "id": doc_id,
-                "type": n["type"],
-                "domain": n["domain"],
-                "status": n["status"],
-                "path": n["path"],
-                "depends_on": self._dep_out[doc_id],
-                "impacts": self._imp_out[doc_id],
-                "canonical_for": n["canonical_for"],
-            })
+            n = dict(self.nodes[doc_id])
+            n["id"] = doc_id
+            n["depends_on"] = self._dep_out[doc_id]
+            n["impacts"] = self._imp_out[doc_id]
+            nodes.append(n)
         return {
             "root": self.root,
             "nodes": nodes,
@@ -416,6 +422,9 @@ def build_graph(root):
         node = {
             "id": doc_id,
             "path": relpath,
+            # 題名は必須項(REQUIRED_KEYS_L2)。集めていなかったので問い合わせから
+            # 落ちており、読み手(doctrine-lens)が別経路を持つ原因になっていた(ADR-087)。
+            "title": _coerce_str(fm.get("title")),
             "type": _coerce_str(fm.get("type")),
             "domain": _coerce_str(fm.get("domain")),
             "status": _coerce_str(fm.get("status")) or _registry.default_status(
