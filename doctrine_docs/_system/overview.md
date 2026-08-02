@@ -18,7 +18,7 @@ sources: []
 |---|---|---|---|
 | GLOSSARY-001 | GLOSSARY | _system | 用語辞書の正本 |
 | DECIDED-001 | DECIDED | _system | 横断の確定方針（12事実） |
-| NONGOAL-001 | NONGOAL | _system | 横断のやらないこと（15項） |
+| NONGOAL-001 | NONGOAL | _system | 横断のやらないこと（16項） |
 | WATCH-001 | WATCH | _system | 横断の退行監視（9項） |
 | ICD-005 | ICD | audit | audit のインターフェース（全件監査の境界） |
 | REQ-008 | REQ | audit | 最小性の監査（過剰と不足の両側を全件検出） |
@@ -168,7 +168,6 @@ sources: []
 | ADR-028 | ADR | packaging | Hook を 7 イベントに広げ、生存性と捕捉を発火面に載せる |
 | ADR-030 | ADR | packaging | 既定 Level 2 を追認し、生存性と捕捉は段差に依らず動くと定める |
 | ADR-031 | ADR | packaging | 全スクリプトは標準ライブラリだけで動く(追認) |
-| ADR-032 | ADR | packaging | Hook 設定はセッション開始時に固定される前提で運用する(追認) |
 | ADR-041 | ADR | packaging | 導入直後を警告で始めない（状態の種蒔き・Level 昇格・初日の中立案内） |
 | ADR-042 | ADR | packaging | 監査要約のスキーマは全読者が照合する・状態ファイルの書式は前方寛容とする |
 | ADR-046 | ADR | packaging | 既定 Level 2 では全件検査を CI に委ね、初回監査前は警告でなく案内を出す |
@@ -184,6 +183,7 @@ sources: []
 | ADR-075 | ADR | packaging | フック境界は沈黙して開かない — 読み手・書き出し・経路解決・配布の四点を実行環境に対して堅くする |
 | ADR-078 | ADR | packaging | Hook 事象の集合を数で凍らせず、能力で検める |
 | ADR-079 | ADR | packaging | サブエージェントへ注入しない理由を「届かない」から「呼び出し側が組む」へ置き換える |
+| ADR-080 | ADR | packaging | Hook 設定は固定されない。settings 由来は live reload される前提へ置き換える |
 | CHANGE-001 | CHANGE | packaging | 導入済みプラグインの版の遅れを生存性として照合する |
 | CHANGE-002 | CHANGE | packaging | リリースの整合を CI の門で検める — 変更履歴の書き忘れを止める |
 | CHANGE-005 | CHANGE | packaging | 不具合の兆候を記録し、承認を経た issue 報告を促す |

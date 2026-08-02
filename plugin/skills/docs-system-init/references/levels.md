@@ -23,4 +23,4 @@
 
 ## 段差とフロントマター
 
-段差の記録はフロントマターではなく `.docs-level` に置く（§4.4）。段差が変えるのは、フロントマターで使える欄の範囲である（Level 3 で `depends_on`・`impacts`、Level 4 で `canonical_for` が加わる。§3.4）。`level:` という欄をフロントマターに書いてはならない。上位へ上げるのは、その情報が要るとわかってからにする。`doctrine_docs/_system/.docs-level` に効いている段差を一行で記す（`level: N`）。`scaffold.py` がべき等に書く。SessionEnd の監査・起動後ガード・レビューのナッジが登録簿の `docs_level(docs_root)` でこれを読み、Level 2 では自主停止する（ADR-019）。目印が無い・不正なときは全構成（Level 4）として扱う。段を変えたら、新しいセッションから効く（Hook 設定はセッション開始時に固定されるため）。
+段差の記録はフロントマターではなく `.docs-level` に置く（§4.4）。段差が変えるのは、フロントマターで使える欄の範囲である（Level 3 で `depends_on`・`impacts`、Level 4 で `canonical_for` が加わる。§3.4）。`level:` という欄をフロントマターに書いてはならない。上位へ上げるのは、その情報が要るとわかってからにする。`doctrine_docs/_system/.docs-level` に効いている段差を一行で記す（`level: N`）。`scaffold.py` がべき等に書く。SessionEnd の監査・起動後ガード・レビューのナッジが登録簿の `docs_level(docs_root)` でこれを読み、Level 2 では自主停止する（ADR-019）。目印が無い・不正なときは全構成（Level 4）として扱う。段を変えたら、新しいセッションから効く（本プラグインの Hook は plugin 層であり、セッション中は保持されるため。ADR-080）。

@@ -320,8 +320,10 @@ def version_drift(raw_stamps, current=None):
 
     セッション冒頭に注入が刻んだ版(hook_inject_version)と、今の自分の版を
     比べる。どちらかが読めなければ判じない(古い版からの更新直後は印が無い —
-    前方寛容)。配線と契約はセッション開始時に固定される(DECIDED-001 事実8)
-    ため、食い違いは「新しいセッションを開始する」が唯一の解になる。
+    前方寛容)。本プラグインの配線は plugin 層なのでセッション中は保持される
+    (DECIDED-001 事実8。settings 由来の hooks は live reload されるが、こちらは
+    別の層である。ADR-080)。契約の注入もセッション冒頭の一度きりなので、
+    食い違いは「新しいセッションを開始する」が解になる。
     """
     if not isinstance(raw_stamps, dict):
         return None
@@ -334,7 +336,7 @@ def version_drift(raw_stamps, current=None):
     if started.strip() == current.strip():
         return None
     return ("プラグインの版がセッションの途中で切り替わった(開始時 %s → 今 %s)。"
-            "配線と契約はセッション開始時に固定されるため、古いまま動いている。"
+            "本プラグインの配線と契約はセッション中は保持されるため、古いまま動いている。"
             "新しいセッションを開始する(ADR-066)"
             % (started.strip(), current.strip()))
 
