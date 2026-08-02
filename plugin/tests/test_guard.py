@@ -230,28 +230,46 @@ class TestPostBlock(GuardTestBase):
                 "identity", doc_id="SPEC-22")) + "内部仕様。\n",
         })
 
-    def test_tc073_edit_pre_allow_then_post_block(self):
-        """TC-073: an Edit that introduces the cross-domain non-ICD dep cannot be
-        pre-denied (allow at PreToolUse); after apply, policy-guard on PostToolUse
-        re-reads the file and emits decision:block with the same message."""
+    def test_tc073_edit_introducing_violation_is_pre_denied(self):
+        """TC-073 (ADR-076): an Edit that INTRODUCES the cross-domain non-ICD dep is
+        denied at PreToolUse, before the bytes reach the worktree. Guard2 builds the
+        post-edit full text with the same `_proposed_text` that Guard1/Guard3 already
+        used, so the old premise ("cannot reconstruct pre-apply") does not hold.
+        The file on disk must be untouched by the guard itself."""
         root = self._identity_internal_repo()
-        # The billing SPEC, already on disk, now WITH the offending dep (post-apply state).
         billing_path = os.path.join(root, "docs/billing/spec/SPEC-90.md")
         os.makedirs(os.path.dirname(billing_path), exist_ok=True)
+        # On disk WITHOUT the offending dep. The edit is what introduces it.
+        clean = _util.fm_block(_doc("billing", doc_id="SPEC-90")) + "本文。\n"
         with open(billing_path, "w", encoding="utf-8") as fh:
-            fh.write(_util.fm_block(_doc("billing", doc_id="SPEC-90",
-                                         fm_extra={"depends_on": ["SPEC-22"]}))
-                     + "本文。\n")
+            fh.write(clean)
 
-        # PreToolUse Edit -> allow (cannot reconstruct full frontmatter pre-apply).
         edit_tin = {"file_path": billing_path,
-                    "old_string": "本文。", "new_string": "本文(更新)。"}
+                    "old_string": "owner: o",
+                    "new_string": "owner: o\ndepends_on: [SPEC-22]"}
         out_pre, _ = _util.invoke(
             "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Edit", edit_tin))
-        decision, _ = _pre(json.loads(out_pre))
-        self.assertEqual(decision, "allow")
+        decision, reason = _pre(json.loads(out_pre))
+        self.assertEqual(decision, "deny")
+        self.assertEqual(
+            reason, "SPEC-22 は identity の内部です。identity の ICD 宛にしてください。")
+        # The guard must not have written anything.
+        with open(billing_path, encoding="utf-8") as fh:
+            self.assertEqual(fh.read(), clean)
 
-        # PostToolUse Edit -> decision:block, same R7 message.
+    def test_tc073b_post_block_remains_for_reconciliation(self):
+        """TC-073b: the PostToolUse block stays as reconciliation (external races,
+        tool-implementation differences). It is no longer the primary gate, but a
+        file that reached disk in violation must still be reported."""
+        root = self._identity_internal_repo()
+        billing_path = os.path.join(root, "docs/billing/spec/SPEC-93.md")
+        os.makedirs(os.path.dirname(billing_path), exist_ok=True)
+        with open(billing_path, "w", encoding="utf-8") as fh:
+            fh.write(_util.fm_block(_doc("billing", doc_id="SPEC-93",
+                                         fm_extra={"depends_on": ["SPEC-22"]}))
+                     + "本文。\n")
+        edit_tin = {"file_path": billing_path,
+                    "old_string": "本文。", "new_string": "本文(更新)。"}
         out_post, code = _util.invoke(
             "policy-guard",
             stdin_obj=_util.hook_stdin("PostToolUse", "Edit", edit_tin,
@@ -284,10 +302,11 @@ class TestPostBlock(GuardTestBase):
         self.assertEqual(resp.get("decision"), "block")
         self.assertIn("identity の ICD 宛に", resp.get("reason"))
 
-    def test_tc119_write_deny_vs_edit_block_same_violation(self):
-        """TC-119: the SAME ICD violation -> Write gives permissionDecision:deny
-        (no disk change), Edit gives decision:block (disk transiently inconsistent).
-        Two code paths, same message, different output grammar."""
+    def test_tc119_write_and_edit_both_pre_deny_same_violation(self):
+        """TC-119 (ADR-076): the SAME ICD violation is pre-denied on BOTH paths.
+        Write is denied from its `content`; Edit is denied from the post-edit full
+        text. The message is identical. The PostToolUse block survives only as
+        reconciliation for a file that reached disk some other way."""
         root = self._identity_internal_repo()
         msg = "SPEC-22 は identity の内部です。identity の ICD 宛にしてください。"
 
@@ -306,19 +325,70 @@ class TestPostBlock(GuardTestBase):
         # by the guard; the guard never writes).
         self.assertFalse(os.path.exists(wpath))
 
-        # Edit path -> post-block (disk already inconsistent).
-        epath = os.path.join(root, "docs/billing/spec/SPEC-93.md")
+        # Edit path -> pre-deny too, with the identical message (ADR-076).
+        epath = os.path.join(root, "docs/billing/spec/SPEC-95.md")
         os.makedirs(os.path.dirname(epath), exist_ok=True)
+        clean = _util.fm_block(_doc("billing", doc_id="SPEC-95")) + "本文。\n"
         with open(epath, "w", encoding="utf-8") as fh:
-            fh.write(_util.fm_block(_doc("billing", doc_id="SPEC-93",
-                                         fm_extra={"depends_on": ["SPEC-22"]}))
-                     + "本文。\n")
-        etin = {"file_path": epath, "old_string": "本文。", "new_string": "改。"}
+            fh.write(clean)
+        etin = {"file_path": epath, "old_string": "owner: o",
+                "new_string": "owner: o\ndepends_on: [SPEC-22]"}
         out_e, _ = _util.invoke(
-            "policy-guard", stdin_obj=_util.hook_stdin("PostToolUse", "Edit", etin))
-        resp = json.loads(out_e)
-        self.assertEqual(resp.get("decision"), "block")
-        self.assertEqual(resp.get("reason"), msg)
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Edit", etin))
+        dec_e, reason_e = _pre(json.loads(out_e))
+        self.assertEqual(dec_e, "deny")
+        self.assertEqual(reason_e, msg)
+        with open(epath, encoding="utf-8") as fh:
+            self.assertEqual(fh.read(), clean, "ガードは書かない")
+
+        # MultiEdit is the same path (the premise never was tool-specific).
+        mpath = os.path.join(root, "docs/billing/spec/SPEC-96.md")
+        with open(mpath, "w", encoding="utf-8") as fh:
+            fh.write(_util.fm_block(_doc("billing", doc_id="SPEC-96")) + "本文。\n")
+        mtin = {"file_path": mpath,
+                "edits": [{"old_string": "本文。", "new_string": "改。"},
+                          {"old_string": "owner: o",
+                           "new_string": "owner: o\ndepends_on: [SPEC-22]"}]}
+        out_m, _ = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "MultiEdit", mtin))
+        dec_m, reason_m = _pre(json.loads(out_m))
+        self.assertEqual(dec_m, "deny")
+        self.assertEqual(reason_m, msg)
+
+    def test_edit_to_icd_is_allowed_without_human_approval(self):
+        """ADR-076 must not over-deny: a cross-domain dep aimed at the other domain's
+        ICD is legitimate and passes with no prompt."""
+        root = self._repo({
+            "docs/identity/ICD.md": _util.fm_block(
+                _doc("identity", doc_id="ICD-9", type_code="ICD")) + "境界。\n",
+        })
+        path = os.path.join(root, "docs/billing/spec/SPEC-97.md")
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(_util.fm_block(_doc("billing", doc_id="SPEC-97")) + "本文。\n")
+        tin = {"file_path": path, "old_string": "owner: o",
+               "new_string": "owner: o\ndepends_on: [ICD-9]"}
+        out, _ = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Edit", tin))
+        decision, reason = _pre(json.loads(out))
+        self.assertEqual(decision, "allow", reason)
+
+    def test_edit_that_cannot_be_reconstructed_is_denied_for_governed_docs(self):
+        """ADR-076 fail-closed: if the post-edit full text cannot be built (old_string
+        mismatch), the guard has no verdict. For a governance document that must deny,
+        not silently allow — the very failure mode ADR-075 removed elsewhere."""
+        root = self._identity_internal_repo()
+        path = os.path.join(root, "docs/billing/spec/SPEC-98.md")
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(_util.fm_block(_doc("billing", doc_id="SPEC-98")) + "本文。\n")
+        tin = {"file_path": path, "old_string": "この文字列は存在しない",
+               "new_string": "何か"}
+        out, _ = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Edit", tin))
+        decision, reason = _pre(json.loads(out))
+        self.assertEqual(decision, "deny")
+        self.assertIn("組み立てられない", reason)
 
     def test_linter_never_emits_decision(self):
         """Critique gap 3: docs-linter stays pure-advisory (never `decision`).

@@ -18,7 +18,7 @@ llm_context: task
 SPEC-003 の受入基準を `plugin/tests/test_guard.py` の各クラスで確認する。`[R7]`
 
 - `TestR7IcdDependency`: 受入シナリオ TC（番号は次のとおり）。TC-070（越境ICD宛=許可）・TC-071（越境非ICD宛=拒否、拒否文を一字一句照合）・TC-072（同ドメイン=許可）・TC-117（相手が deprecated でも許可、`status` 無関係）・TC-123（分類不能=fail-closed 拒否）・dangling 連れ合い（索引に無いが既知型=許可）。
-- `TestPostBlock`: TC-073（Edit は PRE（書き込み前）で許し POST（書き込み後）で block）・TC-074（MultiEdit の block）・TC-119（同一違反で Write deny と Edit block）・リンタは decision を出さない。
+- `TestPostBlock`: TC-073（Edit が違反を持ち込むなら PRE（書き込み前）で deny。ADR-076）・TC-073b（POST の block は突き合わせとして残る）・TC-074（MultiEdit の block）・TC-119（同一違反で Write も Edit も MultiEdit も PRE で deny）・ICD 宛の依存は追加の承認なしで allow・組み立て不能な統治文書の編集は deny・リンタは decision を出さない。
 - `TestImmutability`: TC-075（無関係な現行文書の編集=許可）・TC-076（archive 下の Write/Edit=拒否）・TC-077（既存ADRの改変=拒否、carve-out の `status` 遷移=許可・本文変更=拒否）。
 - `TestDeleteSafety`・`TestPostDeleteSafetyTransition`: TC-078..081（降格・本文消し・Bash rm/git rm/mv=拒否、逆参照ゼロ=許可）・TC-118（block→張り替え→許可）・既存 deprecated や既存空本文の無関係な編集は誤って block しない。
 - `TestBashOutputGrammar`: TC-132（Bash deny に additionalContext も block も無い）。
