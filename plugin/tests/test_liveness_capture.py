@@ -730,6 +730,54 @@ class TestExtAnchors(AuditChecksBase):
         summary, _ = self._audit()
         self.assertFalse(self._codes(summary, "ext_anchor_broken"))
 
+    # ADR-086 / #168: 機械が何も見ていないアンカーは review_by が唯一の見張りである。
+    # 実測: EXT-001 は常時見張られる三本と同じ 92 日の間隔を持ち、その一日で三件の
+    # 反証が届いた(ADR-077・078・080)。定例は一度も先に捉えていない。
+    def _sole_guard(self, num, updated, review_by):
+        """`検査: review_by のみ` のアンカーを、日付を指定して立てる。"""
+        meta = {
+            "id": "EXT-9%02d" % num, "title": "x", "type": "EXT",
+            "domain": "packaging", "status": "current", "owner": "a",
+            "updated": updated, "sources": [],
+        }
+        if review_by is not None:
+            meta["review_by"] = review_by
+        _util.write_doc(self.root, "packaging/external/EXT-9%02d-x.md" % num, meta,
+                        "## 期待\n\n- 対象: `実行環境の仕様(ファイルではない)`\n"
+                        "- 検査: review_by のみ\n")
+
+    def test_sole_guard_without_review_by_errors(self):
+        """唯一の見張りが不在なら、その境界は沈黙して開いている(error)。"""
+        self._sole_guard(5, "2026-07-26", None)
+        summary, _ = self._audit()
+        hits = self._codes(summary, "ext_sole_guard_missing")
+        self.assertTrue(any(f["severity"] == "error" for f in hits), hits)
+
+    def test_sole_guard_too_far_out_warns(self):
+        """唯一の見張りが緩い(30 日超)なら warn。数は見立てなので error にしない。"""
+        self._sole_guard(6, "2026-07-26", "2026-10-26")   # 92 日。EXT-001 の実際の値
+        summary, _ = self._audit()
+        hits = self._codes(summary, "ext_sole_guard_loose")
+        self.assertTrue(hits, "92 日は咎めるはず")
+        self.assertTrue(all(f["severity"] == "warn" for f in hits), hits)
+
+    def test_sole_guard_within_the_ceiling_is_clean(self):
+        self._sole_guard(7, "2026-07-26", "2026-08-25")   # 30 日
+        summary, _ = self._audit()
+        self.assertFalse(self._codes(summary, "ext_sole_guard_loose"))
+        self.assertFalse(self._codes(summary, "ext_sole_guard_missing"))
+
+    def test_watched_anchor_is_not_charged_the_short_cadence(self):
+        """exists で常時見張られるアンカーには課さない(対象が消えれば即座に error)。"""
+        _write(os.path.join(self.base, "watched.md"), "x\n")
+        _util.write_doc(self.root, "packaging/external/EXT-908-x.md", {
+            "id": "EXT-908", "title": "x", "type": "EXT", "domain": "packaging",
+            "status": "current", "owner": "a", "updated": "2026-07-26",
+            "sources": [], "review_by": "2027-01-01",     # 半年先でも咎めない
+        }, "## 期待\n\n- 対象: `watched.md`\n- 検査: exists\n")
+        summary, _ = self._audit()
+        self.assertFalse(self._codes(summary, "ext_sole_guard_loose"))
+
     def test_anchor_without_target_line_warns(self):
         self._ext(4, "本文だけ。\n")
         summary, _ = self._audit()

@@ -17,6 +17,7 @@ llm_context: task
 ## 受入基準への対応
 
 SPEC-011 の検査群について、それぞれ pass と fail の両側を確認する。新設の 7 検査（stale_current・source_drift・archive_integrity・adr_not_landed・glossary_seed_drift・ext_anchor_broken・memory_shadow）は `plugin/tests/test_liveness_capture.py` が確認する。`[R3][R8]`
+- 唯一の見張りである期限（ADR-086）: `検査: review_by のみ` のアンカーについて、①`review_by` 不在が error になること、②30 日超が warn になること、③30 日以内は静かなこと、④`exists` で常時見張られるアンカーには半年先の期限でも課さないこと、を `plugin/tests/test_liveness_capture.py` の `TestExtAnchors` が確認する。**実測を凍らせている** —— ②の見本には `EXT-001` の実際の値（更新 2026-07-26 / 期限 2026-10-26 = 92 日）を使う。
 
 - dead_link: すべての参照が解決すれば pass、解決先のない `depends_on` があれば fail。
 - review_by_overrun: `review_by` が未来日なら pass、期限を過ぎていれば fail（DECIDED と WATCH を含む）。DECIDED に `review_by` が無い場合は error。

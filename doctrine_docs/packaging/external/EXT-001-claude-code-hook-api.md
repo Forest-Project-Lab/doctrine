@@ -6,9 +6,9 @@ domain: packaging
 status: current
 owner: doctrine-maintainers
 created: 2026-07-26
-updated: 2026-07-26
+updated: 2026-08-02
 sources: [https://docs.anthropic.com/claude-code]
-review_by: 2026-10-26
+review_by: 2026-09-01
 llm_context: task
 ---
 
@@ -44,7 +44,7 @@ llm_context: task
 ## 期待
 
 - 対象: `実行環境の仕様(ファイルではない)`
-- 検査: review_by のみ(指紋で追えないため、期限で定期再検証する)
+- 検査: review_by のみ(指紋で追えないため、期限で定期再検証する)。**機械は何も見ていない** —— この期限が唯一の見張りなので、間隔は 30 日以内に保つ(ADR-086)。2026-08-02 の一日で三件の反証が届いた(ADR-077・078・080)。定例は一度も先に捉えていない。
 - 期待する状態: 上のイベント名・ツール名・意味論が保たれている。書き込み系ツールの追加・改名があれば matcher が黙って素通りするため、再検証で拾う
 
 ## 動いたら何が壊れるか

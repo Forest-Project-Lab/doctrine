@@ -56,7 +56,8 @@ AUDIT_CHECKS = (
     "projection_drift", "unregistered_document", "shadowed_document",
     "stray_document", "view_stale", "stale_current", "source_drift",
     "archive_integrity",
-    "adr_not_landed", "glossary_seed_drift", "ext_anchor_broken", "memory_shadow",
+    "adr_not_landed", "glossary_seed_drift", "ext_anchor_broken",
+    "ext_sole_guard_missing", "ext_sole_guard_loose", "memory_shadow",
     "trace_mark_error", "trace_broken_ref", "trace_deprecated_ref",
     "trace_stale", "trace_missing_impl", "trace_marker_suspect",
     "trace_scan_truncated", "trace_unexpected_impl", "trace_undeclared_impl",
@@ -640,7 +641,10 @@ def _check_ext_anchors(g, root):
         wants_exists = "exists" in check
         wants_hash = "hash" in check
         if not wants_exists and not wants_hash:
-            continue  # review_by のみ は機械検査しない(期限は review_by 検査)。
+            # 機械が何も見ていないアンカー。review_by が唯一の見張りである(ADR-086)。
+            # 常時見張られている exists/hash のアンカーと同じ寛容さを与えない。
+            out.extend(_check_ext_sole_guard(doc_id, node))
+            continue
         if target.startswith("http://") or target.startswith("https://"):
             continue  # 通信はしない(ADR-031)。URL は review_by で見る。
         abspath = target if os.path.isabs(target) else os.path.join(proj, target)
@@ -654,6 +658,38 @@ def _check_ext_anchors(g, root):
             continue
         if wants_hash:
             out.extend(_check_ext_hash(doc_id, node, body, target, abspath))
+    return out
+
+
+# 唯一の見張りである期限の上限(ADR-086)。見立てであって測って出した値ではない ——
+# 実測では反証が更新から約5〜7日で届いており、30日でも定例が先に捉えたことにはならない。
+# 縮めるのは窓であって、先に捉えることは保証しない。
+EXT_SOLE_GUARD_MAX_DAYS = 30
+
+
+def _check_ext_sole_guard(doc_id, node):
+    """`検査: review_by のみ` のアンカーの期限を判ずる(ADR-086)。
+
+    二段に分ける。見張りの不在は事実なので error、上限の超過は見立てなので warn。
+    """
+    out = []
+    rb = _parse_date(node.get("review_by"))
+    if rb is None:
+        out.append(_finding(
+            "ext_sole_guard_missing", SEV_ERROR, doc_id, node["path"],
+            "機械が何も見ていないアンカー(検査: review_by のみ)に review_by が無い。"
+            "唯一の見張りが不在で、この境界は沈黙して開いている(ADR-086)"))
+        return out
+    up = _parse_date(node.get("updated"))
+    if up is None:
+        return out  # updated が読めないなら間隔を判じられない(schema 検査の領分)。
+    span = (rb - up).days
+    if span > EXT_SOLE_GUARD_MAX_DAYS:
+        out.append(_finding(
+            "ext_sole_guard_loose", SEV_WARN, doc_id, node["path"],
+            "機械が何も見ていないアンカー(検査: review_by のみ)の点検の間隔が %d 日ある。"
+            "唯一の見張りなので %d 日以内にする(ADR-086。exists/hash で常時見張られる"
+            "アンカーには課さない)" % (span, EXT_SOLE_GUARD_MAX_DAYS)))
     return out
 
 
