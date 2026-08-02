@@ -182,6 +182,8 @@ sources: []
 | ADR-071 | ADR | packaging | リリースの整合を CI の門で検める — 変更履歴の書き忘れの構造的な防止 |
 | ADR-074 | ADR | packaging | 不具合の報告は「検出は機械・送信は人」の二層に分ける |
 | ADR-075 | ADR | packaging | フック境界は沈黙して開かない — 読み手・書き出し・経路解決・配布の四点を実行環境に対して堅くする |
+| ADR-078 | ADR | packaging | Hook 事象の集合を数で凍らせず、能力で検める |
+| ADR-079 | ADR | packaging | サブエージェントへ注入しない理由を「届かない」から「呼び出し側が組む」へ置き換える |
 | CHANGE-001 | CHANGE | packaging | 導入済みプラグインの版の遅れを生存性として照合する |
 | CHANGE-002 | CHANGE | packaging | リリースの整合を CI の門で検める — 変更履歴の書き忘れを止める |
 | CHANGE-005 | CHANGE | packaging | 不具合の兆候を記録し、承認を経た issue 報告を促す |

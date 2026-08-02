@@ -111,15 +111,21 @@ class TestHooksFullProfile(unittest.TestCase):
         self.path = os.path.join(_util.PLUGIN_ROOT, "hooks", "hooks.json")
         self.hooks = _load_json(self.path)
 
-    def test_has_all_seven_events(self):
+    def test_required_events_are_all_wired(self):
+        """ADR-078: 「必要な配線が在る」を検め、集合の上限は凍らせない。
+
+        以前はここが集合の完全一致で、事象は「ちょうど 7 個」と主張していた。
+        現行の公式仕様が定める事象は 30 個あるので、実行環境の機能追加を取り込む
+        改善が、テスト破壊として現れていた。守っているつもりの門が、門を増やす
+        ことを禁じていた。凍らせたいのは配線の欠落であって、上限ではない。
+        """
         # 4 events (SPEC-019) + UserPromptSubmit/Stop/PreCompact (ADR-028:
         # R11 生存性のハートビートと R12 会話知識の捕捉)。
+        required = {"SessionStart", "UserPromptSubmit", "PreToolUse", "PostToolUse",
+                    "Stop", "PreCompact", "SessionEnd"}
         events = set(self.hooks.get("hooks", {}).keys())
-        self.assertEqual(
-            events,
-            {"SessionStart", "UserPromptSubmit", "PreToolUse", "PostToolUse",
-             "Stop", "PreCompact", "SessionEnd"},
-        )
+        missing = required - events
+        self.assertFalse(missing, "必要な配線が欠けている: %s" % sorted(missing))
 
     def test_coverage_matrix_has_no_empty_cell(self):
         """#94 / SPEC-025: 被覆マトリクスの R1〜R12 の全行が、発火経路・実行する

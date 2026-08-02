@@ -18,7 +18,23 @@ llm_context: task
 
 ## 何に依存しているか
 
-実行環境(Claude Code)の Hook 仕様。イベント名(SessionStart・UserPromptSubmit・PreToolUse・PostToolUse・Stop・PreCompact・SessionEnd)、matcher のツール名(`Edit`・`Write`・`MultiEdit`・`Bash`)、`permissionDecision`/`decision` の意味、`stop_hook_active` の旗、`SessionStart` の `source`(`compact` を含む)、**`additionalContext` を運ぶ事象が限られており `PreCompact` は含まれないこと**(ADR-077)、設定がセッション開始時に固定される挙動(ADR-032)。
+実行環境(Claude Code)の Hook 仕様。依存しているのは**能力**であって、事象名の一覧ではない(ADR-078)。名前の列挙は `review_by` の周期より速く動くので、ここには持たない。
+
+| 依存している能力 | いま使っている入口 |
+|---|---|
+| セッション冒頭に文脈を注入できる | `SessionStart`(`source` を運ぶ。`compact` を含む) |
+| 会話ごとに文脈を注入できる | `UserPromptSubmit` |
+| ツール実行の前に拒否できる | `PreToolUse` の `permissionDecision` |
+| ツール実行の後に差し止められる | `PostToolUse` の `decision` |
+| ターンの終端で差し止められる | `Stop`(`stop_hook_active` の旗で無限ループを防ぐ) |
+| 圧縮が起きたことを知れる | `PreCompact`(**文脈は運ばない**。ADR-077) |
+| セッション終了で後始末できる | `SessionEnd` |
+| matcher でツールを絞れる | `Edit`・`Write`・`MultiEdit`・`Bash` |
+
+`additionalContext` を運ぶ事象は限られており、`PreCompact` は含まれない(ADR-077)。
+`SubagentStart` は運ぶ(ADR-079。配線するかは未決)。設定がセッション開始時に固定される
+挙動は ADR-032 が前提に置いていたが、**settings 由来の hooks は live reload される**
+(#157 で扱う)。
 
 ## 期待
 
