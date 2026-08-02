@@ -22,7 +22,7 @@ llm_context: task
 - `is_known_type(type)`: 20 型のいずれかなら真を返す。
 - `default_status(type)` と `default_llm_context(type)`: 既定値を返す。未知の型なら None を返す。
 - `status_allowed(type)`: 許可する `status` の集合を返す。毎回新しい集合を返す。
-- `allowed_locations(type)`: 許可する置き場所の列を返す。毎回新しいリストを返す。
+- `allowed_locations(type)`: 許可する置き場所の列を返す。毎回新しいリストを返す。**`REQ` は `<domain>/` と `_system/` の二つを許す**（ADR-091）—— `_system/` に置いた `REQ` は製品の粒度、`<domain>/` に置いた `REQ` は文書・機能の粒度である。**粒度は置き場所が言い、新しい欄を作らない**（`_system/` は既に横断の三本 `DECIDED`・`NONGOAL`・`WATCH` を置く棚であり、横断・一木に一つ・正本という性質が揃っている）。粒度そのものは機械で判じられないので、取り違えは人とレビューが見る。
 - `is_projection(type)`: 投影型（OVERVIEW・CTXMAP）なら真を返す。
 - `is_current(status)`: `status` が current または accepted なら真を返す。
 - `effective_llm_context(meta)`: フロントマターの `llm_context` を優先して返し、無ければ型の既定を返す。
@@ -46,11 +46,12 @@ llm_context: task
 
 この節がある文書だけが、コードとの追跡の対象になる（ADR-056 の opt-in）。指紋は位置を含まないので、コードを別のファイルへ移しても古びと判じない。更新は `trace-index.py --id SPEC-001` が返す行を写す。
 
-- sha256:1ebfd2234a54d602b2518e625387f68e739c20ce00eba319f59ac70433aa1336
+- sha256:562f529660783690724a35042f527b0730ede241f3587c1f9604ff08c8c591ba
 
 ## 受入基準
 
 - 20 型の登録簿、`status` の許可表、型ごとの既定値、置き場所、既定点検周期（ADR-025）、archived の置き場所（ADR-027）が、DATA-001 と一致する。
+- 置き場所の規則は、手書きの期待表（`EXPECTED_TYPE_LOCATION`）で凍らせる（ADR-060 の様式。ADR-091）。**正本から生成しない** —— 以前この凍結は無く、置き場所を変えても黙って通った（`TYPES`・既定 `status`・既定 `llm_context` は凍結済みだったのに、置き場所だけが抜けていた）。
 - 返したコレクションを書き換えても、登録簿は変わらない。
 - `resolve_duplicate_id` は、与える順序に依らず整列した順の最初を返す。空の入力には None を返し、例外を投げない。
 - accepted は ADR だけで、draft は RESEARCH だけで許可される。

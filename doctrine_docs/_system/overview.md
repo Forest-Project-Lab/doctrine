@@ -20,6 +20,7 @@ sources: []
 | DECIDED-001 | DECIDED | _system | 横断の確定方針（12事実） |
 | NONGOAL-001 | NONGOAL | _system | 横断のやらないこと（17項） |
 | WATCH-001 | WATCH | _system | 横断の退行監視（10項） |
+| REQ-000 | REQ | _system | この体系が解くこと（製品の粒度） |
 | ICD-005 | ICD | audit | audit のインターフェース（全件監査の境界） |
 | REQ-008 | REQ | audit | 最小性の監査（過剰と不足の両側を全件検出） |
 | SPEC-011 | SPEC | audit | 全件監査の検査群・要約スキーマ・決定性 |
@@ -157,6 +158,7 @@ sources: []
 | ADR-049 | ADR | model | 重複 id の採用規則を登録簿に一本化し、先勝ちに統一する |
 | ADR-057 | ADR | model | 統治はリポジトリ一つの内側に閉じ、組織を横断する統治は引き受けない |
 | ADR-064 | ADR | model | 三つの保証限界（サブエージェント注入・id の改名・採番の衝突）を非目標として明文化する |
+| ADR-091 | ADR | model | 製品の粒度の要求を _system の棚へ置く。棚の上の要求は辺で指されない |
 | IMPL-001 | IMPL | model | `_registry.py` の実装メモ |
 | IMPL-002 | IMPL | model | `_frontmatter.py` の実装メモ |
 | TEST-001 | TEST | model | 登録簿契約のテスト計画 |

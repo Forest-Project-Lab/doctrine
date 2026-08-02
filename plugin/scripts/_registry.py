@@ -87,7 +87,7 @@ TYPE_LOCATION = {
     "DECIDED": ["_system/"],
     "NONGOAL": ["_system/"],
     "WATCH": ["_system/", "<domain>/test/"],   # two allowed (§3.2)
-    "REQ": ["<domain>/"],
+    "REQ": ["<domain>/", "_system/"],
     "SPEC": ["<domain>/spec/"],
     "DATA": ["<domain>/spec/"],
     "API": ["<domain>/spec/"],
