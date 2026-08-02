@@ -1,5 +1,5 @@
 # doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
-"""Tests for docs-audit.py (full-corpus audit, SessionEnd/CI) — MASTER §5.5, slice 05 PART B.
+"""Tests for docs-audit.py (full-corpus audit, SessionEnd/CI) — 仕様 §5.5, slice 05 PART B.
 
 Covers every §4.2 audit finding plus the audit↔inject handshake (critique gap C3):
 - dead_link (R4): TC-082 pass, TC-083 fail.
@@ -272,7 +272,7 @@ class ReviewByTest(AuditBase):
         self.assertEqual(len(self.checks_for(data, "review_by_overrun")), 1)
 
     def test_missing_review_by_on_decided_is_error(self):
-        """MASTER §5.5: missing review_by on DECIDED/WATCH = error severity."""
+        """仕様 §5.5: missing review_by on DECIDED/WATCH = error severity."""
         root = self.build([
             (_fm("DECIDED-1", "DECIDED", "billing"), "x"),
         ])
@@ -415,7 +415,7 @@ class OrphanTest(AuditBase):
     def test_stale_zero_dep_projection_not_orphan(self):
         """TC #13(a): a stale, zero-dep OVERVIEW projection is NOT orphan.
 
-        Projections are excluded from the orphan check per MASTER §5.5
+        Projections are excluded from the orphan check per 仕様 §5.5
         (entry points / always-injected), regardless of staleness.
         """
         root = self.build([
@@ -428,7 +428,7 @@ class OrphanTest(AuditBase):
     def test_stale_zero_dep_always_doc_not_orphan(self):
         """TC #13(b): a stale, zero-dep llm_context:always doc is NOT orphan.
 
-        llm_context:always is excluded from the orphan check per MASTER §5.5,
+        llm_context:always is excluded from the orphan check per 仕様 §5.5,
         even when stale and undepended-on. Use reproducible:true to show the
         exclusion fires BEFORE the reproducible conjunct could.
         """

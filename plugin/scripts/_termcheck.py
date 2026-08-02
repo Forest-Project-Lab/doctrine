@@ -20,7 +20,17 @@ from __future__ import annotations
 
 import os
 import re
+import sys
+
+# 作業木にバイトコードを残さない(ADR-075)。フックは一回きりの短命な
+# プロセスで、__pycache__ の利得はほぼ無い。一方、marketplace の source が
+# ディレクトリのとき、ここに書いた物はそのまま利用者へ複製される。
+sys.dont_write_bytecode = True
 from collections import namedtuple
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import _frontmatter          # noqa: E402  種別の門を通す共有の読み手(ADR-075)
 
 # Finding shape — consumed by docs-linter.py and doc-review. (line may be None.)
 Finding = namedtuple("Finding", ("code", "severity", "message", "line"))
@@ -283,8 +293,7 @@ def _parse_loanword_line(line):
 
 
 def _read_text(path):
-    with open(path, "r", encoding="utf-8-sig", newline="") as fh:
-        return fh.read()
+    return _frontmatter.read_text(path)
 
 
 def load_glossary(docs_root):

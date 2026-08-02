@@ -6,7 +6,7 @@ domain: audit
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-28
+updated: 2026-07-29
 sources: [plugin/scripts/docs-audit.py]
 depends_on: [SPEC-011]
 llm_context: task
@@ -27,6 +27,7 @@ llm_context: task
 - ルートが見つからない場合の終了コードは 3 ではなく 0 とする。所見ゼロと同じ扱いにして、CI を不必要に止めない。
 - 与えられた基準日が不正なら終了コード 2 を返すが、監査本体がクラッシュした場合は 0 を返す。後者はセッションの後始末を妨げないためで、両者を取り違えてはならない。
 - `_check_canonical_conflict` は、置換済み（superseded）になっても `canonical_for` を持ち続ける文書を、正本の移譲をやり残した取りこぼしとみなして衝突に含める。
+- ADR-075: id の境界は否定先読み。設定は `_coerce_knobs` で型を検めてから使う。
 
 ## 対象部品
 

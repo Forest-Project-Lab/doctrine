@@ -6,7 +6,7 @@ domain: graph
 status: current
 owner: doctrine-maintainers
 created: 2026-07-28
-updated: 2026-07-28
+updated: 2026-07-29
 sources: [plugin/scripts/_tracescan.py, plugin/scripts/_audit_trace.py]
 depends_on: [SPEC-026, ICD-005]
 llm_context: task

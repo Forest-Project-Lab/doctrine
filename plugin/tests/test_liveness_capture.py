@@ -340,7 +340,9 @@ class TestHeartbeat(LivenessBase):
 
 class TestCaptureNudge(LivenessBase):
     def _flags(self):
-        d = os.path.join(self.plugin_root, ".cache", "session-flags")
+        # 印はプロジェクトスコープに置く(ADR-075)。${CLAUDE_PLUGIN_ROOT} は版ごとに
+        # 別ディレクトリで、更新のたび印が消え、配布実体へも混ざる。
+        d = os.path.join(self.base, ".claude", ".cache", "session-flags")
         os.makedirs(d, exist_ok=True)
         return d
 
@@ -381,13 +383,39 @@ class TestCaptureNudge(LivenessBase):
 
 
 class TestPrecompactDump(unittest.TestCase):
+    """退避の指示。統治木は自前で作る(ADR-075)。
+
+    以前は cwd の統治木に頼っていたため、開発木の外(導入されたプラグインの
+    複製)で走らせると木が無く、応答の形が変わって error になっていた。
+    """
+
+    def _run(self, root):
+        cwd = os.getcwd()
+        os.chdir(root)
+        try:
+            return _util.invoke("precompact-dump", stdin_obj={
+                "hook_event_name": "PreCompact", "trigger": "auto",
+                "cwd": root})
+        finally:
+            os.chdir(cwd)
+
     def test_emits_dump_instruction(self):
-        out, code = _util.invoke("precompact-dump", stdin_obj={
-            "hook_event_name": "PreCompact", "trigger": "auto"})
+        root = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        os.makedirs(os.path.join(root, "doctrine_docs", "_system"),
+                    exist_ok=True)
+        out, code = self._run(root)
         self.assertEqual(code, 0)
         resp = json.loads(out)
         self.assertEqual(resp["hookSpecificOutput"]["hookEventName"], "PreCompact")
         self.assertIn(".session-notes", resp["hookSpecificOutput"]["additionalContext"])
+
+    def test_no_tree_still_answers_without_error(self):
+        """統治木が無い土地でも例外を出さない(導入直後・体系外の作業ディレクトリ)。"""
+        root = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        _out, code = self._run(root)
+        self.assertEqual(code, 0)
 
 
 class TestReviewNudgeFlags(LivenessBase):
@@ -404,7 +432,7 @@ class TestReviewNudgeFlags(LivenessBase):
             "sources": [],
         }, "本文。\n")
         self._edit(p, "rn1")
-        d = os.path.join(self.plugin_root, ".cache", "session-flags")
+        d = os.path.join(self.base, ".claude", ".cache", "session-flags")
         self.assertTrue(os.path.isfile(os.path.join(d, "edits-rn1")))
         self.assertFalse(os.path.isfile(os.path.join(d, "recorded-rn1")))
 
@@ -415,7 +443,7 @@ class TestReviewNudgeFlags(LivenessBase):
             "sources": [],
         }, "本文。\n")
         self._edit(p, "rn2")
-        d = os.path.join(self.plugin_root, ".cache", "session-flags")
+        d = os.path.join(self.base, ".claude", ".cache", "session-flags")
         self.assertTrue(os.path.isfile(os.path.join(d, "recorded-rn2")))
 
     def test_session_notes_write_counts_as_recorded(self):
@@ -423,7 +451,7 @@ class TestReviewNudgeFlags(LivenessBase):
         _write(notes, "- 決定の一文 (出所: 会話, 2026-07-26)\n")
         out, _ = self._edit(notes, "rn3")
         self.assertEqual(out, "")  # ナッジは出ない(印だけ)。
-        d = os.path.join(self.plugin_root, ".cache", "session-flags")
+        d = os.path.join(self.base, ".claude", ".cache", "session-flags")
         self.assertTrue(os.path.isfile(os.path.join(d, "recorded-rn3")))
 
 

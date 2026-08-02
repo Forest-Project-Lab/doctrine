@@ -6,7 +6,7 @@ domain: packaging
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-28
+updated: 2026-07-29
 sources: [plugin/hooks/hooks.json]
 depends_on: [ICD-008, ICD-001, ICD-002, ICD-003, ICD-004, ICD-005, ICD-006, ICD-007]
 llm_context: task
@@ -40,6 +40,9 @@ llm_context: task
 - 段差の実現は配線の差し替えではなく自主停止である（ADR-019）: 配線は常に全構成 `hooks.json` とし、SessionEnd の監査・PostToolUse の `policy-guard.py`・`review-nudge.py` が `doctrine_docs/_system/.docs-level` を読み、Level 2 では静かに済ませる。`hooks.level2.json` は、プラグインを使わず手で配線する場合の代替として同梱を続ける。手で配線するときは、`${CLAUDE_PLUGIN_ROOT}/scripts/` を実際のスクリプトの場所（退避配置なら `.claude/scripts`）へ書き換えること。書き換えないと変数が未定義のため各 `command` が失敗し、予防が黙って無効になる（fail-open）。手順は `docs-system-init` の `references/fallback.md` に置く（#75）。
 - Hook 設定はセッション開始時にスナップショットして固定する。配線を変えても、そのセッションには反映されず、新しいセッションから反映する。
 - per-turn のフック（PreToolUse・PostToolUse・UserPromptSubmit・SessionStart）は体感速度を壊さない。実測（1414 文書）で 1 編集あたり合計およそ 0.4 秒。目安は 1 編集あたり 1 秒以内（1500 文書規模）で、数値の確定は受入テストで詰める（開発方法論と性能の上限は ADR-047）。全件監査はセッション境界と CI に隔離し、per-turn では走らせない。
+- 縮小構成のイベント集合は「全構成 −{SessionEnd}」とする。生存性（R11）と捕捉（R12）は段差に依らず動く（ADR-030 決定2。ADR-075）。
+- フック境界の入出力は共有コア `_hookio` に一本化する。標準の入出力を UTF-8 へ張り替え、書けなければ英数字だけの符号化へ退避し、PreToolUse で書けなければ終了コード 2 へ倒す（ADR-075）。
+- 統治木の解決は親をたどる（`walkup_docs_root`）。環境変数が欠けても部分ディレクトリから届く（ADR-075）。
 
 ## エラー時挙動
 
@@ -48,7 +51,10 @@ llm_context: task
 
 ## 実装の指紋
 
-- コード対応なし: 実装は JSON の配線(hooks.json)であり、注釈の行を持てない
+配線そのものは JSON(hooks.json)であり注釈の行を持てないため、設定側の `trace_exempt` が
+理由と共に載せる(ADR-072)。一方、フック境界の入出力の契約は共有コアに実体を持つ(ADR-075)。
+
+- sha256:76b077b0d11ec42b88368e220d0952d4c92f8da9577748d0d8a4e03ae0aea089
 
 ## 受入基準
 

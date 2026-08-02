@@ -17,11 +17,18 @@ import sys
 import tempfile
 import unittest
 
-_REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-_SCRIPT = os.path.join(_REPO, "scripts", "release-check.py")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import _util                                            # noqa: E402
+
+# 対象はリポジトリ直下 scripts/ に在り、配布物には複製されない(公式仕様)。
+# 導入先では読み込み自体が失敗するため、取得を遅延させ、無ければ skip(ADR-075)。
+_SCRIPT = (os.path.join(_util.REPO_ROOT, "scripts", "release-check.py")
+           if _util.REPO_ROOT else None)
 
 
 def _load_module():
+    if not _SCRIPT or not os.path.isfile(_SCRIPT):
+        return None
     spec = importlib.util.spec_from_file_location("release_check", _SCRIPT)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
@@ -29,6 +36,13 @@ def _load_module():
 
 
 rc = _load_module()
+
+
+def setUpModule():
+    if rc is None:
+        raise unittest.SkipTest(
+            "scripts/release-check.py が無い(導入されたプラグインの複製)。"
+            "この受入は開発木と CI でだけ走る")
 
 
 def _make_repo(tmp, version="1.2.3", changelog=None):
@@ -217,18 +231,45 @@ class RecordDutyTest(unittest.TestCase):
             rc.check_record_duty(self.tmp, "0000000000000000000000000000000000000000", "")
 
 
+class DistributionHygieneTest(unittest.TestCase):
+    """配布物の衛生(ADR-075)。合成木で決定的に凍結する。"""
+
+    def _tree(self, extra_dirs=()):
+        tmp = tempfile.mkdtemp(prefix="relcheck-hyg-")
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        os.makedirs(os.path.join(tmp, "plugin", "scripts"), exist_ok=True)
+        for rel in extra_dirs:
+            os.makedirs(os.path.join(tmp, "plugin", rel), exist_ok=True)
+        return tmp
+
+    def test_clean_tree_has_no_violation(self):
+        self.assertEqual(rc.check_distribution_hygiene(self._tree()), [])
+
+    def test_state_directories_are_reported(self):
+        for rel in (".cache", ".claude", "scripts/__pycache__"):
+            with self.subTest(rel=rel):
+                out = rc.check_distribution_hygiene(self._tree([rel]))
+                self.assertEqual(1, len(out), out)
+                self.assertIn(rel.split("/")[-1], out[0])
+
+
 class SelfApplicationTest(unittest.TestCase):
     """本リポジトリ自身が門を通ること(自己適用の実走)。"""
 
     def test_this_repo_passes_version_integrity(self):
-        r = subprocess.run([sys.executable, _SCRIPT],
-                           capture_output=True, text=True, timeout=60)
-        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
-        self.assertIn("整合", r.stdout)
+        """版の整合と刻印は常に成り立つ(決定的)。
+
+        配布物の衛生はここでは見ない。開発中に道具が置く一時物(py_compile・
+        エディタの点検・直に叩いた unittest が生む __pycache__)で揺れるため、
+        単体試験の緑をそれに縛ると、誰かが py_compile を叩いた日に全体が
+        赤くなる(ADR-075)。衛生そのものは下の合成木の試験が凍結する。
+        """
+        self.assertEqual(rc.check_version_integrity(_util.REPO_ROOT), [])
+        self.assertEqual(rc.check_view_stamps(_util.REPO_ROOT), [])
 
     def test_this_repo_passes_view_stamps(self):
         """公開ビュー3件の刻印が版番号の正本と一致している(ADR-073)。"""
-        self.assertEqual(rc.check_view_stamps(_REPO), [])
+        self.assertEqual(rc.check_view_stamps(_util.REPO_ROOT), [])
 
     def test_usage_error_exits_2(self):
         r = subprocess.run([sys.executable, _SCRIPT, "--nonsense"],

@@ -6,7 +6,7 @@ domain: audit
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-28
+updated: 2026-07-29
 sources: [plugin/tests/test_audit.py]
 depends_on: [SPEC-011]
 llm_context: task
@@ -33,6 +33,8 @@ SPEC-011 の検査群について、それぞれ pass と fail の両側を確�
 - trace_*: opt-in（`## 実装の指紋` の節を持つ文書）が無ければ一件も挙がらないこと。状態×指紋一致の全マス（`ALL_STATUSES` を添字に列挙した 16 マス）が手書きの期待表と一致すること — 現行/accepted は一致で無音・不一致で warn、それ以外の全状態は現行でない id への warn（ADR-060。廃止だけが opt-in の木でも挙がること）。範囲の不在で warn、実在しない id で error、印の対応付けの誤りで error になること。「コード対応なし」の宣言は実態が伴えば無音・範囲があれば warn になり、節の無い現行 SPEC を範囲が指せば advisory で名指しされること（ADR-061）。統治外（exempt）の宣言と範囲の印の同居が warn になり、宣言したファイルにしか発火しないこと（ADR-067）。未宣言があるとき `next_undeclared` が整列順の先頭を運び、無ければ載らないこと。停滞計（`stagnation_streak`）が、直前の要約と和が同値の監査で積み上がり、値が動けば 0 に戻り、直前が無ければ 0 であること（ADR-065）。現行 SPEC の三分類（traced・no_code・undeclared）が要約に載ること。検査名の一覧が独立転記の表と全量一致すること（凍結の実在。ADR-060）。
 - guard_liveness_gap: 印が無ければ黙り、リンタの印だけが進めば advisory で挙がること。判定が鼓動と同じ共有コアにあること（ADR-062）。綴りの揺れた印が advisory（trace_marker_suspect）で挙がり、合否（error/warn）を変えないこと。走査の切り詰めが advisory（trace_scan_truncated）で転記されること。走査が走ったとき要約に `trace_coverage` が載り、保存則の和が合うこと（ADR-058・ADR-059。`plugin/tests/test_audit.py` の CodeTraceTest が確認する）。
 - trace_unmarked_backlog（ADR-072）: 悉皆モードの体系でだけ、印なしの残高が warn 一件で挙がり、既定では挙がらないこと。設定除外（trace_exempt）が残高を減らし、理由の無い宣言が成立しないこと。設定は木の `_system/.context-config.json` から既定で読まれること（ExhaustiveTraceTest が確認する）。
+- ADR-075: 仮名・漢字が地の文で直接隣接する id 参照（助詞が id の直後に続く形、id の直前に助詞が来る形）を dead_link が拾うこと。全角の括弧・句読点・鉤括弧に囲まれた形も同様。
+- ADR-075: 設定の数値キーを文字列で書いても監査が落ちず、既定へ落ちること。
 
 ## 退行観点
 

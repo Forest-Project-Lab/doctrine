@@ -1,7 +1,7 @@
 # doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
 """Tests for collect-context.py — task-scoped minimal context pack (R5).
 
-Component: collect-context.py (llm-context-pack task min-set), MASTER §5.4, C10.
+Component: collect-context.py (llm-context-pack task min-set), 仕様 §5.4, C10.
 Slice 06 §2 (collect-context parts) + critique two-cap gap.
 
 Covers:
@@ -9,7 +9,7 @@ Covers:
   never-group not present in the pack. (R5 "never群が渡らない")
 - TC-102 (B21, fail/regression): a `never` doc that WOULD cover a REQ is still
   excluded BEFORE any covering computation, and the REQ is reported uncovered if
-  nothing else covers it. Hard-exclude-never precedes set-cover (MASTER §5.4, R5).
+  nothing else covers it. Hard-exclude-never precedes set-cover (仕様 §5.4, R5).
 - Minimum covering set (greedy + reverse-prune): no superfluous doc; a doc fully
   subsumed by others is dropped (slice 06 §2.4, T-CC-3).
 - Provenance present per fact: `〔出所: <id> · <relpath>〕` in md, `source_id`/

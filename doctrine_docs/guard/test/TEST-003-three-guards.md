@@ -6,7 +6,7 @@ domain: guard
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-28
+updated: 2026-07-29
 sources: [plugin/tests/test_guard.py]
 depends_on: [SPEC-003]
 llm_context: task
@@ -25,6 +25,12 @@ SPEC-003 の受入基準を `plugin/tests/test_guard.py` の各クラスで確�
 - `TestDeleteSafety` の #71 追加: ディレクトリ対象(rm -rf/git rm -r/git mv)の deny・依存なしディレクトリの allow・mv -t の引数逆転上書き deny・mv -t 新規名 allow。
 - `TestTreelessProjectBoundary`（ADR-036）: 統治木の無いプロジェクトで depends_on を持つ他体系の Write=許可、型を持たない素のメモ+パス形式の依存=許可、対照として木が在れば木の外の stray 文書の越境依存=拒否。
 - `TestEarlyOutNonDocs`: doctrine_docs/ の外の純粋な非文書（.py/.txt）の編集は依存グラフを組まずに allow し（グラフ構築の呼び出し回数がゼロ）、doctrine_docs/ 内の編集はグラフを組んで全ガードを当てる。フロントマターを持つ doctrine_docs/外の Write は早期通過せず Guard2（ICD依存ガード） が拒否する。doctrine_docs/ 外のパス（external/…）やシンボリックリンク経由で `id` を持つ統治文書を降格する Edit は早期通過せず Guard3（削除安全ガード） が拒否する。`id` を持たないが `domain`＋越境 `depends_on` を持つ doctrine_docs/外の文書型を編集した PostToolUse は早期通過せず Guard2 が block する。
+- ADR-075: `status` 行の整形（空白2つ・タブ・末尾空白）を変えても降格の拒否が外れないこと。編集が生の全文へ当たること。
+- ADR-075: シンボリックリンク経由で倉庫の文書を編集・著作できないこと（包含の判定が realpath）。
+- ADR-075: `cd <dir> && rm <file>` と `git -C <dir> rm <file>` が拒否されること。`cd` の宛先を静的に決められない削除が拒否されること。削除の動詞を含まない経路には何も言わないこと。
+- ADR-075: 現行でない文書の削除も、現行の逆依存が残るなら拒否されること（本文消しと判定が対称であること）。
+- ADR-075: 既存 ADR のフロントマターの構文修復が通り、修復に見せかけた本文・鍵の書き換えは拒否されること。
+- ADR-075: 判定を標準の書き出し口へ渡せないとき、PreToolUse が終了コード 2 へ倒れること。非 UTF-8 の locale でも拒否が消えないこと。
 
 ## 退行観点
 WATCH-001 と突き合わせる。守るべき退行は二つある。一つは、削除安全を PRE から POST への遷移で判じること、すなわち、もとから deprecated だったり本文が空だったりする文書を、無関係な編集で取り違えて block しないことである。もう一つは、Bash の拒否を deny だけで行うことである。

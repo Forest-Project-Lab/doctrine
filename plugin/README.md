@@ -77,7 +77,7 @@ per-turn（毎ターン）のHookは単一文書だけを点検する。全件�
 | `term-check.py` | リンタ | 禁止同義語・カルク・未定義語の照合 |
 | `policy-guard.py` | `PreToolUse`・`PostToolUse` | 不変性・`ICD` 依存・削除安全の三ガード |
 | `inject-contract.py` | `SessionStart` | 契約の最小注入 |
-| `docs-audit.py` | `SessionEnd`・`CI` | 全件監査（32検査。孤児・逆孤児・dead link・`canonical_for` 衝突・`ICD` 違反・投影ドリフト・`review_by` 超過・陳腐化の疑い・上流更新の伝播・アーカイブ整合・決定の着地・辞書シードの退行・外部アンカーの存在・メモリの影・体系外 .md・ビューの刻印・コードと仕様の追跡ほか。一覧の正本は `ICD-005`） |
+| `docs-audit.py` | `SessionEnd`・`CI` | 全件監査（検査の一覧の正本は `ICD-005`。孤児・逆孤児・dead link・`canonical_for` 衝突・`ICD` 違反・投影ドリフト・`review_by` 超過・陳腐化の疑い・上流更新の伝播・アーカイブ整合・決定の着地・辞書シードの退行・外部アンカーの存在・メモリの影・体系外 .md・ビューの刻印・コードと仕様の追跡ほか。一覧の正本は `ICD-005`） |
 | `gov-heartbeat.py` | `UserPromptSubmit` | 統治の生存と定例の期限の照合（R11）。1会話1件・セッションに一度 |
 | `capture-nudge.py` | `Stop` | 記録の確認の一度きりの差し止め（R12） |
 | `precompact-dump.py` | `PreCompact` | 圧縮前の退避指示（R12） |
@@ -132,4 +132,4 @@ per-turn（毎ターン）のHookは単一文書だけを点検する。全件�
 
 「100%の予防」は構造上できない。本プラグインの効果は、適切に運用された場合に、特定の失敗類型を検出・早期発見できることに限る。
 
-<!-- doctrine:view src=doctrine as-of=0.7.0 date=2026-07-28 refs=ICD-005,SPEC-016,SPEC-019,SPEC-020 -->
+<!-- doctrine:view src=doctrine as-of=0.8.0 date=2026-07-29 refs=ICD-005,SPEC-016,SPEC-019,SPEC-020 -->

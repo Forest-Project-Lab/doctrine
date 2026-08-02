@@ -25,6 +25,10 @@ import re
 import subprocess
 import sys
 
+# plugin/scripts の共有コアを引くとき、配布される作業木に __pycache__ を
+# 残さない(ADR-075)。ディレクトリ配布では利用者へそのまま複製される。
+sys.dont_write_bytecode = True
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
 
@@ -156,6 +160,29 @@ def check_record_duty(repo, base, pr_title):
     return []
 
 
+def check_distribution_hygiene(repo):
+    """配布物に開発機の実行時生成物が残っていないか(ADR-075)。違反の列を返す。
+
+    marketplace の `source` がディレクトリのとき、配布は git archive ではなく
+    作業木の複製である。`plugin/.gitignore` は複製を止めないので、実行時に
+    plugin/ の下へ書いた物はそのまま利用者の導入先へ配られる。実際に、別の
+    ワークスペース時代の監査要約と開発機のセッション印、および __pycache__ が
+    導入実体へ複製されていた。リリースの直前に一度だけ、ここで断つ。
+    """
+    plugin = os.path.join(repo, "plugin")
+    forbidden = (".cache", ".claude", "__pycache__")
+    found = []
+    for base, dirs, _files in os.walk(plugin):
+        for name in list(dirs):
+            if name in forbidden:
+                found.append(os.path.relpath(os.path.join(base, name), repo))
+    if not found:
+        return []
+    return ["配布物に実行時生成物が残っている: %s。ディレクトリ配布では"
+            "そのまま利用者へ複製される。消してからリリースすること"
+            % ", ".join(sorted(found))]
+
+
 def main(argv):
     base = None
     args = list(argv[1:])
@@ -169,6 +196,7 @@ def main(argv):
     try:
         violations = check_version_integrity(REPO)
         violations += check_view_stamps(REPO)
+        violations += check_distribution_hygiene(REPO)
         if base is not None:
             violations += check_record_duty(
                 REPO, base, os.environ.get(PR_TITLE_ENV, ""))
@@ -179,8 +207,8 @@ def main(argv):
         for v in violations:
             print("[ERROR] %s" % v)
         return 1
-    print("release-check: 整合(版の整合と公開ビューの刻印%sを確認)"
-          % ("と記録の義務" if base is not None else ""))
+    print("release-check: 整合(版の整合・公開ビューの刻印・配布物の衛生%sを確認)"
+          % ("・記録の義務" if base is not None else ""))
     return 0
 
 

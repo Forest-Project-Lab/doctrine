@@ -1,5 +1,5 @@
 # doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
-"""Packaging tests (§6 meta; MASTER §4, §9; BRIEF2 packaging).
+"""Packaging tests (§6 meta; 仕様 §4, §9; BRIEF2 packaging).
 
 Covers the critique gaps "Level-2 trimmed hooks.json", "§6 meta (stdlib-only,
 plugin.json valid, hook-snapshot note)". These assert the shipped manifest +
@@ -55,7 +55,7 @@ def _programs_for(hooks_obj, event, matcher=None):
 
 
 class TestPluginJson(unittest.TestCase):
-    """plugin.json is a valid, minimal Claude Code plugin manifest (MASTER §9)."""
+    """plugin.json is a valid, minimal Claude Code plugin manifest (仕様 §9)."""
 
     def setUp(self):
         self.path = os.path.join(_util.PLUGIN_ROOT, ".claude-plugin", "plugin.json")
@@ -70,9 +70,9 @@ class TestPluginJson(unittest.TestCase):
         # Version: three-component, and IDENTICAL in marketplace.json (the
         # audit found the value duplicated with no sync guarantee).
         self.assertRegex(data["version"], r"^\d+\.\d+\.\d+$")
-        mkt = _load_json(os.path.join(
-            os.path.dirname(_util.PLUGIN_ROOT), ".claude-plugin",
-            "marketplace.json"))
+        repo = _util.require_repo_root(self)
+        mkt = _load_json(os.path.join(repo, ".claude-plugin",
+                                      "marketplace.json"))
         self.assertEqual(mkt["plugins"][0]["version"], data["version"],
                          "plugin.json と marketplace.json の version が不一致")
         self.assertEqual(data["license"], "MIT")
@@ -105,7 +105,7 @@ class TestAllJsonValid(unittest.TestCase):
 
 
 class TestHooksFullProfile(unittest.TestCase):
-    """hooks/hooks.json is the full MASTER §4 profile."""
+    """hooks/hooks.json is the full 仕様 §4 profile."""
 
     def setUp(self):
         self.path = os.path.join(_util.PLUGIN_ROOT, "hooks", "hooks.json")
@@ -125,7 +125,7 @@ class TestHooksFullProfile(unittest.TestCase):
         """#94 / SPEC-025: 被覆マトリクスの R1〜R12 の全行が、発火経路・実行する
         もの・証跡・Level 2 での担保の各列を空白なく埋めていること(保証マトリクスの
         空欄を許さない原則)。表を機械で読み、空セルを凍結する。"""
-        repo = os.path.dirname(_util.PLUGIN_ROOT)
+        repo = _util.require_repo_root(self)
         spec = os.path.join(repo, "doctrine_docs", "packaging", "spec",
                             "SPEC-025-coverage-matrix.md")
         rows = []
@@ -218,7 +218,7 @@ class TestHooksFullProfile(unittest.TestCase):
 
 
 class TestHooksLevel2Profile(unittest.TestCase):
-    """hooks/hooks.level2.json is the trimmed Level-2 variant (MASTER §4.4)."""
+    """hooks/hooks.level2.json is the trimmed Level-2 variant (仕様 §4.4)."""
 
     def setUp(self):
         self.path = os.path.join(_util.PLUGIN_ROOT, "hooks", "hooks.level2.json")
@@ -248,6 +248,37 @@ class TestHooksLevel2Profile(unittest.TestCase):
         progs = _programs_for(self.hooks, "PostToolUse", "Edit|Write|MultiEdit")
         self.assertEqual(progs, ["${CLAUDE_PLUGIN_ROOT}/scripts/docs-linter.py"])
         self.assertNotIn("${CLAUDE_PLUGIN_ROOT}/scripts/policy-guard.py", progs)
+
+    def test_event_set_is_the_full_profile_minus_sessionend(self):
+        """縮小構成のイベント集合を凍結する(ADR-075)。
+
+        これまでこの類は「落とすもの」だけを検めており、残すべきイベントを
+        凍結していなかった。そのため ADR-028 で三イベント(UserPromptSubmit・
+        Stop・PreCompact)を全構成へ足したとき、縮小構成が取り残されても
+        誰も気づかなかった。SPEC-019 が定める縮小差分は「SessionEnd の監査と
+        PostToolUse の policy-guard・review-nudge を外す」だけであり、
+        ADR-030 決定(2)は生存性(R11)と捕捉(R12)を段差に依らず動かすと定める。
+        """
+        full = _load_json(os.path.join(_util.PLUGIN_ROOT, "hooks",
+                                       "hooks.json"))
+        expected = set(full["hooks"]) - {"SessionEnd"}
+        self.assertEqual(
+            expected, set(self.hooks["hooks"]),
+            "縮小構成のイベント集合が『全構成 −{SessionEnd}』と違う。"
+            "生存性(R11)と捕捉(R12)は段差に依らず動く(ADR-030 決定2)")
+
+    def test_liveness_and_capture_survive_the_reduced_profile(self):
+        """R11/R12 の担い手が縮小構成にも配線されている(ADR-030 決定2)。"""
+        for event, program in (
+                ("UserPromptSubmit", "gov-heartbeat.py"),
+                ("Stop", "capture-nudge.py"),
+                ("PreCompact", "precompact-dump.py")):
+            with self.subTest(event=event):
+                self.assertEqual(
+                    ["${CLAUDE_PLUGIN_ROOT}/scripts/" + program],
+                    _programs_for(self.hooks, event),
+                    "%s が縮小構成に無い。手で配線した導入先で "
+                    "R11/R12 が最初から存在しなくなる" % event)
 
     def test_keeps_sessionstart_and_pretooluse(self):
         self.assertEqual(
@@ -353,6 +384,60 @@ class TestScriptsStdlibOnly(unittest.TestCase):
                             top, allowed,
                             "%s imports non-stdlib module %r" % (path, top),
                         )
+
+
+class TestDistributionHygiene(unittest.TestCase):
+    """配布物に開発機の実行時の状態を混ぜない(ADR-075)。
+
+    marketplace の `source` がディレクトリのとき、配布は作業木の複製である
+    (git archive ではない)。`.gitignore` は複製を止めないので、実行時に
+    plugin/ の下へ書いた物はそのまま利用者の導入先へ配られる。実際に
+    導入実体へ、別ワークスペース時代の監査要約(`root` が他所を指す
+    last-audit.json)と開発機のセッション印が複製されていた。
+
+    バイトコード(__pycache__)は無害で、しかも試験自身が生むためここでは
+    見ない。配布の直前に release-check の衛生検査が見る(責務の分担)。
+    """
+
+    FORBIDDEN_DIRS = (".cache", ".claude")
+
+    def test_no_runtime_state_under_plugin_root(self):
+        found = []
+        for base, dirs, _files in os.walk(_util.PLUGIN_ROOT):
+            dirs[:] = [d for d in dirs if d != "__pycache__"]
+            for name in list(dirs):
+                if name in self.FORBIDDEN_DIRS:
+                    found.append(os.path.relpath(os.path.join(base, name),
+                                                 _util.PLUGIN_ROOT))
+        self.assertEqual(
+            [], sorted(found),
+            "plugin/ の下に実行時の状態がある: %s。ディレクトリ配布では"
+            "そのまま利用者へ複製される。消したうえで、書き先を "
+            "${CLAUDE_PROJECT_DIR}/.claude/.cache へ寄せること" % sorted(found))
+
+    def test_no_test_reaches_outside_the_plugin_root(self):
+        """同梱の試験が、配布されないファイルを無条件に読まない(ADR-075)。
+
+        公式仕様は「導入したプラグインは自分のディレクトリの外を参照できない」
+        と明記する。リポジトリ直下の scripts/ や doctrine_docs/ を素で開く試験は、
+        利用者の導入先で必ず失敗する(実測 1 failure / 4 error)。外を要る試験は
+        _util.require_repo_root か setUpModule の skip を通すこと。
+        """
+        import re
+        tests_dir = os.path.join(_util.PLUGIN_ROOT, "tests")
+        pat = re.compile(r"os\.path\.dirname\(\s*_util\.PLUGIN_ROOT\s*\)")
+        offenders = []
+        for name in sorted(os.listdir(tests_dir)):
+            if not name.endswith(".py"):
+                continue
+            with open(os.path.join(tests_dir, name), encoding="utf-8") as fh:
+                body = fh.read()
+            if pat.search(body):
+                offenders.append(name)
+        self.assertEqual(
+            [], offenders,
+            "plugin/ の外を素で指す試験がある: %s。_util.require_repo_root を"
+            "通して、導入先では skip されるようにすること" % offenders)
 
 
 if __name__ == "__main__":

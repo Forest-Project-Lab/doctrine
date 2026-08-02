@@ -15,7 +15,15 @@ Equivalent to:
 
 import os
 import sys
-import unittest
+
+# 作業木に __pycache__ を残さない(ADR-075)。marketplace の source がディレクトリ
+# のとき、配布は作業木の複製であり、試験を走らせた痕跡がそのまま利用者へ配られる。
+# 環境変数も置く: 試験は入口スクリプトを子プロセスでも起こすので、旗だけでは
+# 親プロセスにしか効かない。
+sys.dont_write_bytecode = True
+os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
+
+import unittest                                          # noqa: E402
 
 # This file lives at plugin/run_tests.py, so PLUGIN_ROOT is its directory
 # regardless of the current working directory.
@@ -43,14 +51,21 @@ def main(argv=None):
     skipped = len(result.skipped)
     passed = total - failures - errors  # skipped tests still count as run
 
+    # 0 件を成功と読まない(ADR-075)。discover が何も拾えなかった状態は
+    # 「全部通った」ではなく「何も検めていない」であり、配線の壊れを緑で隠す。
+    ok = result.wasSuccessful() and total > 0
+
     print("")
     print("=" * 60)
     print("SUMMARY: %d run, %d passed, %d failed, %d error, %d skipped"
           % (total, passed - skipped, failures, errors, skipped))
-    print("RESULT: %s" % ("PASS" if result.wasSuccessful() else "FAIL"))
+    if total == 0:
+        print("NO TESTS RAN: %s に test_*.py が無い。探索先が壊れている"
+              % TESTS_DIR)
+    print("RESULT: %s" % ("PASS" if ok else "FAIL"))
     print("=" * 60)
 
-    return 0 if result.wasSuccessful() else 1
+    return 0 if ok else 1
 
 
 if __name__ == "__main__":

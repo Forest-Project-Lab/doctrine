@@ -6,8 +6,8 @@ domain: audit
 status: accepted
 owner: doctrine-maintainers
 created: 2026-07-26
-updated: 2026-07-26
-sources: [Issue #60]
+updated: 2026-07-29
+sources: ["Issue #60"]
 depends_on: [SPEC-011]
 ---
 

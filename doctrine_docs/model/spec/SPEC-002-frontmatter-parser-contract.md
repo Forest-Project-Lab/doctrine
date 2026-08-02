@@ -6,7 +6,7 @@ domain: model
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-26
+updated: 2026-07-29
 sources: [DOCTRINE-001]
 depends_on: [REQ-001, DATA-001]
 llm_context: task
@@ -33,6 +33,8 @@ sources, depends_on, impacts, canonical_for などリスト型のキーは、Non
 - 本文の改行はそのまま残す（CRLF は CRLF のまま）。
 - 重複キーは後に出たものを採り、`duplicate_key` エラーを併せて出す。
 - エラー記録の形は `{code, line, key, detail}`。`missing_open` は厳格な呼び出し側のために予約し、`parse` は出さない。
+- 通常ファイルでなければ開かない。`ensure_regular` が種別を検め、名前付きパイプ・デバイス・ソケットには `OSError` を返す。共有の読み手 `read_text` も同じ門を通る（ADR-075）。
+- 返り値の第三要素 `errors` は消費者を持つ。リンタが `FRONTMATTER_SYNTAX` として表に出す（ADR-075）。
 
 ## エラー時挙動
 

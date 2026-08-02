@@ -21,6 +21,11 @@ import json
 import os
 import sys
 
+# 作業木にバイトコードを残さない(ADR-075)。フックは一回きりの短命な
+# プロセスで、__pycache__ の利得はほぼ無い。一方、marketplace の source が
+# ディレクトリのとき、ここに書いた物はそのまま利用者へ複製される。
+sys.dont_write_bytecode = True
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # doctrine:begin IMPL-006
@@ -111,7 +116,8 @@ def main(argv=None):
     root = opts["root"]
     if root is None:
         # 無指定なら cwd から統治木を解決(ADR-022: doctrine_docs 優先)。
-        root = _registry.locate_docs_root(os.getcwd()) or _registry.DOCS_DIR_NAMES[0]
+        root = (_registry.walkup_docs_root(os.getcwd())
+                or _registry.DOCS_DIR_NAMES[0])
     if not os.path.isdir(root):
         sys.stdout.write("root not found: %s\n" % root)
         return 3

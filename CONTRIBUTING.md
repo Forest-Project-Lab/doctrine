@@ -44,4 +44,4 @@
 
 寄稿は MIT ライセンスの下で受け入れる。Pull Request を出すことで、寄稿を MIT ライセンスで配布することに同意したものとする。
 
-<!-- doctrine:view src=doctrine as-of=0.7.0 date=2026-07-28 refs=PROC-001 -->
+<!-- doctrine:view src=doctrine as-of=0.8.0 date=2026-07-29 refs=PROC-001 -->

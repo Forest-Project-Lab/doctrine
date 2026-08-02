@@ -5,7 +5,7 @@ Unlike the per-script unit tests (which import each script in-process via
 `tests/_util.invoke`), this suite shells out to the actual entry scripts with
 `python3 <script>`, feeds them a hook-JSON envelope on stdin, sets the runtime
 env (`CLAUDE_PLUGIN_ROOT`), and runs from a temp working directory — exactly the
-way Claude Code drives them at runtime (MASTER §3 hook protocol, §4 hooks.json,
+way Claude Code drives them at runtime (仕様 §3 hook protocol, §4 hooks.json,
 §5 script contracts). It exercises the full lifecycle:
 
     scaffold (SessionStart-of-life) -> guards (PreToolUse) -> linter (PostToolUse)
@@ -249,7 +249,7 @@ class TestScaffoldLifecycle(unittest.TestCase):
 # 2. policy-guard.py — ICD-dependency boundary guard (R7, PreToolUse Write)
 # ===========================================================================
 class TestPolicyGuardICDBoundary(unittest.TestCase):
-    """PreToolUse Write cross-domain dependency decisions (MASTER §5.3 Guard2)."""
+    """PreToolUse Write cross-domain dependency decisions (仕様 §5.3 Guard2)."""
 
     def setUp(self):
         self.root = build_identity_billing_corpus()
@@ -327,7 +327,7 @@ class TestLinterSpecMissingSections(unittest.TestCase):
         self.assertEqual(proc.returncode, 0, proc.stderr)
         obj = parse_json_stdout(proc)
 
-        # MASTER §3.3 / C4: the linter is pure-advisory. NEVER a decision key.
+        # 仕様 §3.3 / C4: the linter is pure-advisory. NEVER a decision key.
         self.assertNotIn("decision", obj,
                          "docs-linter must never emit a 'decision' key")
         hso = obj.get("hookSpecificOutput", {})

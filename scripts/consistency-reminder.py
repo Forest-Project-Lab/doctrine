@@ -13,6 +13,10 @@ import json
 import os
 import sys
 
+# plugin/scripts の共有コアを引くとき、配布される作業木に __pycache__ を
+# 残さない(ADR-075)。ディレクトリ配布では利用者へそのまま複製される。
+sys.dont_write_bytecode = True
+
 # doctrine:begin SPEC-023
 INTERVAL = 10
 # doctrine:end SPEC-023

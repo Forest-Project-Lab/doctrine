@@ -26,6 +26,11 @@ import os
 import re
 import sys
 
+# 作業木にバイトコードを残さない(ADR-075)。フックは一回きりの短命な
+# プロセスで、__pycache__ の利得はほぼ無い。一方、marketplace の source が
+# ディレクトリのとき、ここに書いた物はそのまま利用者へ複製される。
+sys.dont_write_bytecode = True
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import _depgraph
@@ -73,7 +78,11 @@ SEV_WARN = "warn"
 SEV_ADVISORY = "advisory"
 
 # 本文中の id 参照トークン(<TYPE>-<NNN>)。dead link の本文走査に使う。
-_ID_TOKEN_RE = re.compile(r"\b([A-Z]+-\d+)\b")
+# 境界は \b を使わない(ADR-075)。\w は Unicode 既定で仮名・漢字を含むため、
+# 「SPEC-901の」「はSPEC-902を」のように地の文が直接隣接する参照を \b が
+# 成立させず、取りこぼしていた。この一本が dead_link・adr_not_landed・
+# projection_drift・memory_shadow の唯一の入口なので、四つが同時に漏れる。
+_ID_TOKEN_RE = re.compile(r"(?<![0-9A-Za-z_-])([A-Z]+-\d+)(?![0-9A-Za-z_-])")
 # 単語シングル化(語彙的酷似)。英数字連なり + 連続する非ASCII。
 _TOKEN_RE = re.compile(r"[A-Za-z0-9_]+|[^\x00-\x7f]+")
 _DATE_RE = re.compile(r"^(\d{4})-(\d{2})-(\d{2})$")
@@ -153,6 +162,42 @@ def _parse_args(argv):
     return opts, None
 
 
+def _coerce_knobs(data, defaults):
+    """設定の値を既定と同じ型へ揃える。揃わない値は落とす(ADR-075)。
+
+    数値キーを文字列で書いた設定が素通りして比較の途中で例外になり、全件監査が
+    落ちていた。CI の門は「所見ゼロ」と読んで緑で通る。ここで型を検め、
+    不正値は既定のまま(= その項目は無かったことに)する。決して例外を投げない。
+    """
+    out = {}
+    for key, value in data.items():
+        want = defaults.get(key)
+        if key not in defaults:
+            continue
+        if key in ("today", "trace_mode"):
+            if isinstance(value, str) and value.strip():
+                out[key] = value
+            continue
+        if key == "trace_exempt":
+            if isinstance(value, dict):
+                out[key] = value
+            continue
+        if isinstance(value, bool):
+            continue                       # bool は数値として受けない
+        if isinstance(want, float):
+            if isinstance(value, (int, float)):
+                out[key] = float(value)
+            continue
+        if isinstance(want, int):
+            if isinstance(value, int):
+                out[key] = value
+            elif isinstance(value, float) and value == int(value):
+                out[key] = int(value)
+            continue
+        out[key] = value
+    return out
+
+
 def _load_config(path):
     """--config の JSON を読み、調整値の dict を返す。読めなければ {}。"""
     knobs = {
@@ -173,7 +218,11 @@ def _load_config(path):
             data = json.load(fh)
     except (OSError, ValueError):
         return knobs
+    # 型を検めてから写す(ADR-075)。数値キーを文字列で書くと、以前は素通りして
+    # 比較の途中で例外になり、全件監査が落ちた。CI の門は所見ゼロ扱いで通る。
+    # 同じ設定を読む collect-context・gov-heartbeat・inject-contract は検めている。
     if isinstance(data, dict):
+        data = _coerce_knobs(data, knobs)
         for k in knobs:
             if k in data:
                 knobs[k] = data[k]
@@ -508,7 +557,7 @@ def _check_archive_integrity(g):
         if node["status"] != "archived":
             continue
         parts = [p for p in node["path"].replace("\\", "/").split("/") if p]
-        if "archive" not in parts[:-1]:
+        if not _registry.is_archived_path(parts[:-1]):
             out.append(_finding(
                 "archive_integrity", SEV_ERROR, doc_id, node["path"],
                 "status『archived』だが <domain>/archive/ の外に在る。"
@@ -1214,7 +1263,8 @@ def main(argv=None):
                 % opts["root_from"])
             return 0
     if root is None:
-        root = _registry.locate_docs_root(os.getcwd()) or _registry.DOCS_DIR_NAMES[0]
+        root = (_registry.walkup_docs_root(os.getcwd())
+                or _registry.DOCS_DIR_NAMES[0])
     if not os.path.isdir(root):
         sys.stdout.write("root not found: %s\n" % root)
         # 監査が走れないのは利用者の誤り(usage に近い)。CI も SessionEnd も

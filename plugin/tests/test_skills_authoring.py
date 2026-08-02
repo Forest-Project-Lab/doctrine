@@ -4,7 +4,7 @@
 `test_skills.py` (owned by the other skills agent) is the cross-cutting gate for
 ALL 7 skills: existence, verbatim §7 description, third-person, <500 lines,
 `## 保証限界` + three tiers, and term-check no-ERROR. This file does NOT repeat
-those; it asserts the per-skill PROCEDURAL contract that MASTER §7 / spec
+those; it asserts the per-skill PROCEDURAL contract that 仕様 §7 / spec
 §4.1/§3.7/§3.8 / design/08-skills.md assign specifically to:
 
     docs-system-init · doc-author · doc-review · change-impact

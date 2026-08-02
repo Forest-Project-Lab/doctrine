@@ -18,8 +18,14 @@ import os
 import re
 import sys
 
+# 作業木にバイトコードを残さない(ADR-075)。フックは一回きりの短命な
+# プロセスで、__pycache__ の利得はほぼ無い。一方、marketplace の source が
+# ディレクトリのとき、ここに書いた物はそのまま利用者へ複製される。
+sys.dont_write_bytecode = True
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import _hookio
 import _frontmatter
 import _intake
 import _registry
@@ -428,7 +434,9 @@ def _check_llm_context(meta, findings):
 
 
 # Markdown heading whose text mentions 決定.
-_DECISION_HEADING_RE = re.compile(r"(?m)^#{1,6}\s*.*決定")
+# 行内の空白だけを見る(ADR-075)。\s は改行を跨ぐため `.*` と組んで二次の
+# バックトラックを生み、同一行に空白 20 万字を置くと 14 秒かかった。
+_DECISION_HEADING_RE = re.compile(r"(?m)^#{1,6}[ \t]*.*決定")
 
 
 def _check_research_decision(meta, body, findings):
@@ -465,10 +473,17 @@ def _check_spec_sections(meta, body, findings):
                 "SPEC_MISSING_SECTION", ERROR,
                 "SPEC の必須節『%s』が無い。" % token, "§3.2/§4.2"))
             continue
-        # Non-empty: content between this heading and the next heading (or EOF).
+        # 節の中身は、同レベル以下の次の見出しまで(ADR-075)。以前は階層を見ず
+        # 「次の見出し」で切っていたため、`## 入出力` の直後に `### 受け取る値`
+        # を置くと中身が空と読まれ、正しい文書が SPEC_EMPTY_SECTION(ERROR)で
+        # 落ちて --batch が exit 1 になった。
         start = headings[match_idx].end()
-        end = (headings[match_idx + 1].start()
-               if match_idx + 1 < len(headings) else len(body or ""))
+        level = len(headings[match_idx].group(1))
+        end = len(body or "")
+        for nxt in headings[match_idx + 1:]:
+            if len(nxt.group(1)) <= level:
+                end = nxt.start()
+                break
         section = (body or "")[start:end]
         if _section_is_empty(section):
             findings.append(Finding(
@@ -532,14 +547,53 @@ def _check_trace(meta, body, findings):
         "§4.2/§6"))
 
 
+def _check_frontmatter_syntax(errs, findings):
+    """§3.4 FRONTMATTER_SYNTAX (ERROR)。解析器が返した構文の誤りを表に出す。
+
+    parse は三要素 (frontmatter, body, errors) を返すが(DECIDED-001 事実2)、
+    errors を読む消費者がどこにも無く、構文の誤りが全ての門を素通りしていた。
+    実害: `sources: [Issue #60]` は流フローの閉じ ']' を欠いて `['Issue']` に
+    化け、値を静かに失ったまま監査もリンタも 0 件を報告した(ADR-075)。
+
+    黙って値を捨てる誤りだけを挙げる。行と鍵を添えて、直す場所を一意にする。
+    """
+    if not errs:
+        return
+    seen = set()
+    for e in errs:
+        if not isinstance(e, dict):
+            continue
+        code = e.get("code")
+        key = e.get("key")
+        sig = (code, key)
+        if sig in seen:
+            continue
+        seen.add(sig)
+        where = "鍵『%s』" % key if key else "フロントマター"
+        line = e.get("line")
+        at = "(%d 行目)" % line if isinstance(line, int) else ""
+        findings.append(Finding(
+            "FRONTMATTER_SYNTAX", ERROR,
+            "%s%s の構文が読めない: %s。値が黙って落ちる。"
+            % (where, at, e.get("detail") or code),
+            "§3.4"))
+
+
 def _check_icd_dep(meta, path, findings):
     """§3.9 ICD_DEP_VIOLATION (advisory ERROR) / ICD_DEP_UNVERIFIED (WARN).
 
-    Best-effort, single-doc-from-the-graph: resolve each depends_on target's
-    domain via _depgraph.resolve over the doc tree. When the target domain
-    cannot be resolved (no graph, or target absent), degrade to UNVERIFIED WARN
-    — the guard (pre-apply) and the audit (post-hoc) are the authoritative
-    enforcers (§4.2/§7). The linter NEVER denies.
+    Best-effort, single-doc: resolve each depends_on target's DOMAIN from the
+    target's *path* — never by reading sibling documents (ADR-075).
+
+    以前はここで依存グラフを丸ごと組んでいた。per-turn の Hook は編集された一つの
+    文書だけを点検する(NONGOAL 第5項・仕様 §4.2)という約束に反し、`depends_on` を
+    持つ文書を編集するたび木の全文書を読んで解析していた(実測 O(N): 木 8000 文書で
+    リンタ 0.53 秒、`depends_on` 無しなら 0.14 秒で平坦)。
+
+    ドメインは置き場所そのものが持つ(<docs_root>/<domain>/…、§3.7)。id は
+    ファイル名の接頭辞である(§3.4)。よって「その id で始まるファイルを名前で探す」
+    だけで解け、本文もフロントマターも読まなくてよい。解けなければ従来どおり
+    UNVERIFIED(WARN)へ落ちる — 権威は事前のガードと事後の監査にある。
     """
     depends_on = _frontmatter.as_list(meta.get("depends_on"))
     if not depends_on:
@@ -549,14 +603,13 @@ def _check_icd_dep(meta, path, findings):
         return
     self_domain = self_domain.strip()
 
-    graph = _build_graph_for(path)
+    docs_root = _docs_root_of(path)
     for dep in depends_on:
         dep_type = _registry.type_of(dep)
-        info = graph.resolve(dep) if graph is not None else None
-        dep_domain = info["domain"] if info else None
-        # Registry-resolvable type lets us treat an ICD target as always OK.
-        if dep_type == "ICD" or (info and info.get("type") == "ICD"):
+        # 登録簿だけで ICD と判る依存は、木を触らずに合格(§3.6)。
+        if dep_type == "ICD":
             continue
+        dep_domain = _domain_of_dep(docs_root, dep)
         if not dep_domain:
             findings.append(Finding(
                 "ICD_DEP_UNVERIFIED", WARN,
@@ -570,22 +623,41 @@ def _check_icd_dep(meta, path, findings):
                 % (dep, dep_domain, dep_domain), "§3.6/§4.2"))
 
 
-def _build_graph_for(path):
-    """Build a dep-graph over the nearest docs/ root of `path`. None on failure.
+def _domain_of_dep(docs_root, dep_id):
+    """依存先 id のドメインを、置き場所の名前だけから解く。無ければ None。
 
-    This is the ONE place the linter consults sibling frontmatter — purely to
-    resolve a depends_on target's DOMAIN (§3.4: an id alone does not encode it).
-    It reads frontmatter only (no bodies). Never raises.
+    §3.7 の配置は <docs_root>/<domain>/[<layer>/]<id>-<slug>.md であり、
+    ドメインは docs_root 直下の一階層目そのものである。§3.4 は id とファイル名の
+    一致を課すので、ファイル名の接頭辞で目当ての一件を選べる。
+
+    決して開かない・読まない・解析しない(ADR-075)。走るのはディレクトリ項目の
+    列挙だけで、per-turn の費用は木の文書数ではなくドメイン数に比例する。
+    複数のドメインに同じ id が現れたら曖昧なので None を返し、UNVERIFIED へ落とす
+    (どちらが正かは監査の canonical_conflict と shadowed_document が判じる)。
     """
-    if _depgraph is None:
+    if not docs_root or not isinstance(dep_id, str) or not dep_id.strip():
         return None
-    root = _docs_root_of(path)
-    if not root:
-        return None
+    dep_id = dep_id.strip()
+    if os.sep in dep_id or "/" in dep_id or dep_id.startswith("."):
+        return None                      # id にパスを書かせない(走査の外へ出さない)。
+    found = set()
     try:
-        return _depgraph.build_graph(root)
-    except Exception:
+        domains = [e for e in os.scandir(docs_root) if e.is_dir()
+                   and not e.name.startswith(".")]
+    except OSError:
         return None
+    for dom in domains:
+        for base, _dirs, names in os.walk(dom.path):
+            hit = any(n.startswith(dep_id + "-") and n.endswith(".md")
+                      for n in names)
+            if hit or (dep_id.startswith("ICD-") and "ICD.md" in names):
+                found.add(dom.name)
+                break
+        if len(found) > 1:
+            return None                  # 曖昧(影文書)。監査に委ねる。
+    if len(found) != 1:
+        return None
+    return found.pop()
 
 
 # ---------------------------------------------------------------------------
@@ -603,12 +675,19 @@ def lint_text(text, path):
     """
     findings = []
 
+    # ⓪ 統治の走査から外す範囲(ADR-075)。根の案内(CLAUDE.md/AGENTS.md)と
+    # dot ディレクトリ配下は、監査が明示的に免除しているのにリンタだけが知らず、
+    # 従うと ADR-029 に反する要求(CLAUDE.md にフロントマターを付ける、
+    # スラッシュコマンド定義を壊す)を出し続けていた。判定は _registry に一本化。
+    if _registry.is_outside_governance(path):
+        return findings
+
     # ① 統治木の外(体系外)。doctrine は統治しない。何も出さない。
     docs_root = _docs_root_of(path)
     if docs_root is None:
         return findings
 
-    meta, body, _errs = _frontmatter.parse(text)
+    meta, body, errs = _frontmatter.parse(text)
     type_code = meta.get("type") if meta else None
     typed = isinstance(type_code, str) and _registry.is_known_type(type_code)
 
@@ -645,6 +724,7 @@ def lint_text(text, path):
 
     rel_parts = _rel_under_docs(path)
 
+    _check_frontmatter_syntax(errs, findings)
     _check_required_keys(meta, findings)
     _check_type_known(meta, findings)
     _check_status(meta, findings)
@@ -661,12 +741,21 @@ def lint_text(text, path):
 
 
 def render_additional_context(path, findings):
-    """Render findings into the §2.2 human-readable advisory block."""
+    """Render findings into the §2.2 human-readable advisory block.
+
+    path と message は注入境界のサニタイザを通す(ADR-040 の射程拡張。ADR-075)。
+    どちらも攻撃者制御になりうる: ファイル名に改行を仕込めば本物と同じ書式の偽
+    所見行を捏造でき、フロントマターの値は逐語で埋め込まれる。ADR-040 の決定は
+    inject-contract と gov-heartbeat を名指ししていたため、同じ境界を持つ
+    リンタだけが素通しだった。
+    """
     lines = ["Self-correct the following before continuing.",
-             "docs-linter: %s" % path]
+             "docs-linter: %s" % _frontmatter.sanitize_inline(path, 300)]
     for f in findings:
         lines.append("  [%s] %s: %s  (%s)"
-                     % (f.severity, f.code, f.message, f.spec_ref))
+                     % (f.severity, f.code,
+                        _frontmatter.sanitize_inline(f.message, 300),
+                        f.spec_ref))
     return "\n".join(lines)
 
 
@@ -734,6 +823,7 @@ def main(argv=None):
     NEVER emits a 'decision' key. On any internal error, emits an advisory note
     and exits 0 — a crashing PostToolUse hook must not break the agent (§4.2).
     """
+    _hookio.harden_stdout()
     if argv is None:
         argv = sys.argv[1:]
 
@@ -745,21 +835,29 @@ def main(argv=None):
         root = argv[1] if len(argv) > 1 else "."
         return _run_batch(root)
 
-    # 発火の印(ADR-062)。Hook 経路のときだけ残す(CI のバッチは上で戻っている)。
+    stdin_text = ""
+    try:
+        stdin_text = sys.stdin.read()
+    except Exception:
+        stdin_text = ""
+
+    # 発火の印(ADR-062)。PostToolUse の経路のときだけ残す(ADR-075)。
+    # 事象を見ずに書いていたため、CLI から保守で走らせるだけで印が立ち、
+    # 対の PreToolUse が無いことを監査が「拒否経路の欠落」と読んで
+    # 偽の advisory を上げていた。対のガードは同じ門を持っている。
     # 最善努力であり、失敗しても本務(点検)を妨げない。
     try:
-        import _auditcache
-        _auditcache.write_stamp("hook_docs_linter")
-    except Exception:
-        pass
+        payload = json.loads(stdin_text) if stdin_text.strip() else {}
+    except (ValueError, TypeError):
+        payload = {}
+    if isinstance(payload, dict) and payload.get("hook_event_name") == "PostToolUse":
+        try:
+            import _auditcache
+            _auditcache.write_stamp("hook_docs_linter")
+        except Exception:
+            pass
 
     try:
-        stdin_text = ""
-        try:
-            stdin_text = sys.stdin.read()
-        except Exception:
-            stdin_text = ""
-
         path = resolve_path(stdin_text, argv)
         if not path:
             return 0
@@ -773,7 +871,7 @@ def main(argv=None):
         findings = lint_text(text, path)
         response = build_response(path, findings)
         if response is not None:
-            sys.stdout.write(json.dumps(response, ensure_ascii=False))
+            _hookio.emit(response, component="docs-linter")
     except Exception as exc:  # never raise out of a PostToolUse hook
         try:
             import _auditcache
@@ -788,7 +886,7 @@ def main(argv=None):
                         "docs-linter: internal error: %r; skipped checks" % (exc,),
                 }
             }
-            sys.stdout.write(json.dumps(note, ensure_ascii=False))
+            _hookio.emit(note, component="docs-linter")
         except Exception:
             pass
     return 0
@@ -796,8 +894,7 @@ def main(argv=None):
 
 def _read_text(path):
     """Read a file as UTF-8 (utf-8-sig, newline='') — mirrors _frontmatter."""
-    with open(path, "r", encoding="utf-8-sig", newline="") as fh:
-        return fh.read()
+    return _frontmatter.read_text(path)
 
 
 if __name__ == "__main__":

@@ -6,7 +6,7 @@ domain: packaging
 status: current
 owner: doctrine-maintainers
 created: 2026-07-28
-updated: 2026-07-28
+updated: 2026-07-29
 sources: [plugin/tests/test_release_check.py, scripts/release-check.py]
 depends_on: [SPEC-027]
 llm_context: task
@@ -32,6 +32,7 @@ SPEC-027 の受入である。テストコードは `plugin/tests/test_release_c
   なることを凍結する（ViewStampTest）。
 - 自己適用の実走: 本リポジトリ自身が門を通る（終了コード 0。公開ビュー3件の
   刻印の一致を含む）。
+- ADR-075: 配布物の衛生の検査が、`.cache`・`.claude`・`__pycache__` を挙げ、無いときは無音であること。
 
 ## 退行観点
 

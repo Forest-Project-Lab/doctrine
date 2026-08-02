@@ -6,7 +6,7 @@ domain: model
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-27
+updated: 2026-07-29
 sources: [DOCTRINE-001]
 depends_on: [REQ-001, DATA-001]
 llm_context: task
@@ -46,7 +46,7 @@ llm_context: task
 
 この節がある文書だけが、コードとの追跡の対象になる（ADR-056 の opt-in）。指紋は位置を含まないので、コードを別のファイルへ移しても古びと判じない。更新は `trace-index.py --id SPEC-001` が返す行を写す。
 
-- sha256:8e46d9e2c01fc94a6aa0fe35f043cea0894c568304123d4050f749f03710cee6
+- sha256:1ebfd2234a54d602b2518e625387f68e739c20ce00eba319f59ac70433aa1336
 
 ## 受入基準
 

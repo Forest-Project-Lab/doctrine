@@ -6,7 +6,7 @@ domain: audit
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-28
+updated: 2026-07-29
 sources: [spec/doctrine.ja.md#4.2]
 depends_on: [REQ-008, ICD-008, ICD-001, ICD-002]
 llm_context: task
@@ -48,6 +48,8 @@ llm_context: task
 - コードと仕様の追跡（trace_*、ADR-056）: `## 実装の指紋` の節に `- sha256:<64桁>` を持つ文書が一つでもあるときだけ効く。門は節の有無だけで判じ、状態を問わない（ADR-060。廃止された仕様だけが opt-in する木でも、その注釈への warn は生きる）。節を持つ文書が一つも無ければ、コードの走査そのものを行わない（使っていない機能の費用を払わせない）。上向きの検査（注釈→文書）は走査が走れば常に効き、下向きの照合（記録した指紋）は現行の文書だけに掛ける。走査は `_tracescan`（SPEC-026）に委ね、統治木の親を根とする。挙げるのは十 — 印の対応付けの誤り（error）・実在しない id を指す注釈（error）・現行でない id を指す注釈（warn）・記録した指紋との食い違い（warn）・記録があるのに範囲が無い（warn）・「コード対応なし」の宣言に反して範囲がある（warn。ADR-061）・統治外（exempt）の宣言と範囲の印の同居（warn。ADR-067）・節の無い現行 SPEC を範囲が指す（advisory。欠陥Dの可視化。ADR-061）・印に見えるが読めない行（advisory。綴りの揺れの兆候。ADR-059）・走査が告げた切り詰めの転記（advisory。走査の所見を読み手が握らない。ADR-059）。節には指紋の記録の代わりに `- コード対応なし: <理由>` の明示宣言を書ける（ADR-061。宣言した仕様は下向きの照合の対象にしない）。あわせて、走査が走ったときは勘定（`trace_coverage`。ADR-058）と現行 SPEC の三分類（`spec_coverage`: traced・no_code・undeclared。ADR-061）を要約に載せる。未宣言があるときは整列順の先頭一件を `spec_coverage.next_undeclared` として運ぶ（キャンペーンの種。一覧は載せない。ADR-065）。直前の要約（監査対象の木の親の `.claude/.cache/last-audit.json`。schema と root を検めてから読む）と比べ、印なしと未宣言の和が動かない監査の連続回数を `trace_coverage.stagnation_streak` に載せる（値が動けば 0。所見にはしない。ADR-065）。「根拠を持たないコード」は挙げない（注釈は任意であり原理的に判じられない。ADR-054 の既知の限界）。悉皆モード（設定 `trace_mode: "exhaustive"`。ADR-072）の体系でだけ、印なしが 1 件以上のとき残高を warn 一件（trace_unmarked_backlog）で挙げる — 件数と三つの出口（範囲を張る／ファイル内の exempt 宣言／設定の適用除外）と一覧の導出を告げ、ファイルごとには鳴らさない。設定 `trace_exempt`（`{パス: 理由}`）は走査へ渡し、注釈を持てない媒体を明示管理外へ分類する（書式と分類は SPEC-026）。設定は監査対象の木の `_system/.context-config.json` から既定で読む（明示の `--config` が優先。ADR-072）。`[R3][R4]`
 - 拒否経路の欠落の疑い（guard_liveness_gap、ADR-062）: フックの発火の印（`.claude/.cache/hook-stamps`）を読み、リンタ（PostToolUse）の印があるのにガード（PreToolUse）の印が無い・60 秒超古いとき advisory で挙げる。判定は `_auditcache.liveness_gap` に一度だけ在り、鼓動（SPEC-021）と同じ答えになる。印が無ければ黙る（CI・更新直後の前方寛容）。`[R11]`
 - メモリの影（memory_shadow、ADR-035）: ハーネスのメモリ（`CLAUDE_CONFIG_DIR`（無ければ `~/.claude`）`/projects/<プロジェクト根の絶対パスの / を - に置換した名前>/memory/` の .md。索引 `MEMORY.md` を除く）が統治文書の id に言及していたら advisory で挙げ、正本との矛盾の点検を促す。置き場が無ければ検査しない（CI では通常無い）。中身の真偽・矛盾は判定しない（§7）。`[R8]`
+- 本文中の id の境界は否定先読みで取る。`\b` は仮名・漢字が直接隣接する参照を落とす（ADR-075）。
+- 設定の値は型を検めてから使う。揃わない値は既定へ落とし、監査を落とさない（ADR-075）。
 
 ## 実装の指紋
 

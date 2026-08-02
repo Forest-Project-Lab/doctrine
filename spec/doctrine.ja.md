@@ -5,7 +5,7 @@ type: DOCTRINE
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-26
+updated: 2026-07-29
 sources: [ASD-STE100, S1000D, DO-178C, MBSE/SysML, c-TF-IDF, JTCA, context-rot, claude-code-hooks]
 ---
 
@@ -349,6 +349,12 @@ for dep in proposed.get("depends_on", []):
 | `_registry.py` | 共有 | 型・status・llm_context・必須キー・置き場所の登録簿（規則の単一の出所） |
 | `_depgraph.py` | 共有 | 依存グラフの中核。`dep-graph.py` と監査が読み込む |
 | `_termcheck.py` | 共有 | 用語チェックの中核（辞書の解析・照合）。`term-check.py` とリンタが読み込む |
+| `_hookio.py` | 共有 | フック境界の入出力。標準の入出力をUTF-8へ張り替え、書けなければ英数字だけの符号化へ退避し、阻止できる事象では終了コード2へ倒す（拒否を沈黙で失わない） |
+| `_intake.py` | 共有 | 体系外 .md の分類の記録の解析と、ビューの刻印の解析（監査・リンタ・リリース整合が共有） |
+| `_tracescan.py` | 共有 | コードの注釈の対の走査と勘定（`trace-index.py` と監査が読み込む） |
+| `_auditcache.py` | 共有 | 監査要約・発火の印・エラージャーナルの読み書き（読み取りの単一の出所） |
+| `_audit_trace.py` | 監査 | 追跡の検査群（監査の枠から分けた検査モジュール） |
+| `_audit_stray.py` | 監査 | 体系外 .md と分類の記録の突き合わせ（同上） |
 | `docs-linter.py` | PostToolUse | 単一文書の点検（SPEC必須節・用語チェッカー・ICD照合・追跡性を含む） |
 | `review-nudge.py` | PostToolUse | 型付き文書の編集時に doc-review を促す助言（`decision` は出さない） |
 | `policy-guard.py` | PreToolUse | 不変性・ICD依存・削除安全の三ガード |
@@ -363,6 +369,8 @@ for dep in proposed.get("depends_on", []):
 | `precompact-dump.py` | PreCompact | 圧縮前の退避指示（R12） |
 | `collect-context.py` | llm-context-pack | `llm_context` でフィルタした最小コンテキスト。被覆を満たす最少集合に絞り、出所を表示する |
 | `scaffold.py` | docs-system-init | `_system` 最小配置（非破壊）。段階導入の縮小構成を選べる |
+| `trace-index.py` | change-impact, 保守 | コードの注釈の対と勘定の問い合わせ。索引を置かず毎回導出する |
+| `code-audit.py` | CI | コード層の検算（import 境界・二重定義リテラル・肥大・解析不能）。方法論の残渣を挙げる |
 
 用語チェッカーは、辞書（§1）を発見しない。承認済みの辞書を強制する。禁止同義語マップ（承認語→禁止語）を持ち、禁止語の出現と、辞書にない専門語の初出を弾く。型コード（§3.2）と要求タグ（§2）は別の正本で定義済みのため、未定義語に数えない（登録簿を引く。辞書に二重定義しない）。カルクは、§1の禁止表現を機械的に照合し、一覧にない訳語臭は doc-review が逆翻訳テルで判定する。`term-extract.py`（c-TF-IDF）はその辞書の候補を出すだけで、確定は人間が承認する。「同じ概念を別の語で書いた」と「英語をなぞった表現」の完全な検出は埋め込みかLLMが要るため、構造（辞書＋禁止同義語＋禁止表現）で先回りする。`[R6][R10]`
 

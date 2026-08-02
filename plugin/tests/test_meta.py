@@ -8,7 +8,7 @@ Spec §6 lists the plugin's META conditions (not bound to a single R-id):
      しない。…"
 
 This file is the acceptance test for the structurally-checkable subset of those
-conditions, and for the README deliverable (MASTER §9, BRIEF2 packaging):
+conditions, and for the README deliverable (仕様 §9, BRIEF2 packaging):
 
   1. STDLIB-ONLY  — every plugin/scripts/*.py imports only the standard library
      or a sibling scripts module (no third-party / pip dependency). Parsed via
@@ -50,7 +50,7 @@ import time       # noqa: E402
 import unittest   # noqa: E402
 
 
-# Hyphenated entry scripts (CLIs / hook targets, MASTER §5 inventory). Cores are
+# Hyphenated entry scripts (CLIs / hook targets, 仕様 §5 inventory). Cores are
 # the underscore-prefixed modules; they are NOT entry scripts (no main()).
 ENTRY_SCRIPTS = (
     "docs-linter.py", "term-check.py", "policy-guard.py", "inject-contract.py",
@@ -169,7 +169,7 @@ class TestPluginInstallShape(unittest.TestCase):
 
 
 class TestReadme(unittest.TestCase):
-    """README is the entry-point/index deliverable (MASTER §9, BRIEF2)."""
+    """README is the entry-point/index deliverable (仕様 §9, BRIEF2)."""
 
     def setUp(self):
         self.path = os.path.join(_util.PLUGIN_ROOT, "README.md")
@@ -334,7 +334,7 @@ class TestPerTurnPerfSmoke(unittest.TestCase):
 
 
 class TestRegistryParity(unittest.TestCase):
-    """spec §3 / R6 (MASTER §10.1): the §3.2/§3.3 registry tables live ONCE in
+    """spec §3 / R6 (仕様 §10.1): the §3.2/§3.3 registry tables live ONCE in
     _registry.py — no other script re-hardcodes them ('コードに規則を二重定義しない',
     R6 '辞書を二重定義しない'). Scans every non-registry script for a dict literal
     that re-encodes the type table (>= 6 keys that are all known TYPE codes)."""

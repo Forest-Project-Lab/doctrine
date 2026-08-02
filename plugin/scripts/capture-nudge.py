@@ -18,10 +18,16 @@ nudged-<sid> の二重の歯止めで防ぐ。Level の段差に依らず動く(
 import json
 import os
 import sys
+
+# 作業木にバイトコードを残さない(ADR-075)。フックは一回きりの短命な
+# プロセスで、__pycache__ の利得はほぼ無い。一方、marketplace の source が
+# ディレクトリのとき、ここに書いた物はそのまま利用者へ複製される。
+sys.dont_write_bytecode = True
 import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import _hookio
 # doctrine:begin SPEC-022
 _FLAG_STALE_SECONDS = 7 * 24 * 3600   # 印の掃除(7日より古い印は消す)
 # doctrine:end SPEC-022
@@ -60,13 +66,15 @@ def _safe_sid(data):
 def _flag_dir():
     """review-nudge.py と同じ置き場の解決(書けなくてもよいので読み側は緩く)。"""
     cands = []
-    plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT")
-    if plugin_root:
-        cands.append(os.path.join(plugin_root, ".cache", "session-flags"))
     proj = os.environ.get("CLAUDE_PROJECT_DIR")
     if proj:
         cands.append(os.path.join(proj, ".claude", ".cache", "session-flags"))
     cands.append(os.path.join(os.getcwd(), ".claude", ".cache", "session-flags"))
+    plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT")
+    if plugin_root:
+        # 後方互換の読み口としてだけ残す(ADR-075)。${CLAUDE_PLUGIN_ROOT} は版ごとに
+        # 別ディレクトリで、更新のたび印が消え、しかも配布実体へ混ざる。
+        cands.append(os.path.join(plugin_root, ".cache", "session-flags"))
     for d in cands:
         if os.path.isdir(d):
             return d
@@ -89,6 +97,7 @@ def _sweep_stale(flag_dir):
 
 
 def main(argv=None):
+    _hookio.harden_stdout()
     try:
         data = _read_stdin_json()
         # 歯止め1: 既にこの Stop ナッジ経由で続行しているなら、二度は止めない。
