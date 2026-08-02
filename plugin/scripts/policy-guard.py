@@ -5,8 +5,10 @@
 - 予防: 書き込み/編集/削除を適用する前に三つの不変条件を点検し、違反を deny で止める。
   Guard1 不変(アーカイブ・既存ADRの改変拒否)、Guard2 ICD依存境界(R7)、Guard3 削除安全
   (現行の逆依存が残る降格/本文消し/rm・git rm・mv を拒否)。最初に拒否したガードで止める。
-- 検出: Edit/MultiEdit は適用前に全文を再構成できないため、PostToolUse で書かれた
-  ファイルを読み直し、Guard2/Guard3 違反なら decision:block を出す(C4)。
+- 検出: PostToolUse で書かれたファイルを読み直し、Guard2/Guard3 違反なら
+  decision:block を出す(C4)。ADR-076 以降これは主たる門ではなく突き合わせであり、
+  外部の競合や tool 実装差を拾う。Guard2 の主たる拒否は PreToolUse に立つ
+  (Edit/MultiEdit も変更後の全文を組み立てて事前に判ずる)。
 - 委ねる: 死リンク・逆孤児・古び等の全件監査は docs-audit に委ねる。助言だけのリンタは
   decision を出さない(C4)。ドメイン解決は _depgraph.resolve に委ねる(IDだけでは
   ドメインは決まらない、§3.4)。
@@ -15,6 +17,7 @@
 - 不変ガード(Guard1)と削除安全ガード(Guard3)が落ちたら fail-closed(deny「ガード異常、
   手で確認」)。Guard2(ICD依存)は docs/** の外の、フロントマターを持たない純粋な非文書
   Write のときだけ fail-open(allow)。それ以外の Guard2 例外も fail-closed。
+  編集後の全文を組み立てられないときも、対象が統治文書なら deny する(ADR-076)。
 - Hook 事象では main から例外を投げない。判定は JSON に載せ、終了コードは常に 0。
 
 C13 の判定(重要 — 将来の改変で静かに fail-open へ倒れないよう明記する):
@@ -309,13 +312,32 @@ def guard_icd_dependency(file_path, tool, tin, graph):
     - dep の status は無関係(C12)。構造(domain と type==ICD)だけを見る。
     - dangling(構文上正しいが索引に無い)→ allow(C13)。
     - 分類不能(type_of/resolve が UNKNOWN)→ deny fail-closed(C13)。
-    Write のみ事前判定する。Edit/MultiEdit は事前に全文を作れないので、ここでは
-    判定しない(PostToolUse の block に回す)。
+
+    Write・Edit・MultiEdit のいずれも事前判定する(ADR-076)。以前は Write だけを見て、
+    Edit/MultiEdit は「事前に全文を作れない」として PostToolUse の block へ回していた。
+    その前提は同じファイルの `_proposed_text` が反証しており(Guard1 と Guard3 は
+    どちらも事前判定でそれを使っている)、作れないのではなく作っていなかっただけである。
+    PostToolUse の block は書き込みを巻き戻さないので、回した分だけ作業木は不正な状態で
+    残っていた。
     """
-    if tool != "Write":
+    if tool == "Write":
+        return _icd_check_content(tin.get("content", ""), graph)
+    if not file_path or not os.path.isfile(file_path):
+        return None  # 新規作成は Write の経路。編集の対象が無ければ判ずるものが無い。
+    try:
+        cur_fm, cur_body, _e = _frontmatter.parse_file(file_path)
+    except (OSError, UnicodeError):
+        return ("ガード異常: 既存ファイル %s を読めません。手で確認してください。" % file_path)
+    new_text = _proposed_text(cur_fm, cur_body, tool, tin, file_path)
+    if new_text is None:
+        # 全文を作れない。統治文書ならガードが判定を持たない状態なので拒む(ADR-076)。
+        # ADR-075 が直したのは、まさに「判定を持たないまま allow へ倒れる」欠陥である。
+        # 体系外の非文書は Guard2 の対象でないので、従来どおり通す。
+        if _coerce_str(cur_fm.get("id")) or _is_under_docs(file_path):
+            return ("編集後の全文を組み立てられないため、ICD 依存を検められません"
+                    "(old_string 不一致の疑い)。編集を見直してください。")
         return None
-    content = tin.get("content", "")
-    return _icd_check_content(content, graph)
+    return _icd_check_content(new_text, graph)
 
 
 def _icd_check_content(content, graph):
@@ -1092,9 +1114,10 @@ def _pre_target_is_guard_inert(file_path, tool, tin):
     ため。MECE:
       - Write: content にフロントマターの開始フェンス '---' が無ければ Guard2 は
         fail-open(§3.6)、Guard3 は id を持たず発火しない。
-      - Edit/MultiEdit: Guard2 は構造上 None(Write のみ判定)。Guard3 は対象を
-        ディスクから読み id で判じるので、on-disk に id があれば発火しうる。よって
-        id を持たない非文書のときだけ inert とみなす(id 有りは早期通過させない)。
+      - Edit/MultiEdit: Guard3 は対象をディスクから読み id で判じるので、on-disk に
+        id があれば発火しうる。Guard2 は ADR-076 以降 Edit も事前判定するので、
+        on-disk にフロントマターがあるか、編集が `depends_on` に触れるなら発火しうる。
+        どちらも起きない非文書のときだけ inert とみなす。
     Guard1 は本判定より前に当て済み(early-out は allow へしか倒れない)。
     """
     if _is_under_docs(file_path) or _is_under_docs(os.path.realpath(file_path)):
@@ -1102,15 +1125,29 @@ def _pre_target_is_guard_inert(file_path, tool, tin):
     if tool == "Write":
         head = tin.get("content", "").lstrip()
         return not head.startswith("---")
-    # Edit/MultiEdit: on-disk に id があれば Guard3 が発火しうる。id 無しなら inert。
+    # Edit/MultiEdit: 編集が depends_on を持ち込むなら Guard2 が発火しうる(ADR-076)。
+    # 全文の組み立ては高いので、ここは編集文字列の字面だけを見る安い検査に留める。
+    if _edit_mentions_depends_on(tin):
+        return False
     if os.path.isfile(file_path):
         try:
             fm, _b, _e = _frontmatter.parse_file(file_path)
         except (OSError, UnicodeError):
             return False  # 読めない対象は早期通過させず Guard3 に委ねる。
-        if _coerce_str(fm.get("id")):
-            return False
+        if _coerce_str(fm.get("id")) or fm:
+            return False  # id は Guard3、フロントマター有りは Guard2 が発火しうる。
     return True
+
+
+def _edit_mentions_depends_on(tin):
+    """編集の文字列が `depends_on` に触れるか(早期通過の安い検査)。"""
+    for edit in [tin] + _frontmatter.as_list(tin.get("edits")):
+        if not isinstance(edit, dict):
+            continue
+        for key in ("old_string", "new_string"):
+            if "depends_on" in _coerce_str(edit.get(key)):
+                return True
+    return False
 
 
 def _guard2_should_fail_open(file_path, tool, tin):

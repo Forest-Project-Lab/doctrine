@@ -21,12 +21,12 @@ llm_context: task
 
 - PreToolUse `Edit|Write|MultiEdit`: 三ガードを順に当て、`permissionDecision: "allow"` または `"deny"`（理由つき）を返す。
 - PreToolUse `Bash`: 削除安全だけを当て、deny または allow を返す（deny だけを使う）。
-- PostToolUse `Edit|MultiEdit`: 書き込んだファイルを読み直し、ICD依存または削除安全に違反していれば `decision: "block"` を、なければ空オブジェクトを返す。
+- PostToolUse `Edit|MultiEdit`: 書き込んだファイルを読み直し、ICD依存または削除安全に違反していれば `decision: "block"` を、なければ空オブジェクトを返す。ADR-076 以降、これは**主たる門ではなく突き合わせ**である（外部の競合・tool 実装差を拾う）。主たる拒否は PreToolUse に立つ。
 
 各ガードの規則:
 
 - 不変（Guard1, `[R8]`）: `<domain>/archive/` 下の編集を拒否する。加えて、置き場所に依らず、ディスク上の実効 `status` が archived の既存文書の編集も拒否する（ADR-027。パス判定だけでは倉庫の外に居る archived 文書が編集自由になる）。現行から archived への遷移の書き込み自体は対象外とする（それは降格の操作であり、削除安全ガードが逆参照ゼロを守る）。既存の `type:ADR` ファイルの改変も拒否する。ただし carve-out だけは許す。carve-out とは、`status` を proposed→accepted・accepted→superseded・accepted→deprecated の範囲で動かし、`superseded_by` と `updated` を付ける編集をいう。ADR に誤りを見つけたときの正規の直し方は ADR-044 が定める（未コミットは削除して作り直す・マージ済みは後継で置換する。作成時に用語とフロントマターを正すのが第一）。
-- ICD依存（Guard2, `[R7]`）: Write の content からフロントマターを読み、`depends_on` の各 dep を調べる。相手のドメインが自ドメインと異なり、しかも相手の型が ICD でなければ拒否する。dep の `status` は見ない（C12: 整合判断id）。Edit・MultiEdit は書き込む前に全文を組み立てられないため、PostToolUse の block に回す。
+- ICD依存（Guard2, `[R7]`）: 変更後の全文からフロントマターを読み、`depends_on` の各 dep を調べる。相手のドメインが自ドメインと異なり、しかも相手の型が ICD でなければ拒否する。dep の `status` は見ない（C12: 整合判断id）。**Write・Edit・MultiEdit のいずれも書き込む前に判ずる（ADR-076）。** 全文は Write なら `content`、Edit・MultiEdit ならディスクの生の全文へ編集を当てたもの（Guard1・Guard3 と同じ `_proposed_text`）とする。全文を組み立てられないとき、対象が統治文書（on-disk に `id` を持つ、または統治木の中）なら拒否する（ガードが判定を持たないまま allow へ倒れる経路を作らない）。体系外の非文書は従来どおり通す。
 - 削除安全（Guard3, `[R4]`）: 現行（current/accepted）から deprecated/superseded/archived への降格、本文を空にする編集、Bash の `rm`・`git rm`・`mv` を対象とする。その文書を指す現行の逆依存が残っているとき、これらを拒否する。逆依存は graph の `reverse_current_dependents(id)` で引く。
 
 ## 制約
