@@ -18,7 +18,7 @@ sources: []
 |---|---|---|---|
 | GLOSSARY-001 | GLOSSARY | _system | 用語辞書の正本 |
 | DECIDED-001 | DECIDED | _system | 横断の確定方針（12事実） |
-| NONGOAL-001 | NONGOAL | _system | 横断のやらないこと（16項） |
+| NONGOAL-001 | NONGOAL | _system | 横断のやらないこと（17項） |
 | WATCH-001 | WATCH | _system | 横断の退行監視（9項） |
 | ICD-005 | ICD | audit | audit のインターフェース（全件監査の境界） |
 | REQ-008 | REQ | audit | 最小性の監査（過剰と不足の両側を全件検出） |
@@ -95,6 +95,7 @@ sources: []
 | ADR-065 | ADR | graph | 紐づけの整理をキャンペーンで駆動し、進捗の停滞を名指しする |
 | ADR-067 | ADR | graph | ファイルは統治外の意思を自分の中に宣言できる — exempt の印と勘定の第四項 |
 | ADR-072 | ADR | graph | 悉皆トレースモード — 「未分類」を残高にする opt-in |
+| ADR-081 | ADR | graph | 検証は証拠の提示である。証跡の形だけを採り、ハザード層と過程適合は採らない |
 | CHANGE-003 | CHANGE | graph | 悉皆トレース — 印なしゼロを選べる体系にする |
 | IMPACT-003 | IMPACT | graph | 悉皆トレース — 影響の列挙 |
 | IMPL-006 | IMPL | graph | `_depgraph.py`＋`dep-graph.py` の実装メモ |
