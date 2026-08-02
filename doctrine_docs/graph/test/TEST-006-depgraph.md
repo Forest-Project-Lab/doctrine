@@ -31,7 +31,9 @@ llm_context: task
 - 越境した impacts 端を、誤って `cross_domain_violation` に分類しないこと（WATCH の項目と照らし合わせて確かめる）。
 - 逆依存と逆孤児の対象を、現行文書より外まで広げないこと。
 - 所見が見つかっても CLI を非ゼロ終了にしないこと。問い合わせ用の CLI を、違反を止めるゲートと混同しない。
+- 直列化が項を隠さないこと（ADR-087）。`title` と鮮度の項（`updated`・`review_by`・`llm_context`・`superseded_by`）が返り、**組み立てが節点へ入れた項と直列化が返す項が一致する**こと。後者が本当の歯止めである —— 正本を書いても、一致を機械が見ていなければまたずれる。
+  `JsonNodeShapeTest` が確認する。**歯止め自身の実効を実測してある**（2026-08-02）: 白名簿を復活させると一致の検査が落ち、組み立てから題名を外すと題名の検査が落ち、復元すると全て通った。
 
 ## 合否基準
 
-`DepGraphCoreTest` と `DepGraphCLITest` のすべてのケースが合格すること。`find_cycles` は自己依存・多頂点循環を検出し、非循環と dangling 端は空を返す（ADR-038）。
+`DepGraphCoreTest`・`DepGraphCLITest`・`JsonNodeShapeTest` のすべてのケースが合格すること。`find_cycles` は自己依存・多頂点循環を検出し、非循環と dangling 端は空を返す（ADR-038）。
