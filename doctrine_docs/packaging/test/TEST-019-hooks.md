@@ -18,7 +18,7 @@ llm_context: task
 
 SPEC-019 の受入基準を確認する。
 
-- `hooks.json` が 7 つのイベント（SessionStart・UserPromptSubmit・PreToolUse・PostToolUse・Stop・PreCompact・SessionEnd。ADR-028）を持つ（test_packaging の test_has_all_seven_events）。
+- `hooks.json` が必要なイベント（SessionStart・UserPromptSubmit・PreToolUse・PostToolUse・Stop・PreCompact・SessionEnd。ADR-028）を**すべて持つ**（test_packaging の test_required_events_are_all_wired）。集合の上限は凍らせない —— 事象を増やしても落ちず、減らせば落ちる（ADR-078）。
 - 各 `command` が `${CLAUDE_PLUGIN_ROOT}/scripts/` 配下の `.py` を指す。
 - PostToolUse の `Edit|Write|MultiEdit` が `policy-guard.py` → `docs-linter.py` → `review-nudge.py` の順である `[R7][R10]`。
 - `Bash` matcher が `policy-guard.py` へ配線されている。
