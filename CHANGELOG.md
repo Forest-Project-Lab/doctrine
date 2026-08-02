@@ -6,6 +6,13 @@
 
 ### 直した
 
+- 圧縮を跨いだ捕捉が、実効のある経路の上に載った(ADR-077)。`PreCompact` で
+  `additionalContext` に退避の指示を載せて返していたが、現行の公式仕様では
+  `additionalContext` を運ぶ事象は決まっており `PreCompact` は含まれない。届かない「版」が
+  あるのではなく、**構造上どの版でも届かない** —— R12 の「圧縮前の促し」は一度も発火した
+  ことのない死んだ経路だった。いまは `PreCompact` が圧縮の印だけを残し、合図は届く事象
+  （`SessionStart` の `source=compact`、または印が新しいとき）で圧縮の**後**に出す。
+
 - ICD 依存の境界が Edit・MultiEdit でも書き込む前に立つようになった(ADR-076)。三ガードの
   うち Guard2 だけが Write のときしか事前に判じておらず、Edit・MultiEdit は PostToolUse の
   block に回していた。その根拠は「事前に全文を作れない」だったが、同じファイルの

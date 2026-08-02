@@ -34,7 +34,7 @@ llm_context: task
 | R9 保証限界 | CI(受入) | run_tests(保証限界節の存在) | テスト結果 | CI 委任 |
 | R10 明快な日本語 | PostToolUse(リンタ+ナッジ)・doc-review 定例 | term-check(カルク)・review-nudge・gov-heartbeat(定例督促) | リンタ助言・governance-state | 在席(リンタ)＋ナッジは Level 3 以降 |
 | R11 統治の生存性 | UserPromptSubmit(毎会話)・SessionStart(注入)・CI | gov-heartbeat(鮮度)・inject-contract(死活警告)・docs-audit(EXT 存在) | 督促・警告・監査要約 | CI 委任(死活は Level 3 以降。ADR-046) |
-| R12 会話知識の捕捉 | Stop(終端)・PreCompact(圧縮前)・PostToolUse(印)・SessionStart(選別義務) | capture-nudge・precompact-dump・review-nudge(印)・inject-contract(未選別節) | 差し止め理由・.session-notes・印 | 在席(段差に依らず動く。ADR-030) |
+| R12 会話知識の捕捉 | Stop(終端)・PreCompact(圧縮の印)・SessionStart(圧縮後の合図・選別義務)・PostToolUse(印) | capture-nudge・precompact-dump(印のみ)・inject-contract(圧縮後の節・未選別節)・review-nudge(印) | 差し止め理由・圧縮の印・.session-notes・印 | 在席(段差に依らず動く。ADR-030) |
 
 明示の非目標: 根拠を持たないコードの検出(注釈は任意であり原理的に判じられない。ADR-054 の既知の限界)・会話の決定の見落としゼロの検出(NONGOAL 第7項)・フックが起動しない経路の予防(NONGOAL 第4項。監査と CI が補う)・ガードが拒否できる状態かの検出(NONGOAL 第9項。ADR-050。R11 の証跡は監査の要約の鮮度までで、ガードの往復は覆わない)。
 
