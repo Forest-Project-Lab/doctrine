@@ -260,6 +260,12 @@ LEVEL4_KEYS = ("canonical_for",)
 # Legal llm_context values (§3.4).
 LLM_CONTEXT_VALUES = ("always", "task", "never")
 
+# Legal `subdomain` values — the KIND of a domain, not its name (ADR-092).
+# 語彙の正本はここだけに置く。呼び手がこの三語を自分の実装へ書き写さないための項である。
+# 省略は「未分類」であり、既定値は無い(型から導かない)。投資の判断そのものはこの項が
+# 持たない —— 中核は要求の「優先度」が、一般は NONGOAL が、委ねたことは ADR が言う。
+SUBDOMAIN_KINDS = ("core", "supporting", "generic")
+
 
 def required_keys(level, type_code):
     """Required frontmatter keys for (level, type) per §3.4.

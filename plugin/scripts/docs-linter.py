@@ -433,6 +433,25 @@ def _check_llm_context(meta, findings):
             % (value, type_code, default), "§3.2"))
 
 
+def _check_subdomain(meta, findings):
+    """§3.5 BAD_SUBDOMAIN (ERROR on bad value) — ADR-092.
+
+    省略・空は「未分類」であり所見を出さない(既存の木で所見が増えないこと)。
+    既定値は無いので、llm_context のような「既定の上書き」の WARN も持たない。
+    """
+    if "subdomain" not in meta:
+        return  # absent -> unclassified, no finding
+    value = meta.get("subdomain")
+    if not isinstance(value, str) or value.strip() == "":
+        return  # empty -> treat as absent (unclassified)
+    value = value.strip()
+    if value not in _registry.SUBDOMAIN_KINDS:
+        findings.append(Finding(
+            "BAD_SUBDOMAIN", ERROR,
+            "subdomain『%s』は {core, supporting, generic} のいずれかにする。" % value,
+            "§3.4"))
+
+
 # Markdown heading whose text mentions 決定.
 # 行内の空白だけを見る(ADR-075)。\s は改行を跨ぐため `.*` と組んで二次の
 # バックトラックを生み、同一行に空白 20 万字を置くと 14 秒かかった。
@@ -749,6 +768,7 @@ def lint_text(text, path):
     _check_stray_location(meta, rel_parts, findings)
     _check_type_location(meta, path, rel_parts, findings)
     _check_llm_context(meta, findings)
+    _check_subdomain(meta, findings)
     _check_research_decision(meta, body, findings)
     _check_spec_sections(meta, body, findings)
     _check_term_check(meta, body, path, findings, text)

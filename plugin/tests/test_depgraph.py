@@ -631,6 +631,86 @@ class JsonNodeShapeTest(unittest.TestCase):
             self.assertIsInstance(by_id["SPEC-1"][field], list, field)
 
 
+class SubdomainNodeTest(unittest.TestCase):
+    """ADR-092 / #152: 節点がドメインの種類を運ぶ。未分類は空文字で、値が化けない。
+
+    呼び手はこの値をそのまま出すだけにする。語彙を自分の実装に持たない。
+    """
+
+    def _graph(self, docs):
+        base = {
+            "docs/_system/glossary.md": _util.fm_block({
+                "id": "GLOSSARY-001", "title": "用語", "type": "GLOSSARY",
+                "domain": "_system", "status": "current", "owner": "o",
+                "updated": "2026-06-01", "sources": []}) + "本文。\n",
+        }
+        base.update(docs)
+        root = _util.make_repo(base)
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        return _util.load_core("_depgraph").build_graph(os.path.join(root, "docs"))
+
+    def _spec(self, num, extra=None):
+        fm = {
+            "id": "SPEC-%d" % num, "title": "s%d" % num, "type": "SPEC",
+            "domain": "billing", "status": "current", "owner": "o",
+            "updated": "2026-06-01", "sources": [],
+        }
+        if extra:
+            fm.update(extra)
+        return {"docs/billing/spec/SPEC-%d-x.md" % num: _util.fm_block(fm) + "本文。\n"}
+
+    def test_declared_kind_is_carried(self):
+        docs = {}
+        for num, kind in ((1, "core"), (2, "supporting"), (3, "generic")):
+            docs.update(self._spec(num, {"subdomain": kind}))
+        by_id = {n["id"]: n for n in self._graph(docs).to_json()["nodes"]}
+        self.assertEqual(by_id["SPEC-1"]["subdomain"], "core")
+        self.assertEqual(by_id["SPEC-2"]["subdomain"], "supporting")
+        self.assertEqual(by_id["SPEC-3"]["subdomain"], "generic")
+
+    def test_absent_is_empty_string_not_missing(self):
+        """未分類は空文字。項が消えると読み手が「取れなかった」と見分けられない。"""
+        by_id = {n["id"]: n for n in self._graph(self._spec(1)).to_json()["nodes"]}
+        self.assertIn("subdomain", by_id["SPEC-1"])
+        self.assertEqual(by_id["SPEC-1"]["subdomain"], "")
+        self.assertEqual(by_id["GLOSSARY-001"]["subdomain"], "")
+
+    def test_non_string_does_not_leak_a_python_repr(self):
+        """真偽値・一覧が来ても、節点には空文字が載る(値が化けない)。"""
+        docs = {}
+        docs.update(self._spec(1, {"subdomain": True}))
+        docs.update(self._spec(2, {"subdomain": ["core"]}))
+        by_id = {n["id"]: n for n in self._graph(docs).to_json()["nodes"]}
+        self.assertEqual(by_id["SPEC-1"]["subdomain"], "")
+        self.assertEqual(by_id["SPEC-2"]["subdomain"], "")
+
+    def test_no_field_leaks_a_container_repr(self):
+        """一項だけ塞がない。同じ補助を通る全てのスカラ項で内部表記が漏れないこと。
+
+        `_coerce_str` は「スカラ値を str に」と宣言していたのに、一覧に str() を当てて
+        "['x']" を返していた。題名でも llm_context でも起きる欠陥だった。
+        """
+        docs = self._spec(1, {"title": ["t"], "llm_context": ["task"],
+                              "status": ["current"], "superseded_by": ["SPEC-9"]})
+        by_id = {n["id"]: n for n in self._graph(docs).to_json()["nodes"]}
+        node = by_id["SPEC-1"]
+        self.assertEqual(node["title"], "")
+        self.assertEqual(node["llm_context"], "")
+        self.assertEqual(node["superseded_by"], "")
+        # status は空なら型の既定に落ちる(既存の挙動)。内部表記は載らない。
+        self.assertEqual(node["status"], "current")
+        for key, value in node.items():
+            if isinstance(value, str):
+                self.assertNotIn("['", value, key)
+
+    def test_graph_does_not_check_the_vocabulary(self):
+        """語彙の当否はリンタが検める。グラフは運ぶだけで、黙って捨てない。"""
+        by_id = {n["id"]: n for n in
+                 self._graph(self._spec(1, {"subdomain": "CORE_DOMAIN"}))
+                 .to_json()["nodes"]}
+        self.assertEqual(by_id["SPEC-1"]["subdomain"], "CORE_DOMAIN")
+
+
 class MirroredEdgeTest(unittest.TestCase):
     """ADR-088 / #151: 両端から書かれた同じ事実に印を付ける。
 

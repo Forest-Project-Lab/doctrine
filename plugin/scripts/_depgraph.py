@@ -465,6 +465,9 @@ def build_graph(root):
             "updated": _coerce_str(fm.get("updated")),
             "review_by": _coerce_str(fm.get("review_by")),
             "llm_context": _coerce_str(fm.get("llm_context")),
+            # ドメインの種類(ADR-092)。省略は未分類なので空文字にする。既定は無いので
+            # 型から導かない。値の当否はリンタが検め、ここでは化けずに運ぶだけにする。
+            "subdomain": _coerce_str(fm.get("subdomain")),
             # 孤児判定の第三連言(再現可能)に使う。frontmatter は素の true/false を
             # bool に解す。欠落・非 bool は None(= 再現可能でない)として残す(加法キー)。
             "reproducible": fm.get("reproducible"),
@@ -476,11 +479,18 @@ def build_graph(root):
 
 
 def _coerce_str(value):
-    """frontmatter のスカラ値を str に正規化する。None/bool/欠落は '' になる。"""
+    """frontmatter のスカラ値を str に正規化する。None/bool/欠落は '' になる。
+
+    入れ物(一覧・写像)も '' にする。str() を当てると Python の内部表記
+    ("['core']") がそのまま問い合わせの値になり、読み手へ化けた値が渡っていた
+    (ADR-092 の「値が化けないこと」)。宣言どおりスカラだけを文字列にする。
+    """
     if value is None:
         return ""
     if isinstance(value, bool):
         return ""
     if isinstance(value, str):
         return value
+    if isinstance(value, (list, tuple, dict, set)):
+        return ""
     return str(value)
