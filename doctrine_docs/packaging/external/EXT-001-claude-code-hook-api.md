@@ -18,7 +18,7 @@ llm_context: task
 
 ## 何に依存しているか
 
-実行環境(Claude Code)の Hook 仕様。イベント名(SessionStart・UserPromptSubmit・PreToolUse・PostToolUse・Stop・PreCompact・SessionEnd)、matcher のツール名(`Edit`・`Write`・`MultiEdit`・`Bash`)、`permissionDecision`/`decision` の意味、`stop_hook_active` の旗、設定がセッション開始時に固定される挙動(ADR-032)。
+実行環境(Claude Code)の Hook 仕様。イベント名(SessionStart・UserPromptSubmit・PreToolUse・PostToolUse・Stop・PreCompact・SessionEnd)、matcher のツール名(`Edit`・`Write`・`MultiEdit`・`Bash`)、`permissionDecision`/`decision` の意味、`stop_hook_active` の旗、`SessionStart` の `source`(`compact` を含む)、**`additionalContext` を運ぶ事象が限られており `PreCompact` は含まれないこと**(ADR-077)、設定がセッション開始時に固定される挙動(ADR-032)。
 
 ## 期待
 

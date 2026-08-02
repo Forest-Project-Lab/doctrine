@@ -738,6 +738,36 @@ def _count_session_notes(docs_root):
         return 0
 
 
+def _compacted_since_last_inject(source):
+    """この起動が圧縮を跨いでいるか(ADR-077)。決して例外を投げない。
+
+    二つの入口を持つ。どちらか一方が生きていれば合図は出る。
+      1. SessionStart の `source` が `compact`。実行環境が届けてくれる素直な合図。
+      2. 圧縮の印が、前回の注入の印より後に付いている。`source` が届かない実行環境
+         （フックへ渡す形が変わった・古い版）でも、印だけで見分けられる。
+    印が読めない・時刻が壊れているときは False(合図を出さない)へ倒す。余計な節を
+    毎回出すより、出ない方が害が小さい。
+    """
+    if source == "compact":
+        return True
+    try:
+        stamps = _auditcache.read_stamps()
+    except Exception:
+        return False
+    if not isinstance(stamps, dict):
+        return False
+    compacted_at = stamps.get("compacted")
+    if compacted_at is None:
+        return False
+    injected_at = stamps.get("hook_inject_contract")
+    if injected_at is None:
+        return True  # 圧縮の印だけ在る(初回の注入より前に圧縮された)。
+    try:
+        return compacted_at > injected_at
+    except TypeError:
+        return False
+
+
 def _knowledge_sections(decided, nongoals, watches, glossary,
                         deprecated, pinned):
     """統治木の知識から組む節(1〜7)。順序と tier は据え置き(ADR-069 の分解)。"""
@@ -824,7 +854,8 @@ def _knowledge_sections(decided, nongoals, watches, glossary,
 
 
 def _status_sections(audit_summary, config_unused, today, stale_days,
-                     docs_level, tree_initialized, notes_pending, pinned):
+                     docs_level, tree_initialized, notes_pending, pinned,
+                     compacted=False):
     """運用の状態から組む節(8〜9)。順序と tier は据え置き(ADR-069 の分解)。"""
     sections = []
     # 8. 前回監査の要約(保護)
@@ -836,6 +867,24 @@ def _status_sections(audit_summary, config_unused, today, stale_days,
         "tier": 0,
         "protected": True,
     })
+
+    # 8a. 圧縮の後の合図(保護、R12。ADR-077)。圧縮前に促す経路は届かないので、
+    # 届く事象(SessionStart)で圧縮の後に告げる。失われた詳細は戻らない。
+    if compacted:
+        sections.append({
+            "key": "compacted",
+            "title": "## 圧縮の後",
+            "lines": [
+                "この会話は圧縮されている。圧縮前のやり取りの詳細は失われており、"
+                "**圧縮の前に促す手立ては無い**（実行環境が圧縮直前に文脈を運ばない）。"
+                "いま思い出せる未記録の決定・撤回・新しい用語・重要な根拠があるなら、"
+                "統治木の `_system/.session-notes` へ一行ずつ追記すること"
+                "（形式: `- <一文の事実> (出所: 会話, YYYY-MM-DD)`）。"
+                "思い出せないものは失われたものとして扱う（R12 の保証限界）。",
+            ],
+            "tier": 0,
+            "protected": True,
+        })
 
     # 8b. 未選別のセッションメモ(保護、R12)。圧縮・終了前に退避した決定の選別を義務化。
     if notes_pending > 0:
@@ -866,7 +915,7 @@ def _status_sections(audit_summary, config_unused, today, stale_days,
 
 def _build_sections(docs, audit_summary, config, today=None,
                     stale_days=DEFAULT_AUDIT_STALE_DAYS, notes_pending=0,
-                    docs_level=4, tree_initialized=False):
+                    docs_level=4, tree_initialized=False, compacted=False):
     """全ブロックを (タイトル, [行...], tier) の順序付きリストで返す。
 
     tier はトリム時の落とす順(大きいほど先に詳細を落とす)。RECAP・最新 DECIDED・全 NONGOAL
@@ -883,7 +932,7 @@ def _build_sections(docs, audit_summary, config, today=None,
                                 deprecated, pinned)
             + _status_sections(audit_summary, config, today, stale_days,
                                docs_level, tree_initialized, notes_pending,
-                               pinned))
+                               pinned, compacted))
 
 
 def _render_sections(sections):
@@ -959,7 +1008,7 @@ def _trim_to_fit(sections, budget, chars_per_token):
 
 def _assemble(docs, audit_summary, config, cap, chars_per_token, had_docs_root,
               today=None, stale_days=DEFAULT_AUDIT_STALE_DAYS, notes_pending=0,
-              docs_level=4, tree_initialized=False):
+              docs_level=4, tree_initialized=False, compacted=False):
     """注入文字列を組み立て、上限を強制し、超過時に通知を付ける。
 
     返り値: (context_string, overflow_bool, untrimmed_estimate)。
@@ -977,7 +1026,8 @@ def _assemble(docs, audit_summary, config, cap, chars_per_token, had_docs_root,
                 estimate_tokens(_ONBOARDING_NOTICE, chars_per_token))
 
     sections = _build_sections(docs, audit_summary, config, today, stale_days,
-                               notes_pending, docs_level, tree_initialized)
+                               notes_pending, docs_level, tree_initialized,
+                               compacted)
     untrimmed = _render_sections(sections)
     untrimmed_est = estimate_tokens(untrimmed, chars_per_token)
 
@@ -1013,14 +1063,21 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
 
-    # SessionStart の stdin は読み捨てる(空 stdin でもブロックしない)。
+    # SessionStart の stdin から source を取る(ADR-077)。以前は読み捨てていたため、
+    # 圧縮由来の起動を見分けられなかった。空 stdin でもブロックしない。
+    payload = {}
     try:
         if not sys.stdin.isatty():
-            sys.stdin.read()
+            payload = _hookio.read_payload()
     except (OSError, ValueError):
-        pass
+        payload = {}
+    source = _coerce_str(payload.get("source")) if isinstance(payload, dict) else ""
 
     try:
+        # 圧縮の判定は、発火の印を上書きする**前**に取る(ADR-077)。前回の注入より
+        # 後に圧縮の印が付いていれば、この起動は圧縮を跨いでいる。source が届く
+        # 実行環境ではそれだけで足りるが、届かない環境のために二つ目の入口を置く。
+        compacted = _compacted_since_last_inject(source)
         # 発火の印(ADR-062)。注入の面が生きている証跡を残す。最善努力。
         _auditcache.write_stamp("hook_inject_contract")
         # 版の印(ADR-066)。セッション冒頭の版を刻み、鼓動が途中の切替を検める。
@@ -1068,7 +1125,8 @@ def main(argv=None):
         tree_initialized = _tree_initialized(docs_root) if had_docs_root else False
         context, _overflow, _est = _assemble(
             docs, audit_summary, config, cap, cpt, had_docs_root,
-            today, stale_days, notes_pending, docs_level, tree_initialized)
+            today, stale_days, notes_pending, docs_level, tree_initialized,
+            compacted)
 
         for w in warnings:
             sys.stderr.write("inject-contract: %s\n" % w)

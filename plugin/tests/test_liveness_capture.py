@@ -383,7 +383,7 @@ class TestCaptureNudge(LivenessBase):
 
 
 class TestPrecompactDump(unittest.TestCase):
-    """退避の指示。統治木は自前で作る(ADR-075)。
+    """圧縮の印。統治木は自前で作る(ADR-075)。
 
     以前は cwd の統治木に頼っていたため、開発木の外(導入されたプラグインの
     複製)で走らせると木が無く、応答の形が変わって error になっていた。
@@ -391,15 +391,24 @@ class TestPrecompactDump(unittest.TestCase):
 
     def _run(self, root):
         cwd = os.getcwd()
+        prev = os.environ.get("CLAUDE_PROJECT_DIR")
         os.chdir(root)
+        os.environ["CLAUDE_PROJECT_DIR"] = root
         try:
             return _util.invoke("precompact-dump", stdin_obj={
                 "hook_event_name": "PreCompact", "trigger": "auto",
                 "cwd": root})
         finally:
             os.chdir(cwd)
+            if prev is None:
+                os.environ.pop("CLAUDE_PROJECT_DIR", None)
+            else:
+                os.environ["CLAUDE_PROJECT_DIR"] = prev
 
-    def test_emits_dump_instruction(self):
+    def test_records_the_stamp_and_says_nothing_to_the_model(self):
+        """ADR-077: PreCompact は additionalContext を運ばない事象である。
+        以前はここに退避の指示を載せて返しており、**一度も届いていなかった**。
+        いまは圧縮が起きた印だけを残し、モデルへは何も言わない。"""
         root = _util.mkdtemp()
         self.addCleanup(shutil.rmtree, root, ignore_errors=True)
         os.makedirs(os.path.join(root, "doctrine_docs", "_system"),
@@ -407,8 +416,12 @@ class TestPrecompactDump(unittest.TestCase):
         out, code = self._run(root)
         self.assertEqual(code, 0)
         resp = json.loads(out)
-        self.assertEqual(resp["hookSpecificOutput"]["hookEventName"], "PreCompact")
-        self.assertIn(".session-notes", resp["hookSpecificOutput"]["additionalContext"])
+        # 届かない経路へ文脈を載せない。空の JSON を返す。
+        self.assertNotIn("additionalContext", json.dumps(resp))
+        # 印は残る(次のセッションの注入がこれを読む)。
+        stamps_path = os.path.join(root, ".claude", ".cache", "hook-stamps")
+        with open(stamps_path, encoding="utf-8") as fh:
+            self.assertIn("compacted:", fh.read())
 
     def test_no_tree_still_answers_without_error(self):
         """統治木が無い土地でも例外を出さない(導入直後・体系外の作業ディレクトリ)。"""
@@ -416,6 +429,83 @@ class TestPrecompactDump(unittest.TestCase):
         self.addCleanup(shutil.rmtree, root, ignore_errors=True)
         _out, code = self._run(root)
         self.assertEqual(code, 0)
+
+
+class TestCompactedSignal(unittest.TestCase):
+    """圧縮の後の合図(ADR-077)。届く事象で告げることを検める。
+
+    圧縮の前に促す経路は構造上どの版でも届かないので、合図は SessionStart に立つ。
+    入口は二つ(source と印)あり、どちらか一方が生きていれば節が出る。
+    """
+
+    def _inject(self, root, source=None):
+        cwd = os.getcwd()
+        prev = os.environ.get("CLAUDE_PROJECT_DIR")
+        os.chdir(root)
+        os.environ["CLAUDE_PROJECT_DIR"] = root
+        stdin = {"hook_event_name": "SessionStart"}
+        if source is not None:
+            stdin["source"] = source
+        try:
+            return _util.invoke("inject-contract", stdin_obj=stdin)
+        finally:
+            os.chdir(cwd)
+            if prev is None:
+                os.environ.pop("CLAUDE_PROJECT_DIR", None)
+            else:
+                os.environ["CLAUDE_PROJECT_DIR"] = prev
+
+    def _tree(self):
+        """登録文書を一つ持つ最小の統治木。空の木は入口で通知へ短絡し、節を組まない。"""
+        root = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        system = os.path.join(root, "doctrine_docs", "_system")
+        os.makedirs(system, exist_ok=True)
+        with open(os.path.join(system, "decided-facts.md"), "w",
+                  encoding="utf-8") as fh:
+            fh.write("---\nid: DECIDED-001\ntitle: t\ntype: DECIDED\n"
+                     "domain: _system\nstatus: current\nowner: o\n"
+                     "updated: 2026-06-01\nreview_by: 2026-12-01\nsources: []\n"
+                     "---\n\n1. 事実。\n")
+        return root
+
+    def _context(self, out):
+        return json.loads(out)["hookSpecificOutput"]["additionalContext"]
+
+    def test_source_compact_raises_the_signal(self):
+        out, code = self._inject(self._tree(), source="compact")
+        self.assertEqual(code, 0)
+        self.assertIn("圧縮の後", self._context(out))
+        self.assertIn(".session-notes", self._context(out))
+
+    def test_ordinary_startup_stays_quiet(self):
+        out, code = self._inject(self._tree(), source="startup")
+        self.assertEqual(code, 0)
+        self.assertNotIn("圧縮の後", self._context(out))
+
+    def test_stamp_alone_raises_the_signal(self):
+        """`source` が届かない実行環境でも、圧縮の印だけで見分けられる。"""
+        root = self._tree()
+        cache = os.path.join(root, ".claude", ".cache")
+        os.makedirs(cache, exist_ok=True)
+        with open(os.path.join(cache, "hook-stamps"), "w", encoding="utf-8") as fh:
+            fh.write("hook_inject_contract: 2026-08-02T00:00:00Z\n"
+                     "compacted: 2026-08-02T01:00:00Z\n")
+        out, code = self._inject(root)  # source を渡さない
+        self.assertEqual(code, 0)
+        self.assertIn("圧縮の後", self._context(out))
+
+    def test_stale_stamp_stays_quiet(self):
+        """前回の注入より前の圧縮は、既に告げ終わっている。二度は言わない。"""
+        root = self._tree()
+        cache = os.path.join(root, ".claude", ".cache")
+        os.makedirs(cache, exist_ok=True)
+        with open(os.path.join(cache, "hook-stamps"), "w", encoding="utf-8") as fh:
+            fh.write("compacted: 2026-08-02T00:00:00Z\n"
+                     "hook_inject_contract: 2026-08-02T01:00:00Z\n")
+        out, code = self._inject(root)
+        self.assertEqual(code, 0)
+        self.assertNotIn("圧縮の後", self._context(out))
 
 
 class TestReviewNudgeFlags(LivenessBase):

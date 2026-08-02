@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
-"""PreCompact の退避指示(R12)。圧縮で会話が要約される前に、未記録の決定をディスクへ。
+"""PreCompact の印(R12)。圧縮が起きたことを機械的に残す。
+
+**モデルへは何も言わない(ADR-077)。** 以前はここで additionalContext に退避の指示を
+載せて返していたが、現行の公式仕様では additionalContext を運ぶ事象は決まっており、
+PreCompact はそこに含まれない。届かない「版」があるのではなく、構造上どの版でも
+届かない。つまり R12 の「圧縮前の促し」は一度も発火したことのない死んだ経路だった。
 
 保証限界:
 - 予防: 何も予防しない。圧縮自体は止めない(止めるべきでもない)。
-- 検出: 何も検出しない。圧縮の直前という「記憶が消える最後の機会」に、
-  未記録の決定・根拠・用語をセッションメモ(_system/.session-notes)へ書き出す
-  よう指示を注入するだけ。実際に書くかは Claude と人間に委ねる。
-- 委ねる: 選別(メモ→ADR/DECIDED への正式化)は次セッションの SessionStart 注入が
-  義務として出す(inject-contract の未選別メモ節)。書式の正しさは選別時に正す。
+- 検出: 圧縮が起きた事実だけを印として残す。会話本文も推論過程も写さない
+  (フックは会話を持たないので、原理的に写せない)。
+- 委ねる: 合図は圧縮の**後**、次の SessionStart の注入が出す(source=compact、または
+  この印が新しいとき)。圧縮で失われた詳細は戻らない。できるのは「失われたかもしれない」
+  と告げることだけである。
 
-additionalContext が PreCompact で届かない版の Claude Code でも、何も壊さない
-(出力は無害な JSON。読まれなければ静かに終わるだけ)。標準ライブラリのみ。
-決して例外を外へ出さない。終了コードは常に 0。
+標準ライブラリのみ。決して例外を外へ出さない。終了コードは常に 0。
 """
 import json
 import os
@@ -24,16 +27,11 @@ sys.dont_write_bytecode = True
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import _auditcache
 import _hookio
 # doctrine:begin SPEC-022
-_INSTRUCTION = (
-    "【統治・圧縮前の退避】この会話はまもなく圧縮され、詳細は失われる。"
-    "未記録の決定・撤回・新しい用語・重要な根拠がこの会話にあるなら、圧縮の前に"
-    "統治木の `_system/.session-notes` へ一行ずつ追記すること"
-    "(形式: `- <一文の事実> (出所: 会話, YYYY-MM-DD)`)。次のセッション開始時に、"
-    "このメモを ADR・DECIDED へ選別する義務が自動で出る(R12)。"
-    "記録すべきものが無ければ何もしなくてよい。"
-)
+# 圧縮が起きたことの印の鍵。次のセッションの注入がこれを読む(ADR-077)。
+COMPACTED_KEY = "compacted"
 # doctrine:end SPEC-022
 
 
@@ -59,16 +57,13 @@ def main(argv=None):
             sys.stdin.read()
         except Exception:
             pass
-        # 統治木の無いプロジェクトでは退避指示を出さない(ADR-036 の境界)。
+        # 統治木の無いプロジェクトでは印を残さない(ADR-036 の境界)。
         if not _project_has_tree():
             return 0
-        out = {
-            "hookSpecificOutput": {
-                "hookEventName": "PreCompact",
-                "additionalContext": _INSTRUCTION,
-            }
-        }
-        _hookio.emit(out, component="precompact-dump")
+        # 圧縮の印だけを原子的に残す(ADR-077)。モデルへは何も返さない —— この事象は
+        # 文脈を運ばないので、返しても誰にも届かない。合図は次の SessionStart が出す。
+        _auditcache.write_stamp(COMPACTED_KEY)
+        _hookio.emit({}, component="precompact-dump")
         return 0
     except Exception:
         return 0
