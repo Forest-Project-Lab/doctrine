@@ -23,7 +23,7 @@ llm_context: task
 - `forward_impacts(id)` → impacts 端の推移閉包（id 自身を含めない）。[R4]
 - `reverse_dependents(id, current_only, transitive)` / `reverse_current_dependents(id)` → depends_on で id を指すノード集合。[R3]
 - `resolve(id)` → `{path, domain, type, status}` か None。
-- `classify_edges()` → `Edge{src, dst, field, kind}` の整列リスト。
+- `classify_edges()` → `Edge{src, dst, field, kind, mirrored}` の整列リスト。`mirrored` は「反対向きの相手が居るか」（ADR-088）—— `A --depends_on--> B` に対して `B --impacts--> A` が在れば真、逆も同じ。**同じ事実を両端から書いたという意味であって、循環という意味ではない**（循環は `find_cycles` が返す。二つを混同しない）。`kind` とは別の軸なので別の欄に持つ（一つの端が同時に「越境違反」かつ「両端書き」でありうる）。読み手はこの印で二本を一本に畳める —— 畳み方の規則を読み手に発明させないためである（実測: 呼び手の木で辺の 28% が両端書きだった）。片方だけ書かれた端は偽であり、**咎めない**（両端に書く義務は無く、印は事実の報告に留まる）。
 - `reverse_orphans()` → `{req_without_spec, spec_without_test}`。
 - `find_cycles()` → `depends_on` 端の循環の整列リスト（各要素は id の整列 list。自己依存 A→A は `[A]`）。索引に無い端はたどらない。Tarjan の強連結成分でサイクル安全。[R3]（ADR-038）
 - `to_json()` → `{root, nodes, edges, dup_ids, parse_warnings}`。**節点は隠さない**（ADR-087）。組み立てが節点へ入れた項をすべて返す。白名簿を持たない —— 以前は八項に絞っており、正本がどこにも無いまま組み立てと別々に手で保つ形になっていて、実際にずれた（組み立てが四項を足した後も白名簿は八項のままで、必須項の `title` は最初から集められてさえいなかった）。
