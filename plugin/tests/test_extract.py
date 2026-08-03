@@ -571,3 +571,45 @@ class TestStdlibOnly(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+class ReadGateTest(unittest.TestCase):
+    """ADR-107: 寛容に読む経路も通常ファイルの門を通る。
+
+    以前ここは自前の open で、門(ADR-075)を迂回していた。走査は統治木の .md を
+    一つずつ渡すので、.md の名を持つ非通常ファイルが在れば直に当たった。
+    """
+
+    def setUp(self):
+        self.mod = _util.load_script("term-extract")
+        self.root = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.root, ignore_errors=True)
+
+    def test_non_regular_file_is_refused_by_the_gate(self):
+        """門が経路に在ることを**振る舞いで**見る。
+
+        以前は素の open が IsADirectoryError を出していた。いまは門の文言が出る
+        —— 文言が変わることが、門を通った証拠である。
+        (名前付きパイプで戻らないことは測れない。測ろうとすると試験が止まる。)
+        """
+        path = os.path.join(self.root, "notreg.md")
+        os.makedirs(path, exist_ok=True)
+        text, warn = self.mod._read_lenient(path)
+        self.assertIsNone(text)
+        self.assertIn("通常ファイルではない", warn or "",
+                      "門を通っていない(自前で開いている)")
+
+    def test_leniency_is_preserved(self):
+        """意図された寛容さは残る —— 一つの読めない字で走査を止めない。"""
+        path = os.path.join(self.root, "bad.md")
+        with open(path, "wb") as fh:
+            fh.write(b"---\nid: X-1\n---\n\n\xff\xfe not utf8\n")
+        text, warn = self.mod._read_lenient(path)
+        self.assertIsNotNone(text, warn)
+        self.assertIn("\ufffd", text, "置き換えの字が入っていない(厳密に落ちた)")
+        self.assertIsNone(warn)
+
+    def test_missing_file_is_a_warning_not_a_crash(self):
+        text, warn = self.mod._read_lenient(os.path.join(self.root, "nope.md"))
+        self.assertIsNone(text)
+        self.assertIn("読めない", warn or "")

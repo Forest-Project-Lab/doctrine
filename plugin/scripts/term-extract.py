@@ -148,15 +148,16 @@ def tokenize(text):
 # ---------------------------------------------------------------------------
 # Corpus scan (B.4).
 # ---------------------------------------------------------------------------
-def _read_text(path):
-    """Read a file as UTF-8 with errors='replace' (B.7 non-UTF8 robustness).
+def _read_lenient(path):
+    """寛容に復号して読む。(本文, 警告 or None) を返す。読めれば例外を投げない。
 
-    Returns (text, warning_or_None). Never raises on a readable file.
+    復号の方針は正本の引数で表す(ADR-107)。**自前で開かない** —— 以前はここが
+    自前の open で、通常ファイルの門(ADR-075)を迂回していた。一つの読めない字で
+    走査を止めない寛容さは残し、門は正本から受け取る。
     """
     try:
-        with open(path, "r", encoding="utf-8", errors="replace", newline="") as fh:
-            return fh.read(), None
-    except OSError as exc:
+        return _frontmatter.read_text(path, errors="replace"), None
+    except (OSError, ValueError) as exc:
         return None, "読めない: %s (%s)" % (path, exc)
 
 
@@ -238,7 +239,7 @@ def scan_corpus(root, include_system, include_all):
             if domain == "_system" and not include_system:
                 continue
 
-            text, werr = _read_text(abspath)
+            text, werr = _read_lenient(abspath)
             if werr is not None:
                 warnings.append(werr)
                 continue

@@ -131,14 +131,20 @@ def ensure_regular(path):
     return p
 
 
-def read_text(path, newline=""):
+def read_text(path, newline="", errors="strict"):
     """統治対象を UTF-8(utf-8-sig)で読む。種別の門を通す唯一の入口(ADR-075)。
 
     parse_file を経由しない読み手(--batch・体系外 .md・辞書・コード層)も、
     ここを通ることで同じ守りを受ける。例外は I/O と復号の失敗だけ。
+
+    `errors` は復号の方針(ADR-107)。既定は厳密で、復号できなければ例外を投げる。
+    寛容に読みたい呼び手(語の抽出のように、一つの読めない字で走査を止めたくない側)は
+    "replace" を渡す。**門は方針に依らず必ず通る** —— 以前は寛容に読みたい一本が
+    自前で open しており、通常ファイルの検めを迂回していた。**方針が違うことは、
+    門が要らないことではない。**
     """
     with open(ensure_regular(path), "r", encoding="utf-8-sig",
-              newline=newline) as fh:
+              newline=newline, errors=errors) as fh:
         return fh.read()
 
 
