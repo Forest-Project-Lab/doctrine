@@ -51,6 +51,7 @@ SCHEMA = _auditcache.SCHEMA   # 要約 schema の正本は共有コア(ADR-053)
 # doctrine:begin SPEC-011
 AUDIT_CHECKS = (
     "dead_link", "dep_cycle", "review_by_overrun", "stale_draft",
+    "source_missing",
     "stale_proposed", "orphan",
     "reverse_orphan_req_no_spec", "reverse_orphan_spec_no_test",
     "canonical_conflict", "near_duplicate", "icd_dependency_violation",
@@ -528,6 +529,47 @@ def _check_stale_current(g, today):
                 "型 %s の既定点検周期 %d 日を超えた(updated %s)。内容を確かめて "
                 "updated を更新するか、review_by を付ける(ADR-025)"
                 % (node["type"], cycle, node["updated"] or "?")))
+    return out
+
+
+# 出所の道の形(ADR-097)。拡張子を持つ相対の道だけを対象にする。URL・文書 id・
+# issue の番号・自由文は対象にしない(それぞれ別の検査か、機械で判じられない)。
+_SOURCE_PATH_RE = re.compile(r"^[\w./-]+\.[A-Za-z0-9]{1,6}$")
+
+
+def _check_source_missing(g, root):
+    """14. 宣言した出所の実在(ADR-097)。`sources` の道が在ることを検める。
+
+    対象は現行の文書。**ADR と投影は除く** —— 受理済み ADR は不変なので `sources` の
+    道を直せず、咎めても直す道が無い(非目標 第12項が「旧 id を指し続ける参照は監査が
+    事後に指す」と立場を決めている)。`source_drift` と孤児の検査も同じ理由で除いている。
+
+    検めるのは「在ること」だけである。その中身が主張を支えているかは見ないし、
+    認識の等級(読んだ／推論した)も見ない。
+    """
+    out = []
+    proj = os.path.dirname(os.path.abspath(root))
+    for doc_id in sorted(g.nodes):
+        node = g.nodes[doc_id]
+        if not _registry.is_current(node["status"]):
+            continue
+        t = node["type"]
+        if t == "ADR" or _registry.is_projection(t):
+            continue
+        for src in _frontmatter.as_list(node.get("sources")):
+            if not isinstance(src, str):
+                continue
+            src = src.strip()
+            if not src or src.startswith(("http://", "https://")):
+                continue
+            if not _SOURCE_PATH_RE.match(src):
+                continue
+            if os.path.exists(os.path.join(proj, src.replace("/", os.sep))):
+                continue
+            out.append(_finding(
+                "source_missing", SEV_WARN, doc_id, node["path"],
+                "sources が指す道 %s が実在しない(動いたか消えた)。"
+                "指し先を確かめて sources を直す" % src))
     return out
 
 
@@ -1153,6 +1195,7 @@ def run_audit(root, today, knobs):
     findings += _check_review_by(g, today)
     findings += _check_stale_draft(g, today, knobs["draft_stale_days"])
     findings += _check_stale_proposed(g, today, knobs["draft_stale_days"])
+    findings += _check_source_missing(g, root)
     findings += _check_orphan(g, today, knobs["orphan_stale_days"])
     findings += _check_reverse_orphan(g)
     findings += _check_canonical_conflict(g)
