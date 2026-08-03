@@ -1338,6 +1338,89 @@ class TestBashOutputGrammar(GuardTestBase):
 # Routing / robustness — W2/W3/W4
 # ---------------------------------------------------------------------------
 
+class TestUnreadableValuesDoNotOpenOtherGuards(GuardTestBase):
+    """ADR-102 が「測っていない」と書いた経路を測り、穴が無いことを凍らせる。
+
+    2026-08-03 の実測。読めない値(一覧で書いた `type`・`status`)が、不変ガード以外の
+    経路の判定を狂わせないことを見る。**穴が無いことも凍らせる** —— 測っていない
+    ままにすると、後から静かに開いても気づけない。
+    """
+
+    def _tree(self, status_val="current", type_val="SPEC"):
+        root = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        os.makedirs(os.path.join(root, "doctrine_docs", "_system"), exist_ok=True)
+        files = {
+            "doctrine_docs/billing/spec/SPEC-9-x.md":
+                _util.fm_block(_doc("billing", doc_id="SPEC-9",
+                                    status=status_val)) + "本文。\n",
+            "doctrine_docs/billing/test/TEST-9-x.md":
+                _util.fm_block(_doc("billing", doc_id="TEST-9", type_code="TEST",
+                                    fm_extra={"depends_on": ["SPEC-9"]}))
+                + "本文。\n",
+        }
+        for rel, text in files.items():
+            ap = os.path.join(root, rel)
+            os.makedirs(os.path.dirname(ap), exist_ok=True)
+            with open(ap, "w", encoding="utf-8", newline="") as fh:
+                fh.write(text)
+        if status_val.startswith("["):
+            # 一覧の値は fm_block が引用符で包むので、素の行で書き直す。
+            ap = os.path.join(root, "doctrine_docs/billing/spec/SPEC-9-x.md")
+            with open(ap, "w", encoding="utf-8") as fh:
+                fh.write("---\nid: SPEC-9\ntitle: t\ntype: %s\ndomain: billing\n"
+                         "status: %s\nowner: o\nupdated: 2026-06-01\nsources: []\n"
+                         "---\n\n本文。\n" % (type_val, status_val))
+        return root
+
+    def _bash_rm(self, root):
+        out, _ = _util.invoke(
+            "policy-guard",
+            stdin_obj=_util.hook_stdin(
+                "PreToolUse", "Bash",
+                {"command": "rm doctrine_docs/billing/spec/SPEC-9-x.md"}, cwd=root))
+        return _pre(json.loads(out))[0]
+
+    def test_delete_safety_holds_with_a_plain_status(self):
+        self.assertEqual(self._bash_rm(self._tree("current")), "deny")
+
+    def test_delete_safety_holds_with_an_unreadable_status(self):
+        """読めない位置づけでも、逆依存の判定は狂わない(グラフ側で判ずるため)。"""
+        self.assertEqual(self._bash_rm(self._tree("[current]")), "deny")
+
+    def _icd_write(self, type_val):
+        root = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        os.makedirs(os.path.join(root, "doctrine_docs", "_system"), exist_ok=True)
+        for rel, text in (
+            ("doctrine_docs/identity/ICD.md",
+             _util.fm_block(_doc("identity", doc_id="ICD-09",
+                                 type_code="ICD")) + "本文。\n"),
+            ("doctrine_docs/identity/spec/SPEC-77-x.md",
+             _util.fm_block(_doc("identity", doc_id="SPEC-77")) + "本文。\n"),
+        ):
+            ap = os.path.join(root, rel)
+            os.makedirs(os.path.dirname(ap), exist_ok=True)
+            with open(ap, "w", encoding="utf-8", newline="") as fh:
+                fh.write(text)
+        content = ("---\nid: SPEC-30\ntitle: t\ntype: %s\ndomain: billing\n"
+                   "status: current\nowner: o\nupdated: 2026-06-01\nsources: []\n"
+                   "depends_on: [SPEC-77]\n---\n\n本文。\n" % type_val)
+        tin = {"file_path": os.path.join(
+            root, "doctrine_docs/billing/spec/SPEC-30-x.md"), "content": content}
+        out, _ = _util.invoke(
+            "policy-guard",
+            stdin_obj=_util.hook_stdin("PreToolUse", "Write", tin, cwd=root))
+        return _pre(json.loads(out))[0]
+
+    def test_icd_boundary_holds_with_a_plain_type(self):
+        self.assertEqual(self._icd_write("SPEC"), "deny")
+
+    def test_icd_boundary_holds_with_an_unreadable_type(self):
+        """読めない型でも越境の判定は狂わない(依存先のドメインは置き場所で解く)。"""
+        self.assertEqual(self._icd_write("[SPEC]"), "deny")
+
+
 class TestTreelessProjectBoundary(GuardTestBase):
     """ADR-036: 統治木の無いプロジェクト(doctrine 未導入の土地)では、二・三
     ガードは発火しない(#67)。リンタの体系外無発火 ADR-024 と同じ境界を
