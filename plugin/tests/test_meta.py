@@ -46,6 +46,7 @@ import _util  # noqa: E402
 import ast        # noqa: E402
 import glob       # noqa: E402
 import json       # noqa: E402
+import re         # noqa: E402
 import time       # noqa: E402
 import unittest   # noqa: E402
 
@@ -488,3 +489,113 @@ class TestRunProvenance(unittest.TestCase):
         self.assertNotIn(os.getcwd(), block)
         self.assertNotIn("doctrine_docs", block)
         self.assertNotIn(os.sep + "workspaces", block)
+
+
+class TestNoWallClockInTests(unittest.TestCase):
+    """ADR-094: 試験は実時計を読まない。時計を固定できる呼び出しでは固定を要求する。
+
+    2026-08-03 に main が赤くなった。誰も何も変えておらず、日付が進んだだけだった
+    —— 注入の試験が要約の `generated_at` を前の固定日に置き、時計を渡していなかった
+    ので、7 日が経った時点で鮮度の警告が湧いた。**門が自分で壊れる形**である。
+
+    規約は `test_integration_e2e.py` の説明文に「実時計を使わない」と書かれていたが、
+    一つのファイルの説明文は他のファイルを縛らない。ここが正本の検めである。
+
+    判定はクラス単位で行い、同じモジュール内の基底クラスまで辿る。ファイル単位では
+    駄目だった —— main の test_inject.py は別のクラスで `--today` を 3 箇所使っており、
+    **ファイル単位の検めは落ちた当日でも通ってしまう**（実測した。歯止めが飾りになる）。
+    """
+
+    CLOCK_FLAG = "--today"
+
+    def _clock_pinnable(self):
+        """時計を固定する口を持つ呼び出しの名前。免除の一覧を持たず、口の有無で決める。
+
+        呼び出しが後から口を得れば、その試験も自動で対象に入る。
+        """
+        names = set()
+        if not os.path.isdir(_util.SCRIPTS):
+            return names
+        for fn in sorted(os.listdir(_util.SCRIPTS)):
+            if not fn.endswith(".py") or fn.startswith("_"):
+                continue
+            try:
+                with open(os.path.join(_util.SCRIPTS, fn), encoding="utf-8") as fh:
+                    src = fh.read()
+            except (OSError, UnicodeError):
+                continue
+            if self.CLOCK_FLAG in src:
+                names.add(fn[:-3])
+        return names
+
+    @staticmethod
+    def _string_literals(node):
+        return {c.value for c in ast.walk(node)
+                if isinstance(c, ast.Constant) and isinstance(c.value, str)}
+
+    def _class_literal_closures(self, tree):
+        """クラスごとの文字列の集合。同じモジュール内の基底クラスの分も畳み込む。
+
+        継承で分かれるのを見落とさないため —— 呼び出しは基底の補助が起動し、固定日は
+        派生の側に書かれる（まさに落ちた形である）。
+        """
+        classes = {n.name: n for n in ast.walk(tree)
+                   if isinstance(n, ast.ClassDef)}
+        out = {}
+
+        def closure(name, seen):
+            node = classes.get(name)
+            if node is None or name in seen:
+                return set()
+            seen.add(name)
+            lits = self._string_literals(node)
+            for base in node.bases:
+                if isinstance(base, ast.Name):
+                    lits |= closure(base.id, seen)
+                elif isinstance(base, ast.Attribute):
+                    lits |= closure(base.attr, seen)
+            return lits
+
+        for name in classes:
+            out[name] = closure(name, set())
+        return out
+
+    def test_the_gate_can_see_at_least_one_pinnable_script(self):
+        """歯止めが空回りしていないこと。口を持つ呼び出しが一つも見えないなら、
+        走査そのものが壊れている（在ることと効くことを分けない）。"""
+        self.assertTrue(self._clock_pinnable(),
+                        "時計を固定する口を持つ呼び出しが一つも見つからない")
+
+    def _offenders(self, pinnable):
+        found = []
+        for fn in sorted(os.listdir(_util.HERE)):
+            if not fn.startswith("test_") or not fn.endswith(".py"):
+                continue
+            path = os.path.join(_util.HERE, fn)
+            try:
+                with open(path, encoding="utf-8") as fh:
+                    src = fh.read()
+                tree = ast.parse(src)
+            except (OSError, UnicodeError, SyntaxError):
+                continue
+            for cls, lits in sorted(self._class_literal_closures(tree).items()):
+                if not any("generated_at" in s for s in lits):
+                    continue
+                invoked = sorted(lits & pinnable)
+                if not invoked:
+                    continue
+                if not any(self.CLOCK_FLAG in s for s in lits):
+                    found.append("%s::%s (起動: %s)"
+                                 % (fn, cls, ", ".join(invoked)))
+        return found
+
+    def test_fixed_generated_at_requires_a_pinned_clock(self):
+        pinnable = self._clock_pinnable()
+        if not pinnable:
+            self.skipTest("時計を固定する口を持つ呼び出しが無い")
+        offenders = self._offenders(pinnable)
+        self.assertEqual(
+            offenders, [],
+            "要約の generated_at を埋め込み、時計を固定できる呼び出しを起動している"
+            "のに、時計を固定していないクラスがある。日付が進むだけで落ちる"
+            "(ADR-094): %s" % "; ".join(offenders))
