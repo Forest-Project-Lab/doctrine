@@ -453,28 +453,28 @@ def build_graph(root):
             "path": relpath,
             # 題名は必須項(REQUIRED_KEYS_L2)。集めていなかったので問い合わせから
             # 落ちており、読み手(doctrine-lens)が別経路を持つ原因になっていた(ADR-087)。
-            "title": _coerce_str(fm.get("title")),
+            "title": _frontmatter.coerce_str(fm.get("title")),
             # 出所も必須項(確定事実3)。題名と同じく集めていなかったので、宣言した
             # 道が実在するかを誰も検められなかった(ADR-097)。ADR-087 が名指した
             # 「必須項が集められてさえいない」欠陥の二件目である。
             "sources": _frontmatter.as_list(fm.get("sources")),
-            "type": _coerce_str(fm.get("type")),
-            "domain": _coerce_str(fm.get("domain")),
+            "type": _frontmatter.coerce_str(fm.get("type")),
+            "domain": _frontmatter.coerce_str(fm.get("domain")),
             # 責任者も必須項(確定事実3)。集めていない最後の一つだった
             # (題名 ADR-087・出所 ADR-097 に続く三件目。ADR-098)。
-            "owner": _coerce_str(fm.get("owner")),
-            "status": _coerce_str(fm.get("status")) or _registry.default_status(
-                _coerce_str(fm.get("type"))) or "",
+            "owner": _frontmatter.coerce_str(fm.get("owner")),
+            "status": _frontmatter.coerce_str(fm.get("status")) or _registry.default_status(
+                _frontmatter.coerce_str(fm.get("type"))) or "",
             "depends_on": _frontmatter.as_list(fm.get("depends_on")),
             "impacts": _frontmatter.as_list(fm.get("impacts")),
             "canonical_for": _frontmatter.as_list(fm.get("canonical_for")),
-            "superseded_by": _coerce_str(fm.get("superseded_by")),
-            "updated": _coerce_str(fm.get("updated")),
-            "review_by": _coerce_str(fm.get("review_by")),
-            "llm_context": _coerce_str(fm.get("llm_context")),
+            "superseded_by": _frontmatter.coerce_str(fm.get("superseded_by")),
+            "updated": _frontmatter.coerce_str(fm.get("updated")),
+            "review_by": _frontmatter.coerce_str(fm.get("review_by")),
+            "llm_context": _frontmatter.coerce_str(fm.get("llm_context")),
             # ドメインの種類(ADR-092)。省略は未分類なので空文字にする。既定は無いので
             # 型から導かない。値の当否はリンタが検め、ここでは化けずに運ぶだけにする。
-            "subdomain": _coerce_str(fm.get("subdomain")),
+            "subdomain": _frontmatter.coerce_str(fm.get("subdomain")),
             # 孤児判定の第三連言(再現可能)に使う。frontmatter は素の true/false を
             # bool に解す。欠落・非 bool は None(= 再現可能でない)として残す(加法キー)。
             "reproducible": fm.get("reproducible"),
@@ -485,19 +485,3 @@ def build_graph(root):
     return g
 
 
-def _coerce_str(value):
-    """frontmatter のスカラ値を str に正規化する。None/bool/欠落は '' になる。
-
-    入れ物(一覧・写像)も '' にする。str() を当てると Python の内部表記
-    ("['core']") がそのまま問い合わせの値になり、読み手へ化けた値が渡っていた
-    (ADR-092 の「値が化けないこと」)。宣言どおりスカラだけを文字列にする。
-    """
-    if value is None:
-        return ""
-    if isinstance(value, bool):
-        return ""
-    if isinstance(value, str):
-        return value
-    if isinstance(value, (list, tuple, dict, set)):
-        return ""
-    return str(value)

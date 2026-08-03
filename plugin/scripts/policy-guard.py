@@ -190,7 +190,7 @@ _ADR_CARVEOUT_KEYS = frozenset({"status", "superseded_by", "updated"})
 # doctrine:end SPEC-003
 
 
-def guard_immutability(file_path, tool, tin):
+def guard_immutability(file_path, tool, tin, cwd=None):
     """Guard1。拒否理由(str)を返す。問題なければ None。
 
     1. file_path が archive/ の下 → 常に deny(Write も Edit も MultiEdit も)。
@@ -205,17 +205,41 @@ def guard_immutability(file_path, tool, tin):
     # 既存 ADR か。ディスク上のファイルを読む(無ければ ADR 改変ではない)。
     if not file_path or not os.path.isfile(file_path):
         return None
+
+    # フロントマターを読む経路は、プロジェクトに統治木が在るときだけ判ずる
+    # (ADR-103。ADR-036 の境界を三つのガードで揃える)。実測: 木がどこにも無い土地の
+    # `type: ADR` なメモが編集できなかった —— ADR-036 が名指しした害そのものである。
+    # 置き場所の判定(archive/ の下)は木を辿るので元から無発火であり、上で済んでいる。
+    # 木が在れば、木の外の逸れた文書も従来どおり点検する。
+    if not _project_has_tree(file_path, cwd):
+        return None
     try:
         cur_fm, cur_body, cur_errs = _frontmatter.parse_file(file_path)
     except (OSError, UnicodeError):
         # 既存ファイルが読めない。fail-closed(Guard1 は安全側)。
         return ("ガード異常: 既存ファイル %s を読めません。手で確認してください。" % file_path)
 
+    # 型と位置づけを読めないなら、不変を判じられない。**沈黙して開かない**
+    # (確定事実12。ADR-102)。実測: `type: [ADR]` で受理済み ADR の本文が書き換えられ、
+    # `status: [archived]` で倉庫の外のアーカイブが編集できた。正規化を揃えるだけでは
+    # 直らない —— 空文字も「ADR ではない」なので、読めないことを読めないと扱う。
+    # 境界は上で判じてある(木の無い土地では既に戻っている)。不在は対象にしない
+    # (「無い」と「読めない」を分ける。不在は必須キーの検査の領分)。
+    for key in ("type", "status"):
+        if key not in cur_fm:
+            continue
+        raw = cur_fm.get(key)
+        if raw is None or isinstance(raw, str):
+            continue
+        return ("%s を文字列として読めないため、不変を判じられません"
+                "(%s: %r)。値を素のスカラで書いてください。"
+                % ("型" if key == "type" else "位置づけ(status)", key, raw))
+
     cur_type = _coerce_type(cur_fm)
     if cur_type != "ADR":
         # ADR-027: status『archived』の文書は、置き場所に依らず不変。
         # (パス判定だけでは、倉庫の外に居る archived 文書が編集自由になる。)
-        eff_status = _coerce_str(cur_fm.get("status")).strip() \
+        eff_status = _frontmatter.coerce_str(cur_fm.get("status")).strip() \
             or _registry.default_status(cur_type) or ""
         if eff_status == "archived":
             return ("アーカイブ済み(status: archived)の文書は不変です。%s は編集できません。"
@@ -230,7 +254,7 @@ def guard_immutability(file_path, tool, tin):
     # のに、ガードが存在した瞬間から凍らせていたため、木に proposed の ADR は一件も
     # 生まれなかった(実測)。逆向き(accepted → proposed)は carve-out の外なので、
     # 受理済みを下書きへ落として書き換える道は開かない。
-    if (_coerce_str(cur_fm.get("status")).strip()
+    if (_frontmatter.coerce_str(cur_fm.get("status")).strip()
             or _registry.default_status("ADR") or "") == "proposed":
         return None
 
@@ -296,8 +320,8 @@ def _adr_delta_ok(cur_fm, cur_body, new_fm, new_body):
         if cur_fm.get(k) != new_fm.get(k):
             return False
     # status 遷移は許される範囲か。
-    old_s = _coerce_str(cur_fm.get("status"))
-    new_s = _coerce_str(new_fm.get("status"))
+    old_s = _frontmatter.coerce_str(cur_fm.get("status"))
+    new_s = _frontmatter.coerce_str(new_fm.get("status"))
     if old_s != new_s:
         if (old_s, new_s) not in _ADR_CARVEOUT_STATUS:
             return False
@@ -343,7 +367,7 @@ def guard_icd_dependency(file_path, tool, tin, graph):
         # 全文を作れない。統治文書ならガードが判定を持たない状態なので拒む(ADR-076)。
         # ADR-075 が直したのは、まさに「判定を持たないまま allow へ倒れる」欠陥である。
         # 体系外の非文書は Guard2 の対象でないので、従来どおり通す。
-        if _coerce_str(cur_fm.get("id")) or _is_under_docs(file_path):
+        if _frontmatter.coerce_str(cur_fm.get("id")) or _is_under_docs(file_path):
             return ("編集後の全文を組み立てられないため、ICD 依存を検められません"
                     "(old_string 不一致の疑い)。編集を見直してください。")
         return None
@@ -357,7 +381,7 @@ def _icd_check_content(content, graph):
     あればそれを点検し、無ければ違反なし(None)を返す。
     """
     proposed = _frontmatter.parse_frontmatter(content)
-    self_domain = _coerce_str(proposed.get("domain"))
+    self_domain = _frontmatter.coerce_str(proposed.get("domain"))
     deps = _frontmatter.as_list(proposed.get("depends_on"))
     for dep in deps:
         reason = _icd_judge_dep(dep, self_domain, graph)
@@ -420,12 +444,12 @@ def guard_delete_safety_edit(file_path, tool, tin, graph):
     except (OSError, UnicodeError):
         return ("ガード異常: 既存ファイル %s を読めません。手で確認してください。" % file_path)
 
-    doc_id = _coerce_str(cur_fm.get("id"))
+    doc_id = _frontmatter.coerce_str(cur_fm.get("id"))
     if not doc_id:
         return None  # id の無い文書は逆依存の対象にならない。
 
     # 現行でない文書を降格しても不変条件には触れない(降格は現行からの遷移)。
-    cur_status = _coerce_str(cur_fm.get("status")) or _registry.default_status(
+    cur_status = _frontmatter.coerce_str(cur_fm.get("status")) or _registry.default_status(
         _coerce_type(cur_fm)) or ""
 
     # 新しい内容(全文)を作る。
@@ -433,7 +457,7 @@ def guard_delete_safety_edit(file_path, tool, tin, graph):
     if new_text is None:
         return None  # 事前に確定できない → PostToolUse に回す。
     new_fm, new_body, _e2 = _frontmatter.parse(new_text)
-    new_status = _coerce_str(new_fm.get("status"))
+    new_status = _frontmatter.coerce_str(new_fm.get("status"))
 
     demoting = _registry.is_current(cur_status) and new_status in _DEMOTED_STATUSES
     emptying = (cur_body or "").strip() != "" and (new_body or "").strip() == ""
@@ -1029,19 +1053,11 @@ def _apply_one(text, old, new, replace_all):
 # 小道具
 # ---------------------------------------------------------------------------
 
-def _coerce_str(value):
-    if value is None:
-        return ""
-    if isinstance(value, bool):
-        return ""
-    if isinstance(value, str):
-        return value
-    return str(value)
 
 
 def _coerce_type(fm):
     """フロントマターの type を引く。無ければ id 接頭辞から。どちらも無ければ ''。"""
-    t = _coerce_str(fm.get("type"))
+    t = _frontmatter.coerce_str(fm.get("type"))
     if t:
         return t
     doc_id = fm.get("id")
@@ -1062,7 +1078,7 @@ def _handle_pre_edit_write(tool, tin, cwd):
 
     # Guard1 不変(fail-closed)。
     try:
-        reason = guard_immutability(file_path, tool, tin)
+        reason = guard_immutability(file_path, tool, tin, cwd)
     except Exception as exc:
         return _pre_deny("ガード異常(不変ガード): %r。手で確認してください。" % (exc,))
     if reason is not None:
@@ -1144,7 +1160,7 @@ def _pre_target_is_guard_inert(file_path, tool, tin):
             fm, _b, _e = _frontmatter.parse_file(file_path)
         except (OSError, UnicodeError):
             return False  # 読めない対象は早期通過させず Guard3 に委ねる。
-        if _coerce_str(fm.get("id")) or fm:
+        if _frontmatter.coerce_str(fm.get("id")) or fm:
             return False  # id は Guard3、フロントマター有りは Guard2 が発火しうる。
     return True
 
@@ -1155,7 +1171,7 @@ def _edit_mentions_depends_on(tin):
         if not isinstance(edit, dict):
             continue
         for key in ("old_string", "new_string"):
-            if "depends_on" in _coerce_str(edit.get(key)):
+            if "depends_on" in _frontmatter.coerce_str(edit.get(key)):
                 return True
     return False
 
@@ -1260,11 +1276,11 @@ def _post_delete_safety(fm, body, graph, tool=None, tin=None, raw_post_text=None
     Edit/MultiEdit を逆当てして復元する。逆当てできない(編集が確定できない)ときは
     安全側に倒し、降格/本文消しの遷移と「みなして」判定する(従来の POST 限定挙動)。
     遷移でなければ block しない。"""
-    doc_id = _coerce_str(fm.get("id"))
+    doc_id = _frontmatter.coerce_str(fm.get("id"))
     if not doc_id:
         return None
 
-    post_status = _coerce_str(fm.get("status"))
+    post_status = _frontmatter.coerce_str(fm.get("status"))
     post_empty = (body or "").strip() == ""
 
     # PRE 状態の復元: POST 全文から編集を逆当てする。
@@ -1309,7 +1325,7 @@ def _reconstruct_pre_edit_state(post_fm, post_body, tool, tin, raw_post_text=Non
     if pre_text is None:
         return safe_default
     pre_fm, pre_body, _e = _frontmatter.parse(pre_text)
-    pre_status = _coerce_str(pre_fm.get("status")) or _registry.default_status(
+    pre_status = _frontmatter.coerce_str(pre_fm.get("status")) or _registry.default_status(
         _coerce_type(pre_fm)) or ""
     return pre_status, (pre_body or "").strip() == ""
 

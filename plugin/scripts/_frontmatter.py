@@ -211,6 +211,30 @@ def as_list(value):
     return [s] if s.strip() != "" else []
 
 
+def coerce_str(value):
+    """フロントマターのスカラ値を str に正規化する。決して例外を投げない(ADR-101)。
+
+    文字列はそのまま。None と真偽値は空文字。**入れ物(一覧・写像・組)も空文字**にする
+    —— str() を当てると Python の内部表記("['a']")が下流へ流れ、常時投入の契約の文や
+    投影に載る。宣言どおりスカラだけを文字列にする。その他のスカラは str()。
+
+    **正本はここだけである。** 以前は四箇所に写しが在り、2026-08-03 に入れ物の欠陥を
+    直したときに一箇所しか直らなかった(ADR-092 の直しが届いていなかった)。
+
+    空文字は「無い」と「読めない」を区別しない。区別が要る呼び手は別の手段を持つ
+    (ガードは読めないことを読めないと扱う。ADR-102)。
+    """
+    if value is None:
+        return ""
+    if isinstance(value, bool):
+        return ""
+    if isinstance(value, str):
+        return value
+    if isinstance(value, (list, tuple, dict, set)):
+        return ""
+    return str(value)
+
+
 # 日付の形(ADR-099)。終端の錨を持つ厳密な一致。写しを作らないための正本である。
 _ISO_DATE_RE = re.compile(r"^(\d{4})-(\d{2})-(\d{2})$")
 

@@ -664,3 +664,49 @@ class TestDateParsingHasOneCanon(unittest.TestCase):
         self.assertEqual(
             sorted(offenders), [],
             "日付の正規表現が正本の外に在る(写しになる。ADR-099): %r" % sorted(offenders))
+
+
+class TestSharedJudgementsHaveOneCanon(unittest.TestCase):
+    """共有の判定は正本の外に写しを持たない(ADR-099・ADR-101)。
+
+    手で書いた表で凍らせる(ADR-060 の様式)。写しが生まれるたびに「一箇所だけ直す」が
+    起き、実際に二度起きた —— 日付の解釈(四写しのうち一つが終端の錨を欠いた)と
+    スカラへの正規化(入れ物の欠陥を直したのが一箇所だけだった)。
+    """
+
+    # 関数名 -> 正本を持つモジュール。写しを許さない。
+    CANONS = {
+        "_parse_date": "_frontmatter.py",
+        "_coerce_str": "_frontmatter.py",
+    }
+
+    def test_no_copy_of_a_shared_judgement(self):
+        offenders = []
+        for path in _scripts_present():
+            base = os.path.basename(path)
+            try:
+                with open(path, encoding="utf-8") as fh:
+                    tree = ast.parse(fh.read(), filename=path)
+            except (OSError, UnicodeError, SyntaxError):
+                continue
+            for node in ast.walk(tree):
+                if not isinstance(node, ast.FunctionDef):
+                    continue
+                canon = self.CANONS.get(node.name)
+                if canon is None or base == canon:
+                    continue
+                offenders.append("%s の %s" % (base, node.name))
+        self.assertEqual(
+            sorted(set(offenders)), [],
+            "共有の判定の写しが在る(一箇所だけ直す事故が起きる。ADR-101): %r"
+            % sorted(set(offenders)))
+
+    def test_the_canon_actually_exists(self):
+        """歯止めが空回りしていないこと。正本が在り、入れ物を空にすること。"""
+        fm = _util.load_core("_frontmatter")
+        self.assertTrue(hasattr(fm, "coerce_str"), "正本 coerce_str が無い")
+        self.assertEqual(fm.coerce_str(["a"]), "",
+                         "入れ物に内部表記を返している")
+        self.assertEqual(fm.coerce_str({"k": 1}), "")
+        self.assertEqual(fm.coerce_str("x"), "x")
+        self.assertEqual(fm.coerce_str(3), "3")

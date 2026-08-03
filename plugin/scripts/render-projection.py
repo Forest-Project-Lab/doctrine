@@ -162,26 +162,18 @@ def _collect_docs(docs_root):
         seen_ids[doc_id] = relpath
         docs.append(_Doc(
             doc_id=doc_id,
-            title=_coerce_str(fm.get("title")),
-            type_code=_coerce_str(fm.get("type")),
-            domain=_coerce_str(fm.get("domain")),
-            status=_coerce_str(fm.get("status")) or _registry.default_status(
-                _coerce_str(fm.get("type"))) or "",
-            updated=_coerce_str(fm.get("updated")),
+            title=_frontmatter.coerce_str(fm.get("title")),
+            type_code=_frontmatter.coerce_str(fm.get("type")),
+            domain=_frontmatter.coerce_str(fm.get("domain")),
+            status=_frontmatter.coerce_str(fm.get("status")) or _registry.default_status(
+                _frontmatter.coerce_str(fm.get("type"))) or "",
+            updated=_frontmatter.coerce_str(fm.get("updated")),
             canonical_for=_frontmatter.as_list(fm.get("canonical_for")),
             relpath=relpath,
         ))
     return docs
 
 
-def _coerce_str(value):
-    if value is None:
-        return ""
-    if isinstance(value, bool):
-        return ""
-    if isinstance(value, str):
-        return value
-    return str(value)
 
 
 def _max_updated(docs):
