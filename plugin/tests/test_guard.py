@@ -483,6 +483,66 @@ class TestImmutability(GuardTestBase):
         self.assertEqual(decision, "deny")
         self.assertIn("ADR", reason)
 
+    def _adr_repo(self, status, body="決定の本文。\n"):
+        root = self._repo({
+            "docs/billing/decisions/ADR-07-choice.md": _util.fm_block(_doc(
+                "billing", doc_id="ADR-07", type_code="ADR", status=status))
+            + body,
+        })
+        return root, os.path.join(root, "docs/billing/decisions/ADR-07-choice.md")
+
+    def _edit(self, path, old, new):
+        tin = {"file_path": path, "old_string": old, "new_string": new}
+        out, _ = _util.invoke(
+            "policy-guard", stdin_obj=_util.hook_stdin("PreToolUse", "Edit", tin))
+        return _pre(json.loads(out))
+
+    def test_proposed_adr_body_is_editable(self):
+        """ADR-095: 不変は accepted から始まる。proposed の ADR は下書きなので直せる。
+
+        語彙は最初から proposed を許し、carve-out も proposed->accepted を明記して
+        いたのに、ガードが存在した瞬間から凍らせていたので木に proposed の ADR は
+        一件も生まれなかった（実測）。
+        """
+        _root, path = self._adr_repo("proposed")
+        decision, _ = self._edit(path, "決定の本文。", "推敲した本文。")
+        self.assertEqual(decision, "allow")
+
+    def test_accepted_adr_body_stays_frozen(self):
+        """ADR-095: 受理済みの本文は凍ったままである（緩めたのは開始点だけ）。"""
+        _root, path = self._adr_repo("accepted")
+        decision, reason = self._edit(path, "決定の本文。", "別の決定。")
+        self.assertEqual(decision, "deny")
+        self.assertIn("ADR", reason)
+
+    def test_accepted_cannot_be_demoted_to_proposed(self):
+        """ADR-095: 逆向きは開かない。受理済みを下書きへ落として書き換える道を作らない。
+
+        これが唯一の穴になりうる経路である。carve-out の外に留まることを凍らせる。
+        """
+        _root, path = self._adr_repo("accepted")
+        decision, _ = self._edit(path, "status: accepted", "status: proposed")
+        self.assertEqual(decision, "deny")
+
+    def test_proposed_can_be_promoted_to_accepted(self):
+        """ADR-095: 昇格の道は元から carve-out に在った。閉じていないことを確かめる。"""
+        _root, path = self._adr_repo("proposed")
+        decision, _ = self._edit(path, "status: proposed", "status: accepted")
+        self.assertEqual(decision, "allow")
+
+    def test_archived_adr_is_frozen_even_if_proposed_would_allow(self):
+        """ADR-095: アーカイブの不変は変えない。置き場所が archive/ なら status に依らず拒む。"""
+        root = self._repo({})
+        os.makedirs(os.path.join(root, "docs", "_system"), exist_ok=True)
+        path = os.path.join(root, "docs/billing/archive/ADR-09-old.md")
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(_util.fm_block(_doc("billing", doc_id="ADR-09",
+                                         type_code="ADR", status="proposed"))
+                     + "古い下書き。\n")
+        decision, _ = self._edit(path, "古い下書き。", "改ざん。")
+        self.assertEqual(decision, "deny")
+
     def test_tc077_sub_new_adr_via_write_allowed(self):
         """TC-077 sub: creating a NEW ADR via Write (no file on disk) -> allow."""
         root = self._repo({})

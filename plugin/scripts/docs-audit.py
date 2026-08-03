@@ -50,7 +50,8 @@ SCHEMA = _auditcache.SCHEMA   # 要約 schema の正本は共有コア(ADR-053)
 # 黙って消えても、この一覧と要約の差で見えるようにする(沈黙する検証器の禁止。R11)。
 # doctrine:begin SPEC-011
 AUDIT_CHECKS = (
-    "dead_link", "dep_cycle", "review_by_overrun", "stale_draft", "orphan",
+    "dead_link", "dep_cycle", "review_by_overrun", "stale_draft",
+    "stale_proposed", "orphan",
     "reverse_orphan_req_no_spec", "reverse_orphan_spec_no_test",
     "canonical_conflict", "near_duplicate", "icd_dependency_violation",
     "projection_drift", "unregistered_document", "shadowed_document",
@@ -401,6 +402,26 @@ def _check_stale_draft(g, today, stale_days):
             out.append(_finding(
                 "stale_draft", SEV_WARN, doc_id, node["path"],
                 "draft のまま %d 日以上更新が無い(updated %s)"
+                % (stale_days, node["updated"] or "?")))
+    return out
+
+
+def _check_stale_proposed(g, today, stale_days):
+    """4. proposed 放置(ADR-095)。status==proposed かつ updated が閾値より古い。
+
+    proposed は現行でないので、孤児・逆孤児・adr_not_landed のどの検査からも見えない。
+    **不変を accepted から始めた以上、下書きのまま置かれたものを誰かが見る必要がある。**
+    咎めるのは放置だけで、proposed であること自体は咎めない(下書きは正当な状態である)。
+    """
+    out = []
+    for doc_id in sorted(g.nodes):
+        node = g.nodes[doc_id]
+        if node["status"] != "proposed":
+            continue
+        if _is_stale(node["updated"], today, stale_days):
+            out.append(_finding(
+                "stale_proposed", SEV_WARN, doc_id, node["path"],
+                "proposed のまま %d 日以上更新が無い(updated %s)。受理するか捨てる"
                 % (stale_days, node["updated"] or "?")))
     return out
 
@@ -1131,6 +1152,7 @@ def run_audit(root, today, knobs):
     findings += _check_dep_cycle(g)
     findings += _check_review_by(g, today)
     findings += _check_stale_draft(g, today, knobs["draft_stale_days"])
+    findings += _check_stale_proposed(g, today, knobs["draft_stale_days"])
     findings += _check_orphan(g, today, knobs["orphan_stale_days"])
     findings += _check_reverse_orphan(g)
     findings += _check_canonical_conflict(g)

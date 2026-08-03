@@ -222,8 +222,18 @@ def guard_immutability(file_path, tool, tin):
                     % (cur_fm.get("id") or file_path))
         return None
 
-    # ここから先は既存 ADR の改変。carve-out だけかを判定する。
+    # ここから先は既存 ADR の改変。
     doc_id = cur_fm.get("id") or file_path
+
+    # 不変は accepted から始まる(ADR-095)。ディスク上の実効 status が proposed の ADR は
+    # まだ決定ではなく下書きなので、本文を直せる。語彙は最初から proposed を許していた
+    # のに、ガードが存在した瞬間から凍らせていたため、木に proposed の ADR は一件も
+    # 生まれなかった(実測)。逆向き(accepted → proposed)は carve-out の外なので、
+    # 受理済みを下書きへ落として書き換える道は開かない。
+    if (_coerce_str(cur_fm.get("status")).strip()
+            or _registry.default_status("ADR") or "") == "proposed":
+        return None
+
     if _adr_change_is_carveout_only(cur_fm, cur_body, tool, tin, file_path,
                                     cur_errs):
         return None
