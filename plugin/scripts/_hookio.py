@@ -103,12 +103,41 @@ def _record(component, message):
         pass
 
 
-def read_payload(limit=8 * 1024 * 1024):
-    """stdin の JSON を dict で返す。読めなければ空 dict。決して例外を投げない。"""
+def _announce_truncated(component, limit):
+    """切り詰めを標準エラーへ一行で告げる(ADR-109)。決して例外を投げない。
+
+    Hook が返す JSON の経路は汚さない。**見えるかは実行環境が決める** ——
+    この体系が保証するのは「書くこと」までである。
+    """
+    try:
+        sys.stderr.write(
+            "%s: 封筒が上限(%d バイト)を超えたので空として扱う"
+            "(黙って切り詰めない。ADR-109)\n" % (component, limit))
+    except Exception:
+        pass
+
+
+def read_payload(limit=8 * 1024 * 1024, component="hook"):
+    """stdin の JSON を dict で返す。読めなければ空 dict。決して例外を投げない。
+
+    上限まで読んで**まだ残っていたら黙らない**(ADR-109)。標準エラーへ一行だけ告げ、
+    空の写像を返す —— 呼び手は封筒が無いときと同じ道を通る。**不具合のジャーナルへは
+    記録しない**(あれは「部品が実行時に倒れた」記録であり、切り詰めは倒れではない。
+    ADR-074)。この体系は黙って切り詰めない規律を三度立てており(走査・語彙的酷似・
+    無視される道)、封筒だけが黙っていた。
+    """
     try:
         raw = sys.stdin.read(limit)
     except Exception:
         return {}
+    if raw and len(raw) >= limit:
+        # 一文字だけ余分に読んで、切り詰めたかを判ずる(上限ちょうどでも一度読む)。
+        try:
+            if sys.stdin.read(1):
+                _announce_truncated(component, limit)
+                return {}
+        except Exception:
+            pass
     if not raw or not raw.strip():
         return {}
     try:

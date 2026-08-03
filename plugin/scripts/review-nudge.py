@@ -218,7 +218,7 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
     try:
-        data = _hookio.read_payload()
+        data = _hookio.read_payload(component="review-nudge")
         path = _doc_path(data, argv)
         base = os.path.basename(path or "")
         type_code = _typed_doc_type(path)
