@@ -14,6 +14,12 @@
        CONTRIBUTING.md が刻印(書式の正本は ICD-005 の view-stamp-format。
        解析は共有コア _intake)を持ち、その as-of が版番号の正本と一致する
        こと。[no-changelog] では免除しない。
+    4. 設定の見張り(常時。ADR-096): 統治の設定 doctrine_docs/_system/
+       .context-config.json が在るなら、それを対象にする EXT アンカーが在り、
+       検査が hash で、指紋の行を持つこと。設定が無い木では何も言わない。
+       ここに置く理由: 指紋が動けば監査が warn を出すが、アンカーそのものが
+       消されても監査は何も言わない(見張りが無くなった状態は見張りでは分から
+       ない)。同梱の試験には置けない(配布物の外を素で読む形になる。ADR-075)。
 
 marketplace.json との一致は検めない(TEST-020 が強制済み。二重定義しない)。
 終了コード: 0 一致 / 1 違反 / 2 前提が読めない。決定的。標準ライブラリのみ。
@@ -99,6 +105,66 @@ def check_version_integrity(repo):
         violations.append(
             "日付の欠落: CHANGELOG の節 [%s] に YYYY-MM-DD の日付が無い"
             % head_version)
+    return violations
+
+
+GOVERNED_CONFIG = "doctrine_docs/_system/.context-config.json"
+
+# EXT の「検査」の行の読み方。監査(docs-audit.py の _EXT_CHECK_RE)と同じ形で読む。
+# 本文全体で "hash" を探すと、散文の「hash にする」で通ってしまう(実測)。
+_EXT_CHECK_LINE_RE = re.compile(r"検査[:：]\s*(\S+)")
+
+
+def check_config_anchor(repo):
+    """統治の設定が指紋で見張られているかを検める(ADR-096)。空なら整合。
+
+    設定の一枚は、常時投入の上限(確定事実6)・追跡の悉皆の様式・走査の適用除外を
+    握っている。指紋が動けば監査が warn を出すが、**アンカーそのものが消されても
+    監査は何も言わない**(見張りが無くなった状態は、見張りでは分からない)。
+    ここが、アンカーの存在を保つ唯一の歯止めである。
+
+    設定が無い木では見張るものが無いので、何も言わない。
+    """
+    violations = []
+    config = os.path.join(repo, GOVERNED_CONFIG.replace("/", os.sep))
+    if not os.path.isfile(config):
+        return violations
+    docs_root = os.path.join(repo, "doctrine_docs")
+    if not os.path.isdir(docs_root):
+        return violations
+    found = []
+    for base, _dirs, files in os.walk(docs_root):
+        for fn in sorted(files):
+            if not fn.endswith(".md"):
+                continue
+            path = os.path.join(base, fn)
+            try:
+                with open(path, encoding="utf-8") as fh:
+                    text = fh.read()
+            except (OSError, UnicodeError):
+                continue
+            if "\ntype: EXT\n" not in text:
+                continue
+            if GOVERNED_CONFIG not in text:
+                continue
+            found.append((os.path.relpath(path, repo), text))
+    if not found:
+        violations.append(
+            "統治の設定 %s を対象にする EXT アンカーが無い(ADR-096)。"
+            "上限・悉皆の様式・適用除外が黙って変わる状態に戻っている"
+            % GOVERNED_CONFIG)
+        return violations
+    for rel, text in found:
+        m = _EXT_CHECK_LINE_RE.search(text)
+        check = m.group(1) if m else "exists"
+        if "hash" not in check:
+            violations.append(
+                "%s の『検査』が hash でない(いまは %s)。存在は変わらず、"
+                "変わるのは中身である(ADR-096)" % (rel, check))
+        if "- 指紋: sha256:" not in text:
+            violations.append(
+                "%s に指紋の行が無い。hash 検査は指紋が無いと素通りする(ADR-039)"
+                % rel)
     return violations
 
 
@@ -197,6 +263,7 @@ def main(argv):
         violations = check_version_integrity(REPO)
         violations += check_view_stamps(REPO)
         violations += check_distribution_hygiene(REPO)
+        violations += check_config_anchor(REPO)
         if base is not None:
             violations += check_record_duty(
                 REPO, base, os.environ.get(PR_TITLE_ENV, ""))
@@ -207,7 +274,7 @@ def main(argv):
         for v in violations:
             print("[ERROR] %s" % v)
         return 1
-    print("release-check: 整合(版の整合・公開ビューの刻印・配布物の衛生%sを確認)"
+    print("release-check: 整合(版の整合・公開ビューの刻印・配布物の衛生・設定の見張り%sを確認)"
           % ("・記録の義務" if base is not None else ""))
     return 0
 
