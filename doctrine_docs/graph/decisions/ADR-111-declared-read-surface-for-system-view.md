@@ -3,7 +3,8 @@ id: ADR-111
 title: 読み口は宣言してから読ませる — System View 構想にはスキーマ不変で応える
 type: ADR
 domain: graph
-status: accepted
+status: superseded
+superseded_by: ADR-112
 owner: doctrine-maintainers
 created: 2026-08-03
 updated: 2026-08-03

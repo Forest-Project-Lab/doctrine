@@ -107,7 +107,7 @@ sources: []
 | ADR-087 | ADR | graph | 問い合わせの節点は隠さない。組み立てた項をそのまま返す |
 | ADR-088 | ADR | graph | 両端から書かれた同じ事実に印を付ける。畳み方を読み手に決めさせない |
 | ADR-089 | ADR | graph | 無視される物は走査しない。その判定は git に訊く |
-| ADR-111 | ADR | graph | 読み口は宣言してから読ませる — System View 構想にはスキーマ不変で応える |
+| ADR-112 | ADR | graph | 読み口の宣言を現行の合意台帳へ追随させる（初版の決定を置換） |
 | CHANGE-003 | CHANGE | graph | 悉皆トレース — 印なしゼロを選べる体系にする |
 | CHANGE-007 | CHANGE | graph | 追跡索引の読み口を ICD へ宣言する（issue |
 | IMPACT-003 | IMPACT | graph | 悉皆トレース — 影響の列挙 |
