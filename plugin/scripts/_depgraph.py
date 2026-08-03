@@ -460,6 +460,9 @@ def build_graph(root):
             "sources": _frontmatter.as_list(fm.get("sources")),
             "type": _coerce_str(fm.get("type")),
             "domain": _coerce_str(fm.get("domain")),
+            # 責任者も必須項(確定事実3)。集めていない最後の一つだった
+            # (題名 ADR-087・出所 ADR-097 に続く三件目。ADR-098)。
+            "owner": _coerce_str(fm.get("owner")),
             "status": _coerce_str(fm.get("status")) or _registry.default_status(
                 _coerce_str(fm.get("type"))) or "",
             "depends_on": _frontmatter.as_list(fm.get("depends_on")),

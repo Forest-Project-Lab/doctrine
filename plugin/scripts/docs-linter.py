@@ -433,6 +433,19 @@ def _check_llm_context(meta, findings):
             % (value, type_code, default), "§3.2"))
 
 
+def _check_placeholder(meta, findings):
+    """§3.4 PLACEHOLDER_VALUE (ERROR) — 雛形の指示文が残っている(ADR-098)。
+
+    判定は共有コア `_frontmatter.placeholder_fields` に一度だけ在り、全件監査も
+    同じコアを呼ぶ(答えが割れない)。本文は見ない —— 正当な山括弧が出るからである。
+    """
+    for key, value in _frontmatter.placeholder_fields(meta):
+        findings.append(Finding(
+            "PLACEHOLDER_VALUE", ERROR,
+            "%s が雛形の指示文のままである(『%s』)。値を書く。" % (key, value),
+            "§3.4"))
+
+
 def _check_subdomain(meta, findings):
     """§3.5 BAD_SUBDOMAIN (ERROR on bad value) — ADR-092.
 
@@ -769,6 +782,7 @@ def lint_text(text, path):
     _check_type_location(meta, path, rel_parts, findings)
     _check_llm_context(meta, findings)
     _check_subdomain(meta, findings)
+    _check_placeholder(meta, findings)
     _check_research_decision(meta, body, findings)
     _check_spec_sections(meta, body, findings)
     _check_term_check(meta, body, path, findings, text)

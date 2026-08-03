@@ -51,7 +51,7 @@ SCHEMA = _auditcache.SCHEMA   # 要約 schema の正本は共有コア(ADR-053)
 # doctrine:begin SPEC-011
 AUDIT_CHECKS = (
     "dead_link", "dep_cycle", "review_by_overrun", "stale_draft",
-    "source_missing",
+    "source_missing", "template_placeholder",
     "stale_proposed", "orphan",
     "reverse_orphan_req_no_spec", "reverse_orphan_spec_no_test",
     "canonical_conflict", "near_duplicate", "icd_dependency_violation",
@@ -535,6 +535,31 @@ def _check_stale_current(g, today):
 # 出所の道の形(ADR-097)。拡張子を持つ相対の道だけを対象にする。URL・文書 id・
 # issue の番号・自由文は対象にしない(それぞれ別の検査か、機械で判じられない)。
 _SOURCE_PATH_RE = re.compile(r"^[\w./-]+\.[A-Za-z0-9]{1,6}$")
+
+
+def _check_template_placeholder(g):
+    """15. 雛形の指示文の残り(ADR-098)。フロントマターの値が指示文のままなら error。
+
+    判定は共有コア `_frontmatter.placeholder_fields` に一度だけ在り、ファイル単位の
+    リンタも同じコアを呼ぶ(答えが割れない。ADR-053 と同じ原理)。本文は見ない
+    —— 正当な山括弧(`<svg>`・置き場所の記法・id の書式)が出るからである。
+
+    対象は現行でない文書も含む。埋め忘れは状態に依らず欠陥だからである。
+    """
+    out = []
+    for doc_id in sorted(g.nodes):
+        node = g.nodes[doc_id]
+        meta = {}
+        for key in ("id", "title", "domain", "owner", "updated", "review_by",
+                    "superseded_by", "sources", "depends_on", "impacts",
+                    "canonical_for"):
+            if key in node:
+                meta[key] = node[key]
+        for key, value in _frontmatter.placeholder_fields(meta):
+            out.append(_finding(
+                "template_placeholder", SEV_ERROR, doc_id, node["path"],
+                "%s が雛形の指示文のままである(『%s』)。値を書く" % (key, value)))
+    return out
 
 
 def _check_source_missing(g, root):
@@ -1196,6 +1221,7 @@ def run_audit(root, today, knobs):
     findings += _check_stale_draft(g, today, knobs["draft_stale_days"])
     findings += _check_stale_proposed(g, today, knobs["draft_stale_days"])
     findings += _check_source_missing(g, root)
+    findings += _check_template_placeholder(g)
     findings += _check_orphan(g, today, knobs["orphan_stale_days"])
     findings += _check_reverse_orphan(g)
     findings += _check_canonical_conflict(g)

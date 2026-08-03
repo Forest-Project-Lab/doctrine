@@ -602,6 +602,21 @@ class JsonNodeShapeTest(unittest.TestCase):
         by_id = {n["id"]: n for n in data["nodes"]}
         self.assertEqual(by_id["SPEC-1"]["title"], "請求の仕様")
 
+    def test_every_required_key_is_on_the_node(self):
+        """ADR-098: 必須キー8個はすべて節点に在る。
+
+        集めていない必須キーは三度出た —— 題名(ADR-087)・出所(ADR-097)・
+        責任者(ADR-098)。**この観点が四件目を防ぐ。**
+        """
+        registry = _util.load_core("_registry")
+        by_id = {n["id"]: n for n in self._graph().to_json()["nodes"]}
+        node = by_id["SPEC-1"]
+        missing = [k for k in registry.REQUIRED_KEYS_L2 if k not in node]
+        self.assertEqual(
+            missing, [],
+            "必須キーが節点に無い(集めていないと、誰もその値を検められない): %s"
+            % missing)
+
     def test_lifecycle_fields_are_returned(self):
         """鮮度と後継の項も返る。読み手が自分で判じられる。"""
         by_id = {n["id"]: n for n in self._graph().to_json()["nodes"]}

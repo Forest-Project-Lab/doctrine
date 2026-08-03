@@ -599,3 +599,42 @@ class BodyStartLineTest(unittest.TestCase):
     def test_never_raises_on_bad_input(self):
         for bad in ((None, None), ("text", None), (None, "body"), (5, 5)):
             self.assertEqual(_frontmatter.body_start_line(*bad), 1)
+
+
+class PlaceholderFieldsTest(unittest.TestCase):
+    """ADR-098: 雛形の指示文の判定。形で判ずる(雛形も語彙の表も読まない)。"""
+
+    def test_detects_whole_value_placeholder(self):
+        got = _frontmatter.placeholder_fields({"owner": "<個人名>"})
+        self.assertEqual(got, [("owner", "<個人名>")])
+
+    def test_detects_partial_value_placeholder(self):
+        """雛形は `id: ADR-<連番>` のように値の一部へ置く。"""
+        got = _frontmatter.placeholder_fields({"id": "ADR-<連番>"})
+        self.assertEqual(got, [("id", "ADR-<連番>")])
+
+    def test_detects_inside_a_list(self):
+        got = _frontmatter.placeholder_fields({"sources": ["ok.py", "<出所URL/会話ID>"]})
+        self.assertEqual(got, [("sources", "<出所URL/会話ID>")])
+
+    def test_clean_frontmatter_is_silent(self):
+        self.assertEqual(_frontmatter.placeholder_fields(
+            {"id": "ADR-001", "title": "登録簿の契約", "owner": "a",
+             "sources": ["plugin/scripts/_registry.py"]}), [])
+
+    def test_non_string_values_are_ignored(self):
+        self.assertEqual(_frontmatter.placeholder_fields(
+            {"n": 3, "b": True, "none": None}), [])
+
+    def test_bad_input_never_raises(self):
+        for bad in (None, "x", 3, []):
+            self.assertEqual(_frontmatter.placeholder_fields(bad), [])
+
+    def test_result_is_sorted_by_key(self):
+        got = _frontmatter.placeholder_fields({"owner": "<個人名>", "id": "A-<連番>"})
+        self.assertEqual([k for k, _v in got], ["id", "owner"])
+
+    def test_empty_angle_pair_is_not_a_placeholder(self):
+        """`<>` や `< >` は指示文ではない(非空の並びを要求する)。"""
+        self.assertEqual(_frontmatter.placeholder_fields({"title": "<>"}), [])
+        self.assertEqual(_frontmatter.placeholder_fields({"title": "< >"}), [])

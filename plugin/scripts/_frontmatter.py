@@ -210,6 +210,36 @@ def as_list(value):
     return [s] if s.strip() != "" else []
 
 
+# 雛形の指示文の形(ADR-098)。山括弧に囲まれた非空の並び。雛形も語彙の表も読まない
+# —— 雛形は配布物であり導入先で差し替えられるので、正本が動くものになる(ADR-090 が
+# 同じ理由で「節の一覧を雛形から読む」案を却下している)。形そのものが指示文の印である。
+_PLACEHOLDER_RE = re.compile(r"<[^<>\s][^<>]*>")
+
+
+def placeholder_fields(meta):
+    """フロントマターに残った雛形の指示文を [(鍵, 値)] で返す。例外は投げない。
+
+    値の一部でも一致とする —— 雛形は `id: ADR-<連番>` のように値の一部に指示文を
+    置くからである。一覧は要素ごとに見る。**本文は見ない** —— 本文には `<svg>`・
+    置き場所の記法・id の書式が正当に出るので、誤検知が多すぎる(ADR-098)。
+
+    判定はここに一度だけ置き、リンタ(予防)と監査(検出)が同じコアを呼ぶ。
+    読み手ごとに答えが割れないようにするためである(ADR-053 と同じ原理)。
+    """
+    out = []
+    if not isinstance(meta, dict):
+        return out
+    for key in sorted(meta):
+        value = meta[key]
+        items = value if isinstance(value, list) else [value]
+        for item in items:
+            if not isinstance(item, str):
+                continue
+            if _PLACEHOLDER_RE.search(item):
+                out.append((str(key), item))
+    return out
+
+
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------

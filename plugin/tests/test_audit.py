@@ -313,6 +313,36 @@ class StaleDraftTest(AuditBase):
         self.assertEqual(len(sd), 1)
         self.assertEqual(sd[0]["severity"], "warn")
 
+    def test_placeholder_in_frontmatter_is_error(self):
+        """ADR-098: 報告の形(用語辞書の正本に owner: <記入>)を名指しで挙げる。"""
+        root = self.build([
+            (_fm("SPEC-1", "SPEC", "billing", owner="<記入>"), "x"),
+        ])
+        data, _ = self.audit_json(root)
+        tp = self.checks_for(data, "template_placeholder")
+        self.assertEqual(len(tp), 1, tp)
+        self.assertEqual(tp[0]["severity"], "error")
+        self.assertIn("owner", tp[0]["message"])
+
+    def test_clean_frontmatter_has_no_placeholder_finding(self):
+        root = self.build([(_fm("SPEC-1", "SPEC", "billing"), "x")])
+        data, _ = self.audit_json(root)
+        self.assertEqual(self.checks_for(data, "template_placeholder"), [])
+
+    def test_body_angle_brackets_are_not_reported(self):
+        """本文は見ない(正当な山括弧が出る)。"""
+        root = self.build([
+            (_fm("SPEC-1", "SPEC", "billing"),
+             "置き場所は <domain>/ とし、id は <TYPE>-<NNN> の形にする。\n"),
+        ])
+        data, _ = self.audit_json(root)
+        self.assertEqual(self.checks_for(data, "template_placeholder"), [])
+
+    def test_template_placeholder_is_in_checks_run(self):
+        root = self.build([(_fm("SPEC-1", "SPEC", "billing"), "x")])
+        data, _ = self.audit_json(root)
+        self.assertIn("template_placeholder", data["checks_run"])
+
     def test_existing_source_path_pass(self):
         """ADR-097: 実在する道は咎めない。"""
         root = self.build([
@@ -1369,6 +1399,8 @@ EXPECTED_AUDIT_CHECKS = (
     "dead_link", "dep_cycle", "review_by_overrun", "stale_draft",
     # ADR-097: 宣言した出所の道が実在すること(ADR と投影は除く。直せないものを咎めない)。
     "source_missing",
+    # ADR-098: 雛形の指示文がフロントマターに残っていないこと。
+    "template_placeholder",
     # ADR-095: 不変を accepted から始めたので、下書きのまま置かれたものを見る。
     # proposed は現行でないため、孤児・逆孤児・adr_not_landed からは見えない。
     "stale_proposed", "orphan",
