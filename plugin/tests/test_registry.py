@@ -316,35 +316,31 @@ class TestRequiredKeys(unittest.TestCase):
         self.assertNotIn("created", R.REQUIRED_KEYS_L2)
 
     def test_non_review_type_returns_base_eight(self):
-        for lvl in (2, 3, 4):
-            self.assertEqual(R.required_keys(lvl, "SPEC"), R.REQUIRED_KEYS_L2, lvl)
+        self.assertEqual(R.required_keys("SPEC"), R.REQUIRED_KEYS_L2)
 
     def test_decided_and_watch_add_review_by(self):
         for t in ("DECIDED", "WATCH"):
-            for lvl in (2, 3, 4):
-                keys = R.required_keys(lvl, t)
-                self.assertEqual(keys, R.REQUIRED_KEYS_L2 + ("review_by",), (t, lvl))
+            self.assertEqual(R.required_keys(t),
+                             R.REQUIRED_KEYS_L2 + ("review_by",), t)
 
-    def test_required_set_does_not_grow_with_level_except_review_by(self):
-        # depends_on / impacts / canonical_for are NEVER required.
+    def test_optional_keys_are_never_required(self):
+        """depends_on / impacts / canonical_for は決して必須にならない。"""
         for t in EXPECTED_TYPES:
-            for lvl in (2, 3, 4):
-                keys = set(R.required_keys(lvl, t))
-                self.assertNotIn("depends_on", keys, (t, lvl))
-                self.assertNotIn("impacts", keys, (t, lvl))
-                self.assertNotIn("canonical_for", keys, (t, lvl))
+            keys = set(R.required_keys(t))
+            for opt in ("depends_on", "impacts", "canonical_for"):
+                self.assertNotIn(opt, keys, (t, opt))
 
-    def test_bad_level_raises(self):
-        for bad in (1, 5, 0, "2", None):
-            with self.assertRaises(ValueError):
-                R.required_keys(bad, "SPEC")
+    def test_level_parameter_is_gone(self):
+        """ADR-106: 何も決めない口を公開しない。
+
+        以前の署名は required_keys(level, type) で、level は検証したあと
+        **無視されていた**（説明文自身が「level は結果を変えない」と書いていた）。
+        """
+        with self.assertRaises(TypeError):
+            R.required_keys(2, "SPEC")
 
     def test_review_by_types_constant(self):
         self.assertEqual(R.REQUIRED_REVIEW_BY_TYPES, ("DECIDED", "WATCH"))
-
-    def test_level_key_ladder_constants(self):
-        self.assertEqual(R.LEVEL3_KEYS, ("depends_on", "impacts", "review_by"))
-        self.assertEqual(R.LEVEL4_KEYS, ("canonical_for",))
 
     def test_subdomain_kinds_frozen(self):
         """ADR-092: ドメインの種類の語彙。出所の本 1.2 から手で書き写した三語。
@@ -363,11 +359,8 @@ class TestRequiredKeys(unittest.TestCase):
         (提案B を却下した理由)。この試験は、後からそれを足したときに落ちる。
         """
         self.assertNotIn("subdomain", R.REQUIRED_KEYS_L2)
-        self.assertNotIn("subdomain", R.LEVEL3_KEYS)
-        self.assertNotIn("subdomain", R.LEVEL4_KEYS)
         for t in EXPECTED_TYPES:
-            self.assertNotIn("subdomain", R.required_keys(2, t))
-            self.assertNotIn("subdomain", R.required_keys(4, t))
+            self.assertNotIn("subdomain", R.required_keys(t))
 
 
 class TestIsCurrent(unittest.TestCase):
@@ -425,17 +418,20 @@ class TestConstants(unittest.TestCase):
     def test_llm_context_values(self):
         self.assertEqual(R.LLM_CONTEXT_VALUES, ("always", "task", "never"))
 
-    def test_system_tier_types(self):
-        self.assertEqual(
-            R.SYSTEM_TIER_TYPES,
-            ("OVERVIEW", "GLOSSARY", "CTXMAP", "DECIDED", "NONGOAL", "WATCH"),
-        )
+    def test_dead_tables_stay_removed(self):
+        """ADR-106: 使われない正本は戻さない。
 
-    def test_always_contract_types(self):
-        self.assertEqual(
-            R.ALWAYS_CONTRACT_TYPES,
-            ("DECIDED", "NONGOAL", "WATCH", "GLOSSARY"),
-        )
+        四つとも消費者がゼロで、**しかも生きた規則と食い違っていた** ——
+        ALWAYS_CONTRACT_TYPES は OVERVIEW を欠き（既定が always の型は五つ）、
+        SYSTEM_TIER_TYPES は REQ を欠いていた（ADR-091 で _system へ置ける型が
+        増えたのに、誰も読まない表は誰も直さなかった）。
+        **消費者が無いことは無害ではなく、静かに嘘になる。**
+        """
+        for name in ("SYSTEM_TIER_TYPES", "ALWAYS_CONTRACT_TYPES",
+                     "LEVEL3_KEYS", "LEVEL4_KEYS"):
+            self.assertFalse(
+                hasattr(R, name),
+                "使われない正本が戻っている(ADR-106): %s" % name)
 
     def test_domain_of_not_present(self):
         # domain_of lives in _depgraph.resolve, NOT in the registry (仕様 §2.5).

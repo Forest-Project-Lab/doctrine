@@ -175,30 +175,27 @@ def _is_system_singleton(rel_parts):
 def _check_required_keys(meta, findings):
     """§3.1 MISSING_KEY (ERROR) + EMPTY_KEY (ERROR; empty sources:[] allowed)."""
     type_code = meta.get("type")
-    for key in _registry.REQUIRED_KEYS_L2:
+    # 必須キーの規則の正本は登録簿(確定事実1。ADR-106)。以前はここで
+    # REQUIRED_KEYS_L2 と REQUIRED_REVIEW_BY_TYPES を自前で組み合わせており、
+    # 同じ規則が二箇所に在った —— そして正本の側は誰にも呼ばれていなかった。
+    required = _registry.required_keys(type_code)
+    for key in required:
         if key not in meta:
+            note = "(DECIDED/WATCH では必須)" if key == "review_by" else ""
             findings.append(Finding(
                 "MISSING_KEY", ERROR,
-                "必須キー『%s』が無い。" % key, "§3.4"))
+                "必須キー『%s』が無い%s。" % (key, note), "§3.4"))
             continue
         value = meta.get(key)
         if key == "sources":
             # Empty sources:[] is allowed (some docs have no external source).
             continue
         if _is_empty_value(value):
+            note = "(DECIDED/WATCH では必須)" if key == "review_by" else ""
             findings.append(Finding(
                 "EMPTY_KEY", ERROR,
-                "必須キー『%s』が空。" % key, "§3.4"))
-    # DECIDED/WATCH additionally require a non-empty review_by.
-    if type_code in _registry.REQUIRED_REVIEW_BY_TYPES:
-        if "review_by" not in meta:
-            findings.append(Finding(
-                "MISSING_KEY", ERROR,
-                "必須キー『review_by』が無い(DECIDED/WATCH では必須)。", "§3.4"))
-        elif _is_empty_value(meta.get("review_by")):
-            findings.append(Finding(
-                "EMPTY_KEY", ERROR,
-                "必須キー『review_by』が空(DECIDED/WATCH では必須)。", "§3.4"))
+                "必須キー『%s』が空%s。" % (key, note), "§3.4"))
+
 
 
 def _is_empty_value(value):

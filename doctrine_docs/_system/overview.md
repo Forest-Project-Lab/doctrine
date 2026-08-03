@@ -173,6 +173,7 @@ sources: []
 | ADR-093 | ADR | model | 位置づけ（`status`）の正本は平文のフロントマターに留める。台帳から導出しない |
 | ADR-099 | ADR | model | 日付の解釈を共有コアに一度だけ置く。写しの食い違いを消す |
 | ADR-101 | ADR | model | スカラへの正規化を共有コアに一度だけ置く。入れ物は空にする |
+| ADR-106 | ADR | model | 使われない正本を落とす。二重に持っていた規則は正本へ寄せる |
 | IMPL-001 | IMPL | model | `_registry.py` の実装メモ |
 | IMPL-002 | IMPL | model | `_frontmatter.py` の実装メモ |
 | TEST-001 | TEST | model | 登録簿契約のテスト計画 |
