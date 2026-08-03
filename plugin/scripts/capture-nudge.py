@@ -42,20 +42,6 @@ _REASON = (
 )
 
 
-def _read_stdin_json():
-    try:
-        raw = sys.stdin.read()
-    except Exception:
-        return {}
-    if not raw or not raw.strip():
-        return {}
-    try:
-        obj = json.loads(raw)
-        return obj if isinstance(obj, dict) else {}
-    except Exception:
-        return {}
-
-
 def _safe_sid(data):
     sid = data.get("session_id")
     if not isinstance(sid, str) or not sid.strip():
@@ -99,7 +85,7 @@ def _sweep_stale(flag_dir):
 def main(argv=None):
     _hookio.harden_stdout()
     try:
-        data = _read_stdin_json()
+        data = _hookio.read_payload()
         # 歯止め1: 既にこの Stop ナッジ経由で続行しているなら、二度は止めない。
         if data.get("stop_hook_active"):
             return 0

@@ -214,6 +214,7 @@ sources: []
 | ADR-084 | ADR | packaging | 被覆の各行は実効を示す試験を名指す。示せないなら未証と明示する |
 | ADR-085 | ADR | packaging | 試験走行は判定の依り所を刷る。証跡は保存せず、走らせた場が持つ |
 | ADR-094 | ADR | packaging | 試験は実時計を読まない。時計を固定できる呼び出しでは固定を機械が要求する |
+| ADR-108 | ADR | packaging | Hook の封筒の読み取りを正本に一本化する。上限は正本が持つ |
 | CHANGE-001 | CHANGE | packaging | 導入済みプラグインの版の遅れを生存性として照合する |
 | CHANGE-002 | CHANGE | packaging | リリースの整合を CI の門で検める — 変更履歴の書き忘れを止める |
 | CHANGE-005 | CHANGE | packaging | 不具合の兆候を記録し、承認を経た issue 報告を促す |
