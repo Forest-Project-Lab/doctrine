@@ -18,7 +18,7 @@ sources: []
 |---|---|---|---|
 | GLOSSARY-001 | GLOSSARY | _system | 用語辞書の正本 |
 | DECIDED-001 | DECIDED | _system | 横断の確定方針（12事実） |
-| NONGOAL-001 | NONGOAL | _system | 横断のやらないこと（17項） |
+| NONGOAL-001 | NONGOAL | _system | 横断のやらないこと（18項） |
 | WATCH-001 | WATCH | _system | 横断の退行監視（11項） |
 | REQ-000 | REQ | _system | この体系が解くこと（製品の粒度） |
 | ICD-005 | ICD | audit | audit のインターフェース（全件監査の境界） |
@@ -160,6 +160,7 @@ sources: []
 | ADR-064 | ADR | model | 三つの保証限界（サブエージェント注入・id の改名・採番の衝突）を非目標として明文化する |
 | ADR-091 | ADR | model | 製品の粒度の要求を _system の棚へ置く。棚の上の要求は辺で指されない |
 | ADR-092 | ADR | model | ドメインの種類は語彙だけを正本に持つ。投資の判断は決定と非目標が持ち続ける |
+| ADR-093 | ADR | model | 位置づけ（`status`）の正本は平文のフロントマターに留める。台帳から導出しない |
 | IMPL-001 | IMPL | model | `_registry.py` の実装メモ |
 | IMPL-002 | IMPL | model | `_frontmatter.py` の実装メモ |
 | TEST-001 | TEST | model | 登録簿契約のテスト計画 |
