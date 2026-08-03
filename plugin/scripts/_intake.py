@@ -34,7 +34,6 @@ _LINE_RE = re.compile(
     r"(?:\s+(?P<due>\d{4}-\d{2}-\d{2}))?\s*$")
 # 刻印の一行(ADR-073)。HTML コメントの内外どちらも受ける。
 _STAMP_RE = re.compile(r"doctrine:view\s+(?P<fields>[^>\r\n]*)")
-_STAMP_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 # doctrine:end IMPL-018
 
 
@@ -125,6 +124,8 @@ def parse_view_stamp(text):
     }
     if not stamp["src"] or not stamp["date"]:
         return stamp, "刻印に必須の欄(src・date)が欠けている"
-    if not _STAMP_DATE_RE.match(stamp["date"]):
+    # 日付の解釈は共有コアが正本(ADR-099)。ここで自前に持たない。
+    # 以前は形だけを見ており、実在しない日付(2026-02-30)を通していた。
+    if _frontmatter.parse_date(stamp["date"]) is None:
         return stamp, "刻印の date が YYYY-MM-DD でない: %s" % stamp["date"]
     return stamp, None

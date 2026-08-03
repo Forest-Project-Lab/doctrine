@@ -24,12 +24,16 @@ import datetime
 import json
 import os
 import re
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import _frontmatter          # noqa: E402  日付の解釈の正本(ADR-099)
 
 # doctrine:begin ADR-053
 SCHEMA = "docs-audit/1"
 STATE_NAME = ".governance-state"
 # doctrine:end ADR-053
-_DATE_RE = re.compile(r"(\d{4})-(\d{2})-(\d{2})")
 # 状態ファイルの行。gov-heartbeat の読みと同じ寛容度にする(全角コロンも許す。
 # ADR-042: 知らないキー・読めない行は無視し、読めた範囲で判じる)。
 _STATE_LINE_RE = re.compile(r"^\s*([A-Za-z0-9_]+)\s*[:：]\s*(\S+)\s*$")
@@ -53,17 +57,6 @@ def candidates():
     return out
 
 
-def _parse_date(value):
-    """先頭の YYYY-MM-DD を date で返す。読めなければ None。例外は投げない。"""
-    if not isinstance(value, str):
-        return None
-    m = _DATE_RE.match(value.strip())
-    if not m:
-        return None
-    try:
-        return datetime.date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
-    except ValueError:
-        return None
 
 
 def read_initialized(docs_root):
@@ -86,7 +79,7 @@ def read_initialized(docs_root):
             for line in fh:
                 m = _STATE_LINE_RE.match(line)
                 if m and m.group(1) == "initialized":
-                    return (True, _parse_date(m.group(2)))
+                    return (True, _frontmatter.parse_date(m.group(2)))
     except (OSError, UnicodeError):
         return (False, None)
     return (False, None)
@@ -110,7 +103,7 @@ def summary_date(summary):
     """要約が表す日。today を優先し、無ければ generated_at の先頭日付。"""
     if not isinstance(summary, dict):
         return None
-    return _parse_date(summary.get("today")) or _parse_date(
+    return _frontmatter.parse_date(summary.get("today")) or _frontmatter.parse_date(
         summary.get("generated_at"))
 
 

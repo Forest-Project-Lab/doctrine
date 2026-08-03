@@ -43,11 +43,12 @@ ICD・正本・投影・現行・依存・参照は用語辞書（`_system/gloss
 |---|---|
 | dead_link | error |
 | dep_cycle（依存の循環。自己依存・多頂点循環。ADR-038） | warn |
-| review_by_overrun（DECIDED/WATCH の不在も含む） | warn（不在は error） |
+| review_by_overrun（DECIDED/WATCH の不在も含む。**超過だけを見る** —— 形式の誤りは bad_date が咎める。ADR-100） | warn（不在は error） |
 | stale_draft | warn |
 | stale_proposed（proposed のまま放置。受理するか捨てる。ADR-095） | warn |
 | source_missing（宣言した出所の道が実在しない。ADR と投影は除く。ADR-097） | warn |
 | template_placeholder（雛形の指示文がフロントマターに残る。ADR-098） | error |
+| bad_date（日付の鍵が解せない。超過・陳腐化の名で報せない。ADR-100） | error |
 | orphan | error |
 | reverse_orphan_req_no_spec / reverse_orphan_spec_no_test | error |
 | canonical_conflict | error |

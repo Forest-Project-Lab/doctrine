@@ -40,21 +40,10 @@ DEFAULT_AUDIT_STALE_DAYS = 7
 DEFAULT_CADENCE_DAYS = 30
 # doctrine:end SPEC-021
 
-_DATE_RE = re.compile(r"^(\d{4})-(\d{2})-(\d{2})$")
 _STATE_LINE_RE = re.compile(r"^\s*([A-Za-z0-9_]+)\s*[:：]\s*(\S+)\s*$")
 STATE_NAME = _auditcache.STATE_NAME   # 正本は共有コア(ADR-053)
 
 
-def _parse_date(s):
-    if not isinstance(s, str):
-        return None
-    m = _DATE_RE.match(s.strip())
-    if not m:
-        return None
-    try:
-        return datetime.date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
-    except ValueError:
-        return None
 
 
 def _read_stdin_json():
@@ -216,7 +205,7 @@ def build_message(docs_root, today, config):
                         "と言えば docs-audit で走らせられます。")
             return ("【統治】前回監査の記録が見つからない。SessionEnd の監査が動いて"
                     "いない可能性がある。「監査を実行して」と言えば docs-audit で確かめる(R11)。")
-        audit_day = _parse_date(summary.get("today"))
+        audit_day = _frontmatter.parse_date(summary.get("today"))
         if audit_day is not None and (today - audit_day).days >= audit_stale_days:
             return ("【統治】前回監査から %d 日が経っている(最終 %s)。SessionEnd の監査が"
                     "動いていない可能性がある。「監査を実行して」と言えば確かめる(R11)。"
@@ -229,7 +218,7 @@ def build_message(docs_root, today, config):
         return line
 
     # 2) doc-review 定例の周期(運用契約、§7)。
-    last = _parse_date(state.get("last_cadence_review"))
+    last = _frontmatter.parse_date(state.get("last_cadence_review"))
     if last is None:
         if summary is None and not state:
             return ""  # 使い始めの前は促さない(騒がしい導入にしない)。
@@ -386,9 +375,9 @@ def main(argv=None):
         today = None
         for i, a in enumerate(argv):
             if a == "--today" and i + 1 < len(argv):
-                today = _parse_date(argv[i + 1])
+                today = _frontmatter.parse_date(argv[i + 1])
             elif a.startswith("--today="):
-                today = _parse_date(a.split("=", 1)[1])
+                today = _frontmatter.parse_date(a.split("=", 1)[1])
         if today is None:
             today = datetime.date.today()
 

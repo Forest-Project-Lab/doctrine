@@ -433,6 +433,32 @@ def _check_llm_context(meta, findings):
             % (value, type_code, default), "§3.2"))
 
 
+# 日付の鍵と、解せないときの重さ(ADR-100)。updated が読めないと鮮度の判定が全部
+# 倒れるので誤り。created は機械の判定に使われないので警告(必須キーではない)。
+# **この配分は見立てであり、測って出した数ではない。**
+_DATE_KEYS = (("updated", ERROR), ("review_by", ERROR), ("created", WARN))
+
+
+def _check_dates(meta, findings):
+    """§3.4 BAD_DATE — 日付の鍵が解せない(ADR-100)。
+
+    日付の解釈は共有コア `_frontmatter.parse_date` が正本(ADR-099)。ここは
+    「解せなかったときに何と言うか」だけを受け持つ。不在は必須キーの検査の領分。
+    """
+    for key, severity in _DATE_KEYS:
+        raw = meta.get(key)
+        if raw is None:
+            continue
+        if not isinstance(raw, str) or raw.strip() == "":
+            continue          # 空は必須キーの検査が見る。
+        if _frontmatter.parse_date(raw) is not None:
+            continue
+        findings.append(Finding(
+            "BAD_DATE", severity,
+            "%s が日付として解せない(『%s』)。YYYY-MM-DD の実在する日付を書く。"
+            % (key, raw), "§3.4"))
+
+
 def _check_placeholder(meta, findings):
     """§3.4 PLACEHOLDER_VALUE (ERROR) — 雛形の指示文が残っている(ADR-098)。
 
@@ -783,6 +809,7 @@ def lint_text(text, path):
     _check_llm_context(meta, findings)
     _check_subdomain(meta, findings)
     _check_placeholder(meta, findings)
+    _check_dates(meta, findings)
     _check_research_decision(meta, body, findings)
     _check_spec_sections(meta, body, findings)
     _check_term_check(meta, body, path, findings, text)

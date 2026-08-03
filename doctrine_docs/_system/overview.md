@@ -34,6 +34,7 @@ sources: []
 | ADR-073 | ADR | audit | 体系外の解釈文書はビューと定め、刻印で参照時点を義務づける |
 | ADR-086 | ADR | audit | 期限が唯一の見張りなら、期限は短くする |
 | ADR-097 | ADR | audit | 宣言した出所が実在することを検める。認識の等級は検めない |
+| ADR-100 | ADR | audit | 壊れた日付をその名で咎める。鮮度の検査に古びと言わせない |
 | CHANGE-004 | CHANGE | audit | 体系外の解釈文書をビューと定め、刻印で古びを見えるようにする |
 | IMPACT-004 | IMPACT | audit | ビューと刻印 — 影響の列挙 |
 | IMPL-011 | IMPL | audit | docs-audit.py の実装メモ |
@@ -166,6 +167,7 @@ sources: []
 | ADR-091 | ADR | model | 製品の粒度の要求を _system の棚へ置く。棚の上の要求は辺で指されない |
 | ADR-092 | ADR | model | ドメインの種類は語彙だけを正本に持つ。投資の判断は決定と非目標が持ち続ける |
 | ADR-093 | ADR | model | 位置づけ（`status`）の正本は平文のフロントマターに留める。台帳から導出しない |
+| ADR-099 | ADR | model | 日付の解釈を共有コアに一度だけ置く。写しの食い違いを消す |
 | IMPL-001 | IMPL | model | `_registry.py` の実装メモ |
 | IMPL-002 | IMPL | model | `_frontmatter.py` の実装メモ |
 | TEST-001 | TEST | model | 登録簿契約のテスト計画 |
