@@ -38,24 +38,26 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import _depgraph
 import _config
 import _frontmatter
+import _tokens
 import _registry
 
 
 # --- トークン推定(inject-contract と同じ保守的な見積もり, MASTER §5.4) -------
 
-def estimate_tokens(text, chars_per_token=4.0):
-    """文字数ベースの推定。決定的。
-
-    4 文字/トークンは英語の近似であり、日本語では実トークンを下回りうる
-    (ADR-075: 以前「日本語では過大に見積もる=安全側」と書いていたが逆だった)。
-    較正が要る導入先は設定の model_chars_per_token を下げる。
-    """
-    if not text:
-        return 0
-    return int(math.ceil(len(text) / float(chars_per_token)))
 
 
 # --- 設定(二つの上限は別キー, C10) ----------------------------------------
+
+def load_chars_per_token(docs_root):
+    """較正(model_chars_per_token)を解く。設定は共有コアが読み、解釈も共有コアが持つ。
+
+    **較正は二つの上限の両方に効く**(ADR-105) —— 以前ここは設定を読まず、説明文だけが
+    「較正が要る導入先は下げる」と言っていた。較正 2.0 の木で同じ 1000 文字を注入は
+    500、パックは 250 と見ており、パックの上限は未較正の見積りで判じられていた。
+    上限そのものは別々のまま(確定事実6)。分けるのは上限であって較正ではない。
+    """
+    return _tokens.chars_per_token(_config.load(docs_root))
+
 
 def load_task_pack_cap(docs_root, override):
     """task_pack_token_cap を解決する。injection_token_cap とは別キー(C10)。
@@ -426,8 +428,10 @@ def build_pack(docs_root, required, domain, task_text):
                     eligible.append(r)
     eligible = sorted(set(eligible))
 
+    cpt = load_chars_per_token(docs_root)
+
     def token_of(nid):
-        return estimate_tokens(titles.get(nid, "") + bodies.get(nid, ""))
+        return _tokens.estimate(titles.get(nid, "") + bodies.get(nid, ""), cpt)
 
     selected, covers_map, uncovered = greedy_cover(
         eligible, req_universe, graph, dep_index, token_of)
@@ -471,6 +475,10 @@ def build_pack(docs_root, required, domain, task_text):
         "never_only": sorted(never_only),
         "boundary": boundary,
         "excluded_never": sorted(excluded_never),
+        # 較正を束に載せて描画へ運ぶ(ADR-105)。上限を判ずる見積りと、選抜で使う
+        # 見積りが同じ較正で動くようにする —— 二つが違う較正で動くと、選んだ後に
+        # 上限で落ちる量が読めない。
+        "chars_per_token": cpt,
     }
 
 
@@ -541,7 +549,7 @@ def _tokenize(text):
 
 # --- 整形(json / md) -------------------------------------------------------
 
-def _enforce_cap(records, cap):
+def _enforce_cap(records, cap, cpt=None):
     """task_pack_token_cap を守る。要求を唯一覆う文書は決して落とさない。
 
     返り値: (kept_records, trimmed:bool, dropped_records)。被覆の限界余剰が
@@ -572,7 +580,7 @@ def _enforce_cap(records, cap):
         # 勘定から漏れ、指定した上限の約 2 倍が出ていた(実測 450 対 1019)。
         buf = []
         _render_doc_md(buf, rec)
-        return estimate_tokens("\n".join(buf))
+        return _tokens.estimate("\n".join(buf), cpt)
 
     kept = list(records)
     trimmed = False
@@ -598,7 +606,8 @@ def _enforce_cap(records, cap):
 def render_json(pack, cap):
     primary = pack["primary_records"]
     dependency = pack["dependency_records"]
-    kept, trimmed, dropped = _enforce_cap(primary + dependency, cap)
+    kept, trimmed, dropped = _enforce_cap(primary + dependency, cap,
+                                          pack.get("chars_per_token"))
     kept_ids = {r["id"] for r in kept}
     uncovered, reasons = _with_dropped(pack, kept, dropped)
     out = {
@@ -648,7 +657,8 @@ def _uncovered_reasons(pack):
 def render_md(pack, cap):
     primary = pack["primary_records"]
     dependency = pack["dependency_records"]
-    kept, trimmed, dropped = _enforce_cap(primary + dependency, cap)
+    kept, trimmed, dropped = _enforce_cap(primary + dependency, cap,
+                                          pack.get("chars_per_token"))
     kept_ids = {r["id"] for r in kept}
     md_uncovered, md_reasons = _with_dropped(pack, kept, dropped)
 

@@ -683,6 +683,9 @@ class TestSharedJudgementsHaveOneCanon(unittest.TestCase):
         # BOM 付きの設定で監査だけが既定へ落ちていた。
         "_load_config": "_config.py",
         "_config_path": "_config.py",
+        # ADR-105: トークンの見積りと較正の解釈。以前は二写しで、較正が注入にだけ
+        # 効き、パックは未較正の見積りで上限を判じていた。
+        "estimate_tokens": "_tokens.py",
     }
 
     def test_no_copy_of_a_shared_judgement(self):
@@ -825,3 +828,58 @@ class TestConfigIsReadThroughTheCanon(unittest.TestCase):
                       "共有の読み手を通っていない(ADR-075 の門が掛からない)")
         self.assertNotIn("open", calls,
                          "素の open を持っている(門を迂回している)")
+
+
+class TestTokenCalibrationIsShared(unittest.TestCase):
+    """ADR-105: 見積りと較正の正本が一つで、壊れた値で負を返さない。
+
+    負のトークン数は上限との比較を必ず通すので、**上限が黙って無効になる**。
+    較正を読ませるのと同時にその道が開くので、頑健な側で揃える。
+    """
+
+    def test_the_canon_exists(self):
+        t = _util.load_core("_tokens")
+        self.assertEqual(t.DEFAULT_CHARS_PER_TOKEN, 4.0)
+        self.assertEqual(t.estimate("abcd"), 1)
+        self.assertEqual(t.estimate("abcde"), 2)
+        self.assertEqual(t.estimate(""), 0)
+
+    def test_calibration_is_honoured(self):
+        t = _util.load_core("_tokens")
+        self.assertEqual(t.chars_per_token({"model_chars_per_token": 2.0}), 2.0)
+        self.assertEqual(t.estimate("a" * 1000, 2.0), 500)
+
+    def test_broken_calibration_falls_back(self):
+        """零・負・非数・真偽値・無限は既定へ。**負のトークン数を返さない。**"""
+        t = _util.load_core("_tokens")
+        for bad in (0, -1, "x", True, False, None, float("inf"), float("nan")):
+            self.assertEqual(
+                t.chars_per_token({"model_chars_per_token": bad}),
+                t.DEFAULT_CHARS_PER_TOKEN, repr(bad))
+            self.assertGreaterEqual(
+                t.estimate("a" * 100, bad), 0,
+                "負のトークン数を返した(上限が黙って無効になる): %r" % (bad,))
+
+    def test_estimate_never_raises(self):
+        t = _util.load_core("_tokens")
+        for bad in (None, 0, [], {}):
+            self.assertEqual(t.estimate("", bad), 0)
+        self.assertEqual(t.estimate(None, 2.0), 0)
+
+    def test_bad_config_shape_falls_back(self):
+        t = _util.load_core("_tokens")
+        for bad in (None, "x", 3, []):
+            self.assertEqual(t.chars_per_token(bad), t.DEFAULT_CHARS_PER_TOKEN)
+
+    def test_the_pack_resolves_the_calibration(self):
+        """パックが較正を読むこと(ADR-105 の主眼)。以前は説明文だけが約束していた。"""
+        cc = _util.load_script("collect-context")
+        root = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        sysdir = os.path.join(root, "_system")
+        os.makedirs(sysdir, exist_ok=True)
+        with open(os.path.join(sysdir, ".context-config.json"), "w",
+                  encoding="utf-8") as fh:
+            fh.write('{"model_chars_per_token": 2.0}')
+        self.assertEqual(cc.load_chars_per_token(root), 2.0,
+                         "パックが較正を読んでいない(較正が注入にだけ効く)")
