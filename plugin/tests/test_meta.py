@@ -599,3 +599,4 @@ class TestNoWallClockInTests(unittest.TestCase):
             "要約の generated_at を埋め込み、時計を固定できる呼び出しを起動している"
             "のに、時計を固定していないクラスがある。日付が進むだけで落ちる"
             "(ADR-094): %s" % "; ".join(offenders))
+

@@ -33,7 +33,7 @@ llm_context: task
 他ドメインが依存してよい境界は、次のとおりである。
 
 - 注入応答: SessionStart に対する Hook の応答 JSON `{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":<文字列>}}`。終了コードは常に 0。Hook とは、Claude Code がツール実行やセッションの節目で呼ぶ外部命令をいう。
-- 二つの別々の上限（C10とは凍結した契約の整合を見る判断項目をいい、これはその一つ）: 注入の `injection_token_cap`（既定 12000）と、パックの `task_pack_token_cap`（任意）。どちらも `_system/.context-config.json` の別キーに置く。トークンとは、モデルが文を区切って数える単位をいう。見積もりは文字数からの近似で、多めに見積もる側に倒す。
+- 二つの別々の上限（C10とは凍結した契約の整合を見る判断項目をいい、これはその一つ）: 注入の `injection_token_cap`（既定 12000）と、パックの `task_pack_token_cap`（任意）。どちらも `_system/.context-config.json` の別キーに置く。**この設定の一枚は `EXT-005` が指紋で見張る**（ADR-096）—— 一枚が上限・追跡の悉皆の様式・走査の適用除外を握っており、静かに書き換わると上限が動き、残高の警告が消え、任意の道が走査から外れる。指紋が動けば監査が warn を出し、打ち直しは人手で行う（打ち直しは差分に現れる）。指紋は中身の当否を保証せず、**変化に人の目が一度入ること**だけを保証する。セッション途中の差し替えは見ない（非目標 第16項。別の問いである）。トークンとは、モデルが文を区切って数える単位をいう。見積もりは文字数からの近似で、多めに見積もる側に倒す。
 - 監査要約の受け渡し: 注入は `${CLAUDE_PROJECT_DIR}/.claude/.cache/last-audit.json`（スキーマ `docs-audit/1`。プラグイン側 cache も後方互換の候補として読む）を読む。読み取りの規則（候補順・`schema` 照合・`root` 照合・世代の照合）は共有コア `_auditcache` が一度だけ定め、注入と鼓動（SPEC-021）が同じ関数を呼ぶ（ADR-053）。統治木を消して同じ場所に作り直したときは、前の世代の要約を世代の照合で捨てる。これは audit（ICD-005）が書いた成果物である。要約は実行可能にする。促しの一行は優先順で一つだけ加える（上限超過の有無に依らない）: 未登録/影文書・体系外 .md（stray_document）・孤児・error は `docs-curate` を、review_by_overrun・adr_not_landed・canonical_conflict・near_duplicate は doc-review を、stale_current は `docs-curate` を名指しする（SPEC-012）。要約が無い・古いときは統治の死活の警告を出す（`[R11]`、SPEC-021 と対）。未選別のセッションメモがあれば選別の義務を保護節で出す（`[R12]`、SPEC-022 と対）。
 - パック様式: `context-pack/1`。`docs`・`uncovered`・`uncovered_reasons`・`boundary_violations`・`trimmed` を含む。
 

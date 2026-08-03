@@ -279,3 +279,86 @@ class SelfApplicationTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ConfigAnchorTest(unittest.TestCase):
+    """ADR-096: 統治の設定が指紋で見張られていること。
+
+    指紋が動けば監査が warn を出すが、**アンカーそのものが消されても監査は何も
+    言わない**(見張りが無くなった状態は、見張りでは分からない)。ここが唯一の
+    歯止めなので、歯止め自身が落ちることを検める。
+    """
+
+    ANCHOR = (
+        "---\n"
+        "id: EXT-9\n"
+        "title: t\n"
+        "type: EXT\n"
+        "domain: context\n"
+        "status: current\n"
+        "owner: o\n"
+        "updated: 2026-08-03\n"
+        "sources: []\n"
+        "---\n\n"
+        "# t\n\n"
+        "## 何に依存しているか\n\n本文。\n\n"
+        "## 期待\n\n"
+        "- 対象: `doctrine_docs/_system/.context-config.json`\n"
+        "- 検査: %s\n"
+        "%s"
+        "\n## 動いたら何が壊れるか\n\n本文。\n"
+    )
+    FP = "- 指紋: sha256:" + "0" * 64 + "\n"
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp(prefix="relcheck-cfg-")
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        _make_repo(self.tmp)
+        self.cfgdir = os.path.join(self.tmp, "doctrine_docs", "_system")
+        os.makedirs(self.cfgdir, exist_ok=True)
+        with open(os.path.join(self.cfgdir, ".context-config.json"),
+                  "w", encoding="utf-8") as f:
+            f.write('{"trace_mode": "exhaustive"}\n')
+        self.extdir = os.path.join(self.tmp, "doctrine_docs", "context", "external")
+        os.makedirs(self.extdir, exist_ok=True)
+
+    def _write_anchor(self, check="hash(内容の指紋)", fingerprint=True):
+        with open(os.path.join(self.extdir, "EXT-9-x.md"), "w",
+                  encoding="utf-8") as f:
+            f.write(self.ANCHOR % (check, self.FP if fingerprint else ""))
+
+    def test_hash_anchor_with_fingerprint_is_clean(self):
+        self._write_anchor()
+        self.assertEqual(rc.check_config_anchor(self.tmp), [])
+
+    def test_missing_anchor_is_violation(self):
+        v = rc.check_config_anchor(self.tmp)
+        self.assertEqual(len(v), 1, v)
+        self.assertIn("EXT アンカーが無い", v[0])
+
+    def test_exists_check_is_violation(self):
+        self._write_anchor(check="exists(存在)")
+        v = rc.check_config_anchor(self.tmp)
+        self.assertTrue(any("hash でない" in x for x in v), v)
+
+    def test_missing_fingerprint_is_violation(self):
+        self._write_anchor(fingerprint=False)
+        v = rc.check_config_anchor(self.tmp)
+        self.assertTrue(any("指紋の行が無い" in x for x in v), v)
+
+    def test_no_config_means_nothing_to_watch(self):
+        """設定が無い木では何も言わない(見張るものが無い)。"""
+        os.remove(os.path.join(self.cfgdir, ".context-config.json"))
+        self.assertEqual(rc.check_config_anchor(self.tmp), [])
+
+    def test_prose_mentioning_hash_does_not_satisfy_the_gate(self):
+        """本文に『hash』の語が在るだけでは通らない。読むのは『検査』の行である。
+
+        最初はこの取り違えで飾りになっていた(実測。散文の「hash にする」で通った)。
+        """
+        self._write_anchor(check="exists(存在)")
+        path = os.path.join(self.extdir, "EXT-9-x.md")
+        with open(path, "a", encoding="utf-8") as f:
+            f.write("\nこちらは hash にする。\n")
+        v = rc.check_config_anchor(self.tmp)
+        self.assertTrue(any("hash でない" in x for x in v), v)
