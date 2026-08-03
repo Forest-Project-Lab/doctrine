@@ -53,20 +53,6 @@ _SESSION_NOTES_NAME = ".session-notes"
 _CODE_NUDGE_MAX_BYTES = 1024 * 1024   # 紐づけ促しで読む一ファイルの上限
 
 
-def _read_stdin_json():
-    try:
-        raw = sys.stdin.read()
-    except Exception:
-        return {}
-    if not raw or not raw.strip():
-        return {}
-    try:
-        obj = json.loads(raw)
-        return obj if isinstance(obj, dict) else {}
-    except Exception:
-        return {}
-
-
 def _doc_path(data, argv):
     ti = data.get("tool_input") or {}
     tr = data.get("tool_response") or {}
@@ -232,7 +218,7 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
     try:
-        data = _read_stdin_json()
+        data = _hookio.read_payload()
         path = _doc_path(data, argv)
         base = os.path.basename(path or "")
         type_code = _typed_doc_type(path)

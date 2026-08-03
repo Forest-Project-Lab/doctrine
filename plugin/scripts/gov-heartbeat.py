@@ -47,18 +47,6 @@ STATE_NAME = _auditcache.STATE_NAME   # 正本は共有コア(ADR-053)
 
 
 
-def _read_stdin_json():
-    try:
-        raw = sys.stdin.read()
-    except Exception:
-        return {}
-    try:
-        obj = json.loads(raw) if raw and raw.strip() else {}
-        return obj if isinstance(obj, dict) else {}
-    except Exception:
-        return {}
-
-
 def _docs_root():
     proj = os.environ.get("CLAUDE_PROJECT_DIR")
     if proj:
@@ -360,7 +348,7 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
     try:
-        data = _read_stdin_json()
+        data = _hookio.read_payload()
         today = None
         for i, a in enumerate(argv):
             if a == "--today" and i + 1 < len(argv):

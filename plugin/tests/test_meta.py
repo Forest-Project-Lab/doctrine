@@ -689,6 +689,8 @@ class TestSharedJudgementsHaveOneCanon(unittest.TestCase):
         # ADR-107: 読み取り。以前は三写しで、一本だけが自前の open で
         # 通常ファイルの門(ADR-075)を迂回していた。
         "_read_text": "_frontmatter.py",
+        # ADR-108: Hook の封筒の読み取り。以前は三写しで、どれも上限を落としていた。
+        "_read_stdin_json": "_hookio.py",
     }
 
     def test_no_copy_of_a_shared_judgement(self):
@@ -971,3 +973,57 @@ class TestReadGateIsInTheCanon(unittest.TestCase):
         self.assertEqual(params["errors"].default, "strict",
                          "既定が厳密でない（寛容が既定になると、落とすべき復号の"
                          "失敗が黙って置き換わる）")
+
+
+class TestHookPayloadIsBounded(unittest.TestCase):
+    """ADR-108: 封筒の読み取りは正本が持ち、上限が全部の Hook に掛かる。
+
+    以前は三本が自前で `sys.stdin.read()` していた —— **上限は正本の判断として
+    在るのに、写しがそれを落としていた**（実測: 9 MB の封筒を三本とも全部読んだ）。
+    """
+
+    HOOKS = ("capture-nudge", "gov-heartbeat", "review-nudge")
+
+    def test_the_canon_bounds_the_read(self):
+        """正本が上限つきで読むことを構造で見る。"""
+        path = os.path.join(_util.SCRIPTS, "_hookio.py")
+        tree = ast.parse(open(path, encoding="utf-8").read(), filename=path)
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name == "read_payload":
+                self.assertTrue(node.args.args or node.args.defaults,
+                                "上限の引数が無い")
+                src = ast.get_source_segment(
+                    open(path, encoding="utf-8").read(), node) or ""
+                self.assertIn("read(limit", src.replace(" ", ""),
+                              "上限を渡さずに読んでいる(無制限)")
+                return
+        self.fail("正本に read_payload が無い")
+
+    def test_the_canon_truncates(self):
+        """振る舞いで見る —— 上限を超えた封筒は解析できず空になる。"""
+        hookio = _util.load_core("_hookio")
+        import io
+        payload = json.dumps({"a": "x" * 100})
+        saved = sys.stdin
+        try:
+            sys.stdin = io.StringIO(payload)
+            self.assertTrue(hookio.read_payload())
+            sys.stdin = io.StringIO(payload)
+            self.assertEqual(hookio.read_payload(limit=10), {})
+        finally:
+            sys.stdin = saved
+
+    def test_hooks_do_not_read_stdin_themselves(self):
+        """呼び手が自前で読まない（上限を落とす道を塞ぐ）。"""
+        offenders = []
+        for name in self.HOOKS:
+            path = os.path.join(_util.SCRIPTS, name + ".py")
+            if not os.path.isfile(path):
+                continue
+            src = open(path, encoding="utf-8").read()
+            if "sys.stdin.read(" in src:
+                offenders.append(name)
+        self.assertEqual(
+            sorted(offenders), [],
+            "封筒を自前で読む Hook が在る(上限が落ちる。ADR-108): %r"
+            % sorted(offenders))

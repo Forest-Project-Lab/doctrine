@@ -16,6 +16,7 @@ llm_context: task
 
 ## 受入基準への対応
 
+- エンベロープの読み取りが共有コア `_hookio.read_payload` に一本化されていること（ADR-108）。**上限が正本に在る**こと（構造）と、**上限を超えた封筒が空になる**こと（振る舞い）。**封筒を自前で読む Hook が無い**こと。**歯止め自身の実効を実測してある**（2026-08-03）: 自前の読み取りへ戻す／正本から上限を外す／写しを一つ作る、の三通りで落ち、いずれも戻すと通った。前後比較も取った —— 9 MB の封筒に文書の道を入れると、変更前は助言が出て（261字）、変更後は出ない（0字）。
 SPEC-019 の受入基準を確認する。
 
 - `hooks.json` が必要なイベント（SessionStart・UserPromptSubmit・PreToolUse・PostToolUse・Stop・PreCompact・SessionEnd。ADR-028）を**すべて持つ**（test_packaging の test_required_events_are_all_wired）。集合の上限は凍らせない —— 事象を増やしても落ちず、減らせば落ちる（ADR-078）。
