@@ -33,6 +33,7 @@ sources: []
 | ADR-069 | ADR | audit | 監査の検査群を枠と検査モジュールへ分割する — 方針と、分割で変えないものの凍結 |
 | ADR-073 | ADR | audit | 体系外の解釈文書はビューと定め、刻印で参照時点を義務づける |
 | ADR-086 | ADR | audit | 期限が唯一の見張りなら、期限は短くする |
+| ADR-097 | ADR | audit | 宣言した出所が実在することを検める。認識の等級は検めない |
 | CHANGE-004 | CHANGE | audit | 体系外の解釈文書をビューと定め、刻印で古びを見えるようにする |
 | IMPACT-004 | IMPACT | audit | ビューと刻印 — 影響の列挙 |
 | IMPL-011 | IMPL | audit | docs-audit.py の実装メモ |

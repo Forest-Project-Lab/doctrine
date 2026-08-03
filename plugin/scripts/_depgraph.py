@@ -454,6 +454,10 @@ def build_graph(root):
             # 題名は必須項(REQUIRED_KEYS_L2)。集めていなかったので問い合わせから
             # 落ちており、読み手(doctrine-lens)が別経路を持つ原因になっていた(ADR-087)。
             "title": _coerce_str(fm.get("title")),
+            # 出所も必須項(確定事実3)。題名と同じく集めていなかったので、宣言した
+            # 道が実在するかを誰も検められなかった(ADR-097)。ADR-087 が名指した
+            # 「必須項が集められてさえいない」欠陥の二件目である。
+            "sources": _frontmatter.as_list(fm.get("sources")),
             "type": _coerce_str(fm.get("type")),
             "domain": _coerce_str(fm.get("domain")),
             "status": _coerce_str(fm.get("status")) or _registry.default_status(

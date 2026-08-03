@@ -313,6 +313,50 @@ class StaleDraftTest(AuditBase):
         self.assertEqual(len(sd), 1)
         self.assertEqual(sd[0]["severity"], "warn")
 
+    def test_existing_source_path_pass(self):
+        """ADR-097: 実在する道は咎めない。"""
+        root = self.build([
+            (_fm("SPEC-1", "SPEC", "billing",
+                 sources=["docs/billing/spec/SPEC-1.md"]), "x"),
+        ])
+        data, _ = self.audit_json(root)
+        self.assertEqual(self.checks_for(data, "source_missing"), [])
+
+    def test_missing_source_path_warns(self):
+        """ADR-097: 実在しない道は warn。"""
+        root = self.build([
+            (_fm("SPEC-1", "SPEC", "billing", sources=["plugin/scripts/nope.py"]), "x"),
+        ])
+        data, _ = self.audit_json(root)
+        sm = self.checks_for(data, "source_missing")
+        self.assertEqual(len(sm), 1, sm)
+        self.assertEqual(sm[0]["severity"], "warn")
+
+    def test_adr_is_not_reported(self):
+        """ADR-097: ADR は対象外。不変なので直せず、咎めても直す道が無い。"""
+        root = self.build([
+            (_fm("ADR-1", "ADR", "billing", sources=["plugin/scripts/nope.py"]),
+             "## 背景\nx\n## 却下した選択肢\ny\n## 決定\nz\n## 帰結\nw\n"),
+        ])
+        data, _ = self.audit_json(root)
+        self.assertEqual(self.checks_for(data, "source_missing"), [])
+
+    def test_url_and_id_and_prose_are_not_reported(self):
+        """ADR-097: URL・文書 id・自由文は対象にしない(形で絞る)。"""
+        root = self.build([
+            (_fm("SPEC-1", "SPEC", "billing",
+                 sources=["https://example.invalid/x.pdf", "ADR-999",
+                          "上位設計書の 4.2 節", "doctrine#159"]), "x"),
+        ])
+        data, _ = self.audit_json(root)
+        self.assertEqual(self.checks_for(data, "source_missing"), [])
+
+    def test_source_missing_is_in_checks_run(self):
+        """黙って消えないこと(R11)。"""
+        root = self.build([(_fm("SPEC-1", "SPEC", "billing"), "x")])
+        data, _ = self.audit_json(root)
+        self.assertIn("source_missing", data["checks_run"])
+
     def test_recent_proposed_pass(self):
         """ADR-095: 最近の proposed は咎めない（proposed であること自体は欠陥でない）。"""
         root = self.build([
@@ -1323,6 +1367,8 @@ def _spec_with_fingerprints(doc_id, fingerprints):
 # 更新する。ここを AUDIT_CHECKS から生成したら凍結の意味が消える。
 EXPECTED_AUDIT_CHECKS = (
     "dead_link", "dep_cycle", "review_by_overrun", "stale_draft",
+    # ADR-097: 宣言した出所の道が実在すること(ADR と投影は除く。直せないものを咎めない)。
+    "source_missing",
     # ADR-095: 不変を accepted から始めたので、下書きのまま置かれたものを見る。
     # proposed は現行でないため、孤児・逆孤児・adr_not_landed からは見えない。
     "stale_proposed", "orphan",

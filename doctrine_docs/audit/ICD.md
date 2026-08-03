@@ -46,6 +46,7 @@ ICD・正本・投影・現行・依存・参照は用語辞書（`_system/gloss
 | review_by_overrun（DECIDED/WATCH の不在も含む） | warn（不在は error） |
 | stale_draft | warn |
 | stale_proposed（proposed のまま放置。受理するか捨てる。ADR-095） | warn |
+| source_missing（宣言した出所の道が実在しない。ADR と投影は除く。ADR-097） | warn |
 | orphan | error |
 | reverse_orphan_req_no_spec / reverse_orphan_spec_no_test | error |
 | canonical_conflict | error |
