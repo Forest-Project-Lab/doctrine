@@ -5,7 +5,7 @@ type: OVERVIEW
 domain: _system
 status: current
 owner: render-projection
-updated: 2026-08-02
+updated: 2026-08-03
 llm_context: always
 sources: []
 ---
@@ -19,7 +19,7 @@ sources: []
 | GLOSSARY-001 | GLOSSARY | _system | 用語辞書の正本 |
 | DECIDED-001 | DECIDED | _system | 横断の確定方針（12事実） |
 | NONGOAL-001 | NONGOAL | _system | 横断のやらないこと（17項） |
-| WATCH-001 | WATCH | _system | 横断の退行監視（10項） |
+| WATCH-001 | WATCH | _system | 横断の退行監視（11項） |
 | REQ-000 | REQ | _system | この体系が解くこと（製品の粒度） |
 | ICD-005 | ICD | audit | audit のインターフェース（全件監査の境界） |
 | REQ-008 | REQ | audit | 最小性の監査（過剰と不足の両側を全件検出） |
@@ -198,6 +198,7 @@ sources: []
 | ADR-080 | ADR | packaging | Hook 設定は固定されない。settings 由来は live reload される前提へ置き換える |
 | ADR-084 | ADR | packaging | 被覆の各行は実効を示す試験を名指す。示せないなら未証と明示する |
 | ADR-085 | ADR | packaging | 試験走行は判定の依り所を刷る。証跡は保存せず、走らせた場が持つ |
+| ADR-094 | ADR | packaging | 試験は実時計を読まない。時計を固定できる呼び出しでは固定を機械が要求する |
 | CHANGE-001 | CHANGE | packaging | 導入済みプラグインの版の遅れを生存性として照合する |
 | CHANGE-002 | CHANGE | packaging | リリースの整合を CI の門で検める — 変更履歴の書き忘れを止める |
 | CHANGE-005 | CHANGE | packaging | 不具合の兆候を記録し、承認を経た issue 報告を促す |

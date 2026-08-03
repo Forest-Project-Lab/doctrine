@@ -124,12 +124,21 @@ class InjectBase(unittest.TestCase):
 
 
 class TestTraceCoverageLine(InjectBase):
-    """勘定の冒頭表示(ADR-058)。追跡を使う体系でだけ、件数の一行を足す。"""
+    """勘定の冒頭表示(ADR-058)。追跡を使う体系でだけ、件数の一行を足す。
+
+    時計は `--today` で固定する。固定しないと、要約の `generated_at` を過去の
+    固定日に置いているので**日が経つだけで鮮度の警告が湧き**、停滞の一行を見る
+    アサートに混ざって落ちる（2026-08-03 に実際に落ちた。試験そのものが時の経過で
+    壊れる形であり、日付を相対に置くか時計を固定するかのどちらかが要る）。
+    """
+
+    FIXED_TODAY = "2026-07-27"
 
     def _summary_obj(self, docs_root, with_coverage, streak=0):
         obj = {
             "schema": "docs-audit/1",
-            "generated_at": "2026-07-27T00:00:00Z", "today": "2026-07-27",
+            "generated_at": self.FIXED_TODAY + "T00:00:00Z",
+            "today": self.FIXED_TODAY,
             "root": docs_root,
             "totals": {"error": 0, "warn": 0, "advisory": 0},
             "counts_by_check": {}, "top_findings": [], "findings": [],
@@ -157,7 +166,8 @@ class TestTraceCoverageLine(InjectBase):
         old = os.environ.get("CLAUDE_PLUGIN_ROOT")
         os.environ["CLAUDE_PLUGIN_ROOT"] = plugin_root
         try:
-            data = self._run_json(docs_root)
+            data = self._run_json(docs_root,
+                                  extra=["--today", self.FIXED_TODAY])
         finally:
             if old is None:
                 os.environ.pop("CLAUDE_PLUGIN_ROOT", None)
@@ -182,7 +192,9 @@ class TestTraceCoverageLine(InjectBase):
 
     def test_fresh_progress_has_no_stagnation_note(self):
         ctx = self._render_with_summary(with_coverage=True, streak=2)
-        self.assertNotIn("動いていない", ctx)
+        # 停滞の一行だけを見る。鮮度の警告(R11)も『動いていない』を含むので、
+        # 部分文字列で見ると別の機能の一行を掴む(ADR-082 と同じ取り違えの形)。
+        self.assertNotIn("回の監査で動いていない", ctx)
 
 
 class TestVersionStamp(InjectBase):
