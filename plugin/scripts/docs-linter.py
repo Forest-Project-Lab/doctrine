@@ -873,7 +873,7 @@ def _run_batch(root):
                 continue
             path = os.path.join(dirpath, fn)
             try:
-                text = _read_text(path)
+                text = _frontmatter.read_text(path)
             except Exception:
                 continue
             findings = [f for f in lint_text(text, path) if f.severity == ERROR]
@@ -942,7 +942,7 @@ def main(argv=None):
         if not os.path.isfile(path):
             return 0
 
-        text = _read_text(path)
+        text = _frontmatter.read_text(path)
         findings = lint_text(text, path)
         response = build_response(path, findings)
         if response is not None:
@@ -965,11 +965,6 @@ def main(argv=None):
         except Exception:
             pass
     return 0
-
-
-def _read_text(path):
-    """Read a file as UTF-8 (utf-8-sig, newline='') — mirrors _frontmatter."""
-    return _frontmatter.read_text(path)
 
 
 if __name__ == "__main__":

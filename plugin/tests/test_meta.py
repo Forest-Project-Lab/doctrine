@@ -686,6 +686,9 @@ class TestSharedJudgementsHaveOneCanon(unittest.TestCase):
         # ADR-105: トークンの見積りと較正の解釈。以前は二写しで、較正が注入にだけ
         # 効き、パックは未較正の見積りで上限を判じていた。
         "estimate_tokens": "_tokens.py",
+        # ADR-107: 読み取り。以前は三写しで、一本だけが自前の open で
+        # 通常ファイルの門(ADR-075)を迂回していた。
+        "_read_text": "_frontmatter.py",
     }
 
     def test_no_copy_of_a_shared_judgement(self):
@@ -940,3 +943,31 @@ class TestRegistryHasNoUnusedCanon(unittest.TestCase):
             sorted(dead), [],
             "登録簿に消費者の無い公開名が在る(古びても誰にも見えない。ADR-106): %r"
             % sorted(dead))
+
+
+class TestReadGateIsInTheCanon(unittest.TestCase):
+    """ADR-107: 読み取りの門は正本が持つ。呼び手が覚えなくてよい形にする。"""
+
+    def test_the_canon_gates_before_opening(self):
+        """正本が門を呼んでいることを構造で見る（振る舞いは測れない）。"""
+        path = os.path.join(_util.SCRIPTS, "_frontmatter.py")
+        tree = ast.parse(open(path, encoding="utf-8").read(), filename=path)
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name == "read_text":
+                calls = {getattr(c.func, "attr", None) or getattr(c.func, "id", None)
+                         for c in ast.walk(node) if isinstance(c, ast.Call)}
+                self.assertIn("ensure_regular", calls,
+                              "正本が門を呼んでいない(ADR-075/ADR-107)")
+                self.assertIn("open", calls, "正本が開いていない")
+                return
+        self.fail("正本に read_text が無い")
+
+    def test_the_canon_takes_a_decoding_policy(self):
+        """復号の方針は引数で表す（別実装として隠れない。ADR-107）。"""
+        fm = _util.load_core("_frontmatter")
+        import inspect
+        params = inspect.signature(fm.read_text).parameters
+        self.assertIn("errors", params, "復号の方針の引数が無い")
+        self.assertEqual(params["errors"].default, "strict",
+                         "既定が厳密でない（寛容が既定になると、落とすべき復号の"
+                         "失敗が黙って置き換わる）")

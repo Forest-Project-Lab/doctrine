@@ -292,10 +292,6 @@ def _parse_loanword_line(line):
     return out
 
 
-def _read_text(path):
-    return _frontmatter.read_text(path)
-
-
 def load_glossary(docs_root):
     """Load the enforced glossary for a target repo.
 
@@ -316,7 +312,7 @@ def load_glossary(docs_root):
         op_path = os.path.join(docs_root, "_system", "glossary.md")
         if os.path.isfile(op_path):
             try:
-                op_text = _read_text(op_path)
+                op_text = _frontmatter.read_text(op_path)
             except (OSError, UnicodeError):
                 op_text = None
                 parse_error = True
@@ -343,7 +339,7 @@ def _load_template_seed():
     degrades to a no-op rather than crashing the hook chain.
     """
     try:
-        text = _read_text(_TEMPLATE_GLOSSARY)
+        text = _frontmatter.read_text(_TEMPLATE_GLOSSARY)
     except (OSError, UnicodeError):
         text = None
     if text is not None:
