@@ -771,6 +771,22 @@ class ProjectionDriftTest(AuditBase):
         pd = self.checks_for(data, "projection_drift")
         self.assertTrue(any(f["refs"] == ["SPEC-9"] for f in pd))
 
+    def test_overview_title_mentioning_old_id_is_not_listed(self):
+        """TC-136: 行の後方(題名セル)の現行でない id は列挙ではない(ADR-113)。
+
+        後継 ADR の題名「(◯◯を置換)」が Overview に写って偽陽性になった実測の凍結。
+        """
+        body = ("描画される。手で編集しない。\n\n"
+                "| SPEC-1 | SPEC | billing | x |\n"
+                "| REQ-1 | REQ | billing | 旧決定（SPEC-9 を置換） |\n")
+        root = self.build([
+            (_fm("OVERVIEW-1", "OVERVIEW", "_system"), body),
+            (_fm("SPEC-1", "SPEC", "billing"), "x"),
+            (_fm("REQ-1", "REQ", "billing"), "x"),
+        ])
+        data, _ = self.audit_json(root)
+        self.assertEqual(self.checks_for(data, "projection_drift"), [])
+
 
 class IcdIndexDriftTest(AuditBase):
     """icd-index.md の投影ドリフト検査(ICD-005)。overview とは別経路。
@@ -804,6 +820,13 @@ class IcdIndexDriftTest(AuditBase):
         self.assertTrue(any("ICD-2" in (f.get("refs") or []) for f in pd),
                         "missing ICD-2 must be reported: %r" % pd)
         self.assertTrue(all(f["severity"] == "error" for f in pd))
+
+    def test_icd_title_mentioning_other_id_is_not_listed(self):
+        """TC-137: 題名セルの中の現行でない ICD id は列挙ではない(ADR-113)。"""
+        body = ("| billing | ICD-1 | 請求の入口 | x | d |\n"
+                "| shipping | ICD-2 | 出荷の入口（ICD-9 を参照） | x | d |\n")
+        data, _ = self.audit_json(self._repo(body))
+        self.assertEqual(self.checks_for(data, "projection_drift"), [])
 
 
 class CtxmapDriftTest(AuditBase):

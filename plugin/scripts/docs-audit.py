@@ -349,6 +349,28 @@ def _body_id_refs(g, node):
     return refs
 
 
+def _projection_listed_ids(g, node):
+    """投影の「列挙された id 集合」— 各行の最初の id だけを数える(ADR-113)。
+
+    列挙とは行を与えられることであり、他の行の題名に名が出ることではない。
+    後継 ADR の題名「(◯◯を置換)」が Overview の題名セルに写り、現行でない文書が
+    「載っている」と誤って咎められた実測がある。一覧形式でも表形式でも行の主は
+    行頭側の id なので、行の後方の id は写り込みとして読み飛ばす。参照検出の
+    共用器(_body_id_refs)は変えない —— あちらは自由文の id も参照として数える。
+    """
+    body = node.get("_body")
+    if body is None:
+        body = _read_body(os.path.join(g.root, node["path"]))
+    refs = set()
+    for line in body.splitlines():
+        for m in _ID_TOKEN_RE.finditer(line):
+            tok = m.group(1)
+            if _registry.type_of(tok) is not None:
+                refs.add(tok)
+                break
+    return refs
+
+
 def _read_body(path):
     try:
         _fm, body, _errs = _frontmatter.parse_file(path)
@@ -1054,7 +1076,7 @@ def _check_projection_drift(g):
 
     overview_node = _find_projection_node(g, "OVERVIEW", "overview.md")
     if overview_node is not None:
-        listed = _body_id_refs(g, overview_node)
+        listed = _projection_listed_ids(g, overview_node)
         missing = expected_overview - listed
         extra = listed - expected_overview - {overview_node["id"]}
         for m in sorted(missing):
@@ -1072,7 +1094,7 @@ def _check_projection_drift(g):
 
     icd_index_node = _find_projection_node(g, "OVERVIEW", "icd-index.md")
     if icd_index_node is not None:
-        listed = {i for i in _body_id_refs(g, icd_index_node)
+        listed = {i for i in _projection_listed_ids(g, icd_index_node)
                   if _registry.type_of(i) == "ICD"}
         missing = expected_icds - listed
         extra = listed - expected_icds

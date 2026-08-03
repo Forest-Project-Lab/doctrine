@@ -19,7 +19,7 @@ sources: []
 | GLOSSARY-001 | GLOSSARY | _system | 用語辞書の正本 |
 | DECIDED-001 | DECIDED | _system | 横断の確定方針（12事実） |
 | NONGOAL-001 | NONGOAL | _system | 横断のやらないこと（18項） |
-| WATCH-001 | WATCH | _system | 横断の退行監視（11項） |
+| WATCH-001 | WATCH | _system | 横断の退行監視（12項） |
 | REQ-000 | REQ | _system | この体系が解くこと（製品の粒度） |
 | ICD-005 | ICD | audit | audit のインターフェース（全件監査の境界） |
 | REQ-008 | REQ | audit | 最小性の監査（過剰と不足の両側を全件検出） |
@@ -35,6 +35,7 @@ sources: []
 | ADR-086 | ADR | audit | 期限が唯一の見張りなら、期限は短くする |
 | ADR-097 | ADR | audit | 宣言した出所が実在することを検める。認識の等級は検めない |
 | ADR-100 | ADR | audit | 壊れた日付をその名で咎める。鮮度の検査に古びと言わせない |
+| ADR-113 | ADR | audit | 投影の列挙は各行の最初の id だけから採る |
 | CHANGE-004 | CHANGE | audit | 体系外の解釈文書をビューと定め、刻印で古びを見えるようにする |
 | IMPACT-004 | IMPACT | audit | ビューと刻印 — 影響の列挙 |
 | IMPL-011 | IMPL | audit | docs-audit.py の実装メモ |
