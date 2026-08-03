@@ -68,6 +68,7 @@ per-turn（毎ターン）のHookは単一文書だけを点検する。全件�
 | `_depgraph.py` | 共有 | 依存グラフの中核（`dep-graph.py`・監査が読み込む） |
 | `_termcheck.py` | 共有 | 用語チェックの中核（辞書の解析・照合。`term-check.py`・リンタが読み込む） |
 | `_intake.py` | 共有 | 分類の記録（`.md-intake`）の読み取りと刻印の解析（監査・リンタ・整合点検・リリースの門が共有） |
+| `_hookio.py` | 共有 | フック境界の入出力（読み取り・判定の書き出し。すべてのフックが共有） |
 | `_auditcache.py` | 共有 | 監査要約・発火の印・エラージャーナルの読み書き（注入・鼓動・監査・ガード・リンタが共有） |
 | `_audit_stray.py` | 共有 | 体系外 .md 系の検査（`stray_document`・`view_stale`。監査が読み込む） |
 | `_audit_trace.py` | 共有 | 追跡系の検査と勘定（監査が読み込む） |
@@ -132,4 +133,4 @@ per-turn（毎ターン）のHookは単一文書だけを点検する。全件�
 
 「100%の予防」は構造上できない。本プラグインの効果は、適切に運用された場合に、特定の失敗類型を検出・早期発見できることに限る。
 
-<!-- doctrine:view src=doctrine as-of=0.8.0 date=2026-07-29 refs=ICD-005,SPEC-016,SPEC-019,SPEC-020 -->
+<!-- doctrine:view src=doctrine as-of=0.9.0 date=2026-08-03 refs=ICD-005,SPEC-016,SPEC-019,SPEC-020 -->
