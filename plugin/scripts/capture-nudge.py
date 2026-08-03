@@ -85,7 +85,7 @@ def _sweep_stale(flag_dir):
 def main(argv=None):
     _hookio.harden_stdout()
     try:
-        data = _hookio.read_payload()
+        data = _hookio.read_payload(component="capture-nudge")
         # 歯止め1: 既にこの Stop ナッジ経由で続行しているなら、二度は止めない。
         if data.get("stop_hook_active"):
             return 0

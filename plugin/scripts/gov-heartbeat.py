@@ -348,7 +348,7 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
     try:
-        data = _hookio.read_payload()
+        data = _hookio.read_payload(component="gov-heartbeat")
         today = None
         for i, a in enumerate(argv):
             if a == "--today" and i + 1 < len(argv):

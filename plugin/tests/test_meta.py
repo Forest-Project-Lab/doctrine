@@ -1013,6 +1013,61 @@ class TestHookPayloadIsBounded(unittest.TestCase):
         finally:
             sys.stdin = saved
 
+    def test_truncation_is_announced(self):
+        """ADR-109: 切り詰めたら黙らない。標準エラーへ一行で告げる。
+
+        以前は完全に黙っていた（実測: 9 MB の封筒で stdout も stderr も空）。
+        使う人から見れば、Hook が理由もなく助言を出さなくなる。
+        """
+        hookio = _util.load_core("_hookio")
+        import contextlib
+        import io
+        payload = json.dumps({"a": "x" * 100})
+        saved = sys.stdin
+        try:
+            sys.stdin = io.StringIO(payload)
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err):
+                self.assertEqual(hookio.read_payload(limit=10, component="試し"), {})
+            self.assertIn("上限", err.getvalue(), "切り詰めを告げていない")
+            self.assertIn("試し", err.getvalue(), "部品の名を告げていない")
+        finally:
+            sys.stdin = saved
+
+    def test_no_announcement_when_nothing_was_truncated(self):
+        """上限ちょうどでも、残りが無ければ告げない（偽の警告を出さない）。"""
+        hookio = _util.load_core("_hookio")
+        import contextlib
+        import io
+        saved = sys.stdin
+        try:
+            sys.stdin = io.StringIO("x" * 10)
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err):
+                hookio.read_payload(limit=10, component="試し")
+            self.assertEqual(err.getvalue(), "",
+                             "切り詰めていないのに告げている")
+        finally:
+            sys.stdin = saved
+
+    def test_truncation_is_not_recorded_as_a_crash(self):
+        """ADR-109: 不具合のジャーナルへは記録しない。
+
+        あの記録は「部品が実行時に倒れた」ためのもの（ADR-074）。切り詰めは倒れ
+        ではない —— **名が事実を語らなくなる。**
+        """
+        path = os.path.join(_util.SCRIPTS, "_hookio.py")
+        tree = ast.parse(open(path, encoding="utf-8").read(), filename=path)
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name == "_announce_truncated":
+                names = {getattr(c.func, "attr", None) or getattr(c.func, "id", None)
+                         for c in ast.walk(node) if isinstance(c, ast.Call)}
+                self.assertNotIn("_record", names,
+                                 "切り詰めを倒れとして記録している")
+                self.assertNotIn("record_error", names)
+                return
+        self.fail("告知の関数が無い")
+
     def test_hooks_do_not_read_stdin_themselves(self):
         """呼び手が自前で読まない（上限を落とす道を塞ぐ）。"""
         offenders = []

@@ -1034,7 +1034,7 @@ def main(argv=None):
     payload = {}
     try:
         if not sys.stdin.isatty():
-            payload = _hookio.read_payload()
+            payload = _hookio.read_payload(component="inject-contract")
     except (OSError, ValueError):
         payload = {}
     source = _frontmatter.coerce_str(payload.get("source")) if isinstance(payload, dict) else ""
