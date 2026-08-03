@@ -6,14 +6,14 @@ domain: _system
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-29
+updated: 2026-08-03
 sources: [spec/doctrine.ja.md]
 review_by: 2026-09-28
 canonical_for: [cross-cutting-frozen-decisions]
 llm_context: always
 ---
 
-# 横断の確定方針（11事実）
+# 横断の確定方針（12事実）
 
 本文書は、体系全体に効く確定事実の正本である。各事実は一文一義で書き、根拠ADR（ADR: 設計判断を一件ずつ記録する文書）のIDを示す。決定を変えるときは、根拠ADRを置換してから本表を更新する。各根拠はあくまで参照であって、依存ではない。
 

@@ -11,3 +11,6 @@
 
 # Python の実行時生成物(リポジトリ直下 scripts/ 用。plugin/ は plugin/.gitignore が持つ)
 __pycache__/
+
+# 規範文書の複製(再配布条件を確認するまでコミットしない。ADR-111・issue #204 台帳 v2-11′)
+Reference_material/

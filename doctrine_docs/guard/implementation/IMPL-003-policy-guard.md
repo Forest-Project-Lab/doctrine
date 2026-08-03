@@ -6,7 +6,7 @@ domain: guard
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-29
+updated: 2026-08-03
 sources: [plugin/scripts/policy-guard.py]
 depends_on: [SPEC-003]
 llm_context: task

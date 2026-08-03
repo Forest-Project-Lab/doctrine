@@ -84,7 +84,7 @@ sources: []
 | TEST-013 | TEST | context | collect-context のテスト計画 |
 | TEST-014 | TEST | context | render-projection のテスト計画 |
 | EXT-005 | EXT | context | 統治の設定（_system/.context-config.json）への依存 |
-| ICD-002 | ICD | graph | graph のインターフェース（依存グラフ問い合わせ契約） |
+| ICD-002 | ICD | graph | graph のインターフェース（依存グラフと追跡索引の問い合わせ契約） |
 | REQ-002 | REQ | graph | 追跡性（要求→仕様→実装→テスト→決定をたどる） |
 | REQ-003 | REQ | graph | 変更耐性（影響集合を依存から列挙する） |
 | SPEC-006 | SPEC | graph | 依存グラフの契約（forward/reverse/classify/reverse-orphans） |
@@ -107,8 +107,11 @@ sources: []
 | ADR-087 | ADR | graph | 問い合わせの節点は隠さない。組み立てた項をそのまま返す |
 | ADR-088 | ADR | graph | 両端から書かれた同じ事実に印を付ける。畳み方を読み手に決めさせない |
 | ADR-089 | ADR | graph | 無視される物は走査しない。その判定は git に訊く |
+| ADR-111 | ADR | graph | 読み口は宣言してから読ませる — System View 構想にはスキーマ不変で応える |
 | CHANGE-003 | CHANGE | graph | 悉皆トレース — 印なしゼロを選べる体系にする |
+| CHANGE-007 | CHANGE | graph | 追跡索引の読み口を ICD へ宣言する（issue |
 | IMPACT-003 | IMPACT | graph | 悉皆トレース — 影響の列挙 |
+| IMPACT-007 | IMPACT | graph | 追跡索引の読み口の宣言 — 影響の列挙 |
 | IMPL-006 | IMPL | graph | `_depgraph.py`＋`dep-graph.py` の実装メモ |
 | IMPL-021 | IMPL | graph | `_tracescan.py`（コード注釈の走査）の実装メモ |
 | TEST-006 | TEST | graph | 依存グラフのテスト計画 |

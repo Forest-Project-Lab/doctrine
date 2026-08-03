@@ -6,7 +6,7 @@ domain: packaging
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-29
+updated: 2026-08-03
 sources: [plugin/hooks/hooks.json, plugin/scripts/scaffold.py]
 depends_on: [SPEC-019, SPEC-020]
 llm_context: task

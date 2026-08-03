@@ -6,7 +6,7 @@ domain: lint
 status: current
 owner: doctrine-maintainers
 created: 2026-07-26
-updated: 2026-07-28
+updated: 2026-08-03
 sources: [plugin/tests/test_review_nudge.py, plugin/tests/test_liveness_capture.py]
 depends_on: [SPEC-024]
 llm_context: task
