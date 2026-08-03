@@ -188,10 +188,6 @@ class _Doc(object):
         self.relpath = ""
 
 
-def _coerce_str(value):
-    if value is None or isinstance(value, bool):
-        return ""
-    return value if isinstance(value, str) else str(value)
 
 
 def _first_fact_line(body):
@@ -296,7 +292,7 @@ def _load_corpus(docs_root, warn):
         except (OSError, UnicodeError) as exc:
             warn("skip(unreadable): %s (%r)" % (relpath, exc))
             continue
-        doc_id = _coerce_str(fm.get("id")).strip()
+        doc_id = _frontmatter.coerce_str(fm.get("id")).strip()
         if not doc_id:
             # frontmatter が無い/id が無い → 飛ばす。
             continue
@@ -313,17 +309,17 @@ def _load_corpus(docs_root, warn):
 
         d = _Doc()
         d.id = _frontmatter.sanitize_inline(doc_id, 60)
-        d.type = _coerce_str(fm.get("type")).strip() or (_registry.type_of(doc_id) or "")
-        d.domain = _coerce_str(fm.get("domain")).strip()
-        d.status = (_coerce_str(fm.get("status")).strip()
+        d.type = _frontmatter.coerce_str(fm.get("type")).strip() or (_registry.type_of(doc_id) or "")
+        d.domain = _frontmatter.coerce_str(fm.get("domain")).strip()
+        d.status = (_frontmatter.coerce_str(fm.get("status")).strip()
                     or _registry.default_status(d.type) or "")
         # title/headline は注入境界へ逐語で届くため、読み込み時に一律サニタイズ
         # する(ADR-040/#96: 改行によるセクション捏造・巨大値による上限回避を断つ)。
         d.title = _frontmatter.sanitize_inline(fm.get("title"))
-        d.updated = _coerce_str(fm.get("updated")).strip()
+        d.updated = _frontmatter.coerce_str(fm.get("updated")).strip()
         d.review_by = _frontmatter.sanitize_inline(fm.get("review_by"), 40)
         d.superseded_by = _frontmatter.sanitize_inline(fm.get("superseded_by"), 40)
-        d.llm_context = _coerce_str(fm.get("llm_context")).strip()
+        d.llm_context = _frontmatter.coerce_str(fm.get("llm_context")).strip()
         d.relpath = relpath
         d.headline = _frontmatter.sanitize_inline(_first_fact_line(body))
         # 確定事実・非目標・退行監視は、本文の要点行を運ぶ(ADR-043、#88)。
@@ -694,7 +690,7 @@ def _priority_headlines(docs, config):
     chosen = []
     if isinstance(pins, list) and pins:
         for pid in pins:
-            d = by_id.get(_coerce_str(pid).strip())
+            d = by_id.get(_frontmatter.coerce_str(pid).strip())
             if d is not None and _effective_ctx(d) != "never":
                 chosen.append(d)
     if not chosen:
@@ -1060,7 +1056,7 @@ def main(argv=None):
             payload = _hookio.read_payload()
     except (OSError, ValueError):
         payload = {}
-    source = _coerce_str(payload.get("source")) if isinstance(payload, dict) else ""
+    source = _frontmatter.coerce_str(payload.get("source")) if isinstance(payload, dict) else ""
 
     try:
         # 圧縮の判定は、発火の印を上書きする**前**に取る(ADR-077)。前回の注入より

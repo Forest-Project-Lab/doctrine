@@ -543,6 +543,100 @@ class TestImmutability(GuardTestBase):
         decision, _ = self._edit(path, "古い下書き。", "改ざん。")
         self.assertEqual(decision, "deny")
 
+    def _write_raw(self, relpath, text):
+        root = self._repo({})
+        os.makedirs(os.path.join(root, "docs", "_system"), exist_ok=True)
+        path = os.path.join(root, relpath)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(text)
+        return path
+
+    _RAW = ("---\nid: %s\ntitle: t\ntype: %s\ndomain: billing\n"
+            "status: %s\nowner: o\nupdated: 2026-06-01\nsources: []\n"
+            "---\n\n本文。\n")
+
+    def test_list_valued_type_is_denied(self):
+        """ADR-102: 型を読めないなら不変を判じられない。**沈黙して開かない。**
+
+        実測(2026-08-03): `type: [ADR]` で受理済み ADR の本文が書き換えられた。
+        """
+        path = self._write_raw("docs/billing/decisions/ADR-07-x.md",
+                               self._RAW % ("ADR-07", "[ADR]", "accepted"))
+        decision, reason = self._edit(path, "本文。", "改ざん。")
+        self.assertEqual(decision, "deny")
+        self.assertIn("読めない", reason)
+
+    def test_list_valued_status_is_denied(self):
+        """ADR-102: 位置づけを読めないなら同じ。倉庫の外のアーカイブが開いていた。"""
+        path = self._write_raw("docs/billing/spec/SPEC-9-x.md",
+                               self._RAW % ("SPEC-9", "SPEC", "[archived]"))
+        decision, reason = self._edit(path, "本文。", "改ざん。")
+        self.assertEqual(decision, "deny")
+        self.assertIn("読めない", reason)
+
+    def test_plain_values_still_pass(self):
+        """緩めていないこと。素の現行文書は従来どおり通る。"""
+        path = self._write_raw("docs/billing/spec/SPEC-9-x.md",
+                               self._RAW % ("SPEC-9", "SPEC", "current"))
+        decision, _ = self._edit(path, "本文。", "改。")
+        self.assertEqual(decision, "allow")
+
+    def test_absent_type_is_not_denied(self):
+        """『無い』と『読めない』を分ける。型が無いファイルは止めない。"""
+        path = self._write_raw(
+            "docs/billing/notes.md",
+            "---\ntitle: t\nowner: o\n---\n\n本文。\n")
+        decision, _ = self._edit(path, "本文。", "改。")
+        self.assertEqual(decision, "allow")
+
+    def _treeless_edit(self, text):
+        """統治木がどこにも無い土地での編集(ADR-103)。
+
+        cwd も木の無い土地に固定する —— 渡さないと、試験の走る doctrine リポジトリの
+        木を拾ってしまう(既存の TestTreelessProjectBoundary と同じ作法)。
+        """
+        root = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        path = os.path.join(root, "vault", "note.md")
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(text)
+        tin = {"file_path": path, "old_string": "本文。", "new_string": "改。"}
+        out, _code = _util.invoke(
+            "policy-guard",
+            stdin_obj=_util.hook_stdin("PreToolUse", "Edit", tin, cwd=root))
+        return _pre(json.loads(out))
+
+    def test_treeless_adr_note_is_allowed(self):
+        """ADR-103: 木がどこにも無い土地の `type: ADR` なメモを裁かない。
+
+        実測(2026-08-03): ADR-036 は「不変性ガードは元から無影響」と書いていたが、
+        事実ではなく、他体系のメモが編集できなかった。
+        """
+        decision, _ = self._treeless_edit(self._RAW % ("ADR-07", "ADR", "accepted"))
+        self.assertEqual(decision, "allow")
+
+    def test_treeless_archived_note_is_allowed(self):
+        decision, _ = self._treeless_edit(self._RAW % ("X-1", "ADR", "archived"))
+        self.assertEqual(decision, "allow")
+
+    def test_treeless_unreadable_type_is_allowed(self):
+        """読めない値の拒否(ADR-102)も同じ境界に揃う。"""
+        decision, _ = self._treeless_edit(self._RAW % ("ADR-07", "[ADR]", "accepted"))
+        self.assertEqual(decision, "allow")
+
+    def test_stray_adr_is_still_denied_when_a_tree_exists(self):
+        """緩めていないこと。木が在れば、木の外の逸れた ADR も従来どおり守る。"""
+        root = self._repo({})
+        os.makedirs(os.path.join(root, "docs", "_system"), exist_ok=True)
+        path = os.path.join(root, "notes", "ADR-07-x.md")
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(self._RAW % ("ADR-07", "ADR", "accepted"))
+        decision, _ = self._edit(path, "本文。", "改。")
+        self.assertEqual(decision, "deny")
+
     def test_tc077_sub_new_adr_via_write_allowed(self):
         """TC-077 sub: creating a NEW ADR via Write (no file on disk) -> allow."""
         root = self._repo({})

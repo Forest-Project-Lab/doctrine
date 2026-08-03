@@ -120,6 +120,8 @@ sources: []
 | ADR-044 | ADR | guard | 不変の ADR に誤りを見つけたときの正規の直し方 |
 | ADR-076 | ADR | guard | ICD 依存の境界は Edit・MultiEdit でも書き込む前に判ずる |
 | ADR-095 | ADR | guard | ADR の不変は accepted から始める。proposed は下書きとして直せる |
+| ADR-102 | ADR | guard | 型と位置づけ（`status`）を読めないとき、ガードは沈黙して開かない |
+| ADR-103 | ADR | guard | 不変ガードも統治木の無い土地では発火しない |
 | IMPL-003 | IMPL | guard | `policy-guard.py` の実装メモ |
 | TEST-003 | TEST | guard | 三ガードの受入試験 |
 | ICD-004 | ICD | lint | lint のインターフェース（リンタと用語チェッカーの公開契約） |
@@ -168,6 +170,7 @@ sources: []
 | ADR-092 | ADR | model | ドメインの種類は語彙だけを正本に持つ。投資の判断は決定と非目標が持ち続ける |
 | ADR-093 | ADR | model | 位置づけ（`status`）の正本は平文のフロントマターに留める。台帳から導出しない |
 | ADR-099 | ADR | model | 日付の解釈を共有コアに一度だけ置く。写しの食い違いを消す |
+| ADR-101 | ADR | model | スカラへの正規化を共有コアに一度だけ置く。入れ物は空にする |
 | IMPL-001 | IMPL | model | `_registry.py` の実装メモ |
 | IMPL-002 | IMPL | model | `_frontmatter.py` の実装メモ |
 | TEST-001 | TEST | model | 登録簿契約のテスト計画 |
