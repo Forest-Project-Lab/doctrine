@@ -36,6 +36,7 @@ sys.dont_write_bytecode = True
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import _depgraph
+import _config
 import _frontmatter
 import _registry
 
@@ -56,28 +57,16 @@ def estimate_tokens(text, chars_per_token=4.0):
 
 # --- 設定(二つの上限は別キー, C10) ----------------------------------------
 
-def _config_path(docs_root):
-    return os.path.join(docs_root, "_system", ".context-config.json")
-
-
 def load_task_pack_cap(docs_root, override):
     """task_pack_token_cap を解決する。injection_token_cap とは別キー(C10)。
 
-    解決順: --max-tokens(override) → <docs-root>/_system/.context-config.json の
-    task_pack_token_cap → None(上限なし)。injection_token_cap は読まない。
+    解決順: --max-tokens(override) → 設定の task_pack_token_cap → None(上限なし)。
+    injection_token_cap は読まない。**読み取りは共有コアが正本**(ADR-104) ——
+    道の組み立ても符号化も自前に持たない。
     """
     if override is not None:
         return override
-    path = _config_path(docs_root)
-    if not os.path.isfile(path):
-        return None
-    try:
-        with open(path, "r", encoding="utf-8-sig") as fh:
-            cfg = json.load(fh)
-    except (OSError, ValueError):
-        return None
-    if not isinstance(cfg, dict):
-        return None
+    cfg = _config.load(docs_root)
     cap = cfg.get("task_pack_token_cap")
     if isinstance(cap, bool):
         return None

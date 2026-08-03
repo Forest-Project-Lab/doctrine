@@ -30,6 +30,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import _hookio
 import _auditcache
+import _config
 import _frontmatter
 import _registry
 
@@ -134,17 +135,6 @@ def _resolve_docs_root(explicit):
     return _registry.walkup_docs_root(os.getcwd())
 
 
-def _load_config(docs_root, config_path):
-    """設定 JSON を読む。既定は <docs-root>/_system/.context-config.json。
-
-    キー: injection_token_cap(int), model_chars_per_token(float),
-    head_tail_priority([id...])。読めなければ空 dict。決して例外を投げない。
-    """
-    path = config_path
-    if not path and docs_root:
-        path = os.path.join(docs_root, "_system", ".context-config.json")
-    if not path or not os.path.isfile(path):
-        return {}
     try:
         with open(path, "r", encoding="utf-8-sig") as fh:
             data = json.load(fh)
@@ -1074,7 +1064,7 @@ def main(argv=None):
         docs_root = _resolve_docs_root(opts["docs_root"])
         had_docs_root = bool(docs_root) and os.path.isdir(docs_root)
 
-        config = _load_config(docs_root, opts["config"])
+        config = _config.load(docs_root, opts["config"])
 
         # 上限: --cap > config.injection_token_cap > 既定 12000。
         cap = opts["cap"]
