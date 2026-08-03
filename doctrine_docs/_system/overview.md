@@ -138,6 +138,7 @@ sources: []
 | ADR-082 | ADR | lint | 門は語の途中で切れる一致で咎めない。雛形の語彙と語を変える接尾を除く |
 | ADR-083 | ADR | lint | 助言の行番号はファイルの行番号とし、換算を共有コアの出口に置く |
 | ADR-090 | ADR | lint | 雛形が定める節を検める。全件が守っていない節は雛形を実態へ合わせる |
+| ADR-098 | ADR | lint | 雛形の指示文が残ったフロントマターを咎める。判定は形で行い、雛形を読まない |
 | IMPL-007 | IMPL | lint | `docs-linter.py` の実装メモ |
 | IMPL-008 | IMPL | lint | `_termcheck.py` の実装メモ |
 | IMPL-009 | IMPL | lint | `term-check.py` の実装メモ |

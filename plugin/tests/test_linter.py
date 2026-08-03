@@ -526,6 +526,46 @@ class LlmContextTest(_Base):
                 self.assertIn("[WARN]", line)
 
 
+class PlaceholderTest(_Base):
+    """ADR-098: 雛形の指示文が残ったフロントマターを咎める。"""
+
+    def _spec_with(self, **extra):
+        self._write("docs/billing/REQ-2-x.md", _req_fm(), "本文。\n")
+        fm = _valid_spec_fm()
+        fm.update(extra)
+        return self._write("docs/billing/spec/SPEC-014-x.md", fm, _SPEC_BODY_4)
+
+    def test_clean_frontmatter_is_silent(self):
+        codes, _ = self._codes(self._spec_with())
+        self.assertNotIn("PLACEHOLDER_VALUE", codes)
+
+    def test_owner_placeholder_is_error(self):
+        out, _ = self._lint(self._spec_with(owner="<個人名>"))
+        ctx = json.loads(out)["hookSpecificOutput"]["additionalContext"]
+        self.assertIn("PLACEHOLDER_VALUE", ctx)
+        for line in ctx.splitlines():
+            if "PLACEHOLDER_VALUE" in line:
+                self.assertIn("[ERROR]", line)
+
+    def test_partial_value_is_caught(self):
+        """雛形は `id: SPEC-<連番>` のように値の一部へ置く。"""
+        codes, _ = self._codes(self._spec_with(title="SPEC-<連番> の話"))
+        self.assertIn("PLACEHOLDER_VALUE", codes)
+
+    def test_list_element_is_caught(self):
+        codes, _ = self._codes(self._spec_with(sources=["<出所URL/会話ID>"]))
+        self.assertIn("PLACEHOLDER_VALUE", codes)
+
+    def test_body_angle_brackets_are_not_reported(self):
+        """本文の山括弧は咎めない(`<svg>`・置き場所の記法・id の書式が正当に出る)。"""
+        self._write("docs/billing/REQ-2-x.md", _req_fm(), "本文。\n")
+        body = (_SPEC_BODY_4
+                + "\n置き場所は <domain>/ とし、id は <TYPE>-<NNN> の形にする。\n")
+        p = self._write("docs/billing/spec/SPEC-014-x.md", _valid_spec_fm(), body)
+        codes, _ = self._codes(p)
+        self.assertNotIn("PLACEHOLDER_VALUE", codes)
+
+
 class SubdomainTest(_Base):
     """ADR-092: ドメインの種類の語彙を検める。省略は未分類で咎めない。"""
 

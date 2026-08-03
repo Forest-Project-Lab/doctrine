@@ -15,6 +15,7 @@ component:
   - seeded DECIDED carries a non-empty review_by (created + 90d)
   - seeded GLOSSARY carries the §1 approved-term + calque tables
 """
+import json
 import os
 import sys
 import shutil
@@ -106,14 +107,20 @@ class TestCreatesMinimalSet(ScaffoldBase):
         text = _util.read(self.sysfile("overview.md"))
         self.assertIn("描画される。手で編集しない。", text)
 
-    def test_overview_is_derived_and_fresh_tree_audits_green(self):
-        """初期化直後のコーパスは自分の監査を素通しで通る(green out of the box).
+    def test_overview_is_derived_and_fresh_tree_reports_only_placeholders(self):
+        """初期化直後のコーパスは、**人が埋める箇所だけ**を名指しして赤い(ADR-098)。
 
-        Regression: scaffold used to leave the overview stub with an empty
-        table, so a brand-new user's very first SessionEnd audit reported
-        projection_drift error×3 and the next SessionStart demanded
-        docs-curate. The seeded overview must list the seeded canonical docs
-        and match render-projection's own derivation exactly."""
+        以前は「素通しで緑」を凍結していた。**その緑は偽りだった** —— 用語辞書の
+        正本が `owner: <記入>` のまま緑で通り、呼び手の木では初期化から今日まで
+        誰も気づかなかった(doctrine#182)。埋まっていない正本を健全と呼ばない。
+
+        いま凍結するのは「緑」ではなく「**指示文以外の所見が出ないこと**」である
+        —— 投影ドリフト・孤児・逆孤児のような、道具の側の不備は一件も出ない。
+
+        Regression(元の観点は残す): scaffold used to leave the overview stub with
+        an empty table, so a brand-new user's very first SessionEnd audit
+        reported projection_drift error×3. The seeded overview must list the
+        seeded canonical docs and match render-projection's own derivation."""
         out, code = self.run_scaffold()
         self.assertEqual(code, 0, out)
         text = _util.read(self.sysfile("overview.md"))
@@ -121,11 +128,21 @@ class TestCreatesMinimalSet(ScaffoldBase):
             self.assertIn(doc_id, text,
                           "seeded overview must list %s" % doc_id)
         docs_root = os.path.join(self.root, "doctrine_docs")
-        audit_out, audit_code = _util.invoke(
+        audit_out, _audit_code = _util.invoke(
             "docs-audit", argv=["--root", docs_root, "--today", TODAY,
-                                "--fail-on", "error"])
-        self.assertEqual(audit_code, 0, audit_out)
-        self.assertIn("error=0 warn=0 advisory=0", audit_out)
+                                "--json", "--fail-on", "never"])
+        data = json.loads(audit_out)
+        others = sorted(set(data["counts_by_check"]) - {"template_placeholder"})
+        self.assertEqual(
+            others, [],
+            "初期化したての木に、人が埋める箇所以外の所見が出ている: %s" % others)
+        self.assertTrue(
+            data["counts_by_check"].get("template_placeholder"),
+            "指示文の所見が一件も出ない。埋めるべき箇所を名指ししていない(ADR-098)")
+        for finding in data["findings"]:
+            self.assertTrue(
+                finding["path"].startswith("_system/"),
+                "埋める箇所は _system の正本に限るはず: %s" % finding["path"])
         check_out, check_code = _util.invoke(
             "render-projection",
             argv=["overview", "--docs-root", docs_root, "--check"])

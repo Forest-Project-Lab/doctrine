@@ -22,6 +22,7 @@ SPEC-011 の検査群について、それぞれ pass と fail の両側を確�
 - dead_link: すべての参照が解決すれば pass、解決先のない `depends_on` があれば fail。
 - review_by_overrun: `review_by` が未来日なら pass、期限を過ぎていれば fail（DECIDED と WATCH を含む）。DECIDED に `review_by` が無い場合は error。
 - stale_draft: draft が最近のものなら pass、古ければ fail。
+- template_placeholder（ADR-098）: フロントマターの項に指示文が残っていれば error、無ければ無音。現行でない文書も対象。走った検査の一覧に載ること。**実物の形で確かめてある**（2026-08-03）: 報告と同じ木（用語辞書の正本に `owner: <記入>`）を作ると `GLOSSARY-001` を名指しで挙げた。
 - source_missing（ADR-097）: 実在する道なら pass、実在しない道は warn。**ADR と投影は対象外**（直せないものを咎めない）。URL・文書 id・自由文は対象外。走った検査の一覧に載ること。**歯止め自身の実効を実測してある**（2026-08-03）: 実物の木の TEST 文書へ実在しない道を入れると warn が出て、戻すと消えた。**この検査が無いあいだに 6 件壊れていた**（`RESEARCH-001` が `archive/` へ退避、`ADR-047` が改名。六本とも ADR なので、この検査では直らない）。
 - stale_proposed（ADR-095）: `proposed` が最近のものなら pass、放置されていれば warn。**`stale_draft` と混ざらないこと**（`proposed` は draft ではない）。走った検査の一覧（`checks_run`）に載ること（黙って消えない。`[R11]`）。**歯止め自身の実効を実測してある**（2026-08-03）: 検査の呼び出しを外すと落ち、戻すと通った。
 - orphan: 依存されていれば pass、三条件すべてを満たせば fail。陳腐化していなければ孤児としない。ICD・投影・always は孤児としない。再現可能かどうかで判定が分かれることも確認する。
