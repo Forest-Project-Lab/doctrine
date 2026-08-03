@@ -853,17 +853,48 @@ def _resolve_tree(root):
     return _registry.locate_docs_root(root)
 
 
+_BATCH_USAGE = ("docs-linter.py --batch [ROOT]\n"
+                "  ROOT は統治木、またはそれを含むプロジェクトの場所(既定: .)\n")
+
+
+def _parse_batch_args(rest):
+    """--batch の後ろを (root, error) に解く。旗を場所として飲まない(ADR-110)。
+
+    兄弟の門(全件監査・追跡の索引・依存グラフ・語の抽出)は、知らない旗を終了コード
+    2 で拒む。この門だけが規約の外に在り、旗を場所として飲んで 0 を返していた
+    —— 綴り違いで門が静かに無効になる(利用者側で実際に起きた)。
+    """
+    rest = list(rest)
+    for word in rest:
+        if word.startswith("-"):
+            return None, "不明な引数: %s" % word
+    if len(rest) > 1:
+        return None, "余分な引数: %s" % " ".join(rest[1:])
+    if not rest:
+        return ".", None
+    return rest[0], None
+
+
 def _run_batch(root):
     """統治木の全 .md を点検し、ERROR があれば終了コード 1(#91)。
 
     per-file の lint_text をそのまま各文書に当てる(規則の二重定義をしない)。
-    ERROR を stderr でなく stdout に一覧し、件数を末尾に出す。統治木が無ければ
-    点検対象なしとして 0(CI で素の docs/ を誤って落とさない)。
+    ERROR を stderr でなく stdout に一覧し、件数を末尾に出す。
+
+    終了コードは 0(ERROR なし)・1(ERROR あり)・3(場所が実在しない。ADR-110)。
+    実在するが統治木でない場所は 0 のまま —— 素の docs/ を持つ導入先を CI で
+    誤って落とさないための配慮であり、そこだけを指している。**点検した文書の数を
+    必ず出す**(見ていない門を緑と読む余地を減らす。ADR-110)。
     """
+    if not os.path.exists(root):
+        sys.stdout.write("docs-linter --batch: 場所が実在しない(%s)。\n" % root)
+        return 3
     tree = _resolve_tree(root)
     if not tree or not os.path.isdir(tree):
-        sys.stdout.write("docs-linter --batch: 統治木が無い(%s)。点検対象なし。\n" % root)
+        sys.stdout.write("docs-linter --batch: 統治木が無い(%s)。点検 0 文書。\n"
+                         % root)
         return 0
+    scanned = 0
     error_docs = 0
     error_count = 0
     for dirpath, dirnames, filenames in os.walk(tree):
@@ -876,6 +907,7 @@ def _run_batch(root):
                 text = _frontmatter.read_text(path)
             except Exception:
                 continue
+            scanned += 1
             findings = [f for f in lint_text(text, path) if f.severity == ERROR]
             if findings:
                 error_docs += 1
@@ -885,10 +917,11 @@ def _run_batch(root):
                     sys.stdout.write("[ERROR] %s: %s (%s)\n"
                                      % (rel, f.message, f.code))
     if error_count:
-        sys.stdout.write("docs-linter --batch: %d 文書に %d 件の ERROR。\n"
-                         % (error_docs, error_count))
+        sys.stdout.write("docs-linter --batch: %d 文書を点検し、%d 文書に %d 件の"
+                         " ERROR。\n" % (scanned, error_docs, error_count))
         return 1
-    sys.stdout.write("docs-linter --batch: ERROR なし。\n")
+    sys.stdout.write("docs-linter --batch: %d 文書を点検し、ERROR なし。\n"
+                     % scanned)
     return 0
 
 
@@ -907,7 +940,10 @@ def main(argv=None):
     # 規則の正本は一つ(_registry)のまま。フックを迂回した経路(GitHub Web UI・
     # 別エージェント・一括スクリプト)で入った不正文書を、マージ前に止められる。
     if argv and argv[0] == "--batch":
-        root = argv[1] if len(argv) > 1 else "."
+        root, err = _parse_batch_args(argv[1:])
+        if err:
+            sys.stdout.write("usage error: %s\n%s" % (err, _BATCH_USAGE))
+            return 2
         return _run_batch(root)
 
     stdin_text = ""

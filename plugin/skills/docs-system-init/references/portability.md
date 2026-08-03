@@ -21,7 +21,7 @@ repos:
     hooks:
       - id: doctrine-batch-lint
         name: doctrine schema gate
-        entry: python3 plugin/scripts/docs-linter.py --batch doctrine_docs
+        entry: python3 plugin/scripts/docs-linter.py --batch .
         language: system
         pass_filenames: false
       - id: doctrine-audit

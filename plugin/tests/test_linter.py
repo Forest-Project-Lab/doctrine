@@ -131,10 +131,43 @@ class BatchModeTest(_Base):
         self.assertIn("[ERROR]", out)
 
     def test_no_tree_exits_0(self):
-        # 統治木が無いプロジェクトは CI で落とさない(点検対象なし)。
+        # 実在するが統治木でない場所は CI で落とさない(素の docs/ への配慮)。
         out, code = _util.invoke(DL, argv=["--batch", self.root])
         self.assertEqual(code, 0)
-        self.assertIn("点検対象なし", out)
+        self.assertIn("統治木が無い", out)
+        self.assertIn("点検 0 文書", out)
+
+    # -- ADR-110: 使い方の誤りを場所として飲まない ------------------------
+    #
+    # 変更前は --batch の次の語を無条件に場所として飲み、旗の綴り違いでも 0 を
+    # 返していた。利用者側がその形のまま門を回しており、正しく呼び直したら
+    # 85 文書に 241 件の ERROR が出た(門は在ったが効いていなかった)。
+
+    def test_unknown_flag_is_not_taken_as_a_root(self):
+        for argv in (["--batch", "--root", "doctrine_docs"],
+                     ["--batch", "--fail-on", "error"],
+                     ["--batch", ".", "--fail-on", "error"]):
+            out, code = _util.invoke(DL, argv=argv)
+            self.assertEqual(code, 2, "%s => %s" % (argv, out))
+            self.assertIn("不明な引数", out)
+
+    def test_extra_word_is_a_usage_error(self):
+        out, code = _util.invoke(DL, argv=["--batch", self.root, "extra"])
+        self.assertEqual(code, 2, out)
+        self.assertIn("余分な引数", out)
+
+    def test_missing_place_exits_3(self):
+        out, code = _util.invoke(
+            DL, argv=["--batch", os.path.join(self.root, "no-such-place")])
+        self.assertEqual(code, 3, out)
+        self.assertIn("実在しない", out)
+
+    def test_scanned_count_is_always_reported(self):
+        fm, body = self._valid_spec("SPEC-9")
+        self._write("doctrine_docs/billing/spec/SPEC-9-x.md", fm, body)
+        out, code = self._batch()
+        self.assertEqual(code, 0, out)
+        self.assertIn("1 文書を点検し", out)
 
 
 class ValidAndAdvisoryTest(_Base):
