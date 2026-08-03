@@ -313,6 +313,50 @@ class StaleDraftTest(AuditBase):
         self.assertEqual(len(sd), 1)
         self.assertEqual(sd[0]["severity"], "warn")
 
+    def test_broken_updated_is_named_bad_date(self):
+        """ADR-100: 壊れた日付は bad_date の名で出る。陳腐化とは言わない。"""
+        root = self.build([
+            (_fm("SPEC-1", "SPEC", "billing", updated="2026-13-45"), "x"),
+        ])
+        data, _ = self.audit_json(root)
+        bd = self.checks_for(data, "bad_date")
+        self.assertEqual(len(bd), 1, bd)
+        self.assertEqual(bd[0]["severity"], "error")
+        self.assertIn("updated", bd[0]["message"])
+
+    def test_broken_date_is_not_reported_as_staleness(self):
+        """ADR-100: 取り違えを凍らせる。一つの欠陥は一つの名前で出す。"""
+        root = self.build([
+            (_fm("SPEC-1", "SPEC", "billing", updated="2026-13-45"), "x"),
+        ])
+        data, _ = self.audit_json(root)
+        for wrong in ("stale_current", "stale_draft", "stale_proposed", "orphan"):
+            self.assertEqual(self.checks_for(data, wrong), [],
+                             "%s が壊れた日付を古びとして報している" % wrong)
+
+    def test_broken_review_by_is_not_reported_as_overrun(self):
+        """ADR-100: 形式の誤りは超過ではない。名が事実を語る。"""
+        root = self.build([
+            (_fm("DECIDED-1", "DECIDED", "billing", review_by="2026-02-30"), "x"),
+        ])
+        data, _ = self.audit_json(root)
+        self.assertEqual(self.checks_for(data, "review_by_overrun"), [],
+                         "形式の誤りを『超過』の名で報している")
+        self.assertEqual(len(self.checks_for(data, "bad_date")), 1)
+
+    def test_real_overrun_still_reported(self):
+        """超過そのものは引き続き出る(緩めていない)。"""
+        root = self.build([
+            (_fm("DECIDED-1", "DECIDED", "billing", review_by="2026-01-01"), "x"),
+        ])
+        data, _ = self.audit_json(root)
+        self.assertEqual(len(self.checks_for(data, "review_by_overrun")), 1)
+
+    def test_bad_date_is_in_checks_run(self):
+        root = self.build([(_fm("SPEC-1", "SPEC", "billing"), "x")])
+        data, _ = self.audit_json(root)
+        self.assertIn("bad_date", data["checks_run"])
+
     def test_placeholder_in_frontmatter_is_error(self):
         """ADR-098: 報告の形(用語辞書の正本に owner: <記入>)を名指しで挙げる。"""
         root = self.build([
@@ -428,16 +472,24 @@ class StaleDraftTest(AuditBase):
         data, _ = self.audit_json(root)
         self.assertIn("stale_proposed", data["checks_run"])
 
-    def test_draft_with_broken_updated_is_stale(self):
-        """updated が解せない draft は古び扱い(不明は安全側 = stale)。"""
+    def test_draft_with_broken_updated_is_named_bad_date(self):
+        """updated が解せない draft は bad_date で出る。古びとは言わない(ADR-100)。
+
+        以前は「不明は安全側 = stale」を凍結していた。**その安全側は名を偽って
+        いた** —— 読み手は「更新が古い」と読むが、実際は「日付が壊れている」で、
+        直す先が違う。一つの欠陥は一つの名前で出す。安全側は bad_date(error)が
+        保つ(warn より重い)。
+        """
         root = self.build([
             (_fm("RESEARCH-1", "RESEARCH", "billing", status="draft",
                  updated="not-a-date", llm_context="never"), "x"),
         ])
         data, _ = self.audit_json(root)
-        sd = self.checks_for(data, "stale_draft")
-        self.assertEqual(len(sd), 1)
-        self.assertEqual(sd[0]["severity"], "warn")
+        self.assertEqual(self.checks_for(data, "stale_draft"), [],
+                         "壊れた日付を『draft 放置』の名で報している")
+        bd = self.checks_for(data, "bad_date")
+        self.assertEqual(len(bd), 1, bd)
+        self.assertEqual(bd[0]["severity"], "error")
 
 
 # --- orphan conjunction (TC-090/091/092/121, R1/R8) -----------------------
@@ -1401,6 +1453,8 @@ EXPECTED_AUDIT_CHECKS = (
     "source_missing",
     # ADR-098: 雛形の指示文がフロントマターに残っていないこと。
     "template_placeholder",
+    # ADR-100: 壊れた日付をその名で咎める(超過・陳腐化の名で報せない)。
+    "bad_date",
     # ADR-095: 不変を accepted から始めたので、下書きのまま置かれたものを見る。
     # proposed は現行でないため、孤児・逆孤児・adr_not_landed からは見えない。
     "stale_proposed", "orphan",

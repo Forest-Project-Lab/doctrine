@@ -20,8 +20,9 @@ SPEC-011 の検査群について、それぞれ pass と fail の両側を確�
 - 唯一の見張りである期限（ADR-086）: `検査: review_by のみ` のアンカーについて、①`review_by` 不在が error になること、②30 日超が warn になること、③30 日以内は静かなこと、④`exists` で常時見張られるアンカーには半年先の期限でも課さないこと、を `plugin/tests/test_liveness_capture.py` の `TestExtAnchors` が確認する。**実測を凍らせている** —— ②の見本には `EXT-001` の実際の値（更新 2026-07-26 / 期限 2026-10-26 = 92 日）を使う。
 
 - dead_link: すべての参照が解決すれば pass、解決先のない `depends_on` があれば fail。
-- review_by_overrun: `review_by` が未来日なら pass、期限を過ぎていれば fail（DECIDED と WATCH を含む）。DECIDED に `review_by` が無い場合は error。
+- review_by_overrun: `review_by` が未来日なら pass、期限を過ぎていれば fail（DECIDED と WATCH を含む）。DECIDED に `review_by` が無い場合は error。**形式の誤りはここでは出ない**（`bad_date` の領分。ADR-100）。
 - stale_draft: draft が最近のものなら pass、古ければ fail。
+- bad_date（ADR-100）: 解せない `updated`・`review_by` が error で出ること。**そして取り違えが消えていること** —— 壊れた日付で `stale_current`・`stale_draft`・`stale_proposed`・`orphan` が鳴らず、壊れた `review_by` で `review_by_overrun` が鳴らないこと（超過そのものは引き続き出る）。走った検査の一覧に載ること。**歯止め自身の実効を実測してある**（2026-08-03）: 検査を外す／取り違えを戻す（`_is_stale` を真へ）／正本の錨を外す、の三通りで落ち、いずれも戻すと通った。
 - template_placeholder（ADR-098）: フロントマターの項に指示文が残っていれば error、無ければ無音。現行でない文書も対象。走った検査の一覧に載ること。**実物の形で確かめてある**（2026-08-03）: 報告と同じ木（用語辞書の正本に `owner: <記入>`）を作ると `GLOSSARY-001` を名指しで挙げた。
 - source_missing（ADR-097）: 実在する道なら pass、実在しない道は warn。**ADR と投影は対象外**（直せないものを咎めない）。URL・文書 id・自由文は対象外。走った検査の一覧に載ること。**歯止め自身の実効を実測してある**（2026-08-03）: 実物の木の TEST 文書へ実在しない道を入れると warn が出て、戻すと消えた。**この検査が無いあいだに 6 件壊れていた**（`RESEARCH-001` が `archive/` へ退避、`ADR-047` が改名。六本とも ADR なので、この検査では直らない）。
 - stale_proposed（ADR-095）: `proposed` が最近のものなら pass、放置されていれば warn。**`stale_draft` と混ざらないこと**（`proposed` は draft ではない）。走った検査の一覧（`checks_run`）に載ること（黙って消えない。`[R11]`）。**歯止め自身の実効を実測してある**（2026-08-03）: 検査の呼び出しを外すと落ち、戻すと通った。

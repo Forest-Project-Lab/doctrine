@@ -600,3 +600,67 @@ class TestNoWallClockInTests(unittest.TestCase):
             "のに、時計を固定していないクラスがある。日付が進むだけで落ちる"
             "(ADR-094): %s" % "; ".join(offenders))
 
+
+
+class TestDateParsingHasOneCanon(unittest.TestCase):
+    """ADR-099: 日付の解釈は共有コアに一度だけ。写しを機械が咎める。
+
+    以前は四箇所に写しが在り、そのうち一つが終端の錨を欠いて `2026-01-01xyz` を
+    受けていた —— ADR-053 が一本化した「要約の読み取り」の中で、日付の答えが
+    読み手ごとに割れていた。**書いても消えないから、機械に見せる。**
+    """
+
+    CANON = "_frontmatter.py"
+
+    def _sources(self):
+        out = []
+        for path in _scripts_present():
+            if os.path.basename(path) == self.CANON:
+                continue
+            try:
+                with open(path, encoding="utf-8") as fh:
+                    out.append((path, fh.read()))
+            except (OSError, UnicodeError):
+                continue
+        return out
+
+    def test_canon_exists_and_is_strict(self):
+        """歯止めが空回りしていないこと。正本が在り、厳しい側であること。"""
+        fm = _util.load_core("_frontmatter")
+        self.assertTrue(hasattr(fm, "parse_date"), "正本 parse_date が無い")
+        self.assertIsNotNone(fm.parse_date("2026-01-01"))
+        self.assertIsNone(fm.parse_date("2026-01-01xyz"),
+                          "終端の錨が無い(緩い側へ揃っている)")
+        self.assertIsNone(fm.parse_date("2026-02-30"),
+                          "実在しない日付を受けている")
+
+    def test_no_script_defines_its_own_date_parser(self):
+        """日付を解す関数を正本の外に持たない(薄い前面すら置かない)。
+
+        前面を置くと、後からそこで挙動を変えられる —— 実際、緩い写しが一つ在って
+        `2026-01-01xyz` を受けていた。呼び手は正本を直に呼ぶ。
+        """
+        offenders = []
+        for path, src in self._sources():
+            try:
+                tree = ast.parse(src, filename=path)
+            except SyntaxError:
+                continue
+            for node in ast.walk(tree):
+                if not isinstance(node, ast.FunctionDef):
+                    continue
+                if node.name in ("_parse_date", "parse_date"):
+                    offenders.append(os.path.relpath(path, _util.PLUGIN_ROOT))
+        self.assertEqual(
+            sorted(set(offenders)), [],
+            "日付を解す関数が正本の外に在る(写しになる。ADR-099): %r"
+            % sorted(set(offenders)))
+
+    def test_no_script_owns_a_date_regexp(self):
+        """`\\d{4}-\\d{2}-\\d{2}` の形の正規表現を正本の外に持たない。"""
+        pattern = r"\\d{4}"
+        offenders = [os.path.relpath(p, _util.PLUGIN_ROOT)
+                     for p, src in self._sources() if pattern in src]
+        self.assertEqual(
+            sorted(offenders), [],
+            "日付の正規表現が正本の外に在る(写しになる。ADR-099): %r" % sorted(offenders))

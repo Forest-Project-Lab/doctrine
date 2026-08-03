@@ -51,7 +51,7 @@ SCHEMA = _auditcache.SCHEMA   # 要約 schema の正本は共有コア(ADR-053)
 # doctrine:begin SPEC-011
 AUDIT_CHECKS = (
     "dead_link", "dep_cycle", "review_by_overrun", "stale_draft",
-    "source_missing", "template_placeholder",
+    "source_missing", "template_placeholder", "bad_date",
     "stale_proposed", "orphan",
     "reverse_orphan_req_no_spec", "reverse_orphan_spec_no_test",
     "canonical_conflict", "near_duplicate", "icd_dependency_violation",
@@ -88,7 +88,6 @@ SEV_ADVISORY = "advisory"
 _ID_TOKEN_RE = re.compile(r"(?<![0-9A-Za-z_-])([A-Z]+-\d+)(?![0-9A-Za-z_-])")
 # 単語シングル化(語彙的酷似)。英数字連なり + 連続する非ASCII。
 _TOKEN_RE = re.compile(r"[A-Za-z0-9_]+|[^\x00-\x7f]+")
-_DATE_RE = re.compile(r"^(\d{4})-(\d{2})-(\d{2})$")
 
 
 # ---------------------------------------------------------------------------
@@ -236,17 +235,6 @@ def _load_config(path):
 # 日付ユーティリティ(決定的; 壁時計に依存しない経路を優先)
 # ---------------------------------------------------------------------------
 
-def _parse_date(s):
-    """'YYYY-MM-DD' を date に。形が違えば None(壊れた日付として扱う)。"""
-    if not isinstance(s, str):
-        return None
-    m = _DATE_RE.match(s.strip())
-    if not m:
-        return None
-    try:
-        return datetime.date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
-    except ValueError:
-        return None
 
 
 class _TodayError(ValueError):
@@ -261,7 +249,7 @@ def _resolve_today(opts, knobs):
     """
     raw = opts.get("today") or knobs.get("today")
     if raw:
-        d = _parse_date(raw)
+        d = _frontmatter.parse_date(raw)
         if d is None:
             raise _TodayError(
                 "--today/config の today が解せない(YYYY-MM-DD 必須): %r" % (raw,))
@@ -379,11 +367,9 @@ def _check_review_by(g, today):
                     "review_by_overrun", SEV_ERROR, doc_id, node["path"],
                     "%s は review_by が必須だが無い" % t))
             continue
-        d = _parse_date(rb)
+        d = _frontmatter.parse_date(rb)
         if d is None:
-            out.append(_finding(
-                "review_by_overrun", SEV_ERROR, doc_id, node["path"],
-                "review_by の日付形式が壊れている: %s" % rb))
+            # 形式の誤りは超過ではない。bad_date が名で咎める(ADR-100)。
             continue
         if d < today:
             out.append(_finding(
@@ -428,10 +414,15 @@ def _check_stale_proposed(g, today, stale_days):
 
 
 def _is_stale(updated, today, stale_days):
-    """updated が today より stale_days 日以上前なら True。日付不明なら True(古び扱い)。"""
-    d = _parse_date(updated)
+    """updated が today より stale_days 日以上前なら True。
+
+    **日付が読めないときは偽を返す**(ADR-100)。以前は真(古び扱い)にしており、
+    壊れた日付が「陳腐化の疑い」として誤った名前で報されていた。一つの欠陥は
+    一つの名前で出す —— 安全側は bad_date(error)が保つ。
+    """
+    d = _frontmatter.parse_date(updated)
     if d is None:
-        return True
+        return False
     return (today - d).days >= stale_days
 
 
@@ -459,7 +450,7 @@ def _check_orphan(g, today, stale_days):
             continue
         # 陳腐化: updated が古い、または review_by 超過。
         stale = _is_stale(node["updated"], today, stale_days)
-        rbd = _parse_date(node["review_by"])
+        rbd = _frontmatter.parse_date(node["review_by"])
         if rbd is not None and rbd < today:
             stale = True
         if not stale:
@@ -521,9 +512,10 @@ def _check_stale_current(g, today):
         cycle = _registry.review_cycle_days(node["type"])
         if cycle is None:
             continue
-        d = _parse_date(node["updated"])
-        overdue = (d is None) or ((today - d).days >= cycle)
-        if overdue:
+        d = _frontmatter.parse_date(node["updated"])
+        if d is None:
+            continue  # 読めない日付で古びを判じない(ADR-100)。bad_date が咎める。
+        if (today - d).days >= cycle:
             out.append(_finding(
                 "stale_current", SEV_WARN, doc_id, node["path"],
                 "型 %s の既定点検周期 %d 日を超えた(updated %s)。内容を確かめて "
@@ -535,6 +527,32 @@ def _check_stale_current(g, today):
 # 出所の道の形(ADR-097)。拡張子を持つ相対の道だけを対象にする。URL・文書 id・
 # issue の番号・自由文は対象にしない(それぞれ別の検査か、機械で判じられない)。
 _SOURCE_PATH_RE = re.compile(r"^[\w./-]+\.[A-Za-z0-9]{1,6}$")
+
+
+def _check_bad_date(g):
+    """16. 壊れた日付(ADR-100)。節点の updated・review_by が解せなければ error。
+
+    日付の解釈は共有コアが正本(ADR-099)。ここは「解せなかったときに何と言うか」
+    だけを受け持つ。**形式の誤りを「超過」や「陳腐化」の名で報せない** ——
+    名が事実を語らないと、読み手が直す先を間違える。
+
+    節点は created を運ばないので、created はファイル単位のリンタだけが見る
+    (必須キーではない。確定事実3)。
+    """
+    out = []
+    for doc_id in sorted(g.nodes):
+        node = g.nodes[doc_id]
+        for key in ("updated", "review_by"):
+            raw = node.get(key)
+            if not raw:
+                continue          # 不在は必須キー/期限の検査の領分。
+            if _frontmatter.parse_date(raw) is not None:
+                continue
+            out.append(_finding(
+                "bad_date", SEV_ERROR, doc_id, node["path"],
+                "%s が日付として解せない(『%s』)。YYYY-MM-DD の実在する日付を書く"
+                % (key, raw)))
+    return out
 
 
 def _check_template_placeholder(g):
@@ -613,14 +631,14 @@ def _check_source_drift(g):
         t = node["type"]
         if t == "ADR" or _registry.is_projection(t):
             continue
-        own = _parse_date(node["updated"])
+        own = _frontmatter.parse_date(node["updated"])
         if own is None:
             continue  # updated 壊れは必須キー/陳腐化側の話。
         for dep in sorted(node["depends_on"]):
             target = g.nodes.get(dep)
             if target is None:
                 continue  # dead link 検査が見る。
-            td = _parse_date(target["updated"])
+            td = _frontmatter.parse_date(target["updated"])
             if td is None:
                 continue
             if td > own:
@@ -761,14 +779,14 @@ def _check_ext_sole_guard(doc_id, node):
     二段に分ける。見張りの不在は事実なので error、上限の超過は見立てなので warn。
     """
     out = []
-    rb = _parse_date(node.get("review_by"))
+    rb = _frontmatter.parse_date(node.get("review_by"))
     if rb is None:
         out.append(_finding(
             "ext_sole_guard_missing", SEV_ERROR, doc_id, node["path"],
             "機械が何も見ていないアンカー(検査: review_by のみ)に review_by が無い。"
             "唯一の見張りが不在で、この境界は沈黙して開いている(ADR-086)"))
         return out
-    up = _parse_date(node.get("updated"))
+    up = _frontmatter.parse_date(node.get("updated"))
     if up is None:
         return out  # updated が読めないなら間隔を判じられない(schema 検査の領分)。
     span = (rb - up).days
@@ -1222,6 +1240,7 @@ def run_audit(root, today, knobs):
     findings += _check_stale_proposed(g, today, knobs["draft_stale_days"])
     findings += _check_source_missing(g, root)
     findings += _check_template_placeholder(g)
+    findings += _check_bad_date(g)
     findings += _check_orphan(g, today, knobs["orphan_stale_days"])
     findings += _check_reverse_orphan(g)
     findings += _check_canonical_conflict(g)
@@ -1229,7 +1248,8 @@ def run_audit(root, today, knobs):
     findings += _check_icd_violation(g)
     findings += _check_projection_drift(g)
     findings += _check_unregistered(g)
-    findings += _audit_stray.collect(root, today, _finding, _parse_date, graph=g)
+    findings += _audit_stray.collect(root, today, _finding, _frontmatter.parse_date,
+                                 graph=g)
     findings += _check_stale_current(g, today)
     findings += _check_source_drift(g)
     findings += _check_archive_integrity(g)

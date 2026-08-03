@@ -13,6 +13,7 @@ MASTER §1 の API をそのまま実装する。仕様 §3.4 のフロントマ
 "外部pip依存を作らない。フロントマターはフラットなので最小パーサで読む"（仕様 §4.3）に従う。
 標準ライブラリのみ。PyYAML は使わない。
 """
+import datetime
 import os
 import re
 import stat
@@ -208,6 +209,30 @@ def as_list(value):
     # Any other scalar (int, float, etc.)
     s = str(value)
     return [s] if s.strip() != "" else []
+
+
+# 日付の形(ADR-099)。終端の錨を持つ厳密な一致。写しを作らないための正本である。
+_ISO_DATE_RE = re.compile(r"^(\d{4})-(\d{2})-(\d{2})$")
+
+
+def parse_date(value):
+    """'YYYY-MM-DD' を date に。解せなければ None。決して例外を投げない(ADR-099)。
+
+    **日付の解釈の正本はここだけである。** 以前は四箇所に写しが在り、そのうち一つが
+    終端の錨を欠いて `2026-01-01xyz` を受けていた —— 要約の鮮度を読む側だけが緩く、
+    ADR-053 が一本化した読み取りの中で答えが割れていた。
+
+    前後の空白は削る。形が合っても実在しない日付(`2026-02-30`)は None を返す。
+    """
+    if not isinstance(value, str):
+        return None
+    m = _ISO_DATE_RE.match(value.strip())
+    if not m:
+        return None
+    try:
+        return datetime.date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+    except ValueError:
+        return None
 
 
 # 雛形の指示文の形(ADR-098)。山括弧に囲まれた非空の並び。雛形も語彙の表も読まない

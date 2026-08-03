@@ -526,6 +526,57 @@ class LlmContextTest(_Base):
                 self.assertIn("[WARN]", line)
 
 
+class BadDateTest(_Base):
+    """ADR-100: 日付の鍵が解せなければ咎める。重さは鍵で分ける。"""
+
+    def _spec_with(self, **extra):
+        self._write("docs/billing/REQ-2-x.md", _req_fm(), "本文。\n")
+        fm = _valid_spec_fm()
+        fm.update(extra)
+        return self._write("docs/billing/spec/SPEC-014-x.md", fm, _SPEC_BODY_4)
+
+    def test_valid_date_is_silent(self):
+        codes, _ = self._codes(self._spec_with(updated="2026-01-01"))
+        self.assertNotIn("BAD_DATE", codes)
+
+    def test_broken_updated_is_error(self):
+        out, _ = self._lint(self._spec_with(updated="2026-13-45"))
+        ctx = json.loads(out)["hookSpecificOutput"]["additionalContext"]
+        self.assertIn("BAD_DATE", ctx)
+        for line in ctx.splitlines():
+            if "BAD_DATE" in line:
+                self.assertIn("[ERROR]", line)
+
+    def test_nonexistent_day_is_caught(self):
+        """形は合っていても実在しない日付は咎める(2026-02-30)。"""
+        codes, _ = self._codes(self._spec_with(updated="2026-02-30"))
+        self.assertIn("BAD_DATE", codes)
+
+    def test_trailing_garbage_is_caught(self):
+        """終端の錨(ADR-099)。`2026-01-01xyz` を通さない。"""
+        codes, _ = self._codes(self._spec_with(updated="2026-01-01xyz"))
+        self.assertIn("BAD_DATE", codes)
+
+    def test_created_is_only_a_warning(self):
+        """created は必須キーではないので警告に留める。"""
+        out, _ = self._lint(self._spec_with(created="2026-13-45"))
+        ctx = json.loads(out)["hookSpecificOutput"]["additionalContext"]
+        lines = [l for l in ctx.splitlines() if "BAD_DATE" in l]
+        self.assertTrue(lines, ctx)
+        for line in lines:
+            self.assertIn("[WARN]", line)
+
+    def test_absent_date_is_not_a_bad_date(self):
+        """不在は必須キーの検査の領分。二重に鳴らさない。"""
+        fm = _valid_spec_fm()
+        fm.pop("updated", None)
+        self._write("docs/billing/REQ-2-x.md", _req_fm(), "本文。\n")
+        p = self._write("docs/billing/spec/SPEC-014-x.md", fm, _SPEC_BODY_4)
+        codes, _ = self._codes(p)
+        self.assertNotIn("BAD_DATE", codes)
+        self.assertIn("MISSING_KEY", codes)
+
+
 class PlaceholderTest(_Base):
     """ADR-098: 雛形の指示文が残ったフロントマターを咎める。"""
 

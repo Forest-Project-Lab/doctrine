@@ -460,22 +460,11 @@ def _headline_of(d):
 # ---------------------------------------------------------------------------
 # 監査要約の描画
 # ---------------------------------------------------------------------------
-_DATE_RE = re.compile(r"^(\d{4})-(\d{2})-(\d{2})$")
 
 # 前回監査がこの日数より古ければ、統治の死活を疑う警告を出す(R11)。
 DEFAULT_AUDIT_STALE_DAYS = 7
 
 
-def _parse_date(s):
-    if not isinstance(s, str):
-        return None
-    m = _DATE_RE.match(s.strip())
-    if not m:
-        return None
-    try:
-        return datetime.date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
-    except ValueError:
-        return None
 
 
 def _tree_initialized(docs_root):
@@ -547,7 +536,7 @@ def _render_audit_summary(summary, today=None, stale_days=DEFAULT_AUDIT_STALE_DA
         lines.append(line)
     # 鮮度の照合(R11)。today が与えられないときだけ壁時計に退避する(監査と同じ規約)。
     # Level 2 では SessionEnd が書かないため、古さは死活の兆候にならない(照合しない)。
-    audit_day = _parse_date(summary.get("today")) if docs_level >= 3 else None
+    audit_day = _frontmatter.parse_date(summary.get("today")) if docs_level >= 3 else None
     if audit_day is not None:
         now = today if isinstance(today, datetime.date) else datetime.date.today()
         age = (now - audit_day).days
@@ -1109,7 +1098,7 @@ def main(argv=None):
                 pass
 
         # 鮮度警告の基準日(--today 優先。無ければ描画時に壁時計へ退避)と閾値。
-        today = _parse_date(opts.get("today"))
+        today = _frontmatter.parse_date(opts.get("today"))
         stale_days = DEFAULT_AUDIT_STALE_DAYS
         if isinstance(config, dict):
             sd = _to_int(config.get("audit_stale_days"))
