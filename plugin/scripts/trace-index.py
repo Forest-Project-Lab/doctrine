@@ -26,6 +26,7 @@ sys.dont_write_bytecode = True
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import _config
 import _registry  # noqa: E402
 import _tracescan  # noqa: E402
 
@@ -108,12 +109,8 @@ def _exempt_paths(docs_root):
     """
     if not docs_root:
         return []
-    path = os.path.join(docs_root, "_system", ".context-config.json")
-    try:
-        with open(path, encoding="utf-8-sig") as fh:
-            cfg = json.load(fh)
-    except (OSError, ValueError):
-        return []
+    # 読み取りは共有コアが正本(ADR-104)。道も符号化も自前に持たない。
+    cfg = _config.load(docs_root)
     exempt = cfg.get("trace_exempt")
     if not isinstance(exempt, dict):
         return []

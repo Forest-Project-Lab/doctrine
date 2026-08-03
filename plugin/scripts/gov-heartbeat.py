@@ -30,7 +30,8 @@ sys.dont_write_bytecode = True
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import _hookio
-import _auditcache  # noqa: E402
+import _auditcache
+import _config  # noqa: E402
 import _frontmatter  # noqa: E402
 import _intake  # noqa: E402
 import _registry  # noqa: E402
@@ -65,18 +66,6 @@ def _docs_root():
         if found is not None:
             return found
     return _registry.walkup_docs_root(os.getcwd())
-
-
-def _load_config(docs_root):
-    if not docs_root:
-        return {}
-    path = os.path.join(docs_root, "_system", ".context-config.json")
-    try:
-        with open(path, "r", encoding="utf-8-sig") as fh:
-            data = json.load(fh)
-        return data if isinstance(data, dict) else {}
-    except (OSError, ValueError, UnicodeError):
-        return {}
 
 
 def _knob(config, key, default):
@@ -384,7 +373,7 @@ def main(argv=None):
         docs_root = _docs_root()
         if not docs_root:
             return 0  # 統治木が無いプロジェクトでは黙る。
-        config = _load_config(docs_root)
+        config = _config.load(docs_root)
         msg = build_message(docs_root, today, config)
         # 拒否経路の欠落の疑い(ADR-062)。判定は _auditcache に一度だけ在る。
         gap = _auditcache.liveness_gap(_auditcache.read_stamps())

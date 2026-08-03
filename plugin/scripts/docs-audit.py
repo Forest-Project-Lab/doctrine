@@ -35,6 +35,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import _depgraph
 import _audit_stray
+import _config
 import _audit_trace
 import _auditcache
 import _frontmatter
@@ -200,8 +201,12 @@ def _coerce_knobs(data, defaults):
     return out
 
 
-def _load_config(path):
-    """--config の JSON を読み、調整値の dict を返す。読めなければ {}。"""
+def _resolve_knobs(path):
+    """設定から調整値の dict を解く。読み取りは共有コアが正本(ADR-104)。
+
+    ここは「値の意味」を持つ —— 型を検めて写し、不正値は既定のまま残す。
+    名前を _load_config から改めた(読むのは正本であり、ここは解く側である)。
+    """
     knobs = {
         "draft_stale_days": DEFAULT_DRAFT_STALE_DAYS,
         "orphan_stale_days": DEFAULT_ORPHAN_STALE_DAYS,
@@ -213,12 +218,10 @@ def _load_config(path):
         "trace_mode": None,        # 悉皆モード(ADR-072)。"exhaustive" だけが効く
         "trace_exempt": {},        # 設定側の統治外宣言 {パス: 理由}(ADR-072)
     }
-    if not path:
-        return knobs
-    try:
-        with open(path, "r", encoding="utf-8") as fh:
-            data = json.load(fh)
-    except (OSError, ValueError):
+    # 読み取りは共有コアが正本(ADR-104)。以前ここだけ utf-8 で開いており、BOM 付きの
+    # 設定で監査だけが既定へ落ちていた(trace_mode を見失い、残高の警告が黙って消えた)。
+    data = _config.load(config_path=path)
+    if not data:
         return knobs
     # 型を検めてから写す(ADR-075)。数値キーを文字列で書くと、以前は素通りして
     # 比較の途中で例外になり、全件監査が落ちた。CI の門は所見ゼロ扱いで通る。
@@ -1425,11 +1428,10 @@ def main(argv=None):
         sys.stdout.write("docs-level 2: 全件監査は Level 3 から。飛ばした。\n")
         return 0
 
-    # 設定は監査対象の木の _system/.context-config.json を既定で読む(ADR-072)。
-    # 明示の --config が優先。無ければ既定値のまま(前方寛容)。
-    config_path = opts["config"] or os.path.join(
-        root, "_system", ".context-config.json")
-    knobs = _load_config(config_path)
+    # 設定は監査対象の木のものを既定で読む(ADR-072)。明示の --config が優先。
+    # 無ければ既定値のまま(前方寛容)。道の組み立ては共有コアが正本(ADR-104)。
+    config_path = opts["config"] or _config.path_for(root)
+    knobs = _resolve_knobs(config_path)
     # today の解決は監査本体の前に行う。供給された today が解せないのは使用法エラー
     # (壁時計に黙って退避しない、§日付ユーティリティの保証)→ 終了コード 2。
     try:

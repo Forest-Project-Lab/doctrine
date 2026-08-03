@@ -36,6 +36,7 @@ when none are present, so the meta suite is green from the first script onward.
 """
 
 import os
+import shutil
 import sys
 # BRIEF2: bootstrap the tests dir onto sys.path so `_util` (and the scripts dir
 # it inserts) resolve whether this file is run directly, via discovery, or via
@@ -678,6 +679,10 @@ class TestSharedJudgementsHaveOneCanon(unittest.TestCase):
     CANONS = {
         "_parse_date": "_frontmatter.py",
         "_coerce_str": "_frontmatter.py",
+        # ADR-104: 設定の読み取り。以前は四写しで、一つだけ utf-8 で開いており
+        # BOM 付きの設定で監査だけが既定へ落ちていた。
+        "_load_config": "_config.py",
+        "_config_path": "_config.py",
     }
 
     def test_no_copy_of_a_shared_judgement(self):
@@ -710,3 +715,113 @@ class TestSharedJudgementsHaveOneCanon(unittest.TestCase):
         self.assertEqual(fm.coerce_str({"k": 1}), "")
         self.assertEqual(fm.coerce_str("x"), "x")
         self.assertEqual(fm.coerce_str(3), "3")
+
+
+class TestConfigIsReadThroughTheCanon(unittest.TestCase):
+    """ADR-104: 統治の設定を自前で開かない。読み取りは共有コアが正本。
+
+    設定の一枚は常時投入の上限(確定事実6)・パックの上限・追跡の悉皆の様式・走査の
+    適用除外を握る。**符号化が一つ違うだけで、監査が設定を丸ごと見失った**(実測)。
+    """
+
+    CANON = "_config.py"
+    CONFIG_NAME = ".context-config.json"
+
+    def test_no_script_opens_the_config_itself(self):
+        """設定の名前を**そのまま**の文字列定数で持つスクリプトを咎める。
+
+        散文の中に名前が出るのは咎めない(案内の文が名前を告げるのは正しい)。
+        判定は文字列定数の一致で行う —— 案内の文は長い文の一部なので一致しない。
+        """
+        offenders = []
+        for path in _scripts_present():
+            base = os.path.basename(path)
+            if base == self.CANON:
+                continue
+            try:
+                tree = ast.parse(open(path, encoding="utf-8").read(),
+                                 filename=path)
+            except (OSError, UnicodeError, SyntaxError):
+                continue
+            for node in ast.walk(tree):
+                if (isinstance(node, ast.Constant)
+                        and isinstance(node.value, str)
+                        and node.value == self.CONFIG_NAME):
+                    offenders.append(base)
+                    break
+        self.assertEqual(
+            sorted(offenders), [],
+            "設定の名前を文字列定数で持つスクリプトが在る(道も符号化も写しになる。"
+            "ADR-104): %r" % sorted(offenders))
+
+    def test_the_canon_reads_a_bom_file(self):
+        """歯止めが空回りしていないこと。BOM 付きも読める側で揃っていること。"""
+        cfg = _util.load_core("_config")
+        root = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        sysdir = os.path.join(root, "_system")
+        os.makedirs(sysdir, exist_ok=True)
+        path = os.path.join(sysdir, self.CONFIG_NAME)
+        with open(path, "w", encoding="utf-8-sig") as fh:
+            fh.write('{"trace_mode": "exhaustive"}')
+        self.assertEqual(cfg.load(root).get("trace_mode"), "exhaustive")
+
+    def test_the_canon_never_raises(self):
+        cfg = _util.load_core("_config")
+        for bad in (None, "", "/nonexistent/x.json"):
+            self.assertEqual(cfg.load(config_path=bad), {})
+        root = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        sysdir = os.path.join(root, "_system")
+        os.makedirs(sysdir, exist_ok=True)
+        with open(os.path.join(sysdir, self.CONFIG_NAME), "w",
+                  encoding="utf-8") as fh:
+            fh.write("{ broken")
+        self.assertEqual(cfg.load(root), {})
+
+    def test_a_list_config_is_not_a_mapping(self):
+        cfg = _util.load_core("_config")
+        root = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        sysdir = os.path.join(root, "_system")
+        os.makedirs(sysdir, exist_ok=True)
+        with open(os.path.join(sysdir, self.CONFIG_NAME), "w",
+                  encoding="utf-8") as fh:
+            fh.write("[1, 2]")
+        self.assertEqual(cfg.load(root), {})
+
+    def test_a_directory_in_place_of_the_config_is_silent(self):
+        """ディレクトリでも例外を投げない(頑健さ。門の証明ではない)。
+
+        **これは通常ファイルの門を証明しない** —— 素の open でも
+        IsADirectoryError は OSError なので同じく黙る(実測)。門そのものは
+        下の構造の検めで凍らせる。
+        """
+        cfg = _util.load_core("_config")
+        root = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        os.makedirs(os.path.join(root, "_system", self.CONFIG_NAME), exist_ok=True)
+        self.assertEqual(cfg.load(root), {})
+
+    def test_the_canon_reads_through_the_shared_reader(self):
+        """通常ファイルの門(ADR-075)を通ることを**構造で**凍らせる。
+
+        名前付きパイプで戻らないことは測れない(測ろうとすると試験が止まる)。
+        測れないものを測ったふりにしない —— 代わりに「共有の読み手を呼んで
+        いること」と「素の open を持たないこと」を見る。
+        """
+        path = os.path.join(_util.SCRIPTS, "_config.py")
+        tree = ast.parse(open(path, encoding="utf-8").read(), filename=path)
+        calls = set()
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            fn = node.func
+            if isinstance(fn, ast.Attribute):
+                calls.add(fn.attr)
+            elif isinstance(fn, ast.Name):
+                calls.add(fn.id)
+        self.assertIn("read_text", calls,
+                      "共有の読み手を通っていない(ADR-075 の門が掛からない)")
+        self.assertNotIn("open", calls,
+                         "素の open を持っている(門を迂回している)")
