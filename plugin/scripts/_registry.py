@@ -124,10 +124,6 @@ PROJECTION_TYPES = ("OVERVIEW", "CTXMAP")
 
 # Types whose canonical instance lives in the _system tier (WATCH also lives
 # under <domain>/test/, see TYPE_LOCATION).
-SYSTEM_TIER_TYPES = ("OVERVIEW", "GLOSSARY", "CTXMAP", "DECIDED", "NONGOAL", "WATCH")
-
-# Types that form the always-injected contract residue (§3.9 / inject-contract).
-ALWAYS_CONTRACT_TYPES = ("DECIDED", "NONGOAL", "WATCH", "GLOSSARY")
 # doctrine:end SPEC-001
 
 # ---------------------------------------------------------------------------
@@ -251,12 +247,6 @@ def review_cycle_days(type_code):
         return None
     return TYPE_REVIEW_CYCLE_DAYS.get(type_code)
 
-# Keys introduced at Level 3 (permitted/meaningful, NOT required) — §3.4/§4.4.
-LEVEL3_KEYS = ("depends_on", "impacts", "review_by")
-
-# Keys introduced at Level 4 (permitted/optional, NEVER required) — §3.4.
-LEVEL4_KEYS = ("canonical_for",)
-
 # Legal llm_context values (§3.4).
 LLM_CONTEXT_VALUES = ("always", "task", "never")
 
@@ -267,19 +257,16 @@ LLM_CONTEXT_VALUES = ("always", "task", "never")
 SUBDOMAIN_KINDS = ("core", "supporting", "generic")
 
 
-def required_keys(level, type_code):
-    """Required frontmatter keys for (level, type) per §3.4.
+def required_keys(type_code):
+    """型ごとの必須キーの列(§3.4)。八つに加え、DECIDED と WATCH は review_by も。
 
-    Returns the base eight (REQUIRED_KEYS_L2), plus `review_by` for DECIDED/WATCH.
-    `level` only gates which keys are PERMITTED (depends_on/impacts at L3+,
-    canonical_for at L4+); the REQUIRED set does NOT grow with level except for
-    review_by. `level` is accepted for API stability and is validated to be one
-    of {2,3,4}; it does not currently change the result beyond that.
+    **必須キーの規則の正本はここだけである**(確定事実1)。以前はリンタが
+    REQUIRED_KEYS_L2 と REQUIRED_REVIEW_BY_TYPES を自前で組み合わせており、
+    同じ規則が二箇所に在った —— そして正本の側が誰にも呼ばれていなかった。
 
-    Raises ValueError if level not in {2,3,4}.
+    段(level)の口は落とした(ADR-106)。生産の呼び手はゼロで、受け取って検証した
+    あと無視していた —— **何も決めない口を公開しない。**
     """
-    if level not in (2, 3, 4):
-        raise ValueError("level must be one of 2, 3, 4")
     keys = list(REQUIRED_KEYS_L2)
     if type_code in REQUIRED_REVIEW_BY_TYPES:
         keys.append("review_by")

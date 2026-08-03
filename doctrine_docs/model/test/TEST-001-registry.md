@@ -22,8 +22,9 @@ SPEC-001 の登録簿契約を検証する。実装テストは `plugin/tests/te
 - `status_allowed` の許可表が型ごとに正しい。accepted は ADR だけ、draft は RESEARCH だけが許される。
 - `type_of` が接頭辞を正しく読み取り、接頭辞が未知のとき、`id` が不正のとき、文字列でないときに None を返す。
 - `effective_llm_context` が上書きを優先して解決し、型が不明のときや辞書でないときに None を返す。
-- `required_keys` が DECIDED と WATCH に `review_by` を加え、level が不正なら ValueError を投げる。
+- `required_keys` が DECIDED と WATCH に `review_by` を加える。**段の口は無い**（渡すと TypeError。ADR-106）。
 - `resolve_duplicate_id` が、与える順序に依らず整列した順の最初を返す。空・None・文字列でない要素に例外を投げない（ADR-049）。
+- 消した表（`SYSTEM_TIER_TYPES`・`ALWAYS_CONTRACT_TYPES`・`LEVEL3_KEYS`・`LEVEL4_KEYS`）が**戻っていない**こと（ADR-106）。`required_keys` が型だけを取り、段を渡すと `TypeError` になること。**登録簿の公開名が消費者を持つ**ことをメタの受入が検めること。
 - `SUBDOMAIN_KINDS` が手書きの期待表と一致し、三語で重複が無い（ADR-092）。`TestRequiredKeys` が確認する。
 
 ## 退行観点

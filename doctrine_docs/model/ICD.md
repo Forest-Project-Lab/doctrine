@@ -49,7 +49,7 @@ model ドメインは、構造規則とフロントマターの解析を、体�
 - `allowed_locations(type)`: 型ごとに許可する置き場所のパターンを返す。毎回その複製を返す。
 - `is_projection(type)`: 投影型（OVERVIEW・CTXMAP）かどうかを返す。
 - `is_current(status)`: 現行（current・accepted）かどうかを返す。
-- `required_keys(level, type)`: 必須キーの列を返す。level が不正なら ValueError を投げる。
+- `required_keys(type)`: 必須キーの列を返す（八つ、DECIDED と WATCH は `review_by` も）。**段（level）の口は落とした**（ADR-106）—— 生産の呼び手はゼロで、受け取って検証したあと無視していた。**何も決めない口を公開しない。**
 
 解析（`_frontmatter.py`）:
 

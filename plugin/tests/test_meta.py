@@ -883,3 +883,60 @@ class TestTokenCalibrationIsShared(unittest.TestCase):
             fh.write('{"model_chars_per_token": 2.0}')
         self.assertEqual(cc.load_chars_per_token(root), 2.0,
                          "パックが較正を読んでいない(較正が注入にだけ効く)")
+
+
+class TestRegistryHasNoUnusedCanon(unittest.TestCase):
+    """ADR-106: 登録簿の公開名は消費者を持つ。使われない正本を置かない。
+
+    **消費者が無いことは無害ではなく、静かに嘘になる** —— 実測で、
+    `ALWAYS_CONTRACT_TYPES` は `OVERVIEW` を欠き、`SYSTEM_TIER_TYPES` は `REQ` を
+    欠いていた。後者は ADR-091 の帰結で、**誰も読まない表は誰も直さなかった。**
+
+    この検めは、その欠陥を見つけた走査そのものである。
+    """
+
+    CANON = "_registry.py"
+
+    def _public_names(self, path):
+        tree = ast.parse(open(path, encoding="utf-8").read(), filename=path)
+        out = []
+        for node in tree.body:
+            if isinstance(node, ast.Assign):
+                for t in node.targets:
+                    if (isinstance(t, ast.Name) and t.id.isupper()
+                            and not t.id.startswith("_")):
+                        out.append((t.id, node.lineno))
+            elif isinstance(node, ast.FunctionDef) and not node.name.startswith("_"):
+                out.append((node.name, node.lineno))
+        return out
+
+    def test_every_public_name_has_a_consumer(self):
+        reg = os.path.join(_util.SCRIPTS, self.CANON)
+        if not os.path.isfile(reg):
+            self.skipTest("_registry.py が無い")
+        lines = open(reg, encoding="utf-8").read().split("\n")
+        others = {}
+        for path in _scripts_present():
+            if os.path.basename(path) == self.CANON:
+                continue
+            try:
+                with open(path, encoding="utf-8") as fh:
+                    others[os.path.basename(path)] = fh.read()
+            except (OSError, UnicodeError):
+                continue
+        dead = []
+        for name, lineno in self._public_names(reg):
+            pattern = r"\b" + re.escape(name) + r"\b"
+            if any(re.search(pattern, src) for src in others.values()):
+                continue
+            # 登録簿の中の取得関数から使われていれば生きている(定義行は除く)。
+            inner = [i + 1 for i, line in enumerate(lines)
+                     if re.search(pattern, line) and (i + 1) != lineno
+                     and not line.strip().startswith("#")]
+            if inner:
+                continue
+            dead.append(name)
+        self.assertEqual(
+            sorted(dead), [],
+            "登録簿に消費者の無い公開名が在る(古びても誰にも見えない。ADR-106): %r"
+            % sorted(dead))
