@@ -33,6 +33,7 @@ import _auditcache
 import _config
 import _frontmatter
 import _registry
+import _tokens
 
 # 既定の注入量上限(トークン)。仕様は数値を固定せず「上限を設ける」とだけ言う(§3.9/§7)。
 # 12000 は運用既定。config の injection_token_cap または --cap で上書きできる。
@@ -41,24 +42,14 @@ DEFAULT_CAP = 12000
 
 # トークン推定は文字数 / 4.0 の天井(MASTER §5.4)。英語の標準近似であり、日本語では
 # 過大評価ぎみ = 安全側(本物の窓を超える前に curate を促す)。この偏りは意図的。
-DEFAULT_CHARS_PER_TOKEN = 4.0
+# 既定と較正の解釈の正本は共有コア(ADR-105)。ここでは持たない。
+DEFAULT_CHARS_PER_TOKEN = _tokens.DEFAULT_CHARS_PER_TOKEN
 # doctrine:end SPEC-012
 
 
 # ---------------------------------------------------------------------------
 # トークン推定(純粋・決定的)
 # ---------------------------------------------------------------------------
-def estimate_tokens(text, chars_per_token=DEFAULT_CHARS_PER_TOKEN):
-    """文字数 / chars_per_token の天井。純粋関数、決定的(MASTER §5.4)。"""
-    if not text:
-        return 0
-    try:
-        cpt = float(chars_per_token)
-    except (TypeError, ValueError):
-        cpt = DEFAULT_CHARS_PER_TOKEN
-    if cpt <= 0:
-        cpt = DEFAULT_CHARS_PER_TOKEN
-    return int(math.ceil(len(text) / cpt))
 
 
 # ---------------------------------------------------------------------------
@@ -940,7 +931,7 @@ def _trim_to_fit(sections, budget, chars_per_token):
         work.append(s)
 
     def total():
-        return estimate_tokens(_render_sections(work), chars_per_token)
+        return _tokens.estimate(_render_sections(work), chars_per_token)
 
     if budget is None:
         return work
@@ -992,19 +983,19 @@ def _assemble(docs, audit_summary, config, cap, chars_per_token, had_docs_root,
     """
     if not had_docs_root:
         # _system が無い → ブートストラップ通知だけ(空文字列にしない、§1.3)。
-        return (_BOOTSTRAP_NOTICE, False, estimate_tokens(_BOOTSTRAP_NOTICE, chars_per_token))
+        return (_BOOTSTRAP_NOTICE, False, _tokens.estimate(_BOOTSTRAP_NOTICE, chars_per_token))
 
     if not docs:
         # docs/ は在るが登録文書がゼロ → オンボーディング通知だけ(§1.3)。
         # bootstrap(had_docs_root 無し)とは相互排他: ここは had_docs_root=True の枝。
         return (_ONBOARDING_NOTICE, False,
-                estimate_tokens(_ONBOARDING_NOTICE, chars_per_token))
+                _tokens.estimate(_ONBOARDING_NOTICE, chars_per_token))
 
     sections = _build_sections(docs, audit_summary, config, today, stale_days,
                                notes_pending, docs_level, tree_initialized,
                                compacted)
     untrimmed = _render_sections(sections)
-    untrimmed_est = estimate_tokens(untrimmed, chars_per_token)
+    untrimmed_est = _tokens.estimate(untrimmed, chars_per_token)
 
     no_cap = (cap is None or cap <= 0)
     overflow = (not no_cap) and (untrimmed_est > cap)
@@ -1015,7 +1006,7 @@ def _assemble(docs, audit_summary, config, cap, chars_per_token, had_docs_root,
     # overflow 通知は常に残す(実行可能な信号)。通知の分を予算から差し引いてから本体を
     # トリムし、本体+通知が上限に収まる天井を守る(MASTER §5.4)。
     notice = _OVERFLOW_TEMPLATE.format(cap=cap, est=untrimmed_est)
-    notice_cost = estimate_tokens("\n\n" + notice, chars_per_token)
+    notice_cost = _tokens.estimate("\n\n" + notice, chars_per_token)
     budget = cap - notice_cost
     if budget < 0:
         budget = 0
@@ -1074,14 +1065,10 @@ def main(argv=None):
         if cap is None:
             cap = DEFAULT_CAP
 
-        cpt = DEFAULT_CHARS_PER_TOKEN
-        if isinstance(config, dict):
-            mcpt = config.get("model_chars_per_token")
-            try:
-                if mcpt is not None and float(mcpt) > 0:
-                    cpt = float(mcpt)
-            except (TypeError, ValueError):
-                pass
+        # 較正の解釈は共有コアが正本(ADR-105)。真偽値・零以下・非数・無限は既定へ
+        # 退避する —— 負は負のトークン数を生み、上限との比較を必ず通すので上限が
+        # 黙って無効になる。パックも同じ較正で動く(分けるのは上限であって較正ではない)。
+        cpt = _tokens.chars_per_token(config)
 
         # 鮮度警告の基準日(--today 優先。無ければ描画時に壁時計へ退避)と閾値。
         today = _frontmatter.parse_date(opts.get("today"))

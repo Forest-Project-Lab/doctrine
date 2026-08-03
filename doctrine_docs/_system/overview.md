@@ -76,6 +76,7 @@ sources: []
 | ADR-053 | ADR | context | 監査要約の読み取りを一箇所に正本化し、木の世代をまたいだ要約は捨てる |
 | ADR-096 | ADR | context | 統治の設定を指紋で見張る。変えるには打ち直しが要る |
 | ADR-104 | ADR | context | 統治の設定の読み取りを共有コアに一度だけ置く |
+| ADR-105 | ADR | context | トークンの見積りを共有コアに一度だけ置き、較正を二つの上限の両方に効かせる |
 | IMPL-012 | IMPL | context | `inject-contract.py` の実装メモ |
 | IMPL-013 | IMPL | context | `collect-context.py` の実装メモ |
 | IMPL-014 | IMPL | context | `render-projection.py` の実装メモ |

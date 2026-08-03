@@ -562,9 +562,9 @@ class TestCapEnforcement(InjectBase):
         cap = 120
         ctx = self._ctx(self._run_json(os.path.join(root, "docs"),
                                        extra=["--cap", str(cap)]))
-        # estimate_tokens of the FINAL string (incl. the overflow notice) <= cap.
+        # 見積り(正本)の FINAL 文字列(溢れの注記を含む)が上限以下であること。
         mod = _util.load_script("inject-contract")
-        est = mod.estimate_tokens(ctx)
+        est = _util.load_core("_tokens").estimate(ctx)
         self.assertLessEqual(est, cap,
                              "final injected size (%d) exceeds cap (%d)" % (est, cap))
         # The overflow notice itself is always kept.
@@ -580,9 +580,9 @@ class TestCapEnforcement(InjectBase):
         root = self._repo(self._many_decided())
         docs_root = os.path.join(root, "docs")
         mod = _util.load_script("inject-contract")
-        full = mod.estimate_tokens(
+        full = _util.load_core("_tokens").estimate(
             self._ctx(self._run_json(docs_root, extra=["--cap", "100000"])))
-        tiny = mod.estimate_tokens(
+        tiny = _util.load_core("_tokens").estimate(
             self._ctx(self._run_json(docs_root, extra=["--cap", "10"])))
         self.assertLess(tiny, full / 2,
                         "budget=0 で切り詰めが走っていない(%d vs 全文 %d)"
@@ -681,7 +681,8 @@ class TestTokenEstimator(unittest.TestCase):
         self.mod = _util.load_script("inject-contract")
 
     def test_estimate_deterministic_ceil(self):
-        f = self.mod.estimate_tokens
+        # 見積りの正本は共有コア(ADR-105)。注入は自前の写しを持たない。
+        f = _util.load_core("_tokens").estimate
         self.assertEqual(f(""), 0)
         self.assertEqual(f("abcd"), 1)            # 4/4 = 1
         self.assertEqual(f("abcde"), 2)           # ceil(5/4) = 2
