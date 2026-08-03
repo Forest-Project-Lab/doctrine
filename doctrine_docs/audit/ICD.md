@@ -34,8 +34,10 @@ ICD・正本・投影・現行・依存・参照は用語辞書（`_system/gloss
 - `audit-summary-schema`: 監査の要約スキーマ `docs-audit/1` の形。
 
 検査と重大度（固定）。名前の正本は `docs-audit.py` の `AUDIT_CHECKS` であり、
-下表はその重大度を添えた対応表である。二行が二件ずつを束ねるため、行数（32）と
-検査名の件数（34）は一致しない。件数は数えず `checks_run` から導く（ADR-075）:
+下表はその重大度を添えた対応表である。二行が二件ずつを束ねるため、行数と検査名の件数は
+一致しない。**件数はここに書かない** —— `checks_run` から導く（ADR-075）。以前ここに
+「行数 32／件数 34」と書いていたが、**検査が増えても誰も直さないので実際にずれていた**
+（測ると件数は 36 だった。数を散文で持つと第二の正本になる）:
 
 | 検査名 | 重大度 |
 |---|---|
@@ -43,6 +45,7 @@ ICD・正本・投影・現行・依存・参照は用語辞書（`_system/gloss
 | dep_cycle（依存の循環。自己依存・多頂点循環。ADR-038） | warn |
 | review_by_overrun（DECIDED/WATCH の不在も含む） | warn（不在は error） |
 | stale_draft | warn |
+| stale_proposed（proposed のまま放置。受理するか捨てる。ADR-095） | warn |
 | orphan | error |
 | reverse_orphan_req_no_spec / reverse_orphan_spec_no_test | error |
 | canonical_conflict | error |

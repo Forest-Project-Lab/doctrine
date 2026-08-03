@@ -22,6 +22,7 @@ SPEC-011 の検査群について、それぞれ pass と fail の両側を確�
 - dead_link: すべての参照が解決すれば pass、解決先のない `depends_on` があれば fail。
 - review_by_overrun: `review_by` が未来日なら pass、期限を過ぎていれば fail（DECIDED と WATCH を含む）。DECIDED に `review_by` が無い場合は error。
 - stale_draft: draft が最近のものなら pass、古ければ fail。
+- stale_proposed（ADR-095）: `proposed` が最近のものなら pass、放置されていれば warn。**`stale_draft` と混ざらないこと**（`proposed` は draft ではない）。走った検査の一覧（`checks_run`）に載ること（黙って消えない。`[R11]`）。**歯止め自身の実効を実測してある**（2026-08-03）: 検査の呼び出しを外すと落ち、戻すと通った。
 - orphan: 依存されていれば pass、三条件すべてを満たせば fail。陳腐化していなければ孤児としない。ICD・投影・always は孤児としない。再現可能かどうかで判定が分かれることも確認する。
 - reverse_orphan: 要求から仕様、仕様からテストまで連鎖がそろっていれば pass、要求に対応する仕様が無ければ fail、仕様に対応するテストが無ければ fail。
 - canonical_conflict: 正本が一つなら pass、二つあれば fail。置換済みなのに正本の移譲をやり残していれば fail。

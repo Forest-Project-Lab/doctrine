@@ -313,6 +313,47 @@ class StaleDraftTest(AuditBase):
         self.assertEqual(len(sd), 1)
         self.assertEqual(sd[0]["severity"], "warn")
 
+    def test_recent_proposed_pass(self):
+        """ADR-095: 最近の proposed は咎めない（proposed であること自体は欠陥でない）。"""
+        root = self.build([
+            (_fm("ADR-1", "ADR", "billing", status="proposed",
+                 updated="2026-06-20"), "x"),
+        ])
+        data, _ = self.audit_json(root)
+        self.assertEqual(self.checks_for(data, "stale_proposed"), [])
+
+    def test_old_proposed_fail(self):
+        """ADR-095: 放置された proposed は stale_proposed(warn)。
+
+        proposed は現行でないので、孤児・逆孤児・adr_not_landed のどの検査からも
+        見えない。不変を accepted から始めた以上、ここが唯一の見張りである。
+        """
+        root = self.build([
+            (_fm("ADR-1", "ADR", "billing", status="proposed",
+                 updated="2025-01-01"), "x"),
+        ])
+        data, _ = self.audit_json(root)
+        sp = self.checks_for(data, "stale_proposed")
+        self.assertEqual(len(sp), 1)
+        self.assertEqual(sp[0]["severity"], "warn")
+
+    def test_proposed_is_not_reported_as_stale_draft(self):
+        """二つの検査を混ぜない。proposed は draft ではない。"""
+        root = self.build([
+            (_fm("ADR-1", "ADR", "billing", status="proposed",
+                 updated="2025-01-01"), "x"),
+        ])
+        data, _ = self.audit_json(root)
+        self.assertEqual(self.checks_for(data, "stale_draft"), [])
+
+    def test_stale_proposed_is_in_checks_run(self):
+        """黙って消えないこと。走った検査の一覧に載る(R11)。"""
+        root = self.build([
+            (_fm("SPEC-1", "SPEC", "billing"), "x"),
+        ])
+        data, _ = self.audit_json(root)
+        self.assertIn("stale_proposed", data["checks_run"])
+
     def test_draft_with_broken_updated_is_stale(self):
         """updated が解せない draft は古び扱い(不明は安全側 = stale)。"""
         root = self.build([
@@ -1281,7 +1322,10 @@ def _spec_with_fingerprints(doc_id, fingerprints):
 # 読み直しではない。ADR-060)。検査を足す・消すときは、この転記表を同じ変更で
 # 更新する。ここを AUDIT_CHECKS から生成したら凍結の意味が消える。
 EXPECTED_AUDIT_CHECKS = (
-    "dead_link", "dep_cycle", "review_by_overrun", "stale_draft", "orphan",
+    "dead_link", "dep_cycle", "review_by_overrun", "stale_draft",
+    # ADR-095: 不変を accepted から始めたので、下書きのまま置かれたものを見る。
+    # proposed は現行でないため、孤児・逆孤児・adr_not_landed からは見えない。
+    "stale_proposed", "orphan",
     "reverse_orphan_req_no_spec", "reverse_orphan_spec_no_test",
     "canonical_conflict", "near_duplicate", "icd_dependency_violation",
     "projection_drift", "unregistered_document", "shadowed_document",

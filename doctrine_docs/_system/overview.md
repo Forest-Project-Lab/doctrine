@@ -115,6 +115,7 @@ sources: []
 | ADR-036 | ADR | guard | 統治木の無いプロジェクトでは二・三ガードとナッジ・退避を発火させない |
 | ADR-044 | ADR | guard | 不変の ADR に誤りを見つけたときの正規の直し方 |
 | ADR-076 | ADR | guard | ICD 依存の境界は Edit・MultiEdit でも書き込む前に判ずる |
+| ADR-095 | ADR | guard | ADR の不変は accepted から始める。proposed は下書きとして直せる |
 | IMPL-003 | IMPL | guard | `policy-guard.py` の実装メモ |
 | TEST-003 | TEST | guard | 三ガードの受入試験 |
 | ICD-004 | ICD | lint | lint のインターフェース（リンタと用語チェッカーの公開契約） |
