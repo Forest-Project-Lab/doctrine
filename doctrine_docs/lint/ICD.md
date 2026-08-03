@@ -6,7 +6,7 @@ domain: lint
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-28
+updated: 2026-08-03
 sources: [plugin/scripts/docs-linter.py]
 depends_on: [ICD-001, ICD-002]
 canonical_for: [document-lint, term-check]

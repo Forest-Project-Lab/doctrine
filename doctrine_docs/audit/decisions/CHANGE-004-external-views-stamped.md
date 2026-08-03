@@ -6,7 +6,7 @@ domain: audit
 status: current
 owner: doctrine-maintainers
 created: 2026-07-28
-updated: 2026-07-29
+updated: 2026-08-03
 sources: [外部独立レビュー 2026-07-28, plugin/scripts/_audit_stray.py]
 depends_on: [SPEC-011, ICD-005]
 llm_context: task
