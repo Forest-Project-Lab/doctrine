@@ -1,0 +1,42 @@
+{
+  "doctrine:exempt": "保証レーンの事象台帳。仕様との対応なし(ADR-114)",
+  "kind": "incident-queue",
+  "note": "FAIL・欠陥・運用の異常はここへ積み、cast レーンの CAST_ANALYSIS が消化する。修正済みでも『なぜ既存の保証が見逃したか』の分析が済むまで closed にしない。",
+  "incidents": [
+    {
+      "id": "INC-001-sessionend-audit-gap",
+      "date": "2026-08-04",
+      "summary": "SessionEnd 監査が 7 日間不実行(cache 2026-07-28 のまま、checks_run も旧世代)。SessionStart の警告(R11)は機能した",
+      "status_at_detection": "cause UNKNOWN(SessionEnd 不発火の疑い: 強制終了系)",
+      "fixed": false,
+      "cast_analysis": "pending",
+      "evidence": ".claude/.cache/last-audit.json の mtime 2026-07-28 → 手動更新 2026-08-04"
+    },
+    {
+      "id": "INC-002-termcheck-ascii-substring",
+      "date": "2026-08-04",
+      "summary": "禁止同義語の ASCII 部分一致誤検知(VERIFY⊃IF)。WATCH-001 類型の新事例。RED→修正→全緑まで完了",
+      "fixed": true,
+      "fix_commit": "af9c858",
+      "cast_analysis": "pending",
+      "why_missed_hypothesis": "『部分文字列の取り違え』の既知類型が CJK 事例だけで凍結され、ASCII 語境界という別の失敗様式が試験にも WATCH の文言にも一般化されていなかった",
+      "evidence": "plugin/tests/test_termcheck.py の RED 証拠(修正前 FAIL)"
+    },
+    {
+      "id": "INC-003-sdk-error-opacity",
+      "date": "2026-08-04",
+      "summary": "認証遮断と不正 model が SDK 例外表面で同一文言になり故障族を区別できない。実行時分類は UNKNOWN 止まり",
+      "fixed": false,
+      "cast_analysis": "pending",
+      "evidence": "assurance/ledger/mutations-2026-08-04.json (M1/M3)"
+    },
+    {
+      "id": "INC-004-hyphen-token-undefined-term",
+      "date": "2026-08-04",
+      "summary": "NOT-APPLICABLE のハイフン分割で UNDEFINED_TERM が NOT に誤反応(候補・未修正)",
+      "fixed": false,
+      "cast_analysis": "pending",
+      "evidence": "assurance/README.md への linter 助言(行 43)"
+    }
+  ]
+}

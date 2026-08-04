@@ -1,0 +1,1115 @@
+{
+  "doctrine:exempt": "保証レーンの網羅台帳。仕様との対応なし(ADR-114)",
+  "kind": "coverage-ledger",
+  "book_id": "stpa",
+  "book_sha256": "bfa9fe932993e6ac239fc7e615d1c815b9566bd564540184401e1e65fe450728",
+  "dispositions": [
+    "実装・試験・証拠あり",
+    "対応計画あり",
+    "非該当で理由あり",
+    "UNKNOWN",
+    "UNASSESSED"
+  ],
+  "entries": [
+    {
+      "key": "STPA:楽観仮定の禁止",
+      "title": "安全側の楽観仮定を禁止する",
+      "category": "安全性と危険要因",
+      "source_lines": "L6-L6",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:ハザードは原因非依存の高抽象度",
+      "title": "ハザードは原因を区別しない抽象度で書く",
+      "category": "安全性と危険要因",
+      "source_lines": "L8-L8",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:ハザードの主語はシステム全体",
+      "title": "ハザードはコンポーネントでなくシステム状態を指す",
+      "category": "安全性と危険要因",
+      "source_lines": "L12-L12",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:制御可能な要因への限定",
+      "title": "ハザードは制御・管理可能な要因のみを参照する",
+      "category": "安全性と危険要因",
+      "source_lines": "L12-L12",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:ハザードごとの防止条件記述",
+      "title": "各ハザードに防止用のシステムレベル条件を書く",
+      "category": "安全性と危険要因",
+      "source_lines": "L12-L12",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:ハザード件数上限7-10",
+      "title": "ハザード総数を小さく保つ",
+      "category": "安全性と危険要因",
+      "source_lines": "L12-L12",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:ハザード文の曖昧語禁止",
+      "title": "曖昧語・再帰語をハザード文から排除する",
+      "category": "文書化",
+      "source_lines": "L12-L12",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:ハザードリストの反復改訂",
+      "title": "ハザードリストは反復改訂する前提で扱う",
+      "category": "構成管理と変更管理",
+      "source_lines": "L14-L14",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:制約はハザードの反転",
+      "title": "システムレベル制約はハザードの状態反転で導出する",
+      "category": "試験設計",
+      "source_lines": "L20-L20",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:制約は具体条件を特定",
+      "title": "制約はハザードを防ぐ条件・動作を具体に特定する",
+      "category": "文書化",
+      "source_lines": "L18-L18",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:制約-ハザード-損失のトレーサビリティ",
+      "title": "制約・ハザード・損失のトレーサビリティを保つ",
+      "category": "証拠と記録",
+      "source_lines": "L30-L30",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:発生後の検出と損失最小化制約",
+      "title": "損失最小化の制約も定義する",
+      "category": "不適合と是正",
+      "source_lines": "L32-L32",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:制約は実装非依存",
+      "title": "安全制約に解決策や実装を書かない",
+      "category": "試験設計",
+      "source_lines": "L38-L38",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:サブハザードから具体制約",
+      "title": "サブハザードからより特定の制約を導く",
+      "category": "試験設計",
+      "source_lines": "L66-L66",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:コントロールストラクチャーは機能モデル",
+      "title": "コントロールストラクチャーは機能モデルとして描く",
+      "category": "検証計画",
+      "source_lines": "L133-L133",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:階層と矢印向きの規約",
+      "title": "縦方向の階層と矢印の向きを規約通りにする",
+      "category": "文書化",
+      "source_lines": "L129-L129",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:構造は実行可能モデルではない",
+      "title": "コントロールストラクチャーを実行可能モデルと混同しない",
+      "category": "検証計画",
+      "source_lines": "L135-L135",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:指示は必ず従われるとは限らない",
+      "title": "コントロールアクションが従われる前提を置かない",
+      "category": "運用と保守",
+      "source_lines": "L143-L143",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:抽象化による複雑さ管理",
+      "title": "抽象化で複雑さを管理し段階的に精密化する",
+      "category": "検証計画",
+      "source_lines": "L145-L145",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:高抽象度から先に解析",
+      "title": "高い抽象度で先に解析してから詳細化する",
+      "category": "検証計画",
+      "source_lines": "L153-L153",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:既存構造の再利用",
+      "title": "既存のコントロールストラクチャーを再利用する",
+      "category": "供給者と再利用",
+      "source_lines": "L157-L157",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:責任の割当と制約への紐づけ",
+      "title": "コントローラに責任を割り当て制約へ紐づける",
+      "category": "組織と力量",
+      "source_lines": "L177-L177",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:プロセスモデルからフィードバック導出",
+      "title": "責任とプロセスモデルからフィードバックを導出する",
+      "category": "証拠と記録",
+      "source_lines": "L200-L200",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:最小構成で解析開始可能",
+      "title": "不完全な構造でも最低要素があれば解析を開始する",
+      "category": "検証計画",
+      "source_lines": "L227-L227",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:後期段階でも情報省略禁止",
+      "title": "後期段階で高レベル情報を意図的に省略しない",
+      "category": "レビューと監査",
+      "source_lines": "L229-L229",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:制御構造の着手最小要素",
+      "title": "分析開始に必要な最小構成を満たす",
+      "category": "検証計画",
+      "source_lines": "L227-L227",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:既知情報の省略禁止",
+      "title": "既知情報の意図的省略を禁じる",
+      "category": "検証計画",
+      "source_lines": "L229-L229",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:矢印ラベルの具体性",
+      "title": "矢印ラベルは機能情報を具体的に示す",
+      "category": "文書化",
+      "source_lines": "L231-L231",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:コントローラ命名は機能役割",
+      "title": "コントローラ名は実装でなく役割で表す",
+      "category": "文書化",
+      "source_lines": "L231-L231",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:実装詳細の遅延記載",
+      "title": "実装詳細は後工程まで遅延させる",
+      "category": "検証計画",
+      "source_lines": "L233-L233",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:図に付随する前提の文書化",
+      "title": "図に付随する前提と補足を文書化する",
+      "category": "文書化",
+      "source_lines": "L275-L275",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:被制御プロセスの制御者被覆",
+      "title": "被制御プロセスの制御者被覆を点検する",
+      "category": "レビューと監査",
+      "source_lines": "L279-L279",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:責任と制御要素の対応",
+      "title": "責任と制御要素の対応を検証する",
+      "category": "レビューと監査",
+      "source_lines": "L279-L279",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:UCAのハザード遡及",
+      "title": "UCAはハザードへ遡及可能にする",
+      "category": "証拠と記録",
+      "source_lines": "L326-L326",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:UCAのコンテキスト明示",
+      "title": "UCAはコンテキストを明示する",
+      "category": "試験設計",
+      "source_lines": "L334-L334",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:UCAの構成要素の完全性",
+      "title": "UCAの構成要素を欠落なく含める",
+      "category": "文書化",
+      "source_lines": "L344-L344",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:UCA4カテゴリの網羅検討",
+      "title": "4種類すべてを検討し件数は固定しない",
+      "category": "試験設計",
+      "source_lines": "L370-L370",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:セーフガード理由の省略禁止",
+      "title": "セーフガード存在を理由にUCAを省かない",
+      "category": "安全性と危険要因",
+      "source_lines": "L350-L350",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:制御は遵守を意味しない",
+      "title": "制御関係は遵守を前提としない",
+      "category": "安全性と危険要因",
+      "source_lines": "L263-L263",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:制御と影響の区別",
+      "title": "制御と単なる影響・応答を区別する",
+      "category": "その他",
+      "source_lines": "L267-L267",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:連続と離散でのタイミング種別",
+      "title": "タイミング種別は連続性で使い分ける",
+      "category": "試験設計",
+      "source_lines": "L366-L366",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:uca-hazard-traceability",
+      "title": "UCA は全てハザードへ追跡可能にする",
+      "category": "安全性と危険要因",
+      "source_lines": "L377-L377",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:uca-context-required",
+      "title": "UCA はコンテキストを必須要素とする",
+      "category": "文書化",
+      "source_lines": "L389-L389",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:context-not-belief",
+      "title": "コンテキストは信念でなく真の状態で書く",
+      "category": "安全性と危険要因",
+      "source_lines": "L391-L391",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:category-count-not-fixed",
+      "title": "UCA 数はカテゴリごとに固定しない",
+      "category": "検証計画",
+      "source_lines": "L370-L370",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:review-all-na-entries",
+      "title": "N/A と判断した種類を全件レビューする",
+      "category": "レビューと監査",
+      "source_lines": "L419-L419",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:parameter-excess-insufficient-direction",
+      "title": "パラメータ付きアクションは過剰・不足・方向を検討する",
+      "category": "試験設計",
+      "source_lines": "L419-L419",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:document-rationale-assumptions",
+      "title": "仮定と推論を UCA に添えて文書化する",
+      "category": "証拠と記録",
+      "source_lines": "L421-L421",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:uca-to-controller-constraint",
+      "title": "各 UCA をコントローラ制約へ変換する",
+      "category": "不適合と是正",
+      "source_lines": "L427-L427",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:iterative-update-of-prior-results",
+      "title": "分析は反復的で前結果を更新できる",
+      "category": "構成管理と変更管理",
+      "source_lines": "L377-L377",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:human-controller-same-treatment",
+      "title": "人間コントローラも同一手順で扱う",
+      "category": "組織と力量",
+      "source_lines": "L411-L411",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:two-types-of-loss-scenarios",
+      "title": "損失シナリオは 2 タイプを必ず検討する",
+      "category": "検証計画",
+      "source_lines": "L471-L471",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:refine-structure-with-sensors-actuators",
+      "title": "シナリオ分析前にセンサ・アクチュエータを追記する",
+      "category": "試験設計",
+      "source_lines": "L484-L484",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:four-causes-of-unsafe-controller-behavior",
+      "title": "非安全な動作の 4 原因を網羅する",
+      "category": "検証計画",
+      "source_lines": "L514-L514",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:four-paths-of-process-model-flaw",
+      "title": "プロセスモデル欠陥の 4 経路を検討する",
+      "category": "検証計画",
+      "source_lines": "L544-L544",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:explain-how-flawed-model-arises",
+      "title": "欠陥プロセスモデルの生成経路を示す",
+      "category": "証拠と記録",
+      "source_lines": "L552-L552",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:complete-inadequate-feedback-reason",
+      "title": "不十分なフィードバックの理由まで書き切る",
+      "category": "不適合と是正",
+      "source_lines": "L568-L568",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:consider-adversary-influenced-feedback",
+      "title": "攻撃者によるフィードバック改ざんを検討する",
+      "category": "安全性と危険要因",
+      "source_lines": "L603-L603",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:security-adversarial-causes-in-scenarios",
+      "title": "敵対的影響を原因候補に明示的に加える",
+      "category": "安全性と危険要因",
+      "source_lines": "L603-L603",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:scenarios-beyond-uca-execution-failures",
+      "title": "UCA不在でもハザードは起こると想定する",
+      "category": "試験設計",
+      "source_lines": "L618-L618",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:control-path-transmission-analysis",
+      "title": "実装形態に依存せずコントロール経路を分析する",
+      "category": "試験設計",
+      "source_lines": "L622-L622",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:spurious-uncommanded-actuation",
+      "title": "未送信なのに応答するシナリオを検討する",
+      "category": "試験設計",
+      "source_lines": "L642-L642",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:controlled-process-nullifies-action",
+      "title": "指示を無効化する被制御プロセス側要因を洗い出す",
+      "category": "試験設計",
+      "source_lines": "L666-L666",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:scenario-not-single-factor-list",
+      "title": "因果要因の羅列ではなくシナリオとして記述する",
+      "category": "試験設計",
+      "source_lines": "L682-L682",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:end-to-end-traceability",
+      "title": "開発プロセス全体でトレーサビリティを維持する",
+      "category": "構成管理と変更管理",
+      "source_lines": "L728-L728",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:stakeholder-defined-unacceptable-losses",
+      "title": "損失は利害関係者が定義し許容不能なものを特定する",
+      "category": "検証計画",
+      "source_lines": "L793-L793",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:hazards-linked-to-losses",
+      "title": "ハザードは損失に関連付けて定義する",
+      "category": "安全性と危険要因",
+      "source_lines": "L809-L809",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:hazard-within-designer-control",
+      "title": "ハザードは設計者が制御できる状態に限定する",
+      "category": "安全性と危険要因",
+      "source_lines": "L811-L811",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:hazard-not-normal-operation",
+      "title": "正常動作を含む広すぎるハザード定義を避ける",
+      "category": "安全性と危険要因",
+      "source_lines": "L813-L813",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:hazard-identification-at-start",
+      "title": "ハザードは開発プロセスの最初に識別する",
+      "category": "検証計画",
+      "source_lines": "L817-L817",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:functional-nonprobabilistic-requirements",
+      "title": "ハザードから機能的で非確率的な安全要求を導く",
+      "category": "検証計画",
+      "source_lines": "L817-L817",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:hazard-to-system-constraint-with-id",
+      "title": "ハザードから上位レベルのシステム制約を導出する",
+      "category": "証拠と記録",
+      "source_lines": "L829-L829",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:no-early-probability-based-screening",
+      "title": "初期段階の発生確率推定に依拠しない",
+      "category": "検証計画",
+      "source_lines": "L775-L775",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:probabilistic-requirements-insufficient",
+      "title": "確率的要求だけでは充足を保証できない",
+      "category": "検証計画",
+      "source_lines": "L779-L779",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:safety-designed-in-not-assured-after",
+      "title": "安全を事後の保証活動として扱わない",
+      "category": "レビューと監査",
+      "source_lines": "L718-L718",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:no-skipping-upstream-activities",
+      "title": "上流活動を省いたプロセスで重要システムを作らない",
+      "category": "組織と力量",
+      "source_lines": "L722-L722",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:external-constraints-documented",
+      "title": "外部制約をコントロールストラクチャから識別し文書化する",
+      "category": "文書化",
+      "source_lines": "L789-L789",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:制約はmust/要求はshallで語彙分離",
+      "title": "制約と要求を助動詞で書き分ける",
+      "category": "文書化",
+      "source_lines": "L843-L843",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:安全制約はハザードの再記述＋ID紐付け",
+      "title": "安全制約はハザードの再記述として定義し由来を明示する",
+      "category": "検証計画",
+      "source_lines": "L885-L885",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:要求分析はアーキテクチャ設計に先行",
+      "title": "要求分析はアーキテクチャ設計に先行させる",
+      "category": "検証計画",
+      "source_lines": "L867-L867",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:モデル境界は目的により定義",
+      "title": "モデル化範囲は目的から定義する",
+      "category": "検証計画",
+      "source_lines": "L841-L841",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:モデルは実装非依存に保ち再利用可能化",
+      "title": "過剰な設計決定を含めない汎用モデルを保つ",
+      "category": "供給者と再利用",
+      "source_lines": "L851-L851",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:コントローラに被制御対象の状態モデル必須",
+      "title": "コントローラは被制御対象の状態モデルを持つ",
+      "category": "安全性と危険要因",
+      "source_lines": "L853-L853",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:精密化で責任権限説明責任とフィードバックを割当",
+      "title": "精密化時に責任・権限・説明責任とフィードバック要求を割り当てる",
+      "category": "組織と力量",
+      "source_lines": "L861-L861",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:フィードバック無提供状態の洗い出し",
+      "title": "フィードバック未提供の状態を仮定で片付けない",
+      "category": "安全性と危険要因",
+      "source_lines": "L859-L859",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:解析は設計解非依存で機能動作から開始",
+      "title": "解析は特定の設計解を前提とせず機能動作から始める",
+      "category": "独立性",
+      "source_lines": "L931-L931",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:未対処ゼロまで解析を反復継続",
+      "title": "精密化は全項目が扱われるまで反復継続する",
+      "category": "検証計画",
+      "source_lines": "L897-L897",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:制約から導出元シナリオへの遡及可能性",
+      "title": "設計制約から導出元シナリオへ遡れるようにする",
+      "category": "証拠と記録",
+      "source_lines": "L977-L977",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:制約に論拠を併記して変更時再導入を防ぐ",
+      "title": "制約に論拠を併記し変更時の非安全機能の再導入を防ぐ",
+      "category": "構成管理と変更管理",
+      "source_lines": "L959-L959",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:後段検出は検出プロセス欠陥として是正",
+      "title": "統合段階での安全欠陥検出はプロセス欠陥として扱う",
+      "category": "不適合と是正",
+      "source_lines": "L987-L987",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:テスト要求は解析結果から導出",
+      "title": "テスト要求は解析結果から生成する",
+      "category": "試験設計",
+      "source_lines": "L991-L991",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:試験環境固有のハザードを別途解析",
+      "title": "試験環境固有のハザードを別途解析する",
+      "category": "試験設計",
+      "source_lines": "L993-L993",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:自動化不能シナリオは運用へ明示移譲",
+      "title": "設計で消せないシナリオは運用側へ明示的に引き渡す",
+      "category": "運用と保守",
+      "source_lines": "L1001-L1001",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:先行指標で設計前提の崩壊を早期検知",
+      "title": "先行指標で設計前提の崩れを検知する",
+      "category": "運用と保守",
+      "source_lines": "L1001-L1001",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:全運用環境に安全管理の仕組みを設置",
+      "title": "すべての運用環境に安全管理システムを置く",
+      "category": "運用と保守",
+      "source_lines": "L1213-L1213",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:計画変更は必ずハザード解析対象",
+      "title": "計画された変更は必ずハザード解析に掛ける",
+      "category": "構成管理と変更管理",
+      "source_lines": "L1217-L1217",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:コンテキストおよび支援系の変更も変更管理対象",
+      "title": "設計以外の変更も同じ変更管理に載せる",
+      "category": "構成管理と変更管理",
+      "source_lines": "L1215-L1215",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:人為的過失は状態認識不整合として解析",
+      "title": "人為的過失を状態認識の不整合として解析する",
+      "category": "安全性と危険要因",
+      "source_lines": "L929-L929",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:手順強制でなく設計で誤りを構造的に排除",
+      "title": "手順順守の強制でなくシステム全体のシナリオ識別で対処する",
+      "category": "組織と力量",
+      "source_lines": "L1225-L1225",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:汎用ハザードのシステム固有詳細化",
+      "title": "汎用ハザードを対象システム固有に詳細化する",
+      "category": "安全性と危険要因",
+      "source_lines": "L1247-L1247",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:生産可能性と作業安全を初回解析から包含",
+      "title": "製造・作業安全の考慮を初回解析から含める",
+      "category": "その他",
+      "source_lines": "L997-L997",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:hazard-as-threshold-condition",
+      "title": "ハザードは閾値超過という観測可能な条件で記述する",
+      "category": "安全性と危険要因",
+      "source_lines": "L1251-L1251",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:hazard-refinement-by-operational-phase",
+      "title": "上位ハザードを運用フェーズ別に詳細化する",
+      "category": "安全性と危険要因",
+      "source_lines": "L1257-L1257",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:cover-all-secondary-hazard-sources",
+      "title": "全エネルギー源（見落としやすい経路）を対象範囲に含める",
+      "category": "安全性と危険要因",
+      "source_lines": "L1253-L1253",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:hazard-to-safety-constraint-mapping",
+      "title": "各ハザードは対応する安全制約へ変換する",
+      "category": "検証計画",
+      "source_lines": "L1261-L1261",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:cross-functional-analysis-team",
+      "title": "分析は分野横断の複数部門チームで実施する",
+      "category": "組織と力量",
+      "source_lines": "L1263-L1263",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:participants-must-be-domain-owners",
+      "title": "参加者は自身の責任領域のリーダーまたは専門家であること",
+      "category": "組織と力量",
+      "source_lines": "L1263-L1263",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:facilitator-method-expert-not-domain-owner",
+      "title": "ファシリテータは手法の習熟者で対象システムには非当事者でよい",
+      "category": "独立性",
+      "source_lines": "L1263-L1263",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:plenary-plus-one-on-one-review",
+      "title": "全体会議と一対一議論を併用して分析を進める",
+      "category": "レビューと監査",
+      "source_lines": "L1265-L1265",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "STPA:method-introduction-before-first-use",
+      "title": "手法が新規な組織では最初に手法の導入説明を行う",
+      "category": "組織と力量",
+      "source_lines": "L1267-L1267",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    }
+  ]
+}

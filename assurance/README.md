@@ -36,7 +36,44 @@ assurance/.venv/bin/python assurance/harness/smoke.py
 
 # レーン自身の決定論試験（SDK 不要・通信不要）
 python3 -m unittest discover -s assurance/tests -v
+
+# オーケストレーションの現在地と次の行動（決定論。ADR-115）
+assurance/.venv/bin/python assurance/harness/orchestrator.py status
+assurance/.venv/bin/python assurance/harness/orchestrator.py validate
+
+# 規範カタログの抽出（評価役: opus high。再開可能・費用二段上限）
+assurance/.venv/bin/python assurance/harness/extract_principles.py --book jerg
+
+# 網羅台帳（五値）の骨組み生成と集計
+assurance/.venv/bin/python assurance/harness/coverage.py init --book jerg
+assurance/.venv/bin/python assurance/harness/coverage.py stats
 ```
+
+## 観点レーンと発火（ADR-115）
+
+規範3冊は観点別レーンに分け、一つのセッションへ同時に読ませない。
+「どの状態で・どのレーンが・何を見るか」の正本は `harness/orchestrator.py`。
+語の読み: 冊子は JERG（宇宙機関の検証標準）・STPA（危険要因分析）・CAST（事故分析）、
+状態は DISCOVER（創出）・CHALLENGE（独立批判）・FORMALIZE（定式化）・VERIFY（独立検証）・
+FAIL（不適合）・UNASSESSED（前提欠如で未評価）。
+
+| レーン | 冊子 | 発火する状態 | 見るもの → 出すもの |
+|---|---|---|---|
+| stpa | STPA ハンドブック | DISCOVER | 境界と seed 事実 → 失敗仮説（scenario） |
+| jerg | JERG-2-610C | MAP_COVERAGE・FORMALIZE・VERIFY | 計画と証拠 → 適合判定 |
+| cast | CAST ハンドブック | CAST_ANALYSIS（FAIL・事象の後） | 事象と統制構造 → 統制欠陥・先行指標 |
+| challenge | （共通） | CHALLENGE | DISCOVER の構造化 JSON だけ → 判定 |
+
+冊子の取り込みは jerg → stpa → cast の順。事象は `ledger/incidents.json` に積み、
+cast 分析が済むまで閉じない。
+
+## model 方針（ADR-116）
+
+- 評価役（抽出・創出・批判・検証計画・事故分析）: `claude-opus-5` × effort `high` が
+  最低線。`harness/model_policy.py` がコードで拒否し、決定論試験が凍結する。
+- 配管確認（煙試験の nonce 往復。意味を要さない）: `claude-haiku-4-5`。
+- 劣化プローブ: 弱い model で意味が保たれるかを**測る目的を明示して**だけ使う。
+- opus が使えなければ評価は UNASSESSED。黙って弱い model へ落とさない。
 
 ## 状態語彙
 

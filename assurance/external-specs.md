@@ -59,6 +59,20 @@
 - 破れた場合: 煙試験が model 起因で失敗する。`--model` で差し替えて切り分ける。
 - 再確認の契機: model の廃止告知。煙試験の失敗時。
 
+## 8. effort・思考・費用上限の指定（0.2.129 の実測）
+
+- 事実: `ClaudeAgentOptions` は `effort`（Literal 'low'|'medium'|'high'|'xhigh'|'max'）・
+  `thinking`（Adaptive/Enabled/Disabled）・`max_thinking_tokens`・`max_budget_usd`・
+  `fallback_model`・`betas`（'context-1m-2025-08-07'）の欄を持つ。dataclass の
+  introspection による実測（2026-08-04、venv 内 0.2.129）。
+- 参照: 実測（公式一次文書での effort の意味論の記述は未取得 = 未確認事項）
+- 仮定: effort は Claude Code 本体の effort 段と同じ意味論で子セッションに効く。
+- 破れた場合: 評価の思考の割り当てが指定と食い違う。反証手段: 同一チャンクを
+  low と high で走らせ usage の思考トークン量を比べる（未実施。再確認の契機:
+  カタログの品質が疑わしいとき・SDK 版更新時）。
+- 費用の防護: 抽出は max_budget_usd（一回上限）と累計上限の二段で止める。
+  fallback_model は渡さない（ADR-116: 黙った縮退の禁止）。
+
 ## 7. 入れ子実行（Claude Code セッション内から SDK を呼ぶ）
 
 - 事実: 公式文書に入れ子実行の注意・制約の記載は見つからなかった（未確認事項として持つ）。

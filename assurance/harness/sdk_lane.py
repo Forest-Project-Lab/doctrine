@@ -62,7 +62,8 @@ def _summarize_usage(value, depth=0):
 
 def run_one_shot(prompt, *, schema=None, model=DEFAULT_MODEL, cwd=None,
                  allowed_tools=(), max_turns=1, timeout_s=240,
-                 system_prompt=None, env=None, execution_kind="real-sdk"):
+                 system_prompt=None, env=None, execution_kind="real-sdk",
+                 effort=None, max_budget_usd=None):
     """一回限りの query() を実行し、証拠となる記録 dict を返す。
 
     記録は必ず status を持つ: PASS / FAIL / UNKNOWN / UNASSESSED。
@@ -80,6 +81,8 @@ def run_one_shot(prompt, *, schema=None, model=DEFAULT_MODEL, cwd=None,
         "schema_sha256": schemas.sha256_of(schema) if schema else None,
         "options": {
             "model": model,
+            "effort": effort,
+            "max_budget_usd": max_budget_usd,
             "max_turns": max_turns,
             "allowed_tools": list(allowed_tools),
             "setting_sources": [],
@@ -110,6 +113,8 @@ def run_one_shot(prompt, *, schema=None, model=DEFAULT_MODEL, cwd=None,
         "cwd": str(cwd) if cwd else None,
         "system_prompt": system_prompt,
         "env": dict(env or {}),
+        "effort": effort,
+        "max_budget_usd": max_budget_usd,
     }
     if schema is not None:
         desired["output_format"] = {"type": "json_schema", "schema": schema}

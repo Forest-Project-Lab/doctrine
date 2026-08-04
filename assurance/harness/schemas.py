@@ -121,6 +121,49 @@ VERDICT_SCHEMA = {
     "additionalProperties": False,
 }
 
+# 規範抽出（冊子 → 検証原則カタログ）の応答。source_quote は原文の連続断片で
+# なければならず、抽出器がチャンク本文との照合で検める（出典なき候補は却下）。
+PRINCIPLE_CATEGORIES = [
+    "検証計画", "独立性", "証拠と記録", "試験設計", "レビューと監査",
+    "構成管理と変更管理", "不適合と是正", "供給者と再利用", "安全性と危険要因",
+    "運用と保守", "組織と力量", "文書化", "その他",
+]
+
+PRINCIPLES_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "principles": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "title": {"type": "string"},
+                    "statement": {"type": "string"},
+                    "source_quote": {"type": "string"},
+                    "source_lines": {"type": "string"},
+                    "category": {"enum": PRINCIPLE_CATEGORIES},
+                    "applicability": {"type": "string"},
+                    "suggested_oracle": {"type": "string"},
+                    "dedupe_key": {"type": "string"},
+                },
+                "required": ["title", "statement", "source_quote",
+                             "source_lines", "category", "applicability",
+                             "suggested_oracle", "dedupe_key"],
+                "additionalProperties": False,
+            },
+        },
+        "chunk_note": {"type": "string"},
+    },
+    "required": ["principles"],
+    "additionalProperties": False,
+}
+
+# 規範網羅の分類（campaign「規範網羅」の五値）。
+COVERAGE_DISPOSITIONS = [
+    "実装・試験・証拠あり", "対応計画あり", "非該当で理由あり",
+    "UNKNOWN", "UNASSESSED",
+]
+
 # FORMALIZE の成果物。campaign 定義のフィールドをそのまま持つ。
 SCENARIO_SCHEMA = {
     "type": "object",

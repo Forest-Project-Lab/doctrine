@@ -65,6 +65,61 @@ def build_discover_prompt(seed_facts, boundary):
     return "\n".join(lines)
 
 
+_EXTRACT_CHARTER = """\
+あなたは規範文書から検証原則を抽出する担当である。対象は下のチャンク
+（行番号 L… 付き）だけ。他の章・他の版・自分の一般知識から補完しない。
+
+規律:
+- 原則は一文一義の statement に言い換える。曖昧語（適切に・十分に）はそのまま写さず、
+  何が要求されているかを具体に書く。
+- source_quote には、チャンク本文に**連続して実在する原文断片**（20〜80字程度）を
+  そのまま書く。存在しない引用は機械照合で却下される。
+- source_lines は "L開始-L終了" の形で、引用が実在する行を指す。
+- 目次・免責・扉・図表番号だけの箇所からは抽出しない。
+- 同じ原則の言い換え増殖を避ける。dedupe_key は原則の本質を表す短い正規化句にする。
+- applicability は「文書統治プラグイン doctrine（Hook・リンタ・監査・スキル・CI で
+  Markdown 統治木を統治する）へどう効くか」の仮説を一文で。
+- suggested_oracle は「守られていないとき何が観測できるか」を一文で。
+- このチャンクに原則が無ければ principles は空配列でよい（無理に作らない）。
+"""
+
+
+def build_extract_principles_prompt(book_title, chunk, numbered_text):
+    """規範抽出の一回限りセッション用プロンプト。
+
+    chunk: books.chunk_lines の要素（絶対行番号を持つ）。
+    numbered_text: books.numbered(chunk) の行番号付き本文。
+    """
+    if not numbered_text.strip():
+        raise ValueError("空のチャンクは抽出に渡さない")
+    return (
+        "%s\n対象冊子: %s\n対象範囲: L%d-L%d\n\n"
+        "--- チャンク本文（行番号付き）---\n%s\n--- 本文ここまで ---\n\n"
+        "PRINCIPLES_SCHEMA に適合する JSON だけを返す。"
+        % (_EXTRACT_CHARTER, book_title,
+           chunk["start_line"], chunk["end_line"], numbered_text))
+
+
+def verify_principles(chunk_text, principles):
+    """引用の実在をチャンク本文と照合する（抽出の反幻覚 oracle）。
+
+    返り値: (accepted, rejected)。空白差は正規化して照合する。
+    照合できない source_quote を持つ原則は却下へ落とす。
+    """
+    def norm(s):
+        return "".join((s or "").split())
+
+    hay = norm(chunk_text)
+    accepted, rejected = [], []
+    for p in principles:
+        needle = norm(p.get("source_quote", ""))
+        if len(needle) >= 10 and needle in hay:
+            accepted.append(p)
+        else:
+            rejected.append(p)
+    return accepted, rejected
+
+
 def build_challenge_prompt(discover_output_json):
     """CHALLENGE の一回限りセッション用プロンプト。
 

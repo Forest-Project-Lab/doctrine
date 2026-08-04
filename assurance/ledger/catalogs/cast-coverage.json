@@ -1,0 +1,3395 @@
+{
+  "doctrine:exempt": "保証レーンの網羅台帳。仕様との対応なし(ADR-114)",
+  "kind": "coverage-ledger",
+  "book_id": "cast",
+  "book_sha256": "cb1b142071b567cd7b6681493fdad653af7262f7490221d3cb7efbb21002d394",
+  "dispositions": [
+    "実装・試験・証拠あり",
+    "対応計画あり",
+    "非該当で理由あり",
+    "UNKNOWN",
+    "UNASSESSED"
+  ],
+  "entries": [
+    {
+      "key": "CAST:深掘り優先-件数網羅より少数深掘り",
+      "title": "少数事象の深掘りを件数網羅より優先する",
+      "category": "検証計画",
+      "source_lines": "L26-L26",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:非難回避-構造の失敗理由を分析",
+      "title": "分析は非難ではなく防止構造の失敗理由を対象とする",
+      "category": "不適合と是正",
+      "source_lines": "L30-L30",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:推奨事項-コントロール強化に紐付け",
+      "title": "推奨事項はコントロール構造の強化に紐づける",
+      "category": "不適合と是正",
+      "source_lines": "L30-L30",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:要因を1-2個に絞らない",
+      "title": "1〜2要因への収束を禁じる",
+      "category": "レビューと監査",
+      "source_lines": "L118-L118",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:分析成果の再利用蓄積",
+      "title": "分析成果は再利用資産として蓄積する",
+      "category": "供給者と再利用",
+      "source_lines": "L124-L124",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:分析が管理システムの弱点を暴く",
+      "title": "分析プロセスは管理システム自身の弱点も特定する",
+      "category": "レビューと監査",
+      "source_lines": "L126-L126",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:分析結果の共有と横展開",
+      "title": "分析結果の共有により未経験の損失から学ぶ",
+      "category": "組織と力量",
+      "source_lines": "L135-L135",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:変化ドリフトの事前検出",
+      "title": "変化の監視により損失前に非安全な変更を検出する",
+      "category": "構成管理と変更管理",
+      "source_lines": "L139-L139",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:形式自由-内容の必須項目は不変",
+      "title": "形式は自由でよいが結果の内容は同一でなければならない",
+      "category": "文書化",
+      "source_lines": "L141-L141",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:根本原因への縮約禁止",
+      "title": "要因を恣意的な根本原因へ縮約しない",
+      "category": "不適合と是正",
+      "source_lines": "L147-L147",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:体系的要因の記載必須",
+      "title": "体系的要因を報告書から省略しない",
+      "category": "文書化",
+      "source_lines": "L147-L147",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:用語定義のスコープ限定",
+      "title": "用語定義はその文書の適用範囲に限定して確立する",
+      "category": "文書化",
+      "source_lines": "L177-L177",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:許容可否判断はステークホルダー",
+      "title": "許容可否の判断はステークホルダーが行う",
+      "category": "組織と力量",
+      "source_lines": "L183-L183",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:意図の有無を問わず分析対象",
+      "title": "意図の有無で分析対象を限定しない",
+      "category": "安全性と危険要因",
+      "source_lines": "L187-L187",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:目的と制約の先行特定",
+      "title": "目的・制約・許容トレードオフを最初に特定する",
+      "category": "検証計画",
+      "source_lines": "L197-L197",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:信頼性と安全性の分離",
+      "title": "信頼性と安全性を同一視しない",
+      "category": "安全性と危険要因",
+      "source_lines": "L197-L197",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:失敗記述に違反制約の明記",
+      "title": "「失敗した」だけの記述を証拠として認めない",
+      "category": "証拠と記録",
+      "source_lines": "L197-L197",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:ハザードはコントロール下の状態",
+      "title": "ハザードは自らのコントロール下の状態として定義する",
+      "category": "安全性と危険要因",
+      "source_lines": "L223-L223",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:symptom-vs-systemic-cause",
+      "title": "症状ではなく体系的原因を是正対象にする",
+      "category": "不適合と是正",
+      "source_lines": "L245-L245",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:omitted-cause-recurrence",
+      "title": "原因記述の省略は同型事故を再発させる",
+      "category": "不適合と是正",
+      "source_lines": "L251-L251",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:deep-few-over-shallow-many",
+      "title": "浅い多数分析より少数の深掘り分析を選ぶ",
+      "category": "検証計画",
+      "source_lines": "L257-L257",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:multi-factor-investigation-scope",
+      "title": "調査範囲に組織・文化・規制要因まで含める",
+      "category": "試験設計",
+      "source_lines": "L261-L261",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:hindsight-bias-marker-words",
+      "title": "後知恵バイアスの語句を報告書の検出対象にする",
+      "category": "レビューと監査",
+      "source_lines": "L273-L273",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:assume-good-faith-of-actor",
+      "title": "当事者は正しいことをしようとしていたという前提から始める",
+      "category": "不適合と是正",
+      "source_lines": "L288-L288",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:why-it-made-sense-at-the-time",
+      "title": "当時その行動が本人に理にかなっていた理由を特定する",
+      "category": "レビューと監査",
+      "source_lines": "L288-L288",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:fix-reporting-system-design",
+      "title": "報告制度は利用強制でなく設計改善で直す",
+      "category": "組織と力量",
+      "source_lines": "L298-L298",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:change-system-to-change-behavior",
+      "title": "振る舞いを変えるにはその発生コンテキストを変える",
+      "category": "不適合と是正",
+      "source_lines": "L300-L300",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:report-derived-statistics-bias",
+      "title": "事故報告書だけを母集団とした原因統計を根拠にしない",
+      "category": "証拠と記録",
+      "source_lines": "L302-L302",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:designer-vs-operator-mental-model",
+      "title": "設計者モデルと運用者モデルの乖離を前提に置く",
+      "category": "運用と保守",
+      "source_lines": "L312-L312",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:monitor-procedure-practice-gap",
+      "title": "手順と実際の振る舞いのギャップを監視し手順を更新する",
+      "category": "構成管理と変更管理",
+      "source_lines": "L323-L323",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:determine-why-rule-was-violated",
+      "title": "規則違反時は違反理由の特定を分析の主眼にする",
+      "category": "不適合と是正",
+      "source_lines": "L323-L323",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:human-error-as-symptom",
+      "title": "人的エラーは症状として扱い設計欠陥の是正を勧告する",
+      "category": "安全性と危険要因",
+      "source_lines": "L329-L329",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:analysis-purpose-not-blame",
+      "title": "分析の目的を責任判定から分離する",
+      "category": "レビューと監査",
+      "source_lines": "L335-L335",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:explanatory-what-why-not-who",
+      "title": "WHO ではなく WHAT と WHY で原因を記述する",
+      "category": "文書化",
+      "source_lines": "L390-L390",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:avoid-verdict-word-failure",
+      "title": "「失敗」等の判定語を避け事実記述で書く",
+      "category": "文書化",
+      "source_lines": "L404-L404",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:include-information-supplier-defect",
+      "title": "原因要約に情報提供側システムの欠陥を含める",
+      "category": "証拠と記録",
+      "source_lines": "L423-L423",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:why-it-seemed-right-not-who-failed",
+      "title": "行動の是非でなく「なぜ正しいと信じたか」を記録する",
+      "category": "不適合と是正",
+      "source_lines": "L429-L429",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:software-does-not-fail-requirements-defect",
+      "title": "ソフトウェアは「失敗」せず、要求とプロセスを疑う",
+      "category": "不適合と是正",
+      "source_lines": "L429-L429",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:learning-failure-decomposed-into-info-system-questions",
+      "title": "組織の「学習の失敗」は情報システムと手順の質問群に分解する",
+      "category": "組織と力量",
+      "source_lines": "L431-L431",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:blame-free-reporting",
+      "title": "報告書は非難でなく全寄与因子の記述に徹する",
+      "category": "文書化",
+      "source_lines": "L439-L439",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:causal-model-limits-learning",
+      "title": "原因メカニズムを制限するモデルは学習量を減らす",
+      "category": "検証計画",
+      "source_lines": "L452-L452",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:single-root-cause-is-arbitrary",
+      "title": "単一の根本原因の選択は独断的である",
+      "category": "不適合と是正",
+      "source_lines": "L486-L486",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:do-not-stop-at-convenient-culprit",
+      "title": "因果の追跡は責任者が見つかった時点で止めてはならない",
+      "category": "不適合と是正",
+      "source_lines": "L488-L488",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:what-and-why-both-required",
+      "title": "何が起こったかに加えてなぜ起こったかを記録する",
+      "category": "証拠と記録",
+      "source_lines": "L488-L488",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:audit-findings-must-be-closed",
+      "title": "監査で指摘された欠陥の是正完了を追跡する",
+      "category": "レビューと監査",
+      "source_lines": "L490-L490",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:systemic-cause-across-all-events",
+      "title": "連鎖の全事象に影響する体系的原因を探す",
+      "category": "独立性",
+      "source_lines": "L494-L494",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:event-chain-is-only-a-starting-point",
+      "title": "事象連鎖は分析の出発点にすぎない",
+      "category": "検証計画",
+      "source_lines": "L504-L504",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:model-must-include-social-and-technical",
+      "title": "事故モデルは社会システムと技術の双方を含める",
+      "category": "安全性と危険要因",
+      "source_lines": "L506-L506",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:verify-decomposition-assumptions",
+      "title": "分解アプローチの前提（独立性と非歪曲）を検証する",
+      "category": "独立性",
+      "source_lines": "L516-L516",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:control-both-behavior-and-interaction",
+      "title": "創発特性の制御には振る舞いと相互作用の両方が要る",
+      "category": "安全性と危険要因",
+      "source_lines": "L529-L529",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:control-action-requires-feedback",
+      "title": "コントローラはコントロールアクションと効果のフィードバックを対で持つ",
+      "category": "運用と保守",
+      "source_lines": "L529-L529",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:accidents-from-inadequate-constraint-enforcement",
+      "title": "事故は安全制約の強制不足から生じる",
+      "category": "安全性と危険要因",
+      "source_lines": "L539-L539",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:scope-beyond-operating-process",
+      "title": "分析対象を運用プロセスだけに限定しない",
+      "category": "レビューと監査",
+      "source_lines": "L541-L541",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:feedback-enables-improvement-of-controls",
+      "title": "フィードバックが安全コントロールの学習と改善を可能にする",
+      "category": "運用と保守",
+      "source_lines": "L543-L543",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:controller-needs-concrete-feedback-channels",
+      "title": "上位コントローラのフィードバック手段を具体的に備える",
+      "category": "レビューと監査",
+      "source_lines": "L568-L568",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:supplier-must-communicate-analysis-assumptions",
+      "title": "供給側は安全分析の前提となる運用環境の想定を伝達する",
+      "category": "供給者と再利用",
+      "source_lines": "L545-L545",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:each-component-enforces-its-constraints",
+      "title": "各コンポーネントが自分に適した安全制約を強制する責任を持つ",
+      "category": "組織と力量",
+      "source_lines": "L545-L545",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:responsibility-authority-accountability-in-spec",
+      "title": "責任・権限・説明責任の割当を構造の仕様に含める",
+      "category": "組織と力量",
+      "source_lines": "L560-L560",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:control-includes-indirect-policy-and-culture",
+      "title": "コントロールは方針・手順・文化による間接的なものも含む",
+      "category": "組織と力量",
+      "source_lines": "L547-L547",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:process-model-inconsistency-causes-unsafe-control",
+      "title": "プロセスモデルと実状態の不一致が非安全な制御を生む",
+      "category": "安全性と危険要因",
+      "source_lines": "L570-L570",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:verify-all-hazard-preventing-systems",
+      "title": "ハザード防止に関わる全システムを検証対象にする",
+      "category": "試験設計",
+      "source_lines": "L425-L425",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:defects-in-information-providing-systems",
+      "title": "情報を提供するシステムの設計欠陥も原因記述に含める",
+      "category": "証拠と記録",
+      "source_lines": "L423-L423",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:プロセスモデルと実状態の不整合",
+      "title": "プロセスモデルと実状態の不整合を事故原因として扱う",
+      "category": "安全性と危険要因",
+      "source_lines": "L570-L570",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:コントローラはプロセスモデルを保持",
+      "title": "全コントローラにプロセスモデルを持たせる",
+      "category": "その他",
+      "source_lines": "L574-L574",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:モデル一致のためのフィードバック提供",
+      "title": "モデルを実状態に一致させるフィードバックを設計する",
+      "category": "検証計画",
+      "source_lines": "L578-L578",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:根本原因への絞り込み禁止",
+      "title": "根本原因への絞り込みを禁止する",
+      "category": "不適合と是正",
+      "source_lines": "L599-L599",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:非難でなく学習が目的",
+      "title": "分析の目的は非難でなく学習",
+      "category": "組織と力量",
+      "source_lines": "L601-L601",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:すべての原因を含める",
+      "title": "すべての原因を含める",
+      "category": "不適合と是正",
+      "source_lines": "L603-L603",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:人間の振る舞いへのシステム思考",
+      "title": "人間の振る舞いにシステム思考を適用する",
+      "category": "組織と力量",
+      "source_lines": "L605-L605",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:なぜとどのようにで説明",
+      "title": "「誰」でなく「なぜ・どのように」で説明する",
+      "category": "証拠と記録",
+      "source_lines": "L606-L606",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:コントロール無効化の理由と強化",
+      "title": "コントロールが効かなかった理由と強化策に重点を置く",
+      "category": "不適合と是正",
+      "source_lines": "L607-L607",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:安全制約強制失敗の理由特定",
+      "title": "調査目的は安全制約を強制できなかった理由の特定",
+      "category": "レビューと監査",
+      "source_lines": "L619-L619",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:全レベルのコントロール検査",
+      "title": "すべての階層で不適切なコントロールを探す",
+      "category": "レビューと監査",
+      "source_lines": "L619-L619",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:分析境界の定義",
+      "title": "分析境界を最初に定義する",
+      "category": "検証計画",
+      "source_lines": "L855-L855",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:ハザードから安全制約を導出",
+      "title": "ハザードからシステムレベル安全制約を導出する",
+      "category": "安全性と危険要因",
+      "source_lines": "L789-L789",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:事象は非難なく記述し質問生成",
+      "title": "事象は結論・非難なしに記述し質問を生成する",
+      "category": "証拠と記録",
+      "source_lines": "L790-L790",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:下部から各コンポーネントの理由を分析",
+      "title": "コンポーネント分析は下部から行い理由まで記述する",
+      "category": "レビューと監査",
+      "source_lines": "L797-L797",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:横断的な体系的要因の特定",
+      "title": "コンポーネントを横断する体系的要因を特定する",
+      "category": "レビューと監査",
+      "source_lines": "L799-L799",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:構造変更推奨と継続的改善",
+      "title": "構造変更の推奨と継続的改善プログラム",
+      "category": "不適合と是正",
+      "source_lines": "L801-L801",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:分析の反復的再検討",
+      "title": "分析は直線的でなく反復的に再検討する",
+      "category": "検証計画",
+      "source_lines": "L803-L803",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:全質問の回答または回答不能宣言",
+      "title": "すべての質問に回答するか回答不能を明示する",
+      "category": "証拠と記録",
+      "source_lines": "L805-L805",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:ハザード起点でコントロールを絞る",
+      "title": "ハザードと安全制約を先に定めてコントロールを絞る",
+      "category": "検証計画",
+      "source_lines": "L853-L853",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:予防に加え軽減の制約を定義",
+      "title": "制約が強制されない場合の軽減制約も定める",
+      "category": "安全性と危険要因",
+      "source_lines": "L879-L879",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:最悪環境を前提に設計運用",
+      "title": "最悪環境を前提に設計・運用する",
+      "category": "試験設計",
+      "source_lines": "L885-L885",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:ハザードはシステムレベル記述",
+      "title": "ハザードはシステムレベルで記述する",
+      "category": "安全性と危険要因",
+      "source_lines": "L885-L885",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:単一コンポーネント集中の回避",
+      "title": "単一コンポーネントへの集中を避ける",
+      "category": "レビューと監査",
+      "source_lines": "L903-L903",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:事象連鎖のみでは不十分",
+      "title": "事象列挙だけでは理由は得られない",
+      "category": "証拠と記録",
+      "source_lines": "L905-L905",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:事象記述での非難語禁止",
+      "title": "事象記述に非難語を用いない",
+      "category": "文書化",
+      "source_lines": "L909-L909",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:変更後に事故が起きる前提の変更管理",
+      "title": "変更後の事故を前提に変更管理を問う",
+      "category": "構成管理と変更管理",
+      "source_lines": "L915-L915",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:記録フォーマットは状況依存",
+      "title": "記録フォーマットは状況に応じて選ぶ",
+      "category": "文書化",
+      "source_lines": "L807-L807",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:no-failure-wording-in-event-description",
+      "title": "事象記述から「失敗した」という語を排除する",
+      "category": "証拠と記録",
+      "source_lines": "L932-L932",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:no-hindsight-bias-statements",
+      "title": "事象記述に後知恵バイアス表現を書かない",
+      "category": "証拠と記録",
+      "source_lines": "L932-L932",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:defer-judgment-during-fact-collection",
+      "title": "分析初期に判断・結論を確定しない",
+      "category": "レビューと監査",
+      "source_lines": "L932-L932",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:every-question-answered-or-declared-unanswerable",
+      "title": "すべての質問を回答するか回答不能と判定する",
+      "category": "検証計画",
+      "source_lines": "L932-L932",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:event-chain-completeness-not-a-gate",
+      "title": "事象連鎖の完全性を成果条件にしない",
+      "category": "検証計画",
+      "source_lines": "L934-L934",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:what-before-why",
+      "title": "「なぜ」の前に「何が」を確定する",
+      "category": "試験設計",
+      "source_lines": "L940-L940",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:physical-layer-description-excludes-human-controllers",
+      "title": "物理プロセスの記述に人・上位コントローラを混入させない",
+      "category": "文書化",
+      "source_lines": "L997-L997",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:causality-as-inadequate-control-not-failure",
+      "title": "安全を失敗ではなくコントロールの問題として扱う",
+      "category": "安全性と危険要因",
+      "source_lines": "L1028-L1028",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:refine-generic-constraints-to-specific-loss",
+      "title": "一般的ハザードと安全制約を当該損失向けに洗練する",
+      "category": "検証計画",
+      "source_lines": "L1001-L1001",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:trace-why-design-flaw-was-introduced",
+      "title": "設計上の欠陥が導入された理由まで遡る",
+      "category": "不適合と是正",
+      "source_lines": "L1009-L1009",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:scope-includes-development-and-operations",
+      "title": "開発と運用の双方を分析範囲に含める",
+      "category": "組織と力量",
+      "source_lines": "L1011-L1011",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:start-high-level-then-refine",
+      "title": "高レベル抽象から始めて後で洗練する",
+      "category": "文書化",
+      "source_lines": "L1030-L1030",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:do-not-start-too-narrow",
+      "title": "範囲を狭く始めることを唯一の誤りとする",
+      "category": "検証計画",
+      "source_lines": "L1032-L1032",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:reuse-original-hazard-analysis-as-input",
+      "title": "既存ハザード分析をコントロール識別の入力にする",
+      "category": "供給者と再利用",
+      "source_lines": "L1032-L1032",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:document-per-component-responsibilities",
+      "title": "コンポーネントごとの責任を文書化する",
+      "category": "文書化",
+      "source_lines": "L1038-L1038",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:classify-locus-of-control-responsibility",
+      "title": "コントロールの責任所在の類型を明示する",
+      "category": "構成管理と変更管理",
+      "source_lines": "L1044-L1044",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:apply-changes-top-level-first",
+      "title": "変更は最上位レベルから先に反映する",
+      "category": "構成管理と変更管理",
+      "source_lines": "L1048-L1048",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:higher-level-supervises-lower-level-controls",
+      "title": "上位コンポーネントは下位のコントロール運用を監督する",
+      "category": "組織と力量",
+      "source_lines": "L1050-L1050",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:separate-listing-from-effectiveness-analysis",
+      "title": "コントロール列挙と有効性評価の工程を分離する",
+      "category": "レビューと監査",
+      "source_lines": "L1052-L1052",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:moc-procedure-with-risk-assessment",
+      "title": "安全管理は変更管理手順とリスク評価を実施する",
+      "category": "構成管理と変更管理",
+      "source_lines": "L1097-L1097",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:safety-review-of-work-instructions",
+      "title": "セーフティクリティカル作業指示書を安全観点でレビューする",
+      "category": "レビューと監査",
+      "source_lines": "L1095-L1095",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:competent-personnel-for-high-risk-processes",
+      "title": "高リスクプロセスへの要員割当は訓練と経験で担保する",
+      "category": "組織と力量",
+      "source_lines": "L1096-L1096",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:変更はMOC手順とリスク評価を経る",
+      "title": "変更は手順に従いリスク評価を経て管理する",
+      "category": "構成管理と変更管理",
+      "source_lines": "L1097-L1097",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:作業指示書の安全レビュー",
+      "title": "作業指示は安全影響の観点でレビューする",
+      "category": "レビューと監査",
+      "source_lines": "L1095-L1095",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:高リスク作業の力量ある要員配置",
+      "title": "高リスク作業には力量に見合う要員を割り当てる",
+      "category": "組織と力量",
+      "source_lines": "L1096-L1096",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:監査の先行指標を確立する",
+      "title": "監査は先行指標に基づいて実施する",
+      "category": "レビューと監査",
+      "source_lines": "L1181-L1181",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:教訓の記録と伝達と活用",
+      "title": "インシデント記録と教訓は必要な人に届き使われることまで確認する",
+      "category": "証拠と記録",
+      "source_lines": "L1161-L1161",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:変更手順の遵守確認と改善",
+      "title": "変更手順は遵守確認とフィードバックで改善する",
+      "category": "構成管理と変更管理",
+      "source_lines": "L1235-L1235",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:安全情報システムの維持と伝達",
+      "title": "安全情報システムを維持し組織横断で伝達する",
+      "category": "文書化",
+      "source_lines": "L1251-L1251",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:供給要素の変更を利用者へ通知",
+      "title": "供給側は安全性に影響する変更を利用者へ通知する",
+      "category": "供給者と再利用",
+      "source_lines": "L1309-L1309",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:指摘欠点の是正完了追跡",
+      "title": "指摘した欠点は是正完了まで追跡する",
+      "category": "不適合と是正",
+      "source_lines": "L1384-L1384",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:責任の実行有無を判定する",
+      "title": "分析は責任が実行されたかどうかの判定を軸にする",
+      "category": "検証計画",
+      "source_lines": "L1410-L1410",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:責任の空白は構造再設計",
+      "title": "責任の未特定・未割当は構造の再設計対象とする",
+      "category": "組織と力量",
+      "source_lines": "L1410-L1410",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:責任認識の矛盾を手がかりにする",
+      "title": "責任認識の食い違い自体を手がかりとして扱う",
+      "category": "レビューと監査",
+      "source_lines": "L1412-L1412",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:責任知識の継続強化と監査",
+      "title": "責任の知識を継続的に強化し監査する",
+      "category": "レビューと監査",
+      "source_lines": "L1412-L1412",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:最下層から上位層への分析順序",
+      "title": "分析は最下層から上位層へ進める",
+      "category": "検証計画",
+      "source_lines": "L1424-L1424",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:非難でなく振る舞いの必然性を理解",
+      "title": "個人への責任追及ではなく振る舞いの必然性を理解する",
+      "category": "レビューと監査",
+      "source_lines": "L1422-L1422",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:後知恵語彙の禁止",
+      "title": "記述に後知恵的・批判的な語を用いない",
+      "category": "文書化",
+      "source_lines": "L1436-L1436",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:非難含意語の言い換え規約",
+      "title": "非難を含意する用語は分析用語から除外する",
+      "category": "文書化",
+      "source_lines": "L1440-L1440",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:未回答の質問を文書化する",
+      "title": "断定できない未回答の質問を結論に明記する",
+      "category": "証拠と記録",
+      "source_lines": "L1442-L1442",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:機械的遵守が前提の指示は自動化",
+      "title": "考えずに従わせる指示は自動化する",
+      "category": "試験設計",
+      "source_lines": "L1446-L1446",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:誤り列挙だけでなく理由を記述",
+      "title": "誤りの列挙だけの報告では再発を防げない",
+      "category": "不適合と是正",
+      "source_lines": "L1446-L1446",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:当時の視点で誤りでなかった理由を分析",
+      "title": "当時それが誤りに見えなかった理由を分析する",
+      "category": "レビューと監査",
+      "source_lines": "L1450-L1450",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:自動化は設計者の想定に遡る",
+      "title": "自動コントローラは設計者の想定に遡って分析する",
+      "category": "安全性と危険要因",
+      "source_lines": "L1444-L1444",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:破られた想定の再検討",
+      "title": "想定が破られた事象が起きたら想定を再検討する",
+      "category": "不適合と是正",
+      "source_lines": "L1530-L1530",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:責任充足判定から分析を始める",
+      "title": "分析はまず責任充足の判定から始める",
+      "category": "検証計画",
+      "source_lines": "L1490-L1490",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:プロセスモデル欠陥とその原因の識別",
+      "title": "プロセスモデルの欠陥と発生理由を識別する",
+      "category": "安全性と危険要因",
+      "source_lines": "L1524-L1524",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:標準機能の欠如は理由を記録",
+      "title": "標準的な安全機能を欠いた設計はその理由を記録する",
+      "category": "証拠と記録",
+      "source_lines": "L1503-L1503",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:運用フィードバックで設計改善",
+      "title": "運用からのフィードバックで設計を改善する",
+      "category": "運用と保守",
+      "source_lines": "L1216-L1216",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:記録形式は記録可能性と可読性で判断",
+      "title": "記録の表記法は記録可能性と可読性で判断する",
+      "category": "文書化",
+      "source_lines": "L1452-L1452",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:手順文書のハザード分析ベース安全レビュー必須",
+      "title": "全作業指示書のハザード分析に基づく安全レビュー",
+      "category": "レビューと監査",
+      "source_lines": "L1652-L1652",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:手順の起草者と承認者の分離",
+      "title": "作成者以外の専門家による手順生成の監督",
+      "category": "独立性",
+      "source_lines": "L1647-L1647",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:手順の書式適合と必須項目欠落検査",
+      "title": "形式適合と必須項目の欠落検査",
+      "category": "文書化",
+      "source_lines": "L1586-L1586",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:上位文書の利用可能性（読み手適合）",
+      "title": "読み手が使える粒度で設計情報を提供する",
+      "category": "文書化",
+      "source_lines": "L1590-L1590",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:形式承認の禁止・実質審査の証跡",
+      "title": "承認は実質審査であって形式通過ではない",
+      "category": "レビューと監査",
+      "source_lines": "L1832-L1832",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:変更時の想定再評価をMOCで強制",
+      "title": "変更管理手順の強制と想定の再評価",
+      "category": "構成管理と変更管理",
+      "source_lines": "L1653-L1653",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:パラメータ変更前のリスク評価必須",
+      "title": "リスク評価なしの手順変更の禁止",
+      "category": "構成管理と変更管理",
+      "source_lines": "L1644-L1644",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:安全想定の記録と失効先行指標の定義",
+      "title": "想定の明示的記録と失効検知の指標",
+      "category": "検証計画",
+      "source_lines": "L1791-L1791",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:先行指標の妥当性・代理指標の禁止",
+      "title": "先行指標は対象リスクと因果的に関連していること",
+      "category": "検証計画",
+      "source_lines": "L1645-L1645",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:最低限準拠を超える安全活動の実効性",
+      "title": "最低限の規制準拠を超える実効性",
+      "category": "組織と力量",
+      "source_lines": "L1651-L1651",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:監査のすり抜け時に監査手順を是正",
+      "title": "監査が欠陥を検出できなかった場合の監査自体の検証",
+      "category": "レビューと監査",
+      "source_lines": "L1784-L1784",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:リスク情報の不透明な集約禁止",
+      "title": "リスク情報を統合して埋没させない",
+      "category": "証拠と記録",
+      "source_lines": "L1785-L1785",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:報告書の要約と詳細の二層提示",
+      "title": "詳細分析と要約の併載",
+      "category": "文書化",
+      "source_lines": "L1612-L1612",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:行為でなく行為の理由を分析する",
+      "title": "行動そのものではなく行動が生じた理由を分析対象にする",
+      "category": "不適合と是正",
+      "source_lines": "L1600-L1600",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:責任委譲には情報と訓練を伴わせる",
+      "title": "責任を果たせる手段を伴わない責任委譲の禁止",
+      "category": "組織と力量",
+      "source_lines": "L1602-L1602",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:高リスク作業の資格要件と実配置の照合",
+      "title": "要求資格と実配置の照合",
+      "category": "組織と力量",
+      "source_lines": "L1778-L1778",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:非定常フェーズへの自動支援の適用",
+      "title": "非定常フェーズにも支援機構を用意する",
+      "category": "運用と保守",
+      "source_lines": "L1776-L1776",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:クリティカル条項の静かな削除の検出",
+      "title": "クリティカル指定の時間的劣化を検出する",
+      "category": "構成管理と変更管理",
+      "source_lines": "L1635-L1635",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:供給品差替時の提供情報差分確認",
+      "title": "供給された構成要素の変更情報の取り込み",
+      "category": "供給者と再利用",
+      "source_lines": "L1643-L1643",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:他所インシデントを再評価トリガー化",
+      "title": "他所の同種インシデントを想定再評価のトリガーにする",
+      "category": "不適合と是正",
+      "source_lines": "L1646-L1646",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:教訓の反映手順の確立",
+      "title": "教訓の取り込み手順の確立",
+      "category": "不適合と是正",
+      "source_lines": "L1656-L1656",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:運用フィードバックによる設計改訂",
+      "title": "運用からのフィードバックによる設計改善",
+      "category": "運用と保守",
+      "source_lines": "L1828-L1828",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:安全責任のオーナー特定必須",
+      "title": "安全責任の所在は必ず特定できること",
+      "category": "組織と力量",
+      "source_lines": "L1806-L1806",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:安全評価と事業評価の分離",
+      "title": "安全リスク評価をビジネスリスク評価から分離する",
+      "category": "独立性",
+      "source_lines": "L1875-L1875",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:先行指標による監査強化",
+      "title": "監査手順は逸脱を示す先行指標で強化する",
+      "category": "レビューと監査",
+      "source_lines": "L1877-L1877",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:検出失敗の原因調査",
+      "title": "明白な手順違反を検出できなかった監査の失敗自体を調査する",
+      "category": "レビューと監査",
+      "source_lines": "L1877-L1877",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:供給者による変更の明示通知",
+      "title": "供給者は変更内容と変更事実を明示的に通知する",
+      "category": "供給者と再利用",
+      "source_lines": "L1886-L1886",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:文書確認のみの監督の限界",
+      "title": "文書と抜き取り検査だけの監督は運用実態を捉えられない",
+      "category": "レビューと監査",
+      "source_lines": "L1915-L1915",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:高リスク活動への監督資源の優先配分",
+      "title": "最も危険な活動に監督資源を優先配分する",
+      "category": "検証計画",
+      "source_lines": "L1917-L1917",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:非寄与コンポーネントも分析対象",
+      "title": "損失に寄与しなかったコンポーネントも分析対象に含める",
+      "category": "証拠と記録",
+      "source_lines": "L1945-L1945",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:全体構造の分析",
+      "title": "個々のコントローラの検査だけでは不十分",
+      "category": "検証計画",
+      "source_lines": "L1945-L1945",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:共通の体系的要因による多重防護の無効化",
+      "title": "体系的要因は全ての防護を同時に無効化する",
+      "category": "安全性と危険要因",
+      "source_lines": "L1957-L1957",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:重複責任による監視の抜け",
+      "title": "重複する責任は相互の未実施を生む",
+      "category": "組織と力量",
+      "source_lines": "L1982-L1982",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:責任割り当ての経時的劣化",
+      "title": "責任の割り当ては時間とともに崩壊する",
+      "category": "運用と保守",
+      "source_lines": "L1986-L1986",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:設計上と実際の伝達経路の照合",
+      "title": "設計上のリンクと実際に機能したリンクを照合する",
+      "category": "レビューと監査",
+      "source_lines": "L1990-L1990",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:全コントロールループにフィードバック必須",
+      "title": "全てのコントロールループにフィードバック経路を要求する",
+      "category": "検証計画",
+      "source_lines": "L1994-L1994",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:問題報告経路の可用性",
+      "title": "問題報告経路の利用可能性を保証する",
+      "category": "不適合と是正",
+      "source_lines": "L2007-L2007",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:調査対象としての安全情報システム",
+      "title": "調査には安全情報システムの検査を含める",
+      "category": "証拠と記録",
+      "source_lines": "L2011-L2011",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:情報システム保有と有用性の乖離",
+      "title": "情報システムの保有は有用性を保証しない",
+      "category": "証拠と記録",
+      "source_lines": "L2013-L2013",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:要約統計偏重による傾向情報の喪失",
+      "title": "要約統計のみでは経時変化を学習できない",
+      "category": "証拠と記録",
+      "source_lines": "L2028-L2028",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:利用可能な形式での情報提示",
+      "title": "情報は利用者が使える形式で提示する",
+      "category": "文書化",
+      "source_lines": "L2030-L2030",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:情報活用のための構造とプロセス",
+      "title": "情報を活用する構造とプロセスを併設する",
+      "category": "組織と力量",
+      "source_lines": "L2032-L2032",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:公式設計と実動作の二重評価",
+      "title": "公式な設計と損失時の実際の動作を両方評価する",
+      "category": "レビューと監査",
+      "source_lines": "L2042-L2042",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:ニアミスの構造欠陥特定への利用",
+      "title": "ニアミス・軽微インシデントは欠陥特定に使う",
+      "category": "不適合と是正",
+      "source_lines": "L2042-L2042",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:設計の多様性と一般原則による評価",
+      "title": "唯一の正しい設計はないが一般設計原則で評価できる",
+      "category": "その他",
+      "source_lines": "L2040-L2040",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:責任権限説明責任の設計反映",
+      "title": "責任・権限・説明責任の割り当てを設計に反映する",
+      "category": "組織と力量",
+      "source_lines": "L2040-L2040",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:変更手順の作成遵守改善サイクル",
+      "title": "変更手順は作成・遵守確認・フィードバック改善の三点を満たす",
+      "category": "構成管理と変更管理",
+      "source_lines": "L1848-L1848",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:単純事象連鎖モデルの不十分性",
+      "title": "時代遅れの事象連鎖モデルは複雑システムのリスクを捉えない",
+      "category": "安全性と危険要因",
+      "source_lines": "L1852-L1852",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:前提と除外事項の再評価",
+      "title": "リスク分析の前提と推測を再評価する手順を持つ",
+      "category": "検証計画",
+      "source_lines": "L1856-L1856",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:オペレータ限定分析の回避",
+      "title": "分析視野をオペレータの行動に限定しない",
+      "category": "不適合と是正",
+      "source_lines": "L1945-L1945",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:ソフトウェア要因の報告脱落",
+      "title": "ソフトウェア起因の要因は報告から脱落しやすい",
+      "category": "証拠と記録",
+      "source_lines": "L2015-L2015",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:責任権限説明責任の割当明示",
+      "title": "責任・権限・説明責任の割当を構造設計に明示する",
+      "category": "組織と力量",
+      "source_lines": "L2040-L2040",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:宣言された設計と実動作の突合",
+      "title": "公式設計と実運用の両方を評価する",
+      "category": "レビューと監査",
+      "source_lines": "L2042-L2042",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:軽微インシデントの先行兆候利用",
+      "title": "軽微なインシデントを大損失前の手がかりとして使う",
+      "category": "不適合と是正",
+      "source_lines": "L2042-L2042",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:報告系の目的は非難でなく欠陥特定",
+      "title": "インシデント報告は責任追及でなく構造欠陥の特定に使う",
+      "category": "不適合と是正",
+      "source_lines": "L2042-L2042",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:手順の存在確認でなく適用確認",
+      "title": "監督は手順の存在だけでなく実適用まで検査する",
+      "category": "レビューと監査",
+      "source_lines": "L2050-L2050",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:安全立証でなく非安全状態の探索",
+      "title": "安全性の立証ではなく非安全状態の特定を目的にする",
+      "category": "安全性と危険要因",
+      "source_lines": "L2076-L2076",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:外部指摘依存でなく能動的探索",
+      "title": "外部指摘を待たず内部から能動的に問題を探す",
+      "category": "レビューと監査",
+      "source_lines": "L2080-L2080",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:文書量でなく設計運用への影響",
+      "title": "設計と運用に影響しない文書は安全を生まない",
+      "category": "文書化",
+      "source_lines": "L2081-L2081",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:文書化された哲学方針の存在確認が起点",
+      "title": "文化分析は文書化された安全哲学と方針の評価から始める",
+      "category": "文書化",
+      "source_lines": "L2086-L2086",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:安全の作り込みと後付け禁止",
+      "title": "安全は設計に作り込み、後付けしない",
+      "category": "検証計画",
+      "source_lines": "L2092-L2092",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:分析目的は帰責でなく変更",
+      "title": "原因分析の目的は責任者特定でなく変更の特定",
+      "category": "不適合と是正",
+      "source_lines": "L2093-L2093",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:非難なき情報表面化",
+      "title": "安全情報は恐れなく表面化でき、分析は非難なしで行う",
+      "category": "組織と力量",
+      "source_lines": "L2095-L2095",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:方針の実践確認プロセス",
+      "title": "方針の採用と実践を確認するプロセスを持つ",
+      "category": "レビューと監査",
+      "source_lines": "L2103-L2103",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:申告でなく行動観測による評価",
+      "title": "文化は申告でなく実際の行動から評価する",
+      "category": "証拠と記録",
+      "source_lines": "L2105-L2105",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:変更管理の存在と強制力",
+      "title": "計画された変更には強制力のある変更管理を適用する",
+      "category": "構成管理と変更管理",
+      "source_lines": "L2115-L2115",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:計画外変化の検出手段",
+      "title": "計画外の変化を検出する仕組みを用意する",
+      "category": "構成管理と変更管理",
+      "source_lines": "L2117-L2117",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:設計時想定の運用中再検査",
+      "title": "当初の安全想定を運用中に再検査して先行指標とする",
+      "category": "運用と保守",
+      "source_lines": "L2125-L2125",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:漸進的変更の専門家レビュー",
+      "title": "漸進的な削除・修正も専門家レビューの対象にする",
+      "category": "レビューと監査",
+      "source_lines": "L2119-L2119",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:自己満足への構造的対策",
+      "title": "自己満足への対策を構造に組み込む",
+      "category": "運用と保守",
+      "source_lines": "L2141-L2141",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:コントローラのリスク認識の検証",
+      "title": "コントローラのリスク認識の正確さを調査する",
+      "category": "検証計画",
+      "source_lines": "L2143-L2143",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:自動化時の既存安全コントロール継承",
+      "title": "自動化時に人間が担っていた安全コントロールを引き継ぐ",
+      "category": "構成管理と変更管理",
+      "source_lines": "L2155-L2155",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:推奨事項の削減でなく優先順位付け",
+      "title": "推奨事項は数を減らさず優先順位付けで扱う",
+      "category": "不適合と是正",
+      "source_lines": "L2182-L2182",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:推奨事項の責任割当実施検査フィードバック",
+      "title": "推奨事項に責任者・実施検査・有効性フィードバックを設ける",
+      "category": "不適合と是正",
+      "source_lines": "L2186-L2186",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:是正措置の有効性証拠の収集",
+      "title": "変更の有効性は証拠を収集して判断する",
+      "category": "証拠と記録",
+      "source_lines": "L2192-L2192",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:結果提示は関係の可視化",
+      "title": "分析結果は単純なリストでなく要因間の関係で示す",
+      "category": "文書化",
+      "source_lines": "L2200-L2200",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:ハイパーリンクによる追跡可能性",
+      "title": "詳細をハイパーリンクで辿れるように保存する",
+      "category": "証拠と記録",
+      "source_lines": "L2202-L2202",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:要約粒度の過圧縮と過分散の回避",
+      "title": "要約は過度な圧縮も過度な分散も避ける",
+      "category": "文書化",
+      "source_lines": "L2204-L2204",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:結果提示は関係構造で",
+      "title": "結果表示は要因間の関係を示す形式にする",
+      "category": "文書化",
+      "source_lines": "L2200-L2200",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:リンクによる追跡可能性",
+      "title": "要因と回答の所在をリンクで追跡可能にする",
+      "category": "証拠と記録",
+      "source_lines": "L2202-L2202",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:要約の粒度制御",
+      "title": "要約の粒度を過度な圧縮にも分散にもしない",
+      "category": "文書化",
+      "source_lines": "L2204-L2204",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:設計構造と実動作構造の対比",
+      "title": "設計上の構造と実際に動作していた構造を対で示す",
+      "category": "レビューと監査",
+      "source_lines": "L2251-L2251",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:構造変更の削除と追加を可視化",
+      "title": "構造の時間変化は削除と追加を区別して可視化する",
+      "category": "構成管理と変更管理",
+      "source_lines": "L2251-L2251",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:変更時のフィードバック経路維持",
+      "title": "組織変更時にフィードバック経路の維持を要件化する",
+      "category": "構成管理と変更管理",
+      "source_lines": "L2257-L2257",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:監視責任の空白排除",
+      "title": "他者が監視していると想定した不作為を排除する",
+      "category": "レビューと監査",
+      "source_lines": "L2257-L2257",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:原因記述は防止策に接続する",
+      "title": "原因記述は防止のガイダンスを与えるものにする",
+      "category": "不適合と是正",
+      "source_lines": "L2304-L2304",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:分析出力の客観性を僭称しない",
+      "title": "分析結果を客観的「現実」と称さない",
+      "category": "証拠と記録",
+      "source_lines": "L2302-L2302",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:上位層まで分析対象を広げる",
+      "title": "最下層の実行者に焦点を限定しない",
+      "category": "組織と力量",
+      "source_lines": "L2306-L2306",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:競合する是正の形骸化評価",
+      "title": "他目的と競合する是正措置は形骸化を前提に扱う",
+      "category": "不適合と是正",
+      "source_lines": "L2308-L2308",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:禁止前に既存慣行の理由を調査",
+      "title": "慣行を禁止する前に存在理由を確認する",
+      "category": "不適合と是正",
+      "source_lines": "L2292-L2292",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:未回答の質問を明示保持",
+      "title": "情報が欠落した箇所は未回答の質問として記録する",
+      "category": "証拠と記録",
+      "source_lines": "L2312-L2312",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:未説明の記述を追及",
+      "title": "理由が説明されていない記述は追及の対象にする",
+      "category": "レビューと監査",
+      "source_lines": "L2413-L2413",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:質問駆動で複数の是正を導く",
+      "title": "質問の展開によって推奨事項を導出する",
+      "category": "不適合と是正",
+      "source_lines": "L2449-L2449",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:例外作業の統制と発生低減",
+      "title": "手順外作業は統制し発生自体を低減する",
+      "category": "運用と保守",
+      "source_lines": "L2456-L2456",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:作業ごとの使用ツール文書化",
+      "title": "全作業について使用すべき道具を文書化する",
+      "category": "文書化",
+      "source_lines": "L2461-L2461",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:専門分析は力量ある担当へ",
+      "title": "力量のない者に専門分析の責任を負わせない",
+      "category": "組織と力量",
+      "source_lines": "L2471-L2471",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:ハザードから要求制約への変換",
+      "title": "ハザードを安全要求と制約に変換する",
+      "category": "安全性と危険要因",
+      "source_lines": "L2571-L2571",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:ハザード間の矛盾を明示",
+      "title": "矛盾するハザードの存在を認識して意思決定する",
+      "category": "安全性と危険要因",
+      "source_lines": "L2571-L2571",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:承認プロセスの再現性",
+      "title": "承認は有効で再現性のある意思決定プロセスに基づく",
+      "category": "レビューと監査",
+      "source_lines": "L2581-L2581",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:独立審査体によるリスク審査",
+      "title": "新しいリスク情報は独立した委員会が審査する",
+      "category": "独立性",
+      "source_lines": "L2587-L2587",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:承認後の継続監視と再検証",
+      "title": "承認後も継続監視と長期検証を行う",
+      "category": "運用と保守",
+      "source_lines": "L2586-L2586",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:不適合な既承認物の撤回",
+      "title": "不適合と判明した既承認物は撤去・制限する",
+      "category": "不適合と是正",
+      "source_lines": "L2588-L2588",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:各コントローラの責任記述",
+      "title": "コントローラの責任を各コンポーネント分析に記述する",
+      "category": "文書化",
+      "source_lines": "L2600-L2600",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:独立監視委員会の常設",
+      "title": "試験の監視は被評価者から独立した委員会が行う",
+      "category": "独立性",
+      "source_lines": "L2692-L2692",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:結果公開の適時性と網羅性",
+      "title": "結果は適時かつ全量で公開する",
+      "category": "証拠と記録",
+      "source_lines": "L2690-L2690",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:執筆関与と利害の開示",
+      "title": "文書の作成関与者と利害関係を明示する",
+      "category": "文書化",
+      "source_lines": "L2696-L2696",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:利益相反規定の例外なき適用",
+      "title": "利益相反規定は設定するだけでなく例外なく運用する",
+      "category": "独立性",
+      "source_lines": "L2869-L2869",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:承認権限と撤回権限の分離",
+      "title": "承認する部門と取り消す部門を分ける",
+      "category": "独立性",
+      "source_lines": "L2941-L2941",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:是正提案が失点にならない構造",
+      "title": "是正提案が承認側の失点として扱われる構造を排除する",
+      "category": "組織と力量",
+      "source_lines": "L2928-L2928",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:監視資源の被監視主体からの独立",
+      "title": "監視主体は被監視主体から資金・資源の独立を保つ",
+      "category": "独立性",
+      "source_lines": "L2929-L2929",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:未知リスク承認時の追加検証義務",
+      "title": "長期リスクが未知のまま承認する場合は追加検証を必須条件にする",
+      "category": "検証計画",
+      "source_lines": "L2909-L2909",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:新情報に基づく仕様記述の更新",
+      "title": "新しい安全情報が出たら仕様記述を更新する",
+      "category": "構成管理と変更管理",
+      "source_lines": "L2881-L2881",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:簡略審査経路の適用基準確認",
+      "title": "簡略審査は適用基準の充足を確認してから使う",
+      "category": "レビューと監査",
+      "source_lines": "L2904-L2904",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:要求事項の施行状況の確認",
+      "title": "要求事項は定めるだけでなく施行状況を確認する",
+      "category": "レビューと監査",
+      "source_lines": "L2905-L2905",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:警告後の是正追跡",
+      "title": "一度の警告で終わらせず是正を追跡する",
+      "category": "不適合と是正",
+      "source_lines": "L2915-L2915",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:被審査者提供情報への単独依存の禁止",
+      "title": "被審査者提供の情報だけで審査を完結させない",
+      "category": "証拠と記録",
+      "source_lines": "L2936-L2936",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:検証実施事実の全件登録",
+      "title": "実施した検証は結果の良否によらず全件登録する",
+      "category": "証拠と記録",
+      "source_lines": "L2948-L2948",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:自発報告のみによる評価の禁止",
+      "title": "自発報告だけでは発生率を評価できない",
+      "category": "運用と保守",
+      "source_lines": "L2950-L2950",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:ベースライン比較による事象識別",
+      "title": "検出には通常水準との比較基準を用意する",
+      "category": "試験設計",
+      "source_lines": "L2919-L2919",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:評価者と被評価者の経済的分離",
+      "title": "評価者は被評価者から報酬を受け取らない",
+      "category": "独立性",
+      "source_lines": "L3289-L3289",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:自主規制前提の排除",
+      "title": "自主規制が働くという前提を置かない",
+      "category": "レビューと監査",
+      "source_lines": "L3312-L3312",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:対象変化への要求事項追随",
+      "title": "対象の変化に合わせて要求事項を更新する",
+      "category": "構成管理と変更管理",
+      "source_lines": "L3297-L3297",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:全体健全性と部分健全性の分離評価",
+      "title": "システム全体の健全性を構成要素の健全性と区別する",
+      "category": "安全性と危険要因",
+      "source_lines": "L3277-L3277",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:ハザードと安全制約の一対一対応",
+      "title": "各ハザードに対応する安全制約を明記する",
+      "category": "安全性と危険要因",
+      "source_lines": "L2969-L2969",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:調査チームの被調査組織からの独立と上位報告",
+      "title": "調査チームは当事者組織の管理系統から独立させる",
+      "category": "独立性",
+      "source_lines": "L3403-L3403",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:兆候止まりを禁じ共通体系要因の特定を要求",
+      "title": "分析は兆候の列挙で止めず共通の体系的要因まで到達させる",
+      "category": "不適合と是正",
+      "source_lines": "L3391-L3391",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:同一対象の旧新手法比較による有効性実証",
+      "title": "新手法の有効性は既存手法との同一対象再分析比較で示す",
+      "category": "検証計画",
+      "source_lines": "L3393-L3393",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:未回答質問の明示的記録",
+      "title": "分析中に生じた未回答の質問を成果物に明示して残す",
+      "category": "証拠と記録",
+      "source_lines": "L3597-L3597",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:変更管理手順の強制と変更時の前提再評価",
+      "title": "変更管理手順は強制され、変更時に旧前提を再評価する",
+      "category": "構成管理と変更管理",
+      "source_lines": "L3626-L3626",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:外部同種事象を契機とした前提の見直し",
+      "title": "他所の同種事故が前提を否定したら想定を見直す",
+      "category": "安全性と危険要因",
+      "source_lines": "L3603-L3603",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:作業指示書のハザード情報に基づく専門家レビュー",
+      "title": "作業指示書はハザード分析情報に基づき有識者がレビューする",
+      "category": "レビューと監査",
+      "source_lines": "L3625-L3625",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:力量要件と担保責任者の割り当て",
+      "title": "作業実施者の力量要件と、その担保責任者を割り当てる",
+      "category": "組織と力量",
+      "source_lines": "L3611-L3611",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:最小限遵守を安全達成とみなさない",
+      "title": "規制・標準の最小限遵守を安全の達成とみなさない",
+      "category": "レビューと監査",
+      "source_lines": "L3624-L3624",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:監督機構自体のレビューと再設計",
+      "title": "監督・規制側の手順自体も分析対象としてレビュー・再設計する",
+      "category": "レビューと監査",
+      "source_lines": "L3579-L3579",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:リスクの先行指標の妥当性検証",
+      "title": "リスクの先行指標は妥当性を検証して設定・適用する",
+      "category": "運用と保守",
+      "source_lines": "L3628-L3628",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:教訓を適用する手順の確立",
+      "title": "得られた教訓を実際に適用する手順を確立する",
+      "category": "不適合と是正",
+      "source_lines": "L3629-L3629",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:欠落・不十分なコントロールの明示的表示",
+      "title": "欠落・不十分なコントロールとフィードバックを図上で明示する",
+      "category": "証拠と記録",
+      "source_lines": "L3595-L3595",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:手法変更に対する上層部の賛同確保",
+      "title": "手法変更には上層部の賛同を先に確保する",
+      "category": "組織と力量",
+      "source_lines": "L3397-L3397",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:専任・経験蓄積グループによる内部調査",
+      "title": "内部調査は経験を蓄積した専任グループが実施する",
+      "category": "組織と力量",
+      "source_lines": "L3403-L3403",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:再利用資料への作成時期・版差の注記",
+      "title": "再利用する既存分析には作成時期と手法の版差を注記する",
+      "category": "供給者と再利用",
+      "source_lines": "L3409-L3409",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:想定の記録と変更時再検査",
+      "title": "想定の記録と再検査を変更管理に組み込む",
+      "category": "構成管理と変更管理",
+      "source_lines": "L3645-L3645",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:反証証拠による想定再評価",
+      "title": "反証証拠が出た時点で想定を再評価する",
+      "category": "不適合と是正",
+      "source_lines": "L3681-L3681",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:安全評価とビジネス評価の分離",
+      "title": "安全リスク評価をビジネスリスク評価から分離する",
+      "category": "独立性",
+      "source_lines": "L3663-L3663",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:安全判断のコスト独立性",
+      "title": "技術的安全判断をコスト・スケジュールから独立させる",
+      "category": "独立性",
+      "source_lines": "L3768-L3768",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:安全と納期の対立裁定手順",
+      "title": "安全とプログラム上の要求の対立に明示的な裁定手順を置く",
+      "category": "組織と力量",
+      "source_lines": "L3769-L3769",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:監査の検出力評価",
+      "title": "監査は明白な手順違反を検出できたかで評価する",
+      "category": "レビューと監査",
+      "source_lines": "L3641-L3641",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:リスク先行指標による監査",
+      "title": "監査指標は結果件数でなくリスク増加の先行指標にする",
+      "category": "レビューと監査",
+      "source_lines": "L3665-L3665",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:最低準拠は不十分",
+      "title": "規制の最低要件への準拠を安全の十分条件としない",
+      "category": "レビューと監査",
+      "source_lines": "L3689-L3689",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:作業指示書の安全監督",
+      "title": "安全上重要な作業指示書は安全技術の監督下で作成する",
+      "category": "文書化",
+      "source_lines": "L3637-L3637",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:承認は内容完全性の確認",
+      "title": "承認プロセスは指示内容の完全性と安全性を確認する",
+      "category": "レビューと監査",
+      "source_lines": "L3653-L3653",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:設計文書の下流利用者充足",
+      "title": "設計文書は下流の利用者が理解できる情報を含む",
+      "category": "文書化",
+      "source_lines": "L3653-L3653",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:何をとなぜのトレース文書化",
+      "title": "「何を」と「なぜ」をトレース付きで文書化する",
+      "category": "証拠と記録",
+      "source_lines": "L3782-L3782",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:ハザードログの維持追跡",
+      "title": "ハザードログを作成し状態を追跡し続ける",
+      "category": "安全性と危険要因",
+      "source_lines": "L3779-L3779",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:ハザード分析の継続更新",
+      "title": "ハザード分析はライフサイクル全体で継続・更新する",
+      "category": "検証計画",
+      "source_lines": "L3783-L3783",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:全変更のハザード分析と承認",
+      "title": "提案されたすべての変更にハザード分析と承認を要求する",
+      "category": "構成管理と変更管理",
+      "source_lines": "L3799-L3799",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:計画外変更時の構造監査",
+      "title": "計画外変更やリスク増大時に統制構造を監査する",
+      "category": "構成管理と変更管理",
+      "source_lines": "L3761-L3761",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:勧告の実施と有効性確認",
+      "title": "是正勧告は実施と有効性まで確認する",
+      "category": "不適合と是正",
+      "source_lines": "L3760-L3760",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:人の非難で分析を止めない",
+      "title": "原因分析をオペレータエラーで止めない",
+      "category": "不適合と是正",
+      "source_lines": "L3741-L3741",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:エラー誘発設計要因の排除",
+      "title": "非安全行動を誘発する設計要因を排除する",
+      "category": "試験設計",
+      "source_lines": "L3781-L3781",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:危険作業前の安全装置点検",
+      "title": "危険作業の開始前に安全装置を点検する",
+      "category": "運用と保守",
+      "source_lines": "L3797-L3797",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:異常原因特定まで再開禁止",
+      "title": "異常の原因を特定するまで作業を再開しない",
+      "category": "運用と保守",
+      "source_lines": "L3798-L3798",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:運用教訓の上流還流",
+      "title": "運用の教訓を上流プロセスへ還流する",
+      "category": "不適合と是正",
+      "source_lines": "L3786-L3786",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:迂回行動からの学習",
+      "title": "学習機会としての迂回行動を調査する",
+      "category": "運用と保守",
+      "source_lines": "L3677-L3677",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:方針の理解遵守有効性の測定",
+      "title": "方針の理解・遵守・有効性をフィードバックで判定する",
+      "category": "レビューと監査",
+      "source_lines": "L3758-L3758",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:請負業者含む要件実施監視",
+      "title": "請負業者を含めて要件の実施を監視する",
+      "category": "供給者と再利用",
+      "source_lines": "L3759-L3759",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:重要変更の明示的通知",
+      "title": "供給者は重要な変更を利用者へ明示的に警告する",
+      "category": "供給者と再利用",
+      "source_lines": "L3667-L3667",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:高リスク活動への厳格監督",
+      "title": "リスクの高い活動ほど厳格な監督を割り当てる",
+      "category": "検証計画",
+      "source_lines": "L3673-L3673",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:安全重要作業者の力量確保",
+      "title": "安全上重要な作業者の力量と資源を確保する",
+      "category": "組織と力量",
+      "source_lines": "L3765-L3765",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:懸念表明チャネルと裁定",
+      "title": "懸念を表明できる経路と裁定手続を用意する",
+      "category": "組織と力量",
+      "source_lines": "L3774-L3774",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:問題報告システムの構築監視",
+      "title": "使いやすい問題報告システムを構築し監視する",
+      "category": "証拠と記録",
+      "source_lines": "L3766-L3766",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:責任と権限とフィードバックの一体化",
+      "title": "責任には権限・説明責任・フィードバック経路を伴わせる",
+      "category": "組織と力量",
+      "source_lines": "L3753-L3753",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:リストの非網羅性の明示",
+      "title": "チェックリストは網羅的でないと明示し補完する",
+      "category": "検証計画",
+      "source_lines": "L3751-L3751",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:安全情報システムの評価再設計",
+      "title": "安全情報システムを評価し再設計する",
+      "category": "証拠と記録",
+      "source_lines": "L3687-L3687",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:調査記録の分析可能性",
+      "title": "調査記録は分析に必要な情報を含める",
+      "category": "証拠と記録",
+      "source_lines": "L3679-L3679",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:危険作業前の安全装置点検#2",
+      "title": "運用開始前の安全装置の作動確認",
+      "category": "運用と保守",
+      "source_lines": "L3797-L3797",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:再開前の異常原因特定",
+      "title": "異常原因の特定を再開の前提条件にする",
+      "category": "不適合と是正",
+      "source_lines": "L3798-L3798",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:変更へのハザード分析と承認",
+      "title": "変更管理手順にハザード分析と承認を組み込む",
+      "category": "構成管理と変更管理",
+      "source_lines": "L3799-L3799",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:安全機構の無効化指針",
+      "title": "安全上重要な機器の無効化に関する成文化された指針",
+      "category": "構成管理と変更管理",
+      "source_lines": "L3806-L3806",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:ハザード分析を監査の入力にする",
+      "title": "ハザード分析結果を運用・保守の前提条件にする",
+      "category": "レビューと監査",
+      "source_lines": "L3800-L3800",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:遵守と教育有効性の計測データ",
+      "title": "手順遵守と教育有効性を示すデータの収集",
+      "category": "証拠と記録",
+      "source_lines": "L3800-L3800",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:リスク先行指標の検出",
+      "title": "リスク上昇の先行指標の特定とフィードバック経路",
+      "category": "運用と保守",
+      "source_lines": "L3801-L3801",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:運用から開発への還流",
+      "title": "運用から開発への情報還流経路",
+      "category": "組織と力量",
+      "source_lines": "L3802-L3802",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:是正措置の責任割当と追跡",
+      "title": "是正推奨事項の責任割当と実施追跡",
+      "category": "不適合と是正",
+      "source_lines": "L3803-L3803",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:安全活動の独立確認",
+      "title": "安全上重要な活動の独立確認",
+      "category": "独立性",
+      "source_lines": "L3804-L3804",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:安全重要項目の保守優先",
+      "title": "安全上重要項目の保守優先とスケジュール遵守",
+      "category": "運用と保守",
+      "source_lines": "L3805-L3805",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:再起動専用手順",
+      "title": "停止後・保守後の再起動には専用手順を用いる",
+      "category": "運用と保守",
+      "source_lines": "L3807-L3807",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:擬似警報の削減",
+      "title": "擬似警報の調査と削減",
+      "category": "運用と保守",
+      "source_lines": "L3808-L3808",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:故障機器の明示と周知",
+      "title": "誤作動中の機器の明示と伝達",
+      "category": "運用と保守",
+      "source_lines": "L3809-L3809",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:安全運用範囲の定義と周知",
+      "title": "安全運用範囲の定義・周知と遵守の是認",
+      "category": "運用と保守",
+      "source_lines": "L3810-L3810",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:管理者への安全情報伝達",
+      "title": "管理者への安全情報伝達チャネル",
+      "category": "組織と力量",
+      "source_lines": "L3812-L3812",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:ハザードログの継続維持",
+      "title": "運用時ハザード・ログの継続的維持と利用",
+      "category": "証拠と記録",
+      "source_lines": "L3796-L3796",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:安全遂行のための教育と改善ループ",
+      "title": "作業者の安全遂行能力を担保する教育",
+      "category": "組織と力量",
+      "source_lines": "L3793-L3793",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:システム目的の明示",
+      "title": "システムの目的を明示的に特定する",
+      "category": "試験設計",
+      "source_lines": "L3834-L3834",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:分析範囲と目的の事前合意",
+      "title": "分析関係者による目的の特定と合意",
+      "category": "検証計画",
+      "source_lines": "L3838-L3838",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:仕様によるモデル一貫性",
+      "title": "仕様によるメンタルモデルの一貫性確保",
+      "category": "文書化",
+      "source_lines": "L3838-L3838",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:コントローラのプロセスモデル保持",
+      "title": "コントローラは制御対象のプロセスモデルを持つ",
+      "category": "検証計画",
+      "source_lines": "L3903-L3903",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:欠陥の混入理由と見逃し理由の双方調査",
+      "title": "事故調査は設計欠陥の導入時点と見逃し理由を特定する",
+      "category": "不適合と是正",
+      "source_lines": "L3929-L3929",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "CAST:危険状態の排除を最優先",
+      "title": "危険状態を排除する設計を最優先する",
+      "category": "安全性と危険要因",
+      "source_lines": "L3875-L3875",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    }
+  ]
+}
