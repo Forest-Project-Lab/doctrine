@@ -222,6 +222,7 @@ sources: []
 | ADR-094 | ADR | packaging | 試験は実時計を読まない。時計を固定できる呼び出しでは固定を機械が要求する |
 | ADR-108 | ADR | packaging | Hook の封筒の読み取りを正本に一本化する。上限は正本が持つ |
 | ADR-109 | ADR | packaging | 封筒を切り詰めたら黙らない。標準エラーへ一行で告げる |
+| ADR-114 | ADR | packaging | 保証キャンペーンの実行系評価は開発専用レーンに隔離する — 配布物へ依存を持ち込まない |
 | CHANGE-001 | CHANGE | packaging | 導入済みプラグインの版の遅れを生存性として照合する |
 | CHANGE-002 | CHANGE | packaging | リリースの整合を CI の門で検める — 変更履歴の書き忘れを止める |
 | CHANGE-005 | CHANGE | packaging | 不具合の兆候を記録し、承認を経た issue 報告を促す |

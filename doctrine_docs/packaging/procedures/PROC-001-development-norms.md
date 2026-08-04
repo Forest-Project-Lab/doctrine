@@ -6,8 +6,8 @@ domain: packaging
 status: current
 owner: doctrine-maintainers
 created: 2026-07-28
-updated: 2026-07-29
-sources: [doctrine_docs/packaging/decisions/ADR-047-development-methodology.md, doctrine_docs/packaging/decisions/ADR-068-code-audit-residues.md, doctrine_docs/packaging/decisions/ADR-071-release-integrity-gate.md]
+updated: 2026-08-04
+sources: [doctrine_docs/packaging/decisions/ADR-047-development-methodology.md, doctrine_docs/packaging/decisions/ADR-068-code-audit-residues.md, doctrine_docs/packaging/decisions/ADR-071-release-integrity-gate.md, doctrine_docs/packaging/decisions/ADR-114-assurance-sdk-lane.md]
 depends_on: [ICD-008]
 llm_context: task
 ---
@@ -48,6 +48,18 @@ per-turn の性能は受入の門で凍結する: 合成 1,500 文書で 1 編�
 ## 追跡の三角（仕様⇔実装⇔試験）
 
 追跡の機構（SPEC-026）は文書型を選ばない。仕様が実装の範囲の指紋を記録するのと同じ形で、**テスト文書（TEST）も、受入を凍結するテストコードの範囲の指紋を記録してよい**。記録すれば、テストの消失・改変が監査（trace_missing_impl / trace_stale）で見える。
+
+## 保証レーン（ADR-114）
+
+継続保証キャンペーンの実行系評価は、開発専用レーン `assurance/` に隔離する（ADR-114）。
+配布物 `plugin/` は標準ライブラリだけで動く方針（DECIDED-001 事実7）のまま変えない。
+
+- レーンだけが venv と pin した依存を持つ。配布物からレーンのコードを取り込まない。
+- 評価セッションは一回限り・設定の読み込みなし・空の一時作業場所とし、独立批判へは
+  構造化された成果物だけを渡す。
+- レーンが使えないときは UNASSESSED（前提欠如で未評価）として決定論試験だけで続行する。
+  前提診断・煙試験・故障注入の証拠は `assurance/ledger/` に在る。
+- 運転手順の詳細はレーンの案内（`assurance/README.md`。体系外のビュー）が持つ。
 
 ## 手順
 
