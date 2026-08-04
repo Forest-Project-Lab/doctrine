@@ -5,7 +5,7 @@ type: OVERVIEW
 domain: _system
 status: current
 owner: render-projection
-updated: 2026-08-03
+updated: 2026-08-04
 llm_context: always
 sources: []
 ---
@@ -117,6 +117,7 @@ sources: []
 | IMPL-021 | IMPL | graph | `_tracescan.py`（コード注釈の走査）の実装メモ |
 | TEST-006 | TEST | graph | 依存グラフのテスト計画 |
 | TEST-026 | TEST | graph | コード注釈の書式の検証 |
+| EXT-006 | EXT | graph | System View 検証（実験ブランチ）の Phase 0 参照点への依存 |
 | ICD-003 | ICD | guard | guard のインターフェース（三ガードの公開境界） |
 | REQ-004 | REQ | guard | 境界明瞭（越境依存は相手ICD宛のみ許す） |
 | SPEC-003 | SPEC | guard | 三ガードの判定規則（不変・ICD依存・削除安全） |
