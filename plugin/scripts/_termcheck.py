@@ -549,6 +549,31 @@ def _mask_approved_compounds(masked, glossary=None):
     return masked
 
 
+_ASCII_SYNONYM_RE = re.compile(r"^[A-Za-z0-9]+$")
+_ASCII_WORDCHARS = frozenset(
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_")
+
+
+def _find_ascii_word(masked, syn):
+    """ASCII 純字の同義語は語境界を要求して探す。無ければ -1。
+
+    日本語と違い ASCII には語境界が在る。両隣のどちらかに ASCII の語構成字が
+    続く出現(VERIFY⊃IF・UNVERIFIED⊃IF)はその語ではない(WATCH-001 の
+    『部分文字列の取り違え』類型。実測 2026-08-04)。CJK・記号・空白の隣接
+    (外部IF・IF仕様)は語のままなので従来どおり咎める。
+    """
+    start = 0
+    while True:
+        idx = masked.find(syn, start)
+        if idx < 0:
+            return -1
+        before = masked[idx - 1] if idx > 0 else ""
+        after = masked[idx + len(syn): idx + len(syn) + 1]
+        if before not in _ASCII_WORDCHARS and after not in _ASCII_WORDCHARS:
+            return idx
+        start = idx + 1
+
+
 def _check_banned_synonyms(masked, glossary):
     """BANNED_SYNONYM (ERROR) — §1 / R6. Literal substring on masked body.
 
@@ -557,12 +582,18 @@ def _check_banned_synonyms(masked, glossary):
     (『入出力』⊃『出力』, 『現在形』⊃『現在』); those compounds are masked length-
     preservingly first so a compliant SPEC/API template is not false-flagged,
     while a standalone synonym in ordinary prose is still caught.
+    ASCII-only synonyms additionally require ASCII word boundaries
+    (_find_ascii_word) — ASCII does have boundaries, so an occurrence inside a
+    longer ASCII word is not that word.
     Ordered by (synonym order in glossary, first occurrence).
     """
     masked = _mask_approved_compounds(masked, glossary)
     out = []
     for syn, approved in glossary.banned_synonyms:
-        idx = masked.find(syn)
+        if _ASCII_SYNONYM_RE.match(syn):
+            idx = _find_ascii_word(masked, syn)
+        else:
+            idx = masked.find(syn)
         if idx < 0:
             continue
         out.append(Finding(
