@@ -16,140 +16,393 @@
       "title": "安全側の楽観仮定を禁止する",
       "category": "安全性と危険要因",
       "source_lines": "L6-L6",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "「守られる前提を置かない」の実体は保証限界の明文化として現に在る。REQ-013 が各成果物に予防・検出・委ねるを書かせ、ADR-050 は「ガードが拒否できる状態かは検出しない」と非保証を明記し、ADR-064 は三つの保証限界を非目標として置き、NONGOAL-001 と WATCH-001 が横断の非目標と退行監視を持つ。ただし文書中の楽観仮定そのもの（「〜は正しいと仮定する」「〜は起きない」）を挙げる検査は、監査40検査・リンタ23検査コードのいずれにも無い。",
+      "evidence": [
+        "REQ-013",
+        "ADR-050",
+        "ADR-064",
+        "NONGOAL-001",
+        "WATCH-001"
+      ],
+      "recheck_trigger": "仮定記述を挙げる監査検査またはリンタ検査コードが追加されたとき、あるいは ADR-050 が置換されたとき。",
+      "gap": "仮定を置いた記述を名指し、逸脱経路の記述を要求する機構（監査検査・リンタ検査コード・doc-review の判定項目のいずれか）が無く、非保証の明文化は書き手の規律に依る。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "1d06a5cb86ba206d5c050f468e418f30a7c02729e6227cbe981dd51bf65e53af",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:ハザードは原因非依存の高抽象度",
       "title": "ハザードは原因を区別しない抽象度で書く",
       "category": "安全性と危険要因",
       "source_lines": "L8-L8",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "非該当で理由あり",
+      "reason": "ADR-081 が「証跡の形だけを採り、ハザード層と過程適合は採らない」と定めており、原因非依存の抽象度で書くべきハザード記述という対象が体系に存在しない。境界の根拠は二つ。統治の対象は ADR-015 により知識と決定の層（＋ADR-054 の注釈が囲むコード範囲）に限られること、そして索引の型の一覧に危険要因を運ぶ型が無く、新設した唯一の型は PROC である（ADR-013）こと。RESEARCH-004 が宇宙機保証実務との対照で何が移せるかを検討中の下書きに留まる。",
+      "evidence": [
+        "ADR-081",
+        "ADR-015",
+        "ADR-013",
+        "REQ-000",
+        "RESEARCH-004"
+      ],
+      "recheck_trigger": "ADR-081 が superseded になり、ハザード層を採る決定が accepted になったとき。",
+      "gap": null,
+      "confidence": "high",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "1d06a5cb86ba206d5c050f468e418f30a7c02729e6227cbe981dd51bf65e53af",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:ハザードの主語はシステム全体",
       "title": "ハザードはコンポーネントでなくシステム状態を指す",
       "category": "安全性と危険要因",
       "source_lines": "L12-L12",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "非該当で理由あり",
+      "reason": "ハザード記述そのものが体系に無い（ADR-081）。主語を正規化する対象が無いだけでなく、フロントマターの必須キーはちょうど8個（ADR-033、DATA-001）で不安全状態を書く欄が無く、型の一覧にも危険要因の型が無い。統治の主語は文書・辺・発火経路であり、システム状態の記述はこの体系の語彙の外側にある（ADR-015）。",
+      "evidence": [
+        "ADR-081",
+        "ADR-033",
+        "DATA-001",
+        "ADR-015",
+        "NONGOAL-001"
+      ],
+      "recheck_trigger": "DATA-001 のスキーマに不安全状態を運ぶキーまたは型が追加されたとき。",
+      "gap": null,
+      "confidence": "high",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "1d06a5cb86ba206d5c050f468e418f30a7c02729e6227cbe981dd51bf65e53af",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:制御可能な要因への限定",
       "title": "ハザードは制御・管理可能な要因のみを参照する",
       "category": "安全性と危険要因",
       "source_lines": "L12-L12",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "ハザード欄は無いが、原則の実体である「制御・管理できる範囲だけを参照する」規則は統治要求の側に実装され検められている。ADR-057 が統治をリポジトリ一つの内側に閉じ、ADR-022 が素の docs を他所の土地として触れず、ADR-036／ADR-103 が統治木の無い土地では発火させない。制御外の要因は EXT 型のアンカーとして宣言され（ADR-026、EXT-001〜EXT-006）、実在・出所・指紋を監査が検める（ext_anchor_broken、source_missing、source_drift、ADR-039、ADR-097）。見張りが唯一で緩い／欠ける場合も名指しされる（ext_sole_guard_loose、ext_sole_guard_missing）。試験計画は TEST-021。",
+      "evidence": [
+        "ADR-026",
+        "ADR-057",
+        "ADR-036",
+        "EXT-001",
+        "ext_anchor_broken",
+        "ext_sole_guard_missing",
+        "ext_sole_guard_loose",
+        "ADR-097",
+        "SPEC-021",
+        "TEST-021"
+      ],
+      "recheck_trigger": "ADR-057 が置換され統治が組織横断へ広がったとき、または EXT の存在・指紋検査が緩められたとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "1d06a5cb86ba206d5c050f468e418f30a7c02729e6227cbe981dd51bf65e53af",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:ハザードごとの防止条件記述",
       "title": "各ハザードに防止用のシステムレベル条件を書く",
       "category": "安全性と危険要因",
       "source_lines": "L12-L12",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "非該当で理由あり",
+      "reason": "対の左辺である危険要因の列挙が体系に無い（ADR-081）ため、各ハザードに防止条件を併記するという要求は宛先を持たない。境界を示すと、同形の対応づけの規律自体は在る——被覆マトリクスが統治要求×発火経路×証跡を並べ（SPEC-025、TEST-025）、ADR-084 が各行に実効を示す試験を名指させ、示せない行は未証と明示させる。左辺が危険要因でなく統治要求である点だけが違う。",
+      "evidence": [
+        "ADR-081",
+        "SPEC-025",
+        "ADR-084",
+        "TEST-025",
+        "NONGOAL-001"
+      ],
+      "recheck_trigger": "危険要因を運ぶ型または節が正本に導入され、ADR-081 の非採用が置換されたとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "1d06a5cb86ba206d5c050f468e418f30a7c02729e6227cbe981dd51bf65e53af",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:ハザード件数上限7-10",
       "title": "ハザード総数を小さく保つ",
       "category": "安全性と危険要因",
       "source_lines": "L12-L12",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "非該当で理由あり",
+      "reason": "上限を課すべきハザード一覧が体系に無い（ADR-081）。加えて、件数で規約を凍らせる作法自体をこの体系は退けている——ADR-078 は Hook 事象の集合を数で凍らせず能力で検めると定め、数による凍結を明示的に置き換えた前例がある。よって仮にハザード層を導入しても「7〜10」という件数上限は既存の方針と衝突し、そのままは移せない。",
+      "evidence": [
+        "ADR-081",
+        "ADR-078",
+        "NONGOAL-001"
+      ],
+      "recheck_trigger": "ハザード一覧が導入され、かつ ADR-078 の「数で凍らせない」方針が見直されたとき。",
+      "gap": null,
+      "confidence": "high",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "1d06a5cb86ba206d5c050f468e418f30a7c02729e6227cbe981dd51bf65e53af",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:ハザード文の曖昧語禁止",
       "title": "曖昧語・再帰語をハザード文から排除する",
       "category": "文書化",
       "source_lines": "L12-L12",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "当てはめ仮説が指す「書き込み時に語を照合する門」は現に在る。PostToolUse で docs-linter.py が走り、その中核 _termcheck.py が未承認語と禁止同義語を照合する（REQ-006、SPEC-008、TEST-008、term-check.py が単体実行の前面）。カルクの照合は REQ-007。誤検知を抑える調整も決定済み（ADR-082 語の途中で切れる一致を咎めない、ADR-018 固有名の動的な覆い、ADR-023 never 文脈の除外）。再帰的・テスト不能な記述の判定は監査でなく doc-review が担うと分担が決まっている（ADR-020）。ただし禁止語の中身（「適切に」「十分に」等が GLOSSARY-001 に登録されているか）は索引から確認できず、証拠が届くのは機構の存在までである。",
+      "evidence": [
+        "REQ-006",
+        "REQ-007",
+        "SPEC-008",
+        "plugin/scripts/_termcheck.py",
+        "plugin/scripts/term-check.py",
+        "TEST-008",
+        "PostToolUse",
+        "ADR-020",
+        "GLOSSARY-001"
+      ],
+      "recheck_trigger": "GLOSSARY-001 の禁止同義語セルから曖昧語が外れたとき、または用語チェッカーが助言のみで発火しなくなったとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "1d06a5cb86ba206d5c050f468e418f30a7c02729e6227cbe981dd51bf65e53af",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:ハザードリストの反復改訂",
       "title": "ハザードリストは反復改訂する前提で扱う",
       "category": "構成管理と変更管理",
       "source_lines": "L14-L14",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "危険要因一覧そのものは無いが、原則が求める「一覧を凍結資産にせず生きた文書として改訂し続ける」規律は、対応する横断リストに対して実装されている。NONGOAL-001（18項）と WATCH-001（12項）は current の統治文書で、型ごとの既定点検周期により全現行文書に実効期限が張られる（ADR-025）。期限超過は review_by_overrun、現行の古びは stale_current が挙げ、期限が唯一の見張りのときは期限を短くする（ADR-086）。後段の発見を差し戻す経路は会話知識の捕捉（REQ-015、SPEC-022、TEST-022）と、不変の ADR に誤りを見つけたときの正規の直し方（ADR-044）が担う。受入は TEST-021（ADR-025/026/027 の検査を含む plugin/tests/test_liveness_capture.py）。",
+      "evidence": [
+        "WATCH-001",
+        "NONGOAL-001",
+        "ADR-025",
+        "review_by_overrun",
+        "stale_current",
+        "ADR-086",
+        "ADR-044",
+        "SPEC-022",
+        "TEST-021",
+        "plugin/tests/test_liveness_capture.py"
+      ],
+      "recheck_trigger": "ADR-025 の点検周期が撤回されたとき、または WATCH-001 が更新されないまま stale_current に居座り続けたとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "1d06a5cb86ba206d5c050f468e418f30a7c02729e6227cbe981dd51bf65e53af",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:制約はハザードの反転",
       "title": "システムレベル制約はハザードの状態反転で導出する",
       "category": "試験設計",
       "source_lines": "L20-L20",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "非該当で理由あり",
+      "reason": "反転すべきハザード状態が体系に無い（ADR-081）ため、この導出操作は定義できない。境界として、片側だけ存在する対を落とすという同形の検査は在る——要求に仕様が無い（reverse_orphan_req_no_spec）、仕様に試験が無い（reverse_orphan_spec_no_test）を全件監査が挙げる（SPEC-011、TEST-011）。形は同じだが左辺は REQ／SPEC であってハザードではなく、状態の反転という意味論も持たない。",
+      "evidence": [
+        "ADR-081",
+        "reverse_orphan_req_no_spec",
+        "reverse_orphan_spec_no_test",
+        "SPEC-011",
+        "NONGOAL-001"
+      ],
+      "recheck_trigger": "ハザードと制約の対を運ぶ型が正本に入り、対の欠落を検る検査が監査へ追加されたとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "1d06a5cb86ba206d5c050f468e418f30a7c02729e6227cbe981dd51bf65e53af",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:制約は具体条件を特定",
       "title": "制約はハザードを防ぐ条件・動作を具体に特定する",
       "category": "文書化",
       "source_lines": "L18-L18",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "「検査可能な述語に変換できない記述を弾く」という判断は、監査でなく doc-review が担うと決定済みで（ADR-020）、担い手の技能は一仕様で規定され検証計画もある（SPEC-016、TEST-016、REQ-012 が判断の層に保証限界の明示を課す）。機械側が検るのは雛形が定める節の有無まで（ADR-090、MISSING_SECTION、EMPTY_SECTION）で、節の中身が動作条件を含むかは検らない。",
+      "evidence": [
+        "ADR-020",
+        "SPEC-016",
+        "TEST-016",
+        "REQ-012",
+        "ADR-090",
+        "MISSING_SECTION"
+      ],
+      "recheck_trigger": "SPEC-016 に doc-review の判定項目が列挙されたとき、または記述の具体性を検る検査コードが追加されたとき。",
+      "gap": "doc-review が「標語的な一文」を落とす判定項目の明文と、その実効を示す試験が索引に現れない。記述の具体性を検る機構は監査40検査・リンタ23コードのいずれにも無い。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "1d06a5cb86ba206d5c050f468e418f30a7c02729e6227cbe981dd51bf65e53af",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:制約-ハザード-損失のトレーサビリティ",
       "title": "制約・ハザード・損失のトレーサビリティを保つ",
       "category": "証拠と記録",
       "source_lines": "L30-L30",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "多対多の有向リンクで要求→仕様→実装→試験→決定をたどる仕組みが実装され、試験計画もある（REQ-002、SPEC-006、plugin/scripts/dep-graph.py、TEST-006、ICD-002 が問い合わせ契約）。追跡の正路は depends_on の REQ と定められ、本文の要求タグは自己適用の約束と区別される（ADR-045）。ダングリング参照は dead_link と trace_broken_ref、孤立は三条件の連言で定義した orphan（ADR-008）が挙げ、リンタは書き込み時に MISSING_TRACE で欠落を告げる。上位目的にあたる製品粒度の要求は REQ-000 と ADR-091 の棚が受ける。",
+      "evidence": [
+        "REQ-002",
+        "SPEC-006",
+        "TEST-006",
+        "ADR-045",
+        "ADR-008",
+        "orphan",
+        "dead_link",
+        "MISSING_TRACE",
+        "REQ-000",
+        "ADR-091",
+        "plugin/scripts/dep-graph.py"
+      ],
+      "recheck_trigger": "ADR-045 が置換され追跡の正路が変わったとき、または orphan の三条件が緩められたとき。",
+      "gap": null,
+      "confidence": "high",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "1d06a5cb86ba206d5c050f468e418f30a7c02729e6227cbe981dd51bf65e53af",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:発生後の検出と損失最小化制約",
       "title": "損失最小化の制約も定義する",
       "category": "不適合と是正",
       "source_lines": "L32-L32",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "予防（三ガード）だけでなく、起きた後の検出と是正が体系に並置されている。各成果物は予防・検出・委ねるを書く（REQ-013）。検出は SessionEnd と CI の全件監査（SPEC-011、plugin/scripts/docs-audit.py、TEST-011）で、決定が着地していない等を adr_not_landed が、放置は stale_current が挙げる。是正は不変の ADR の正規の直し方（ADR-044）と、検出は機械・送信は人に分けた不具合報告（ADR-074、CHANGE-005、IMPACT-005）が担う。事象を閉じてよい条件も、照合を通った統制欠陥と先行指標を持つ事故分析が揃ったときだけと定めている（ADR-117）。",
+      "evidence": [
+        "REQ-013",
+        "SPEC-011",
+        "plugin/scripts/docs-audit.py",
+        "TEST-011",
+        "adr_not_landed",
+        "stale_current",
+        "ADR-044",
+        "ADR-074",
+        "ADR-117",
+        "SessionEnd"
+      ],
+      "recheck_trigger": "ADR-117 の閉じる条件が緩められたとき、または SessionEnd の監査配線が外れたとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "1d06a5cb86ba206d5c050f468e418f30a7c02729e6227cbe981dd51bf65e53af",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:制約は実装非依存",
       "title": "安全制約に解決策や実装を書かない",
       "category": "試験設計",
       "source_lines": "L38-L38",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "層の分離は正本で決まっている。統治の対象は知識と決定の層に限られ（ADR-015）、手順は PROC 一型に閉じ（ADR-013）、実装の詳細は IMPL 型と ICD の公開契約に置かれる（IMPL-001、ICD-001）。型ごとの雛形と必須節は検られる（SPEC-017、TEST-017、ADR-090）。ただし要求・仕様の本文が特定スクリプト名に依存していないかを検る機構は無い。",
+      "evidence": [
+        "ADR-015",
+        "ADR-013",
+        "IMPL-001",
+        "ICD-001",
+        "SPEC-017",
+        "TEST-017",
+        "ADR-090",
+        "DATA-001"
+      ],
+      "recheck_trigger": "要求・仕様の文面から実装名の混入を挙げる検査が追加されたとき、または ADR-015 の層の限定が置換されたとき。",
+      "gap": "文面の実装依存（制約文にツール名・スクリプト名が入り、代替実装で無効になる状態）を挙げる検査が、監査40検査・リンタ23コードのいずれにも無く、層の分離は型と置き場所の規則までで止まっている。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "1d06a5cb86ba206d5c050f468e418f30a7c02729e6227cbe981dd51bf65e53af",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:サブハザードから具体制約",
       "title": "サブハザードからより特定の制約を導く",
       "category": "試験設計",
       "source_lines": "L66-L66",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "階層的な精密化の骨格は在る。製品粒度の要求を _system の棚に置き（REQ-000、ADR-091）、ドメイン要求→仕様→試験へ降ろす段が型で表され、各段の欠落は reverse_orphan_req_no_spec と reverse_orphan_spec_no_test が全件監査で挙げる（SPEC-011、TEST-011、ICD-005）。ただし検るのは対応の有無であって粒度の適合ではない。",
+      "evidence": [
+        "REQ-000",
+        "ADR-091",
+        "reverse_orphan_req_no_spec",
+        "reverse_orphan_spec_no_test",
+        "SPEC-011",
+        "TEST-011",
+        "ICD-005"
+      ],
+      "recheck_trigger": "粒度の適合を検る検査が監査に加わったとき、または ADR-091 の棚の規則が変わったとき。",
+      "gap": "細分化された下位項目に対し、対応する規則が上位の一般則のままで具体化されていないことを名指す機構が無い（存在は検るが粒度は検らない）。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "1d06a5cb86ba206d5c050f468e418f30a7c02729e6227cbe981dd51bf65e53af",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:コントロールストラクチャーは機能モデル",
@@ -157,259 +410,767 @@
       "category": "検証計画",
       "source_lines": "L133-L133",
       "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "reason": "統治構造にあたる図として CTXMAP-001（全体図）が在り、投影として正本から決定論で描画される（SPEC-014、plugin/scripts/render-projection.py、ADR-016）ことまでは索引から判る。しかしその中身が「コマンドとフィードバックの送受」を示す機能モデルなのか、置き場所の写しなのかは索引から判定できない。索引が持つのは id と題と描画の事実までで、図の内容は読んでいない。近い機能的表現として被覆マトリクス（SPEC-025、統治要求×発火経路×証跡）が在るが、これが構造図の役を担う旨の記述も索引には無い。",
+      "evidence": [
+        "CTXMAP-001",
+        "SPEC-014",
+        "plugin/scripts/render-projection.py",
+        "ADR-016",
+        "SPEC-025"
+      ],
+      "recheck_trigger": "CTXMAP-001 の節構成（指示とフィードバックの向きを持つか）または SPEC-014 の描画対象の内訳が索引に現れたとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "1d06a5cb86ba206d5c050f468e418f30a7c02729e6227cbe981dd51bf65e53af",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:階層と矢印向きの規約",
       "title": "縦方向の階層と矢印の向きを規約通りにする",
       "category": "文書化",
       "source_lines": "L129-L129",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "向きのある辺と越境の規則は在る。越境依存は相手 ICD 宛のみ許され（REQ-004、ADR-006 は cross_domain_violation を depends_on 端のみに付ける）、違反は ICD_DEP_VIOLATION と icd_dependency_violation が挙げ、問い合わせは forward/reverse を持つ（SPEC-006、ICD-002）。両端から書かれた同じ事実には印を付け、畳み方を読み手に決めさせない（ADR-088）ので、双方向の曖昧さを潰す規律も一部は在る。",
+      "evidence": [
+        "REQ-004",
+        "ADR-006",
+        "SPEC-006",
+        "ICD-002",
+        "ICD_DEP_VIOLATION",
+        "icd_dependency_violation",
+        "ADR-088"
+      ],
+      "recheck_trigger": "辺に種別（指示／フィードバック）または権限の上下を持たせる決定が accepted になったとき。",
+      "gap": "辺の種別が depends_on 一種で、下向き＝指示／上向き＝フィードバックの別と、上位・下位の権限階層を表す規約が無い。どちらが権限を持つかを図または辺から判定できない。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "1d06a5cb86ba206d5c050f468e418f30a7c02729e6227cbe981dd51bf65e53af",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:構造は実行可能モデルではない",
       "title": "コントロールストラクチャーを実行可能モデルと混同しない",
       "category": "検証計画",
       "source_lines": "L135-L135",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "正本は文書に置かれ、表示は正本から描き直せる派生に限られる（ADR-016、刊行物は投影一覧に含めない）。表示層は統治判断を持たず索引が無ければ黙る（ADR-052）。描画のずれは projection_drift が挙げ、描画は SPEC-014／TEST-014／render-projection.py が受ける。逆に実行される設定（Hook 仕様・自己適用設定・CI 定義）は正本でなく EXT のアンカーとして外から参照され、実在と指紋を検められる（ADR-026、EXT-001、EXT-002、EXT-004）。実装できない参加者である人の査読も、機械の検算との分担として PROC-001 と REQ-012 に明記されている。",
+      "evidence": [
+        "ADR-016",
+        "ADR-052",
+        "SPEC-014",
+        "TEST-014",
+        "projection_drift",
+        "ADR-026",
+        "EXT-001",
+        "EXT-004",
+        "PROC-001",
+        "REQ-012"
+      ],
+      "recheck_trigger": "設定ファイルを統治の正本として扱う決定が入ったとき、または ADR-052／ADR-016 が置換されたとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "1d06a5cb86ba206d5c050f468e418f30a7c02729e6227cbe981dd51bf65e53af",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:指示は必ず従われるとは限らない",
       "title": "コントロールアクションが従われる前提を置かない",
       "category": "運用と保守",
       "source_lines": "L143-L143",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "発火したことと守られたことを分けて扱う機構が実装されている。フックは発火の印を残し、対の食い違いから拒否経路の欠落を疑う（ADR-062）。監査は走ったこと自体の印を残し、鮮度の警告が不実行と書き込み失敗を区別する（ADR-119）。生存性は UserPromptSubmit の鼓動が会話ごとに照合し（REQ-014、SPEC-021、plugin/scripts/gov-heartbeat.py、TEST-021）、見張りの穴は guard_liveness_gap と ext_sole_guard_loose が名指す。さらに「ガードが拒否できる状態かは検出しない」ことを保証限界として明記し、機能カナリアを次の版へ分けている（ADR-050）——遵守を前提化しない態度が決定として残っている。",
+      "evidence": [
+        "REQ-014",
+        "SPEC-021",
+        "TEST-021",
+        "plugin/scripts/gov-heartbeat.py",
+        "UserPromptSubmit",
+        "ADR-062",
+        "ADR-119",
+        "ADR-050",
+        "guard_liveness_gap",
+        "ext_sole_guard_loose"
+      ],
+      "recheck_trigger": "ADR-062 の発火の印が外されたとき、または ADR-050 が機能カナリアの実装により置換されたとき。",
+      "gap": null,
+      "confidence": "high",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "1d06a5cb86ba206d5c050f468e418f30a7c02729e6227cbe981dd51bf65e53af",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:抽象化による複雑さ管理",
       "title": "抽象化で複雑さを管理し段階的に精密化する",
       "category": "検証計画",
       "source_lines": "L145-L145",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "常時渡す集合は最小に保たれ（REQ-010、SPEC-012 の SessionStart 最小契約、ADR-043 の要点行、TEST-012）、必要な範囲だけをタスク別の最小被覆パックで降ろす（SPEC-013、plugin/scripts/collect-context.py、TEST-013）。上限は注入とパックで別に持ち（ADR-009）、見積りは共有コアに一度だけ置いて較正を両方に効かせる（ADR-105）。全対象を一律に展開する悉皆トレースは既定でなく opt-in（ADR-072、CHANGE-003）で、投影の Context Map は骨組みとして描かれる（render-projection.py）。段階的な精密化が既定という形が現に動いている。",
+      "evidence": [
+        "REQ-010",
+        "SPEC-012",
+        "SPEC-013",
+        "plugin/scripts/collect-context.py",
+        "TEST-012",
+        "TEST-013",
+        "ADR-009",
+        "ADR-105",
+        "ADR-072",
+        "plugin/scripts/render-projection.py"
+      ],
+      "recheck_trigger": "悉皆トレースが既定になったとき、または SessionStart の常時集合が最小の縛りを外したとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "1d06a5cb86ba206d5c050f468e418f30a7c02729e6227cbe981dd51bf65e53af",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:高抽象度から先に解析",
       "title": "高い抽象度で先に解析してから詳細化する",
       "category": "検証計画",
       "source_lines": "L153-L153",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "順序の規範は在る。変更フローの段数は規模でなく決定を含むか否かで分け（ADR-051）、影響集合を依存から先に列挙する道が用意されている（REQ-003、SPEC-006、TEST-006）。しかし発火の実際は逆順で、PostToolUse の単文書リンタが細則から先に走り、構造レベルの欠落（reverse_orphan_* や guard_liveness_gap）を挙げる全件監査は SessionEnd と CI に後置される（ADR-046 が既定 Level 2 で全件検査を CI に委ねる）。",
+      "evidence": [
+        "ADR-051",
+        "REQ-003",
+        "SPEC-006",
+        "TEST-006",
+        "ADR-046",
+        "PostToolUse",
+        "SessionEnd",
+        "guard_liveness_gap"
+      ],
+      "recheck_trigger": "構造レベルの審査を編集前に要求する門（PreToolUse 側の検査）が入ったとき、または ADR-046 の委譲先が変わったとき。",
+      "gap": "抽象度の順（構造の審査を細則の点検に先行させる）を強制する機構が無く、順序は書き手と技能の運用に委ねられている。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "1d06a5cb86ba206d5c050f468e418f30a7c02729e6227cbe981dd51bf65e53af",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:既存構造の再利用",
       "title": "既存のコントロールストラクチャーを再利用する",
       "category": "供給者と再利用",
       "source_lines": "L157-L157",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "統治構造そのものを配布物として再利用する形が実装され検証されている。20型＋icd-index の雛形（SPEC-017、TEST-017、IMPL-016）と非破壊・最小の足場づくり（SPEC-015、plugin/scripts/scaffold.py、TEST-015、REQ-011）により、導入先はゼロから書かない。雛形が語彙を符号化し 7 技能を固定する設計判断は ADR-010。配布は SPEC-020／TEST-020、既定名は ADR-022。導入済みの複製が正本の版から遅れていないかは鼓動が照合する（ADR-070、CHANGE-001、IMPACT-001）。雛形のまま残った箇所は template_placeholder と PLACEHOLDER_VALUE が挙げる。",
+      "evidence": [
+        "SPEC-015",
+        "SPEC-017",
+        "plugin/scripts/scaffold.py",
+        "TEST-015",
+        "TEST-017",
+        "ADR-010",
+        "SPEC-020",
+        "TEST-020",
+        "ADR-070",
+        "template_placeholder",
+        "PLACEHOLDER_VALUE"
+      ],
+      "recheck_trigger": "雛形の型数や 7 技能固定（ADR-010）が変わったとき、または ADR-070 の版照合が外れたとき。",
+      "gap": null,
+      "confidence": "high",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "1d06a5cb86ba206d5c050f468e418f30a7c02729e6227cbe981dd51bf65e53af",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:責任の割当と制約への紐づけ",
       "title": "コントローラに責任を割り当て制約へ紐づける",
       "category": "組織と力量",
       "source_lines": "L177-L177",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "各成果物が予防・検出・委ねるを書くことで担い手と責任が明記され（REQ-013）、被覆マトリクスが統治要求×発火経路×証跡の対応を持つ（SPEC-025、TEST-025）。各行は実効を示す試験を名指し、示せないなら未証と明示する（ADR-084）ので、責任の空欄が緑に紛れない。ドメインの公開境界は ICD が持ち（ICD-003 三ガードの公開境界、ICD-005 監査の境界）、機械の検算と人の査読の分担は PROC-001 が定める。担い手の欠落・唯一の見張りは guard_liveness_gap と ext_sole_guard_missing が名指す。",
+      "evidence": [
+        "REQ-013",
+        "SPEC-025",
+        "TEST-025",
+        "ADR-084",
+        "ICD-003",
+        "ICD-005",
+        "PROC-001",
+        "guard_liveness_gap",
+        "ext_sole_guard_missing"
+      ],
+      "recheck_trigger": "SPEC-025 の被覆マトリクスに未証の行が増え続けたとき、または ADR-084 の「未証と明示する」規律が置換されたとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "1d06a5cb86ba206d5c050f468e418f30a7c02729e6227cbe981dd51bf65e53af",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:プロセスモデルからフィードバック導出",
       "title": "責任とプロセスモデルからフィードバックを導出する",
       "category": "証拠と記録",
       "source_lines": "L200-L200",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "判断に使う内部状態と、それを正確に保つ入力の対が正本化されている。注入と鼓動が同じ答えを得るため監査要約の読み取りは一箇所に置かれ、木の世代をまたいだ要約は捨てる（ADR-053、plugin/scripts/_auditcache.py、plugin/tests/test_auditcache.py、ADR-037 の読み順）。要約のスキーマは全読者が照合する（ADR-042）。状態が古いまま判定していないかは、監査が走ったこと自体の印と、不実行と書き込み失敗を区別する鮮度の警告で見える（ADR-119、SPEC-021、TEST-021）。統治の設定の読み取りも共有コアに一度だけ置かれ（ADR-104、plugin/scripts/_config.py）、指紋で見張られる（ADR-096）。",
+      "evidence": [
+        "ADR-053",
+        "plugin/scripts/_auditcache.py",
+        "plugin/tests/test_auditcache.py",
+        "ADR-042",
+        "ADR-037",
+        "ADR-119",
+        "SPEC-021",
+        "TEST-021",
+        "ADR-104",
+        "ADR-096"
+      ],
+      "recheck_trigger": "監査要約の読み手が _auditcache 以外に増えたとき、または ADR-042 のスキーマ照合が外れたとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "1d06a5cb86ba206d5c050f468e418f30a7c02729e6227cbe981dd51bf65e53af",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:最小構成で解析開始可能",
       "title": "不完全な構造でも最低要素があれば解析を開始する",
       "category": "検証計画",
       "source_lines": "L227-L227",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "統治木が未完成でも動く前提で組まれている。足場は非破壊・最小で置かれ（SPEC-015、plugin/scripts/scaffold.py、TEST-015、REQ-011）、導入直後は警告でなく案内から始まり（ADR-041 の状態の種蒔き・初日の中立案内、ADR-046 の初回監査前の案内）、生存性と捕捉は段差に依らず動く（ADR-030）。段階導入と自主停止は ADR-011／ADR-019。下限も明示されており、統治木の無い土地ではガードとナッジを発火させない（ADR-036、ADR-103）——すなわち統治主体・介入手段・対象が揃った時点から動く。受入は TEST-021。",
+      "evidence": [
+        "SPEC-015",
+        "plugin/scripts/scaffold.py",
+        "TEST-015",
+        "ADR-041",
+        "ADR-046",
+        "ADR-030",
+        "ADR-011",
+        "ADR-019",
+        "ADR-036",
+        "TEST-021"
+      ],
+      "recheck_trigger": "ADR-041 の初日の中立案内が撤回され、未完成の木で警告を出す運用へ変わったとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "1d06a5cb86ba206d5c050f468e418f30a7c02729e6227cbe981dd51bf65e53af",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:後期段階でも情報省略禁止",
       "title": "後期段階で高レベル情報を意図的に省略しない",
       "category": "レビューと監査",
       "source_lines": "L229-L229",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "見たものを黙って落とさない規律が実装されている。走査は勘定を返し触れた対象を必ず分類する保存則（ADR-058、plugin/scripts/_tracescan.py、TEST-026）、統治外の意思は exempt として第四項に立てる（ADR-067）、点検の門は見た数を必ず言う（ADR-110）、封筒を切り詰めたら標準エラーへ一行で告げる（ADR-109）。走査の打ち切りは trace_scan_truncated が挙げ、印に見えるが読めない行は trace_marker_suspect として疑いに立つ（ADR-059）。投影は正本から描き直され、抜けは projection_drift が挙げる（SPEC-014、TEST-014、ADR-113）。",
+      "evidence": [
+        "ADR-058",
+        "plugin/scripts/_tracescan.py",
+        "TEST-026",
+        "ADR-110",
+        "ADR-109",
+        "trace_scan_truncated",
+        "trace_marker_suspect",
+        "ADR-059",
+        "projection_drift",
+        "SPEC-014"
+      ],
+      "recheck_trigger": "ADR-058 の保存則が緩められたとき、または trace_scan_truncated／projection_drift が黙る設定が入ったとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "1d06a5cb86ba206d5c050f468e418f30a7c02729e6227cbe981dd51bf65e53af",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:制御構造の着手最小要素",
       "title": "分析開始に必要な最小構成を満たす",
       "category": "検証計画",
       "source_lines": "L227-L227",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "最小要素の存在検査に相当する機構は在る（必須キーちょうど8個を ADR-033/DATA-001 が定め、欠落・空を MISSING_KEY・EMPTY_KEY・MISSING_FRONTMATTER が挙げる。型と status が読めないときガードは沈黙して開かない＝ADR-102）。ただし『最小3要素が揃うまで次工程へ進ませない』という段階の門は無く、リンタは PostToolUse の助言のみ（SPEC-007）で進行を止めない。",
+      "evidence": [
+        "ADR-033",
+        "DATA-001",
+        "MISSING_KEY",
+        "EMPTY_KEY",
+        "MISSING_FRONTMATTER",
+        "ADR-102",
+        "SPEC-007",
+        "plugin/scripts/policy-guard.py"
+      ],
+      "recheck_trigger": "リンタまたはガードに「前提条件を満たすまで下流の生成を拒否する」判定が追加され、SPEC-007 か SPEC-003 に門として明記されたとき。",
+      "gap": "着手可否を判ずる前提条件セット（主体・操作・対象に相当する最小構成）の定義と、それを満たすまで下流成果物の生成を止める門。現状の必須キー検査は文書単位の欠落検査であって工程の門ではない。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "77cb2210b3e57444927fdc979dab4e61ff76c9e30cf74667ce2261a1712a6930",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:既知情報の省略禁止",
       "title": "既知情報の意図的省略を禁じる",
       "category": "検証計画",
       "source_lines": "L229-L229",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "上流に確定した情報が下流に反映されていない状態を、全件監査が名前を持った検査として挙げる：決定が下流文書へ着地していない adr_not_landed、要求に仕様が無い reverse_orphan_req_no_spec、仕様に試験が無い reverse_orphan_spec_no_test、正本と投影の食い違い projection_drift。検査群と決定性は SPEC-011 が定め、受入は TEST-011 に計画がある。",
+      "evidence": [
+        "adr_not_landed",
+        "reverse_orphan_req_no_spec",
+        "reverse_orphan_spec_no_test",
+        "projection_drift",
+        "SPEC-011",
+        "TEST-011",
+        "plugin/scripts/docs-audit.py",
+        "plugin/tests/test_audit.py"
+      ],
+      "recheck_trigger": "ADR-069 の検査モジュール分割で adr_not_landed か reverse_orphan_* の挙動が変わり、SPEC-011 の凍結された列挙が改訂されたとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "77cb2210b3e57444927fdc979dab4e61ff76c9e30cf74667ce2261a1712a6930",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:矢印ラベルの具体性",
       "title": "矢印ラベルは機能情報を具体的に示す",
       "category": "文書化",
       "source_lines": "L231-L231",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "非該当で理由あり",
+      "reason": "この体系の辺はラベルを持たない。依存は depends_on による id への参照だけで表され（SPEC-006 の forward/reverse/classify、ICD-002）、越境の判定も depends_on の端に付く（ADR-006）ため、『曖昧な語のラベル』という対象が構造上存在しない。語の曖昧さは辺ではなく本文に対して用語チェッカーが担う体系分担になっている（SPEC-008・ADR-007 の禁止同義語）。境界は「辺に語を載せない」という正本の設計であり、単なる関心外ではない。",
+      "evidence": [
+        "SPEC-006",
+        "ICD-002",
+        "ADR-006",
+        "ADR-045",
+        "SPEC-008",
+        "ADR-007"
+      ],
+      "recheck_trigger": "依存の辺に種別名や説明ラベルを持たせる拡張が DATA-001 か SPEC-006 に入ったとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "77cb2210b3e57444927fdc979dab4e61ff76c9e30cf74667ce2261a1712a6930",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:コントローラ命名は機能役割",
       "title": "コントローラ名は実装でなく役割で表す",
       "category": "文書化",
       "source_lines": "L231-L231",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "非該当で理由あり",
+      "reason": "この体系は抽象度を名前ではなく型で担わせる。実装名で呼ぶべき層は IMPL 型として正規に存在し（IMPL-001『_registry.py の実装メモ』のように実装識別子を題に持つのが正しい形）、統治の対象は知識と決定の層に限ると定めている（ADR-015・ADR-013）。名前の検査は id とファイル名・置き場所の対応（ID_FILENAME_MISMATCH・BAD_FILENAME・TYPE_LOCATION_MISMATCH）に限られ、名前の意味的な役割性はテスト不能記述として doc-review（人の査読）へ振られている（ADR-020・PROC-001）。",
+      "evidence": [
+        "ADR-015",
+        "ADR-013",
+        "IMPL-001",
+        "ID_FILENAME_MISMATCH",
+        "BAD_FILENAME",
+        "TYPE_LOCATION_MISMATCH",
+        "ADR-020",
+        "PROC-001",
+        "doc-review"
+      ],
+      "recheck_trigger": "題や id の語義（役割語か実装名か）を判ずる検査が SPEC-007 か SPEC-008 に追加されたとき。",
+      "gap": null,
+      "confidence": "low",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "77cb2210b3e57444927fdc979dab4e61ff76c9e30cf74667ce2261a1712a6930",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:実装詳細の遅延記載",
       "title": "実装詳細は後工程まで遅延させる",
       "category": "検証計画",
       "source_lines": "L233-L233",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "層の分離そのものは正本に在る：型（REQ/SPEC/IMPL）と置き場所の対応を REQ-005 が要求し、TYPE_LOCATION_MISMATCH・DOMAIN_PATH_MISMATCH・ARCHIVED_LOCATION_MISMATCH が機械で咎める。手順は PROC 型に一本化（ADR-013）、統治の対象は知識と決定の層に限る（ADR-015）。しかし『上位型の文書に実装詳細が混入している』ことを判ずる粒度違反の検査は、監査40件・リンタ23件のいずれにも無い。",
+      "evidence": [
+        "REQ-005",
+        "TYPE_LOCATION_MISMATCH",
+        "DOMAIN_PATH_MISMATCH",
+        "ADR-013",
+        "ADR-015",
+        "SPEC-017"
+      ],
+      "recheck_trigger": "上位型の本文に実装詳細が混入したことを挙げる検査が SPEC-007 か SPEC-011 に追加されたとき。",
+      "gap": "上位型（REQ・SPEC）の本文に実装識別子（API名・型番・関数名）が現れたことを検出する粒度違反の検査。現状は置き場所と型の対応しか見ていない。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "77cb2210b3e57444927fdc979dab4e61ff76c9e30cf74667ce2261a1712a6930",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:図に付随する前提の文書化",
       "title": "図に付随する前提と補足を文書化する",
       "category": "文書化",
       "source_lines": "L275-L275",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "節の必須化そのものは実装済みで、雛形が定める節を全件に対して検める決定もある（ADR-090、MISSING_SECTION・EMPTY_SECTION、SPEC-017、ADR-098/template_placeholder で雛形の指示文の残りも咎める）。図の側も、投影は正本から決定論で描き直せるものに限ると定めている（ADR-016・SPEC-014、CTXMAP-001）。ただし『図に対して前提・責任・補足の節を必須とする』という具体の節要求が雛形に在るかは索引に現れておらず、図固有の不足検査は無い。",
+      "evidence": [
+        "ADR-090",
+        "MISSING_SECTION",
+        "EMPTY_SECTION",
+        "SPEC-017",
+        "ADR-016",
+        "SPEC-014",
+        "CTXMAP-001",
+        "template_placeholder"
+      ],
+      "recheck_trigger": "CTXMAP や投影の雛形に前提・責任の節が追加され、ADR-090 の全件検査の対象になったとき。",
+      "gap": "図・投影を含む文書に対する「前提」「責任」「補足」節の雛形定義と、その欠落を挙げる検査。現状の MISSING_SECTION は雛形が定めた節にしか効かない。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "77cb2210b3e57444927fdc979dab4e61ff76c9e30cf74667ce2261a1712a6930",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:被制御プロセスの制御者被覆",
       "title": "被制御プロセスの制御者被覆を点検する",
       "category": "レビューと監査",
       "source_lines": "L279-L279",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "到達可能性の点検として直接移植済み。上流を持たない文書は孤児として三条件の連言で定義され（ADR-008）、監査が orphan を挙げる。逆向きの被覆欠落も reverse_orphan_req_no_spec・reverse_orphan_spec_no_test として名前を持ち、依存グラフの契約 SPEC-006 が forward/reverse/classify/reverse-orphans を公開している。エンジンは _depgraph.py、試験計画は TEST-006。",
+      "evidence": [
+        "orphan",
+        "ADR-008",
+        "reverse_orphan_req_no_spec",
+        "reverse_orphan_spec_no_test",
+        "SPEC-006",
+        "ICD-002",
+        "plugin/scripts/_depgraph.py",
+        "plugin/tests/test_depgraph.py",
+        "TEST-006"
+      ],
+      "recheck_trigger": "ADR-008 の孤児の三条件、または ADR-091（_system の棚の要求は辺で指されない）の除外範囲が変わったとき。",
+      "gap": null,
+      "confidence": "high",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "77cb2210b3e57444927fdc979dab4e61ff76c9e30cf74667ce2261a1712a6930",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:責任と制御要素の対応",
       "title": "責任と制御要素の対応を検証する",
       "category": "レビューと監査",
       "source_lines": "L279-L279",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "責務（REQ/SPEC）と実行手段（コード注釈）・検証手段（TEST）の双方向の突合が実装されている。仕様はコードとの関係を宣言でき、宣言と実態の矛盾を検査する（ADR-061）。片側欠落は trace_missing_impl・trace_undeclared_impl・trace_unexpected_impl・reverse_orphan_spec_no_test として挙がり、両端から書かれた同じ事実には印が付く（ADR-088）。書式は SPEC-026、走査は _tracescan.py、監査側は _audit_trace.py。",
+      "evidence": [
+        "ADR-061",
+        "ADR-088",
+        "ADR-048",
+        "trace_missing_impl",
+        "trace_undeclared_impl",
+        "trace_unexpected_impl",
+        "reverse_orphan_spec_no_test",
+        "SPEC-026",
+        "plugin/scripts/_tracescan.py",
+        "plugin/scripts/_audit_trace.py",
+        "TEST-026"
+      ],
+      "recheck_trigger": "ADR-056（追跡の検査は仕様が指紋を記録したときだけ効く）の発火条件が変わり、宣言の無い仕様が黙って素通りする範囲が広がったとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "77cb2210b3e57444927fdc979dab4e61ff76c9e30cf74667ce2261a1712a6930",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:UCAのハザード遡及",
       "title": "UCAはハザードへ遡及可能にする",
       "category": "証拠と記録",
       "source_lines": "L326-L326",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "当てはめ仮説どおりの機構が在る：上位識別子への参照の欠落は MISSING_TRACE、存在しない識別子への参照は dead_link と trace_broken_ref、廃止先への参照は trace_deprecated_ref が挙げ、上流を持たない項目は orphan（ADR-008）となる。追跡の正路は depends_on の REQ と定められている（ADR-045）。全件監査は SessionEnd と CI（EXT-004）で走る。なおハザード層そのものは採らない決定（ADR-081）があるため、遡及先は上位要求・決定であってハザードではない。",
+      "evidence": [
+        "MISSING_TRACE",
+        "dead_link",
+        "trace_broken_ref",
+        "trace_deprecated_ref",
+        "orphan",
+        "ADR-045",
+        "ADR-008",
+        "EXT-004",
+        "plugin/scripts/docs-audit.py"
+      ],
+      "recheck_trigger": "ADR-081 が改訂されてハザード層を導入する、または MISSING_TRACE の適用範囲が縮んだとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "77cb2210b3e57444927fdc979dab4e61ff76c9e30cf74667ce2261a1712a6930",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:UCAのコンテキスト明示",
       "title": "UCAはコンテキストを明示する",
       "category": "試験設計",
       "source_lines": "L334-L334",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "『どの状況で違反になるか』を条件節として要求し、無条件の記述を差し戻す機械検査は無い。リンタ23件は構造（キー・節・日付・場所・雛形の残り）を見るもので、文の条件節の有無は見ない。一方、テスト不能な記述の判定は監査ではなく doc-review が担うという決定が現に在り（ADR-020）、機械の検算と人の査読の分担は PROC-001 が正本化している。受け皿としての判断の層は REQ-012 と配布 skill doc-review。",
+      "evidence": [
+        "ADR-020",
+        "PROC-001",
+        "REQ-012",
+        "doc-review",
+        "SPEC-007"
+      ],
+      "recheck_trigger": "条件節の有無を判ずる検査が SPEC-007 のリンタ点検か SPEC-011 の監査検査群に追加されたとき。",
+      "gap": "禁止・非安全の記述に条件節（いつ・どの状態で）を必須とするスキーマ節の定義と、その欠落を挙げる検査。現状は人の査読に委ねられており、欠落は機械では見えない。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "77cb2210b3e57444927fdc979dab4e61ff76c9e30cf74667ce2261a1712a6930",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:UCAの構成要素の完全性",
       "title": "UCAの構成要素を欠落なく含める",
       "category": "文書化",
       "source_lines": "L344-L344",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "順序自由・欠落禁止のスキーマ検証は、フロントマターに対して実装済み。必須キーはちょうど8個と定め（ADR-033）、様式の正本は DATA-001、欠落は MISSING_KEY、空は EMPTY_KEY、雛形の値のままは PLACEHOLDER_VALUE と ADR-098、未知の型は UNKNOWN_TYPE が挙げる。点検は PostToolUse の docs-linter.py（SPEC-007）と全件監査の両方で走り、試験は plugin/tests/test_linter.py と TEST-007。",
+      "evidence": [
+        "ADR-033",
+        "DATA-001",
+        "MISSING_KEY",
+        "EMPTY_KEY",
+        "PLACEHOLDER_VALUE",
+        "UNKNOWN_TYPE",
+        "ADR-098",
+        "SPEC-007",
+        "plugin/scripts/docs-linter.py",
+        "plugin/tests/test_linter.py",
+        "TEST-007"
+      ],
+      "recheck_trigger": "ADR-033 の必須キー数、または DATA-001 のスキーマが改訂されたとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "77cb2210b3e57444927fdc979dab4e61ff76c9e30cf74667ce2261a1712a6930",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:UCA4カテゴリの網羅検討",
       "title": "4種類すべてを検討し件数は固定しない",
       "category": "試験設計",
       "source_lines": "L370-L370",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "『全観点を必ず分類し、件数は0でも複数でもよい』という規律が保存則として実装されている：走査は勘定を返し、触れた対象を必ず分類する（ADR-058）。統治外の意思は exempt の印として宣言でき、勘定の第四項に載る（ADR-067）。明示の『対応なし』は宣言として認められ、宣言と実態の矛盾を検査する（ADR-061、trace_exempt_conflict）。未分類は残高として残り（ADR-072、trace_unmarked_backlog）、印に見えるが読めない行も疑いとして挙がる（ADR-059、trace_marker_suspect）。",
+      "evidence": [
+        "ADR-058",
+        "ADR-067",
+        "ADR-061",
+        "ADR-072",
+        "trace_unmarked_backlog",
+        "trace_exempt_conflict",
+        "trace_marker_suspect",
+        "SPEC-026",
+        "plugin/scripts/_tracescan.py",
+        "TEST-026"
+      ],
+      "recheck_trigger": "ADR-058 の保存則（触れた対象を必ず分類する）または ADR-072 の悉皆モードの既定が変わったとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "77cb2210b3e57444927fdc979dab4e61ff76c9e30cf74667ce2261a1712a6930",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:セーフガード理由の省略禁止",
       "title": "セーフガード存在を理由にUCAを省かない",
       "category": "安全性と危険要因",
       "source_lines": "L350-L350",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "非該当で理由あり",
+      "reason": "この体系は危険要因の登録簿を持たない。検証は証拠の提示であり、証跡の形だけを採ってハザード層と過程適合は採らないと明文で決めている（ADR-081）ため、『別の防護が在るから危険要因の記載を省く』という省略の対象そのものが存在しない。近い規律は残差の開示側に置かれており、各成果物が予防・検出・委ねるを書くこと（REQ-013）、ガードが拒否できる状態かは検出しないと明記すること（ADR-050）、三つの保証限界を非目標として明文化すること（ADR-064・NONGOAL-001）で、守られているから書かない、を封じている。",
+      "evidence": [
+        "ADR-081",
+        "REQ-013",
+        "ADR-050",
+        "ADR-064",
+        "NONGOAL-001",
+        "RESEARCH-004"
+      ],
+      "recheck_trigger": "ADR-081 が改訂されてハザード（危険要因）の登録簿が体系に入ったとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "77cb2210b3e57444927fdc979dab4e61ff76c9e30cf74667ce2261a1712a6930",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:制御は遵守を意味しない",
       "title": "制御関係は遵守を前提としない",
       "category": "安全性と危険要因",
       "source_lines": "L263-L263",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "規則を定義しただけで遵守されるとは見なさない立場が、生存性として実装されている。統治の生存性は要求として立ち（REQ-014、沈黙する故障を禁じる）、ハートビートが監査の鮮度・期限・外部アンカーの存在を照合する（SPEC-021、gov-heartbeat.py、UserPromptSubmit）。フックは発火の印を残し、対の食い違いから拒否経路の欠落を疑い（ADR-062、guard_liveness_gap）、監査は走ったこと自体の印を残して不実行と書き込み失敗を区別する（ADR-119）。加えて『ガードが拒否できる状態かは検出しない』という限界を明記している（ADR-050）。",
+      "evidence": [
+        "REQ-014",
+        "SPEC-021",
+        "guard_liveness_gap",
+        "ADR-062",
+        "ADR-119",
+        "ADR-050",
+        "plugin/scripts/gov-heartbeat.py",
+        "UserPromptSubmit",
+        "plugin/tests/test_liveness_capture.py",
+        "TEST-021"
+      ],
+      "recheck_trigger": "ADR-050 が予告する機能カナリア（拒否経路が実際に効くかの検証）が実装され、生存性の検出範囲が変わったとき。",
+      "gap": null,
+      "confidence": "high",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "77cb2210b3e57444927fdc979dab4e61ff76c9e30cf74667ce2261a1712a6930",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:制御と影響の区別",
       "title": "制御と単なる影響・応答を区別する",
       "category": "その他",
       "source_lines": "L267-L267",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "区別自体は正本の決定として在る：追跡の正路は depends_on の REQ であり、本文の要求タグは自己適用の約束にすぎない（ADR-045）。越境の違反は depends_on の端にのみ付き（ADR-006）、投影は正本から描き直せる派生表示に限る（ADR-016）。しかし『意思決定も監督も伴わない通知関係が統治の辺として登録されている』ことを判ずる意味的な型検査は、監査40件・リンタ23件のいずれにも無い。既存の icd_dependency_violation・ICD_DEP_VIOLATION は越境の宛先を見るもので、関係の性質は見ない。",
+      "evidence": [
+        "ADR-045",
+        "ADR-006",
+        "ADR-016",
+        "icd_dependency_violation",
+        "ICD_DEP_VIOLATION",
+        "SPEC-006"
+      ],
+      "recheck_trigger": "depends_on に関係の種別が導入される、または辺の昇格の妥当性を判ずる検査が SPEC-011 に加わったとき。",
+      "gap": "辺の性質（統治するか、単に言及・通知するか）を宣言させ、実態と食い違う昇格を挙げる検査。現状は depends_on に載ったか否かの二値で、載せる判断は人に委ねられている。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "77cb2210b3e57444927fdc979dab4e61ff76c9e30cf74667ce2261a1712a6930",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:連続と離散でのタイミング種別",
@@ -417,209 +1178,588 @@
       "category": "試験設計",
       "source_lines": "L366-L366",
       "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "reason": "索引からは判定できない。時間の扱いは二種類存在する（型ごとの既定点検周期で全現行文書に実効期限を張る ADR-025 と stale_current・stale_draft・stale_proposed・review_by_overrun、期限が唯一の見張りなら期限を短くする ADR-086、他方でセッションに一度だけ・一度きりの案内という単発の発火 ADR-063・ADR-066・ADR-041）。しかし、これらが『操作の連続性で検査種別を切り替える』という規律に当たるのか、それとも別々の理由で並んでいるだけなのかを、索引の記述からは決められない。当てはめ仮説の言う「継続状態型／一回きり型」に相当する分類語が正本に在るかも読み取れない。",
+      "evidence": [
+        "ADR-025",
+        "ADR-086",
+        "stale_current",
+        "review_by_overrun",
+        "ADR-063",
+        "ADR-066"
+      ],
+      "recheck_trigger": "統治対象の操作を継続型／単発型に分類する語が GLOSSARY-001 か DATA-001 に現れ、検査の適用がその分類で分岐すると明記されたとき。",
+      "gap": null,
+      "confidence": "low",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "77cb2210b3e57444927fdc979dab4e61ff76c9e30cf74667ce2261a1712a6930",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:uca-hazard-traceability",
       "title": "UCA は全てハザードへ追跡可能にする",
       "category": "安全性と危険要因",
       "source_lines": "L377-L377",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "上位への参照を必須とし、参照切れと孤立を報告する機構が実装されている。上位を指す印の欠落は MISSING_TRACE、参照先の不在は dead_link と trace_broken_ref、上流を持たない文書は orphan（三条件の連言＝ADR-008）として全件監査が挙げる。上位側の欠落候補という逆向きの見方も reverse_orphan_req_no_spec・reverse_orphan_spec_no_test で名前を持つ。追跡の正路は depends_on の REQ（ADR-045）。ハザードという層は採らない決定（ADR-081）なので、遡及先は上位要求・決定として読み替えている。",
+      "evidence": [
+        "MISSING_TRACE",
+        "dead_link",
+        "trace_broken_ref",
+        "orphan",
+        "ADR-008",
+        "reverse_orphan_req_no_spec",
+        "ADR-045",
+        "ADR-081",
+        "SPEC-011",
+        "TEST-011"
+      ],
+      "recheck_trigger": "ADR-091（_system の棚の要求は辺で指されない）の除外や orphan の三条件が変わり、孤立の検出範囲が動いたとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "77cb2210b3e57444927fdc979dab4e61ff76c9e30cf74667ce2261a1712a6930",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:uca-context-required",
       "title": "UCA はコンテキストを必須要素とする",
       "category": "文書化",
       "source_lines": "L389-L389",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "雛形が定める節を必須とし、欠落を機械で咎める土台は在る（ADR-090 が全件に対して節を検め、MISSING_SECTION・EMPTY_SECTION が挙げ、雛形は SPEC-017、点検は PostToolUse の docs-linter.py＝SPEC-007）。しかし『適用条件（いつ違反になるか）』という欄が雛形に定義されているという証拠は索引に無く、結果だけを述べた記述を不合格にする規則も無い。",
+      "evidence": [
+        "ADR-090",
+        "MISSING_SECTION",
+        "EMPTY_SECTION",
+        "SPEC-017",
+        "SPEC-007",
+        "plugin/scripts/docs-linter.py"
+      ],
+      "recheck_trigger": "雛形（SPEC-017）に適用条件の節が追加され、MISSING_SECTION の対象になったとき。",
+      "gap": "規則・禁止の雛形に「適用条件」欄を定義し、ADR-090 の全件検査の対象に載せること。欄が無い限り MISSING_SECTION は発火しない。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "77cb2210b3e57444927fdc979dab4e61ff76c9e30cf74667ce2261a1712a6930",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:context-not-belief",
       "title": "コンテキストは信念でなく真の状態で書く",
       "category": "安全性と危険要因",
       "source_lines": "L391-L391",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "『事実だけを写す』側の決定と検査は在る：DECIDED へ写すのは横断の確定事実だけ（ADR-014）、ハーネスのメモリは環境と個人の事実に限り影の正本化を見張る（ADR-035、memory_shadow）、宣言した出所が実在することは検めるが認識の等級は検めない（ADR-097、source_missing・source_drift）、注入境界では引用データと指示を分ける（ADR-040）。しかし『信念表現（〜と思い込んでいる時に）が条件欄に混入した』ことを文字列・構文で弾く規則は、用語チェッカーの照合規則（SPEC-008）にも監査にも無い。",
+      "evidence": [
+        "ADR-014",
+        "ADR-035",
+        "memory_shadow",
+        "ADR-097",
+        "source_missing",
+        "source_drift",
+        "ADR-040",
+        "SPEC-008"
+      ],
+      "recheck_trigger": "条件欄と原因欄を分ける様式が DATA-001 か雛形に入り、混入を挙げる照合が SPEC-008 に加わったとき。",
+      "gap": "条件欄と原因欄の分離を様式として定め、信念を表す語が条件欄に現れたことを挙げる照合規則。現状 ADR-097 は出所の実在だけを見て、記述の認識論的な種別は見ない。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "77cb2210b3e57444927fdc979dab4e61ff76c9e30cf74667ce2261a1712a6930",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:category-count-not-fixed",
       "title": "UCA 数はカテゴリごとに固定しない",
       "category": "検証計画",
       "source_lines": "L370-L370",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "観点ごとに1項目を強制せず、検討済みの証跡と項目数を分けて記録する設計が実装されている：走査は勘定を返し触れた対象を必ず分類する保存則（ADR-058）、統治外の意思は exempt として第四項に計上（ADR-067）、未分類は残高として残る悉皆モード（ADR-072・trace_unmarked_backlog）、明示の『対応なし』は正規の結果（ADR-061）。件数は勘定の結果であって割当てではない。均一な水増しの側も near_duplicate が別途挙げる。",
+      "evidence": [
+        "ADR-058",
+        "ADR-067",
+        "ADR-072",
+        "trace_unmarked_backlog",
+        "ADR-061",
+        "near_duplicate",
+        "plugin/scripts/_tracescan.py",
+        "plugin/tests/test_tracescan.py"
+      ],
+      "recheck_trigger": "ADR-072 の悉皆モードが既定化される、または保存則の勘定の項が変わったとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "77cb2210b3e57444927fdc979dab4e61ff76c9e30cf74667ce2261a1712a6930",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:review-all-na-entries",
       "title": "N/A と判断した種類を全件レビューする",
       "category": "レビューと監査",
       "source_lines": "L419-L419",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "『対象外』の宣言を印として記録し、実態と突き合わせる仕組みは実装済み：ファイルは統治外の意思を exempt として宣言でき勘定の第四項に載る（ADR-067）、宣言と実態の矛盾は trace_exempt_conflict が挙げる、明示の『対応なし』は ADR-061 が認め検査する、体系外 .md は分類の記録と突き合わせ未分類だけを挙げる（ADR-021・_intake.py・unregistered_document）。欠けているのは理由の側で、除外に理由の記載を必須とし、理由の無い除外を挙げる検査は索引に無い。",
+      "evidence": [
+        "ADR-067",
+        "trace_exempt_conflict",
+        "ADR-061",
+        "ADR-021",
+        "plugin/scripts/_intake.py",
+        "unregistered_document",
+        "stray_document"
+      ],
+      "recheck_trigger": "exempt の印に理由欄が加わり、理由欠落を挙げる検査が SPEC-011 か SPEC-026 に入ったとき。",
+      "gap": "exempt・対象外・N/A の宣言に理由欄と再確認の刻印を必須化し、理由が空の除外を挙げる検査。現状は印の有無と矛盾だけを見ており、無根拠な除外は通る。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "77cb2210b3e57444927fdc979dab4e61ff76c9e30cf74667ce2261a1712a6930",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:parameter-excess-insufficient-direction",
       "title": "パラメータ付きアクションは過剰・不足・方向を検討する",
       "category": "試験設計",
       "source_lines": "L419-L419",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "閾値を持つ規則と、その上限に対する受入は在る（注入とパックで二つの別上限＝ADR-009・SPEC-013、トークン見積りと較正の正本＝ADR-105、封筒の上限＝ADR-108 と切り詰めの告知＝ADR-109、性能の上限＝ADR-047 と plugin/tests/test_perf_gate.py）。しかし『数値の規則には過剰・不足・方向の三観点を必ず生成する』という展開の義務は、開発規範（PROC-001）にも試験の正本にも見当たらない。三観点が各試験計画で満たされているかは索引の粒度では確認できない。",
+      "evidence": [
+        "ADR-009",
+        "SPEC-013",
+        "ADR-105",
+        "ADR-108",
+        "ADR-109",
+        "ADR-047",
+        "plugin/tests/test_perf_gate.py",
+        "PROC-001"
+      ],
+      "recheck_trigger": "PROC-001 か code-audit.py の検算に、数値規則の境界三観点の生成義務が加わったとき。",
+      "gap": "閾値・量を持つ規則に対して上限超過・下限未満・向きの反転の三観点の試験項目を必須生成する規則と、その欠落を検める門。現状は上限ごとに個別の受入が在るだけ。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "77cb2210b3e57444927fdc979dab4e61ff76c9e30cf74667ce2261a1712a6930",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:document-rationale-assumptions",
       "title": "仮定と推論を UCA に添えて文書化する",
       "category": "証拠と記録",
       "source_lines": "L421-L421",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "根拠と前提を項目に添えて残す規律は、型と雛形と検査で機械化されている：決定は ADR 型として根拠ごと残り、雛形が定める節は全件で検められ（ADR-090）、欠落は MISSING_SECTION、空欄は EMPTY_SECTION、雛形の文言のままは PLACEHOLDER_VALUE・template_placeholder・ADR-098 が咎める。雛形の正本は SPEC-017、検証は TEST-017 と plugin/tests/test_templates.py、発火は PostToolUse の docs-linter.py。なお発火は助言であり阻止ではない（SPEC-007）。",
+      "evidence": [
+        "ADR-090",
+        "MISSING_SECTION",
+        "EMPTY_SECTION",
+        "PLACEHOLDER_VALUE",
+        "template_placeholder",
+        "ADR-098",
+        "SPEC-017",
+        "TEST-017",
+        "plugin/tests/test_templates.py",
+        "SPEC-007"
+      ],
+      "recheck_trigger": "雛形から根拠・前提の節が外れる、または ADR-090 の「全件が守っていない節は雛形を実態へ合わせる」規則で当該節が削られたとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "77cb2210b3e57444927fdc979dab4e61ff76c9e30cf74667ce2261a1712a6930",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:uca-to-controller-constraint",
       "title": "各 UCA をコントローラ制約へ変換する",
       "category": "不適合と是正",
       "source_lines": "L427-L427",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "『発見の型ごとに強制手段を対応づけ、双方向のリンクを保つ』運用が被覆マトリクスとして実装されている：統治要求×発火経路×証跡の行を持ち（SPEC-025）、各行は実効を示す試験を名指し、示せないなら未証と明示する（ADR-084）。検査側の食い違い（linter と audit のずれ）は整合点検が回帰ガードとして見張る（SPEC-023・TEST-023）。受入は TEST-025、メタ条件は plugin/tests/test_meta.py。",
+      "evidence": [
+        "SPEC-025",
+        "ADR-084",
+        "TEST-025",
+        "SPEC-023",
+        "TEST-023",
+        "plugin/tests/test_meta.py",
+        "plugin/tests/test_linter.py"
+      ],
+      "recheck_trigger": "ADR-084 の「未証と明示する」運用が緩む、または被覆マトリクスの行と検査の対応が SPEC-025 の改訂で変わったとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "77cb2210b3e57444927fdc979dab4e61ff76c9e30cf74667ce2261a1712a6930",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:iterative-update-of-prior-results",
       "title": "分析は反復的で前結果を更新できる",
       "category": "構成管理と変更管理",
       "source_lines": "L377-L377",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "反復と上流改訂は一級の機構として在る：不変の ADR に誤りを見つけたときの正規の直し方が定まり（ADR-044）、不変は accepted から始まり proposed は下書きとして直せる（ADR-095）。置換は status superseded として現に運用されている（ADR-017・ADR-032・ADR-111 が superseded、ADR-112 が初版の決定を置換）。変更フローは決定を含むか否かで段数を分け（ADR-051）、下流の発見は CHANGE→IMPACT→ADR の連鎖と change-impact skill で上流へ戻る（CHANGE-007・IMPACT-007）。着地漏れは adr_not_landed、古びは stale_current・review_by_overrun（ADR-025）、リリース側の整合は CI の門（ADR-071・SPEC-027・EXT-004）。",
+      "evidence": [
+        "ADR-044",
+        "ADR-095",
+        "ADR-112",
+        "ADR-051",
+        "change-impact",
+        "CHANGE-007",
+        "IMPACT-007",
+        "adr_not_landed",
+        "stale_current",
+        "review_by_overrun",
+        "ADR-071",
+        "SPEC-027",
+        "EXT-004"
+      ],
+      "recheck_trigger": "ADR-044 の正規の直し方、または ADR-095 の不変の起点（accepted から）が改訂されたとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "77cb2210b3e57444927fdc979dab4e61ff76c9e30cf74667ce2261a1712a6930",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:human-controller-same-treatment",
       "title": "人間コントローラも同一手順で扱う",
       "category": "組織と力量",
       "source_lines": "L411-L411",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "人の工程は統治木の中に型付き文書として在る：ADR-013 が手順を運ぶ型 PROC を新設し、PROC-001 が開発規範として機械の検算と人の査読の分担を正本化する（ADR-068）。発火面でも SPEC-024／review-nudge.py が手編集に対して人の doc-review を促す。ただし『人手工程が統治木に現れていない』ことを名指す機械の検査は監査検査名・リンタ検査コードのいずれにも無く、想定 oracle をそのまま検める手段が索引に無い。",
+      "evidence": [
+        "ADR-013",
+        "PROC-001",
+        "ADR-068",
+        "SPEC-024",
+        "plugin/scripts/review-nudge.py",
+        "TEST-024"
+      ],
+      "recheck_trigger": "監査に人手工程の欠落を挙げる検査が追加されたか、PROC 型の文書が複数に増えて網羅の点検規則が定義されたとき。",
+      "gap": "人手判断の工程が統治木のノードとして欠けていることを検出する監査検査またはリンタ検査コードが無い（PROC 型の網羅性は検められていない）。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "ad86921740a0ffb203c0530dcdfbd36a68160870f116233879d85e393f8be73e",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:two-types-of-loss-scenarios",
       "title": "損失シナリオは 2 タイプを必ず検討する",
       "category": "検証計画",
       "source_lines": "L471-L471",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "実行・反映側の失敗経路は決定として現に在る：ADR-062 は発火の印の対の食い違いから拒否経路の欠落を疑い、ADR-119 は鮮度の警告に不実行と書き込み失敗を区別させ、監査は guard_liveness_gap を持つ。判断ロジック側は SPEC-003／SPEC-007 が担う。しかし『両タイプを必ず分けて洗い出す』ことを義務づける様式・門は索引に無く、損失シナリオという層自体は ADR-081 で採らないと決めている。",
+      "evidence": [
+        "ADR-062",
+        "ADR-119",
+        "guard_liveness_gap",
+        "SPEC-003",
+        "ADR-081"
+      ],
+      "recheck_trigger": "事故分析の様式が定義され、実行系経路の記載欠落を機械が咎めるようになったとき。",
+      "gap": "分析成果物に二つの経路（判断の誤り／実行・反映の失敗）の双方の記載を要求し、片側欠落を検出する規則が無い。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "ad86921740a0ffb203c0530dcdfbd36a68160870f116233879d85e393f8be73e",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:refine-structure-with-sensors-actuators",
       "title": "シナリオ分析前にセンサ・アクチュエータを追記する",
       "category": "試験設計",
       "source_lines": "L484-L484",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "SPEC-025 の被覆マトリクスは『統治要求×発火経路×証跡』の形で、観測手段（リンタ・Hook）と適用手段を行として名指す。ADR-084 は各行に実効を示す試験の名指しを義務づけ、示せない行は未証と明示させる。発火面の構造は SPEC-019（7イベントの Hook 配線）、全体像は CTXMAP-001 が持ち、受入は TEST-025、走行の証跡の扱いは ADR-085／SPEC-028 が定める。",
+      "evidence": [
+        "SPEC-025",
+        "ADR-084",
+        "SPEC-019",
+        "CTXMAP-001",
+        "TEST-025",
+        "SPEC-028",
+        "ADR-085"
+      ],
+      "recheck_trigger": "被覆マトリクスの行から発火経路の固有名が外され、要求と証跡だけの表になったとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "ad86921740a0ffb203c0530dcdfbd36a68160870f116233879d85e393f8be73e",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:four-causes-of-unsafe-controller-behavior",
       "title": "非安全な動作の 4 原因を網羅する",
       "category": "検証計画",
       "source_lines": "L514-L514",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "個々の原因種は決定として散在する：入力の汚染は ADR-040（注入境界のサニタイズ）、上流入力の不正は ADR-039／source_drift、実行基盤の故障時の既定は ADR-102（読めないとき沈黙して開かない）。事象を閉じる条件は ADR-117 が統制欠陥と事故分析の両立で定める。しかし四原因を固定分類として持ち、分類漏れを監査テンプレートで検出する仕組みは索引に無い。",
+      "evidence": [
+        "ADR-117",
+        "ADR-040",
+        "ADR-039",
+        "ADR-102",
+        "source_drift"
+      ],
+      "recheck_trigger": "事故分析の様式に原因の類型欄が定義され、欠落を検める検査名が追加されたとき。",
+      "gap": "原因を四類（基盤故障・規則実装の欠陥・上流入力の不正・状態把握の誤り）に固定する様式と、空欄を咎める検査が無い。",
+      "confidence": "low",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "ad86921740a0ffb203c0530dcdfbd36a68160870f116233879d85e393f8be73e",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:four-paths-of-process-model-flaw",
       "title": "プロセスモデル欠陥の 4 経路を検討する",
       "category": "検証計画",
       "source_lines": "L544-L544",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "『そもそも計測していない』の明示は体系の柱として在る：REQ-013（予防・検出・委ねるの明示）、ADR-050（ガードが拒否できる状態かは検出しないと明記）、ADR-064（三つの保証限界の非目標化）、NONGOAL-001。誤ったフィードバックの受信は source_drift／ext_anchor_broken が、遅延・不実行は ADR-119 が扱う。だが四経路を毎回点検させる監査項目そのものは索引に無い。",
+      "evidence": [
+        "REQ-013",
+        "ADR-050",
+        "ADR-064",
+        "NONGOAL-001",
+        "source_drift",
+        "ext_anchor_broken",
+        "ADR-119"
+      ],
+      "recheck_trigger": "監査に警告の無視や未計測領域を経路として挙げる検査が加わったとき。",
+      "gap": "誤検出・握り潰し・遅延・未計測の四経路を一件ごとに点検する監査項目（検査名）が無い。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "ad86921740a0ffb203c0530dcdfbd36a68160870f116233879d85e393f8be73e",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:explain-how-flawed-model-arises",
       "title": "欠陥プロセスモデルの生成経路を示す",
       "category": "証拠と記録",
       "source_lines": "L552-L552",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "不具合の報告経路は決定として在る：ADR-074 が『検出は機械・送信は人』の二層に分け、CHANGE-005／IMPACT-005 が兆候の記録と承認を経た issue 報告を定める。しかし報告に『どの入力・どの欠測から誤判定に至ったか』の経路記載を必須とする欄や、その欠落を咎める検査は索引から確認できない。",
+      "evidence": [
+        "ADR-074",
+        "CHANGE-005",
+        "IMPACT-005"
+      ],
+      "recheck_trigger": "不具合報告の雛形に原因経路の節が定義され、節の欠落が MISSING_SECTION 等で検められるようになったとき。",
+      "gap": "不具合報告の様式に入力・欠測から判定に至る経路の必須記載欄が定義されていない。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "ad86921740a0ffb203c0530dcdfbd36a68160870f116233879d85e393f8be73e",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:complete-inadequate-feedback-reason",
       "title": "不十分なフィードバックの理由まで書き切る",
       "category": "不適合と是正",
       "source_lines": "L568-L568",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "ADR-117 は事象を閉じてよい条件を『照合を通った統制欠陥と、先行指標を持つ事故分析が揃ったとき』に限ると決めており、原則の要求（理由を書き切るまで完成としない）と正面から対応する決定が現に在る。ADR-062 は『鳴らなかった検出器』を疑う根拠を与える。ただしこれを CI の門として強制する実装（スクリプト・検査名）は索引に無く、release-check（SPEC-027）は版と記録の整合に限られる。",
+      "evidence": [
+        "ADR-117",
+        "ADR-062",
+        "SPEC-027"
+      ],
+      "recheck_trigger": "事象の閉止条件を検める検査名またはスクリプトが追加されたとき。",
+      "gap": "閉じる条件（検出器が鳴らなかった理由の説明）を機械が検める門が未実装で、判定は人の運用に委ねられている。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "ad86921740a0ffb203c0530dcdfbd36a68160870f116233879d85e393f8be73e",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:consider-adversary-influenced-feedback",
       "title": "攻撃者によるフィードバック改ざんを検討する",
       "category": "安全性と危険要因",
       "source_lines": "L603-L603",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "投入・改ざんの経路には具体の機構が在る：ADR-096 は統治の設定を指紋で見張り変更に打ち直しを要求し、ADR-040 は注入境界をサニタイズして引用データと指示を分け、ADR-039 は EXT の hash 検査を実装し、監査は ext_anchor_broken／source_drift を持つ。ADR-075 はフック境界を沈黙して開かせない。一方、傍受・開示（読み取られる側）の経路を扱う決定・検査は索引に無い。",
+      "evidence": [
+        "ADR-096",
+        "ADR-040",
+        "ADR-039",
+        "ADR-075",
+        "ext_anchor_broken",
+        "source_drift",
+        "plugin/scripts/_config.py"
+      ],
+      "recheck_trigger": "傍受・開示を扱う決定が起こされたか、注入・設定の機密性に関する検査が追加されたとき。",
+      "gap": "傍受・開示の経路（統治入力や証跡が読み取られる・漏れる側）を想定した決定と検査が無く、四様のうち二様だけが覆われている。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "ad86921740a0ffb203c0530dcdfbd36a68160870f116233879d85e393f8be73e",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:security-adversarial-causes-in-scenarios",
       "title": "敵対的影響を原因候補に明示的に加える",
       "category": "安全性と危険要因",
       "source_lines": "L603-L603",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "敵対的原因の一部は決定と検査として在る（ADR-096 の設定指紋、ADR-039 の EXT hash、ADR-040 の注入サニタイズ、ADR-075 のフック境界）。しかし原則が求めるのは『各ノードのシナリオに敵対欄を常設する』という成果物の様式であり、体系はシナリオ集という層自体を持たない（ADR-081 が証跡の形だけを採ると決めている）。よって機構は在るが様式が無い。",
+      "evidence": [
+        "ADR-096",
+        "ADR-039",
+        "ADR-040",
+        "ADR-075",
+        "ADR-081"
+      ],
+      "recheck_trigger": "脅威項目を常設する文書型または監査検査が体系に加わったとき。",
+      "gap": "ノードごとに偽装・遮断・遅延・無効化を列挙する敵対シナリオ欄という様式が定義されていない。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "ad86921740a0ffb203c0530dcdfbd36a68160870f116233879d85e393f8be73e",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:scenarios-beyond-uca-execution-failures",
       "title": "UCA不在でもハザードは起こると想定する",
       "category": "試験設計",
       "source_lines": "L618-L618",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "『指示は正しいのに実行されない』型は独立の系統として実装されている：REQ-014（統治の生存性・沈黙する故障の禁止）を SPEC-021 の統治ハートビートが担い、ADR-062 が発火の印と対の食い違いから拒否経路の欠落を疑い、ADR-119 が不実行と書き込み失敗を区別する。監査は guard_liveness_gap を持ち、受入は TEST-021、試験ファイルは test_liveness_capture.py。ADR-050 は『ガードが拒否できる状態かは検出しない』という限界を明記しており、覆いの縁も文書化されている。",
+      "evidence": [
+        "REQ-014",
+        "SPEC-021",
+        "ADR-062",
+        "ADR-119",
+        "guard_liveness_gap",
+        "plugin/scripts/gov-heartbeat.py",
+        "TEST-021",
+        "plugin/tests/test_liveness_capture.py",
+        "ADR-050"
+      ],
+      "recheck_trigger": "ADR-050 の限界（拒否できる状態かの未検出）が事故として顕在化したか、機能カナリアが実装されたとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "ad86921740a0ffb203c0530dcdfbd36a68160870f116233879d85e393f8be73e",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:control-path-transmission-analysis",
       "title": "実装形態に依存せずコントロール経路を分析する",
       "category": "試験設計",
       "source_lines": "L622-L622",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "伝送経路の各段が名指しで扱われている：ADR-075 はフック境界を読み手・書き出し・経路解決・配布の四点で堅くし、SPEC-019 が7イベント／matcher／解決／縮小構成を定め、ADR-108／ADR-109 が封筒の読み取りの正本化と切り詰め時の告知を、ADR-080 が settings 由来の live reload 前提への置換を定める。受入は TEST-019、連鎖の実走は test_integration_e2e.py。",
+      "evidence": [
+        "ADR-075",
+        "SPEC-019",
+        "ADR-108",
+        "ADR-109",
+        "ADR-080",
+        "TEST-019",
+        "plugin/tests/test_integration_e2e.py",
+        "plugin/scripts/_hookio.py"
+      ],
+      "recheck_trigger": "Hook の実行環境が変わって経路解決や封筒の前提が崩れたとき、または段の順序に依存する不具合が観測されたとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "ad86921740a0ffb203c0530dcdfbd36a68160870f116233879d85e393f8be73e",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:spurious-uncommanded-actuation",
@@ -627,489 +1767,1368 @@
       "category": "試験設計",
       "source_lines": "L642-L642",
       "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "reason": "素材は在る（ADR-062 の発火の印、ADR-119 の監査走行の印）が、これらは『鳴るべき時に鳴らなかった』側を疑う向きに定義されており、指示・トリガの記録が無いのに統治アクションが走ったことを検出する規則かどうかは、索引の題と検査名からは判定できない。該当しそうな監査検査名も見当たらない。",
+      "evidence": [
+        "ADR-062",
+        "ADR-119"
+      ],
+      "recheck_trigger": "発火の印の対の照合が『対応する指示の無い実行』も挙げると仕様に明記されたとき、または該当の検査名が追加されたとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "ad86921740a0ffb203c0530dcdfbd36a68160870f116233879d85e393f8be73e",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:controlled-process-nullifies-action",
       "title": "指示を無効化する被制御プロセス側要因を洗い出す",
       "category": "試験設計",
       "source_lines": "L666-L666",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "適用後の状態を独立に見る機構は在る：policy-guard は PreToolUse と PostToolUse の両方に登録され、ADR-004 は PostToolUse の事前状態を raw 全文で復元すると決め、ADR-076 は Edit・MultiEdit でも書き込む前に判ずる。影の正本化は memory_shadow／shadowed_document／canonical_conflict が見張る。しかし『統治は成功したのに他ツールや上位設定の上書きで実効しない』という失効要因を名指す検査は索引に無い。",
+      "evidence": [
+        "ADR-004",
+        "ADR-076",
+        "plugin/scripts/policy-guard.py",
+        "memory_shadow",
+        "shadowed_document",
+        "canonical_conflict"
+      ],
+      "recheck_trigger": "統治アクションが成功終了したのに最終状態へ反映されない事象が観測されたとき。",
+      "gap": "他ツールの自動整形・上位設定によるオーバーライドを独立の失効要因として点検する検査が無い。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "ad86921740a0ffb203c0530dcdfbd36a68160870f116233879d85e393f8be73e",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:scenario-not-single-factor-list",
       "title": "因果要因の羅列ではなくシナリオとして記述する",
       "category": "試験設計",
       "source_lines": "L682-L682",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "ADR-117 が閉止条件として『先行指標を持つ事故分析』を要求しており、要因の羅列で終わらせない意図は決定として在る。一方で監査の出力は SPEC-011 の検査群と要約スキーマに沿う所見の列挙であり（ADR-042 が読者全員に照合させる）、要因間の相互作用を述べた筋書きを求める様式は索引に無い。ADR-081 はハザード層と過程適合を採らないと決めており、この不足は無自覚な穴ではない。",
+      "evidence": [
+        "ADR-117",
+        "SPEC-011",
+        "ADR-042",
+        "ADR-081"
+      ],
+      "recheck_trigger": "事故分析の文書型または節構成が定義され、雛形の節として筋書きが義務づけられたとき。",
+      "gap": "相互作用と経過を含む筋書き形式の記述を要求し、名詞句の羅列を咎める様式・検査が無い。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "ad86921740a0ffb203c0530dcdfbd36a68160870f116233879d85e393f8be73e",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:end-to-end-traceability",
       "title": "開発プロセス全体でトレーサビリティを維持する",
       "category": "構成管理と変更管理",
       "source_lines": "L728-L728",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "追跡関係の保持は体系の中核として実装・試験されている：REQ-002（追跡性）と REQ-003（変更耐性）を SPEC-006 の依存グラフ契約と ICD-002 が担い、_depgraph.py／dep-graph.py が問い合わせを、_tracescan.py／trace-index.py と SPEC-026 がコード注釈側を、ADR-048 が双方向トレースを、ADR-055 が索引を毎回導出することを定める。監査は orphan／reverse_orphan_spec_no_test／trace_broken_ref／trace_missing_impl を持ち、影響列挙は change-impact 技能が担う。試験は TEST-006／TEST-026 と test_depgraph.py／test_tracescan.py。",
+      "evidence": [
+        "REQ-002",
+        "REQ-003",
+        "SPEC-006",
+        "ICD-002",
+        "SPEC-026",
+        "ADR-048",
+        "ADR-055",
+        "orphan",
+        "reverse_orphan_spec_no_test",
+        "trace_broken_ref",
+        "plugin/scripts/dep-graph.py",
+        "plugin/scripts/_tracescan.py",
+        "TEST-006",
+        "plugin/tests/test_depgraph.py"
+      ],
+      "recheck_trigger": "依存の宣言（depends_on）以外の経路で規則が参照されるようになり、影響集合の列挙が全体読み直しに戻ったとき。",
+      "gap": null,
+      "confidence": "high",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "ad86921740a0ffb203c0530dcdfbd36a68160870f116233879d85e393f8be73e",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:stakeholder-defined-unacceptable-losses",
       "title": "損失は利害関係者が定義し許容不能なものを特定する",
       "category": "検証計画",
       "source_lines": "L793-L793",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "非該当で理由あり",
+      "reason": "体系は損失層を採らないと明示的に決めている：ADR-081 は『検証は証拠の提示である。証跡の形だけを採り、ハザード層と過程適合は採らない』とし、その境界の根拠は RESEARCH-004（宇宙機ソフトウェアの保証実務との対照）に置かれる。代わりに『何を解くか／何をやらないか』は REQ-000（製品の粒度の要求）・NONGOAL-001（18項）・DECIDED-001 として先に合意され、検査はこの要求層に紐づく。つまり原則の機能は別の語で持たれ、損失という層は意図的に不在である。",
+      "evidence": [
+        "ADR-081",
+        "RESEARCH-004",
+        "REQ-000",
+        "NONGOAL-001",
+        "DECIDED-001"
+      ],
+      "recheck_trigger": "ADR-081 が置換され、体系が損失・ハザードの層を採ると決め直したとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "ad86921740a0ffb203c0530dcdfbd36a68160870f116233879d85e393f8be73e",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:hazards-linked-to-losses",
       "title": "ハザードは損失に関連付けて定義する",
       "category": "安全性と危険要因",
       "source_lines": "L809-L809",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "非該当で理由あり",
+      "reason": "ハザードという層自体を ADR-081 が採らないと決めているため、ハザードに損失識別子を付す要求は当たらない。境界の根拠として、体系は各規則の由来を損失ではなく要求への辺で持つと定めており（ADR-045：追跡の正路は depends_on の REQ、ADR-091：製品の粒度の要求は _system の棚）、由来の欠落は orphan／reverse_orphan_req_no_spec が機械照合する。目的不明の規則を排除するという機能は要求層で満たされている。",
+      "evidence": [
+        "ADR-081",
+        "ADR-045",
+        "ADR-091",
+        "orphan",
+        "reverse_orphan_req_no_spec"
+      ],
+      "recheck_trigger": "ハザード層を採る決定が起こされたか、規則の由来を REQ 以外に置く運用が始まったとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "ad86921740a0ffb203c0530dcdfbd36a68160870f116233879d85e393f8be73e",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:hazard-within-designer-control",
       "title": "ハザードは設計者が制御できる状態に限定する",
       "category": "安全性と危険要因",
       "source_lines": "L811-L811",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "非該当で理由あり",
+      "reason": "ADR-081 によりハザードの定義行為そのものが体系の外に置かれている。ただし『制御できる範囲に限る』という趣旨は別の語で満たされている：ADR-057 は統治をリポジトリ一つの内側に閉じ、ADR-036／ADR-103 は統治木の無い土地で発火させず、ADR-064 は制御できない三点を保証限界として非目標に明文化する。よって境界は外部要因の言い換えではなく、発火条件と非目標の形で引かれている。",
+      "evidence": [
+        "ADR-081",
+        "ADR-057",
+        "ADR-036",
+        "ADR-103",
+        "ADR-064",
+        "NONGOAL-001"
+      ],
+      "recheck_trigger": "統治の対象範囲が組織横断や外部サービスへ広がる決定が起こされたとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "ad86921740a0ffb203c0530dcdfbd36a68160870f116233879d85e393f8be73e",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:hazard-not-normal-operation",
       "title": "正常動作を含む広すぎるハザード定義を避ける",
       "category": "安全性と危険要因",
       "source_lines": "L813-L813",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "非該当で理由あり",
+      "reason": "ハザードの粒度に関する規範は、ハザード層を採らないと決めた ADR-081 により当たらない。境界の根拠：体系は通常の編集そのものを咎めず、拒否は三ガード（不変・ICD依存・削除安全、SPEC-003）に限り、単一文書のリンタは助言に留める（SPEC-007／docs-linter.py）。導入直後を警告で始めない ADR-041 も同じ趣旨で、是正可能な状態だけを咎めるという設計判断は既に別の語で持たれている。",
+      "evidence": [
+        "ADR-081",
+        "SPEC-003",
+        "SPEC-007",
+        "plugin/scripts/docs-linter.py",
+        "ADR-041"
+      ],
+      "recheck_trigger": "ガードの拒否範囲が通常運用そのものへ広がり、機能停止しか是正案が出ない咎めが現れたとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "ad86921740a0ffb203c0530dcdfbd36a68160870f116233879d85e393f8be73e",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:hazard-identification-at-start",
       "title": "ハザードは開発プロセスの最初に識別する",
       "category": "検証計画",
       "source_lines": "L817-L817",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "非該当で理由あり",
+      "reason": "ハザード識別という工程を体系は採らない（ADR-081）。境界の根拠として、着手前に置かれる分析は別の形で制度化されている：ADR-051 が変更フローの段数を『決定を含むか否か』で分け、各変更は CHANGE と IMPACT（影響の列挙）を伴い（CHANGE-001〜007／IMPACT-001〜007）、決定が着地していない状態は監査の adr_not_landed が挙げる。よって着手ゲートは在るが、その中身はハザードではなく決定と影響である。",
+      "evidence": [
+        "ADR-081",
+        "ADR-051",
+        "CHANGE-006",
+        "IMPACT-006",
+        "adr_not_landed"
+      ],
+      "recheck_trigger": "新しい発火面（Hook・検査）の追加時に、決定と影響の列挙だけでは見落とされた危険状態が事後に判明したとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "ad86921740a0ffb203c0530dcdfbd36a68160870f116233879d85e393f8be73e",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:functional-nonprobabilistic-requirements",
       "title": "ハザードから機能的で非確率的な安全要求を導く",
       "category": "検証計画",
       "source_lines": "L817-L817",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "決定可能な形で書かせる仕組みは部分的に在る：ADR-084 は被覆の各行に実効を示す試験の名指しを求め、示せないなら未証と明示させる。SPEC-011 は監査の決定性を契約に含む。テスト不能な記述の判定は ADR-020 が監査でなく doc-review（人）に割り当てると決めている。しかし確率や割合で書かれた要求文を機械が咎める検査コードはリンタの23件に無く、機械側の担保は未実装である。",
+      "evidence": [
+        "ADR-084",
+        "SPEC-011",
+        "ADR-020",
+        "REQ-013",
+        "SPEC-025"
+      ],
+      "recheck_trigger": "確率的表現を咎める検査コードが追加されたか、ADR-020 の割り当てが見直されたとき。",
+      "gap": "発生率・割合で書かれた要求文を検出するリンタ検査コードまたは監査検査名が無く、判定は人の doc-review に委ねられている。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "ad86921740a0ffb203c0530dcdfbd36a68160870f116233879d85e393f8be73e",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:hazard-to-system-constraint-with-id",
       "title": "ハザードから上位レベルのシステム制約を導出する",
       "category": "証拠と記録",
       "source_lines": "L829-L829",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "非該当で理由あり",
+      "reason": "制約に付す由来識別子を体系はハザードではなく要求に取ると決めている（ADR-045：追跡の正路は depends_on の REQ、ADR-091：製品の粒度の要求は _system の棚に置き辺で指されない）。ハザード層自体は ADR-081 で採らない。原則が求める『識別子付きの由来と、その欠落の機械照合』という機能は、orphan／reverse_orphan_req_no_spec とリンタの MISSING_TRACE として現に在るため、欠けているのは語であって機構ではない。",
+      "evidence": [
+        "ADR-081",
+        "ADR-045",
+        "ADR-091",
+        "orphan",
+        "reverse_orphan_req_no_spec",
+        "MISSING_TRACE"
+      ],
+      "recheck_trigger": "由来の識別子を REQ 以外の層（危険状態や損失）に置く決定が起こされたとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "ad86921740a0ffb203c0530dcdfbd36a68160870f116233879d85e393f8be73e",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:no-early-probability-based-screening",
       "title": "初期段階の発生確率推定に依拠しない",
       "category": "検証計画",
       "source_lines": "L775-L775",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "確率による選別は体系の作りとして成立しない：REQ-008 は最小性の監査を過剰と不足の両側で全件検出と定め、SPEC-011 が全件監査の検査群・要約スキーマ・決定性を契約化し、docs-audit.py が SessionEnd／CI で走る（ADR-046 は既定 Level 2 で全件検査を CI に委ねる）。ADR-058 の保存則は触れた対象を必ず分類させ、ADR-072 の悉皆トレースは未分類を残高として残す。試験は TEST-011 と test_audit.py。",
+      "evidence": [
+        "REQ-008",
+        "SPEC-011",
+        "ADR-046",
+        "ADR-058",
+        "ADR-072",
+        "plugin/scripts/docs-audit.py",
+        "TEST-011",
+        "plugin/tests/test_audit.py"
+      ],
+      "recheck_trigger": "監査に標本化や上位N件の打ち切りが導入され、落とした分を告げないまま全件と称するようになったとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "ad86921740a0ffb203c0530dcdfbd36a68160870f116233879d85e393f8be73e",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:probabilistic-requirements-insufficient",
       "title": "確率的要求だけでは充足を保証できない",
       "category": "検証計画",
       "source_lines": "L779-L779",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "保証の主たる根拠は決定的な検査に置かれている：SPEC-011 が監査の決定性を、SPEC-014 が投影の決定論描画を契約とし、REQ-012 は判断の層（技能・候補語抽出）が決定論を補う位置にあり保証限界を明示すると定める。保証キャンペーン側でも ADR-115 が発火を決定論の状態機械で制御し、ADR-118 は決定論で組んだ索引に対して割当を行い解決しない証拠の緑を落とすと決め、ADR-116 は弱い model への黙った縮退を禁ずる。試験は TEST-014／test_render.py。",
+      "evidence": [
+        "SPEC-011",
+        "SPEC-014",
+        "REQ-012",
+        "ADR-115",
+        "ADR-116",
+        "ADR-118",
+        "TEST-014",
+        "plugin/tests/test_render.py"
+      ],
+      "recheck_trigger": "統治の合否判定が確信度や合格率などの統計量に依存する経路へ置き換わったとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "ad86921740a0ffb203c0530dcdfbd36a68160870f116233879d85e393f8be73e",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:safety-designed-in-not-assured-after",
       "title": "安全を事後の保証活動として扱わない",
       "category": "レビューと監査",
       "source_lines": "L718-L718",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "統治は編集時点の発火面に作り込まれている：PreToolUse と PostToolUse の両方に policy-guard.py が登録され、SPEC-003 が三ガードの判定規則を、ADR-076 が Edit・MultiEdit でも書き込む前に判ずることを定める。PostToolUse では docs-linter.py と review-nudge.py が助言と促しを返し（SPEC-007／SPEC-024）、SessionEnd の全件監査は後追いの網として重ねられる。受入は TEST-003 と test_guard.py。",
+      "evidence": [
+        "SPEC-003",
+        "ADR-076",
+        "PreToolUse",
+        "PostToolUse",
+        "plugin/scripts/policy-guard.py",
+        "SPEC-007",
+        "TEST-003",
+        "plugin/tests/test_guard.py"
+      ],
+      "recheck_trigger": "ガードやリンタが発火面から外れ、違反の検出が SessionEnd 監査やリリース後のみに残ったとき。",
+      "gap": null,
+      "confidence": "high",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "ad86921740a0ffb203c0530dcdfbd36a68160870f116233879d85e393f8be73e",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:no-skipping-upstream-activities",
       "title": "上流活動を省いたプロセスで重要システムを作らない",
       "category": "組織と力量",
       "source_lines": "L722-L722",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "変更の段数を「決定を含むか否か」で分ける決定（ADR-051）と、決定が実装に着地していない状態を挙げる検査（adr_not_landed）は在るが、上流（目的・対象損失の定義）を飛ばして実装に入ったこと自体を咎める門は索引に無い。",
+      "evidence": [
+        "ADR-051",
+        "adr_not_landed",
+        "SPEC-011",
+        "plugin/scripts/docs-audit.py"
+      ],
+      "recheck_trigger": "監査の検査名に上流欠落（要求・目的の不在で実装が入ったこと）を挙げる検査が追加されたとき。",
+      "gap": "「先行文書の不在のまま統治ルールが増えた」ことを検出する検査（実装先行の禁止ゲート）と、その受入試験。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "278a741cbdbea926b618e46c04c620dfbd79e0243a23b23b679d9d841b1b64cb",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:external-constraints-documented",
       "title": "外部制約をコントロールストラクチャから識別し文書化する",
       "category": "文書化",
       "source_lines": "L789-L789",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "統治木の外の要求・設定・上位設計を EXT 型のアンカーとして登録する決定（ADR-026）があり、EXT-001〜EXT-006 が現に登録され、存在・指紋・唯一の見張りの緩みを監査が検める（ext_anchor_broken／source_missing／source_drift／ext_sole_guard_missing）。鼓動側の照合も SPEC-021 と gov-heartbeat.py に在る。",
+      "evidence": [
+        "ADR-026",
+        "ADR-039",
+        "EXT-001",
+        "EXT-004",
+        "ext_anchor_broken",
+        "source_missing",
+        "SPEC-021",
+        "plugin/scripts/gov-heartbeat.py",
+        "plugin/tests/test_liveness_capture.py"
+      ],
+      "recheck_trigger": "EXT 型の廃止や ext_anchor_broken／source_missing の削除など、外部由来制約の登録先が変わったとき。",
+      "gap": "",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "278a741cbdbea926b618e46c04c620dfbd79e0243a23b23b679d9d841b1b64cb",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:制約はmust/要求はshallで語彙分離",
       "title": "制約と要求を助動詞で書き分ける",
       "category": "文書化",
       "source_lines": "L843-L843",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "非該当で理由あり",
+      "reason": "この体系は制約と目標を助動詞ではなく型で分離する。規範は ADR・PROC、目標は REQ、やらないことは NONGOAL-001 が担い、必須キーと型の正本（DATA-001・ADR-033・ADR-013）が判別の依り所になる。用語の門（SPEC-008）は未承認語と禁止同義語の照合であって文の法性を判別しない。よって助動詞での語彙分離は境界の外であり、機構の欠落ではなく分離手段の違いである。",
+      "evidence": [
+        "DATA-001",
+        "ADR-033",
+        "ADR-013",
+        "NONGOAL-001",
+        "SPEC-008",
+        "REQ-006"
+      ],
+      "recheck_trigger": "リンタまたは用語チェッカーに文の法性（規範文か目標文か）を判別する検査コードが加わったとき。",
+      "gap": "",
+      "confidence": "low",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "278a741cbdbea926b618e46c04c620dfbd79e0243a23b23b679d9d841b1b64cb",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:安全制約はハザードの再記述＋ID紐付け",
       "title": "安全制約はハザードの再記述として定義し由来を明示する",
       "category": "検証計画",
       "source_lines": "L885-L885",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "非該当で理由あり",
+      "reason": "ハザード層を持たないことは推測ではなく明文の決定である。ADR-081 が「検証は証拠の提示である。証跡の形だけを採り、ハザード層と過程適合は採らない」と定め、規則に由来ハザード ID を持たせる設計を体系として採らないと決めている。退行の見張りは WATCH-001 と監査の検査名で担われ、ハザード ID の台帳は置かない。",
+      "evidence": [
+        "ADR-081",
+        "WATCH-001",
+        "NONGOAL-001"
+      ],
+      "recheck_trigger": "ADR-081 が superseded となり、ハザード層を採る決定が landed したとき。",
+      "gap": null,
+      "confidence": "high",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "278a741cbdbea926b618e46c04c620dfbd79e0243a23b23b679d9d841b1b64cb",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:要求分析はアーキテクチャ設計に先行",
       "title": "要求分析はアーキテクチャ設計に先行させる",
       "category": "検証計画",
       "source_lines": "L867-L867",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "型の連鎖（REQ→SPEC→TEST→IMPL）と、仕様を持たない要求・試験を持たない仕様を挙げる逆孤児検査（reverse_orphan_req_no_spec／reverse_orphan_spec_no_test）で構造上の先行関係は保たれる。しかし履歴上の時間的先行（実装コミットが要求記述より前か）は索引のどの検査も検めない。",
+      "evidence": [
+        "reverse_orphan_req_no_spec",
+        "reverse_orphan_spec_no_test",
+        "REQ-001",
+        "ADR-051",
+        "SPEC-011"
+      ],
+      "recheck_trigger": "監査または CI の門に履歴順序（先行関係）を検める検査が加わったとき。",
+      "gap": "コミット履歴の順序を見て「実装が要求記述に先行した」ことを挙げる履歴監査と、その受入試験。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "278a741cbdbea926b618e46c04c620dfbd79e0243a23b23b679d9d841b1b64cb",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:モデル境界は目的により定義",
       "title": "モデル化範囲は目的から定義する",
       "category": "検証計画",
       "source_lines": "L841-L841",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "統治の適用範囲は目的付きで明示され、範囲外に発火しないことが決定と実装の両方で押さえられている。既定名 doctrine_docs と素の docs への不干渉（ADR-022）、統治木の無い土地では発火しない（ADR-036・ADR-103）、統治木外へ schema 強制をしない（ADR-024）、無視される物は走査しない（ADR-089）、設定の読み取りは _config.py が正本（ADR-104）。",
+      "evidence": [
+        "ADR-022",
+        "ADR-024",
+        "ADR-036",
+        "ADR-089",
+        "ADR-057",
+        "plugin/scripts/_config.py",
+        "STRAY_DOCUMENT",
+        "plugin/tests/test_linter.py",
+        "plugin/tests/test_guard.py"
+      ],
+      "recheck_trigger": "統治木の位置や適用範囲の既定（ADR-022／ADR-036）が変わり、範囲外への発火抑止の根拠が置き換わったとき。",
+      "gap": "",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "278a741cbdbea926b618e46c04c620dfbd79e0243a23b23b679d9d841b1b64cb",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:モデルは実装非依存に保ち再利用可能化",
       "title": "過剰な設計決定を含めない汎用モデルを保つ",
       "category": "供給者と再利用",
       "source_lines": "L851-L851",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "雛形は20型として仕様化され（SPEC-017）、語彙を符号化する役目と遅延生成が決定に在り（ADR-010）、導入先への無影響と標準ライブラリのみという制約もある（ADR-047・ADR-031）。だが「雛形にリポジトリ固有のパスやツール名が混入した」ことを機械が検める仕組みは索引に無く、汎用性の維持は著述と査読に依っている。",
+      "evidence": [
+        "SPEC-017",
+        "ADR-010",
+        "ADR-047",
+        "ADR-031",
+        "plugin/tests/test_templates.py"
+      ],
+      "recheck_trigger": "リンタか監査に雛形の環境固有語を咎める検査コードが加わったとき。",
+      "gap": "雛形・共有正本への環境固有語（パス・ツール名）の混入を検出する検査と、その受入試験。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "278a741cbdbea926b618e46c04c620dfbd79e0243a23b23b679d9d841b1b64cb",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:コントローラに被制御対象の状態モデル必須",
       "title": "コントローラは被制御対象の状態モデルを持つ",
       "category": "安全性と危険要因",
       "source_lines": "L853-L853",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "判断する側が現在状態を読んでから動く形が正本化されている。前回監査の要約は _auditcache.py に一本化され（ADR-053・ADR-037）、木の世代をまたいだ要約は捨てる。ガードは型と status を読めなければ沈黙して開かない（ADR-102）。促しはセッションに一度だけに束ねられる（ADR-063）。ただし ADR-050 が「ガードが拒否できる状態かは検出しない」と自ら限界を明記している。",
+      "evidence": [
+        "ADR-053",
+        "ADR-037",
+        "ADR-102",
+        "ADR-063",
+        "plugin/scripts/_auditcache.py",
+        "plugin/scripts/_registry.py",
+        "plugin/tests/test_auditcache.py",
+        "plugin/tests/test_guard.py"
+      ],
+      "recheck_trigger": "ADR-050 が予告する機能カナリアが実装され、ガード自身の可動状態の模型が変わったとき。",
+      "gap": "",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "278a741cbdbea926b618e46c04c620dfbd79e0243a23b23b679d9d841b1b64cb",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:精密化で責任権限説明責任とフィードバックを割当",
       "title": "精密化時に責任・権限・説明責任とフィードバック要求を割り当てる",
       "category": "組織と力量",
       "source_lines": "L861-L861",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "発火経路と証跡の割当は被覆マトリクス（SPEC-025）と、各行が実効を示す試験を名指す決定（ADR-084）に在り、機械と人の分担は PROC-001、成果物ごとの「予防・検出・委ねる」は REQ-013 が課す。しかし各規則に対する権限（誰が緩和・免除を許すか）と説明責任（違反時に誰へ届くか）の割当は索引の語として見当たらない。",
+      "evidence": [
+        "SPEC-025",
+        "ADR-084",
+        "PROC-001",
+        "REQ-013",
+        "TEST-025"
+      ],
+      "recheck_trigger": "被覆マトリクスの列に責任者・通知先が加わるか、規則の免除承認の手続きが決定として landed したとき。",
+      "gap": "規則ごとの権限保持者と通知先（説明責任の宛先）を必須項として持たせる規定と、その欠落を挙げる検査。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "278a741cbdbea926b618e46c04c620dfbd79e0243a23b23b679d9d841b1b64cb",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:フィードバック無提供状態の洗い出し",
       "title": "フィードバック未提供の状態を仮定で片付けない",
       "category": "安全性と危険要因",
       "source_lines": "L859-L859",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "沈黙する故障を禁じることが要求そのものとして立っており（REQ-014）、境界ごとに「黙って開かない・黙って素通りしない・切り詰めたら告げる」が決定として並ぶ（ADR-075・ADR-102・ADR-039・ADR-109）。フックは発火の印を残し対の食い違いから拒否経路の欠落を疑い（ADR-062・guard_liveness_gap）、監査は走ったこと自体の印を残して不実行と書き込み失敗を区別する（ADR-119）。",
+      "evidence": [
+        "REQ-014",
+        "ADR-075",
+        "ADR-102",
+        "ADR-109",
+        "ADR-062",
+        "ADR-119",
+        "guard_liveness_gap",
+        "SPEC-021",
+        "plugin/tests/test_liveness_capture.py"
+      ],
+      "recheck_trigger": "新しい発火面（フック事象やスクリプト）が加わり、その出力の可視性が REQ-014 の被覆に入っていないとき。",
+      "gap": "",
+      "confidence": "high",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "278a741cbdbea926b618e46c04c620dfbd79e0243a23b23b679d9d841b1b64cb",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:解析は設計解非依存で機能動作から開始",
       "title": "解析は特定の設計解を前提とせず機能動作から始める",
       "category": "独立性",
       "source_lines": "L931-L931",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "外部ツールへの依存を体系の内側の規範から切り離す決定は在る。Hook 事象の集合を数でなく能力で検める（ADR-078）、外部仕様は EXT アンカーとして統治する（ADR-026・EXT-001）。だが「規範記述が特定ツールのオプション名に直結していないか」を検める機構は索引に無く、実装非依存は著述の規律に依る。",
+      "evidence": [
+        "ADR-078",
+        "ADR-026",
+        "EXT-001",
+        "REQ-001",
+        "ext_anchor_broken"
+      ],
+      "recheck_trigger": "EXT-001 が指す外部仕様（Hook 仕様・ツール名）が改版され、規範側の記述が追随を要したとき。",
+      "gap": "規範文がツール固有語に束縛されていることを検出する検査、またはツール置換時に規範が残ることを示す受入試験。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "278a741cbdbea926b618e46c04c620dfbd79e0243a23b23b679d9d841b1b64cb",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:未対処ゼロまで解析を反復継続",
       "title": "精密化は全項目が扱われるまで反復継続する",
       "category": "検証計画",
       "source_lines": "L897-L897",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "未対処を残高として持ち越す形が実装されている。悉皆トレースは「未分類」を残高にする opt-in として決定され（ADR-072）、監査は trace_unmarked_backlog として残件を挙げ、走査は勘定を返し触れた対象を必ず分類する保存則を持つ（ADR-058・ADR-067）。整理はキャンペーンで駆動し停滞を名指しする（ADR-065）。ただし残高化は opt-in であり、既定では未分類がゼロになるまでの強制はない。",
+      "evidence": [
+        "ADR-072",
+        "ADR-058",
+        "ADR-067",
+        "ADR-065",
+        "trace_unmarked_backlog",
+        "plugin/scripts/_tracescan.py",
+        "plugin/tests/test_tracescan.py"
+      ],
+      "recheck_trigger": "悉皆モードの既定が変わるか、trace_unmarked_backlog の扱い（警告か門か）が変わったとき。",
+      "gap": "",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "278a741cbdbea926b618e46c04c620dfbd79e0243a23b23b679d9d841b1b64cb",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:制約から導出元シナリオへの遡及可能性",
       "title": "設計制約から導出元シナリオへ遡れるようにする",
       "category": "証拠と記録",
       "source_lines": "L977-L977",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "追跡性は要求として立ち（REQ-002）、依存グラフの契約（SPEC-006・ICD-002）と CLI（dep-graph.py）で前向き・逆向きに辿れる。遡及の断絶は dead_link・orphan・trace_broken_ref・trace_missing_impl として監査が挙げ、追跡の正路は depends_on の REQ と定められている（ADR-045）。ただし遡及先は決定・要求であって、因果シナリオ層は ADR-081 により持たない。",
+      "evidence": [
+        "REQ-002",
+        "SPEC-006",
+        "ICD-002",
+        "ADR-045",
+        "dead_link",
+        "orphan",
+        "trace_broken_ref",
+        "plugin/scripts/dep-graph.py",
+        "plugin/tests/test_depgraph.py"
+      ],
+      "recheck_trigger": "依存の意味づけ（depends_on の正路）や孤児の定義（ADR-008）が変わったとき。",
+      "gap": "",
+      "confidence": "high",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "278a741cbdbea926b618e46c04c620dfbd79e0243a23b23b679d9d841b1b64cb",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:制約に論拠を併記して変更時再導入を防ぐ",
       "title": "制約に論拠を併記し変更時の非安全機能の再導入を防ぐ",
       "category": "構成管理と変更管理",
       "source_lines": "L959-L959",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "決定は不変として守られ、誤りの直し方は置換の手続きに正規化されている（ADR-044・ADR-095・SPEC-003・policy-guard.py）。雛形が定める節の充足は ADR-090 と MISSING_SECTION／EMPTY_SECTION で検める。しかし「規則の緩和・削除の差分に論拠の反証を要求する」という審査要件は索引の語として見当たらず、論拠併記が緩和時の門になっているとは索引から言えない。",
+      "evidence": [
+        "ADR-044",
+        "ADR-095",
+        "SPEC-003",
+        "MISSING_SECTION",
+        "EMPTY_SECTION",
+        "ADR-090",
+        "plugin/scripts/policy-guard.py",
+        "plugin/tests/test_guard.py"
+      ],
+      "recheck_trigger": "ADR の置換手続き（ADR-044）に論拠反証の必須化が加わるか、監査に緩和差分を挙げる検査が増えたとき。",
+      "gap": "規則の緩和・削除を伴う変更に、置換元の論拠の反証を必須とする審査規定と、その機械検出。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "278a741cbdbea926b618e46c04c620dfbd79e0243a23b23b679d9d841b1b64cb",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:後段検出は検出プロセス欠陥として是正",
       "title": "統合段階での安全欠陥検出はプロセス欠陥として扱う",
       "category": "不適合と是正",
       "source_lines": "L987-L987",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "事象を閉じる条件を統制欠陥と先行指標つきの事故分析の両立に縛る決定（ADR-117）と、リンタと監査の食い違いを回帰ガードとして固める仕様（SPEC-023）、拒否経路の欠落を対の食い違いから疑う決定（ADR-062）が在る。だが「後段で捕まった違反ごとに検出層の前倒しを義務づける」手続きの機械化は索引に無い。",
+      "evidence": [
+        "ADR-117",
+        "SPEC-023",
+        "ADR-062",
+        "guard_liveness_gap",
+        "WATCH-001",
+        "plugin/tests/test_meta.py"
+      ],
+      "recheck_trigger": "ADR-117 の閉塞条件が運用され、後段検出からの規則追加が記録として残り始めたとき。",
+      "gap": "後段検出の修正差分に、検出層を前倒しする規則追加が伴っているかを検める門または受入試験。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "278a741cbdbea926b618e46c04c620dfbd79e0243a23b23b679d9d841b1b64cb",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:テスト要求は解析結果から導出",
       "title": "テスト要求は解析結果から生成する",
       "category": "試験設計",
       "source_lines": "L991-L991",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "仕様に対応する試験の不在は逆孤児として全件で挙がり（reverse_orphan_spec_no_test）、被覆の各行は実効を示す試験を名指し、示せないものは未証と明示する決定が在る（ADR-084・SPEC-025）。TEST 型の文書が SPEC と対で並び、監査の決定性は SPEC-011 が定める。",
+      "evidence": [
+        "reverse_orphan_spec_no_test",
+        "ADR-084",
+        "SPEC-025",
+        "SPEC-011",
+        "TEST-011",
+        "plugin/scripts/docs-audit.py"
+      ],
+      "recheck_trigger": "ADR-084 の「未証と明示する」規約が緩むか、reverse_orphan_spec_no_test が既定から外れたとき。",
+      "gap": "",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "278a741cbdbea926b618e46c04c620dfbd79e0243a23b23b679d9d841b1b64cb",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:試験環境固有のハザードを別途解析",
       "title": "試験環境固有のハザードを別途解析する",
       "category": "試験設計",
       "source_lines": "L993-L993",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "評価・試験の実行系を配布物から隔離する決定（ADR-114）、導入先への無影響の保証（ADR-047）、試験は実時計を読まない（ADR-094）、試験走行の証跡は保存せず走らせた場が持つ（ADR-085・SPEC-028）、CI 定義は外部アンカーとして登録（EXT-004）と、試験の場への配慮は在る。だが試験環境そのものを統治対象として、その場固有の危険（CI 上だけで動く書き換えなど）を洗い出した記録は索引に無い。",
+      "evidence": [
+        "ADR-114",
+        "ADR-047",
+        "ADR-094",
+        "SPEC-028",
+        "EXT-004",
+        "plugin/tests/test_perf_gate.py"
+      ],
+      "recheck_trigger": "CI で自動修正や書き込みを行う経路が追加されたとき。",
+      "gap": "CI・サンドボックス側の発火経路に対する固有の危険の列挙と、それを検める受入試験。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "278a741cbdbea926b618e46c04c620dfbd79e0243a23b23b679d9d841b1b64cb",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:自動化不能シナリオは運用へ明示移譲",
       "title": "設計で消せないシナリオは運用側へ明示的に引き渡す",
       "category": "運用と保守",
       "source_lines": "L1001-L1001",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "移譲は要求の水準で義務づけられている。各成果物が「予防・検出・委ねる」を書く（REQ-013）、方法論の分担は機械の検算と人の査読に分けて正本化（PROC-001・ADR-068）、テスト不能記述の判定は監査でなく doc-review が担う（ADR-020）、記録するのは人の確認だけ（ADR-055）、不具合は検出が機械・送信が人（ADR-074）。受け皿は 7 技能として仕様化されている（SPEC-016）。",
+      "evidence": [
+        "REQ-013",
+        "PROC-001",
+        "ADR-020",
+        "ADR-055",
+        "ADR-074",
+        "SPEC-016",
+        "plugin/tests/test_skills.py"
+      ],
+      "recheck_trigger": "新しい統治項目が自動化不能と判断されたのに、技能または PROC-001 に受け皿が書かれないまま残ったとき。",
+      "gap": "",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "278a741cbdbea926b618e46c04c620dfbd79e0243a23b23b679d9d841b1b64cb",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:先行指標で設計前提の崩壊を早期検知",
       "title": "先行指標で設計前提の崩れを検知する",
       "category": "運用と保守",
       "source_lines": "L1001-L1001",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "鮮度・期限・外部アンカーの生存という遅行寄りの見張りは在る（SPEC-021・ADR-086・ADR-070・guard_liveness_gap・WATCH-001）。だが規則の空振り率・抑止率のような先行指標は索引に無く、ADR-050 は「ガードが拒否できる状態かは検出しない」と述べ機能カナリアを次の版へ送っている。ADR-117 が先行指標を事象閉塞の条件として要求している段階である。",
+      "evidence": [
+        "ADR-050",
+        "ADR-086",
+        "ADR-070",
+        "SPEC-021",
+        "WATCH-001",
+        "ADR-117",
+        "guard_liveness_gap"
+      ],
+      "recheck_trigger": "ADR-050 が予告する機能カナリアが実装されたとき、または発火計数を持つ検査が加わったとき。",
+      "gap": "規則ごとの発火・空振りの計数と、その推移から前提の崩れを告げる指標（機能カナリアを含む）。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "278a741cbdbea926b618e46c04c620dfbd79e0243a23b23b679d9d841b1b64cb",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:全運用環境に安全管理の仕組みを設置",
       "title": "すべての運用環境に安全管理システムを置く",
       "category": "運用と保守",
       "source_lines": "L1213-L1213",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "非該当で理由あり",
+      "reason": "適用範囲の外に出ることが明文の境界として決まっている。統治はリポジトリ一つの内側に閉じ、組織を横断する統治は引き受けない（ADR-057）。さらに統治木の無い土地では発火せず（ADR-036・ADR-103）、段差は .docs-level をスクリプト自身が読んで自主停止する（ADR-019・ADR-030）。よって「全稼働環境の一覧と実在の突合」は、体系が意図して持たない領域であり、抜け穴ではなく宣言された境界である。",
+      "evidence": [
+        "ADR-057",
+        "ADR-036",
+        "ADR-103",
+        "ADR-019",
+        "ADR-030",
+        "NONGOAL-001"
+      ],
+      "recheck_trigger": "ADR-057 が置換され、複数リポジトリ横断の統治が目標に入ったとき。",
+      "gap": "",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "278a741cbdbea926b618e46c04c620dfbd79e0243a23b23b679d9d841b1b64cb",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:計画変更は必ずハザード解析対象",
       "title": "計画された変更は必ずハザード解析に掛ける",
       "category": "構成管理と変更管理",
       "source_lines": "L1217-L1217",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "影響集合を依存から列挙する要求と契約（REQ-003・SPEC-006・ICD-002・dep-graph.py）が在り、変更ごとに IMPACT 型の文書が現に並ぶ（IMPACT-001〜IMPACT-007）。しかし影響解析の実行を変更ごとに強制する門は索引に無く、CI の門は版と変更履歴の整合を検めるものである（SPEC-027・ADR-071）。到達先も決定・仕様であってハザードではない（ADR-081）。",
+      "evidence": [
+        "REQ-003",
+        "SPEC-006",
+        "IMPACT-003",
+        "SPEC-027",
+        "ADR-071",
+        "plugin/scripts/dep-graph.py",
+        "plugin/tests/test_depgraph.py",
+        "plugin/tests/test_release_check.py"
+      ],
+      "recheck_trigger": "CI の門に統治木変更時の影響解析の実行検査が加わったとき。",
+      "gap": "統治木を変える変更に対し、影響解析の実行と IMPACT の添付を必須にする門。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "278a741cbdbea926b618e46c04c620dfbd79e0243a23b23b679d9d841b1b64cb",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:コンテキストおよび支援系の変更も変更管理対象",
       "title": "設計以外の変更も同じ変更管理に載せる",
       "category": "構成管理と変更管理",
       "source_lines": "L1215-L1215",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "設計以外の変更も同じ台帳に載る。外部の出所は EXT として登録され、存在・指紋・唯一の見張りを監査が検める（ADR-026・ADR-039・ext_anchor_broken・source_missing・source_drift・ADR-097）。統治の設定は指紋で見張られ、変えるには打ち直しが要る（ADR-096）。導入済みの複製の版の遅れは鼓動が検め（ADR-070・CHANGE-001・SPEC-021）、依存の増加は標準ライブラリのみという制約で抑えられている（ADR-031）。",
+      "evidence": [
+        "ADR-026",
+        "ADR-039",
+        "ADR-096",
+        "ADR-070",
+        "ADR-097",
+        "source_drift",
+        "ext_anchor_broken",
+        "CHANGE-001",
+        "plugin/scripts/gov-heartbeat.py"
+      ],
+      "recheck_trigger": "外部依存（Hook 仕様・CI 定義・設定）の版が上がり、EXT の指紋が打ち直されたとき。",
+      "gap": "",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "278a741cbdbea926b618e46c04c620dfbd79e0243a23b23b679d9d841b1b64cb",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:人為的過失は状態認識不整合として解析",
       "title": "人為的過失を状態認識の不整合として解析する",
       "category": "安全性と危険要因",
       "source_lines": "L929-L929",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "認識と実態のずれに当たる決定と検査は点在する。ハーネスのメモリによる影の正本化を見張る（ADR-035・memory_shadow・shadowed_document）、注入境界で引用データと指示を分ける（ADR-040）、表示層は統治判断を持たず索引が無ければ黙る（ADR-052）、リンタは助言のみで書き換えない（ADR-024）。しかしこれらを「状態認識の不整合」という一つの危険として体系的に洗い出した記録は索引に無い。",
+      "evidence": [
+        "ADR-035",
+        "ADR-040",
+        "ADR-052",
+        "ADR-024",
+        "memory_shadow",
+        "shadowed_document",
+        "plugin/scripts/docs-linter.py"
+      ],
+      "recheck_trigger": "体系に自動書き換えを行う経路（自動修正）が追加されたとき。",
+      "gap": "実態と利用者の認識のずれを生む経路の網羅的な列挙と、その被覆を示す文書。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "278a741cbdbea926b618e46c04c620dfbd79e0243a23b23b679d9d841b1b64cb",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:手順強制でなく設計で誤りを構造的に排除",
       "title": "手順順守の強制でなくシステム全体のシナリオ識別で対処する",
       "category": "組織と力量",
       "source_lines": "L1225-L1225",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "体系の骨格が「文書で守らせる」より「機械で検める」側に寄せられている。方法論の分担は機械の検算と人の査読に切り分けられ（PROC-001・ADR-068・code-audit.py）、越境と不変と削除安全は書き込む前に判ずるガードとして実装され（SPEC-003・ADR-076・policy-guard.py）、現行性と用語は機械点検の要求として立つ（REQ-005・REQ-006）。",
+      "evidence": [
+        "PROC-001",
+        "ADR-068",
+        "ADR-076",
+        "SPEC-003",
+        "REQ-005",
+        "REQ-006",
+        "plugin/scripts/policy-guard.py",
+        "plugin/scripts/code-audit.py",
+        "plugin/tests/test_code_audit.py"
+      ],
+      "recheck_trigger": "同種の違反の再発に対し、検査ではなく注意書きの追記だけで閉じた事例が現れたとき。",
+      "gap": "",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "278a741cbdbea926b618e46c04c620dfbd79e0243a23b23b679d9d841b1b64cb",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:汎用ハザードのシステム固有詳細化",
       "title": "汎用ハザードを対象システム固有に詳細化する",
       "category": "安全性と危険要因",
       "source_lines": "L1247-L1247",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "雛形のまま放置された統治木を機械が咎める。雛形の指示文が残ったフロントマターを形で判ずる決定と検査（ADR-098・PLACEHOLDER_VALUE・template_placeholder）、辞書の種からの乖離の検査（glossary_seed_drift）、雛形が定める節の充足（ADR-090・MISSING_SECTION）が在り、初期化は非破壊の最小配置に留めて固有化を利用者に残す（SPEC-015・scaffold.py）。",
+      "evidence": [
+        "ADR-098",
+        "template_placeholder",
+        "PLACEHOLDER_VALUE",
+        "glossary_seed_drift",
+        "ADR-090",
+        "SPEC-015",
+        "plugin/scripts/scaffold.py",
+        "plugin/tests/test_templates.py"
+      ],
+      "recheck_trigger": "雛形の配布形が変わり、template_placeholder や glossary_seed_drift の判定基準が置き換わったとき。",
+      "gap": "",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "278a741cbdbea926b618e46c04c620dfbd79e0243a23b23b679d9d841b1b64cb",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:生産可能性と作業安全を初回解析から包含",
       "title": "製造・作業安全の考慮を初回解析から含める",
       "category": "その他",
       "source_lines": "L997-L997",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "「作りやすさ・運用負荷を初期設計から評価対象に含める」に相当する決定は現に在る。ADR-047 が開発方法論の採用範囲と性能の上限・導入先への無影響保証を定め、ADR-041 が導入直後の体験（状態の種蒔き・初日の中立案内）を設計判断として持ち、PROC-001 が機械の検算と人の査読の分担を正本化している。しかし『新しい統治規則を足すときにその記述コスト・更新負荷を事前に評価する』手順や検査は索引に無い。監査の検査名 40 件・リンタの検査コード 23 件のいずれも記述コストや更新負荷を測らず、鮮度側（stale_current・review_by_overrun）で事後に古びを咎めるだけである。よって実装ではなく計画の段階と判ずる。",
+      "evidence": [
+        "ADR-047",
+        "ADR-041",
+        "PROC-001",
+        "ADR-086",
+        "review_by_overrun",
+        "stale_current"
+      ],
+      "recheck_trigger": "規則・雛形の新設時に記述コスト／運用負荷の事前評価を義務づける決定（ADR）または監査の検査が追加されたとき。",
+      "gap": "規則・雛形を新設／改訂するときに、その記述コストと運用更新負荷を採否の判断材料として事前に評価する手順（および評価の記録先）が無い。ADR-086 が『期限が唯一の見張りなら期限は短くする』と定めているとおり、現状は陳腐化を期限で事後検出する構えに留まる。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "92db15ce00556efd3d2db257b1aa86f0eaa4762afaafbf84fb36966bd755cf57",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:hazard-as-threshold-condition",
       "title": "ハザードは閾値超過という観測可能な条件で記述する",
       "category": "安全性と危険要因",
       "source_lines": "L1251-L1251",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "統治の各規則は『曖昧な望ましさ』ではなく、対象・条件・逸脱方向を持つ機械判定として符号化されている。リンタは MISSING_KEY・BAD_DATE・ID_FILENAME_MISMATCH のような判定可能な検査コードで助言を出し（SPEC-007／docs-linter.py）、監査は SPEC-011 で検査群・要約スキーマ・決定性を契約として固定している。閾値そのものも数として正本にあり、ADR-033 は必須キーをちょうど 8 個と定め、ADR-009 は注入とパックで二つの別上限を持つと定める。人手解釈に落ちる部分は放置ではなく境界として明示され、ADR-020 がテスト不能記述の判定を監査でなく doc-review に振り分けている。試験計画は TEST-007・TEST-011 に在る。",
+      "evidence": [
+        "SPEC-007",
+        "SPEC-011",
+        "MISSING_KEY",
+        "BAD_DATE",
+        "ID_FILENAME_MISMATCH",
+        "ADR-033",
+        "ADR-009",
+        "ADR-020",
+        "plugin/scripts/docs-linter.py",
+        "TEST-007",
+        "TEST-011"
+      ],
+      "recheck_trigger": "閾値や判定条件を伴わない『望ましさ』の規則が新たに正本へ入り、リンタ・監査のどちらでも機械判定できない箇所が生じたとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "92db15ce00556efd3d2db257b1aa86f0eaa4762afaafbf84fb36966bd755cf57",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:hazard-refinement-by-operational-phase",
       "title": "上位ハザードを運用フェーズ別に詳細化する",
       "category": "安全性と危険要因",
       "source_lines": "L1257-L1257",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "対応計画あり",
+      "reason": "運用局面を分ける決定は複数在る。ADR-051 は変更フローの段数を『決定を含むか否か』で分け、ADR-044 は不変の ADR に誤りを見つけたときの正規の直し方（＝訂正局面の経路）を定め、ADR-095 は proposed を下書きとして直せるとして著述局面を分離し、ADR-034 は移行の台帳を分類の記録から導出すると定めて移行局面を扱う。だが『上位の失敗モードを局面別サブ項目へ詳細化する』という体系的な分割は無く、監査の検査名 40 件は局面（通常編集／移行／緊急修正／保守）で添字づけられていない。発火面も PostToolUse・SessionEnd といった事象で分かれるだけで、局面の別ではない。よって決定は在るが実装された局面別詳細化は無いと判ずる。",
+      "evidence": [
+        "ADR-051",
+        "ADR-044",
+        "ADR-095",
+        "ADR-034",
+        "SPEC-011"
+      ],
+      "recheck_trigger": "移行・緊急修正・保守の各局面を名指した検査、または局面別に失敗モードを分割した正本文書が追加されたとき。",
+      "gap": "失敗モードを運用局面ごとに分割して列挙した正本が無く、移行・緊急修正・保守の各経路が監査でその局面として名指されない。局面別に『どの検査が効くか』を対応づけた記述も索引に見当たらない。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "92db15ce00556efd3d2db257b1aa86f0eaa4762afaafbf84fb36966bd755cf57",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:cover-all-secondary-hazard-sources",
       "title": "全エネルギー源（見落としやすい経路）を対象範囲に含める",
       "category": "安全性と危険要因",
       "source_lines": "L1253-L1253",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "副次経路の網羅は体系の中心的な機構として実装されている。ADR-058 が保存則（走査は勘定を返し、触れた対象を必ず分類する）を定め、ADR-067 が exempt の印と勘定の第四項を加え、ADR-072 が悉皆トレースモードで『未分類』を残高にする。体系外 .md は ADR-021 に従い分類の記録（_intake.py）と突き合わされ、未分類だけが監査に挙がる（unregistered_document・stray_document・shadowed_document）。統治木の外への依存は ADR-026 で EXT 型のアンカーとして統治され、ext_anchor_broken・source_missing・source_drift が効く。生成物側も projection_drift、雛形側も template_placeholder が見張る。走査対象の境界は ADR-089 で git の無視判定に委ねられ、恣意的な取りこぼしを避けている。",
+      "evidence": [
+        "ADR-058",
+        "ADR-067",
+        "ADR-072",
+        "ADR-021",
+        "ADR-026",
+        "unregistered_document",
+        "stray_document",
+        "trace_unmarked_backlog",
+        "ext_anchor_broken",
+        "projection_drift",
+        "template_placeholder",
+        "plugin/scripts/_intake.py",
+        "plugin/scripts/_audit_stray.py",
+        "TEST-011"
+      ],
+      "recheck_trigger": "勘定の保存則が破れる経路（分類されないまま走査を抜ける対象）が新たに生じたとき、または新種の生成物・取り込み経路が統治対象の列挙に入らないまま導入されたとき。",
+      "gap": null,
+      "confidence": "high",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "92db15ce00556efd3d2db257b1aa86f0eaa4762afaafbf84fb36966bd755cf57",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:hazard-to-safety-constraint-mapping",
       "title": "各ハザードは対応する安全制約へ変換する",
       "category": "検証計画",
       "source_lines": "L1261-L1261",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "『項目ごとに対応する規則が在るかを対応表で機械照合する』機構は SPEC-025（被覆マトリクス＝統治要求×発火経路×証跡）として在り、ADR-084 が各行に実効を示す試験の名指しを義務づけ、示せない行は未証と明示させる。対応の欠落は監査でも検出され、reverse_orphan_req_no_spec が仕様の無い要求を、reverse_orphan_spec_no_test が試験の無い仕様を挙げる。受入は TEST-025 に在る。ただし本体系は『ハザードの列挙』そのものは持たない — ADR-081 が証跡の形だけを採り、ハザード層と過程適合は採らないと明記しており、写像の左辺は統治要求である。当てはめ仮説の求める『対応表による機械照合』は満たされている。",
+      "evidence": [
+        "SPEC-025",
+        "TEST-025",
+        "ADR-084",
+        "ADR-081",
+        "reverse_orphan_req_no_spec",
+        "reverse_orphan_spec_no_test",
+        "plugin/scripts/docs-audit.py"
+      ],
+      "recheck_trigger": "ADR-081 が覆されてハザード層を体系が引き受けたとき、または被覆マトリクスの行が試験を名指さないまま未証の明示も欠いたとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "92db15ce00556efd3d2db257b1aa86f0eaa4762afaafbf84fb36966bd755cf57",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:cross-functional-analysis-team",
       "title": "分析は分野横断の複数部門チームで実施する",
       "category": "組織と力量",
       "source_lines": "L1263-L1263",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "非該当で理由あり",
+      "reason": "この原則は分析に参加する人の部門構成という組織側の要件であり、本体系の統治境界の外にある。境界の根拠は二つ在る。ADR-015 は統治の対象を知識と決定の層に限ると定め、人員配置や承認体制を対象に含めない。ADR-057 は統治をリポジトリ一つの内側に閉じ、組織を横断する統治は引き受けないと定める。近接するのは PROC-001 だが、これが分けるのは『機械の検算と人の査読』という担い手の種類であって、人の部門数や役割数の下限ではない。したがって『対象外の領域だから』ではなく、統治の層（知識と決定）と組織の層を分ける明示の決定によって当たらないと判ずる。",
+      "evidence": [
+        "ADR-015",
+        "ADR-057",
+        "PROC-001",
+        "NONGOAL-001"
+      ],
+      "recheck_trigger": "ADR-015 または ADR-057 が改められ、承認体制や役割配置が統治の対象へ引き上げられたとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "92db15ce00556efd3d2db257b1aa86f0eaa4762afaafbf84fb36966bd755cf57",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:participants-must-be-domain-owners",
       "title": "参加者は自身の責任領域のリーダーまたは専門家であること",
       "category": "組織と力量",
       "source_lines": "L1263-L1263",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "非該当で理由あり",
+      "reason": "領域ごとの責任者（CODEOWNERS 相当）を人に割り当ててレビュー必須者とする要件は、ADR-015 が統治の対象を知識と決定の層に限ると定めた境界の外にある。体系はドメインを持ち（model・graph・guard・lint・audit・context・authoring・packaging）、境界は ICD-001〜ICD-008 と icd_dependency_violation・ADR-006 で機械的に守られているが、守るのは文書とコードの依存であって人の承認権限ではない。ADR-057 が統治をリポジトリの内側に閉じ、ADR-064 が保証限界を非目標として明文化しているとおり、人の力量や責任分掌は体系が引き受けない。索引に責任者の割当を記録する型・検査・設定は一つも無い。",
+      "evidence": [
+        "ADR-015",
+        "ADR-057",
+        "ADR-064",
+        "icd_dependency_violation",
+        "NONGOAL-001"
+      ],
+      "recheck_trigger": "領域責任者を記録する型や設定（CODEOWNERS 相当）が導入され、その不在を咎める検査が加わったとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "92db15ce00556efd3d2db257b1aa86f0eaa4762afaafbf84fb36966bd755cf57",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:facilitator-method-expert-not-domain-owner",
       "title": "ファシリテータは手法の習熟者で対象システムには非当事者でよい",
       "category": "独立性",
       "source_lines": "L1263-L1263",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "適合判定を著者から切り離し、手法側の中立な担い手に置く設計は実装されている。判定はスクリプトが行い、PostToolUse の docs-linter.py が単一文書を、SessionEnd の docs-audit.py が全件を、PreToolUse／PostToolUse の policy-guard.py が三ガードを判ずる。判定の依り所は著者ではなく正本で、SPEC-011 が検査群と決定性を固定し、ADR-052 は編集画面の表示層が統治判断を持たないと定めて判定者を表示から分離する。判定が行われた記録も残り、ADR-119 は監査が走ったこと自体の印を残すと定め、ADR-062 はフックが発火の印を残して対の食い違いから拒否経路の欠落を疑うと定める。人の側の中立な担い手としては配布 Skill の doc-review が置かれている。",
+      "evidence": [
+        "plugin/scripts/docs-linter.py",
+        "plugin/scripts/policy-guard.py",
+        "plugin/scripts/docs-audit.py",
+        "SessionEnd",
+        "PreToolUse",
+        "SPEC-011",
+        "ADR-052",
+        "ADR-119",
+        "ADR-062",
+        "doc-review"
+      ],
+      "recheck_trigger": "判定の一部が著者側の宣言に委ねられる経路（自己申告で検査を素通りできる仕組み）が導入されたとき、または発火の印が残らない判定経路が生じたとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "92db15ce00556efd3d2db257b1aa86f0eaa4762afaafbf84fb36966bd755cf57",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:plenary-plus-one-on-one-review",
       "title": "全体会議と一対一議論を併用して分析を進める",
       "category": "レビューと監査",
       "source_lines": "L1265-L1265",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "点検は一括の全体一回に集約されておらず、二層に分散している。文書単位の個別点検は PostToolUse の docs-linter.py（SPEC-007）と review-nudge.py（SPEC-024）が担い、ADR-012 が doc-review を著述時の閉じた輪にすると定めて個別レビューを著述の場に置く。全体側は SessionEnd の docs-audit.py（SPEC-011）で、ADR-046 は既定 Level 2 では全件検査を CI に委ねると定め、全体の会を重くしない設計を明示する。受入は TEST-007・TEST-011・TEST-024 に在る。なお本体系が記録するのは人の議論そのものではなく決定と点検の結果であり、想定 oracle の『議論記録』は ADR・CHANGE の形で残る。",
+      "evidence": [
+        "SPEC-007",
+        "SPEC-024",
+        "SPEC-011",
+        "ADR-012",
+        "ADR-046",
+        "plugin/scripts/review-nudge.py",
+        "plugin/scripts/docs-audit.py",
+        "TEST-024",
+        "TEST-011"
+      ],
+      "recheck_trigger": "個別点検の経路（PostToolUse のリンタまたは review-nudge）が外され、点検が全件監査の一括実行だけに集約されたとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "92db15ce00556efd3d2db257b1aa86f0eaa4762afaafbf84fb36966bd755cf57",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     },
     {
       "key": "STPA:method-introduction-before-first-use",
       "title": "手法が新規な組織では最初に手法の導入説明を行う",
       "category": "組織と力量",
       "source_lines": "L1267-L1267",
-      "disposition": "UNKNOWN",
-      "reason": "MAP_COVERAGE 未実施",
-      "evidence": null,
-      "recheck_trigger": "MAP_COVERAGE の実行"
+      "disposition": "実装・試験・証拠あり",
+      "reason": "適用開始前に手法を説明する構えは実装されている。導入は scaffold.py（SPEC-015／docs-system-init）が _system の最小配置とルートの案内を非破壊で置くところから始まり、ADR-041 が導入直後を警告で始めないこと（状態の種蒔き・Level 昇格・初日の中立案内）を定め、ADR-046 が初回監査前は警告でなく案内を出すと定める。ADR-066 は版の切替の検出と Level 昇格の一度きりの案内を体系に持たせ、新しい段階へ移る前に説明が出る経路を gov-heartbeat.py（SPEC-021）に載せる。案内の置き場も ADR-029 が CLAUDE.md と AGENTS.md を投影ではなく案内と定めて確保している。受入は TEST-015・TEST-021 に在る。",
+      "evidence": [
+        "SPEC-015",
+        "ADR-041",
+        "ADR-046",
+        "ADR-066",
+        "ADR-029",
+        "plugin/scripts/scaffold.py",
+        "plugin/scripts/gov-heartbeat.py",
+        "docs-system-init",
+        "TEST-015",
+        "TEST-021"
+      ],
+      "recheck_trigger": "個別の新規規則や技能が、導入時の案内・説明を伴わずに直ちに拒否や警告として発火する経路で追加されたとき。",
+      "gap": null,
+      "confidence": "medium",
+      "assigned_at": "2026-08-05T10:16:56Z",
+      "assigned_by": {
+        "model": "claude-opus-5",
+        "effort": "high",
+        "prompt_sha256": "92db15ce00556efd3d2db257b1aa86f0eaa4762afaafbf84fb36966bd755cf57",
+        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+      }
     }
-  ]
+  ],
+  "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2"
 }
