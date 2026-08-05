@@ -70,8 +70,21 @@ class OrchestratorTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             self._stub_ledger(tmp, coverage_unknown=3, evaluated_unknown=4)
             cov = orchestrator.coverage_status()["jerg"]
-            self.assertEqual(cov["unassessed"], 3)
+            self.assertEqual(cov["unmapped"], 3)
             self.assertEqual(cov["unknown"], 7)
+
+    def test_unassessed_disposition_is_not_unmapped_work(self):
+        """五値の UNASSESSED（前提欠如で評価できないという結論）は割当済みである。
+        集計キー unmapped（まだ評価していない）と同じ語で数えてはならない
+        —— 一語に二つの意味を持たせる取り違えは INC-006・INC-010 で二度起きた。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            self._stub_ledger(tmp, coverage_unknown=0, unassessed_disposition=2)
+            cov = orchestrator.coverage_status()["jerg"]
+            self.assertEqual(cov["unmapped"], 0)
+            self.assertEqual(cov["status"], "MAPPED")
+            self.assertEqual(
+                [a for a in orchestrator.next_actions()
+                 if a.startswith("MAP_COVERAGE")], [])
 
     def test_mapped_coverage_is_not_an_action(self):
         """全件が割り当て済みなら MAP_COVERAGE は挙げない（消えない行動を作らない）。"""
@@ -81,7 +94,8 @@ class OrchestratorTest(unittest.TestCase):
                 [a for a in orchestrator.next_actions()
                  if a.startswith("MAP_COVERAGE")], [])
 
-    def _stub_ledger(self, tmp, coverage_unknown, evaluated_unknown=0):
+    def _stub_ledger(self, tmp, coverage_unknown, evaluated_unknown=0,
+                     unassessed_disposition=0):
         """実台帳に依存しない一時の帳簿を立てる（三冊とも抽出済み扱い）。"""
         for attr, value in (("CATALOG_DIR", tmp),
                             ("INCIDENTS_PATH", os.path.join(tmp, "inc.json"))):
@@ -102,6 +116,10 @@ class OrchestratorTest(unittest.TestCase):
                          "assigned_at": "2026-08-05T00:00:00Z",
                          "reason": "索引から判定できない"}
                         for i in range(evaluated_unknown)]
+            entries += [{"key": "u%d" % i, "disposition": "UNASSESSED",
+                         "assigned_at": "2026-08-05T00:00:00Z",
+                         "reason": "前提が欠けて評価できない"}
+                        for i in range(unassessed_disposition)]
             entries.append({"key": "done", "disposition": "非該当で理由あり"})
             with open(os.path.join(tmp, "%s-coverage.json" % book),
                       "w", encoding="utf-8") as f:

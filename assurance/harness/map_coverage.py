@@ -216,7 +216,9 @@ def main(argv=None):
                     if e.get("disposition") == "UNKNOWN" and not e.get("assigned_at"))
     judged_unknown = sum(1 for e in cov["entries"]
                          if e.get("disposition") == "UNKNOWN" and e.get("assigned_at"))
-    summary = dict(totals, book=args.book, remaining_unassessed=remaining,
+    # 鍵の名は unmapped 側で揃える（五値の UNASSESSED と数を混ぜない。orchestrator
+    # の coverage_status と同じ語で呼ぶ）。
+    summary = dict(totals, book=args.book, remaining_unmapped=remaining,
                    judged_unknown=judged_unknown, stopped=stopped)
     print(json.dumps(summary, ensure_ascii=False))
     if stopped:
