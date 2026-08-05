@@ -212,6 +212,101 @@ def leading_indicators_defined(analysis):
     return True
 
 
+_MAP_COVERAGE_CHARTER = """\
+あなたは保証キャンペーンの MAP_COVERAGE 担当（jerg レーン＝検証計画と客観的証拠の
+観点）である。検証原則の一つひとつを、下に示す doctrine の**現状の索引**と
+突き合わせ、五値のどれかへ割り当てる。
+
+五値の意味:
+- 実装・試験・証拠あり … 原則が求めることが実装され、試験があり、証拠を指せる。
+- 対応計画あり       … 実装は無いが、対応する決定や仕様が現に在る（gap に何が
+                        足りないかを書く）。
+- 非該当で理由あり   … この体系には当たらない（reason に、なぜ当たらないかを書く。
+                        「対象外の領域だから」で終わらせず、境界の根拠を示す）。
+- UNKNOWN            … 索引からは判定できない。判らないことを判らないと書く。
+- UNASSESSED         … 前提が欠けて評価できない。
+
+規律:
+- **証拠ポインタの無い「実装・試験・証拠あり」を書かない。** evidence には索引に
+  実在するものだけを書く: 文書 id（`SPEC-011`）・ファイルの場所
+  （`plugin/scripts/docs-audit.py`）・監査の検査名（`adr_not_landed`）・
+  リンタの検査コード（`MISSING_KEY`）・Hook のイベント名（`SessionEnd`）・
+  `plugin/tests/test_x.py::test_名` の形。解決しないポインタは機械照合で外され、
+  その割当は UNKNOWN へ落ちる。
+- 索引に無いものを在ることにしない。索引は現状のすべてではないが、あなたが
+  参照してよい唯一の現状である。読んでいないものを根拠にしない。
+- 原則の言い回しが体系の語と違うだけの場合と、実際に機構が無い場合を区別する。
+- 迷ったら「実装・試験・証拠あり」ではなく UNKNOWN。**緑へ倒さない。**
+- recheck_trigger には「この割当を見直すべき出来事」を一文で書く。
+"""
+
+
+def build_map_coverage_prompt(principles, system_index_text):
+    """MAP_COVERAGE の一回限りセッション用プロンプト。
+
+    principles: [{key, title, statement, category, applicability,
+                  suggested_oracle}, ...]（割当の対象だけ）。
+    system_index_text: system_index.as_prompt_text() の平文。
+
+    ここでも、実装者の会話・弁明・期待する結論を渡す口は作らない。
+    """
+    if not principles:
+        raise ValueError("割当の対象が空のまま評価へ渡さない")
+    if not system_index_text.strip():
+        raise ValueError("現状の索引が空のまま評価へ渡さない（UNASSESSED へ倒す）")
+    items = []
+    for p in principles:
+        items.append(
+            "- key: %s\n  題: %s\n  原則: %s\n  分類: %s\n"
+            "  当てはめ仮説: %s\n  想定 oracle: %s"
+            % (p.get("key"), p.get("title"), p.get("statement"),
+               p.get("category"), p.get("applicability"),
+               p.get("suggested_oracle")))
+    return (
+        "%s\n--- doctrine の現状の索引 ---\n%s\n--- 索引ここまで ---\n\n"
+        "--- 割当の対象（%d 件。すべてに一つずつ答える）---\n%s\n"
+        "--- 対象ここまで ---\n\n"
+        "COVERAGE_ASSIGNMENT_SCHEMA に適合する JSON だけを返す。"
+        "assignments は対象と同じ %d 件で、key はそのまま写す。"
+        % (_MAP_COVERAGE_CHARTER, system_index_text,
+           len(principles), "\n".join(items), len(principles)))
+
+
+def verify_coverage_assignments(assignments, resolve, requested_keys):
+    """割当の証拠ポインタを索引と照合する（網羅の反幻覚 oracle）。
+
+    resolve: ポインタ文字列 → 種別 or None（system_index.resolve_pointer の部分適用）。
+    requested_keys: 依頼した key の集合。知らない key の割当は受け取らない。
+
+    返り値: (accepted, downgraded, rejected)
+    - accepted   … そのまま台帳へ入れてよい割当。
+    - downgraded … 「実装・試験・証拠あり」だが解決する証拠が無く UNKNOWN へ落とした割当。
+    - rejected   … 依頼していない key（台帳へ入れない）。
+    """
+    known = set(requested_keys)
+    accepted, downgraded, rejected = [], [], []
+    for a in assignments:
+        if a.get("key") not in known:
+            rejected.append({"assignment": a, "problem": "依頼していない key"})
+            continue
+        pointers = list(a.get("evidence") or [])
+        resolved = [p for p in pointers if resolve(p)]
+        unresolved = [p for p in pointers if not resolve(p)]
+        a = dict(a)
+        a["evidence"] = resolved
+        if unresolved:
+            a["unresolved_evidence"] = unresolved
+        if a.get("disposition") == "実装・試験・証拠あり" and not resolved:
+            a["original_disposition"] = a["disposition"]
+            a["disposition"] = "UNKNOWN"
+            a["reason"] = ("[証拠ポインタが索引で解決しないため UNKNOWN へ落とした] "
+                           + str(a.get("reason") or ""))
+            downgraded.append(a)
+        else:
+            accepted.append(a)
+    return accepted, downgraded, rejected
+
+
 def build_challenge_prompt(discover_output_json):
     """CHALLENGE の一回限りセッション用プロンプト。
 

@@ -173,8 +173,15 @@ def coverage_status():
                             "unknown": None, "total": 0}
             continue
         unknown = sum(1 for e in entries if e.get("disposition") == "UNKNOWN")
+        # 評価の結果としての UNKNOWN（割当済み）と、まだ評価していない UNKNOWN を
+        # 分ける。混ぜると、判定不能と結論した項目を永久に引き直す「消えない行動」に
+        # なる（INC-006 と同型を、その修正の直後に持ち込みかけた）。
+        unassessed = sum(1 for e in entries
+                         if e.get("disposition") == "UNKNOWN"
+                         and not e.get("assigned_at"))
         out[book_id] = {
-            "status": "PARTIAL" if unknown else "MAPPED",
+            "status": "PARTIAL" if unassessed else "MAPPED",
+            "unassessed": unassessed,
             "unknown": unknown,
             "total": len(entries),
         }
@@ -209,8 +216,9 @@ def next_actions():
         if cov["status"] == "UNASSESSED":
             actions.append("MAP_COVERAGE: %s の台帳骨組みの生成" % book_id)
         elif cov["status"] == "PARTIAL":
-            actions.append("MAP_COVERAGE: %s の未割当 %d/%d 件"
-                           % (book_id, cov["unknown"], cov["total"]))
+            actions.append("MAP_COVERAGE: %s の未評価 %d/%d 件（判定不能 %d 件は割当済み）"
+                           % (book_id, cov["unassessed"], cov["total"],
+                              cov["unknown"] - cov["unassessed"]))
         elif cov["status"] == "UNKNOWN":
             actions.append("MAP_COVERAGE: %s の台帳が読めない（%s）"
                            % (book_id, cov.get("reason")))

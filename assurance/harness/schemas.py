@@ -257,6 +257,36 @@ COVERAGE_DISPOSITIONS = [
     "UNKNOWN", "UNASSESSED",
 ]
 
+# MAP_COVERAGE の成果物。原則ごとに五値のどれかへ割り当てる。
+# 「実装・試験・証拠あり」は証拠ポインタが索引で解決したときだけ通る
+# （通らなければ prompts.verify_coverage_assignments が UNKNOWN へ落とす）。
+COVERAGE_ASSIGNMENT_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "assignments": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "type": "object",
+                "properties": {
+                    "key": {"type": "string"},
+                    "disposition": {"enum": COVERAGE_DISPOSITIONS},
+                    "reason": {"type": "string"},
+                    "evidence": {"type": "array", "items": {"type": "string"}},
+                    "gap": {"type": "string"},
+                    "recheck_trigger": {"type": "string"},
+                    "confidence": {"enum": ["high", "medium", "low"]},
+                },
+                "required": ["key", "disposition", "reason",
+                             "recheck_trigger", "confidence"],
+                "additionalProperties": False,
+            },
+        },
+    },
+    "required": ["assignments"],
+    "additionalProperties": False,
+}
+
 # FORMALIZE の成果物。campaign 定義のフィールドをそのまま持つ。
 SCENARIO_SCHEMA = {
     "type": "object",
