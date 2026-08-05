@@ -6,6 +6,17 @@
 
 ### 直した（照合が意図より広かった）
 
+- **用語チェッカーの未定義語判定が、ハイフンで綴じた識別子を全体として扱うようにした**。
+  語境界はハイフンで切れるので、変更前は `INC-005`・`NOT-APPLICABLE`・`SHA-256` の
+  前半が単独の未定義略語として挙がった（実測: 保証キャンペーン 2026-08-05、本
+  リポジトリの ADR を書いている最中に発火。事象 INC-004）。下の ASCII（英数字だけの
+  文字集合）語境界の項と同じ WATCH-001『部分文字列の取り違え』類型で、こちらは
+  未定義語の側。綴じるのはハイフンだけとし、他の約物は従来どおり語の境目に残す
+  （緩和を広げすぎないことを `test_standalone_acronym_next_to_punctuation_still_flagged`
+  が凍結する）。受入は `test_hyphen_joined_identifier_is_one_token` ほか2件。
+  修正前に FAIL（走ったが不適合）する証拠は
+  `assurance/ledger/red/INC-004-undefined-term.json`。
+
 - **用語チェッカーの禁止同義語照合が、ASCII 純字の同義語に ASCII 語境界を要求するようにした**。
   日本語に語境界は無いので生の部分一致が正しいが、ASCII には境界が在る。変更前は
   『IF』(→ICD)が ASCII 語の内部へも一致し、`VERIFY`・`UNVERIFIED` と書いた文書が

@@ -152,6 +152,35 @@ def catalog_status():
     return out
 
 
+def coverage_status():
+    """冊子ごとの網羅台帳の状態。骨組みの存在と割当の完了を区別する。
+
+    骨組みだけが在る台帳は「MAP_COVERAGE 未実施」であって済みではない
+    （事象 INC-006: 骨組みの存在を済みと読み、606 件が UNKNOWN のまま
+    next_actions が空になった）。
+    """
+    out = {}
+    for book_id in sorted(books.BOOKS):
+        path = os.path.join(CATALOG_DIR, "%s-coverage.json" % book_id)
+        if not os.path.isfile(path):
+            out[book_id] = {"status": "UNASSESSED", "unknown": None, "total": 0}
+            continue
+        try:
+            with open(path, encoding="utf-8") as f:
+                entries = json.load(f).get("entries", [])
+        except (OSError, ValueError) as exc:
+            out[book_id] = {"status": "UNKNOWN", "reason": str(exc),
+                            "unknown": None, "total": 0}
+            continue
+        unknown = sum(1 for e in entries if e.get("disposition") == "UNKNOWN")
+        out[book_id] = {
+            "status": "PARTIAL" if unknown else "MAPPED",
+            "unknown": unknown,
+            "total": len(entries),
+        }
+    return out
+
+
 def load_incidents():
     if not os.path.isfile(INCIDENTS_PATH):
         return []
@@ -172,9 +201,23 @@ def next_actions():
     for inc in load_incidents():
         if inc.get("cast_analysis") in (None, "pending"):
             actions.append("CAST_ANALYSIS: %s" % inc["id"])
-    if cats["jerg"]["status"] == "PRESENT" and not os.path.isfile(
-            os.path.join(CATALOG_DIR, "jerg-coverage.json")):
-        actions.append("MAP_COVERAGE: jerg カタログ × doctrine 現状")
+    covs = coverage_status()
+    for book_id in ("jerg", "stpa", "cast"):
+        if cats[book_id]["status"] != "PRESENT":
+            continue          # 抽出が済むまで台帳は立たない（上の行動が先）
+        cov = covs[book_id]
+        if cov["status"] == "UNASSESSED":
+            actions.append("MAP_COVERAGE: %s の台帳骨組みの生成" % book_id)
+        elif cov["status"] == "PARTIAL":
+            actions.append("MAP_COVERAGE: %s の未割当 %d/%d 件"
+                           % (book_id, cov["unknown"], cov["total"]))
+        elif cov["status"] == "UNKNOWN":
+            actions.append("MAP_COVERAGE: %s の台帳が読めない（%s）"
+                           % (book_id, cov.get("reason")))
+    if not actions:
+        # 空は「やることが無い」と読める。反復の既定の入口を必ず示す
+        # （CAST_DONE・CURATED の遷移先。INC-006）。
+        actions.append("DISCOVER: 新しい失敗仮説の創出（前提はすべて充足）")
     return actions
 
 
@@ -185,8 +228,11 @@ def main(argv=None):
         print(json.dumps({"problems": problems}, ensure_ascii=False, indent=2))
         return 0 if not problems else 2
     if cmd == "status":
+        # 行動列だけでなく、それが導かれた根拠（未割当の件数）も必ず出す。
+        # 短い行動列を「済んだ」と読ませない（INC-006 の統制欠陥）。
         print(json.dumps({
             "catalogs": catalog_status(),
+            "coverage": coverage_status(),
             "incidents": [
                 {"id": i["id"], "cast_analysis": i.get("cast_analysis")}
                 for i in load_incidents()],

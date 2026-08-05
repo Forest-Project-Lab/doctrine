@@ -120,6 +120,98 @@ def verify_principles(chunk_text, principles):
     return accepted, rejected
 
 
+_CAST_CHARTER = """\
+あなたは保証キャンペーンの CAST_ANALYSIS 担当である。事故分析の規範（CAST）に
+沿って、事象そのものではなく**統制構造のどこが欠けていたか**を分析する。
+
+規律:
+- 個人・エージェントの不注意を原因にしない。「なぜその時点では妥当に見えたか」を
+  必ず書く。責任追及ではなく統制の再設計が目的である。
+- 統制欠陥は、下の統制構造に実在する要素 id を必ず指す。無い要素は作らない。
+- normative_refs には、下の CAST 検証原則の dedupe_key を**そのまま**書く。
+  一覧に無い鍵は機械照合で却下される。憶測の出典を書かない。
+- 修正済みの事象でも「なぜ既存の保証が見逃したか」を書く。修正は分析の代わりに
+  ならない。
+- leading_indicators（先行指標）は、事象が再発する**前**に観測できるものだけを書く。
+  事後に判る事実は指標ではない。どこで観測するか（where）と、何をもって異常と
+  するか（threshold）を具体に書く。
+- 指標が導入複製の版に依存するなら version_independent を false にする。
+  版が遅れると検出器も遅れる故障（古びの検出器が古びる）を隠さない。
+- 判らないことは unknowns に書く。埋めるために推測で断定しない。
+"""
+
+
+def build_cast_analysis_prompt(incident, control_structure_text, principle_index):
+    """CAST_ANALYSIS の一回限りセッション用プロンプト。
+
+    incident: incidents.json の一件（構造化された記録だけ）。
+    control_structure_text: control_structure.as_prompt_text() の平文。
+    principle_index: [(dedupe_key, title, statement), ...] の列（CAST カタログ）。
+
+    実装者の会話・弁明・期待する結論を渡す口は意図して作らない
+    （CHALLENGE と同じ独立性の規律。ADR-115）。
+    """
+    if not isinstance(incident, dict) or not incident.get("id"):
+        raise ValueError("incident は id を持つ構造化された記録でなければならない")
+    if not control_structure_text.strip():
+        raise ValueError("統制構造が空のまま分析へ渡さない")
+    if not principle_index:
+        raise ValueError("CAST カタログが空のまま分析へ渡さない（UNASSESSED へ倒す）")
+
+    refs = "\n".join(
+        "- %s ｜ %s ｜ %s" % (key, title, statement)
+        for key, title, statement in principle_index)
+    return (
+        "%s\n"
+        "--- 事象の記録（これが唯一の入力。会話履歴は存在しない）---\n%s\n"
+        "--- 統制構造（実在する要素だけ。id をそのまま使う）---\n%s\n"
+        "--- CAST 検証原則（dedupe_key ｜ 題 ｜ 一文）---\n%s\n"
+        "--- 一覧ここまで ---\n\n"
+        "CAST_ANALYSIS_SCHEMA に適合する JSON だけを返す。"
+        % (_CAST_CHARTER,
+           json.dumps(incident, ensure_ascii=False, indent=2),
+           control_structure_text, refs))
+
+
+def verify_cast_analysis(analysis, known_element_ids, known_principle_keys):
+    """統制欠陥の参照先の実在を照合する（分析の反幻覚 oracle）。
+
+    返り値: (accepted_flaws, rejected_flaws)。rejected は理由を添えて返す。
+    実在しない統制要素・カタログに無い規範鍵を指す欠陥は実装へ渡さない。
+    """
+    accepted, rejected = [], []
+    elements = set(known_element_ids)
+    keys = set(known_principle_keys)
+    for flaw in analysis.get("control_flaws", []):
+        problems = []
+        if flaw.get("control_element_id") not in elements:
+            problems.append("統制構造に無い要素 %r" % flaw.get("control_element_id"))
+        unknown_refs = [r for r in flaw.get("normative_refs", []) if r not in keys]
+        if unknown_refs:
+            problems.append("カタログに無い規範鍵 %s" % unknown_refs[:3])
+        if problems:
+            rejected.append({"flaw": flaw, "problems": problems})
+        else:
+            accepted.append(flaw)
+    return accepted, rejected
+
+
+def leading_indicators_defined(analysis):
+    """CAST_DONE の guard（orchestrator の TRANSITIONS と同名）。
+
+    先行指標が一つ以上あり、どれも「どこで観測するか」と「何を異常とするか」を
+    埋めていること。空文字での形式的な充足は通さない。
+    """
+    indicators = analysis.get("leading_indicators") or []
+    if not indicators:
+        return False
+    for ind in indicators:
+        for key in ("indicator", "observable", "where", "threshold"):
+            if not str(ind.get(key) or "").strip():
+                return False
+    return True
+
+
 def build_challenge_prompt(discover_output_json):
     """CHALLENGE の一回限りセッション用プロンプト。
 

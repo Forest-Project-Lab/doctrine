@@ -158,6 +158,99 @@ PRINCIPLES_SCHEMA = {
     "additionalProperties": False,
 }
 
+# CAST_ANALYSIS の成果物。事象そのものではなく「統制のどこが欠けていたか」を書く。
+# 統制欠陥は統制構造の要素 id を必ず指し、規範の出典（CAST カタログの dedupe_key）を
+# 必ず持つ。どちらも機械照合できるので、出典なき断定は却下できる。
+CONTROL_FLAW_TYPES = [
+    "制御動作が無い", "制御動作が遅い", "制御動作が誤っている",
+    "手掛かりが無い", "手掛かりが誤っている", "手掛かりが遅い",
+    "統制の対象範囲が想定と食い違う", "統制どうしの調整の欠如",
+    "統制自身の劣化を検出できない",
+]
+
+CAST_ANALYSIS_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "incident_id": {"type": "string"},
+        "loss": {"type": "string"},
+        "hazard": {"type": "string"},
+        "control_flaws": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "type": "object",
+                "properties": {
+                    "control_element_id": {"type": "string"},
+                    "flaw_type": {"enum": CONTROL_FLAW_TYPES},
+                    "description": {"type": "string"},
+                    "why_it_seemed_adequate": {"type": "string"},
+                    "normative_refs": {
+                        "type": "array", "items": {"type": "string"}, "minItems": 1},
+                    "evidence_ref": {"type": "string"},
+                },
+                "required": ["control_element_id", "flaw_type", "description",
+                             "why_it_seemed_adequate", "normative_refs"],
+                "additionalProperties": False,
+            },
+        },
+        "why_existing_assurance_missed": {"type": "string"},
+        "systemic_factors": {"type": "array", "items": {"type": "string"}},
+        "leading_indicators": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "type": "object",
+                "properties": {
+                    "indicator": {"type": "string"},
+                    "observable": {"type": "string"},
+                    "where": {"type": "string"},
+                    "threshold": {"type": "string"},
+                    "version_independent": {"type": "boolean"},
+                    "why_version_independent": {"type": "string"},
+                },
+                "required": ["indicator", "observable", "where", "threshold",
+                             "version_independent"],
+                "additionalProperties": False,
+            },
+        },
+        "new_scenario_candidates": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "hypothesis": {"type": "string"},
+                    "oracle": {"type": "string"},
+                    "falsification_signal": {"type": "string"},
+                    "severity": {"enum": ["P0", "P1", "P2", "P3"]},
+                },
+                "required": ["hypothesis", "oracle", "falsification_signal",
+                             "severity"],
+                "additionalProperties": False,
+            },
+        },
+        "recommendations": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "action": {"type": "string"},
+                    "kind": {"enum": ["機構の変更", "監視の追加", "文書化",
+                                      "所有者判断", "調査の継続"]},
+                    "owner_decision_required": {"type": "boolean"},
+                },
+                "required": ["action", "kind", "owner_decision_required"],
+                "additionalProperties": False,
+            },
+        },
+        "unknowns": {"type": "array", "items": {"type": "string"}},
+        "confidence": {"enum": ["high", "medium", "low"]},
+    },
+    "required": ["incident_id", "loss", "hazard", "control_flaws",
+                 "why_existing_assurance_missed", "leading_indicators",
+                 "unknowns", "confidence"],
+    "additionalProperties": False,
+}
+
 # 規範網羅の分類（campaign「規範網羅」の五値）。
 COVERAGE_DISPOSITIONS = [
     "実装・試験・証拠あり", "対応計画あり", "非該当で理由あり",

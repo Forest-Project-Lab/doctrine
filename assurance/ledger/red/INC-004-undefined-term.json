@@ -1,0 +1,16 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "reproduce-red",
+  "incident_id": "INC-004-hyphen-token-undefined-term",
+  "generated_at": "2026-08-05T05:25:44Z",
+  "git_sha": "230419ee4c69c65e5112ab061345dbbf7e5aa277",
+  "phase": "before-fix",
+  "command": "python3 -m unittest plugin.tests.test_termcheck.UndefinedTermTest -v",
+  "returncode": 1,
+  "expect": "修正前に FAIL すること（最初から緑は再現と認めない）",
+  "observed_failures": [
+    "FAIL: test_hyphen_joined_identifier_is_one_token (plugin.tests.test_termcheck.UndefinedTermTest.test_hyphen_joined_identifier_is_one_token)",
+    "FAIL: test_hyphen_joined_tail_is_not_flagged_alone (plugin.tests.test_termcheck.UndefinedTermTest.test_hyphen_joined_tail_is_not_flagged_alone)"
+  ],
+  "tail": "de='UNDEFINED_TERM', severity='[44 chars]e=1)] != []\n\nFirst list contains 1 additional elements.\nFirst extra element 0:\nFinding(code='UNDEFINED_TERM', severity='WARN', message='未定義語『INC』を初出で定義する(§1)。', line=1)\n\n- [Finding(code='UNDEFINED_TERM', severity='WARN', message='未定義語『INC』を初出で定義する(§1)。', line=1)]\n+ [] : 事象 INC-005 を参照する。 → INC\n\n======================================================================\nFAIL: test_hyphen_joined_tail_is_not_flagged_alone (plugin.tests.test_termcheck.UndefinedTermTest.test_hyphen_joined_tail_is_not_flagged_alone)\n後半だけを未定義語として挙げるのも同じ取り違えである。\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/workspaces/doctrine/plugin/tests/test_termcheck.py\", line 297, in test_hyphen_joined_tail_is_not_flagged_alone\n    self.assertEqual(\nAssertionError: Lists differ: ['未定義語『NOT』を初出で定義する(§1)。', '未定義語『APPLICABLE』を初出で定義する(§1)。'] != []\n\nFirst list contains 2 additional elements.\nFirst extra element 0:\n'未定義語『NOT』を初出で定義する(§1)。'\n\n- ['未定義語『NOT』を初出で定義する(§1)。', '未定義語『APPLICABLE』を初出で定義する(§1)。']\n+ []\n\n----------------------------------------------------------------------\nRan 10 tests in 0.058s\n\nFAILED (failures=2)\n"
+}
