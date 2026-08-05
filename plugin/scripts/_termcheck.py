@@ -409,21 +409,27 @@ def mask_body(body):
 # Specialized-term candidate: a Latin acronym (>=2 upper) or Latin+digit token.
 _SPECIAL_TERM_RE = re.compile(r"\b([A-Z]{2,}[0-9]*|[A-Za-z]+[0-9]+)\b")
 
-# A hyphen glues ASCII runs into ONE identifier ('INC-005', 'NOT-APPLICABLE',
-# 'SHA-256'). `\b` in _SPECIAL_TERM_RE breaks at the hyphen, so the leading and
-# trailing runs each look like a standalone acronym. Judging a fragment as
-# undefined jargon is the WATCH-001 substring-mistaking family in its ASCII
-# word-boundary form (INC-002 was the same family for BANNED_SYNONYM; INC-004 is
-# this one). A hyphen-joined identifier is judged as a whole or not at all —
-# never by its fragments. Only '-' glues: other punctuation still bounds a term.
-_HYPHEN_GLUE_BEFORE_RE = re.compile(r"[0-9A-Za-z]-\Z")
-_HYPHEN_GLUE_AFTER_RE = re.compile(r"\A-[0-9A-Za-z]")
+# Some ASCII punctuation GLUES runs into ONE identifier: 'INC-005',
+# 'NOT-APPLICABLE', 'SHA-256' (hyphen) and 'v0.7.0', 'ARINC653.1' (dot).
+# `\b` in _SPECIAL_TERM_RE breaks at the glue, so the leading and trailing runs
+# each look like a standalone acronym. Judging a fragment as undefined jargon is
+# the WATCH-001 substring-mistaking family in its ASCII word-boundary form
+# (INC-002 hit BANNED_SYNONYM; INC-004 was the hyphen here; INC-011 the dot).
+# A glued identifier is judged as a whole or not at all — never by its fragments.
+#
+# _GLUE is the AXIS, not a list of fixed cases: adding a glue character is a data
+# change with a matching row in test_identifier_glue_axis_is_covered. Everything
+# NOT listed here still bounds a term (the relaxation must not widen past this).
+# '_' needs no entry — it is a word character, so `\b` never splits on it.
+_GLUE = "-."
+_GLUE_BEFORE_RE = re.compile(r"[0-9A-Za-z][%s]\Z" % re.escape(_GLUE))
+_GLUE_AFTER_RE = re.compile(r"\A[%s][0-9A-Za-z]" % re.escape(_GLUE))
 
 
-def _is_hyphen_fragment(text, start, end):
-    """Is text[start:end] merely a piece of a longer hyphen-joined identifier?"""
-    return bool(_HYPHEN_GLUE_BEFORE_RE.search(text[max(0, start - 2):start])
-                or _HYPHEN_GLUE_AFTER_RE.match(text[end:end + 2]))
+def _is_identifier_fragment(text, start, end):
+    """Is text[start:end] merely a piece of a longer glued identifier?"""
+    return bool(_GLUE_BEFORE_RE.search(text[max(0, start - 2):start])
+                or _GLUE_AFTER_RE.match(text[end:end + 2]))
 
 
 def _line_of_offset(text, offset):
@@ -679,8 +685,8 @@ def _check_undefined(masked, glossary):
     loanwords = set(glossary.loanwords)
     for m in _SPECIAL_TERM_RE.finditer(masked):
         term = m.group(1)
-        if _is_hyphen_fragment(masked, m.start(), m.end()):
-            continue   # 識別子の断片。全体としてしか判じない(INC-004)
+        if _is_identifier_fragment(masked, m.start(), m.end()):
+            continue   # 識別子の断片。全体としてしか判じない(INC-004・INC-011)
         if term in seen:
             continue
         seen.add(term)

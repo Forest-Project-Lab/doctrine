@@ -291,6 +291,21 @@ class UndefinedTermTest(unittest.TestCase):
             ut = [f for f in fs if f.code == "UNDEFINED_TERM"]
             self.assertEqual(ut, [], "%s → %s" % (body, fragment))
 
+    def test_identifier_glue_axis_is_covered(self):
+        """既知類型を『失敗様式の軸』へ展開する（接着文字の軸）。
+
+        INC-004 はハイフン、INC-011 はドットで同じ取り違えが起きた。個別の事例を
+        一つずつ潰す形では三例目・四例目が出る。接着文字をこの表の行として持ち、
+        新しい接着を足すときは**先にここへ行を足す**。
+        """
+        for glue in ("-", "."):
+            for head, tail in (("INC", "005"), ("NOT", "APPLICABLE"),
+                               ("SHA", "256"), ("v0", "7")):
+                body = "識別子 %s%s%s を参照する。" % (head, glue, tail)
+                fs = tc.check(body, {"type": "SPEC"}, self.g)
+                ut = [f for f in fs if f.code == "UNDEFINED_TERM"]
+                self.assertEqual(ut, [], body)
+
     def test_hyphen_joined_tail_is_not_flagged_alone(self):
         """後半だけを未定義語として挙げるのも同じ取り違えである。"""
         fs = tc.check("状態は NOT-APPLICABLE とする。", {"type": "SPEC"}, self.g)

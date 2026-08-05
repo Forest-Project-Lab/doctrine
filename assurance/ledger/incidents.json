@@ -139,12 +139,16 @@
       "date": "2026-08-05",
       "summary": "版の綴り v0.7.0 の前半 v0 が単独の未定義略語として挙がった。INC-004(ハイフン)と同型で、接着がドットの場合。WATCH-001『部分文字列の取り違え』類型の三例目",
       "detected_by": "ADR-119 を書いている最中に発火(2026-08-05)。INC-004 の発見と同じ経路",
-      "fixed": false,
-      "cast_analysis": "pending",
+      "fixed": true,
+      "cast_analysis": "done",
       "pattern_note": "一つずつ接着文字を足す対処では追いつかない兆候。識別子を『ASCII 英数字と - と . から成る連なり』として一度に扱う一般化を検討する。ただし緩和を広げすぎない柵(他の約物は語の境目)は保つ",
       "why_missed_hypothesis": "INC-002 の cast 分析が指摘した『既知類型を失敗様式の軸へ展開して反例集合へ変換する段の不在』が、修正の直後にもう一度実証された。INC-004 の修正はハイフンという一事例に閉じており、軸(接着文字)へ展開していない",
       "next_step": "別 PR。REPRODUCE_RED から。この PR では ADR-119 の文言を書き換えて回避しただけであり、欠陥は残っている",
-      "evidence": "本会話中のリンタ助言(ADR-119 の初稿に対する UNDEFINED_TERM『v0』)"
+      "evidence": "本会話中のリンタ助言(ADR-119 の初稿に対する UNDEFINED_TERM『v0』)",
+      "cast_analysis_ref": "assurance/ledger/cast/INC-011-dot-joined-token-undefined-term.json",
+      "cast_analyzed_at": "2026-08-05T10:05:06Z",
+      "fix_note": "接着文字を軸として持つ形に一般化した。_termcheck.py の _GLUE が正本で、足すときは先に test_identifier_glue_axis_is_covered の行を足す。WATCH-001 第2項も『事例ではなく軸』へ書き換えた。修正前 FAIL の証拠は assurance/ledger/red/INC-011-dot-glue.json",
+      "verification_note_2026-08-05": "本件の分析で初めて統制欠陥が1件却下された（4つの出典のうち1つが実在しない dedupe_key の捏造）。照合器は意図どおり働いた。ただし残り3つは実在しており、『どれか一つでも解決しなければ欠陥ごと却下』という厳格側の規則が、内容としては妥当な指摘を落としている。網羅の割当（ADR-118）は解決しないポインタだけを外して残す形で、規則が食い違っている。**この反復では緩めない** —— 気に入った指摘を通すために反幻覚の規則を緩めるのは、まさに campaign が禁じた『都合のよい停止条件』だからである。規則を揃えるかは所有者判断として残す"
     }
   ]
 }
