@@ -1,0 +1,774 @@
+{
+  "accepted_flaws": [
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "「次の行動を決定論で導く」制御が、coverage_status の単一値を入力として map_coverage と next_actions を算出しており、評価の結果としての UNKNOWN を未評価と同じ扱いで引き直しの対象に含めていた。制御が決定論であることは、その制御が向かう先が正しいことを意味しない。出力は毎回同一で安定していたが、その安定は『同じ 8 件を永久に指し続ける』形の安定であった。",
+      "evidence_ref": "本会話中の実測（2026-08-05, merge 前）: jerg の割当完了後も next_actions が『未割当 8/158 件』を出力し続けた。fix_note: unassessed(assigned_at 無し) と unknown を分けて数える。",
+      "flaw_type": "制御動作が誤っている",
+      "normative_refs": [
+        "プロセスモデルと実状態の不整合",
+        "process-model-inconsistency-causes-unsafe-control",
+        "信頼性と安全性の分離",
+        "software-does-not-fail-requirements-defect"
+      ],
+      "why_it_seemed_adequate": "当該キャンペーンの設計時点では、coverage_status は『被覆済みか否か』を表す一軸の語彙として導入され、判定不能という第三の帰結は評価を走らせて初めて生まれた。導入時には値の由来が一つしかなく、単一値で表すことに矛盾は無かった。また next_actions が毎回同じ集合を返すことは決定論の要件そのものであり、出力の反復自体は正常動作と区別がつかない。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "台帳および next_actions が出す『未割当 8/158 件』という手掛かりは、実際には『評価済みで判定不能 8 件・未評価 0 件』を指していた。二つの母数が一つのラベルに集約されているため、手掛かりを受け取る側（OWNER、および次ラウンドのレーン自身）が実状態を復元する手段が無い。カウントを提供する側の設計欠陥であり、受け取り側の読み違いとしては扱えない。",
+      "evidence_ref": "実測された next_actions 出力『未割当 8/158 件』と、割当完了済みという実状態の食い違い。",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "defects-in-information-providing-systems",
+        "include-information-supplier-defect",
+        "リスク情報の不透明な集約禁止"
+      ],
+      "why_it_seemed_adequate": "表示は台帳の単一フィールドから機械的に導かれており、集計経路に恣意は無い。数値は内部的に一貫しており、他のどの数値とも矛盾しないため、表示だけを見て誤りを疑う手掛かりが存在しなかった。"
+    },
+    {
+      "control_element_id": "OWNER",
+      "description": "OWNER が持つ手掛かり（進捗報告・PR の diff・台帳 assurance/ledger/）のいずれにも、『評価を経て判定不能と結論した件数』を『まだ評価していない件数』と分けて示す欄が無い。したがって OWNER は、キャンペーンが収束に向かっているのか同じ場所を回っているのかを、手元の情報だけからは区別できない。既知の穴（報告が実施ではなく意図を書いていても人からは見分けにくい）と同じ構造で、報告の粒度が上位コントローラの判断に必要な粒度を下回っている。",
+      "evidence_ref": "統制構造記載の OWNER 手掛かり一覧（進捗報告・PR diff・台帳）に判定不能の別建て項目が無い。",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "controller-needs-concrete-feedback-channels",
+        "要約統計偏重による傾向情報の喪失",
+        "全コントロールループにフィードバック必須"
+      ],
+      "why_it_seemed_adequate": "進捗報告は規定形式に適合しており、未割当件数という単一の残数指標は進捗の要約として一般に十分に見える。残数が単調に減る限りこの要約で判断でき、残数が減らないことが『作業が残っている』と読めるうちは異常として立ち上がらない。"
+    },
+    {
+      "control_element_id": "CI_RELEASE_CHECK",
+      "description": "merge 前に赤で止める制御には、レーンの出力の終了性（同じ入力を繰り返し与えたとき next_actions が単調減少し空へ収束すること）および状態語彙の由来分離を検査する試験が含まれていない。INC-006 の是正では当該症状に対応する受入試験が追加されたが、それは個別症状に固有の試験であり、同一類型を一般に捕まえる不変条件としては CI に置かれていない。本件も同様に、事象が実測された後に test_evaluated_unknown_is_not_re_listed ほか 1 件が追加される順序になっている。",
+      "evidence_ref": "fix_note: 受入は test_evaluated_unknown_is_not_re_listed ほか1件。検出は CI ではなく本会話中の実測。",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "symptom-vs-systemic-cause",
+        "監査の検出力評価",
+        "監査のすり抜け時に監査手順を是正",
+        "audit-findings-must-be-closed"
+      ],
+      "why_it_seemed_adequate": "INC-006 の是正時点では、追加した受入試験がその事象を確実に赤にすることを確認できており、是正の完了条件を満たしていた。是正の一般化を要求する基準が明示されていない限り、症状に対応する試験の追加は十分な対処として自然に見える。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "レーンは事象を台帳へ積み分析が済むまで閉じない制御を持つが、同一キャンペーン内で同型の取り違え（状態を一つの値で表し由来の違う二つを混ぜる）が二度成立したこと自体を、是正が症状止まりであることの兆候として検出・提示する機構を持たない。pattern_note に人が書いた記述としては残るが、レーンの制御入力にはなっていない。",
+      "evidence_ref": "pattern_note: 同一キャンペーン内で同型の取り違えが二度（INC-006 は骨組みの存在と割当完了、本件は判定不能と未評価）。",
+      "flaw_type": "統制自身の劣化を検出できない",
+      "normative_refs": [
+        "兆候止まりを禁じ共通体系要因の特定を要求",
+        "是正措置の有効性証拠の収集",
+        "変化ドリフトの事前検出",
+        "共通の体系的要因による多重防護の無効化"
+      ],
+      "why_it_seemed_adequate": "各事象は個別に検出され、個別に修正され、個別に台帳へ閉じられており、事象単位の処理としては完結している。類型の再出現は複数の台帳項目にまたがる性質であり、事象単位の処理からは視野に入らない。"
+    },
+    {
+      "control_element_id": "GOVERNANCE_TREE",
+      "description": "INC-006 の分析から得られた類型（状態の表現に由来の異なる意味を畳み込まない）が、後続の実装が参照できる想定・制約として統治木に記録されていない。隣接する WATCH-001（照合が意図より広い）は存在するが、本件の類型を包含する記述にはなっておらず、想定が破られたときに気づくための先行指標も定義されていない。結果として、直後の実装は同じ設計判断を独立に再現できる状態に置かれていた。",
+      "evidence_ref": "pattern_note が WATCH-001 を『隣接』とのみ記述し、包含する統治記述が挙げられていないこと。",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "教訓の反映手順の確立",
+        "分析成果の再利用蓄積",
+        "安全想定の記録と失効先行指標の定義",
+        "learning-failure-decomposed-into-info-system-questions"
+      ],
+      "why_it_seemed_adequate": "INC-006 は修正済みで台帳上は閉じており、修正がコードに入っている以上、同じ誤りは繰り返されないと見なせる。類型としての抽象化は分析の副産物であり、文書化の対象として明示的に要求されていない。"
+    },
+    {
+      "control_element_id": "POST_TOOL_LINTER",
+      "description": "リンタは編集された一つの文書だけを点検する設計であり、点検対象は統治文書に限定される。本件の欠陥はハーネス側の状態集計コード（orchestrator の coverage_status 集計と map_coverage）に存在し、かつ単一ファイル内で閉じず『状態を書く地点』と『状態を読む地点』の関係に宿るため、対象範囲・粒度の双方から観測できない。統治の点検は文書に効くという想定と、実際に損失を生む場所とが食い違っている。",
+      "evidence_ref": "統制構造記載: 『編集された一つの文書だけを点検し、助言を返す』『decision を出さない設計であり、拒否はガード頼み（WATCH-001）』。",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "scope-beyond-operating-process",
+        "verify-all-hazard-preventing-systems",
+        "do-not-start-too-narrow"
+      ],
+      "why_it_seemed_adequate": "リンタは統治木の健全性を守るために設計された助言器であり、その範囲内では設計どおりに機能している。範囲外を見ないことは設計上の非目標として宣言されており、欠落ではなく仕様として扱われてきた。"
+    },
+    {
+      "control_element_id": "PRE_TOOL_GUARD",
+      "description": "拒否の門は違反する編集・削除を終了コード 2 で拒む制御を持つが、拒否の判定基準は文書・削除の安全性に置かれており、状態語彙に新しい値が導入されるときにその値の由来が既存値と重ならないことを要求する門は存在しない。すなわち、本件の欠陥は『拒めるはずの違反』として定義されていない。",
+      "evidence_ref": "統制構造記載の PRE_TOOL_GUARD の制御内容と既知の穴（体系側から拒否能力を検出しない）。",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "accidents-from-inadequate-constraint-enforcement",
+        "ハザードから安全制約を導出",
+        "trace-why-design-flaw-was-introduced"
+      ],
+      "why_it_seemed_adequate": "ガードの責務は復旧不能な操作と統治違反の遮断であり、意味論的な設計判断（状態表現の分割）はレビューと試験の領域と整理されてきた。ガードで意味論を判定しようとすれば誤拒否が増えるため、範囲を絞る判断には合理性がある。"
+    },
+    {
+      "control_element_id": "SESSION_START_CONTRACT",
+      "description": "セッション冒頭に注入される確定・非目標・退行監視の要点に、直前に閉じた INC-006 の類型を昇格させる経路が無い。注入内容の更新が事象の分析完了に追随しないため、同型の設計判断が行われるセッションの開始時点では、その類型はまだ注入対象に含まれていない。加えて注入は主セッションだけに効き、サブエージェント側には届かない（NONGOAL-001）。",
+      "evidence_ref": "統制構造記載: SESSION_START_CONTRACT の制御内容と NONGOAL-001。事象は INC-006 修正の直後に発生。",
+      "flaw_type": "手掛かりが遅い",
+      "normative_refs": [
+        "教訓の記録と伝達と活用",
+        "情報活用のための構造とプロセス",
+        "設計時想定の運用中再検査"
+      ],
+      "why_it_seemed_adequate": "注入の要点は安定した確定事項を対象とする設計であり、頻繁に書き換えると要点が肥大して読まれなくなる。直近の一事象を即座に要点へ昇格させない運用には、可読性を保つという合理的な理由がある。"
+    },
+    {
+      "control_element_id": "PLUGIN_DISTRIBUTION",
+      "description": "本件の是正は merge 前・未出荷（shipped: false）であり、是正が利用者環境の複製へ届くかどうかは利用者の update 操作に依存する。是正済みという台帳上の状態と、導入複製で実際に動いている挙動との間には、リポジトリ側から観測できない世代差が残る。是正が『済み』と記録された時点と、ハザードが実際に消える時点が一致しない。",
+      "evidence_ref": "事象記録 fixed: true / shipped: false。統制構造記載の既知の穴（複製が何世代遅れているかをリポジトリ側から観測できない、INC-005）。",
+      "flaw_type": "制御動作が遅い",
+      "normative_refs": [
+        "供給要素の変更を利用者へ通知",
+        "指摘欠点の是正完了追跡",
+        "重要変更の明示的通知"
+      ],
+      "why_it_seemed_adequate": "marketplace 経由の更新は利用者の環境を勝手に書き換えない設計であり、利用者操作を前提とすることは配布境界の尊重として妥当である。また本件は未出荷であるため、現時点で利用者側に持ち込まれた挙動は存在しない。"
+    }
+  ],
+  "analysis": {
+    "confidence": "medium",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "「次の行動を決定論で導く」制御が、coverage_status の単一値を入力として map_coverage と next_actions を算出しており、評価の結果としての UNKNOWN を未評価と同じ扱いで引き直しの対象に含めていた。制御が決定論であることは、その制御が向かう先が正しいことを意味しない。出力は毎回同一で安定していたが、その安定は『同じ 8 件を永久に指し続ける』形の安定であった。",
+        "evidence_ref": "本会話中の実測（2026-08-05, merge 前）: jerg の割当完了後も next_actions が『未割当 8/158 件』を出力し続けた。fix_note: unassessed(assigned_at 無し) と unknown を分けて数える。",
+        "flaw_type": "制御動作が誤っている",
+        "normative_refs": [
+          "プロセスモデルと実状態の不整合",
+          "process-model-inconsistency-causes-unsafe-control",
+          "信頼性と安全性の分離",
+          "software-does-not-fail-requirements-defect"
+        ],
+        "why_it_seemed_adequate": "当該キャンペーンの設計時点では、coverage_status は『被覆済みか否か』を表す一軸の語彙として導入され、判定不能という第三の帰結は評価を走らせて初めて生まれた。導入時には値の由来が一つしかなく、単一値で表すことに矛盾は無かった。また next_actions が毎回同じ集合を返すことは決定論の要件そのものであり、出力の反復自体は正常動作と区別がつかない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "台帳および next_actions が出す『未割当 8/158 件』という手掛かりは、実際には『評価済みで判定不能 8 件・未評価 0 件』を指していた。二つの母数が一つのラベルに集約されているため、手掛かりを受け取る側（OWNER、および次ラウンドのレーン自身）が実状態を復元する手段が無い。カウントを提供する側の設計欠陥であり、受け取り側の読み違いとしては扱えない。",
+        "evidence_ref": "実測された next_actions 出力『未割当 8/158 件』と、割当完了済みという実状態の食い違い。",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "defects-in-information-providing-systems",
+          "include-information-supplier-defect",
+          "リスク情報の不透明な集約禁止"
+        ],
+        "why_it_seemed_adequate": "表示は台帳の単一フィールドから機械的に導かれており、集計経路に恣意は無い。数値は内部的に一貫しており、他のどの数値とも矛盾しないため、表示だけを見て誤りを疑う手掛かりが存在しなかった。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "OWNER が持つ手掛かり（進捗報告・PR の diff・台帳 assurance/ledger/）のいずれにも、『評価を経て判定不能と結論した件数』を『まだ評価していない件数』と分けて示す欄が無い。したがって OWNER は、キャンペーンが収束に向かっているのか同じ場所を回っているのかを、手元の情報だけからは区別できない。既知の穴（報告が実施ではなく意図を書いていても人からは見分けにくい）と同じ構造で、報告の粒度が上位コントローラの判断に必要な粒度を下回っている。",
+        "evidence_ref": "統制構造記載の OWNER 手掛かり一覧（進捗報告・PR diff・台帳）に判定不能の別建て項目が無い。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "controller-needs-concrete-feedback-channels",
+          "要約統計偏重による傾向情報の喪失",
+          "全コントロールループにフィードバック必須"
+        ],
+        "why_it_seemed_adequate": "進捗報告は規定形式に適合しており、未割当件数という単一の残数指標は進捗の要約として一般に十分に見える。残数が単調に減る限りこの要約で判断でき、残数が減らないことが『作業が残っている』と読めるうちは異常として立ち上がらない。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "merge 前に赤で止める制御には、レーンの出力の終了性（同じ入力を繰り返し与えたとき next_actions が単調減少し空へ収束すること）および状態語彙の由来分離を検査する試験が含まれていない。INC-006 の是正では当該症状に対応する受入試験が追加されたが、それは個別症状に固有の試験であり、同一類型を一般に捕まえる不変条件としては CI に置かれていない。本件も同様に、事象が実測された後に test_evaluated_unknown_is_not_re_listed ほか 1 件が追加される順序になっている。",
+        "evidence_ref": "fix_note: 受入は test_evaluated_unknown_is_not_re_listed ほか1件。検出は CI ではなく本会話中の実測。",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "symptom-vs-systemic-cause",
+          "監査の検出力評価",
+          "監査のすり抜け時に監査手順を是正",
+          "audit-findings-must-be-closed"
+        ],
+        "why_it_seemed_adequate": "INC-006 の是正時点では、追加した受入試験がその事象を確実に赤にすることを確認できており、是正の完了条件を満たしていた。是正の一般化を要求する基準が明示されていない限り、症状に対応する試験の追加は十分な対処として自然に見える。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "レーンは事象を台帳へ積み分析が済むまで閉じない制御を持つが、同一キャンペーン内で同型の取り違え（状態を一つの値で表し由来の違う二つを混ぜる）が二度成立したこと自体を、是正が症状止まりであることの兆候として検出・提示する機構を持たない。pattern_note に人が書いた記述としては残るが、レーンの制御入力にはなっていない。",
+        "evidence_ref": "pattern_note: 同一キャンペーン内で同型の取り違えが二度（INC-006 は骨組みの存在と割当完了、本件は判定不能と未評価）。",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "兆候止まりを禁じ共通体系要因の特定を要求",
+          "是正措置の有効性証拠の収集",
+          "変化ドリフトの事前検出",
+          "共通の体系的要因による多重防護の無効化"
+        ],
+        "why_it_seemed_adequate": "各事象は個別に検出され、個別に修正され、個別に台帳へ閉じられており、事象単位の処理としては完結している。類型の再出現は複数の台帳項目にまたがる性質であり、事象単位の処理からは視野に入らない。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "INC-006 の分析から得られた類型（状態の表現に由来の異なる意味を畳み込まない）が、後続の実装が参照できる想定・制約として統治木に記録されていない。隣接する WATCH-001（照合が意図より広い）は存在するが、本件の類型を包含する記述にはなっておらず、想定が破られたときに気づくための先行指標も定義されていない。結果として、直後の実装は同じ設計判断を独立に再現できる状態に置かれていた。",
+        "evidence_ref": "pattern_note が WATCH-001 を『隣接』とのみ記述し、包含する統治記述が挙げられていないこと。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "教訓の反映手順の確立",
+          "分析成果の再利用蓄積",
+          "安全想定の記録と失効先行指標の定義",
+          "learning-failure-decomposed-into-info-system-questions"
+        ],
+        "why_it_seemed_adequate": "INC-006 は修正済みで台帳上は閉じており、修正がコードに入っている以上、同じ誤りは繰り返されないと見なせる。類型としての抽象化は分析の副産物であり、文書化の対象として明示的に要求されていない。"
+      },
+      {
+        "control_element_id": "POST_TOOL_LINTER",
+        "description": "リンタは編集された一つの文書だけを点検する設計であり、点検対象は統治文書に限定される。本件の欠陥はハーネス側の状態集計コード（orchestrator の coverage_status 集計と map_coverage）に存在し、かつ単一ファイル内で閉じず『状態を書く地点』と『状態を読む地点』の関係に宿るため、対象範囲・粒度の双方から観測できない。統治の点検は文書に効くという想定と、実際に損失を生む場所とが食い違っている。",
+        "evidence_ref": "統制構造記載: 『編集された一つの文書だけを点検し、助言を返す』『decision を出さない設計であり、拒否はガード頼み（WATCH-001）』。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "scope-beyond-operating-process",
+          "verify-all-hazard-preventing-systems",
+          "do-not-start-too-narrow"
+        ],
+        "why_it_seemed_adequate": "リンタは統治木の健全性を守るために設計された助言器であり、その範囲内では設計どおりに機能している。範囲外を見ないことは設計上の非目標として宣言されており、欠落ではなく仕様として扱われてきた。"
+      },
+      {
+        "control_element_id": "PRE_TOOL_GUARD",
+        "description": "拒否の門は違反する編集・削除を終了コード 2 で拒む制御を持つが、拒否の判定基準は文書・削除の安全性に置かれており、状態語彙に新しい値が導入されるときにその値の由来が既存値と重ならないことを要求する門は存在しない。すなわち、本件の欠陥は『拒めるはずの違反』として定義されていない。",
+        "evidence_ref": "統制構造記載の PRE_TOOL_GUARD の制御内容と既知の穴（体系側から拒否能力を検出しない）。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "accidents-from-inadequate-constraint-enforcement",
+          "ハザードから安全制約を導出",
+          "trace-why-design-flaw-was-introduced"
+        ],
+        "why_it_seemed_adequate": "ガードの責務は復旧不能な操作と統治違反の遮断であり、意味論的な設計判断（状態表現の分割）はレビューと試験の領域と整理されてきた。ガードで意味論を判定しようとすれば誤拒否が増えるため、範囲を絞る判断には合理性がある。"
+      },
+      {
+        "control_element_id": "SESSION_START_CONTRACT",
+        "description": "セッション冒頭に注入される確定・非目標・退行監視の要点に、直前に閉じた INC-006 の類型を昇格させる経路が無い。注入内容の更新が事象の分析完了に追随しないため、同型の設計判断が行われるセッションの開始時点では、その類型はまだ注入対象に含まれていない。加えて注入は主セッションだけに効き、サブエージェント側には届かない（NONGOAL-001）。",
+        "evidence_ref": "統制構造記載: SESSION_START_CONTRACT の制御内容と NONGOAL-001。事象は INC-006 修正の直後に発生。",
+        "flaw_type": "手掛かりが遅い",
+        "normative_refs": [
+          "教訓の記録と伝達と活用",
+          "情報活用のための構造とプロセス",
+          "設計時想定の運用中再検査"
+        ],
+        "why_it_seemed_adequate": "注入の要点は安定した確定事項を対象とする設計であり、頻繁に書き換えると要点が肥大して読まれなくなる。直近の一事象を即座に要点へ昇格させない運用には、可読性を保つという合理的な理由がある。"
+      },
+      {
+        "control_element_id": "PLUGIN_DISTRIBUTION",
+        "description": "本件の是正は merge 前・未出荷（shipped: false）であり、是正が利用者環境の複製へ届くかどうかは利用者の update 操作に依存する。是正済みという台帳上の状態と、導入複製で実際に動いている挙動との間には、リポジトリ側から観測できない世代差が残る。是正が『済み』と記録された時点と、ハザードが実際に消える時点が一致しない。",
+        "evidence_ref": "事象記録 fixed: true / shipped: false。統制構造記載の既知の穴（複製が何世代遅れているかをリポジトリ側から観測できない、INC-005）。",
+        "flaw_type": "制御動作が遅い",
+        "normative_refs": [
+          "供給要素の変更を利用者へ通知",
+          "指摘欠点の是正完了追跡",
+          "重要変更の明示的通知"
+        ],
+        "why_it_seemed_adequate": "marketplace 経由の更新は利用者の環境を勝手に書き換えない設計であり、利用者操作を前提とすることは配布境界の尊重として妥当である。また本件は未出荷であるため、現時点で利用者側に持ち込まれた挙動は存在しない。"
+      }
+    ],
+    "hazard": "保証レーンが、由来の異なる二つの状態（未評価＝assigned_at 無し／評価の結果としての判定不能）を coverage_status の単一値へ畳み込んだまま保持し、その値を次行動の決定と被覆率の算出に用いている状態。この状態では、コントローラ（ASSURANCE_LANE）のプロセスモデルが対象プロセスの実状態と一致せず、「まだ見ていない」と「見た上で決着した」が同一の制御アクション（引き直し）を誘発する。",
+    "incident_id": "INC-010-evaluated-unknown-relisted",
+    "leading_indicators": [
+      {
+        "indicator": "next_actions の非収束（同一項目 id の再掲）",
+        "observable": "固定入力でレーンを連続ラウンド空回ししたときの next_actions 集合の推移。同一項目 id が、当該項目に対する評価完了イベント（assigned_at 記録または評価結果の確定）の後も出現し続けるか",
+        "threshold": "評価完了が記録された項目 id が、その後 2 ラウンド以上 next_actions に再出現したら異常。または next_actions の集合サイズが 3 ラウンド連続で減少しなければ異常",
+        "version_independent": true,
+        "where": "assurance/harness/orchestrator.py の next_actions 出力および assurance/ledger/ の履歴",
+        "why_version_independent": "リポジトリ正本のハーネスに固定入力を与えて観測でき、利用者環境へ導入された複製の版に依存しない"
+      },
+      {
+        "indicator": "状態語彙の値あたりの意味的由来の数",
+        "observable": "coverage_status など状態を表す列挙の各値について、その値を書き込むコード地点と、書き込みの契機となる事実の種類を列挙した対応表",
+        "threshold": "一つの列挙値に対し、意味的に異なる契機（例: 未評価／評価済み判定不能）からの書き込み地点が 2 種類以上あれば異常",
+        "version_independent": true,
+        "where": "assurance/harness/ 配下の静的検査（状態値の書き込み地点の走査）",
+        "why_version_independent": "正本コードの静的性質であり、導入複製の版とは無関係に観測できる"
+      },
+      {
+        "indicator": "残数表示の内訳整合",
+        "observable": "進捗報告・next_actions が出す『未割当 N 件』と、assigned_at 欠損件数を独立に数え直した値との差",
+        "threshold": "差が 0 でない状態が 1 回でも観測されたら異常（差の正負を問わない）",
+        "version_independent": true,
+        "where": "assurance/ledger/ の集計と進捗報告の生成経路",
+        "why_version_independent": "台帳と集計コードを正本側で突き合わせるだけで判定でき、複製の版に依存しない"
+      },
+      {
+        "indicator": "終了性を検査する決定論試験の本数",
+        "observable": "CI の決定論試験のうち、出力の収束・単調減少を検査する試験の数、および状態語彙に値が追加された変更に随伴して追加された不変条件試験の数",
+        "threshold": "終了性試験が 0 本なら異常。状態語彙へ値を追加する変更が、由来分離または終了性の不変条件試験を伴わずに提出されたら異常",
+        "version_independent": true,
+        "where": ".github/workflows のジョブ結果と試験一覧",
+        "why_version_independent": "CI はリポジトリ正本を対象に走るため、利用者環境の導入状態に左右されない"
+      },
+      {
+        "indicator": "是正の一般化率（症状固有試験のみで閉じた是正の連続数）",
+        "observable": "台帳で閉じた事象について、受入試験が当該症状に固有か、同型を一般に捕まえる不変条件かの分類",
+        "threshold": "症状固有試験のみで閉じた是正が連続 2 件を超えたら異常（類型の再出現を許す状態が続いている兆候）",
+        "version_independent": true,
+        "where": "assurance/ledger/ と PR の diff",
+        "why_version_independent": "台帳と PR の内容だけで判定でき、配布・導入の版に依存しない"
+      },
+      {
+        "indicator": "是正を含む版の導入複製への到達遅れ",
+        "observable": "HEARTBEAT が比較する正本の版と導入複製の版の世代差、および本件の受入試験を含む版が複製へ到達しているか",
+        "threshold": "世代差が 1 以上の状態が 1 セッションを超えて継続したら異常",
+        "version_independent": false,
+        "where": "plugin/scripts/gov-heartbeat.py の警告と .claude/.cache/last-audit.json",
+        "why_version_independent": "検出器（HEARTBEAT）自身が導入複製の側で動くため、複製の版が遅れると検出器も同時に遅れる共通原因故障を含む（INC-005）。この指標は、版が遅れているときにこそ最も鈍る"
+      }
+    ],
+    "loss": "保証レーンが導く「次の行動」が有限に収束しない状態が持ち込まれかけた。評価を終えて判定不能と結論した 8 件が毎ラウンド next_actions に再掲されるため、(1) 評価資源が既に結論の出た対象へ恒久的に振り向けられ、(2) OWNER が受け取る進捗（未割当 8/158 件）が実状態（未評価 0 件・評価済み判定不能 8 件）と異なる意味で伝わり、キャンペーンの完了判断の根拠が損なわれる。merge 前に検出され是正されたため利用者環境への影響は生じていない（shipped: false）。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "全列挙値について契機が一対一で対応し、複数契機を持つ値が 0 件であれば本仮説は否定される",
+        "hypothesis": "coverage_status 以外の状態語彙にも同型の畳み込みが残っている（例: 事象台帳の cast_analysis: pending が『未着手』と『分析したが結論保留』を同一値で表す）",
+        "oracle": "状態を表す全列挙について、値ごとに書き込み地点と書き込みの契機を列挙した対応表を静的に生成し、一値に複数の意味的契機が対応する箇所を抽出する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "全ての固定入力で有限ラウンド以内に空へ収束すれば本仮説は否定される",
+        "hypothesis": "判定不能以外にも next_actions を非収束にする経路がある（依存が欠けて恒久的に割当不能な項目、対象外と結論した項目など）",
+        "oracle": "固定入力でレーンを N ラウンド空回しし、next_actions 集合が単調減少して空へ収束するかを決定論試験として検査する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "算出経路が単一の定義関数に集約されており、他の経路が存在しなければ本仮説は否定される",
+        "hypothesis": "是正が map_coverage の側だけに入り、進捗報告など別の集計経路が旧定義（unassessed と unknown を合算）のまま残っている",
+        "oracle": "『未割当』件数を算出・表示する全経路を洗い出し、いずれも同一の定義関数を経由しているかを確認する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "語彙変更を伴う変更が全て不変条件試験を伴っていれば本仮説は否定される",
+        "hypothesis": "INC-006 と本件の類型が統治木へ昇格しないまま、三度目の同型が同一キャンペーン内で成立する",
+        "oracle": "以後の状態語彙追加・変更を伴う変更について、由来分離の不変条件試験が随伴しているかを PR 単位で追跡する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "複製の版が正本と一致し、世代差 0 が継続して観測されれば本仮説は否定される",
+        "hypothesis": "是正済みだが未出荷であるため、導入複製側では旧挙動（判定不能を引き直す next_actions）が動き続け、その差をリポジトリ側から観測できない",
+        "oracle": "HEARTBEAT の版比較出力に、本件の受入試験を含む版へ到達済みかどうかを示す判定を加え、複製の世代差を観測する",
+        "severity": "P3"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "coverage_status を『評価の有無（assigned_at の有無に対応）』と『評価結果（判定不能を含む）』の二軸へ分離し、単一値へ由来の異なる状態を畳み込まないことを型で表現する。互換性に影響するため適用範囲は OWNER の判断を要する",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "決定論試験に終了性の検査を追加する。固定入力でレーンを反復し、next_actions が単調減少して有限ラウンドで空へ収束すること、および評価完了が記録された項目 id が再出現しないことを不変条件として赤で止める",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "状態列挙の各値について書き込み地点と契機を走査し、一値に複数の意味的契機が対応する箇所を検出する静的検査を CI へ追加する",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "進捗報告と台帳の表示を、未評価件数と評価済み判定不能件数を別建てで示す形に改め、単一の残数へ要約しない",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "INC-006 と本件に共通する類型（状態の表現に由来の異なる意味を畳み込まない）を統治木へ想定として記録し、その想定が成立しなくなったことを示す先行指標（上記の静的検査と終了性試験）を併記する。WATCH-001 との包含関係も明記する",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "判定不能と結論した 8 件について、結論の根拠と、結論を覆して再評価を起動する条件（新情報・評価 model の更新・依存の解消）を定義する。凍結のまま放置するか再評価を設けるかは所有者の判断を要する",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "『未割当』件数を算出する全経路を洗い出し、単一の定義関数へ集約されているかを確認する。旧定義の残存があれば併せて是正する",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "是正の完了条件に『症状固有試験に加え、同型を一般に捕まえる不変条件試験があること』を加えるかを検討する。完了条件の変更はレーンの運用規約に触れるため所有者の判断を要する",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "本件の是正を含む版が導入複製へ到達したかを HEARTBEAT の版比較で判定できるようにし、到達前は当該挙動が複製側に残っている旨を警告する。ただしこの検出器は複製側で動くため、版遅れ時に検出器も遅れる残余リスクを明記する",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "同型の畳み込みが残る箇所の棚卸しを、状態語彙全体を対象に実施する",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "状態を単一のスカラで表す設計が、事象の増加に伴って複数の由来を吸収していく。導入時点では一軸で妥当であり、由来が増える瞬間に分割を要求する統制が存在しない（同一キャンペーン内で二度成立: INC-006・INC-010）",
+      "是正の完了条件が『当該症状を赤にする試験の追加』に置かれており、類型としての不変条件へ昇格させることが要求されていない。症状ごとの是正は個別には妥当で、蓄積しても類型は塞がらない",
+      "保証の焦点が『行動が出ること』（信頼性）に置かれ、『行動が有限で終わること』（安全性に相当する性質）が別の検査対象として分離されていない",
+      "統治の点検器（リンタ・ガード・監査）の対象範囲が統治文書に置かれ、実際に決定を生むハーネスのコードが視野の外にある",
+      "上位コントローラ（OWNER）へ届く手掛かりが単一の残数へ要約され、内訳の由来が消える。要約の粒度が判断の粒度を下回っていることを検出する経路が無い",
+      "是正の完了記録（fixed）と、利用者環境での実効（shipped・導入複製の版）が別の時間軸を持ち、前者だけで閉じられる",
+      "検出が人の実測に依存しており、観測されなければ非収束はそのまま安定して動き続ける（沈黙する故障）"
+    ],
+    "unknowns": [
+      "8 件が判定不能と結論された根拠、およびその結論を将来覆す条件（再評価トリガ）が定義されているかは記録から判らない。定義が無ければ、判定不能は引き直しの対象から外れると同時に永久に凍結される可能性がある",
+      "coverage_status に今後 unassessed / unknown 以外の由来（評価中・評価不能・対象外など）が加わるか、およびこの語彙の変更を承認する主体が誰かは記録に無い",
+      "本件と INC-006 のほかに、同型の畳み込み（単一値へ由来の異なる状態を混ぜる）が残っている箇所の数は未測定である",
+      "未割当件数を算出する経路が map_coverage 一つに集約されているか、進捗報告など別経路が旧定義のまま残っているかは記録から判らない",
+      "受入試験が正本 CI 上で赤から緑へ遷移した証跡は未確認である（本会話中の実測に留まり、merge 前・未出荷）",
+      "WATCH-001 の類型定義が本件を包含する形へ更新されるかは未決であり、隣接という判断が誰の判断かも記録に無い",
+      "next_actions の終了性（何をもってキャンペーン完了とするか）が仕様として文書化されているかは判らない",
+      "サブエージェント経路で実装が行われた場合に、本件の類型が実装側へ届く経路があるかは判らない（NONGOAL-001 の範囲がどこまで及ぶか未確認）"
+    ],
+    "why_existing_assurance_missed": "既存の保証は「レーンが決定論で次の行動を出すこと」と「個々の事象に対応する受入試験が赤から緑へ移ること」を確認する形で組まれており、「出された行動の集合が有限回で空へ収束すること」を確認する対象を持っていない。next_actions が毎回同じ 8 件を返す状態は、決定論の観点からは正常な出力であり、残作業がある状態と外形的に区別がつかない。さらに coverage_status は導入時点で由来が一つしかない一軸の語彙として妥当であり、判定不能という第二の由来は評価を実行して初めて発生したため、語彙の導入時に分割の必要を示す証拠は存在しなかった。INC-006 の是正はその症状に対応する試験の追加で完了条件を満たしており、類型としての不変条件を CI や統治木へ昇格させる要求が定義されていない。加えて、リンタとガードの点検対象は統治文書であり、欠陥が宿ったのはハーネスの状態集計であって、既存センサの視野の外にあった。結果として検出は人が出力を実測することに依存し、修正済みである現在も、検出を人の観測に依存する構造そのものは変わっていない。"
+  },
+  "control_structure_ids": [
+    "OWNER",
+    "CI_RELEASE_CHECK",
+    "SESSION_START_CONTRACT",
+    "HEARTBEAT",
+    "PRE_TOOL_GUARD",
+    "POST_TOOL_LINTER",
+    "SESSION_END_AUDIT",
+    "CAPTURE_NUDGE",
+    "PLUGIN_DISTRIBUTION",
+    "ASSURANCE_LANE",
+    "GOVERNANCE_TREE"
+  ],
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "duration_ms": 257766,
+  "errors": [],
+  "execution_kind": "real-sdk",
+  "generated_at": "2026-08-05T09:13:21Z",
+  "git_dirty": true,
+  "git_sha": "e212e78c6dd40494eb06437a5960f85dcf789de3",
+  "incident_id": "INC-010-evaluated-unknown-relisted",
+  "incident_sha256": "26c7fc75a1a05d64531707017d9138660fc65ffd930def8fda91bd95febe3891",
+  "init": {
+    "claude_code_version": "2.1.221",
+    "model": "claude-opus-5",
+    "session_id": "66d64865-c4f7-4005-97f8-919ae5919859",
+    "tools_count": 27
+  },
+  "kind": "cast-analysis",
+  "leading_indicators_defined": true,
+  "options": {
+    "allowed_tools": [],
+    "cwd": "/tmp/assurance-cast-e7cjiszh",
+    "effort": "high",
+    "max_budget_usd": 4.0,
+    "max_turns": 1,
+    "model": "claude-opus-5",
+    "setting_sources": [],
+    "timeout_s": 900
+  },
+  "oracle": "structured_output がレーン側再検証にも適合",
+  "principles_offered": 337,
+  "prompt_sha256": "d323c724b4dcd48b450a76124646b2074cfb34a7dd5a5b21cc4ebc262e5a0ec7",
+  "rejected_flaws": [],
+  "result_meta": {
+    "duration_api_ms": 250144,
+    "is_error": false,
+    "num_turns": 2,
+    "session_id": "66d64865-c4f7-4005-97f8-919ae5919859",
+    "subtype": "success",
+    "total_cost_usd": 0.8221705,
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 39022,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 39022,
+      "cache_read_input_tokens": 15963,
+      "inference_geo": "not_available",
+      "input_tokens": 2,
+      "iterations": "list",
+      "output_tokens": 15510,
+      "server_tool_use": {
+        "web_fetch_requests": 0,
+        "web_search_requests": 0
+      },
+      "service_tier": "standard",
+      "speed": "standard"
+    }
+  },
+  "schema_sha256": "0d1643d5e16353723405302c1f6ffcf753915e2a4f27a3530e8ef9a9ee45cb46",
+  "sdk_version": "0.2.129",
+  "settled": true,
+  "status": "PASS",
+  "structured_output": {
+    "confidence": "medium",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "「次の行動を決定論で導く」制御が、coverage_status の単一値を入力として map_coverage と next_actions を算出しており、評価の結果としての UNKNOWN を未評価と同じ扱いで引き直しの対象に含めていた。制御が決定論であることは、その制御が向かう先が正しいことを意味しない。出力は毎回同一で安定していたが、その安定は『同じ 8 件を永久に指し続ける』形の安定であった。",
+        "evidence_ref": "本会話中の実測（2026-08-05, merge 前）: jerg の割当完了後も next_actions が『未割当 8/158 件』を出力し続けた。fix_note: unassessed(assigned_at 無し) と unknown を分けて数える。",
+        "flaw_type": "制御動作が誤っている",
+        "normative_refs": [
+          "プロセスモデルと実状態の不整合",
+          "process-model-inconsistency-causes-unsafe-control",
+          "信頼性と安全性の分離",
+          "software-does-not-fail-requirements-defect"
+        ],
+        "why_it_seemed_adequate": "当該キャンペーンの設計時点では、coverage_status は『被覆済みか否か』を表す一軸の語彙として導入され、判定不能という第三の帰結は評価を走らせて初めて生まれた。導入時には値の由来が一つしかなく、単一値で表すことに矛盾は無かった。また next_actions が毎回同じ集合を返すことは決定論の要件そのものであり、出力の反復自体は正常動作と区別がつかない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "台帳および next_actions が出す『未割当 8/158 件』という手掛かりは、実際には『評価済みで判定不能 8 件・未評価 0 件』を指していた。二つの母数が一つのラベルに集約されているため、手掛かりを受け取る側（OWNER、および次ラウンドのレーン自身）が実状態を復元する手段が無い。カウントを提供する側の設計欠陥であり、受け取り側の読み違いとしては扱えない。",
+        "evidence_ref": "実測された next_actions 出力『未割当 8/158 件』と、割当完了済みという実状態の食い違い。",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "defects-in-information-providing-systems",
+          "include-information-supplier-defect",
+          "リスク情報の不透明な集約禁止"
+        ],
+        "why_it_seemed_adequate": "表示は台帳の単一フィールドから機械的に導かれており、集計経路に恣意は無い。数値は内部的に一貫しており、他のどの数値とも矛盾しないため、表示だけを見て誤りを疑う手掛かりが存在しなかった。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "OWNER が持つ手掛かり（進捗報告・PR の diff・台帳 assurance/ledger/）のいずれにも、『評価を経て判定不能と結論した件数』を『まだ評価していない件数』と分けて示す欄が無い。したがって OWNER は、キャンペーンが収束に向かっているのか同じ場所を回っているのかを、手元の情報だけからは区別できない。既知の穴（報告が実施ではなく意図を書いていても人からは見分けにくい）と同じ構造で、報告の粒度が上位コントローラの判断に必要な粒度を下回っている。",
+        "evidence_ref": "統制構造記載の OWNER 手掛かり一覧（進捗報告・PR diff・台帳）に判定不能の別建て項目が無い。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "controller-needs-concrete-feedback-channels",
+          "要約統計偏重による傾向情報の喪失",
+          "全コントロールループにフィードバック必須"
+        ],
+        "why_it_seemed_adequate": "進捗報告は規定形式に適合しており、未割当件数という単一の残数指標は進捗の要約として一般に十分に見える。残数が単調に減る限りこの要約で判断でき、残数が減らないことが『作業が残っている』と読めるうちは異常として立ち上がらない。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "merge 前に赤で止める制御には、レーンの出力の終了性（同じ入力を繰り返し与えたとき next_actions が単調減少し空へ収束すること）および状態語彙の由来分離を検査する試験が含まれていない。INC-006 の是正では当該症状に対応する受入試験が追加されたが、それは個別症状に固有の試験であり、同一類型を一般に捕まえる不変条件としては CI に置かれていない。本件も同様に、事象が実測された後に test_evaluated_unknown_is_not_re_listed ほか 1 件が追加される順序になっている。",
+        "evidence_ref": "fix_note: 受入は test_evaluated_unknown_is_not_re_listed ほか1件。検出は CI ではなく本会話中の実測。",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "symptom-vs-systemic-cause",
+          "監査の検出力評価",
+          "監査のすり抜け時に監査手順を是正",
+          "audit-findings-must-be-closed"
+        ],
+        "why_it_seemed_adequate": "INC-006 の是正時点では、追加した受入試験がその事象を確実に赤にすることを確認できており、是正の完了条件を満たしていた。是正の一般化を要求する基準が明示されていない限り、症状に対応する試験の追加は十分な対処として自然に見える。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "レーンは事象を台帳へ積み分析が済むまで閉じない制御を持つが、同一キャンペーン内で同型の取り違え（状態を一つの値で表し由来の違う二つを混ぜる）が二度成立したこと自体を、是正が症状止まりであることの兆候として検出・提示する機構を持たない。pattern_note に人が書いた記述としては残るが、レーンの制御入力にはなっていない。",
+        "evidence_ref": "pattern_note: 同一キャンペーン内で同型の取り違えが二度（INC-006 は骨組みの存在と割当完了、本件は判定不能と未評価）。",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "兆候止まりを禁じ共通体系要因の特定を要求",
+          "是正措置の有効性証拠の収集",
+          "変化ドリフトの事前検出",
+          "共通の体系的要因による多重防護の無効化"
+        ],
+        "why_it_seemed_adequate": "各事象は個別に検出され、個別に修正され、個別に台帳へ閉じられており、事象単位の処理としては完結している。類型の再出現は複数の台帳項目にまたがる性質であり、事象単位の処理からは視野に入らない。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "INC-006 の分析から得られた類型（状態の表現に由来の異なる意味を畳み込まない）が、後続の実装が参照できる想定・制約として統治木に記録されていない。隣接する WATCH-001（照合が意図より広い）は存在するが、本件の類型を包含する記述にはなっておらず、想定が破られたときに気づくための先行指標も定義されていない。結果として、直後の実装は同じ設計判断を独立に再現できる状態に置かれていた。",
+        "evidence_ref": "pattern_note が WATCH-001 を『隣接』とのみ記述し、包含する統治記述が挙げられていないこと。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "教訓の反映手順の確立",
+          "分析成果の再利用蓄積",
+          "安全想定の記録と失効先行指標の定義",
+          "learning-failure-decomposed-into-info-system-questions"
+        ],
+        "why_it_seemed_adequate": "INC-006 は修正済みで台帳上は閉じており、修正がコードに入っている以上、同じ誤りは繰り返されないと見なせる。類型としての抽象化は分析の副産物であり、文書化の対象として明示的に要求されていない。"
+      },
+      {
+        "control_element_id": "POST_TOOL_LINTER",
+        "description": "リンタは編集された一つの文書だけを点検する設計であり、点検対象は統治文書に限定される。本件の欠陥はハーネス側の状態集計コード（orchestrator の coverage_status 集計と map_coverage）に存在し、かつ単一ファイル内で閉じず『状態を書く地点』と『状態を読む地点』の関係に宿るため、対象範囲・粒度の双方から観測できない。統治の点検は文書に効くという想定と、実際に損失を生む場所とが食い違っている。",
+        "evidence_ref": "統制構造記載: 『編集された一つの文書だけを点検し、助言を返す』『decision を出さない設計であり、拒否はガード頼み（WATCH-001）』。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "scope-beyond-operating-process",
+          "verify-all-hazard-preventing-systems",
+          "do-not-start-too-narrow"
+        ],
+        "why_it_seemed_adequate": "リンタは統治木の健全性を守るために設計された助言器であり、その範囲内では設計どおりに機能している。範囲外を見ないことは設計上の非目標として宣言されており、欠落ではなく仕様として扱われてきた。"
+      },
+      {
+        "control_element_id": "PRE_TOOL_GUARD",
+        "description": "拒否の門は違反する編集・削除を終了コード 2 で拒む制御を持つが、拒否の判定基準は文書・削除の安全性に置かれており、状態語彙に新しい値が導入されるときにその値の由来が既存値と重ならないことを要求する門は存在しない。すなわち、本件の欠陥は『拒めるはずの違反』として定義されていない。",
+        "evidence_ref": "統制構造記載の PRE_TOOL_GUARD の制御内容と既知の穴（体系側から拒否能力を検出しない）。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "accidents-from-inadequate-constraint-enforcement",
+          "ハザードから安全制約を導出",
+          "trace-why-design-flaw-was-introduced"
+        ],
+        "why_it_seemed_adequate": "ガードの責務は復旧不能な操作と統治違反の遮断であり、意味論的な設計判断（状態表現の分割）はレビューと試験の領域と整理されてきた。ガードで意味論を判定しようとすれば誤拒否が増えるため、範囲を絞る判断には合理性がある。"
+      },
+      {
+        "control_element_id": "SESSION_START_CONTRACT",
+        "description": "セッション冒頭に注入される確定・非目標・退行監視の要点に、直前に閉じた INC-006 の類型を昇格させる経路が無い。注入内容の更新が事象の分析完了に追随しないため、同型の設計判断が行われるセッションの開始時点では、その類型はまだ注入対象に含まれていない。加えて注入は主セッションだけに効き、サブエージェント側には届かない（NONGOAL-001）。",
+        "evidence_ref": "統制構造記載: SESSION_START_CONTRACT の制御内容と NONGOAL-001。事象は INC-006 修正の直後に発生。",
+        "flaw_type": "手掛かりが遅い",
+        "normative_refs": [
+          "教訓の記録と伝達と活用",
+          "情報活用のための構造とプロセス",
+          "設計時想定の運用中再検査"
+        ],
+        "why_it_seemed_adequate": "注入の要点は安定した確定事項を対象とする設計であり、頻繁に書き換えると要点が肥大して読まれなくなる。直近の一事象を即座に要点へ昇格させない運用には、可読性を保つという合理的な理由がある。"
+      },
+      {
+        "control_element_id": "PLUGIN_DISTRIBUTION",
+        "description": "本件の是正は merge 前・未出荷（shipped: false）であり、是正が利用者環境の複製へ届くかどうかは利用者の update 操作に依存する。是正済みという台帳上の状態と、導入複製で実際に動いている挙動との間には、リポジトリ側から観測できない世代差が残る。是正が『済み』と記録された時点と、ハザードが実際に消える時点が一致しない。",
+        "evidence_ref": "事象記録 fixed: true / shipped: false。統制構造記載の既知の穴（複製が何世代遅れているかをリポジトリ側から観測できない、INC-005）。",
+        "flaw_type": "制御動作が遅い",
+        "normative_refs": [
+          "供給要素の変更を利用者へ通知",
+          "指摘欠点の是正完了追跡",
+          "重要変更の明示的通知"
+        ],
+        "why_it_seemed_adequate": "marketplace 経由の更新は利用者の環境を勝手に書き換えない設計であり、利用者操作を前提とすることは配布境界の尊重として妥当である。また本件は未出荷であるため、現時点で利用者側に持ち込まれた挙動は存在しない。"
+      }
+    ],
+    "hazard": "保証レーンが、由来の異なる二つの状態（未評価＝assigned_at 無し／評価の結果としての判定不能）を coverage_status の単一値へ畳み込んだまま保持し、その値を次行動の決定と被覆率の算出に用いている状態。この状態では、コントローラ（ASSURANCE_LANE）のプロセスモデルが対象プロセスの実状態と一致せず、「まだ見ていない」と「見た上で決着した」が同一の制御アクション（引き直し）を誘発する。",
+    "incident_id": "INC-010-evaluated-unknown-relisted",
+    "leading_indicators": [
+      {
+        "indicator": "next_actions の非収束（同一項目 id の再掲）",
+        "observable": "固定入力でレーンを連続ラウンド空回ししたときの next_actions 集合の推移。同一項目 id が、当該項目に対する評価完了イベント（assigned_at 記録または評価結果の確定）の後も出現し続けるか",
+        "threshold": "評価完了が記録された項目 id が、その後 2 ラウンド以上 next_actions に再出現したら異常。または next_actions の集合サイズが 3 ラウンド連続で減少しなければ異常",
+        "version_independent": true,
+        "where": "assurance/harness/orchestrator.py の next_actions 出力および assurance/ledger/ の履歴",
+        "why_version_independent": "リポジトリ正本のハーネスに固定入力を与えて観測でき、利用者環境へ導入された複製の版に依存しない"
+      },
+      {
+        "indicator": "状態語彙の値あたりの意味的由来の数",
+        "observable": "coverage_status など状態を表す列挙の各値について、その値を書き込むコード地点と、書き込みの契機となる事実の種類を列挙した対応表",
+        "threshold": "一つの列挙値に対し、意味的に異なる契機（例: 未評価／評価済み判定不能）からの書き込み地点が 2 種類以上あれば異常",
+        "version_independent": true,
+        "where": "assurance/harness/ 配下の静的検査（状態値の書き込み地点の走査）",
+        "why_version_independent": "正本コードの静的性質であり、導入複製の版とは無関係に観測できる"
+      },
+      {
+        "indicator": "残数表示の内訳整合",
+        "observable": "進捗報告・next_actions が出す『未割当 N 件』と、assigned_at 欠損件数を独立に数え直した値との差",
+        "threshold": "差が 0 でない状態が 1 回でも観測されたら異常（差の正負を問わない）",
+        "version_independent": true,
+        "where": "assurance/ledger/ の集計と進捗報告の生成経路",
+        "why_version_independent": "台帳と集計コードを正本側で突き合わせるだけで判定でき、複製の版に依存しない"
+      },
+      {
+        "indicator": "終了性を検査する決定論試験の本数",
+        "observable": "CI の決定論試験のうち、出力の収束・単調減少を検査する試験の数、および状態語彙に値が追加された変更に随伴して追加された不変条件試験の数",
+        "threshold": "終了性試験が 0 本なら異常。状態語彙へ値を追加する変更が、由来分離または終了性の不変条件試験を伴わずに提出されたら異常",
+        "version_independent": true,
+        "where": ".github/workflows のジョブ結果と試験一覧",
+        "why_version_independent": "CI はリポジトリ正本を対象に走るため、利用者環境の導入状態に左右されない"
+      },
+      {
+        "indicator": "是正の一般化率（症状固有試験のみで閉じた是正の連続数）",
+        "observable": "台帳で閉じた事象について、受入試験が当該症状に固有か、同型を一般に捕まえる不変条件かの分類",
+        "threshold": "症状固有試験のみで閉じた是正が連続 2 件を超えたら異常（類型の再出現を許す状態が続いている兆候）",
+        "version_independent": true,
+        "where": "assurance/ledger/ と PR の diff",
+        "why_version_independent": "台帳と PR の内容だけで判定でき、配布・導入の版に依存しない"
+      },
+      {
+        "indicator": "是正を含む版の導入複製への到達遅れ",
+        "observable": "HEARTBEAT が比較する正本の版と導入複製の版の世代差、および本件の受入試験を含む版が複製へ到達しているか",
+        "threshold": "世代差が 1 以上の状態が 1 セッションを超えて継続したら異常",
+        "version_independent": false,
+        "where": "plugin/scripts/gov-heartbeat.py の警告と .claude/.cache/last-audit.json",
+        "why_version_independent": "検出器（HEARTBEAT）自身が導入複製の側で動くため、複製の版が遅れると検出器も同時に遅れる共通原因故障を含む（INC-005）。この指標は、版が遅れているときにこそ最も鈍る"
+      }
+    ],
+    "loss": "保証レーンが導く「次の行動」が有限に収束しない状態が持ち込まれかけた。評価を終えて判定不能と結論した 8 件が毎ラウンド next_actions に再掲されるため、(1) 評価資源が既に結論の出た対象へ恒久的に振り向けられ、(2) OWNER が受け取る進捗（未割当 8/158 件）が実状態（未評価 0 件・評価済み判定不能 8 件）と異なる意味で伝わり、キャンペーンの完了判断の根拠が損なわれる。merge 前に検出され是正されたため利用者環境への影響は生じていない（shipped: false）。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "全列挙値について契機が一対一で対応し、複数契機を持つ値が 0 件であれば本仮説は否定される",
+        "hypothesis": "coverage_status 以外の状態語彙にも同型の畳み込みが残っている（例: 事象台帳の cast_analysis: pending が『未着手』と『分析したが結論保留』を同一値で表す）",
+        "oracle": "状態を表す全列挙について、値ごとに書き込み地点と書き込みの契機を列挙した対応表を静的に生成し、一値に複数の意味的契機が対応する箇所を抽出する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "全ての固定入力で有限ラウンド以内に空へ収束すれば本仮説は否定される",
+        "hypothesis": "判定不能以外にも next_actions を非収束にする経路がある（依存が欠けて恒久的に割当不能な項目、対象外と結論した項目など）",
+        "oracle": "固定入力でレーンを N ラウンド空回しし、next_actions 集合が単調減少して空へ収束するかを決定論試験として検査する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "算出経路が単一の定義関数に集約されており、他の経路が存在しなければ本仮説は否定される",
+        "hypothesis": "是正が map_coverage の側だけに入り、進捗報告など別の集計経路が旧定義（unassessed と unknown を合算）のまま残っている",
+        "oracle": "『未割当』件数を算出・表示する全経路を洗い出し、いずれも同一の定義関数を経由しているかを確認する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "語彙変更を伴う変更が全て不変条件試験を伴っていれば本仮説は否定される",
+        "hypothesis": "INC-006 と本件の類型が統治木へ昇格しないまま、三度目の同型が同一キャンペーン内で成立する",
+        "oracle": "以後の状態語彙追加・変更を伴う変更について、由来分離の不変条件試験が随伴しているかを PR 単位で追跡する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "複製の版が正本と一致し、世代差 0 が継続して観測されれば本仮説は否定される",
+        "hypothesis": "是正済みだが未出荷であるため、導入複製側では旧挙動（判定不能を引き直す next_actions）が動き続け、その差をリポジトリ側から観測できない",
+        "oracle": "HEARTBEAT の版比較出力に、本件の受入試験を含む版へ到達済みかどうかを示す判定を加え、複製の世代差を観測する",
+        "severity": "P3"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "coverage_status を『評価の有無（assigned_at の有無に対応）』と『評価結果（判定不能を含む）』の二軸へ分離し、単一値へ由来の異なる状態を畳み込まないことを型で表現する。互換性に影響するため適用範囲は OWNER の判断を要する",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "決定論試験に終了性の検査を追加する。固定入力でレーンを反復し、next_actions が単調減少して有限ラウンドで空へ収束すること、および評価完了が記録された項目 id が再出現しないことを不変条件として赤で止める",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "状態列挙の各値について書き込み地点と契機を走査し、一値に複数の意味的契機が対応する箇所を検出する静的検査を CI へ追加する",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "進捗報告と台帳の表示を、未評価件数と評価済み判定不能件数を別建てで示す形に改め、単一の残数へ要約しない",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "INC-006 と本件に共通する類型（状態の表現に由来の異なる意味を畳み込まない）を統治木へ想定として記録し、その想定が成立しなくなったことを示す先行指標（上記の静的検査と終了性試験）を併記する。WATCH-001 との包含関係も明記する",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "判定不能と結論した 8 件について、結論の根拠と、結論を覆して再評価を起動する条件（新情報・評価 model の更新・依存の解消）を定義する。凍結のまま放置するか再評価を設けるかは所有者の判断を要する",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "『未割当』件数を算出する全経路を洗い出し、単一の定義関数へ集約されているかを確認する。旧定義の残存があれば併せて是正する",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "是正の完了条件に『症状固有試験に加え、同型を一般に捕まえる不変条件試験があること』を加えるかを検討する。完了条件の変更はレーンの運用規約に触れるため所有者の判断を要する",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "本件の是正を含む版が導入複製へ到達したかを HEARTBEAT の版比較で判定できるようにし、到達前は当該挙動が複製側に残っている旨を警告する。ただしこの検出器は複製側で動くため、版遅れ時に検出器も遅れる残余リスクを明記する",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "同型の畳み込みが残る箇所の棚卸しを、状態語彙全体を対象に実施する",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "状態を単一のスカラで表す設計が、事象の増加に伴って複数の由来を吸収していく。導入時点では一軸で妥当であり、由来が増える瞬間に分割を要求する統制が存在しない（同一キャンペーン内で二度成立: INC-006・INC-010）",
+      "是正の完了条件が『当該症状を赤にする試験の追加』に置かれており、類型としての不変条件へ昇格させることが要求されていない。症状ごとの是正は個別には妥当で、蓄積しても類型は塞がらない",
+      "保証の焦点が『行動が出ること』（信頼性）に置かれ、『行動が有限で終わること』（安全性に相当する性質）が別の検査対象として分離されていない",
+      "統治の点検器（リンタ・ガード・監査）の対象範囲が統治文書に置かれ、実際に決定を生むハーネスのコードが視野の外にある",
+      "上位コントローラ（OWNER）へ届く手掛かりが単一の残数へ要約され、内訳の由来が消える。要約の粒度が判断の粒度を下回っていることを検出する経路が無い",
+      "是正の完了記録（fixed）と、利用者環境での実効（shipped・導入複製の版）が別の時間軸を持ち、前者だけで閉じられる",
+      "検出が人の実測に依存しており、観測されなければ非収束はそのまま安定して動き続ける（沈黙する故障）"
+    ],
+    "unknowns": [
+      "8 件が判定不能と結論された根拠、およびその結論を将来覆す条件（再評価トリガ）が定義されているかは記録から判らない。定義が無ければ、判定不能は引き直しの対象から外れると同時に永久に凍結される可能性がある",
+      "coverage_status に今後 unassessed / unknown 以外の由来（評価中・評価不能・対象外など）が加わるか、およびこの語彙の変更を承認する主体が誰かは記録に無い",
+      "本件と INC-006 のほかに、同型の畳み込み（単一値へ由来の異なる状態を混ぜる）が残っている箇所の数は未測定である",
+      "未割当件数を算出する経路が map_coverage 一つに集約されているか、進捗報告など別経路が旧定義のまま残っているかは記録から判らない",
+      "受入試験が正本 CI 上で赤から緑へ遷移した証跡は未確認である（本会話中の実測に留まり、merge 前・未出荷）",
+      "WATCH-001 の類型定義が本件を包含する形へ更新されるかは未決であり、隣接という判断が誰の判断かも記録に無い",
+      "next_actions の終了性（何をもってキャンペーン完了とするか）が仕様として文書化されているかは判らない",
+      "サブエージェント経路で実装が行われた場合に、本件の類型が実装側へ届く経路があるかは判らない（NONGOAL-001 の範囲がどこまで及ぶか未確認）"
+    ],
+    "why_existing_assurance_missed": "既存の保証は「レーンが決定論で次の行動を出すこと」と「個々の事象に対応する受入試験が赤から緑へ移ること」を確認する形で組まれており、「出された行動の集合が有限回で空へ収束すること」を確認する対象を持っていない。next_actions が毎回同じ 8 件を返す状態は、決定論の観点からは正常な出力であり、残作業がある状態と外形的に区別がつかない。さらに coverage_status は導入時点で由来が一つしかない一軸の語彙として妥当であり、判定不能という第二の由来は評価を実行して初めて発生したため、語彙の導入時に分割の必要を示す証拠は存在しなかった。INC-006 の是正はその症状に対応する試験の追加で完了条件を満たしており、類型としての不変条件を CI や統治木へ昇格させる要求が定義されていない。加えて、リンタとガードの点検対象は統治文書であり、欠陥が宿ったのはハーネスの状態集計であって、既存センサの視野の外にあった。結果として検出は人が出力を実測することに依存し、修正済みである現在も、検出を人の観測に依存する構造そのものは変わっていない。"
+  }
+}

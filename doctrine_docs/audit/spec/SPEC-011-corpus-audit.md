@@ -69,6 +69,7 @@ llm_context: task
 - `--respect-docs-level` 付きで、対象の `doctrine_docs/_system/.docs-level` が `level: 2` の場合: 監査を飛ばした旨を出して終了コード 0 を返し、要約は書かない（ADR-019。全件監査は Level 3 から）。この旗は SessionEnd の配線だけが付ける。CI は付けず、Level に依らず監査する。
 - 与えられた `--today` または config.today を日付として解釈できない場合: 使い方の誤りとして終了コード 2 を返す。黙ってシステム時刻に切り替えることはしない。
 - 監査本体がクラッシュした場合: stderr に記録して終了コード 0 を返し、Hook の連鎖を妨げない。要約の書き込みに失敗した場合も 0 を保つ。あわせて実行時例外の要約をエラージャーナル（書式の正本は SPEC-021。許可制で統治対象の内容は入らない）へ最善努力で残す（ADR-074）。
+- 要約の書き込みに失敗しても 0 を保つ以上、失敗は外から見えない。そこで `--summary-out` を指定された実行は、走ったこと自体の印 `hook_session_end_audit`（時刻）と、書けたかどうかの印 `hook_session_end_write`（`ok` / `failed`）を `.claude/.cache/hook-stamps` へ最善努力で残す（ADR-119）。印の書き込みが失敗しても監査の本務を妨げない。読み手は鼓動（SPEC-021）で、判定は `_auditcache.audit_write_gap` に一度だけ在る。印が無ければ何も言わない（前方寛容。不在は不実行の証明ではない）。`[R11]`
 
 ## 受入基準
 

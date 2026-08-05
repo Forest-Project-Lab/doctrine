@@ -111,10 +111,14 @@
       "summary": "SessionEnd の監査は、走らなかったことも書けなかったことも観測できない。(1) 発火の印が無い(hook-stamps は inject_contract・docs_linter・policy_guard_pre だけ)。(2) --summary-out の書き込みに失敗しても終了コードは 0 のまま(仕様 §5.5 の明示の決定)",
       "detected_by": "INC-001 の切り分け中に再現(2026-08-05)。--root-from 空・書けない場所への --summary-out で exit=0、stderr に 'summary write failed' が出るだけであることを実測",
       "fixed": false,
-      "cast_analysis": "pending",
+      "cast_analysis": "done",
       "note_owner_decision": "(2) は仕様に書かれた決定の変更にあたる(『失敗しても 0 を保つ』)。覆すなら ADR が要る。(1) は追加であり、既存の決定と衝突しない",
       "next_step": "別の PR で扱う。まず (1) の発火の印を足して『発火しなかった』と『書けなかった』を分ける。(2) の可否は所有者判断",
-      "evidence": "plugin/scripts/docs-audit.py の 1481-1489 行(『失敗しても 0 を保つ(§5.5)』)・.claude/.cache/hook-stamps に SessionEnd の項が無いこと"
+      "evidence": "plugin/scripts/docs-audit.py の 1481-1489 行(『失敗しても 0 を保つ(§5.5)』)・.claude/.cache/hook-stamps に SessionEnd の項が無いこと",
+      "cast_analysis_ref": "assurance/ledger/cast/INC-009-sessionend-audit-unobservable.json",
+      "cast_analyzed_at": "2026-08-05T09:09:01Z",
+      "fixed_partially": true,
+      "fix_note": "(1) 発火の印を足した(ADR-119): 監査は --summary-out の実行で hook_session_end_audit と hook_session_end_write を残し、鼓動が 『走ったが書けていない』を名指しする。修正前 FAIL の証拠は assurance/ledger/red/INC-009-audit-write-gap.json。(2) 要約の書き込み失敗を終了コードへ出す件は未着手(所有者判断)。SessionEnd がそもそも発火しない場合の区別も依然つかない"
     },
     {
       "id": "INC-010-evaluated-unknown-relisted",
@@ -124,9 +128,23 @@
       "fixed": true,
       "shipped": false,
       "fix_note": "coverage_status が unassessed(assigned_at 無し)と unknown を分けて数え、map_coverage も未評価だけを引く。受入は test_evaluated_unknown_is_not_re_listed ほか1件",
-      "cast_analysis": "pending",
+      "cast_analysis": "done",
       "pattern_note": "同一キャンペーン内で『状態を一つの値で表し、由来の違う二つを混ぜる』取り違えが二度起きた(INC-006 は骨組みの存在と割当完了、本件は判定不能と未評価)。WATCH-001 の『照合が意図より広い』類型と隣接する",
-      "evidence": "本会話中の実測。修正前に FAIL する試験を先に置いた"
+      "evidence": "本会話中の実測。修正前に FAIL する試験を先に置いた",
+      "cast_analysis_ref": "assurance/ledger/cast/INC-010-evaluated-unknown-relisted.json",
+      "cast_analyzed_at": "2026-08-05T09:13:21Z"
+    },
+    {
+      "id": "INC-011-dot-joined-token-undefined-term",
+      "date": "2026-08-05",
+      "summary": "版の綴り v0.7.0 の前半 v0 が単独の未定義略語として挙がった。INC-004(ハイフン)と同型で、接着がドットの場合。WATCH-001『部分文字列の取り違え』類型の三例目",
+      "detected_by": "ADR-119 を書いている最中に発火(2026-08-05)。INC-004 の発見と同じ経路",
+      "fixed": false,
+      "cast_analysis": "pending",
+      "pattern_note": "一つずつ接着文字を足す対処では追いつかない兆候。識別子を『ASCII 英数字と - と . から成る連なり』として一度に扱う一般化を検討する。ただし緩和を広げすぎない柵(他の約物は語の境目)は保つ",
+      "why_missed_hypothesis": "INC-002 の cast 分析が指摘した『既知類型を失敗様式の軸へ展開して反例集合へ変換する段の不在』が、修正の直後にもう一度実証された。INC-004 の修正はハイフンという一事例に閉じており、軸(接着文字)へ展開していない",
+      "next_step": "別 PR。REPRODUCE_RED から。この PR では ADR-119 の文言を書き換えて回避しただけであり、欠陥は残っている",
+      "evidence": "本会話中のリンタ助言(ADR-119 の初稿に対する UNDEFINED_TERM『v0』)"
     }
   ]
 }

@@ -184,6 +184,17 @@ def build_message(docs_root, today, config):
                     "いない可能性がある。「監査を実行して」と言えば docs-audit で確かめる(R11)。")
         audit_day = _frontmatter.parse_date(summary.get("today"))
         if audit_day is not None and (today - audit_day).days >= audit_stale_days:
+            # 走った証跡が在るなら、原因の側を名指しする(ADR-119)。判定は
+            # _auditcache に一度だけ在る。証跡が無ければ従来どおり症状だけ告げる
+            # (不在から不実行を断じない)。
+            gap = _auditcache.audit_write_gap(
+                _auditcache.read_stamps(),
+                summary,
+                write_ok=_auditcache.read_stamp_values().get(
+                    "hook_session_end_write") != "failed")
+            if gap:
+                return ("【統治】前回監査から %d 日が経っている(最終 %s)。%s。"
+                        % ((today - audit_day).days, audit_day.isoformat(), gap))
             return ("【統治】前回監査から %d 日が経っている(最終 %s)。SessionEnd の監査が"
                     "動いていない可能性がある。「監査を実行して」と言えば確かめる(R11)。"
                     % ((today - audit_day).days, audit_day.isoformat()))

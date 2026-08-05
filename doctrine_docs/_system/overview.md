@@ -227,6 +227,7 @@ sources: []
 | ADR-116 | ADR | packaging | 評価役の実行条件は opus の effort high を最低線とし、弱い model への黙った縮退を禁ずる |
 | ADR-117 | ADR | packaging | 事象を閉じてよいのは、照合を通った統制欠陥と先行指標を持つ事故分析が揃ったときだけとする |
 | ADR-118 | ADR | packaging | 網羅の割当は決定論で組んだ現状の索引に対して行い、解決しない証拠を根拠にした緑は落とす |
+| ADR-119 | ADR | packaging | 監査は走ったこと自体の印を残し、鮮度の警告が不実行と書き込み失敗を区別する |
 | CHANGE-001 | CHANGE | packaging | 導入済みプラグインの版の遅れを生存性として照合する |
 | CHANGE-002 | CHANGE | packaging | リリースの整合を CI の門で検める — 変更履歴の書き忘れを止める |
 | CHANGE-005 | CHANGE | packaging | 不具合の兆候を記録し、承認を経た issue 報告を促す |

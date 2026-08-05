@@ -338,6 +338,43 @@ class TestHeartbeat(LivenessBase):
         self.assertEqual((out, code), ("", 0))
 
 
+class TestAuditWriteGap(LivenessBase):
+    """鮮度の警告が原因の側を名指しできること(ADR-119)。
+
+    走った証跡(監査自身の発火の印)が在るのに要約が古いままなら、原因は不実行で
+    はなく書き込みの失敗である。印が無ければ従来どおり症状だけを告げる。
+    """
+
+    def _put_stamps(self, text):
+        path = os.path.join(self.base, ".claude", ".cache", "hook-stamps")
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        _write(path, text)
+
+    def test_stale_without_a_stamp_keeps_the_old_wording(self):
+        self._put_summary("2026-07-25")
+        self._put_state("last_cadence_review: 2026-08-01\n")
+        out, _ = self._hb("2026-08-04", "s-gap1")
+        self.assertIn("前回監査から", out)
+        self.assertIn("動いていない可能性", out)
+
+    def test_stale_with_a_newer_stamp_names_the_write_failure(self):
+        self._put_summary("2026-07-25")
+        self._put_state("last_cadence_review: 2026-08-01\n")
+        self._put_stamps("hook_session_end_audit: 2026-08-04T10:00:00Z\n")
+        out, _ = self._hb("2026-08-04", "s-gap2")
+        self.assertIn("前回監査から", out)
+        self.assertIn("監査は走っている", out)
+        self.assertNotIn("動いていない可能性", out)
+
+    def test_stale_with_a_failed_write_flag_names_it(self):
+        self._put_summary("2026-07-25")
+        self._put_state("last_cadence_review: 2026-08-01\n")
+        self._put_stamps("hook_session_end_audit: 2026-08-04T10:00:00Z\n"
+                         "hook_session_end_write: failed\n")
+        out, _ = self._hb("2026-08-04", "s-gap3")
+        self.assertIn("書け", out)
+
+
 class TestCaptureNudge(LivenessBase):
     def _flags(self):
         # 印はプロジェクトスコープに置く(ADR-075)。${CLAUDE_PLUGIN_ROOT} は版ごとに
