@@ -1,0 +1,16 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "reproduce-red",
+  "incident_id": "INC-011-dot-joined-token-undefined-term",
+  "generated_at": "2026-08-05T10:01:58Z",
+  "git_sha": "12a97c1b9b369829e6b3a4a86a6e7b28583e00db",
+  "phase": "before-fix",
+  "command": "python3 -m unittest plugin.tests.test_termcheck.UndefinedTermTest -v",
+  "returncode": 1,
+  "expect": "修正前に FAIL すること（最初から緑は再現と認めない）",
+  "observed_failures": [
+    "FAIL: test_identifier_glue_axis_is_covered (plugin.tests.test_termcheck.UndefinedTermTest.test_identifier_glue_axis_is_covered)"
+  ],
+  "note": "軸(接着文字)を表として持つ試験を先に置いた。ハイフンの行は既に緑、ドットの行が FAIL する",
+  "tail": "==\nFAIL: test_identifier_glue_axis_is_covered (plugin.tests.test_termcheck.UndefinedTermTest.test_identifier_glue_axis_is_covered)\n既知類型を『失敗様式の軸』へ展開する（接着文字の軸）。\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/workspaces/doctrine/plugin/tests/test_termcheck.py\", line 307, in test_identifier_glue_axis_is_covered\n    self.assertEqual(ut, [], body)\nAssertionError: Lists differ: [Finding(code='UNDEFINED_TERM', severity='[44 chars]e=1)] != []\n\nFirst list contains 1 additional elements.\nFirst extra element 0:\nFinding(code='UNDEFINED_TERM', severity='WARN', message='未定義語『INC』を初出で定義する(§1)。', line=1)\n\n- [Finding(code='UNDEFINED_TERM', severity='WARN', message='未定義語『INC』を初出で定義する(§1)。', line=1)]\n+ [] : 識別子 INC.005 を参照する。\n\n----------------------------------------------------------------------\nRan 11 tests in 0.062s\n\nFAILED (failures=1)\n"
+}
