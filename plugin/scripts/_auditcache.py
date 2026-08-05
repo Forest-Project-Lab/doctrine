@@ -439,6 +439,39 @@ def liveness_gap(stamps, skew_seconds=GUARD_LINTER_SKEW_SECONDS):
     return None
 
 
+def audit_write_gap(stamps, summary, write_ok=None):
+    """監査は走ったのに要約が更新されていない疑い(ADR-119)。無ければ None。
+
+    規則: 監査の発火の印があり、かつ (a) 書き込みの印が失敗を告げている、
+    または (b) 印が要約の日付より新しいとき、「走ったが書けていない」。
+    **印が無ければ何も言わない** —— 不在は不実行の証明ではなく、段階や利用者の
+    設定で SessionEnd の監査を持たない構成があるため(ADR-062 と同じ前方寛容)。
+
+    この判定が要るのは、鮮度の警告だけでは『走らなかった』と『走ったが書けな
+    かった』を区別できないからである(事象 INC-001 で 8 日ぶん区別できなかった)。
+    """
+    if not isinstance(stamps, dict):
+        return None
+    ran = stamps.get("hook_session_end_audit")
+    if ran is None:
+        return None
+    if not isinstance(summary, dict):
+        return None            # 要約が一度も無い状態は鮮度側の警告が扱う。
+    if write_ok is False:
+        return ("監査は走っているが、要約を書けていない(書き込みの印が失敗を"
+                "告げている)。置き場(.claude/.cache)の権限と場所を確かめる"
+                "(ADR-119)")
+    audit_day = _frontmatter.parse_date(summary.get("today"))
+    if audit_day is None:
+        return None
+    if ran.date() > audit_day:
+        return ("監査は走っている(印 %s)のに、要約は %s のままである。"
+                "要約の書き込みが失敗している疑い。置き場(.claude/.cache)の"
+                "権限と場所を確かめる(ADR-119)"
+                % (ran.strftime("%Y-%m-%dT%H:%M:%SZ"), audit_day.isoformat()))
+    return None
+
+
 # ---------------------------------------------------------------------------
 # エラージャーナル(ADR-074)。書式の正本は SPEC-021。
 # ---------------------------------------------------------------------------

@@ -1,0 +1,16 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "reproduce-red",
+  "incident_id": "INC-009-sessionend-audit-unobservable",
+  "generated_at": "2026-08-05T09:09:08Z",
+  "git_sha": "e212e78c6dd40494eb06437a5960f85dcf789de3",
+  "phase": "before-fix",
+  "expect": "修正前に FAIL すること（最初から緑は再現と認めない）",
+  "steps": [
+    "1) _auditcache.audit_write_gap を呼ぶ試験6件 → AttributeError（関数が無い）",
+    "2) gov-heartbeat.py だけを修正前へ戻して TestAuditWriteGap を実行 → 2件 FAIL"
+  ],
+  "observed": "鮮度の警告は『SessionEnd の監査が動いていない可能性がある』の一文だけで、走った証跡が在っても原因を名指しできなかった",
+  "tail": "AssertionError: '監査は走っている' not found in '{\"hookSpecificOutput\": {\"hookEventName\": \"UserPromptSubmit\", \"additionalContext\": \"【統治】前回監査から 10 日が経っている(最終 2026-07-25)。SessionEnd の監査が動いていない可能性がある。「監査を実行して」と言えば確かめる(R11)。\"}}'\n\n----------------------------------------------------------------------\nRan 3 tests in 0.174s\n\nFAILED (failures=2)",
+  "field_observation": "本リポジトリの .claude/.cache/last-audit.json は 2026-08-04 の手動更新のままで、以後に終了したセッションは一度も書いていない。hook-stamps に SessionEnd の項が無い"
+}

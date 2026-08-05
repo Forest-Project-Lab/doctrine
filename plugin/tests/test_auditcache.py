@@ -481,3 +481,52 @@ class ErrorJournalTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class AuditWriteGapTest(unittest.TestCase):
+    """監査の走った証跡と要約の食い違い(ADR-119)。
+
+    INC-001 では監査の要約が 8 日更新されず、鮮度の警告は出たが『走らなかった』と
+    『走ったが書けなかった』を区別できなかった。区別の材料は、監査自身の発火の印と
+    要約の日付の対にある(ADR-062 と同じ形の対の比較。印の不在からは何も言わない)。
+    """
+
+    def _ts(self, s):
+        return datetime.datetime.strptime(
+            s, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=datetime.timezone.utc)
+
+    def test_silent_without_an_audit_stamp(self):
+        """印が無ければ判じない(前方寛容。ADR-062 と同じ規律)。"""
+        self.assertIsNone(A.audit_write_gap({}, {"today": "2026-07-28"}))
+        self.assertIsNone(A.audit_write_gap(None, {"today": "2026-07-28"}))
+
+    def test_gap_when_the_write_flag_says_failed(self):
+        gap = A.audit_write_gap(
+            {"hook_session_end_audit": self._ts("2026-08-04T10:00:00Z")},
+            {"today": "2026-08-04"},
+            write_ok=False)
+        self.assertIsNotNone(gap)
+        self.assertIn("書け", gap)
+
+    def test_gap_when_the_stamp_is_newer_than_the_summary(self):
+        """走った証跡が要約より新しい = 走ったが要約が更新されていない。"""
+        gap = A.audit_write_gap(
+            {"hook_session_end_audit": self._ts("2026-08-04T10:00:00Z")},
+            {"today": "2026-07-28"})
+        self.assertIsNotNone(gap)
+        self.assertIn("2026-07-28", gap)
+
+    def test_no_gap_when_the_summary_keeps_up(self):
+        self.assertIsNone(A.audit_write_gap(
+            {"hook_session_end_audit": self._ts("2026-08-04T10:00:00Z")},
+            {"today": "2026-08-04"}))
+
+    def test_no_gap_without_a_summary(self):
+        """要約が一度も無い状態は別の警告(鮮度側)が扱う。ここでは黙る。"""
+        self.assertIsNone(A.audit_write_gap(
+            {"hook_session_end_audit": self._ts("2026-08-04T10:00:00Z")}, None))
+
+    def test_broken_summary_date_is_silent(self):
+        self.assertIsNone(A.audit_write_gap(
+            {"hook_session_end_audit": self._ts("2026-08-04T10:00:00Z")},
+            {"today": "きのう"}))

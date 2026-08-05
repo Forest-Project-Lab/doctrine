@@ -1,0 +1,752 @@
+{
+  "accepted_flaws": [
+    {
+      "control_element_id": "SESSION_END_AUDIT",
+      "description": "SessionEnd の監査が起動したこと自体を記録する印が存在しない。.claude/.cache/hook-stamps には inject_contract・docs_linter・policy_guard_pre の項のみがあり、SessionEnd の項が無い。したがって『監査が発火した』という事実は、監査の出力（last-audit.json）が更新されたときにのみ間接的に推定でき、出力が無い場合に未発火なのか出力に至らなかったのかを体系側から言えない。",
+      "evidence_ref": ".claude/.cache/hook-stamps に SessionEnd の項が無いこと",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "全コントロールループにフィードバック必須",
+        "control-action-requires-feedback",
+        "安全活動の独立確認"
+      ],
+      "why_it_seemed_adequate": "監査は成果物を必ず書くセンサとして設計されており、成果物の更新そのものが実行の証拠を兼ねる、という構成は当時は経済的で一貫して見えた。『出力があれば走った』は真であり、その逆（出力が無ければ走っていない）も同時に成り立つと暗黙に置かれていた。hook-stamps は当初、拒否や助言を返す入口側フックの生存確認のために作られたため、出力を持つ終端側フックはその対象として必要性が低く見えた。"
+    },
+    {
+      "control_element_id": "SESSION_END_AUDIT",
+      "description": "--summary-out への書き込みが完了しなかった場合も終了コードは 0 のままであり（plugin/scripts/docs-audit.py 1481-1489、仕様 §5.5 の明示の決定）、通知は stderr の 'summary write failed' の一行に限られる。呼び出し側が受け取る唯一の機械可読な手掛かり（終了コード）が、書き込みの成否と対応していない。--root-from 空・書けない場所への --summary-out で exit=0 が実測されている。",
+      "evidence_ref": "plugin/scripts/docs-audit.py 1481-1489（『失敗しても 0 を保つ(§5.5)』）",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "プロセスモデルと実状態の不整合",
+        "defects-in-information-providing-systems",
+        "標準機能の欠如は理由を記録"
+      ],
+      "why_it_seemed_adequate": "SessionEnd は利用者のセッション終端で走る経路であり、そこで非 0 を返すと終了そのものを妨げる、あるいは利用者に統治側の都合で終了時エラーを見せることになる、という懸念は妥当である。監査は拒否の門ではなく助言センサであるという役割分担（拒否は PRE_TOOL_GUARD が担う）と整合させると、『失敗しても 0 を保つ』は仕様として筋が通っており、実際に §5.5 として明示の決定が置かれた。決定時点では、終了コード以外に成否を残す経路（別の失敗印）を併置する必要性は論点になっていない。"
+    },
+    {
+      "control_element_id": "SESSION_END_AUDIT",
+      "description": "SESSION_START_CONTRACT・HEARTBEAT・OWNER の三者が監査の状態を知る経路は、いずれも単一の成果物 .claude/.cache/last-audit.json に収束している。この一点が欠ける・古びると、独立に配置されたはずの三つの統制が同時に同一の誤ったプロセスモデル（『監査は済んでいる』または『単に古いだけ』）を持つ。多重の防護に見える配置が、共通の入力を持つために同時に無効化される。",
+      "evidence_ref": "統制構造：SESSION_START_CONTRACT・HEARTBEAT がともに last-audit.json を手掛かりとすること",
+      "flaw_type": "統制どうしの調整の欠如",
+      "normative_refs": [
+        "共通の体系的要因による多重防護の無効化",
+        "設計上と実際の伝達経路の照合",
+        "モデル一致のためのフィードバック提供"
+      ],
+      "why_it_seemed_adequate": "単一の要約ファイルに集約する設計は、読み手ごとに別形式の状態を持たせるより整合が取りやすく、注入と鼓動が同じ事実を見ることを保証する利点がある。集約点が同時に単一の共通原因になるという性質は、集約の利点と表裏であり、要約が常に書かれる前提の下では見えにくい。"
+    },
+    {
+      "control_element_id": "HEARTBEAT",
+      "description": "監査が走らなかったこと・書けなかったことが体系に現れる最初の機会は、次セッションのターンで鼓動が出す『古び』警告であり、これは事象の発生後である。加えてその警告は last-audit.json の鮮度のみを根拠とするため、未発火・書き込み不成立・正常だが間隔が空いた、の三者を同一の表示に潰す。さらに検出器自身が導入複製の側で動くため、版が遅れると警告も遅れる（INC-005 と同型の共通原因）。",
+      "evidence_ref": "SESSION_END_AUDIT の既知の穴（INC-001）・HEARTBEAT の既知の穴（INC-005）",
+      "flaw_type": "手掛かりが遅い",
+      "normative_refs": [
+        "変化ドリフトの事前検出",
+        "リスク先行指標の検出",
+        "計画外変化の検出手段"
+      ],
+      "why_it_seemed_adequate": "古びの警告はターンごとに出る高頻度のフィードバックであり、『監査の不在は必ず古びとして現れる』という設計上の想定の下では、専用の未発火検出は冗長に見えた。鮮度という単一の量で表現することは、利用者に返す情報量を絞る観点からも合理的だった。"
+    },
+    {
+      "control_element_id": "SESSION_START_CONTRACT",
+      "description": "注入の有無そのものが統治の生存指標として扱われている（R11）。しかし注入は last-audit.json の内容が古くとも欠けていても成立するため、『注入された』という観測は『前セッションの監査が実施され記録された』を含意しない。生存の代理指標が、検出したい対象（監査の実行）と因果的に接続していない。",
+      "evidence_ref": "SESSION_START_CONTRACT の手掛かり『注入の有無そのものが統治の生存の指標（R11）』",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "先行指標の妥当性・代理指標の禁止",
+        "全体健全性と部分健全性の分離評価",
+        "プロセスモデルと実状態の不整合"
+      ],
+      "why_it_seemed_adequate": "注入はセッション冒頭で必ず走り、走ったか否かが冒頭の内容として利用者にも見える数少ない観測点である。可観測性が高い量を生存指標に選ぶことは自然であり、注入と監査が同じキャッシュを介して結ばれている限り、両者の生死は連動するように見えた。"
+    },
+    {
+      "control_element_id": "CAPTURE_NUDGE",
+      "description": "hook-stamps の対象は入口側の三フック（inject_contract・docs_linter・policy_guard_pre）に限られており、終端側で走る Stop / PreCompact の決定捕捉も発火印を残さない。結果として、セッション終端付近で走る統制群（監査・決定捕捉）はいずれも、走った証跡を体系に残さない同じ盲域に入っている。終端が正常に到達したかどうかを、監査とは独立に裏取りする手掛かりが無い。",
+      "evidence_ref": "hook-stamps の項が inject_contract・docs_linter・policy_guard_pre だけであること",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "監視責任の空白排除",
+        "調査対象としての安全情報システム",
+        "do-not-start-too-narrow"
+      ],
+      "why_it_seemed_adequate": "発火印の仕組みは、拒否や助言を返す入口側フックが黙って無効化されていないかを見るために導入されており、その目的の範囲では過不足がない。終端側フックは退避メモという別の成果物を持つため、入口側と同じ扱いを要する対象とは見なされていなかった。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "保証レーンは決定論試験で挙動を確認し、事象を台帳に積んで分析が済むまで閉じない。しかし試験項目に『センサが実運用の経路で発火し、成果物の書き込みまで到達したこと』を確認する系が無い。PRE_TOOL_GUARD について『ガードが実際に拒否できることは体系側から検出しない』とされた穴（NONGOAL-001）と同型の穴が、センサ側にも空いている。本件は保証レーンの能動的な点検ではなく、別事象（INC-001）の切り分けの副産物として現れた。",
+      "evidence_ref": "ASSURANCE_LANE・PRE_TOOL_GUARD の既知の穴（NONGOAL-001）／detected_by が INC-001 の切り分けであること",
+      "flaw_type": "統制自身の劣化を検出できない",
+      "normative_refs": [
+        "監査のすり抜け時に監査手順を是正",
+        "監査の検出力評価",
+        "欠陥の混入理由と見逃し理由の双方調査"
+      ],
+      "why_it_seemed_adequate": "フックの実行は実行系（ホスト側）の責務であり、体系がそれを再実装して確認するのは境界を越えるという判断は一貫している。かつ NONGOAL-001 として『体系側からの検出はしない』が明示の非目標に置かれているため、同種の欠落は仕様どおりの状態として通過する。非目標が、点検すべき対象を視界から外す働きをしている。"
+    },
+    {
+      "control_element_id": "CI_RELEASE_CHECK",
+      "description": "CI は docs-audit の JSON（監査の出力内容）とジョブの成否を手掛かりとするが、監査プロセスが利用者環境のフック経路で起動できたか、書き込み先が利用可能だったかは対象外である。§5.5 の『失敗しても 0 を保つ』は、CI 上ではジョブ緑として現れるため、赤で止める契機を作らない。CI が見るのはリポジトリ正本であり、導入複製での発火は視界の外にある。",
+      "evidence_ref": "CI_RELEASE_CHECK の既知の穴（正本のみを見る）",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "手順の存在確認でなく適用確認",
+        "scope-beyond-operating-process",
+        "宣言された設計と実動作の突合"
+      ],
+      "why_it_seemed_adequate": "CI の役割は merge 前に正本の内容欠陥を止めることであり、利用者環境の実行時挙動は原理的に CI の外側にある。監査の出力を検証していれば監査自体も検証できているという理解は、出力が常に書かれる前提の下では自然である。"
+    },
+    {
+      "control_element_id": "OWNER",
+      "description": "所有者は進捗報告・PR の diff・台帳を手掛かりに持つが、『監査が何回発火し、何回要約を書けたか』を示す手掛かりを持たない。§5.5 の『失敗しても 0 を保つ』は所有者の決定として仕様に存在するが、その決定に伴う残余リスク（成否が終了コードから読めず、stderr の一行にしか現れない）と、その想定が崩れたことを示す先行指標が決定に併記されていない。そのため、決定を再検討すべき時点が所有者に届かない。",
+      "evidence_ref": "note_owner_decision（§5.5 の変更には ADR が要る）",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "controller-needs-concrete-feedback-channels",
+        "安全想定の記録と失効先行指標の定義",
+        "責任権限説明責任の設計反映"
+      ],
+      "why_it_seemed_adequate": "§5.5 は明示の決定として文書化されており、決定が記録されていること自体が統治として正しい形をしている。決定の記録に残余リスクと失効指標を併記する規約が無い状態では、決定文だけを残すのは当時の様式に沿った完全な作業である。既知の穴『報告が実施ではなく意図を書いていても人からは見分けにくい』と同じ構図が、機械側の手掛かりにも現れている。"
+    },
+    {
+      "control_element_id": "PLUGIN_DISTRIBUTION",
+      "description": "発火印を追加しても、それが観測を始めるのは導入複製が更新された後である。複製が何世代遅れているかをリポジトリ側から観測できないため、『印が無い＝発火しなかった』と『印が無い＝印を書く版がまだ届いていない』を、修正直後の期間は区別できない。修正が観測可能性を回復する時点そのものが観測できない。",
+      "evidence_ref": "PLUGIN_DISTRIBUTION の既知の穴（INC-005）",
+      "flaw_type": "統制自身の劣化を検出できない",
+      "normative_refs": [
+        "供給者による変更の明示通知",
+        "対象変化への要求事項追随",
+        "計画外変化の検出手段"
+      ],
+      "why_it_seemed_adequate": "更新を利用者の操作に委ねる配布形態は、利用者環境の自律性を尊重する設計であり、強制更新を避ける理由がある。版の遅れは鼓動が警告する対象として既に扱われており、追加の観測経路は重複に見えた。"
+    }
+  ],
+  "analysis": {
+    "confidence": "medium",
+    "control_flaws": [
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "SessionEnd の監査が起動したこと自体を記録する印が存在しない。.claude/.cache/hook-stamps には inject_contract・docs_linter・policy_guard_pre の項のみがあり、SessionEnd の項が無い。したがって『監査が発火した』という事実は、監査の出力（last-audit.json）が更新されたときにのみ間接的に推定でき、出力が無い場合に未発火なのか出力に至らなかったのかを体系側から言えない。",
+        "evidence_ref": ".claude/.cache/hook-stamps に SessionEnd の項が無いこと",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "全コントロールループにフィードバック必須",
+          "control-action-requires-feedback",
+          "安全活動の独立確認"
+        ],
+        "why_it_seemed_adequate": "監査は成果物を必ず書くセンサとして設計されており、成果物の更新そのものが実行の証拠を兼ねる、という構成は当時は経済的で一貫して見えた。『出力があれば走った』は真であり、その逆（出力が無ければ走っていない）も同時に成り立つと暗黙に置かれていた。hook-stamps は当初、拒否や助言を返す入口側フックの生存確認のために作られたため、出力を持つ終端側フックはその対象として必要性が低く見えた。"
+      },
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "--summary-out への書き込みが完了しなかった場合も終了コードは 0 のままであり（plugin/scripts/docs-audit.py 1481-1489、仕様 §5.5 の明示の決定）、通知は stderr の 'summary write failed' の一行に限られる。呼び出し側が受け取る唯一の機械可読な手掛かり（終了コード）が、書き込みの成否と対応していない。--root-from 空・書けない場所への --summary-out で exit=0 が実測されている。",
+        "evidence_ref": "plugin/scripts/docs-audit.py 1481-1489（『失敗しても 0 を保つ(§5.5)』）",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "プロセスモデルと実状態の不整合",
+          "defects-in-information-providing-systems",
+          "標準機能の欠如は理由を記録"
+        ],
+        "why_it_seemed_adequate": "SessionEnd は利用者のセッション終端で走る経路であり、そこで非 0 を返すと終了そのものを妨げる、あるいは利用者に統治側の都合で終了時エラーを見せることになる、という懸念は妥当である。監査は拒否の門ではなく助言センサであるという役割分担（拒否は PRE_TOOL_GUARD が担う）と整合させると、『失敗しても 0 を保つ』は仕様として筋が通っており、実際に §5.5 として明示の決定が置かれた。決定時点では、終了コード以外に成否を残す経路（別の失敗印）を併置する必要性は論点になっていない。"
+      },
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "SESSION_START_CONTRACT・HEARTBEAT・OWNER の三者が監査の状態を知る経路は、いずれも単一の成果物 .claude/.cache/last-audit.json に収束している。この一点が欠ける・古びると、独立に配置されたはずの三つの統制が同時に同一の誤ったプロセスモデル（『監査は済んでいる』または『単に古いだけ』）を持つ。多重の防護に見える配置が、共通の入力を持つために同時に無効化される。",
+        "evidence_ref": "統制構造：SESSION_START_CONTRACT・HEARTBEAT がともに last-audit.json を手掛かりとすること",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "共通の体系的要因による多重防護の無効化",
+          "設計上と実際の伝達経路の照合",
+          "モデル一致のためのフィードバック提供"
+        ],
+        "why_it_seemed_adequate": "単一の要約ファイルに集約する設計は、読み手ごとに別形式の状態を持たせるより整合が取りやすく、注入と鼓動が同じ事実を見ることを保証する利点がある。集約点が同時に単一の共通原因になるという性質は、集約の利点と表裏であり、要約が常に書かれる前提の下では見えにくい。"
+      },
+      {
+        "control_element_id": "HEARTBEAT",
+        "description": "監査が走らなかったこと・書けなかったことが体系に現れる最初の機会は、次セッションのターンで鼓動が出す『古び』警告であり、これは事象の発生後である。加えてその警告は last-audit.json の鮮度のみを根拠とするため、未発火・書き込み不成立・正常だが間隔が空いた、の三者を同一の表示に潰す。さらに検出器自身が導入複製の側で動くため、版が遅れると警告も遅れる（INC-005 と同型の共通原因）。",
+        "evidence_ref": "SESSION_END_AUDIT の既知の穴（INC-001）・HEARTBEAT の既知の穴（INC-005）",
+        "flaw_type": "手掛かりが遅い",
+        "normative_refs": [
+          "変化ドリフトの事前検出",
+          "リスク先行指標の検出",
+          "計画外変化の検出手段"
+        ],
+        "why_it_seemed_adequate": "古びの警告はターンごとに出る高頻度のフィードバックであり、『監査の不在は必ず古びとして現れる』という設計上の想定の下では、専用の未発火検出は冗長に見えた。鮮度という単一の量で表現することは、利用者に返す情報量を絞る観点からも合理的だった。"
+      },
+      {
+        "control_element_id": "SESSION_START_CONTRACT",
+        "description": "注入の有無そのものが統治の生存指標として扱われている（R11）。しかし注入は last-audit.json の内容が古くとも欠けていても成立するため、『注入された』という観測は『前セッションの監査が実施され記録された』を含意しない。生存の代理指標が、検出したい対象（監査の実行）と因果的に接続していない。",
+        "evidence_ref": "SESSION_START_CONTRACT の手掛かり『注入の有無そのものが統治の生存の指標（R11）』",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "先行指標の妥当性・代理指標の禁止",
+          "全体健全性と部分健全性の分離評価",
+          "プロセスモデルと実状態の不整合"
+        ],
+        "why_it_seemed_adequate": "注入はセッション冒頭で必ず走り、走ったか否かが冒頭の内容として利用者にも見える数少ない観測点である。可観測性が高い量を生存指標に選ぶことは自然であり、注入と監査が同じキャッシュを介して結ばれている限り、両者の生死は連動するように見えた。"
+      },
+      {
+        "control_element_id": "CAPTURE_NUDGE",
+        "description": "hook-stamps の対象は入口側の三フック（inject_contract・docs_linter・policy_guard_pre）に限られており、終端側で走る Stop / PreCompact の決定捕捉も発火印を残さない。結果として、セッション終端付近で走る統制群（監査・決定捕捉）はいずれも、走った証跡を体系に残さない同じ盲域に入っている。終端が正常に到達したかどうかを、監査とは独立に裏取りする手掛かりが無い。",
+        "evidence_ref": "hook-stamps の項が inject_contract・docs_linter・policy_guard_pre だけであること",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "監視責任の空白排除",
+          "調査対象としての安全情報システム",
+          "do-not-start-too-narrow"
+        ],
+        "why_it_seemed_adequate": "発火印の仕組みは、拒否や助言を返す入口側フックが黙って無効化されていないかを見るために導入されており、その目的の範囲では過不足がない。終端側フックは退避メモという別の成果物を持つため、入口側と同じ扱いを要する対象とは見なされていなかった。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "保証レーンは決定論試験で挙動を確認し、事象を台帳に積んで分析が済むまで閉じない。しかし試験項目に『センサが実運用の経路で発火し、成果物の書き込みまで到達したこと』を確認する系が無い。PRE_TOOL_GUARD について『ガードが実際に拒否できることは体系側から検出しない』とされた穴（NONGOAL-001）と同型の穴が、センサ側にも空いている。本件は保証レーンの能動的な点検ではなく、別事象（INC-001）の切り分けの副産物として現れた。",
+        "evidence_ref": "ASSURANCE_LANE・PRE_TOOL_GUARD の既知の穴（NONGOAL-001）／detected_by が INC-001 の切り分けであること",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "監査のすり抜け時に監査手順を是正",
+          "監査の検出力評価",
+          "欠陥の混入理由と見逃し理由の双方調査"
+        ],
+        "why_it_seemed_adequate": "フックの実行は実行系（ホスト側）の責務であり、体系がそれを再実装して確認するのは境界を越えるという判断は一貫している。かつ NONGOAL-001 として『体系側からの検出はしない』が明示の非目標に置かれているため、同種の欠落は仕様どおりの状態として通過する。非目標が、点検すべき対象を視界から外す働きをしている。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "CI は docs-audit の JSON（監査の出力内容）とジョブの成否を手掛かりとするが、監査プロセスが利用者環境のフック経路で起動できたか、書き込み先が利用可能だったかは対象外である。§5.5 の『失敗しても 0 を保つ』は、CI 上ではジョブ緑として現れるため、赤で止める契機を作らない。CI が見るのはリポジトリ正本であり、導入複製での発火は視界の外にある。",
+        "evidence_ref": "CI_RELEASE_CHECK の既知の穴（正本のみを見る）",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "手順の存在確認でなく適用確認",
+          "scope-beyond-operating-process",
+          "宣言された設計と実動作の突合"
+        ],
+        "why_it_seemed_adequate": "CI の役割は merge 前に正本の内容欠陥を止めることであり、利用者環境の実行時挙動は原理的に CI の外側にある。監査の出力を検証していれば監査自体も検証できているという理解は、出力が常に書かれる前提の下では自然である。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者は進捗報告・PR の diff・台帳を手掛かりに持つが、『監査が何回発火し、何回要約を書けたか』を示す手掛かりを持たない。§5.5 の『失敗しても 0 を保つ』は所有者の決定として仕様に存在するが、その決定に伴う残余リスク（成否が終了コードから読めず、stderr の一行にしか現れない）と、その想定が崩れたことを示す先行指標が決定に併記されていない。そのため、決定を再検討すべき時点が所有者に届かない。",
+        "evidence_ref": "note_owner_decision（§5.5 の変更には ADR が要る）",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "controller-needs-concrete-feedback-channels",
+          "安全想定の記録と失効先行指標の定義",
+          "責任権限説明責任の設計反映"
+        ],
+        "why_it_seemed_adequate": "§5.5 は明示の決定として文書化されており、決定が記録されていること自体が統治として正しい形をしている。決定の記録に残余リスクと失効指標を併記する規約が無い状態では、決定文だけを残すのは当時の様式に沿った完全な作業である。既知の穴『報告が実施ではなく意図を書いていても人からは見分けにくい』と同じ構図が、機械側の手掛かりにも現れている。"
+      },
+      {
+        "control_element_id": "PLUGIN_DISTRIBUTION",
+        "description": "発火印を追加しても、それが観測を始めるのは導入複製が更新された後である。複製が何世代遅れているかをリポジトリ側から観測できないため、『印が無い＝発火しなかった』と『印が無い＝印を書く版がまだ届いていない』を、修正直後の期間は区別できない。修正が観測可能性を回復する時点そのものが観測できない。",
+        "evidence_ref": "PLUGIN_DISTRIBUTION の既知の穴（INC-005）",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "供給者による変更の明示通知",
+          "対象変化への要求事項追随",
+          "計画外変化の検出手段"
+        ],
+        "why_it_seemed_adequate": "更新を利用者の操作に委ねる配布形態は、利用者環境の自律性を尊重する設計であり、強制更新を避ける理由がある。版の遅れは鼓動が警告する対象として既に扱われており、追加の観測経路は重複に見えた。"
+      }
+    ],
+    "hazard": "体系が、自らのセンサ（SessionEnd の全件監査）の実行状態—発火したか、要約を書けたか—を観測できない状態にあり、その成果物 .claude/.cache/last-audit.json の存在と鮮度だけを根拠として、下流の統制（契約注入・鼓動・所有者判断）が動作している。成果物の欠落・古びは複数の異なる原因（未発火／書き込み不成立／単に古い）に対応するが、体系はその区別を持たないため、いずれの場合も同じ（あるいは無い）反応しか返せない。",
+    "incident_id": "INC-009-sessionend-audit-unobservable",
+    "leading_indicators": [
+      {
+        "indicator": "発火印を書かない統制の数（定義済みフック集合と印を書く実装箇所の差集合の大きさ）",
+        "observable": "リポジトリ正本上で、hooks 定義に列挙されたフックと、hook-stamps へ印を書く実装を持つスクリプトを突き合わせた差集合",
+        "threshold": "差集合が 1 以上（現状は SessionEnd 監査と Stop/PreCompact 捕捉が該当）で赤。0 を維持できているかを毎 PR で確認",
+        "version_independent": true,
+        "where": "CI（.github/workflows）から、hooks 定義と plugin/scripts/*.py の印書き込み箇所を静的照合",
+        "why_version_independent": "照合対象がリポジトリ正本の定義と実装のみであり、導入複製の版に依存しない"
+      },
+      {
+        "indicator": "成否を終了コードに載せない分岐のうち、代替の観測経路（stderr 以外の失敗印）を持たないものの数",
+        "observable": "docs-audit.py などで、例外・書き込み不成立時に 0 を返す分岐と、そこから書かれる失敗印ファイルの有無の対応表",
+        "threshold": "代替経路を持たない分岐が 1 以上で赤。§5.5 を維持する場合でも、失敗印の併置により 0 にできる",
+        "version_independent": true,
+        "where": "CI の静的検査（plugin/scripts/docs-audit.py の該当分岐、現状 1481-1489 を含む）",
+        "why_version_independent": "正本のソース上の性質であり、複製の更新状況に依存しない"
+      },
+      {
+        "indicator": "台帳内で『観測不能性』型と分類され未着手のまま滞留している事象の最大経過日数",
+        "observable": "assurance/ledger/ の各事象の fixed・cast_analysis・next_step と登録日",
+        "threshold": "14 日を超える滞留が 1 件以上で所有者へ提示。本件のように『別 PR で扱う』とされた事象が期限を持たずに残る状態を検出する",
+        "version_independent": true,
+        "where": "assurance/ledger/（保証レーンが毎回走査）",
+        "why_version_independent": "台帳はリポジトリ正本側の資産であり、導入複製の版に依存しない"
+      },
+      {
+        "indicator": "セッション終端の発火印の数に対する last-audit.json 更新回数の比",
+        "observable": "hook-stamps の SessionEnd 項の更新回数と、last-audit.json の更新時刻列",
+        "threshold": "比が 1 を下回った時点で『走ったが書けなかった』が発生したと判定し警告。比が 0 に近い期間が 2 セッション続けば書き込み先の可用性を調査",
+        "version_independent": false,
+        "where": ".claude/.cache/hook-stamps および .claude/.cache/last-audit.json（導入複製側）",
+        "why_version_independent": "観測点が導入複製側にあり、発火印を書く版が届くまで指標そのものが存在しない。版が遅れると指標も遅れる（INC-005 と同型）"
+      },
+      {
+        "indicator": "鼓動が出した古び警告のうち、直前セッションの終端発火印が存在するものの割合",
+        "observable": "古び警告の発生記録と、直前セッションの SessionEnd 発火印の有無",
+        "threshold": "割合が 0 より大きい状態が観測されたら、古びの原因が未発火ではなく書き込み不成立であると分離して報告する。1 セッションでも発生すれば所有者へ提示",
+        "version_independent": false,
+        "where": "導入複製側の .claude/.cache（鼓動の判定時点）",
+        "why_version_independent": "発火印と鼓動の双方が導入複製側の実装に依存するため、版が遅れると両方が同時に遅れる"
+      },
+      {
+        "indicator": "導入複製と正本の版の世代差の継続日数",
+        "observable": "claude plugin update の応答および複製側が報告する版",
+        "threshold": "1 世代以上の遅れが 7 日以上継続したら、複製側で観測する全指標を『判定不能』として扱い、緑と区別して表示する",
+        "version_independent": false,
+        "where": "利用者環境（PLUGIN_DISTRIBUTION の応答）",
+        "why_version_independent": "版の遅れそのものを複製側の申告で観測するため、遅れの検出も遅れる共通原因故障の中にある"
+      }
+    ],
+    "loss": "統治木の全件監査が走らなかった場合と、走ったが要約を書けなかった場合とを、体系のどこからも区別できない状態のまま、次セッションの契約注入・鼓動・所有者の判断が「監査済みの要約がある」という前提で進行しうる。結果として、統治木の退行が誰にも観測されないまま PR・merge・配布へ進む余地が残り、実際に INC-001 の切り分けでは、監査の未実施と書き込み不成立を分けられないことが原因追跡の所要時間を増やした。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "capture-nudge に対応する印が hook-stamps に存在する、または印を書く実装が確認できる",
+        "hypothesis": "Stop / PreCompact の決定捕捉も発火印を持たないため、決定の取りこぼし促進が走らなかったことを体系側から観測できない（本件と同型の盲域が終端側フック全体に及ぶ）",
+        "oracle": "hooks 定義に列挙されたフックの集合と、hook-stamps に現れる鍵の集合を突き合わせ、差集合を列挙する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "0 を返す分岐が §5.5 の一箇所のみであり、他はすべて非 0 か観測経路を持つ",
+        "hypothesis": "docs-audit.py には --summary-out 以外にも、処理が完了しないまま終了コード 0 を返す分岐が存在する",
+        "oracle": "docs-audit.py の全例外処理・早期 return を列挙し、各分岐について呼び出し側が成否を知る経路（終了コード以外を含む）の有無を対応表にする",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "いずれかの保存先に当該行が残っている",
+        "hypothesis": "stderr に出る 'summary write failed' は、どの保存先にも残らず、事後にも観測できない",
+        "oracle": "書けない場所を指定して再現させ、実行系のログ保存先・キャッシュ・台帳を全数走査してその文字列の残存を確認する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "非 0 で終了が阻害される、またはエラー表示が利用者に残る",
+        "hypothesis": "SessionEnd フックの非 0 終了は実行系のセッション終了を妨げず、§5.5 の前提（非 0 は終了を壊す）が成立しない",
+        "oracle": "非 0 を返す試験用の SessionEnd フックを構成し、終了挙動・利用者への表示・後続セッションへの影響を実測する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "間隔によらず、前セッションで監査が走っていない場合には必ず警告が出る",
+        "hypothesis": "鼓動の古び閾値より短い間隔でセッションが再開される運用では、監査が一度も走らなくても警告が出ない窓が存在する",
+        "oracle": "last-audit.json を更新しないまま閾値未満の間隔で連続セッションを開始し、警告の有無を観測する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "判定ロジックが版を先に確認し、印を書かない版では判定不能を返す",
+        "hypothesis": "発火印を追加した版が導入複製へ届くまでの期間、印の不在が『未発火』と誤解釈され、偽の警告が出る",
+        "oracle": "印を書かない版の複製に対して、新しい判定ロジックを適用した場合の出力を再現する",
+        "severity": "P2"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "SessionEnd 監査に発火印を追加し、『起動した』『走査を完了した』『要約の書き込みが完了した』を別項として hook-stamps に記録する。これにより『発火しなかった』と『書けなかった』が分離される。既存の決定と衝突しない追加であり、単独の PR で扱える",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "Stop / PreCompact の決定捕捉にも同じ発火印を追加し、終端側フック群の盲域を閉じる",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "hooks 定義と発火印の書き込み実装を CI で静的照合し、印を書かないフックが 1 つでもあれば赤で止める。照合はリポジトリ正本上で行うため導入複製の版に依存しない",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "§5.5 の『失敗しても 0 を保つ』を維持したまま、書き込みが完了しなかった事実を last-audit.json とは別の失敗印ファイルへ残す（終了コードの契約を変えずに機械可読な手掛かりを追加する）。この代替を採るか、終了コードの契約自体を ADR で変更するかは所有者の判断",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "§5.5 の決定文に、その決定に伴う残余リスク（成否が終了コードから読めない）と、想定が失効したことを示す先行指標を併記する規約を導入し、既存の明示の決定にも遡って適用する",
+        "kind": "文書化",
+        "owner_decision_required": true
+      },
+      {
+        "action": "鼓動の古び警告を、原因別（未発火／書き込み不成立／間隔）に分けて表示するよう変更し、発火印が届いていない版では『判定不能』を緑と区別して示す",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "統制構造全体を対象に、『成果物の存在を実行の証拠として代用している箇所』を棚卸しし、各箇所について代理指標と検出対象の因果的な接続を確認する",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "SessionEnd が発火しない終了経路（強制終了・環境の落ち・ヘッドレス・サブエージェント）と、SessionEnd で非 0 を返した場合の実行系の挙動を実測し、§5.5 の前提として記録する",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "『出力が存在すれば実行された』という代理指標が複数の統制に共通して使われている。注入の有無を統治の生存指標とする R11 も、last-audit.json の鮮度を監査の実施根拠とする鼓動も、同じ形の推論に依存しており、想定が破れる場合に同時に外れる",
+      "統制の観測可能性の確認が非目標（NONGOAL-001）に括られており、ガード側で既知だった穴と同型の穴がセンサ側にも生じた。非目標の記述が、点検すべき対象を視界から外す働きをしている",
+      "観測の連結点が単一ファイル .claude/.cache/last-audit.json に集中し、独立に配置された三つの統制（注入・鼓動・所有者判断）が同一の共通原因を共有している",
+      "検出器が被観測側（導入複製）で動く配置が繰り返し現れている（INC-005 と本件の指標の一部）。修正を入れても、修正が観測を始める時点そのものが観測できない",
+      "仕様に書かれた決定（§5.5）が、残余リスクの記録と失効を示す先行指標を伴わないまま既定として継承される様式になっている。決定の記録が残っていることと、決定の前提が今も成立していることが、別々に扱われていない",
+      "本件が別事象（INC-001）の切り分けの副産物として発見されており、統制の観測可能性を能動的に棚卸しする工程が保証レーンに無い",
+      "終端側で走る統制群（SessionEnd 監査・Stop/PreCompact 捕捉）が、入口側フック向けに設計された生存確認機構の対象外にまとめて置かれている。フックの分類が観測機構の設計に暗黙の境界を引いている"
+    ],
+    "unknowns": [
+      "SessionEnd が実際に発火しなかった回数と頻度。発火印が存在しないため、過去分は復元できない（本件の修正後に初めて計測が始まる）",
+      "--summary-out の書き込みが完了しなかった事象が実運用でどれだけ起きているか。実測は再現試験のみで、運用実績の母数が無い",
+      "stderr の 'summary write failed' が利用者環境のどこかに保存・収集されているか。誰かの目に届く経路が実在するかを確認していない",
+      "§5.5 の『失敗しても 0 を保つ』が、どの想定に基づく決定か。SessionEnd で非 0 を返した場合に実行系が何をするか（終了の阻害・エラー表示・無視）の実測記録が残っていない",
+      "hook-stamps に SessionEnd の項が無いのが、意図的な除外なのか、印の仕組みが入口側フック向けに作られた際に対象化されなかった結果なのか。決定の記録が確認できていない",
+      "サブエージェント実行・ヘッドレス実行・強制終了の各経路で SessionEnd が発火するか否か。NONGOAL-001 は注入について主セッション限定と述べるが、SessionEnd 側の挙動は記録に無い",
+      "鼓動の古び閾値の値と、その閾値内に次セッションが始まる場合に監査の不在が一度も警告されない窓の長さ"
+    ],
+    "why_existing_assurance_missed": "既存の保証は三つの層で、いずれもこの欠落を対象に含まない配置になっていた。第一に CI は正本の内容（docs-audit の JSON）を検証する系であり、フックが利用者環境で起動したか・書き込み先が利用可能だったかという実行時の副作用は原理的に対象外で、§5.5 により終了コードが 0 に保たれる以上ジョブは緑になる。第二に保証レーンの決定論試験は出力の正しさを見るが、センサ自身の生存確認は NONGOAL-001 として明示的に非目標へ置かれており、非目標に書かれた事項は点検の視界から外れる。第三に運用側の検出器である鼓動は、last-audit.json の鮮度という単一の量に依存し、未発火・書き込み不成立・単なる間隔を同一表示へ潰す。三層いずれも「出力が存在すれば実行された」という同じ想定を共有していたため、想定が破れる場合（実行されたが出力に至らない／実行されない）に対して独立した検出力を持たなかった。結果として本件は保証の能動的な点検ではなく、別事象 INC-001 の切り分けという偶然の経路でのみ表面化した。修正が未了であること自体より、観測可能性の欠落を探す工程が保証の中に存在しないことが、この見逃しの説明である。"
+  },
+  "control_structure_ids": [
+    "OWNER",
+    "CI_RELEASE_CHECK",
+    "SESSION_START_CONTRACT",
+    "HEARTBEAT",
+    "PRE_TOOL_GUARD",
+    "POST_TOOL_LINTER",
+    "SESSION_END_AUDIT",
+    "CAPTURE_NUDGE",
+    "PLUGIN_DISTRIBUTION",
+    "ASSURANCE_LANE",
+    "GOVERNANCE_TREE"
+  ],
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "duration_ms": 286452,
+  "errors": [],
+  "execution_kind": "real-sdk",
+  "generated_at": "2026-08-05T09:09:01Z",
+  "git_dirty": true,
+  "git_sha": "e212e78c6dd40494eb06437a5960f85dcf789de3",
+  "incident_id": "INC-009-sessionend-audit-unobservable",
+  "incident_sha256": "c613ca99026fb444905dbef1c3730feea6eeef32645daef0b31e9a958f337172",
+  "init": {
+    "claude_code_version": "2.1.221",
+    "model": "claude-opus-5",
+    "session_id": "9ce4ccf6-bfc2-412c-9159-eed68cb1a81b",
+    "tools_count": 27
+  },
+  "kind": "cast-analysis",
+  "leading_indicators_defined": true,
+  "options": {
+    "allowed_tools": [],
+    "cwd": "/tmp/assurance-cast-3887mmhw",
+    "effort": "high",
+    "max_budget_usd": 4.0,
+    "max_turns": 1,
+    "model": "claude-opus-5",
+    "setting_sources": [],
+    "timeout_s": 900
+  },
+  "oracle": "structured_output がレーン側再検証にも適合",
+  "principles_offered": 337,
+  "prompt_sha256": "8723195b86dc12f44719b5d787d0c675570c9ac11c57f601ef460642054ab466",
+  "rejected_flaws": [],
+  "result_meta": {
+    "duration_api_ms": 283685,
+    "is_error": false,
+    "num_turns": 2,
+    "session_id": "9ce4ccf6-bfc2-412c-9159-eed68cb1a81b",
+    "subtype": "success",
+    "total_cost_usd": 0.8635335,
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 39050,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 39050,
+      "cache_read_input_tokens": 15963,
+      "inference_geo": "not_available",
+      "input_tokens": 2,
+      "iterations": "list",
+      "output_tokens": 17154,
+      "server_tool_use": {
+        "web_fetch_requests": 0,
+        "web_search_requests": 0
+      },
+      "service_tier": "standard",
+      "speed": "standard"
+    }
+  },
+  "schema_sha256": "0d1643d5e16353723405302c1f6ffcf753915e2a4f27a3530e8ef9a9ee45cb46",
+  "sdk_version": "0.2.129",
+  "settled": true,
+  "status": "PASS",
+  "structured_output": {
+    "confidence": "medium",
+    "control_flaws": [
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "SessionEnd の監査が起動したこと自体を記録する印が存在しない。.claude/.cache/hook-stamps には inject_contract・docs_linter・policy_guard_pre の項のみがあり、SessionEnd の項が無い。したがって『監査が発火した』という事実は、監査の出力（last-audit.json）が更新されたときにのみ間接的に推定でき、出力が無い場合に未発火なのか出力に至らなかったのかを体系側から言えない。",
+        "evidence_ref": ".claude/.cache/hook-stamps に SessionEnd の項が無いこと",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "全コントロールループにフィードバック必須",
+          "control-action-requires-feedback",
+          "安全活動の独立確認"
+        ],
+        "why_it_seemed_adequate": "監査は成果物を必ず書くセンサとして設計されており、成果物の更新そのものが実行の証拠を兼ねる、という構成は当時は経済的で一貫して見えた。『出力があれば走った』は真であり、その逆（出力が無ければ走っていない）も同時に成り立つと暗黙に置かれていた。hook-stamps は当初、拒否や助言を返す入口側フックの生存確認のために作られたため、出力を持つ終端側フックはその対象として必要性が低く見えた。"
+      },
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "--summary-out への書き込みが完了しなかった場合も終了コードは 0 のままであり（plugin/scripts/docs-audit.py 1481-1489、仕様 §5.5 の明示の決定）、通知は stderr の 'summary write failed' の一行に限られる。呼び出し側が受け取る唯一の機械可読な手掛かり（終了コード）が、書き込みの成否と対応していない。--root-from 空・書けない場所への --summary-out で exit=0 が実測されている。",
+        "evidence_ref": "plugin/scripts/docs-audit.py 1481-1489（『失敗しても 0 を保つ(§5.5)』）",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "プロセスモデルと実状態の不整合",
+          "defects-in-information-providing-systems",
+          "標準機能の欠如は理由を記録"
+        ],
+        "why_it_seemed_adequate": "SessionEnd は利用者のセッション終端で走る経路であり、そこで非 0 を返すと終了そのものを妨げる、あるいは利用者に統治側の都合で終了時エラーを見せることになる、という懸念は妥当である。監査は拒否の門ではなく助言センサであるという役割分担（拒否は PRE_TOOL_GUARD が担う）と整合させると、『失敗しても 0 を保つ』は仕様として筋が通っており、実際に §5.5 として明示の決定が置かれた。決定時点では、終了コード以外に成否を残す経路（別の失敗印）を併置する必要性は論点になっていない。"
+      },
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "SESSION_START_CONTRACT・HEARTBEAT・OWNER の三者が監査の状態を知る経路は、いずれも単一の成果物 .claude/.cache/last-audit.json に収束している。この一点が欠ける・古びると、独立に配置されたはずの三つの統制が同時に同一の誤ったプロセスモデル（『監査は済んでいる』または『単に古いだけ』）を持つ。多重の防護に見える配置が、共通の入力を持つために同時に無効化される。",
+        "evidence_ref": "統制構造：SESSION_START_CONTRACT・HEARTBEAT がともに last-audit.json を手掛かりとすること",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "共通の体系的要因による多重防護の無効化",
+          "設計上と実際の伝達経路の照合",
+          "モデル一致のためのフィードバック提供"
+        ],
+        "why_it_seemed_adequate": "単一の要約ファイルに集約する設計は、読み手ごとに別形式の状態を持たせるより整合が取りやすく、注入と鼓動が同じ事実を見ることを保証する利点がある。集約点が同時に単一の共通原因になるという性質は、集約の利点と表裏であり、要約が常に書かれる前提の下では見えにくい。"
+      },
+      {
+        "control_element_id": "HEARTBEAT",
+        "description": "監査が走らなかったこと・書けなかったことが体系に現れる最初の機会は、次セッションのターンで鼓動が出す『古び』警告であり、これは事象の発生後である。加えてその警告は last-audit.json の鮮度のみを根拠とするため、未発火・書き込み不成立・正常だが間隔が空いた、の三者を同一の表示に潰す。さらに検出器自身が導入複製の側で動くため、版が遅れると警告も遅れる（INC-005 と同型の共通原因）。",
+        "evidence_ref": "SESSION_END_AUDIT の既知の穴（INC-001）・HEARTBEAT の既知の穴（INC-005）",
+        "flaw_type": "手掛かりが遅い",
+        "normative_refs": [
+          "変化ドリフトの事前検出",
+          "リスク先行指標の検出",
+          "計画外変化の検出手段"
+        ],
+        "why_it_seemed_adequate": "古びの警告はターンごとに出る高頻度のフィードバックであり、『監査の不在は必ず古びとして現れる』という設計上の想定の下では、専用の未発火検出は冗長に見えた。鮮度という単一の量で表現することは、利用者に返す情報量を絞る観点からも合理的だった。"
+      },
+      {
+        "control_element_id": "SESSION_START_CONTRACT",
+        "description": "注入の有無そのものが統治の生存指標として扱われている（R11）。しかし注入は last-audit.json の内容が古くとも欠けていても成立するため、『注入された』という観測は『前セッションの監査が実施され記録された』を含意しない。生存の代理指標が、検出したい対象（監査の実行）と因果的に接続していない。",
+        "evidence_ref": "SESSION_START_CONTRACT の手掛かり『注入の有無そのものが統治の生存の指標（R11）』",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "先行指標の妥当性・代理指標の禁止",
+          "全体健全性と部分健全性の分離評価",
+          "プロセスモデルと実状態の不整合"
+        ],
+        "why_it_seemed_adequate": "注入はセッション冒頭で必ず走り、走ったか否かが冒頭の内容として利用者にも見える数少ない観測点である。可観測性が高い量を生存指標に選ぶことは自然であり、注入と監査が同じキャッシュを介して結ばれている限り、両者の生死は連動するように見えた。"
+      },
+      {
+        "control_element_id": "CAPTURE_NUDGE",
+        "description": "hook-stamps の対象は入口側の三フック（inject_contract・docs_linter・policy_guard_pre）に限られており、終端側で走る Stop / PreCompact の決定捕捉も発火印を残さない。結果として、セッション終端付近で走る統制群（監査・決定捕捉）はいずれも、走った証跡を体系に残さない同じ盲域に入っている。終端が正常に到達したかどうかを、監査とは独立に裏取りする手掛かりが無い。",
+        "evidence_ref": "hook-stamps の項が inject_contract・docs_linter・policy_guard_pre だけであること",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "監視責任の空白排除",
+          "調査対象としての安全情報システム",
+          "do-not-start-too-narrow"
+        ],
+        "why_it_seemed_adequate": "発火印の仕組みは、拒否や助言を返す入口側フックが黙って無効化されていないかを見るために導入されており、その目的の範囲では過不足がない。終端側フックは退避メモという別の成果物を持つため、入口側と同じ扱いを要する対象とは見なされていなかった。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "保証レーンは決定論試験で挙動を確認し、事象を台帳に積んで分析が済むまで閉じない。しかし試験項目に『センサが実運用の経路で発火し、成果物の書き込みまで到達したこと』を確認する系が無い。PRE_TOOL_GUARD について『ガードが実際に拒否できることは体系側から検出しない』とされた穴（NONGOAL-001）と同型の穴が、センサ側にも空いている。本件は保証レーンの能動的な点検ではなく、別事象（INC-001）の切り分けの副産物として現れた。",
+        "evidence_ref": "ASSURANCE_LANE・PRE_TOOL_GUARD の既知の穴（NONGOAL-001）／detected_by が INC-001 の切り分けであること",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "監査のすり抜け時に監査手順を是正",
+          "監査の検出力評価",
+          "欠陥の混入理由と見逃し理由の双方調査"
+        ],
+        "why_it_seemed_adequate": "フックの実行は実行系（ホスト側）の責務であり、体系がそれを再実装して確認するのは境界を越えるという判断は一貫している。かつ NONGOAL-001 として『体系側からの検出はしない』が明示の非目標に置かれているため、同種の欠落は仕様どおりの状態として通過する。非目標が、点検すべき対象を視界から外す働きをしている。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "CI は docs-audit の JSON（監査の出力内容）とジョブの成否を手掛かりとするが、監査プロセスが利用者環境のフック経路で起動できたか、書き込み先が利用可能だったかは対象外である。§5.5 の『失敗しても 0 を保つ』は、CI 上ではジョブ緑として現れるため、赤で止める契機を作らない。CI が見るのはリポジトリ正本であり、導入複製での発火は視界の外にある。",
+        "evidence_ref": "CI_RELEASE_CHECK の既知の穴（正本のみを見る）",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "手順の存在確認でなく適用確認",
+          "scope-beyond-operating-process",
+          "宣言された設計と実動作の突合"
+        ],
+        "why_it_seemed_adequate": "CI の役割は merge 前に正本の内容欠陥を止めることであり、利用者環境の実行時挙動は原理的に CI の外側にある。監査の出力を検証していれば監査自体も検証できているという理解は、出力が常に書かれる前提の下では自然である。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者は進捗報告・PR の diff・台帳を手掛かりに持つが、『監査が何回発火し、何回要約を書けたか』を示す手掛かりを持たない。§5.5 の『失敗しても 0 を保つ』は所有者の決定として仕様に存在するが、その決定に伴う残余リスク（成否が終了コードから読めず、stderr の一行にしか現れない）と、その想定が崩れたことを示す先行指標が決定に併記されていない。そのため、決定を再検討すべき時点が所有者に届かない。",
+        "evidence_ref": "note_owner_decision（§5.5 の変更には ADR が要る）",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "controller-needs-concrete-feedback-channels",
+          "安全想定の記録と失効先行指標の定義",
+          "責任権限説明責任の設計反映"
+        ],
+        "why_it_seemed_adequate": "§5.5 は明示の決定として文書化されており、決定が記録されていること自体が統治として正しい形をしている。決定の記録に残余リスクと失効指標を併記する規約が無い状態では、決定文だけを残すのは当時の様式に沿った完全な作業である。既知の穴『報告が実施ではなく意図を書いていても人からは見分けにくい』と同じ構図が、機械側の手掛かりにも現れている。"
+      },
+      {
+        "control_element_id": "PLUGIN_DISTRIBUTION",
+        "description": "発火印を追加しても、それが観測を始めるのは導入複製が更新された後である。複製が何世代遅れているかをリポジトリ側から観測できないため、『印が無い＝発火しなかった』と『印が無い＝印を書く版がまだ届いていない』を、修正直後の期間は区別できない。修正が観測可能性を回復する時点そのものが観測できない。",
+        "evidence_ref": "PLUGIN_DISTRIBUTION の既知の穴（INC-005）",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "供給者による変更の明示通知",
+          "対象変化への要求事項追随",
+          "計画外変化の検出手段"
+        ],
+        "why_it_seemed_adequate": "更新を利用者の操作に委ねる配布形態は、利用者環境の自律性を尊重する設計であり、強制更新を避ける理由がある。版の遅れは鼓動が警告する対象として既に扱われており、追加の観測経路は重複に見えた。"
+      }
+    ],
+    "hazard": "体系が、自らのセンサ（SessionEnd の全件監査）の実行状態—発火したか、要約を書けたか—を観測できない状態にあり、その成果物 .claude/.cache/last-audit.json の存在と鮮度だけを根拠として、下流の統制（契約注入・鼓動・所有者判断）が動作している。成果物の欠落・古びは複数の異なる原因（未発火／書き込み不成立／単に古い）に対応するが、体系はその区別を持たないため、いずれの場合も同じ（あるいは無い）反応しか返せない。",
+    "incident_id": "INC-009-sessionend-audit-unobservable",
+    "leading_indicators": [
+      {
+        "indicator": "発火印を書かない統制の数（定義済みフック集合と印を書く実装箇所の差集合の大きさ）",
+        "observable": "リポジトリ正本上で、hooks 定義に列挙されたフックと、hook-stamps へ印を書く実装を持つスクリプトを突き合わせた差集合",
+        "threshold": "差集合が 1 以上（現状は SessionEnd 監査と Stop/PreCompact 捕捉が該当）で赤。0 を維持できているかを毎 PR で確認",
+        "version_independent": true,
+        "where": "CI（.github/workflows）から、hooks 定義と plugin/scripts/*.py の印書き込み箇所を静的照合",
+        "why_version_independent": "照合対象がリポジトリ正本の定義と実装のみであり、導入複製の版に依存しない"
+      },
+      {
+        "indicator": "成否を終了コードに載せない分岐のうち、代替の観測経路（stderr 以外の失敗印）を持たないものの数",
+        "observable": "docs-audit.py などで、例外・書き込み不成立時に 0 を返す分岐と、そこから書かれる失敗印ファイルの有無の対応表",
+        "threshold": "代替経路を持たない分岐が 1 以上で赤。§5.5 を維持する場合でも、失敗印の併置により 0 にできる",
+        "version_independent": true,
+        "where": "CI の静的検査（plugin/scripts/docs-audit.py の該当分岐、現状 1481-1489 を含む）",
+        "why_version_independent": "正本のソース上の性質であり、複製の更新状況に依存しない"
+      },
+      {
+        "indicator": "台帳内で『観測不能性』型と分類され未着手のまま滞留している事象の最大経過日数",
+        "observable": "assurance/ledger/ の各事象の fixed・cast_analysis・next_step と登録日",
+        "threshold": "14 日を超える滞留が 1 件以上で所有者へ提示。本件のように『別 PR で扱う』とされた事象が期限を持たずに残る状態を検出する",
+        "version_independent": true,
+        "where": "assurance/ledger/（保証レーンが毎回走査）",
+        "why_version_independent": "台帳はリポジトリ正本側の資産であり、導入複製の版に依存しない"
+      },
+      {
+        "indicator": "セッション終端の発火印の数に対する last-audit.json 更新回数の比",
+        "observable": "hook-stamps の SessionEnd 項の更新回数と、last-audit.json の更新時刻列",
+        "threshold": "比が 1 を下回った時点で『走ったが書けなかった』が発生したと判定し警告。比が 0 に近い期間が 2 セッション続けば書き込み先の可用性を調査",
+        "version_independent": false,
+        "where": ".claude/.cache/hook-stamps および .claude/.cache/last-audit.json（導入複製側）",
+        "why_version_independent": "観測点が導入複製側にあり、発火印を書く版が届くまで指標そのものが存在しない。版が遅れると指標も遅れる（INC-005 と同型）"
+      },
+      {
+        "indicator": "鼓動が出した古び警告のうち、直前セッションの終端発火印が存在するものの割合",
+        "observable": "古び警告の発生記録と、直前セッションの SessionEnd 発火印の有無",
+        "threshold": "割合が 0 より大きい状態が観測されたら、古びの原因が未発火ではなく書き込み不成立であると分離して報告する。1 セッションでも発生すれば所有者へ提示",
+        "version_independent": false,
+        "where": "導入複製側の .claude/.cache（鼓動の判定時点）",
+        "why_version_independent": "発火印と鼓動の双方が導入複製側の実装に依存するため、版が遅れると両方が同時に遅れる"
+      },
+      {
+        "indicator": "導入複製と正本の版の世代差の継続日数",
+        "observable": "claude plugin update の応答および複製側が報告する版",
+        "threshold": "1 世代以上の遅れが 7 日以上継続したら、複製側で観測する全指標を『判定不能』として扱い、緑と区別して表示する",
+        "version_independent": false,
+        "where": "利用者環境（PLUGIN_DISTRIBUTION の応答）",
+        "why_version_independent": "版の遅れそのものを複製側の申告で観測するため、遅れの検出も遅れる共通原因故障の中にある"
+      }
+    ],
+    "loss": "統治木の全件監査が走らなかった場合と、走ったが要約を書けなかった場合とを、体系のどこからも区別できない状態のまま、次セッションの契約注入・鼓動・所有者の判断が「監査済みの要約がある」という前提で進行しうる。結果として、統治木の退行が誰にも観測されないまま PR・merge・配布へ進む余地が残り、実際に INC-001 の切り分けでは、監査の未実施と書き込み不成立を分けられないことが原因追跡の所要時間を増やした。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "capture-nudge に対応する印が hook-stamps に存在する、または印を書く実装が確認できる",
+        "hypothesis": "Stop / PreCompact の決定捕捉も発火印を持たないため、決定の取りこぼし促進が走らなかったことを体系側から観測できない（本件と同型の盲域が終端側フック全体に及ぶ）",
+        "oracle": "hooks 定義に列挙されたフックの集合と、hook-stamps に現れる鍵の集合を突き合わせ、差集合を列挙する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "0 を返す分岐が §5.5 の一箇所のみであり、他はすべて非 0 か観測経路を持つ",
+        "hypothesis": "docs-audit.py には --summary-out 以外にも、処理が完了しないまま終了コード 0 を返す分岐が存在する",
+        "oracle": "docs-audit.py の全例外処理・早期 return を列挙し、各分岐について呼び出し側が成否を知る経路（終了コード以外を含む）の有無を対応表にする",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "いずれかの保存先に当該行が残っている",
+        "hypothesis": "stderr に出る 'summary write failed' は、どの保存先にも残らず、事後にも観測できない",
+        "oracle": "書けない場所を指定して再現させ、実行系のログ保存先・キャッシュ・台帳を全数走査してその文字列の残存を確認する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "非 0 で終了が阻害される、またはエラー表示が利用者に残る",
+        "hypothesis": "SessionEnd フックの非 0 終了は実行系のセッション終了を妨げず、§5.5 の前提（非 0 は終了を壊す）が成立しない",
+        "oracle": "非 0 を返す試験用の SessionEnd フックを構成し、終了挙動・利用者への表示・後続セッションへの影響を実測する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "間隔によらず、前セッションで監査が走っていない場合には必ず警告が出る",
+        "hypothesis": "鼓動の古び閾値より短い間隔でセッションが再開される運用では、監査が一度も走らなくても警告が出ない窓が存在する",
+        "oracle": "last-audit.json を更新しないまま閾値未満の間隔で連続セッションを開始し、警告の有無を観測する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "判定ロジックが版を先に確認し、印を書かない版では判定不能を返す",
+        "hypothesis": "発火印を追加した版が導入複製へ届くまでの期間、印の不在が『未発火』と誤解釈され、偽の警告が出る",
+        "oracle": "印を書かない版の複製に対して、新しい判定ロジックを適用した場合の出力を再現する",
+        "severity": "P2"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "SessionEnd 監査に発火印を追加し、『起動した』『走査を完了した』『要約の書き込みが完了した』を別項として hook-stamps に記録する。これにより『発火しなかった』と『書けなかった』が分離される。既存の決定と衝突しない追加であり、単独の PR で扱える",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "Stop / PreCompact の決定捕捉にも同じ発火印を追加し、終端側フック群の盲域を閉じる",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "hooks 定義と発火印の書き込み実装を CI で静的照合し、印を書かないフックが 1 つでもあれば赤で止める。照合はリポジトリ正本上で行うため導入複製の版に依存しない",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "§5.5 の『失敗しても 0 を保つ』を維持したまま、書き込みが完了しなかった事実を last-audit.json とは別の失敗印ファイルへ残す（終了コードの契約を変えずに機械可読な手掛かりを追加する）。この代替を採るか、終了コードの契約自体を ADR で変更するかは所有者の判断",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "§5.5 の決定文に、その決定に伴う残余リスク（成否が終了コードから読めない）と、想定が失効したことを示す先行指標を併記する規約を導入し、既存の明示の決定にも遡って適用する",
+        "kind": "文書化",
+        "owner_decision_required": true
+      },
+      {
+        "action": "鼓動の古び警告を、原因別（未発火／書き込み不成立／間隔）に分けて表示するよう変更し、発火印が届いていない版では『判定不能』を緑と区別して示す",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "統制構造全体を対象に、『成果物の存在を実行の証拠として代用している箇所』を棚卸しし、各箇所について代理指標と検出対象の因果的な接続を確認する",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "SessionEnd が発火しない終了経路（強制終了・環境の落ち・ヘッドレス・サブエージェント）と、SessionEnd で非 0 を返した場合の実行系の挙動を実測し、§5.5 の前提として記録する",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "『出力が存在すれば実行された』という代理指標が複数の統制に共通して使われている。注入の有無を統治の生存指標とする R11 も、last-audit.json の鮮度を監査の実施根拠とする鼓動も、同じ形の推論に依存しており、想定が破れる場合に同時に外れる",
+      "統制の観測可能性の確認が非目標（NONGOAL-001）に括られており、ガード側で既知だった穴と同型の穴がセンサ側にも生じた。非目標の記述が、点検すべき対象を視界から外す働きをしている",
+      "観測の連結点が単一ファイル .claude/.cache/last-audit.json に集中し、独立に配置された三つの統制（注入・鼓動・所有者判断）が同一の共通原因を共有している",
+      "検出器が被観測側（導入複製）で動く配置が繰り返し現れている（INC-005 と本件の指標の一部）。修正を入れても、修正が観測を始める時点そのものが観測できない",
+      "仕様に書かれた決定（§5.5）が、残余リスクの記録と失効を示す先行指標を伴わないまま既定として継承される様式になっている。決定の記録が残っていることと、決定の前提が今も成立していることが、別々に扱われていない",
+      "本件が別事象（INC-001）の切り分けの副産物として発見されており、統制の観測可能性を能動的に棚卸しする工程が保証レーンに無い",
+      "終端側で走る統制群（SessionEnd 監査・Stop/PreCompact 捕捉）が、入口側フック向けに設計された生存確認機構の対象外にまとめて置かれている。フックの分類が観測機構の設計に暗黙の境界を引いている"
+    ],
+    "unknowns": [
+      "SessionEnd が実際に発火しなかった回数と頻度。発火印が存在しないため、過去分は復元できない（本件の修正後に初めて計測が始まる）",
+      "--summary-out の書き込みが完了しなかった事象が実運用でどれだけ起きているか。実測は再現試験のみで、運用実績の母数が無い",
+      "stderr の 'summary write failed' が利用者環境のどこかに保存・収集されているか。誰かの目に届く経路が実在するかを確認していない",
+      "§5.5 の『失敗しても 0 を保つ』が、どの想定に基づく決定か。SessionEnd で非 0 を返した場合に実行系が何をするか（終了の阻害・エラー表示・無視）の実測記録が残っていない",
+      "hook-stamps に SessionEnd の項が無いのが、意図的な除外なのか、印の仕組みが入口側フック向けに作られた際に対象化されなかった結果なのか。決定の記録が確認できていない",
+      "サブエージェント実行・ヘッドレス実行・強制終了の各経路で SessionEnd が発火するか否か。NONGOAL-001 は注入について主セッション限定と述べるが、SessionEnd 側の挙動は記録に無い",
+      "鼓動の古び閾値の値と、その閾値内に次セッションが始まる場合に監査の不在が一度も警告されない窓の長さ"
+    ],
+    "why_existing_assurance_missed": "既存の保証は三つの層で、いずれもこの欠落を対象に含まない配置になっていた。第一に CI は正本の内容（docs-audit の JSON）を検証する系であり、フックが利用者環境で起動したか・書き込み先が利用可能だったかという実行時の副作用は原理的に対象外で、§5.5 により終了コードが 0 に保たれる以上ジョブは緑になる。第二に保証レーンの決定論試験は出力の正しさを見るが、センサ自身の生存確認は NONGOAL-001 として明示的に非目標へ置かれており、非目標に書かれた事項は点検の視界から外れる。第三に運用側の検出器である鼓動は、last-audit.json の鮮度という単一の量に依存し、未発火・書き込み不成立・単なる間隔を同一表示へ潰す。三層いずれも「出力が存在すれば実行された」という同じ想定を共有していたため、想定が破れる場合（実行されたが出力に至らない／実行されない）に対して独立した検出力を持たなかった。結果として本件は保証の能動的な点検ではなく、別事象 INC-001 の切り分けという偶然の経路でのみ表面化した。修正が未了であること自体より、観測可能性の欠落を探す工程が保証の中に存在しないことが、この見逃しの説明である。"
+  }
+}

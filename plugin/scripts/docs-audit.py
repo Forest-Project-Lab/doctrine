@@ -1480,13 +1480,22 @@ def main(argv=None):
 
     # 要約の永続化(--summary-out)。原子的に書き、失敗しても 0 を保つ(§5.5)。
     if opts["summary_out"]:
+        proj = opts["root_from"] or os.path.dirname(os.path.abspath(root))
+        write_ok = True
         try:
             _atomic_write(opts["summary_out"],
                           json.dumps(summary, ensure_ascii=False,
                                      sort_keys=True, indent=2) + "\n")
         except OSError as exc:
+            write_ok = False
             sys.stderr.write("docs-audit: summary write failed: %r\n" % (exc,))
             # 書き込み失敗でも終了コードは下のゲート判定に従う(SessionEnd は 0)。
+        # 走ったこと自体の印(ADR-119)。要約が書けたかと分けて残すので、鮮度の
+        # 警告が『走らなかった』と『走ったが書けなかった』を区別できる。印の
+        # 書き込みは最善努力で、失敗しても監査の本務を妨げない(ADR-062)。
+        _auditcache.write_stamp("hook_session_end_audit", proj=proj)
+        _auditcache.write_stamp("hook_session_end_write", proj=proj,
+                                value="ok" if write_ok else "failed")
 
     # 標準出力。
     if opts["json"]:
