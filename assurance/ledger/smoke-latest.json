@@ -1,0 +1,78 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "duration_ms": 14155,
+  "environment": {
+    "credentials_file_present": true,
+    "env_keys_present": [
+      "CLAUDECODE",
+      "CLAUDE_AGENT_SDK_VERSION",
+      "CLAUDE_CODE_CHILD_SESSION",
+      "CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING",
+      "CLAUDE_CODE_ENABLE_TASKS",
+      "CLAUDE_CODE_ENTRYPOINT",
+      "CLAUDE_CODE_EXECPATH",
+      "CLAUDE_CODE_SESSION_ID",
+      "CLAUDE_CONFIG_DIR",
+      "CLAUDE_EFFORT",
+      "CLAUDE_PID"
+    ]
+  },
+  "errors": [],
+  "execution_kind": "real-sdk",
+  "generated_at": "2026-08-04T15:00:58Z",
+  "git_dirty": true,
+  "git_sha": "55d84e137e138f1f4e508cb2c8e5a1fb9718bcf9",
+  "init": {
+    "claude_code_version": "2.1.221",
+    "model": "claude-haiku-4-5",
+    "session_id": "93a70b69-5f8b-4594-9d9e-b14d05659046",
+    "tools_count": 27
+  },
+  "isolated_cwd": "/tmp/assurance-smoke-hos5ulm5",
+  "kind": "smoke",
+  "nonce_len": 16,
+  "options": {
+    "allowed_tools": [],
+    "cwd": "/tmp/assurance-smoke-hos5ulm5",
+    "max_turns": 1,
+    "model": "claude-haiku-4-5",
+    "setting_sources": [],
+    "timeout_s": 240
+  },
+  "oracle": "structured_output がレーン側再検証にも適合",
+  "prompt_sha256": "d32afca2591e11125e545dc07a07d41767ecd9340d6fcf6bfe7e170870986c6f",
+  "result_meta": {
+    "duration_api_ms": 8222,
+    "is_error": false,
+    "num_turns": 2,
+    "session_id": "93a70b69-5f8b-4594-9d9e-b14d05659046",
+    "subtype": "success",
+    "total_cost_usd": 0.037435,
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 17974,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 17974,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "not_available",
+      "input_tokens": 10,
+      "iterations": "list",
+      "output_tokens": 165,
+      "server_tool_use": {
+        "web_fetch_requests": 0,
+        "web_search_requests": 0
+      },
+      "service_tier": "standard",
+      "speed": "standard"
+    }
+  },
+  "result_text_head": "{\"lane_echo\":\"757c40014ca42cf4\",\"self_check\":\"ok\"}",
+  "schema_sha256": "cf619fc141bd97e4498a786bb425d1bb53930e9ee58716338765c87bfbb628ba",
+  "sdk_version": "0.2.129",
+  "status": "PASS",
+  "structured_output": {
+    "lane_echo": "757c40014ca42cf4",
+    "self_check": "ok"
+  }
+}

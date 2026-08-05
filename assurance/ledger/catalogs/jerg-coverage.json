@@ -1,0 +1,1595 @@
+{
+  "doctrine:exempt": "保証レーンの網羅台帳。仕様との対応なし(ADR-114)",
+  "kind": "coverage-ledger",
+  "book_id": "jerg",
+  "book_sha256": "74a35e0a39be0405e315dcbbbd548c6ba0b5485928754912b4c25b639a226191",
+  "dispositions": [
+    "実装・試験・証拠あり",
+    "対応計画あり",
+    "非該当で理由あり",
+    "UNKNOWN",
+    "UNASSESSED"
+  ],
+  "entries": [
+    {
+      "key": "JERG:requirement-verifiable-and-consistent",
+      "title": "要求仕様は検証可能形式かつ相互無矛盾",
+      "category": "検証計画",
+      "source_lines": "L392-L392",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:unverifiable-requirement-compensation",
+      "title": "検証可能形式にできない要求は補完手段を計画に載せる",
+      "category": "検証計画",
+      "source_lines": "L392-L395",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:config-audit-third-party",
+      "title": "構成監査は実施者と別の第三者が行う",
+      "category": "独立性",
+      "source_lines": "L330-L330",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:ivv-organizational-independence",
+      "title": "IV&V は開発組織から独立した組織が実施する",
+      "category": "独立性",
+      "source_lines": "L379-L379",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:verification-objective-evidence",
+      "title": "検証は客観的証拠の提示で行う",
+      "category": "証拠と記録",
+      "source_lines": "L219-L219",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:verification-methods-not-only-test",
+      "title": "検証手段は試験に限らずレビュー・検査も含む",
+      "category": "レビューと監査",
+      "source_lines": "L219-L219",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:validation-intended-use",
+      "title": "妥当性確認は意図された用途に対して行う",
+      "category": "検証計画",
+      "source_lines": "L374-L374",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:identifier-per-item",
+      "title": "入出力項目には識別子を付与する",
+      "category": "文書化",
+      "source_lines": "L332-L332",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:traceability-upper-lower",
+      "title": "上位仕様と下位仕様の対応を保持する",
+      "category": "証拠と記録",
+      "source_lines": "L380-L380",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:test-spec-unambiguous",
+      "title": "試験仕様は曖昧さなく具体化する",
+      "category": "試験設計",
+      "source_lines": "L366-L366",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:verification-plan-scope-method-env-timing",
+      "title": "検証計画は範囲・内容・方法・環境・時期を定める",
+      "category": "検証計画",
+      "source_lines": "L362-L364",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:test-plan-contents",
+      "title": "試験計画には対象・構成・設備・日程・体制を含める",
+      "category": "試験設計",
+      "source_lines": "L365-L365",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:coverage-metrics-c0-c1-mcdc",
+      "title": "試験網羅率は定義済み指標で測る",
+      "category": "試験設計",
+      "source_lines": "L334-L334",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:model-coverage-criteria-predefined",
+      "title": "モデル試験網羅の評価基準は事前に設定する",
+      "category": "試験設計",
+      "source_lines": "L274-L274",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:model-unit-test-equivalence",
+      "title": "モデル単体試験のテストケースは実装側単体試験と等価性評価する",
+      "category": "試験設計",
+      "source_lines": "L278-L278",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:config-management-module-and-docs",
+      "title": "構成管理はモジュール単位まで行い文書も対象とする",
+      "category": "構成管理と変更管理",
+      "source_lines": "L332-L332",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:completeness-presence-and-version",
+      "title": "完全性は不足なしと正しいバージョンの両方を指す",
+      "category": "構成管理と変更管理",
+      "source_lines": "L326-L326",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:system-boundary-unique-definition",
+      "title": "システム定義の境界は一意に定める",
+      "category": "構成管理と変更管理",
+      "source_lines": "L332-L332",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:problem-requires-investigation-and-correction",
+      "title": "問題は調査と是正措置の対象として扱う",
+      "category": "不適合と是正",
+      "source_lines": "L389-L389",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:terminology-defer-to-parent-standard",
+      "title": "用語定義は上位標準に準拠する",
+      "category": "文書化",
+      "source_lines": "L192-L192",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:process-coverage-over-nonduplication",
+      "title": "プロセスは重複を許容して不足なく網羅する",
+      "category": "組織と力量",
+      "source_lines": "L417-L417",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:no-implied-execution-order",
+      "title": "章番号順の実施を強制しない",
+      "category": "その他",
+      "source_lines": "L415-L415",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:tailoring-per-project",
+      "title": "標準はテーラリングして適用する",
+      "category": "その他",
+      "source_lines": "L375-L375",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:tailoring-by-criticality-class",
+      "title": "クリティカリティに基づくテーラリング",
+      "category": "検証計画",
+      "source_lines": "L509-L515",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:verification-requires-objective-evidence",
+      "title": "検証は客観的証拠の提示による",
+      "category": "証拠と記録",
+      "source_lines": "L479-L481",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:joint-review-by-differing-parties",
+      "title": "共同レビューは立場の異なる複数当事者で行う",
+      "category": "独立性",
+      "source_lines": "L491-L493",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:qa-checks-conformance-and-plan-adherence",
+      "title": "品質保証は標準適合と計画遵守の二面を確認する",
+      "category": "レビューと監査",
+      "source_lines": "L473-L475",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:overall-process-structure-defined-before-execution",
+      "title": "プロセス全体構成と管理方法の事前定義",
+      "category": "検証計画",
+      "source_lines": "L558",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:plan-documented-and-agreed",
+      "title": "開発計画の文書化と合意",
+      "category": "文書化",
+      "source_lines": "L642",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:plan-updated-as-status-changes",
+      "title": "計画は状況に応じて更新・管理する",
+      "category": "構成管理と変更管理",
+      "source_lines": "L657",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:progress-tracked-and-reported",
+      "title": "進捗の把握と管理者への報告",
+      "category": "運用と保守",
+      "source_lines": "L661",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:document-hierarchy-and-process-io-mapping",
+      "title": "文書体系とプロセス間入出力関係の整備",
+      "category": "文書化",
+      "source_lines": "L623",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:cots-reuse-asset-identified-and-vetted",
+      "title": "COTS・再利用資産の識別と入手経路の安全性確認",
+      "category": "供給者と再利用",
+      "source_lines": "L632-L639",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:knowledge-asset-acceptance-and-retirement-criteria",
+      "title": "ナレッジ資産の受入・認定・廃止基準",
+      "category": "供給者と再利用",
+      "source_lines": "L590-L591",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:unique-identifier-per-requirement-item",
+      "title": "要求項目への個別識別子付与",
+      "category": "文書化",
+      "source_lines": "L821",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:traceability-analyzed-documented-maintained",
+      "title": "トレーサビリティと整合性の解析・文書化・維持",
+      "category": "証拠と記録",
+      "source_lines": "L830",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:code-to-design-naming-correspondence",
+      "title": "実装と設計の対応付け（命名を含む）確認",
+      "category": "証拠と記録",
+      "source_lines": "L1164",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:stakeholder-feedback-and-review-agreement",
+      "title": "利害関係者へのフィードバックとレビュー合意",
+      "category": "レビューと監査",
+      "source_lines": "L709",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:defects-identified-and-corrective-action-taken",
+      "title": "仕様の問題点・不備・不整合の識別と対策",
+      "category": "不適合と是正",
+      "source_lines": "L712",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:verifiability-evaluated-per-item",
+      "title": "要求項目ごとの検証可能性評価",
+      "category": "試験設計",
+      "source_lines": "L716",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:verification-plan-coverage-evaluated",
+      "title": "検証計画の網羅性評価",
+      "category": "検証計画",
+      "source_lines": "L842",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:non-test-verification-means-justified",
+      "title": "試験によらない確認項目の識別と妥当性評価",
+      "category": "検証計画",
+      "source_lines": "L843",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:review-action-items-followed-up",
+      "title": "要処置事項のフォローアップ",
+      "category": "不適合と是正",
+      "source_lines": "L919",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:review-record-and-quantitative-review-quality",
+      "title": "審査記録の作成と審査自体の定量的品質評価",
+      "category": "レビューと監査",
+      "source_lines": "L919",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:evaluation-criteria-and-selection-rationale-recorded",
+      "title": "設計評価基準の事前定義と選択根拠の記録",
+      "category": "証拠と記録",
+      "source_lines": "L776",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:operational-assumptions-and-constraints-updated",
+      "title": "運用前提・運用制約の更新義務",
+      "category": "運用と保守",
+      "source_lines": "L987",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:pass-criteria-defined-in-advance",
+      "title": "合格基準の事前設定",
+      "category": "試験設計",
+      "source_lines": "L1075",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:coverage-thresholds-by-criticality",
+      "title": "クリティカリティに応じた試験網羅率基準",
+      "category": "試験設計",
+      "source_lines": "L1076-L1128",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:alternative-assurance-when-coverage-unmet",
+      "title": "網羅率未達時の代替確認",
+      "category": "試験設計",
+      "source_lines": "L1149",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:static-analysis-and-complexity-threshold",
+      "title": "静的解析と複雑度上限",
+      "category": "試験設計",
+      "source_lines": "L1150-L1162",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:test-records-in-verdict-decidable-form",
+      "title": "合否判定可能な形式での試験記録",
+      "category": "証拠と記録",
+      "source_lines": "L1148",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:generated-artifact-equivalence-to-source",
+      "title": "生成物と生成元データの等価性評価",
+      "category": "検証計画",
+      "source_lines": "L1149",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:review-follows-planned-verification-policy",
+      "title": "レビューは計画で定めた検証方針に従って実施",
+      "category": "レビューと監査",
+      "source_lines": "L1144",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:artifacts-conform-to-defined-coding-standard",
+      "title": "コーディング規約への準拠",
+      "category": "文書化",
+      "source_lines": "L1138",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:measurement-data-defined-planned-recorded",
+      "title": "計測データの定義・計画・実施記録",
+      "category": "証拠と記録",
+      "source_lines": "L845-L855",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:審査記録+審査の定量的品質評価",
+      "title": "審査記録と審査自体の定量的品質評価",
+      "category": "レビューと監査",
+      "source_lines": "L1230-L1230",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:要処置事項の期限付き追跡",
+      "title": "要処置事項のフォローアップ",
+      "category": "不適合と是正",
+      "source_lines": "L1456-L1456",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:統合基準と検証ポイントの定義",
+      "title": "統合基準と検証ポイントの事前定義",
+      "category": "検証計画",
+      "source_lines": "L1242-L1242",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:統合後ベースラインの確定",
+      "title": "統合後ベースラインの確定",
+      "category": "構成管理と変更管理",
+      "source_lines": "L1249-L1249",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:自動生成物と手動成果物の結合整合確認",
+      "title": "生成物と手書き成果物の統合整合確認",
+      "category": "試験設計",
+      "source_lines": "L1250-L1250",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:生成元と生成物の等価性検査",
+      "title": "生成元モデルと生成物の等価性確認",
+      "category": "試験設計",
+      "source_lines": "L1315-L1315",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:仕様に対する試験網羅性",
+      "title": "試験観点の網羅性要求",
+      "category": "試験設計",
+      "source_lines": "L1310-L1310",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:試験の合格基準を事前定義",
+      "title": "合格基準の事前設定",
+      "category": "試験設計",
+      "source_lines": "L1324-L1324",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:試験条件の記録と再現性",
+      "title": "試験構成情報の記録による再現性確保",
+      "category": "証拠と記録",
+      "source_lines": "L1342-L1342",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:試験結果の保管と提示可能性",
+      "title": "試験結果の記録・保管・提示",
+      "category": "証拠と記録",
+      "source_lines": "L1343-L1343",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:修正時の既実施検証の再評価・再実施",
+      "title": "修正発生時の既実施試験の有効性評価と再実施",
+      "category": "不適合と是正",
+      "source_lines": "L1344-L1344",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:最上流プロセスからの再実施",
+      "title": "上流波及を含む再実施手順",
+      "category": "不適合と是正",
+      "source_lines": "L1875-L1875",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:運用前提・制約の発見時更新",
+      "title": "運用前提・運用制約の随時更新",
+      "category": "運用と保守",
+      "source_lines": "L1327-L1327",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:準備段階の問題も記録対象",
+      "title": "試験準備段階で発見した問題の記録・管理",
+      "category": "証拠と記録",
+      "source_lines": "L1560-L1560",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:品質指標の定期報告",
+      "title": "計測データの評価結果の定期報告",
+      "category": "証拠と記録",
+      "source_lines": "L1378-L1378",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:配布物と構成管理情報の同時取得",
+      "title": "インストール成果物と構成管理情報の一体取得",
+      "category": "構成管理と変更管理",
+      "source_lines": "L1466-L1466",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:配置後の元データ照合",
+      "title": "インストール結果の照合による一致確認",
+      "category": "証拠と記録",
+      "source_lines": "L1488-L1488",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:運用シナリオ網羅性の検証",
+      "title": "運用シナリオ網羅性の確認",
+      "category": "試験設計",
+      "source_lines": "L1570-L1570",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:問題報告・変更要求手順の確立",
+      "title": "問題報告・変更要求の対処手順の確立",
+      "category": "運用と保守",
+      "source_lines": "L1734-L1734",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:解決までの継続監視と報告",
+      "title": "解決までの監視と要求元への報告",
+      "category": "不適合と是正",
+      "source_lines": "L1778-L1778",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:無許可コンポーネントの混入防止",
+      "title": "無許可コンポーネント混入の防止",
+      "category": "構成管理と変更管理",
+      "source_lines": "L1829-L1829",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:書換え前バージョン・設定値の記録",
+      "title": "書換え前状態の記録",
+      "category": "運用と保守",
+      "source_lines": "L1891-L1891",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:書換え手順にリカバリを含める",
+      "title": "書換え手順へのリカバリ手順の内包",
+      "category": "運用と保守",
+      "source_lines": "L1892-L1892",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:文書管理計画の策定",
+      "title": "文書管理計画の事前立案",
+      "category": "文書化",
+      "source_lines": "L1982-L1982",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:定義済み様式・技術内容への準拠",
+      "title": "様式・技術的内容への準拠",
+      "category": "文書化",
+      "source_lines": "L2015-L2015",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:源泉情報の適切性確認",
+      "title": "源泉情報の適切性確認",
+      "category": "文書化",
+      "source_lines": "L2019-L2019",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:文書情報の完全性確認",
+      "title": "文書情報の完全性確認",
+      "category": "文書化",
+      "source_lines": "L2057-L2057",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:発行前の権限者承認",
+      "title": "発行前の権限者による点検・承認",
+      "category": "独立性",
+      "source_lines": "L2036-L2036",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:最新版の確実な利用",
+      "title": "最新版利用の確実化",
+      "category": "文書化",
+      "source_lines": "L2049-L2049",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:秘匿要求への準拠確認",
+      "title": "秘匿要求への準拠確認",
+      "category": "文書化",
+      "source_lines": "L2030-L2030",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:期限切れ・無効文書の廃棄",
+      "title": "廃棄期限到達時の対応と無効文書の廃棄",
+      "category": "文書化",
+      "source_lines": "L2068-L2068",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:構成監査の戦略と責任",
+      "title": "構成監査の戦略と責任の定義",
+      "category": "レビューと監査",
+      "source_lines": "L2109-L2109",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:変更承認時のリスク・影響評価",
+      "title": "変更承認におけるリスクと影響の検討",
+      "category": "構成管理と変更管理",
+      "source_lines": "L2116-L2116",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:構成管理対象品目の識別",
+      "title": "構成管理対象品目の識別",
+      "category": "構成管理と変更管理",
+      "source_lines": "L2148-L2148",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:ベースライン内容とバージョンの明確化",
+      "title": "ベースラインの構成品目とバージョンの明確化",
+      "category": "構成管理と変更管理",
+      "source_lines": "L2159-L2159",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:版管理体系による履歴追跡",
+      "title": "版管理体系による履歴記録と追跡可能性",
+      "category": "構成管理と変更管理",
+      "source_lines": "L2160-L2160",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:baseline-identifies-items-and-versions",
+      "title": "ベースラインは目的別に確立し内容を明示する",
+      "category": "構成管理と変更管理",
+      "source_lines": "L2159-L2159",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:version-control-history-traceable",
+      "title": "構成管理の履歴は追跡可能な体系で記録する",
+      "category": "構成管理と変更管理",
+      "source_lines": "L2160-L2160",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:item-set-completeness-and-version-check",
+      "title": "構成品目一式の過不足とバージョン整合を確認し記録する",
+      "category": "構成管理と変更管理",
+      "source_lines": "L2183-L2183",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:change-request-identification-and-correlation",
+      "title": "変更要求は識別し他の変更要求との関連を評価する",
+      "category": "構成管理と変更管理",
+      "source_lines": "L2191-L2191",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:change-request-record-fields",
+      "title": "変更依頼から状態までを記録する",
+      "category": "証拠と記録",
+      "source_lines": "L2193-L2193",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:analyze-verification-needed-for-change",
+      "title": "変更に伴い必要となる検証・妥当性確認を事前に分析する",
+      "category": "構成管理と変更管理",
+      "source_lines": "L2201-L2201",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:change-approval-decision-recorded",
+      "title": "変更は審査で承認され、承認根拠が追跡できる",
+      "category": "レビューと監査",
+      "source_lines": "L2207-L2209",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:approved-change-closure-verified",
+      "title": "承認済み変更は修正と検証の完了を確認する",
+      "category": "構成管理と変更管理",
+      "source_lines": "L2215-L2215",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:baseline-functional-physical-audit",
+      "title": "ベースラインを目的に照らして機能的・物理的に評価する",
+      "category": "レビューと監査",
+      "source_lines": "L2223-L2223",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:master-copy-retained-lifecycle",
+      "title": "原本とマスターコピーをライフサイクル全体で維持する",
+      "category": "構成管理と変更管理",
+      "source_lines": "L2231-L2231",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:release-follows-defined-procedure",
+      "title": "リリースは決められた手続きに従って管理する",
+      "category": "構成管理と変更管理",
+      "source_lines": "L2227-L2227",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:configuration-audit-against-plan",
+      "title": "構成管理が計画どおり実施されているか監査する",
+      "category": "レビューと監査",
+      "source_lines": "L2235-L2235",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:qa-independent-from-development",
+      "title": "品質保証責任者は開発組織から独立させる",
+      "category": "独立性",
+      "source_lines": "L2271-L2271",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:qa-plan-agreed-with-acquirer",
+      "title": "品質保証活動計画は取得者と合意する",
+      "category": "組織と力量",
+      "source_lines": "L2337-L2337",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:independent-verification-ivv",
+      "title": "必要に応じて独立検証・妥当性確認を行う",
+      "category": "独立性",
+      "source_lines": "L2347-L2347",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:defined-process-conforms-to-standard",
+      "title": "定義されたプロセスが標準に適合していることを保証する",
+      "category": "レビューと監査",
+      "source_lines": "L2351-L2351",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:tooling-qualified-for-process",
+      "title": "支援ツール・環境が標準プロセスに使用可能か評価する",
+      "category": "試験設計",
+      "source_lines": "L2353-L2353",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:personnel-competence-and-training",
+      "title": "要員の必要能力を識別し計画的に教育する",
+      "category": "組織と力量",
+      "source_lines": "L2361-L2361",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:purchased-item-quality-conformance",
+      "title": "購買品の品質が品質保証要求に合致することを確認する",
+      "category": "供給者と再利用",
+      "source_lines": "L2369-L2369",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:supplier-selection-from-evaluation-records",
+      "title": "供給業者は能力評価と選定記録に基づき選ぶ",
+      "category": "供給者と再利用",
+      "source_lines": "L2375-L2375",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:reuse-evaluation-criteria",
+      "title": "再利用ソフトウェア製品は適合性・トレーサビリティ・リスクで評価する",
+      "category": "供給者と再利用",
+      "source_lines": "L2383-L2383",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:qa-records-accessible-to-stakeholders",
+      "title": "品質保証記録は関係者が閲覧できる状態にする",
+      "category": "証拠と記録",
+      "source_lines": "L2438-L2445",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:tool-selection-criteria-documented",
+      "title": "ツール選定は定義した基準で評価し結果をまとめる",
+      "category": "試験設計",
+      "source_lines": "L2455-L2455",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:edit-source-not-generated-artifact",
+      "title": "生成物ではなく生成元を修正する",
+      "category": "構成管理と変更管理",
+      "source_lines": "L2486-L2486",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:manual-edit-of-generated-requires-full-process",
+      "title": "生成物を手修正する場合は手動開発と同等のプロセスを課す",
+      "category": "構成管理と変更管理",
+      "source_lines": "L2487-L2487",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:verification-provides-objective-evidence",
+      "title": "検証は要求充足の客観的証拠を提供する活動である",
+      "category": "検証計画",
+      "source_lines": "L2491-L2491",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:verification-scope-and-characteristics",
+      "title": "検証範囲と検証すべき特性を事前に識別する",
+      "category": "検証計画",
+      "source_lines": "L2511-L2511",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:verification-constraints-and-limits",
+      "title": "検証の制約・限界を識別する",
+      "category": "検証計画",
+      "source_lines": "L2514-L2514",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:verification-depth-by-criticality",
+      "title": "検証の深さは対象の重要度に応じて決める",
+      "category": "検証計画",
+      "source_lines": "L2529-L2529",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:verification-procedure-includes-recording",
+      "title": "検証手順は記録・分析・保存・報告の方法まで定義する",
+      "category": "証拠と記録",
+      "source_lines": "L2534-L2534",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:verification-findings-into-problem-resolution",
+      "title": "検証で識別された問題は問題解決プロセスへ回す",
+      "category": "不適合と是正",
+      "source_lines": "L2536-L2539",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:design-traceable-to-requirements",
+      "title": "設計は要求へのトレーサビリティを確保する",
+      "category": "検証計画",
+      "source_lines": "L2577-L2577",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:code-traceable-to-design",
+      "title": "実装は設計へのトレーサビリティを確保する",
+      "category": "検証計画",
+      "source_lines": "L2591-L2591",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:generated-artifact-equivalence-check",
+      "title": "生成元と生成物の等価性を評価する",
+      "category": "検証計画",
+      "source_lines": "L2599-L2599",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:integration-correct-versions-complete",
+      "title": "統合対象は正しいバージョンで完全かつ正確に統合する",
+      "category": "検証計画",
+      "source_lines": "L2605-L2605",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:document-configuration-follows-procedure",
+      "title": "文書の構成管理が手続きに従っていることを検証する",
+      "category": "文書化",
+      "source_lines": "L2620-L2628",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:verification-results-baselined",
+      "title": "検証結果のトレーサビリティとベースライン成果物を維持する",
+      "category": "証拠と記録",
+      "source_lines": "L2636-L2639",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:simulated-vs-real-environment-delta",
+      "title": "模擬環境を使う場合は実環境との差異を評価する",
+      "category": "試験設計",
+      "source_lines": "L2693-L2693",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:validation-issues-tracked-to-closure",
+      "title": "妥当性確認の問題は記録し解決状況を追跡する",
+      "category": "不適合と是正",
+      "source_lines": "L2700-L2700",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:review-entry-exit-criteria-agreed",
+      "title": "レビューごとに対象・範囲・手順・開始終了基準を事前合意する",
+      "category": "レビューと監査",
+      "source_lines": "L2738-L2753",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:review-panel-includes-independent-experts",
+      "title": "審査員には作業関係者以外の有識者を含める",
+      "category": "独立性",
+      "source_lines": "L2806-L2806",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:review-preconditions-and-documentation",
+      "title": "審査は対象と目的を明確にし資料完成を事前確認する",
+      "category": "レビューと監査",
+      "source_lines": "L2807-L2810",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:review-quality-metrics-collected",
+      "title": "審査は定量データを取得して審査自体の品質を評価する",
+      "category": "レビューと監査",
+      "source_lines": "L2821-L2821",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:walkthrough-findings-followed-to-closure",
+      "title": "ウォークスルーの指摘は対策完了までフォローする",
+      "category": "不適合と是正",
+      "source_lines": "L2834-L2834",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:assessor-third-party-independence",
+      "title": "アセッサーは開発担当者と指揮権者を除く第三者とする",
+      "category": "独立性",
+      "source_lines": "L2873-L2873",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:assessment-results-reported-and-documented",
+      "title": "アセスメント結果は対象組織へ報告し最終成果を文書化する",
+      "category": "レビューと監査",
+      "source_lines": "L2874-L2874",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:problem-resolution-process-covers-all",
+      "title": "すべてのインシデントと問題を扱う問題解決プロセスを確立する",
+      "category": "不適合と是正",
+      "source_lines": "L2906-L2906",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:incidents-promptly-reported-and-received",
+      "title": "発見された問題は記録後に迅速に報告し受領する",
+      "category": "不適合と是正",
+      "source_lines": "L2929-L2929",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:incident-correlated-with-known-problems",
+      "title": "インシデントは既知の問題と関連付けて識別する",
+      "category": "不適合と是正",
+      "source_lines": "L2935-L2935",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:problem-reproduction-confirmed",
+      "title": "報告された問題は再現を確認して検証する",
+      "category": "不適合と是正",
+      "source_lines": "L2946-L2946",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:root-cause-analysis-required",
+      "title": "問題は根本原因まで調査・分析する",
+      "category": "不適合と是正",
+      "source_lines": "L2949-L2949",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:fix-decision-criteria",
+      "title": "修正の要否を効果・規模・致命度・緊急性から判断する",
+      "category": "不適合と是正",
+      "source_lines": "L2957-L2957",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:multiple-fix-options-considered",
+      "title": "修正方法は複数案を検討してから選択する",
+      "category": "不適合と是正",
+      "source_lines": "L2958-L2958",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:修正要否判断=効果/規模/致命度/緊急性",
+      "title": "修正要否は明示基準で判断する",
+      "category": "不適合と是正",
+      "source_lines": "L2957-L2957",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:修正方法の複数案検討",
+      "title": "修正方法は複数案から選択する",
+      "category": "不適合と是正",
+      "source_lines": "L2958-L2958",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:問題報告-変更要求-分析結果のトレース",
+      "title": "問題報告・変更要求・分析結果の対応付け",
+      "category": "構成管理と変更管理",
+      "source_lines": "L2959-L2959",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:運用留意点の文書化",
+      "title": "運用上の留意点の文書化",
+      "category": "文書化",
+      "source_lines": "L2962-L2962",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:解決方法の関係者合意",
+      "title": "解決方法は関係者合意で決定する",
+      "category": "レビューと監査",
+      "source_lines": "L2969-L2969",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:暫定措置の合意",
+      "title": "暫定措置も合意して決定する",
+      "category": "不適合と是正",
+      "source_lines": "L2970-L2970",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:問題の終結までの追跡",
+      "title": "問題は終結まで追跡管理する",
+      "category": "不適合と是正",
+      "source_lines": "L2974-L2974",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:措置後の二次問題モニタ継続",
+      "title": "モニタは二次問題の不発生確認まで継続",
+      "category": "不適合と是正",
+      "source_lines": "L2982-L2982",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:記録の保管期間遵守",
+      "title": "記録は計画された保管期間を守る",
+      "category": "証拠と記録",
+      "source_lines": "L2986-L2986",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:インシデント傾向分析",
+      "title": "インシデントと問題の傾向分析",
+      "category": "不適合と是正",
+      "source_lines": "L2990-L2990",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:再発防止と水平展開",
+      "title": "再発防止と水平展開",
+      "category": "不適合と是正",
+      "source_lines": "L2994-L2994",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:最上流プロセスからの再実施#2",
+      "title": "修正は影響の及ぶ最上流工程から再実施",
+      "category": "構成管理と変更管理",
+      "source_lines": "L3000-L3000",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:テーラリング許容",
+      "title": "テーラリングはプロジェクト特性に応じ可能",
+      "category": "組織と力量",
+      "source_lines": "L3411-L3411",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    },
+    {
+      "key": "JERG:必須要求の不適用には正当理由",
+      "title": "必須項目の不適用には正当理由が要る",
+      "category": "検証計画",
+      "source_lines": "L3413-L3413",
+      "disposition": "UNKNOWN",
+      "reason": "MAP_COVERAGE 未実施",
+      "evidence": null,
+      "recheck_trigger": "MAP_COVERAGE の実行"
+    }
+  ]
+}

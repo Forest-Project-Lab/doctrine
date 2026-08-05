@@ -152,6 +152,30 @@ class BannedSynonymTest(unittest.TestCase):
         bs = [f for f in fs if f.code == "BANNED_SYNONYM"]
         self.assertEqual(bs, [])
 
+    def test_ascii_synonym_not_matched_inside_ascii_word(self):
+        """保証キャンペーン実測 2026-08-04: ASCII 純字の禁止同義語『IF』(→ICD)が、
+        ASCII 語 VERIFY / UNVERIFIED の内部へ部分一致していた(WATCH-001 の
+        『部分文字列の取り違え』類型。『入出力』『選択肢』と同族の新事例)。
+        日本語に語境界は無いが ASCII には在る。両隣のどちらかに ASCII の
+        語構成字が続く出現は、その語ではないので咎めない。承認複合語の覆いへ
+        VERIFY を足す対処は取らない(覆いは雛形・仕様が定める語に限る。ADR-082)。"""
+        self.assertIn("IF", [syn for syn, _a in self.g.banned_synonyms])
+        for word in ("VERIFY", "UNVERIFIED", "NOTIFY", "LIFECYCLE"):
+            fs = tc.check("状態の名に %s を使う。" % word, {"type": "SPEC"}, self.g)
+            bs = [f for f in fs
+                  if f.code == "BANNED_SYNONYM" and "『IF』" in f.message]
+            self.assertEqual(bs, [], word)
+
+    def test_standalone_ascii_synonym_still_caught(self):
+        """境界要求の後も、語として現れた IF は引き続き咎める。CJK 隣接
+        (外部IF・IF仕様)は ASCII 語境界の外なので語のままである。"""
+        for body in ("この IF を廃止する。", "外部IFを定義する。", "IF仕様を書く。",
+                     "(IF)を使う。"):
+            fs = tc.check(body, {"type": "SPEC"}, self.g)
+            bs = [f for f in fs
+                  if f.code == "BANNED_SYNONYM" and "『IF』" in f.message]
+            self.assertTrue(bs, body)
+
 
 class CalqueTest(unittest.TestCase):
     """B8 term-check calque — R10 (TC-065..067)."""

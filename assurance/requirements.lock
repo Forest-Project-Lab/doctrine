@@ -1,0 +1,4 @@
+# doctrine:exempt 開発専用保証レーン(ADR-114)。仕様との対応はコード側に持たない
+# 保証レーン専用。配布物 plugin/ はこれに依存しない（stdlib のみを維持）。
+# 更新時は assurance/external-specs.md の対応項も更新すること。
+claude-agent-sdk==0.2.129

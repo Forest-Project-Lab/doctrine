@@ -1,0 +1,49 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "attack-evaluator-minimal",
+  "date": "2026-08-04",
+  "git_sha": "55d84e137e138f1f4e508cb2c8e5a1fb9718bcf9",
+  "purpose": "保証機構(smoke/doctor)自身が、壊れたとき本当に非緑になることの実証",
+  "claim": "レーンの前提喪失・実行失敗は PASS として記録されない",
+  "injections": [
+    {
+      "id": "M1-auth-deprivation",
+      "fault": "HOME を空ディレクトリへ、CLAUDE_CONFIG_DIR/CLAUDE_CODE_OAUTH_TOKEN/ANTHROPIC_API_KEY を除去",
+      "expected": "非緑(UNASSESSED が理想)",
+      "observed_status": "UNKNOWN",
+      "observed_exit": 4,
+      "verdict": "PASS(安全側成立)",
+      "note": "SDK の例外文言が『returned an error result: success』で認証欠如を示さない。認証喪失の一次検出は doctor の auth_signal 検査が背負う(実行時分類は頼れない)"
+    },
+    {
+      "id": "M2-sdk-absent",
+      "fault": "venv でない system python で実行(claude_agent_sdk 不在)",
+      "expected": "UNASSESSED / exit 3",
+      "observed_status": "UNASSESSED",
+      "observed_exit": 3,
+      "verdict": "PASS(設計どおり)"
+    },
+    {
+      "id": "M3-invalid-model",
+      "fault": "--model claude-no-such-model-xyz",
+      "expected": "非緑(FAIL/UNKNOWN)",
+      "observed_status": "UNKNOWN",
+      "observed_exit": 4,
+      "verdict": "PASS(安全側成立)",
+      "note": "M1 と同一の不透明な例外文言。故障族が SDK 例外表面で区別できない"
+    }
+  ],
+  "findings": [
+    {
+      "id": "OBS-SDK-ERROR-OPACITY",
+      "summary": "認証喪失・不正 model という異なる故障族が、SDK 例外の文言では区別不能(いずれも『error result: success』)",
+      "consequence": "実行時の故障分類は UNKNOWN までしか出せない。UNASSESSED への精密化には CLI の stderr 捕捉が要る",
+      "disposition": "残余リスクとして保持。scenario 候補: sdk_lane に stderr 捕捉を足し故障分類を検証する試験",
+      "severity": "P3"
+    }
+  ],
+  "residual_risks": [
+    "M1/M3 の UNKNOWN は『非緑』ではあるが原因を指さない。原因診断は doctor 側検査とペアで運用する",
+    "同一 Claude 系 model による共通原因故障(評価者と実装者が同型の誤りを共有する)はこの注入では検証していない"
+  ]
+}
