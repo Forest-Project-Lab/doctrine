@@ -8,9 +8,21 @@
       "date": "2026-08-04",
       "summary": "SessionEnd 監査が 7 日間不実行(cache 2026-07-28 のまま、checks_run も旧世代)。SessionStart の警告(R11)は機能した",
       "status_at_detection": "cause UNKNOWN(SessionEnd 不発火の疑い: 強制終了系)",
+      "hypothesis_update_2026-08-05": "INC-005 の版の遅れ(導入複製が 0.7.0)と同根の疑い。旧 checks_run は旧版監査の書き込みと整合する。強制終了説と併せて要切り分け",
       "fixed": false,
       "cast_analysis": "pending",
       "evidence": ".claude/.cache/last-audit.json の mtime 2026-07-28 → 手動更新 2026-08-04"
+    },
+    {
+      "id": "INC-005-installed-plugin-version-lag",
+      "date": "2026-08-05",
+      "summary": "自己適用の導入複製が 0.7.0 のまま(リポジトリ正本は 0.10.0)。本キャンペーンの2セッションのフック(契約注入・ガード・リンタ・SessionEnd 監査)は3世代前のコードで走っていた。『cache だけ旧版』カオス分類の実発生",
+      "detected_by": "claude plugin update の応答『updated from 0.7.0 to 0.10.0』(2026-08-05)。鼓動の版遅れ警告(ADR-070)は2セッションを通じて一度も発火していない",
+      "leading_indicator_failure_hypothesis": "版遅れ検出が 0.7.0 より後に入った機能なら、検出器自身が旧版で欠けていた(古びの検出器が古びる共通原因故障)。ADR-070 の導入版を要確認",
+      "fixed": true,
+      "fix_note": "複製は 0.10.0 へ更新済み(新セッションで反映)。ただし『なぜ2セッション気づかれなかったか』の cast 分析と再発防止(先行指標の版非依存化)が本体",
+      "cast_analysis": "pending",
+      "evidence": "plugin update 出力・鼓動警告の不在(本会話ログ)・INC-001 の旧世代 checks_run"
     },
     {
       "id": "INC-002-termcheck-ascii-substring",
