@@ -9,6 +9,9 @@
       "summary": "SessionEnd 監査が 7 日間不実行(cache 2026-07-28 のまま、checks_run も旧世代)。SessionStart の警告(R11)は機能した",
       "status_at_detection": "cause UNKNOWN(SessionEnd 不発火の疑い: 強制終了系)",
       "hypothesis_update_2026-08-05": "INC-005 の版の遅れ(導入複製が 0.7.0)と同根の疑い。旧 checks_run は旧版監査の書き込みと整合する。強制終了説と併せて要切り分け",
+      "hypothesis_refuted_2026-08-05": "版の遅れ説は成り立たない。v0.7.0 の hooks.json も SessionEnd に docs-audit を配線しており(git show 343613b)、配線の欠落では説明できない。コマンドの失敗説も成り立たない —— hook と同一のコマンドを手で走らせると exit 0 で要約を書く(証拠: 一時領域への probe)",
+      "gap_still_open_2026-08-05": "不実行は継続している。.claude/.cache/last-audit.json は generated_at 2026-08-04 のまま(INC-001 の手動更新)で、以後に終了したセッション(a43df44d ほか)は一度も書いていない。導入複製は 0.10.0 に追いついている(hook-stamps の hook_inject_version)ので、版とは無関係に空いている",
+      "discrimination_blocked_by": "SessionEnd には発火の印が無い(hook-stamps が持つのは inject_contract・docs_linter・policy_guard_pre だけ)。『発火しなかった』と『発火したが書けなかった』を区別する手掛かりが体系に無い。INC-009 として分離",
       "fixed": false,
       "cast_analysis": "done",
       "evidence": ".claude/.cache/last-audit.json の mtime 2026-07-28 → 手動更新 2026-08-04",
@@ -83,10 +86,12 @@
       "detected_by": "エラージャーナルからの利用者報告(ADR-074 の手順)。台帳の欠落は 2026-08-05 のループ中に発見",
       "status_at_detection": "未再現。現行 0.10.0 の同ファイルは大きく変わっており、行 470 は対応しない",
       "fixed": false,
-      "cast_analysis": "pending",
+      "cast_analysis": "done",
       "next_step": "REPRODUCE_RED。再現できなければ UNKNOWN として RECORD へ落とし、実装へ進まない(ADR-115)",
       "why_ledger_missed_hypothesis": "事象台帳の入口が本キャンペーンの発見だけで、外部から届いた失敗(issue)を取り込む経路が無い。門の外で起きた失敗は保証の視野に入らない",
-      "evidence": "https://github.com/Forest-Project-Lab/doctrine/issues/208"
+      "evidence": "https://github.com/Forest-Project-Lab/doctrine/issues/208",
+      "cast_analysis_ref": "assurance/ledger/cast/INC-007-linter-nameerror-field-report.json",
+      "cast_analyzed_at": "2026-08-05T08:05:42Z"
     },
     {
       "id": "INC-008-ledger-write-back-clobber",
@@ -95,8 +100,33 @@
       "detected_by": "本キャンペーンのループ中に予見し、実際に消えたことを確認(2026-08-05)",
       "fixed": true,
       "fix_note": "update_incident() が書く直前に読み直し、対象 id の項だけを更新する。受入は test_cast_analysis.py の IncidentWriteBackTest 3件",
+      "cast_analysis": "done",
+      "evidence": "本会話中の実測(INC-007 の追記が一度消え、再追記した)",
+      "cast_analysis_ref": "assurance/ledger/cast/INC-008-ledger-write-back-clobber.json",
+      "cast_analyzed_at": "2026-08-05T08:09:47Z"
+    },
+    {
+      "id": "INC-009-sessionend-audit-unobservable",
+      "date": "2026-08-05",
+      "summary": "SessionEnd の監査は、走らなかったことも書けなかったことも観測できない。(1) 発火の印が無い(hook-stamps は inject_contract・docs_linter・policy_guard_pre だけ)。(2) --summary-out の書き込みに失敗しても終了コードは 0 のまま(仕様 §5.5 の明示の決定)",
+      "detected_by": "INC-001 の切り分け中に再現(2026-08-05)。--root-from 空・書けない場所への --summary-out で exit=0、stderr に 'summary write failed' が出るだけであることを実測",
+      "fixed": false,
       "cast_analysis": "pending",
-      "evidence": "本会話中の実測(INC-007 の追記が一度消え、再追記した)"
+      "note_owner_decision": "(2) は仕様に書かれた決定の変更にあたる(『失敗しても 0 を保つ』)。覆すなら ADR が要る。(1) は追加であり、既存の決定と衝突しない",
+      "next_step": "別の PR で扱う。まず (1) の発火の印を足して『発火しなかった』と『書けなかった』を分ける。(2) の可否は所有者判断",
+      "evidence": "plugin/scripts/docs-audit.py の 1481-1489 行(『失敗しても 0 を保つ(§5.5)』)・.claude/.cache/hook-stamps に SessionEnd の項が無いこと"
+    },
+    {
+      "id": "INC-010-evaluated-unknown-relisted",
+      "date": "2026-08-05",
+      "summary": "INC-006 の修正の直後に、同型の『消えない行動』を持ち込みかけた。評価の結果としての UNKNOWN(判定不能)と未評価の UNKNOWN を区別せず数えたため、判定不能と結論した 8 件を永久に引き直す next_actions になっていた",
+      "detected_by": "jerg の割当完了後に next_actions が『未割当 8/158 件』を出し続けたのを実測(2026-08-05、merge 前)",
+      "fixed": true,
+      "shipped": false,
+      "fix_note": "coverage_status が unassessed(assigned_at 無し)と unknown を分けて数え、map_coverage も未評価だけを引く。受入は test_evaluated_unknown_is_not_re_listed ほか1件",
+      "cast_analysis": "pending",
+      "pattern_note": "同一キャンペーン内で『状態を一つの値で表し、由来の違う二つを混ぜる』取り違えが二度起きた(INC-006 は骨組みの存在と割当完了、本件は判定不能と未評価)。WATCH-001 の『照合が意図より広い』類型と隣接する",
+      "evidence": "本会話中の実測。修正前に FAIL する試験を先に置いた"
     }
   ]
 }

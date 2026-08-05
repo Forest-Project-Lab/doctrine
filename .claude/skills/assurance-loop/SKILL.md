@@ -63,6 +63,8 @@ FIX → VERIFY → ATTACK_EVALUATOR → RECORD → CURATE（正本: `harness/orc
 
 - `catalogs/<book>-principles.json` — 検証原則カタログ（引用・行番号・費用・指紋つき）。
 - `catalogs/<book>-coverage.json` — 五値の網羅台帳。再生成は評価済み割当を保持する。
+  割当は現状の索引（`harness/system_index.py`）に対して行い、証拠ポインタは機械照合。
+  解決しないポインタしか無い「実装・試験・証拠あり」は UNKNOWN へ落ちる（ADR-118）。
 - `incidents.json` — 事象の列。cast 分析が済むまで閉じない。「済んだ」の三条件は
   ADR-117（schema 適合・照合を通った統制欠陥が1件以上・先行指標の定義）。
 - `cast/<事象 id>.json` — 分析の結果（統制欠陥・先行指標・却下された欠陥つき）。
@@ -82,6 +84,7 @@ assurance/.venv/bin/python assurance/harness/extract_principles.py --book jerg  
 assurance/.venv/bin/python assurance/harness/coverage.py init --book jerg      # 台帳骨組み
 assurance/.venv/bin/python assurance/harness/coverage.py stats                 # 五値の集計
 assurance/.venv/bin/python assurance/harness/cast_analysis.py --all            # 事象の分析 (ADR-117)
+assurance/.venv/bin/python assurance/harness/map_coverage.py --book jerg       # 五値の割当 (ADR-118)
 assurance/.venv/bin/python assurance/harness/smoke.py            # 実 SDK 煙試験 (0/2/3/4)
 python3 -m unittest discover -s assurance/tests                  # レーン決定論試験
 python3 plugin/run_tests.py                                      # 本体試験

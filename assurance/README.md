@@ -53,6 +53,10 @@ assurance/.venv/bin/python assurance/harness/coverage.py stats
 # 事象 → 統制欠陥と先行指標（評価役: opus high。ADR-117 の三条件をコードが判ずる）
 assurance/.venv/bin/python assurance/harness/cast_analysis.py --dry-run --all
 assurance/.venv/bin/python assurance/harness/cast_analysis.py --all
+
+# 網羅の割当（現状の索引に対して五値を割り当てる。ADR-118。束ごとに保存・再開可能）
+assurance/.venv/bin/python assurance/harness/map_coverage.py --book jerg --dry-run
+assurance/.venv/bin/python assurance/harness/map_coverage.py --book jerg --max-batches 2
 ```
 
 ## 観点レーンと発火（ADR-115）

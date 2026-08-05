@@ -57,6 +57,22 @@ class OrchestratorTest(unittest.TestCase):
             self.assertTrue([a for a in actions if a.startswith("MAP_COVERAGE")],
                             actions)
 
+    def test_evaluated_unknown_is_not_re_listed(self):
+        """評価の結果としての UNKNOWN は割当済みである。未評価の UNKNOWN と混ぜると
+        同じ項目を永久に引き直す『消えない行動』になる（INC-006 と同型）。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            self._stub_ledger(tmp, coverage_unknown=0, evaluated_unknown=4)
+            actions = orchestrator.next_actions()
+            self.assertEqual(
+                [a for a in actions if a.startswith("MAP_COVERAGE")], [], actions)
+
+    def test_unevaluated_and_evaluated_unknown_are_counted_apart(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self._stub_ledger(tmp, coverage_unknown=3, evaluated_unknown=4)
+            cov = orchestrator.coverage_status()["jerg"]
+            self.assertEqual(cov["unassessed"], 3)
+            self.assertEqual(cov["unknown"], 7)
+
     def test_mapped_coverage_is_not_an_action(self):
         """全件が割り当て済みなら MAP_COVERAGE は挙げない（消えない行動を作らない）。"""
         with tempfile.TemporaryDirectory() as tmp:
@@ -65,7 +81,7 @@ class OrchestratorTest(unittest.TestCase):
                 [a for a in orchestrator.next_actions()
                  if a.startswith("MAP_COVERAGE")], [])
 
-    def _stub_ledger(self, tmp, coverage_unknown):
+    def _stub_ledger(self, tmp, coverage_unknown, evaluated_unknown=0):
         """実台帳に依存しない一時の帳簿を立てる（三冊とも抽出済み扱い）。"""
         for attr, value in (("CATALOG_DIR", tmp),
                             ("INCIDENTS_PATH", os.path.join(tmp, "inc.json"))):
@@ -82,6 +98,10 @@ class OrchestratorTest(unittest.TestCase):
                                       "rejected": 0}}, f)
             entries = [{"key": "k%d" % i, "disposition": "UNKNOWN"}
                        for i in range(coverage_unknown)]
+            entries += [{"key": "e%d" % i, "disposition": "UNKNOWN",
+                         "assigned_at": "2026-08-05T00:00:00Z",
+                         "reason": "索引から判定できない"}
+                        for i in range(evaluated_unknown)]
             entries.append({"key": "done", "disposition": "非該当で理由あり"})
             with open(os.path.join(tmp, "%s-coverage.json" % book),
                       "w", encoding="utf-8") as f:
