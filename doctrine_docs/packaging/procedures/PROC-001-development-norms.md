@@ -6,7 +6,7 @@ domain: packaging
 status: current
 owner: doctrine-maintainers
 created: 2026-07-28
-updated: 2026-08-04
+updated: 2026-08-05
 sources: [doctrine_docs/packaging/decisions/ADR-047-development-methodology.md, doctrine_docs/packaging/decisions/ADR-068-code-audit-residues.md, doctrine_docs/packaging/decisions/ADR-071-release-integrity-gate.md, doctrine_docs/packaging/decisions/ADR-114-assurance-sdk-lane.md, doctrine_docs/packaging/decisions/ADR-115-viewpoint-lane-orchestration.md, doctrine_docs/packaging/decisions/ADR-116-evaluation-model-floor.md]
 depends_on: [ICD-008]
 llm_context: task
@@ -62,6 +62,10 @@ per-turn の性能は受入の門で凍結する: 合成 1,500 文書で 1 編�
 - 規範3冊の評価は観点別レーン（stpa=創出・jerg=検証計画と証拠・cast=失敗後更新）に
   分け、発火は決定論の状態機械が制御する（ADR-115）。評価役の実行条件は opus の
   effort high を最低線とし、弱い model への黙った縮退を禁ずる（ADR-116）。
+- 事象を閉じてよいのは、照合を通った統制欠陥と先行指標を持つ事故分析が揃った
+  ときだけとする（ADR-117）。修正済みであることは閉じる理由にならない。
+  統制構造の正本はレーンのコードに一度だけ置き、実体を失ったら分析は
+  UNASSESSED へ倒れる。
 - 運転手順の詳細はレーンの案内（`assurance/README.md`。体系外のビュー）が持つ。
 
 ## 手順

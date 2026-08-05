@@ -10,8 +10,10 @@
       "status_at_detection": "cause UNKNOWN(SessionEnd 不発火の疑い: 強制終了系)",
       "hypothesis_update_2026-08-05": "INC-005 の版の遅れ(導入複製が 0.7.0)と同根の疑い。旧 checks_run は旧版監査の書き込みと整合する。強制終了説と併せて要切り分け",
       "fixed": false,
-      "cast_analysis": "pending",
-      "evidence": ".claude/.cache/last-audit.json の mtime 2026-07-28 → 手動更新 2026-08-04"
+      "cast_analysis": "done",
+      "evidence": ".claude/.cache/last-audit.json の mtime 2026-07-28 → 手動更新 2026-08-04",
+      "cast_analysis_ref": "assurance/ledger/cast/INC-001-sessionend-audit-gap.json",
+      "cast_analyzed_at": "2026-08-05T05:22:19Z"
     },
     {
       "id": "INC-005-installed-plugin-version-lag",
@@ -21,8 +23,10 @@
       "leading_indicator_failure_hypothesis": "版遅れ検出が 0.7.0 より後に入った機能なら、検出器自身が旧版で欠けていた(古びの検出器が古びる共通原因故障)。ADR-070 の導入版を要確認",
       "fixed": true,
       "fix_note": "複製は 0.10.0 へ更新済み(新セッションで反映)。ただし『なぜ2セッション気づかれなかったか』の cast 分析と再発防止(先行指標の版非依存化)が本体",
-      "cast_analysis": "pending",
-      "evidence": "plugin update 出力・鼓動警告の不在(本会話ログ)・INC-001 の旧世代 checks_run"
+      "cast_analysis": "done",
+      "evidence": "plugin update 出力・鼓動警告の不在(本会話ログ)・INC-001 の旧世代 checks_run",
+      "cast_analysis_ref": "assurance/ledger/cast/INC-005-installed-plugin-version-lag.json",
+      "cast_analyzed_at": "2026-08-05T05:26:14Z"
     },
     {
       "id": "INC-002-termcheck-ascii-substring",
@@ -30,25 +34,69 @@
       "summary": "禁止同義語の ASCII 部分一致誤検知(VERIFY⊃IF)。WATCH-001 類型の新事例。RED→修正→全緑まで完了",
       "fixed": true,
       "fix_commit": "af9c858",
-      "cast_analysis": "pending",
+      "cast_analysis": "done",
       "why_missed_hypothesis": "『部分文字列の取り違え』の既知類型が CJK 事例だけで凍結され、ASCII 語境界という別の失敗様式が試験にも WATCH の文言にも一般化されていなかった",
-      "evidence": "plugin/tests/test_termcheck.py の RED 証拠(修正前 FAIL)"
+      "evidence": "plugin/tests/test_termcheck.py の RED 証拠(修正前 FAIL)",
+      "cast_analysis_ref": "assurance/ledger/cast/INC-002-termcheck-ascii-substring.json",
+      "cast_analyzed_at": "2026-08-05T05:30:33Z"
     },
     {
       "id": "INC-003-sdk-error-opacity",
       "date": "2026-08-04",
       "summary": "認証遮断と不正 model が SDK 例外表面で同一文言になり故障族を区別できない。実行時分類は UNKNOWN 止まり",
       "fixed": false,
-      "cast_analysis": "pending",
-      "evidence": "assurance/ledger/mutations-2026-08-04.json (M1/M3)"
+      "cast_analysis": "done",
+      "evidence": "assurance/ledger/mutations-2026-08-04.json (M1/M3)",
+      "cast_analysis_ref": "assurance/ledger/cast/INC-003-sdk-error-opacity.json",
+      "cast_analyzed_at": "2026-08-05T05:34:01Z"
     },
     {
       "id": "INC-004-hyphen-token-undefined-term",
       "date": "2026-08-04",
-      "summary": "NOT-APPLICABLE のハイフン分割で UNDEFINED_TERM が NOT に誤反応(候補・未修正)",
+      "summary": "ハイフンで綴じた識別子の前半・後半に UNDEFINED_TERM が誤反応(NOT-APPLICABLE の NOT・INC-005 の INC・SHA-256 の SHA)。WATCH-001 類型の未定義語側の事例。RED→修正→全緑まで完了",
+      "fixed": true,
+      "fix_note": "_termcheck.py の _is_hyphen_fragment で識別子の断片を除く。修正前 FAIL の証拠は assurance/ledger/red/INC-004-undefined-term.json",
+      "recurrence_2026-08-05": "本キャンペーン中に ADR-117 を書いている最中、同じ形で再発火した(INC-005 の INC)。INC-002 の cast 分析が指摘した『既知類型を反例集合へ展開する段の不在』の実証",
+      "cast_analysis": "done",
+      "cast_analysis_note": "分析は修正前の記録(fixed: false)に対して行った。CAST の問いは『なぜ既存の保証が見逃したか』であり、修正の有無で変わらない(ADR-117)",
+      "evidence": "assurance/README.md への linter 助言(行 43)",
+      "cast_analysis_ref": "assurance/ledger/cast/INC-004-hyphen-token-undefined-term.json",
+      "cast_analyzed_at": "2026-08-05T05:38:10Z"
+    },
+    {
+      "id": "INC-006-next-actions-silently-empty",
+      "date": "2026-08-05",
+      "summary": "次の行動の正本が空を返した。事象5件の分析が済んだ時点で next_actions が [] になり『やることが無い』と読める状態になったが、網羅台帳は 606 件すべて UNKNOWN(MAP_COVERAGE 未実施)であった",
+      "detected_by": "本キャンペーンのループ中、orchestrator status の [] と coverage stats の全件 UNKNOWN の食い違い(2026-08-05)",
+      "root_cause_observed": "MAP_COVERAGE の行動条件が『jerg-coverage.json が存在しないこと』だったため、骨組みを生成した時点で行動が消えた。骨組みの存在を割当の完了と読んでいた",
+      "fixed": true,
+      "fix_note": "coverage_status() で骨組みと割当完了を区別し、UNKNOWN が残る限り MAP_COVERAGE を挙げる。行動が空になるときは反復の入口 DISCOVER を必ず示す。修正前 FAIL の証拠は assurance/ledger/red/INC-006-next-actions.json",
+      "cast_analysis": "done",
+      "evidence": "assurance/ledger/red/INC-006-next-actions.json",
+      "cast_analysis_ref": "assurance/ledger/cast/INC-006-next-actions-silently-empty.json",
+      "cast_analyzed_at": "2026-08-05T05:50:04Z"
+    },
+    {
+      "id": "INC-007-linter-nameerror-field-report",
+      "date": "2026-08-02",
+      "summary": "利用者環境の docs-linter が NameError で 20 回連続して落ちた(版 0.8.0、行 470)。issue #208 として報告済み。本キャンペーンの台帳には一度も積まれていなかった",
+      "detected_by": "エラージャーナルからの利用者報告(ADR-074 の手順)。台帳の欠落は 2026-08-05 のループ中に発見",
+      "status_at_detection": "未再現。現行 0.10.0 の同ファイルは大きく変わっており、行 470 は対応しない",
       "fixed": false,
       "cast_analysis": "pending",
-      "evidence": "assurance/README.md への linter 助言(行 43)"
+      "next_step": "REPRODUCE_RED。再現できなければ UNKNOWN として RECORD へ落とし、実装へ進まない(ADR-115)",
+      "why_ledger_missed_hypothesis": "事象台帳の入口が本キャンペーンの発見だけで、外部から届いた失敗(issue)を取り込む経路が無い。門の外で起きた失敗は保証の視野に入らない",
+      "evidence": "https://github.com/Forest-Project-Lab/doctrine/issues/208"
+    },
+    {
+      "id": "INC-008-ledger-write-back-clobber",
+      "date": "2026-08-05",
+      "summary": "分析中に積んだ事象 INC-007 が、分析終了時の書き戻しで消えた。cast_analysis.py が開始時の写しで台帳全体を上書きしていた(最後の書き手が勝つ)",
+      "detected_by": "本キャンペーンのループ中に予見し、実際に消えたことを確認(2026-08-05)",
+      "fixed": true,
+      "fix_note": "update_incident() が書く直前に読み直し、対象 id の項だけを更新する。受入は test_cast_analysis.py の IncidentWriteBackTest 3件",
+      "cast_analysis": "pending",
+      "evidence": "本会話中の実測(INC-007 の追記が一度消え、再追記した)"
     }
   ]
 }

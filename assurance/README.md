@@ -38,6 +38,8 @@ assurance/.venv/bin/python assurance/harness/smoke.py
 python3 -m unittest discover -s assurance/tests -v
 
 # オーケストレーションの現在地と次の行動（決定論。ADR-115）
+# next_actions は空にならない。台帳の骨組みが在ることは割当が済んだことではなく、
+# UNKNOWN が残る限り MAP_COVERAGE を挙げる（事象 INC-006）。
 assurance/.venv/bin/python assurance/harness/orchestrator.py status
 assurance/.venv/bin/python assurance/harness/orchestrator.py validate
 
@@ -47,6 +49,10 @@ assurance/.venv/bin/python assurance/harness/extract_principles.py --book jerg
 # 網羅台帳（五値）の骨組み生成と集計
 assurance/.venv/bin/python assurance/harness/coverage.py init --book jerg
 assurance/.venv/bin/python assurance/harness/coverage.py stats
+
+# 事象 → 統制欠陥と先行指標（評価役: opus high。ADR-117 の三条件をコードが判ずる）
+assurance/.venv/bin/python assurance/harness/cast_analysis.py --dry-run --all
+assurance/.venv/bin/python assurance/harness/cast_analysis.py --all
 ```
 
 ## 観点レーンと発火（ADR-115）
@@ -65,7 +71,12 @@ FAIL（不適合）・UNASSESSED（前提欠如で未評価）。
 | challenge | （共通） | CHALLENGE | DISCOVER の構造化 JSON だけ → 判定 |
 
 冊子の取り込みは jerg → stpa → cast の順。事象は `ledger/incidents.json` に積み、
-cast 分析が済むまで閉じない。
+cast 分析が済むまで閉じない。「済んだ」の定義は ADR-117 が持つ —— 応答が
+`CAST_ANALYSIS_SCHEMA` へ適合し、参照照合を通った統制欠陥が一つ以上残り、
+先行指標が「どこで観測するか」と「何を異常とするか」を埋めていること。三つとも
+`harness/cast_analysis.py` の決定論コードが判ずる。分析の入力は事象の構造化記録・
+統制構造（`harness/control_structure.py`）・カタログ全件だけで、会話・弁明は渡さない。
+分析の結果は `ledger/cast/<事象 id>.json` に残る。
 
 ## model 方針（ADR-116）
 
@@ -95,4 +106,4 @@ PASS（適合の証拠あり）/ FAIL（走ったが不適合）/ UNKNOWN（観�
 - 評価者の CHALLENGE（独立批判）と VERIFY（独立検証）へ、実装者の会話・弁明・期待回答を渡さない。渡してよいのは構造化された成果物だけ。
 - 模擬（stub）で通った結果を、実 Claude での保証として記録しない。記録には必ず実行種別を書く。
 
-<!-- doctrine:view src=doctrine as-of=0.10.0 date=2026-08-04 refs=DECIDED-001,NONGOAL-001 -->
+<!-- doctrine:view src=doctrine as-of=0.10.0 date=2026-08-05 refs=DECIDED-001,NONGOAL-001 -->

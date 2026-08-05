@@ -1,0 +1,17 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "reproduce-red",
+  "incident_id": "INC-006-next-actions-silently-empty",
+  "generated_at": "2026-08-05T05:45:27Z",
+  "git_sha": "230419ee4c69c65e5112ab061345dbbf7e5aa277",
+  "phase": "before-fix",
+  "command": "python3 -m unittest assurance.tests.test_orchestrator -v",
+  "returncode": 1,
+  "expect": "修正前に FAIL すること（最初から緑は再現と認めない）",
+  "observed_failures": [
+    "FAIL: test_next_actions_is_never_silently_empty (assurance.tests.test_orchestrator.OrchestratorTest.test_next_actions_is_never_silently_empty)",
+    "FAIL: test_unmapped_coverage_is_an_action (assurance.tests.test_orchestrator.OrchestratorTest.test_unmapped_coverage_is_an_action)"
+  ],
+  "field_observation": "実台帳でも next_actions が [] を返した一方、coverage stats は 606 件すべて UNKNOWN であった",
+  "tail": "===\nFAIL: test_next_actions_is_never_silently_empty (assurance.tests.test_orchestrator.OrchestratorTest.test_next_actions_is_never_silently_empty)\n空の next_actions は「やることが無い」と読める。台帳が UNKNOWN だらけでも\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/workspaces/doctrine/assurance/tests/test_orchestrator.py\", line 49, in test_next_actions_is_never_silently_empty\n    self.assertTrue(orchestrator.next_actions())\nAssertionError: [] is not true\n\n======================================================================\nFAIL: test_unmapped_coverage_is_an_action (assurance.tests.test_orchestrator.OrchestratorTest.test_unmapped_coverage_is_an_action)\n骨組みが在るだけでは MAP_COVERAGE は済んでいない。UNKNOWN が残る限り\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/workspaces/doctrine/assurance/tests/test_orchestrator.py\", line 57, in test_unmapped_coverage_is_an_action\n    self.assertTrue([a for a in actions if a.startswith(\"MAP_COVERAGE\")],\nAssertionError: [] is not true : []\n\n----------------------------------------------------------------------\nRan 9 tests in 0.009s\n\nFAILED (failures=2)\n"
+}

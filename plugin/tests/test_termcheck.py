@@ -280,6 +280,31 @@ class UndefinedTermTest(unittest.TestCase):
         fs = tc.check("ARINC653 を採る。", {"type": "SPEC"}, self.g)
         self.assertTrue([f for f in fs if f.code == "UNDEFINED_TERM"])
 
+    def test_hyphen_joined_identifier_is_one_token(self):
+        """WATCH-001 の類型（ASCII 語境界）: ハイフンで綴じた識別子の前半を、
+        単独の未定義略語と取り違えてはならない。'INC-005' の 'INC'、
+        'NOT-APPLICABLE' の 'NOT' で実測した誤検知（事象 INC-004）。"""
+        for body, fragment in (("事象 INC-005 を参照する。", "INC"),
+                               ("状態は NOT-APPLICABLE とする。", "NOT"),
+                               ("鍵は SHA-256 で採る。", "SHA")):
+            fs = tc.check(body, {"type": "SPEC"}, self.g)
+            ut = [f for f in fs if f.code == "UNDEFINED_TERM"]
+            self.assertEqual(ut, [], "%s → %s" % (body, fragment))
+
+    def test_hyphen_joined_tail_is_not_flagged_alone(self):
+        """後半だけを未定義語として挙げるのも同じ取り違えである。"""
+        fs = tc.check("状態は NOT-APPLICABLE とする。", {"type": "SPEC"}, self.g)
+        self.assertEqual(
+            [f.message for f in fs if f.code == "UNDEFINED_TERM"], [])
+
+    def test_standalone_acronym_next_to_punctuation_still_flagged(self):
+        """ハイフン以外の区切りは従来どおり。語境界の緩和を広げすぎない。"""
+        for body in ("ARINC653、を採る。", "（ARINC653）を採る。",
+                     "ARINC653/他 を採る。"):
+            fs = tc.check(body, {"type": "SPEC"}, self.g)
+            self.assertTrue(
+                [f for f in fs if f.code == "UNDEFINED_TERM"], body)
+
 
 class MaskingTest(unittest.TestCase):
     """擬陽性回避: mask code fences / inline code / URLs (仕様 §6)."""

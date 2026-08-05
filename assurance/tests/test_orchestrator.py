@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # doctrine:exempt 開発専用保証レーン(ADR-114)。仕様との対応はコード側に持たない
 """オーケストレーションの正本(LANES/TRANSITIONS)の自己整合の凍結。"""
+import json
 import os
 import sys
+import tempfile
 import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -38,6 +40,52 @@ class OrchestratorTest(unittest.TestCase):
         t = [t for t in orchestrator.TRANSITIONS
              if t["event"] == "RED_IMPOSSIBLE"][0]
         self.assertEqual(t["to"], "RECORD")
+
+    def test_next_actions_is_never_silently_empty(self):
+        """空の next_actions は「やることが無い」と読める。台帳が UNKNOWN だらけでも
+        止まって見える形を許さない（事象 INC-006）。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            self._stub_ledger(tmp, coverage_unknown=0)
+            self.assertTrue(orchestrator.next_actions())
+
+    def test_unmapped_coverage_is_an_action(self):
+        """骨組みが在るだけでは MAP_COVERAGE は済んでいない。UNKNOWN が残る限り
+        次の行動として挙げる（骨組みの存在を済みと読んだのが INC-006）。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            self._stub_ledger(tmp, coverage_unknown=3)
+            actions = orchestrator.next_actions()
+            self.assertTrue([a for a in actions if a.startswith("MAP_COVERAGE")],
+                            actions)
+
+    def test_mapped_coverage_is_not_an_action(self):
+        """全件が割り当て済みなら MAP_COVERAGE は挙げない（消えない行動を作らない）。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            self._stub_ledger(tmp, coverage_unknown=0)
+            self.assertEqual(
+                [a for a in orchestrator.next_actions()
+                 if a.startswith("MAP_COVERAGE")], [])
+
+    def _stub_ledger(self, tmp, coverage_unknown):
+        """実台帳に依存しない一時の帳簿を立てる（三冊とも抽出済み扱い）。"""
+        for attr, value in (("CATALOG_DIR", tmp),
+                            ("INCIDENTS_PATH", os.path.join(tmp, "inc.json"))):
+            orig = getattr(orchestrator, attr)
+            setattr(orchestrator, attr, value)
+            self.addCleanup(setattr, orchestrator, attr, orig)
+        with open(os.path.join(tmp, "inc.json"), "w", encoding="utf-8") as f:
+            json.dump({"incidents": []}, f)
+        for book in ("jerg", "stpa", "cast"):
+            with open(os.path.join(tmp, "%s-principles.json" % book),
+                      "w", encoding="utf-8") as f:
+                json.dump({"chunks": [], "principles": [],
+                           "totals": {"cost_usd": 0.0, "principles": 0,
+                                      "rejected": 0}}, f)
+            entries = [{"key": "k%d" % i, "disposition": "UNKNOWN"}
+                       for i in range(coverage_unknown)]
+            entries.append({"key": "done", "disposition": "非該当で理由あり"})
+            with open(os.path.join(tmp, "%s-coverage.json" % book),
+                      "w", encoding="utf-8") as f:
+                json.dump({"entries": entries}, f)
 
     def test_challenge_sits_between_discover_and_formalize(self):
         ev = {t["event"]: t for t in orchestrator.TRANSITIONS}
