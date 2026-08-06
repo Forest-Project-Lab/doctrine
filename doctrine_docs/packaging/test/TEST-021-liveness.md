@@ -25,6 +25,7 @@ SPEC-021 の受入を `plugin/tests/test_liveness_capture.py` が機械で確認
 - セッションに一度だけ(test_once_per_session)。
 - 紐づけキャンペーン(ADR-065) → 未宣言の先頭一件を三つの出口つきで促し(test_trace_campaign_prompts_the_next_undeclared_spec)、停滞に触れ(test_trace_campaign_mentions_stagnation)、書式に合わない id を文面に載せず(test_trace_campaign_rejects_a_malformed_id)、移行キャンペーンが出す間は順番を待つ(test_trace_campaign_waits_for_md_migration)。
 - 発火の印の対の食い違い(ADR-062) → 他が健全でも「拒否経路の疑い」を告げる(test_guard_liveness_gap_is_announced)。
+- 現地状態の転記(ADR-122) → `--field-state` が版と生存の印だけの平文を出し、統治対象の内容を含めず、送信しない旨を本文に書く(test_flag_prints_the_report_and_exits_zero・test_report_never_carries_governed_content)。版の遅れの助言に転記の求め方が添う(test_version_lag_message_offers_the_transcription)。
 - 監査の走った証跡が要約より新しい(ADR-119) → 鮮度の警告が「監査は走っている」と原因を名指しし、従来の「動いていない可能性」を出さない(test_stale_with_a_newer_stamp_names_the_write_failure)。書き込みの印が失敗を告げるときも名指しする(test_stale_with_a_failed_write_flag_names_it)。証跡が無ければ従来の文面のまま(test_stale_without_a_stamp_keeps_the_old_wording)。
 - 版の切替(ADR-066) → 冒頭の版と今の版が違えば毎セッション再起動を促し(test_version_drift_is_announced_every_session)、印が無ければ黙る(test_no_version_drift_without_the_stamp)。注入が版の印を刻むこと・判定の規則は `test_inject.py` の TestVersionStamp と `test_auditcache.py` が凍結する。
 - 版の遅れ(ADR-070) → マニフェストの宣言と実行中の版が食い違えば更新の言い方まで含めて促し(test_version_lag_advises_update_in_a_self_marketplace_repo)、マニフェストの無い導入先では黙る(test_no_version_lag_without_a_manifest)。判定の規則(正本は source の先を優先・同名の項目だけ・不一致のみで向きを言わない)は `test_auditcache.py` の VersionLagTest が凍結する。

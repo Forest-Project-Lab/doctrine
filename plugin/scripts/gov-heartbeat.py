@@ -358,6 +358,11 @@ def main(argv=None):
     _hookio.harden_stdout()
     if argv is None:
         argv = sys.argv[1:]
+    # 現地状態の転記(ADR-122)。求められたときだけ、人が読んで貼れる平文で出す。
+    # フックとしての振る舞いはしない(標準入力も読まない)。**送信はしない。**
+    if "--field-state" in argv:
+        sys.stdout.write(_auditcache.field_state_report() + "\n")
+        return 0
     try:
         data = _hookio.read_payload(component="gov-heartbeat")
         today = None
@@ -386,7 +391,9 @@ def main(argv=None):
         # 検める。マニフェストを持たない導入先では黙る(自己適用だけの照合)。
         lag = _auditcache.version_lag()
         if lag:
-            msg = (msg + "\n" if msg else "") + "【版の遅れ】" + lag
+            # 転記の求め方を添える(ADR-122)。送るのは体系ではなく利用者である。
+            msg = ((msg + "\n" if msg else "")
+                   + "【版の遅れ】" + _auditcache.version_lag_advice(lag))
         if not msg:
             return 0
         sid = data.get("session_id")
