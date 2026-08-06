@@ -41,11 +41,13 @@ _CHALLENGE_CHARTER = """\
 """
 
 
-def build_discover_prompt(seed_facts, boundary):
+def build_discover_prompt(seed_facts, boundary, principle_index=()):
     """DISCOVER の一回限りセッション用プロンプト。
 
     seed_facts: 出発点となる事実の列（例: 直近の障害・規範の条項）。
     boundary: 対象システム境界の一文。
+    principle_index: (鍵, 題, 一文) の列。出典として引ける鍵をここで示す。
+        空でも組めるが、そのときは出典の機械照合ができない。
     """
     if not isinstance(seed_facts, (list, tuple)) or not seed_facts:
         raise ValueError("seed_facts は空でない列でなければならない")
@@ -54,13 +56,19 @@ def build_discover_prompt(seed_facts, boundary):
              "",
              "出発点の事実（これ自体を疑ってもよい）:"]
     lines += ["- %s" % fact for fact in seed_facts]
+    if principle_index:
+        lines += ["", "引ける規範の鍵（鍵 ｜ 題 ｜ 一文）:"]
+        lines += ["- %s ｜ %s ｜ %s" % (k, t, st)
+                  for k, t, st in principle_index]
     lines += [
         "",
-        "応答は SCENARIO_SCHEMA に適合する JSON の配列だけを返す。"
+        "応答は SCENARIOS_SCHEMA に適合する JSON だけを返す（`scenarios` の配列）。"
         "各要素は scenario_id, normative_refs, system_boundary, loss, hazard,"
         " unsafe_control_action, event_sequence, fault, injection_point,"
         " expected_safe_behavior, oracle, falsification_signal, severity,"
-        " confidence を必ず持つ。",
+        " confidence を必ず持つ。scenario_id は `SCN-` で始まる一意の識別子にする。"
+        "normative_refs には、下に示した規範の鍵をそのまま書く。一覧に無い鍵は"
+        "機械照合で外される（憶測の出典を書かない）。",
     ]
     return "\n".join(lines)
 
@@ -332,6 +340,56 @@ def verify_coverage_assignments(assignments, resolve, requested_keys):
     return accepted, downgraded, rejected
 
 
+def verify_scenarios(scenarios, known_principle_keys):
+    """創出された scenario の出典を照合する（創出の反幻覚 oracle）。
+
+    ADR-121 と同じ主張単位の規則にする —— 解決する出典を一つでも保つ scenario は
+    残し、外した鍵を刻む。解決する出典がゼロの scenario だけを却下する。
+
+    返り値: (accepted, rejected)
+    """
+    keys = set(known_principle_keys)
+    accepted, rejected = [], []
+    for scn in scenarios:
+        refs = list(scn.get("normative_refs") or [])
+        resolved = [r for r in refs if r in keys]
+        unknown = [r for r in refs if r not in keys]
+        if not resolved:
+            rejected.append({"scenario": scn,
+                             "problems": ["解決する規範鍵が一つも無い %s"
+                                          % unknown[:3]]})
+            continue
+        scn = dict(scn)
+        scn["normative_refs"] = resolved
+        if unknown:
+            scn["unresolved_refs"] = unknown
+            scn["citation_defect"] = True
+        accepted.append(scn)
+    return accepted, rejected
+
+
+def verify_verdicts(verdicts, requested_ids):
+    """CHALLENGE の判定を、依頼した候補の id と突き合わせる。
+
+    返り値: (matched, unrequested, missing)
+    - matched      … 依頼した候補への判定。
+    - unrequested  … 依頼していない id への判定（受け取らない）。
+    - missing      … 判定が返ってこなかった候補の id（沈黙を ACCEPT と読まない）。
+    """
+    wanted = list(requested_ids)
+    seen = set()
+    matched, unrequested = [], []
+    for v in verdicts:
+        sid = v.get("scenario_id")
+        if sid in wanted:
+            seen.add(sid)
+            matched.append(v)
+        else:
+            unrequested.append(v)
+    missing = [sid for sid in wanted if sid not in seen]
+    return matched, unrequested, missing
+
+
 def build_challenge_prompt(discover_output_json):
     """CHALLENGE の一回限りセッション用プロンプト。
 
@@ -345,5 +403,9 @@ def build_challenge_prompt(discover_output_json):
         payload = discover_output_json
     else:
         raise ValueError("DISCOVER の構造化 JSON だけを受け取る")
-    return "%s\n批判対象:\n%s\n\n各候補への判定を VERDICT_SCHEMA に適合する JSON で返す。" % (
-        _CHALLENGE_CHARTER, payload)
+    return ("%s\n批判対象:\n%s\n\n"
+            "CHALLENGE_SCHEMA に適合する JSON だけを返す（`verdicts` の配列）。"
+            "**候補の一つひとつに一つの判定を返す。** 各判定は scenario_id を"
+            "そのまま写し、verdict と reasons を必ず持つ。判定を返さなかった候補は"
+            "沈黙として扱われ、ACCEPT とは読まれない。" % (
+                _CHALLENGE_CHARTER, payload))
