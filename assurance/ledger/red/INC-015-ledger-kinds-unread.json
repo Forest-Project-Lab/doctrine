@@ -1,0 +1,25 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "reproduce-red",
+  "incident_id": "INC-015-discover-output-invisible-to-canon",
+  "generated_at": "2026-08-06T07:20:00Z",
+  "git_sha": "e06964a0dc83d90e3354526fda3f64df938e68de",
+  "phase": "before-fix",
+  "command": "python3 -m unittest assurance.tests.test_orchestrator",
+  "returncode": 1,
+  "expect": "修正前に FAIL すること（最初から緑は再現と認めない）",
+  "observed_failures": [
+    "FAIL: test_validate_is_clean — 台帳に在るが種別が未宣言 6 件",
+    "FAIL: test_real_ledger_has_no_undeclared_artifact — 差集合が空でない"
+  ],
+  "measured_undeclared": [
+    "red/INC-004-undefined-term.json",
+    "red/INC-006-next-actions.json",
+    "red/INC-009-audit-write-gap.json",
+    "red/INC-011-dot-glue.json",
+    "runs/smoke-20260804T150058Z.json",
+    "smoke-latest.json"
+  ],
+  "note": "INC-015 の事故分析が挙げた P1 仮説『DISCOVER 以外にも、成果物を生む段が存在し、その成果を正本が読まないまま放置されている組が他にもある』の反証試験。反証信号は『差集合が空である』だったが、差集合は 3 種 6 件で空でない。仮説は反証されず確証された。未接続は DISCOVER の一件ではなく 3 種であった。",
+  "tail": ""
+}

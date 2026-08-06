@@ -199,5 +199,58 @@ class OrchestratorTest(unittest.TestCase):
         self.assertEqual(ev["CHALLENGE_DONE"]["to"], "FORMALIZE")
 
 
+class LedgerKindTest(unittest.TestCase):
+    """台帳の成果物種別は、読む経路か読まない理由のどちらかを必ず持つ（ADR-124）。
+
+    一段ごとの受入試験は、その一段しか守らない。INC-012・INC-015 で同型の未接続が
+    三度通ったので、症状ではなく不変条件で蓋をする。
+    """
+
+    def test_every_kind_is_either_read_or_declared_unread(self):
+        for entry in orchestrator.LEDGER_KINDS:
+            read_by = entry.get("read_by") or ()
+            why = entry.get("why_not_read")
+            self.assertNotEqual(
+                bool(read_by), bool(why),
+                "%s は読取経路と読まない理由のちょうど一方を持つこと" % entry["kind"])
+
+    def test_declared_readers_exist(self):
+        """宣言が嘘をつけないようにする。名は実在する呼べる関数へ解決すること。"""
+        for entry in orchestrator.LEDGER_KINDS:
+            for fn_name in entry.get("read_by") or ():
+                self.assertTrue(callable(getattr(orchestrator, fn_name, None)),
+                                "%s の %r" % (entry["kind"], fn_name))
+
+    def test_real_ledger_has_no_undeclared_artifact(self):
+        """実台帳に、どの宣言にも当たらない成果物が無い（差集合が空）。"""
+        self.assertEqual(orchestrator.undeclared_ledger_files(), [])
+
+    def test_novel_artifact_kind_turns_the_canon_red(self):
+        """未知の種別を台帳へ注入したら赤で止まる。
+
+        これは今回の一段（FORMALIZE）の受入試験ではなく、次に走らせ手が増えた
+        ときにも効く不変条件であることの確認である（INC-015 の事故分析が挙げた
+        P1 仮説の反証試験）。
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            ledger = os.path.join(tmp, "ledger")
+            os.makedirs(os.path.join(ledger, "brand-new-lane"))
+            with open(os.path.join(ledger, "brand-new-lane", "out.json"),
+                      "w", encoding="utf-8") as f:
+                json.dump({"date": "2099-01-01"}, f)
+            undeclared = orchestrator.undeclared_ledger_files(ledger)
+            self.assertEqual(undeclared, ["brand-new-lane/out.json"])
+
+    def test_hidden_files_are_not_artifacts(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ledger = os.path.join(tmp, "ledger")
+            os.makedirs(os.path.join(ledger, ".cache"))
+            for path in (os.path.join(ledger, ".DS_Store"),
+                         os.path.join(ledger, ".cache", "x.json")):
+                with open(path, "w", encoding="utf-8") as f:
+                    f.write("{}")
+            self.assertEqual(orchestrator.undeclared_ledger_files(ledger), [])
+
+
 if __name__ == "__main__":
     unittest.main()
