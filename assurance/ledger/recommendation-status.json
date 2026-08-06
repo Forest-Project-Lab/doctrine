@@ -1,0 +1,6 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "recommendation-status",
+  "note": "事故分析が出した推奨の処遇（ADR-125）。鍵は (incident_id, index) で、index は cast/<事象 id>.json の analysis.recommendations の並び順。書かれていない推奨の既定は、分析が owner_decision_required を印していれば owner、それ以外は pending。state は pending / landed / rejected / owner のいずれか。rejected は note に理由を、landed は evidence_ref に証拠のポインタを必ず持つ（持たないと orchestrator.py validate が赤になる）。",
+  "dispositions": []
+}

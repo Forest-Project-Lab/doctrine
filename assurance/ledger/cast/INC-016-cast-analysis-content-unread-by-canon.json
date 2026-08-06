@@ -1,0 +1,748 @@
+{
+  "accepted_flaws": [
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "ASSURANCE_LANE は「assurance/ledger/」を手掛かりとして持つが、cast/*.json から実際に取り込むのは generated_at のみとされる。schemas.py が定める control_flaws・leading_indicators・new_scenario_candidates・recommendations は、制御アクション（次の行動の決定論的導出）の入力集合に一度も入らない。コントロールアクションは在るが、そのアクションを調整するためのフィードバックの中身が経路上で欠落している。",
+      "evidence_ref": "assurance/harness/orchestrator.py（evaluator_outputs_latest）／assurance/harness/schemas.py",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "全コントロールループにフィードバック必須",
+        "control-action-requires-feedback",
+        "情報活用のための構造とプロセス",
+        "教訓の記録と伝達と活用",
+        "文書量でなく設計運用への影響"
+      ],
+      "why_it_seemed_adequate": "ASSURANCE_LANE のもう一つの制御「事象を台帳へ積み、分析が済むまで閉じない」を満たすには、分析が生成済みか否かの判定だけで足りる。generated_at の有無と鮮度はその判定に十分であり、読取経路が実在する以上、台帳は「読まれている」と正本に宣言でき、契約は充足しているように見えた。読取の粒度がファイル単位で足りるという想定は、それまでの三度の同型事象がいずれもファイル単位の未接続だったことによって補強されていた。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "生成された recommendations に対して、実施責任の割当・実施状況の検査・有効性のフィードバックを与える制御動作が存在しない。推奨は状態（未着手／機構化済み／所有者判断待ち／却下と理由）を持たず、terminal 状態に到達したかを追跡する機構が無いため、指摘のまま未処理で残り得る。",
+      "evidence_ref": "assurance/ledger/cast/*.json（recommendations に状態欄が無い）",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "推奨事項の責任割当実施検査フィードバック",
+        "是正措置の責任割当と追跡",
+        "audit-findings-must-be-closed",
+        "指摘欠点の是正完了追跡",
+        "教訓を適用する手順の確立"
+      ],
+      "why_it_seemed_adequate": "台帳は「分析が済むまで閉じない」という閉鎖条件を持っており、分析の生成そのものが追跡対象として設計されていた。分析が済めば内容は次の反復の判断材料になるという想定の下では、推奨ごとの状態機械は冗長な二重管理に見えた。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "「分析が正本に読まれている」ことの判定に generated_at という生成時刻の代理指標が用いられている。この量は分析の適用状況と因果的に関連せず、中身が一度も消費されていなくても正常値を示し続ける。安全に関する情報（統制欠陥・先行指標）が、鮮度という単一のメタデータへ丸め込まれ、リスク要因が識別不能になっている。",
+      "evidence_ref": "assurance/harness/orchestrator.py（evaluator_outputs_latest が generated_at のみを取る）",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "先行指標の妥当性・代理指標の禁止",
+        "リスク情報の不透明な集約禁止",
+        "要約統計偏重による傾向情報の喪失",
+        "情報システム保有と有用性の乖離"
+      ],
+      "why_it_seemed_adequate": "鮮度は古びの検出という既存の統治語彙（HEARTBEAT・last-audit.json）に整合しており、台帳全体で一貫した扱いができる安価な指標だった。古びていない＝現行の分析が在る、という読み替えは他の統治対象で機能してきた。"
+    },
+    {
+      "control_element_id": "OWNER",
+      "description": "所有者の手掛かりは進捗報告・PR の diff・台帳の三つだが、いずれも「未適用の推奨が何件あり、どれが所有者判断を要するか」を提示しない。機構化を要する6件と P1 仮説3件は、人が台帳を開いて手で拾わない限り所有者の視界に入らず、互換性・配布境界・評価 model の最低線といった所有者固有の権限に属する判断が起動しない。",
+      "evidence_ref": "統制構造 OWNER の手掛かり一覧／INC-016 impact 記述",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "controller-needs-concrete-feedback-channels",
+        "feedback-enables-improvement-of-controls",
+        "利用可能な形式での情報提示",
+        "上位文書の利用可能性（読み手適合）",
+        "管理者への安全情報伝達"
+      ],
+      "why_it_seemed_adequate": "台帳は所有者の手掛かりとして明示的に列挙されており、原理的には全内容が閲覧可能である。閲覧可能性が伝達の代替になるという想定は、台帳の件数が少ないうちは実際に成立していた。既知の穴「報告が実施ではなく意図を書いていても人からは見分けにくい」と同じ形の帯域制約が、ここでは未検出のまま残った。"
+    },
+    {
+      "control_element_id": "CI_RELEASE_CHECK",
+      "description": "ADR-124 の不変条件（台帳の種別ごとに読取経路が在るか、無い理由が書かれているか）を実装した検査は、cast 種別に読取経路が実在するため緑を返す。検査の述語は種別粒度で書かれており、スキーマが定める個々のフィールドが読まれているかを問わない。したがってこの形の未接続を赤にできず、緑が「中身が接続されている」ことを含意しないまま merge を通す。",
+      "evidence_ref": "ADR-124（帰結節に検査の限界を明記）／.github/workflows",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "監査のすり抜け時に監査手順を是正",
+        "監査の検出力評価",
+        "検出失敗の原因調査",
+        "最低限準拠を超える安全活動の実効性",
+        "最低準拠は不十分"
+      ],
+      "why_it_seemed_adequate": "種別粒度の不変条件は、それまで観測された三度の未接続（ファイルごと読まれていない形）をすべて赤にできた。検出できた事象の集合が検査の十分性の証拠として機能し、粒度を一段深める必要は測定されるまで見えなかった。限界は同 ADR の帰結に自ら明記されており、認識の欠落ではなく機構化の欠落である。"
+    },
+    {
+      "control_element_id": "SESSION_START_CONTRACT",
+      "description": "セッション冒頭の注入は確定・非目標・退行監視の要点を対象とし、その源は統治木である。台帳の未適用推奨・未検証の P1 仮説・先行指標は注入対象に含まれないため、走らせ手の行動を変える帯域の最も高い経路に、事故分析の成果が一度も乗らない。",
+      "evidence_ref": "plugin/scripts/inject-contract.py（統制構造の記述）",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "教訓の反映手順の確立",
+        "情報活用のための構造とプロセス",
+        "安全情報システムの維持と伝達",
+        "利用可能な形式での情報提示"
+      ],
+      "why_it_seemed_adequate": "注入の設計目的は統治の生存の指標（R11）を満たすことと、確定事実の逸脱を防ぐことであり、分析成果の伝達は台帳の役割だと分業されていた。注入内容を増やすことは冒頭コンテキストの希釈という別のリスクを持つため、絞り込みは合理的な選択だった。"
+    },
+    {
+      "control_element_id": "GOVERNANCE_TREE",
+      "description": "事故分析の成果を統治木（decided-facts.md 等）へ落とす経路が定義されていない。統治木は docs-audit・dep-graph・注入・鼓動の共通の源であるため、ここへ到達しない知見は下流のどの統制にも波及しない。ASSURANCE_LANE が生成する知識と GOVERNANCE_TREE が配る知識が別々の貯蔵庫に置かれ、両者を接続する責任がどの要素にも割り当てられていない。",
+      "evidence_ref": "doctrine_docs/_system/decided-facts.md／assurance/ledger/ の二系統",
+      "flaw_type": "統制どうしの調整の欠如",
+      "normative_refs": [
+        "分析成果の再利用蓄積",
+        "安全情報システムの維持と伝達",
+        "設計上と実際の伝達経路の照合",
+        "監視責任の空白排除",
+        "責任の空白は構造再設計"
+      ],
+      "why_it_seemed_adequate": "台帳と統治木は目的の異なる記録であり、事象の記録（可変・時系列）を確定事実（不変・規範）へ混ぜないという分離は設計上の美点として機能していた。分離は正しく、欠けているのは分離の上に架ける橋だが、橋の不在は各々の統制を単体で見る限り欠陥として現れない。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "分析が毎反復生成され続けているのに、その中身が一度も次の行動を変えていないという状態を、レーン自身が観測する指標を持たない。生成の側にはコストと成否の記録があるが、消費の側には何の計数も無く、生産と消費の非対称が無期限に続き得る。",
+      "evidence_ref": "INC-016 summary（分析は毎反復買われるが中身は次の行動を変えない）",
+      "flaw_type": "統制自身の劣化を検出できない",
+      "normative_refs": [
+        "自己満足への構造的対策",
+        "全体健全性と部分健全性の分離評価",
+        "分析が管理システムの弱点を暴く",
+        "symptom-vs-systemic-cause",
+        "調査対象としての安全情報システム"
+      ],
+      "why_it_seemed_adequate": "決定論試験の成否と台帳の閉鎖条件により、レーンの健全性は緑で表現されていた。構成要素（分析の生成、台帳の追記、検査の通過）がそれぞれ健全であることが、レーン全体の健全性の証拠として扱われていた。"
+    }
+  ],
+  "analysis": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "ASSURANCE_LANE は「assurance/ledger/」を手掛かりとして持つが、cast/*.json から実際に取り込むのは generated_at のみとされる。schemas.py が定める control_flaws・leading_indicators・new_scenario_candidates・recommendations は、制御アクション（次の行動の決定論的導出）の入力集合に一度も入らない。コントロールアクションは在るが、そのアクションを調整するためのフィードバックの中身が経路上で欠落している。",
+        "evidence_ref": "assurance/harness/orchestrator.py（evaluator_outputs_latest）／assurance/harness/schemas.py",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "全コントロールループにフィードバック必須",
+          "control-action-requires-feedback",
+          "情報活用のための構造とプロセス",
+          "教訓の記録と伝達と活用",
+          "文書量でなく設計運用への影響"
+        ],
+        "why_it_seemed_adequate": "ASSURANCE_LANE のもう一つの制御「事象を台帳へ積み、分析が済むまで閉じない」を満たすには、分析が生成済みか否かの判定だけで足りる。generated_at の有無と鮮度はその判定に十分であり、読取経路が実在する以上、台帳は「読まれている」と正本に宣言でき、契約は充足しているように見えた。読取の粒度がファイル単位で足りるという想定は、それまでの三度の同型事象がいずれもファイル単位の未接続だったことによって補強されていた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "生成された recommendations に対して、実施責任の割当・実施状況の検査・有効性のフィードバックを与える制御動作が存在しない。推奨は状態（未着手／機構化済み／所有者判断待ち／却下と理由）を持たず、terminal 状態に到達したかを追跡する機構が無いため、指摘のまま未処理で残り得る。",
+        "evidence_ref": "assurance/ledger/cast/*.json（recommendations に状態欄が無い）",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "推奨事項の責任割当実施検査フィードバック",
+          "是正措置の責任割当と追跡",
+          "audit-findings-must-be-closed",
+          "指摘欠点の是正完了追跡",
+          "教訓を適用する手順の確立"
+        ],
+        "why_it_seemed_adequate": "台帳は「分析が済むまで閉じない」という閉鎖条件を持っており、分析の生成そのものが追跡対象として設計されていた。分析が済めば内容は次の反復の判断材料になるという想定の下では、推奨ごとの状態機械は冗長な二重管理に見えた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "「分析が正本に読まれている」ことの判定に generated_at という生成時刻の代理指標が用いられている。この量は分析の適用状況と因果的に関連せず、中身が一度も消費されていなくても正常値を示し続ける。安全に関する情報（統制欠陥・先行指標）が、鮮度という単一のメタデータへ丸め込まれ、リスク要因が識別不能になっている。",
+        "evidence_ref": "assurance/harness/orchestrator.py（evaluator_outputs_latest が generated_at のみを取る）",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "先行指標の妥当性・代理指標の禁止",
+          "リスク情報の不透明な集約禁止",
+          "要約統計偏重による傾向情報の喪失",
+          "情報システム保有と有用性の乖離"
+        ],
+        "why_it_seemed_adequate": "鮮度は古びの検出という既存の統治語彙（HEARTBEAT・last-audit.json）に整合しており、台帳全体で一貫した扱いができる安価な指標だった。古びていない＝現行の分析が在る、という読み替えは他の統治対象で機能してきた。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者の手掛かりは進捗報告・PR の diff・台帳の三つだが、いずれも「未適用の推奨が何件あり、どれが所有者判断を要するか」を提示しない。機構化を要する6件と P1 仮説3件は、人が台帳を開いて手で拾わない限り所有者の視界に入らず、互換性・配布境界・評価 model の最低線といった所有者固有の権限に属する判断が起動しない。",
+        "evidence_ref": "統制構造 OWNER の手掛かり一覧／INC-016 impact 記述",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "controller-needs-concrete-feedback-channels",
+          "feedback-enables-improvement-of-controls",
+          "利用可能な形式での情報提示",
+          "上位文書の利用可能性（読み手適合）",
+          "管理者への安全情報伝達"
+        ],
+        "why_it_seemed_adequate": "台帳は所有者の手掛かりとして明示的に列挙されており、原理的には全内容が閲覧可能である。閲覧可能性が伝達の代替になるという想定は、台帳の件数が少ないうちは実際に成立していた。既知の穴「報告が実施ではなく意図を書いていても人からは見分けにくい」と同じ形の帯域制約が、ここでは未検出のまま残った。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "ADR-124 の不変条件（台帳の種別ごとに読取経路が在るか、無い理由が書かれているか）を実装した検査は、cast 種別に読取経路が実在するため緑を返す。検査の述語は種別粒度で書かれており、スキーマが定める個々のフィールドが読まれているかを問わない。したがってこの形の未接続を赤にできず、緑が「中身が接続されている」ことを含意しないまま merge を通す。",
+        "evidence_ref": "ADR-124（帰結節に検査の限界を明記）／.github/workflows",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "監査のすり抜け時に監査手順を是正",
+          "監査の検出力評価",
+          "検出失敗の原因調査",
+          "最低限準拠を超える安全活動の実効性",
+          "最低準拠は不十分"
+        ],
+        "why_it_seemed_adequate": "種別粒度の不変条件は、それまで観測された三度の未接続（ファイルごと読まれていない形）をすべて赤にできた。検出できた事象の集合が検査の十分性の証拠として機能し、粒度を一段深める必要は測定されるまで見えなかった。限界は同 ADR の帰結に自ら明記されており、認識の欠落ではなく機構化の欠落である。"
+      },
+      {
+        "control_element_id": "SESSION_START_CONTRACT",
+        "description": "セッション冒頭の注入は確定・非目標・退行監視の要点を対象とし、その源は統治木である。台帳の未適用推奨・未検証の P1 仮説・先行指標は注入対象に含まれないため、走らせ手の行動を変える帯域の最も高い経路に、事故分析の成果が一度も乗らない。",
+        "evidence_ref": "plugin/scripts/inject-contract.py（統制構造の記述）",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "教訓の反映手順の確立",
+          "情報活用のための構造とプロセス",
+          "安全情報システムの維持と伝達",
+          "利用可能な形式での情報提示"
+        ],
+        "why_it_seemed_adequate": "注入の設計目的は統治の生存の指標（R11）を満たすことと、確定事実の逸脱を防ぐことであり、分析成果の伝達は台帳の役割だと分業されていた。注入内容を増やすことは冒頭コンテキストの希釈という別のリスクを持つため、絞り込みは合理的な選択だった。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "事故分析の成果を統治木（decided-facts.md 等）へ落とす経路が定義されていない。統治木は docs-audit・dep-graph・注入・鼓動の共通の源であるため、ここへ到達しない知見は下流のどの統制にも波及しない。ASSURANCE_LANE が生成する知識と GOVERNANCE_TREE が配る知識が別々の貯蔵庫に置かれ、両者を接続する責任がどの要素にも割り当てられていない。",
+        "evidence_ref": "doctrine_docs/_system/decided-facts.md／assurance/ledger/ の二系統",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "分析成果の再利用蓄積",
+          "安全情報システムの維持と伝達",
+          "設計上と実際の伝達経路の照合",
+          "監視責任の空白排除",
+          "責任の空白は構造再設計"
+        ],
+        "why_it_seemed_adequate": "台帳と統治木は目的の異なる記録であり、事象の記録（可変・時系列）を確定事実（不変・規範）へ混ぜないという分離は設計上の美点として機能していた。分離は正しく、欠けているのは分離の上に架ける橋だが、橋の不在は各々の統制を単体で見る限り欠陥として現れない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "分析が毎反復生成され続けているのに、その中身が一度も次の行動を変えていないという状態を、レーン自身が観測する指標を持たない。生成の側にはコストと成否の記録があるが、消費の側には何の計数も無く、生産と消費の非対称が無期限に続き得る。",
+        "evidence_ref": "INC-016 summary（分析は毎反復買われるが中身は次の行動を変えない）",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "自己満足への構造的対策",
+          "全体健全性と部分健全性の分離評価",
+          "分析が管理システムの弱点を暴く",
+          "symptom-vs-systemic-cause",
+          "調査対象としての安全情報システム"
+        ],
+        "why_it_seemed_adequate": "決定論試験の成否と台帳の閉鎖条件により、レーンの健全性は緑で表現されていた。構成要素（分析の生成、台帳の追記、検査の通過）がそれぞれ健全であることが、レーン全体の健全性の証拠として扱われていた。"
+      }
+    ],
+    "hazard": "保証レーンが、自らの統制下にある台帳に記録済みの事故分析の中身（推奨・先行指標・新規仮説）を入力に取らないまま、次の行動を決定論で導いている状態。すなわち統制構造が、フィードバック情報を保持していながら、それを制御アクションの決定に反映しない状態にある。この状態は、統治文書・配布・評価の各層で未検出の欠陥が同時に蓄積する条件下で損失に至る。",
+    "incident_id": "INC-016-cast-analysis-content-unread-by-canon",
+    "leading_indicators": [
+      {
+        "indicator": "スキーマ必須フィールドのうち harness コードから一度も参照されないものの件数",
+        "observable": "assurance/harness/schemas.py が定めるフィールド名一覧を機械生成し、assurance/harness/ 配下の全コードに対して参照を照合した結果の 0 件フィールド数",
+        "threshold": "0 件参照のフィールドが 1 つでも存在し、かつ「読まない理由」の明示が無ければ赤",
+        "version_independent": true,
+        "where": "リポジトリ正本の決定論試験（CI_RELEASE_CHECK のジョブとして）",
+        "why_version_independent": "正本のコードとスキーマだけで完結し、利用者環境の導入複製の版に依存しない"
+      },
+      {
+        "indicator": "未適用の推奨の滞留反復数",
+        "observable": "ledger/cast/*.json の recommendations のうち terminal 状態（機構化済み／却下＋理由／所有者判断済み）に到達していない件の、最古のものが滞留した反復数",
+        "threshold": "3 反復以上滞留した推奨が 1 件でもあれば異常。状態欄そのものが無い場合は測定不能として赤",
+        "version_independent": true,
+        "where": "assurance/ledger/cast/ と保証レーンの反復カウンタ",
+        "why_version_independent": "台帳と正本レーンの内部状態のみで算出でき、配布された複製を参照しない"
+      },
+      {
+        "indicator": "new_scenario_candidates の消費率",
+        "observable": "直近 N 反復に生成された新規仮説候補のうち、対応する scenario または決定論試験に到達した件数の割合",
+        "threshold": "直近 5 反復で生成 >0 かつ到達 0 件なら異常（生成が消費されていない）",
+        "version_independent": true,
+        "where": "assurance/ledger/cast/ と assurance/harness/ の scenario 定義の突合",
+        "why_version_independent": "生成物と試験定義の双方が正本側にあり、複製の版を経由しない"
+      },
+      {
+        "indicator": "次の行動の入力集合に占める cast 由来項目の割合",
+        "observable": "保証レーンが次の行動を導いた際の入力集合の記録に、cast/*.json の generated_at 以外のフィールドに由来する項目が含まれた反復の割合",
+        "threshold": "3 反復連続で 0% なら異常（分析が買われているが行動を変えていない）",
+        "version_independent": true,
+        "where": "assurance/harness/orchestrator.py の決定ログ",
+        "why_version_independent": "レーンの決定ログは正本側の実行で生成される"
+      },
+      {
+        "indicator": "検査の緑と実接続の差分",
+        "observable": "ADR-124 の種別粒度検査が緑を返す種別のうち、フィールド粒度の照合で未接続が検出される種別の数",
+        "threshold": "差分 >0 なら、緑の意味が縮んでいる兆候として検査述語の見直しを起動",
+        "version_independent": true,
+        "where": "CI の docs-audit / release-check 出力と、フィールド粒度照合の結果の突合",
+        "why_version_independent": "両方の検査が正本の CI 上で走る"
+      },
+      {
+        "indicator": "導入複製側で未適用推奨の警告が届いているか",
+        "observable": "HEARTBEAT が読む .claude/.cache/last-audit.json に未適用推奨の件数が載っているか、および導入複製の版と正本の版の差",
+        "threshold": "複製の版が正本より 1 世代でも遅れていれば、この警告の欠落を検出できないものとして扱う",
+        "version_independent": false,
+        "where": "利用者環境の .claude/.cache/last-audit.json と claude plugin update の応答",
+        "why_version_independent": "検出器自身が導入複製の側で動くため、版が遅れれば警告の内容も遅れる。INC-005 と同じ共通原因故障（古びの検出器が古びる）を、この指標は継承する"
+      }
+    ],
+    "loss": "事故分析（CAST）の成果——統制欠陥・先行指標・新規 scenario 候補・推奨——が、生成のコストを毎反復支払われながら、保証レーンの次の行動にも所有者の判断にも入力として届かない。結果として、機構化を要する推奨6件と P1 の新規仮説3件が是正要求に変換されないまま台帳に滞留し、INC-012・INC-015・ADR-124 と同型の未接続が四度目の再発をしている。所有者（ステークホルダー）にとって、分析への支出が防止構造の強化に転化しない状態は許容できない。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "すべての種別で、すべての必須フィールドが harness 内の 1 箇所以上から参照されている。",
+        "hypothesis": "cast 以外の台帳種別にも、読取経路は実在するが読まれるのは鮮度メタデータのみ、という同型のフィールド粒度未接続が存在する。",
+        "oracle": "各種別のスキーマ必須フィールド名を機械生成し、harness 配下の全コードへ参照照合して 0 件参照フィールドの集合を出す。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "少なくとも一つの記載済み先行指標に対して、実際に測定して閾値超過を報じるコードが存在する。",
+        "hypothesis": "leading_indicators フィールドに書かれた閾値を実際に評価・警告する機構が harness に無く、先行指標そのものが本事象と同じ形で死んでいる。",
+        "oracle": "過去の cast/*.json に記載された各先行指標について、対応する測定コードまたは警告経路が harness に存在するかを照合する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "注入テキストに台帳由来の未適用項目が実際に含まれている。",
+        "hypothesis": "SessionStart の注入内容の源が統治木に限られるため、台帳由来の未適用項目はセッションに一度も入らず、走らせ手の行動を変える経路が構造的に存在しない。",
+        "oracle": "inject-contract.py が生成する注入テキストの各項目の出所を分類し、台帳由来項目の件数を数える。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "所有者判断待ちの滞留が 2 反復以内に収束し、最大滞留も有界である。",
+        "hypothesis": "推奨の消費経路を機構化しても、所有者判断待ちの列で同じ死に方をする（人の帯域が新しいボトルネックになり、滞留が無期限化する）。",
+        "oracle": "所有者判断待ち状態の推奨について、状態遷移までの平均・最大滞留反復数を測定する。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "警告の生成を正本側で完結させ、複製側は表示のみを担う設計で一致率が版に依存しない。",
+        "hypothesis": "未適用推奨の警告を導入複製側の HEARTBEAT に載せると、複製の版遅れによって警告自体が古び、INC-005 の共通原因故障が再演される。",
+        "oracle": "複製の版と、そこで表示される未適用推奨の件数を、正本側の実件数と突き合わせて一致率を測る。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "接続後も決定の一致率が接続前と同水準を保つ。",
+        "hypothesis": "中身の接続を実装した後、蓄積済みの未適用推奨が一斉に入力集合へ流入し、同系 model の評価者が生んだ品質のばらつきが次の行動の決定を不安定にする。",
+        "oracle": "接続の前後で、次の行動の決定が反復間でどれだけ変動するか（同一入力に対する決定の一致率）を測る。",
+        "severity": "P3"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "evaluator_outputs_latest を、schemas.py が定める cast の必須フィールド（control_flaws・leading_indicators・new_scenario_candidates・recommendations）を実際に読み、次の行動の候補集合へ入れる形へ拡張する。読まないフィールドがある場合は「読まない理由」を出力に残し、理由の無い未読を許さない。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "recommendations の各件に状態（未着手／機構化済み／所有者判断待ち／却下＋理由）を持たせ、terminal 状態に到達するまで当該事象を閉じない制御を ASSURANCE_LANE に追加する。状態欄の無い既存の台帳項目は移行時に未着手として初期化する。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "ADR-124 の不変条件を、種別粒度からフィールド粒度へ引き上げる。schemas.py のフィールド名一覧を機械生成し、harness 内の参照を照合して 0 件参照を赤にする決定論試験を CI へ追加する。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "台帳の未適用推奨と未検証 P1 仮説を、SessionStart の注入または進捗報告の規定形式のいずれかに載せる経路を設計する。統治木と台帳という二つの貯蔵庫を橋渡しする責任を、どの要素が負うかを明示する。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "未適用推奨の滞留反復数、new_scenario_candidates の消費率、次の行動の入力集合に占める cast 由来項目の割合を、正本側で継続測定する監視を追加する（いずれも版非依存）。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "ADR-124 の検査述語が種別粒度であり「中身が接続されていること」を含意しないという緑の意味の限界を、統治木（decided-facts）へ明記する。同時に、緑の意味の縮みを検出する責任がどこにあるかも記す。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "機構化が必要な6件のうち、互換性を壊す変更・配布境界の変更・評価 model の最低線に触れるものについて、実施可否と優先順位を判断する。推奨は件数を理由に削らず、優先順位付けと長期目標への分類で扱う。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "evidence の grep 走査範囲を確定し、harness 外に cast の中身を読む経路が存在しないことを確認する。あわせて、cast 以外の台帳種別についても同型のフィールド粒度未接続が無いかを照合する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "本事象の分析結果が実際に次の反復の行動を変えたかどうかを、是正の実施後に証拠（決定ログ・監査結果・後続インシデント）を収集して判定する。判定できるまで本事象を有効性未確認として扱う。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "「記録が存在すること」を「伝達され適用されたこと」の代理として扱う設計が、INC-012・INC-015・ADR-124・本件に共通して現れている。これは独立に見える複数の防護（台帳・CI 検査・注入・鼓動）を同時に無効化する共通原因であり、防護の多重化では減らない。",
+      "検査の述語が構造の粒度（ファイル・種別）で書かれ、内容の粒度で書かれない。緑が何を含意しないかは緑からは読めず、述語の縮みは検査を通した人にも見えない。",
+      "生成のコストは毎反復支払われるのに、消費の有無はどの要素の指標にもなっていない。生産側だけに計数がある非対称が、形骸化を無期限に持続させる。",
+      "統治の高帯域な伝達経路（SessionStart の注入）が統治木のみを源とし、台帳を源としない。事象由来の知識と規範由来の知識が別々の貯蔵庫に置かれ、両者を橋渡しする責任がどの要素にも割り当てられていない。",
+      "限界の認識が文書に記録されても機構に変換されない——本件の限界は ADR-124 の帰結に自ら明記されていた。記録から機構への変換経路の欠如が、その欠如自身の是正の起動をも止めるという自己参照がある。",
+      "同型事象の四度目であることは、個々の是正が症状（その回の未接続）に対して行われ、症状を生む体系（内容粒度の接続責任が無割当であること）に到達していないことを示す。"
+    ],
+    "unknowns": [
+      "【実在の未確認】本分析の作業環境（空の一時ディレクトリ）には assurance/ も doctrine_docs/ も存在せず、事象が名指しする evaluator_outputs_latest、schemas.py の new_scenario_candidates／recommendations、ADR-124、ledger/cast/*.json のいずれについても実在を独立に確認できていない。統制構造に実体として現れるのは ASSURANCE_LANE の assurance/harness/orchestrator.py と手掛かり assurance/ledger/ までであり、事象が指す関数名・スキーマ項目・ADR 番号は統制構造の記載には見当たらない。上記の統制欠陥は、事象記録の evidence_kind=measurement の主張を真と仮定したうえで、統制構造に実在する要素へ写して組み立てている。この仮定が崩れれば、少なくとも中身粒度に関する欠陥（1・3・5）は再検討を要する。confidence を low としたのはこの理由による。",
+      "evidence に言う「grep で 0 件」の走査範囲が不明。harness 内のみを見たのか、リポジトリ全体を見たのかで結論が変わる。harness 外に読取経路が存在する可能性を排除できていない。",
+      "「機構化が要る6件」「P1 の新規仮説3件」の内訳と出所が示されておらず、所有者判断を要するものと機構化で足りるものの切り分けを検証できていない。件数の根拠も未確認。",
+      "ADR-124 の不変条件の述語の正確な定義（「読取経路」と判定する条件、「理由」の受理条件）が未確認であり、フィールド粒度へ拡張したときに何が赤になるかを見積もれない。",
+      "過去に所有者が台帳の cast 推奨を人手で拾った実績があるか。人手経路が実質的に働いていたなら損失の規模は小さく、働いていなかったなら四度分の推奨が丸ごと未適用の可能性がある。この区別は測定されていない。",
+      "ASSURANCE_LANE の既知の穴（評価者が同系 model である共通原因故障）が、読まれないまま蓄積した分析の中身の品質にどう効いているかは未測定。中身が接続された時点で、品質の低い推奨が一斉に流入するリスクの大きさが判らない。",
+      "本事象が fixed=false・shipped=false であるため、是正後にこの形の未接続が再発しないことを示す証拠は現時点で存在しない。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は、この形を検出できない述語で書かれていた。ADR-124 の不変条件は「台帳の種別ごとに、読取経路が在るか、無い理由が書かれているか」を問う。cast 種別には evaluator_outputs_latest という読取経路が実在するため、検査は種別粒度で緑を返す。検査が問うのは経路の存在であって、スキーマが定める各フィールドが実際に入力集合へ入るかではない。したがって「ファイルは読まれており、読まれていないのは中身である」という一段深い粒度の未接続は、構造上この検査を赤にできない（この限界は同 ADR の帰結に自ら記載されており、認識ではなく機構が欠けていた）。CI_RELEASE_CHECK が見るのはジョブの成否と docs-audit の JSON であり、レーン内部のフィードバック不足は成否として表現されない。ASSURANCE_LANE 自身も、閉鎖条件を「分析が済むまで閉じない」と定義していたため、分析の生成をもって責任が果たされたと判定できてしまう。さらに、この限界を記録した ADR-124 の帰結それ自体が、記録から機構への変換経路を持たないまま台帳側に留まっていた——本事象の欠陥が、本事象の是正の起動をも止めるという自己参照の構造がある。検出は既存の保証によってではなく、ADR-124 実装直後にその検査の限界を能動的に測るという、統制構造には常設されていない一回限りの活動によって得られた。"
+  },
+  "control_structure_ids": [
+    "OWNER",
+    "CI_RELEASE_CHECK",
+    "SESSION_START_CONTRACT",
+    "HEARTBEAT",
+    "PRE_TOOL_GUARD",
+    "POST_TOOL_LINTER",
+    "SESSION_END_AUDIT",
+    "CAPTURE_NUDGE",
+    "PLUGIN_DISTRIBUTION",
+    "ASSURANCE_LANE",
+    "GOVERNANCE_TREE"
+  ],
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "duration_ms": 347374,
+  "errors": [],
+  "execution_kind": "real-sdk",
+  "flaws_with_citation_defect": [],
+  "generated_at": "2026-08-06T08:59:58Z",
+  "git_dirty": true,
+  "git_sha": "7955ee9e8b5483cb2fac9ed0d4e33608d7189998",
+  "incident_evidence": {
+    "kind": "measurement",
+    "refs": [
+      "assurance/harness/orchestrator.py",
+      "assurance/harness/schemas.py",
+      "assurance/ledger/cast/INC-015-discover-output-invisible-to-canon.json",
+      "ADR-124"
+    ],
+    "resolved": [
+      "assurance/harness/orchestrator.py",
+      "assurance/harness/schemas.py",
+      "assurance/ledger/cast/INC-015-discover-output-invisible-to-canon.json",
+      "ADR-124"
+    ],
+    "unresolved": [],
+    "verifiable": true
+  },
+  "incident_id": "INC-016-cast-analysis-content-unread-by-canon",
+  "incident_sha256": "9b12554f68a84de9dd64925515491b2e2e548c7826bdd92de592ecafb16919c6",
+  "init": {
+    "claude_code_version": "2.1.221",
+    "model": "claude-opus-5",
+    "session_id": "75b3df01-36f4-428e-8610-280645a5c0da",
+    "tools_count": 27
+  },
+  "kind": "cast-analysis",
+  "leading_indicators_defined": true,
+  "options": {
+    "allowed_tools": [],
+    "cwd": "/tmp/assurance-cast-dnpf4spw",
+    "effort": "high",
+    "max_budget_usd": 4.0,
+    "max_turns": 8,
+    "model": "claude-opus-5",
+    "setting_sources": [],
+    "timeout_s": 900
+  },
+  "oracle": "structured_output がレーン側再検証にも適合",
+  "principles_offered": 337,
+  "prompt_sha256": "a82a8dc404dd1d160c8e81dcbb65c11ed3c843249280fac95698c7828e8e68aa",
+  "rejected_flaws": [],
+  "result_meta": {
+    "duration_api_ms": 399175,
+    "is_error": false,
+    "num_turns": 3,
+    "session_id": "75b3df01-36f4-428e-8610-280645a5c0da",
+    "subtype": "success",
+    "total_cost_usd": 0.903733,
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 39957,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 39957,
+      "cache_read_input_tokens": 71286,
+      "inference_geo": "not_available",
+      "input_tokens": 4,
+      "iterations": "list",
+      "output_tokens": 17272,
+      "server_tool_use": {
+        "web_fetch_requests": 0,
+        "web_search_requests": 0
+      },
+      "service_tier": "standard",
+      "speed": "standard"
+    }
+  },
+  "schema_sha256": "0d1643d5e16353723405302c1f6ffcf753915e2a4f27a3530e8ef9a9ee45cb46",
+  "sdk_version": "0.2.129",
+  "settled": true,
+  "status": "PASS",
+  "structured_output": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "ASSURANCE_LANE は「assurance/ledger/」を手掛かりとして持つが、cast/*.json から実際に取り込むのは generated_at のみとされる。schemas.py が定める control_flaws・leading_indicators・new_scenario_candidates・recommendations は、制御アクション（次の行動の決定論的導出）の入力集合に一度も入らない。コントロールアクションは在るが、そのアクションを調整するためのフィードバックの中身が経路上で欠落している。",
+        "evidence_ref": "assurance/harness/orchestrator.py（evaluator_outputs_latest）／assurance/harness/schemas.py",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "全コントロールループにフィードバック必須",
+          "control-action-requires-feedback",
+          "情報活用のための構造とプロセス",
+          "教訓の記録と伝達と活用",
+          "文書量でなく設計運用への影響"
+        ],
+        "why_it_seemed_adequate": "ASSURANCE_LANE のもう一つの制御「事象を台帳へ積み、分析が済むまで閉じない」を満たすには、分析が生成済みか否かの判定だけで足りる。generated_at の有無と鮮度はその判定に十分であり、読取経路が実在する以上、台帳は「読まれている」と正本に宣言でき、契約は充足しているように見えた。読取の粒度がファイル単位で足りるという想定は、それまでの三度の同型事象がいずれもファイル単位の未接続だったことによって補強されていた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "生成された recommendations に対して、実施責任の割当・実施状況の検査・有効性のフィードバックを与える制御動作が存在しない。推奨は状態（未着手／機構化済み／所有者判断待ち／却下と理由）を持たず、terminal 状態に到達したかを追跡する機構が無いため、指摘のまま未処理で残り得る。",
+        "evidence_ref": "assurance/ledger/cast/*.json（recommendations に状態欄が無い）",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "推奨事項の責任割当実施検査フィードバック",
+          "是正措置の責任割当と追跡",
+          "audit-findings-must-be-closed",
+          "指摘欠点の是正完了追跡",
+          "教訓を適用する手順の確立"
+        ],
+        "why_it_seemed_adequate": "台帳は「分析が済むまで閉じない」という閉鎖条件を持っており、分析の生成そのものが追跡対象として設計されていた。分析が済めば内容は次の反復の判断材料になるという想定の下では、推奨ごとの状態機械は冗長な二重管理に見えた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "「分析が正本に読まれている」ことの判定に generated_at という生成時刻の代理指標が用いられている。この量は分析の適用状況と因果的に関連せず、中身が一度も消費されていなくても正常値を示し続ける。安全に関する情報（統制欠陥・先行指標）が、鮮度という単一のメタデータへ丸め込まれ、リスク要因が識別不能になっている。",
+        "evidence_ref": "assurance/harness/orchestrator.py（evaluator_outputs_latest が generated_at のみを取る）",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "先行指標の妥当性・代理指標の禁止",
+          "リスク情報の不透明な集約禁止",
+          "要約統計偏重による傾向情報の喪失",
+          "情報システム保有と有用性の乖離"
+        ],
+        "why_it_seemed_adequate": "鮮度は古びの検出という既存の統治語彙（HEARTBEAT・last-audit.json）に整合しており、台帳全体で一貫した扱いができる安価な指標だった。古びていない＝現行の分析が在る、という読み替えは他の統治対象で機能してきた。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者の手掛かりは進捗報告・PR の diff・台帳の三つだが、いずれも「未適用の推奨が何件あり、どれが所有者判断を要するか」を提示しない。機構化を要する6件と P1 仮説3件は、人が台帳を開いて手で拾わない限り所有者の視界に入らず、互換性・配布境界・評価 model の最低線といった所有者固有の権限に属する判断が起動しない。",
+        "evidence_ref": "統制構造 OWNER の手掛かり一覧／INC-016 impact 記述",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "controller-needs-concrete-feedback-channels",
+          "feedback-enables-improvement-of-controls",
+          "利用可能な形式での情報提示",
+          "上位文書の利用可能性（読み手適合）",
+          "管理者への安全情報伝達"
+        ],
+        "why_it_seemed_adequate": "台帳は所有者の手掛かりとして明示的に列挙されており、原理的には全内容が閲覧可能である。閲覧可能性が伝達の代替になるという想定は、台帳の件数が少ないうちは実際に成立していた。既知の穴「報告が実施ではなく意図を書いていても人からは見分けにくい」と同じ形の帯域制約が、ここでは未検出のまま残った。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "ADR-124 の不変条件（台帳の種別ごとに読取経路が在るか、無い理由が書かれているか）を実装した検査は、cast 種別に読取経路が実在するため緑を返す。検査の述語は種別粒度で書かれており、スキーマが定める個々のフィールドが読まれているかを問わない。したがってこの形の未接続を赤にできず、緑が「中身が接続されている」ことを含意しないまま merge を通す。",
+        "evidence_ref": "ADR-124（帰結節に検査の限界を明記）／.github/workflows",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "監査のすり抜け時に監査手順を是正",
+          "監査の検出力評価",
+          "検出失敗の原因調査",
+          "最低限準拠を超える安全活動の実効性",
+          "最低準拠は不十分"
+        ],
+        "why_it_seemed_adequate": "種別粒度の不変条件は、それまで観測された三度の未接続（ファイルごと読まれていない形）をすべて赤にできた。検出できた事象の集合が検査の十分性の証拠として機能し、粒度を一段深める必要は測定されるまで見えなかった。限界は同 ADR の帰結に自ら明記されており、認識の欠落ではなく機構化の欠落である。"
+      },
+      {
+        "control_element_id": "SESSION_START_CONTRACT",
+        "description": "セッション冒頭の注入は確定・非目標・退行監視の要点を対象とし、その源は統治木である。台帳の未適用推奨・未検証の P1 仮説・先行指標は注入対象に含まれないため、走らせ手の行動を変える帯域の最も高い経路に、事故分析の成果が一度も乗らない。",
+        "evidence_ref": "plugin/scripts/inject-contract.py（統制構造の記述）",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "教訓の反映手順の確立",
+          "情報活用のための構造とプロセス",
+          "安全情報システムの維持と伝達",
+          "利用可能な形式での情報提示"
+        ],
+        "why_it_seemed_adequate": "注入の設計目的は統治の生存の指標（R11）を満たすことと、確定事実の逸脱を防ぐことであり、分析成果の伝達は台帳の役割だと分業されていた。注入内容を増やすことは冒頭コンテキストの希釈という別のリスクを持つため、絞り込みは合理的な選択だった。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "事故分析の成果を統治木（decided-facts.md 等）へ落とす経路が定義されていない。統治木は docs-audit・dep-graph・注入・鼓動の共通の源であるため、ここへ到達しない知見は下流のどの統制にも波及しない。ASSURANCE_LANE が生成する知識と GOVERNANCE_TREE が配る知識が別々の貯蔵庫に置かれ、両者を接続する責任がどの要素にも割り当てられていない。",
+        "evidence_ref": "doctrine_docs/_system/decided-facts.md／assurance/ledger/ の二系統",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "分析成果の再利用蓄積",
+          "安全情報システムの維持と伝達",
+          "設計上と実際の伝達経路の照合",
+          "監視責任の空白排除",
+          "責任の空白は構造再設計"
+        ],
+        "why_it_seemed_adequate": "台帳と統治木は目的の異なる記録であり、事象の記録（可変・時系列）を確定事実（不変・規範）へ混ぜないという分離は設計上の美点として機能していた。分離は正しく、欠けているのは分離の上に架ける橋だが、橋の不在は各々の統制を単体で見る限り欠陥として現れない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "分析が毎反復生成され続けているのに、その中身が一度も次の行動を変えていないという状態を、レーン自身が観測する指標を持たない。生成の側にはコストと成否の記録があるが、消費の側には何の計数も無く、生産と消費の非対称が無期限に続き得る。",
+        "evidence_ref": "INC-016 summary（分析は毎反復買われるが中身は次の行動を変えない）",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "自己満足への構造的対策",
+          "全体健全性と部分健全性の分離評価",
+          "分析が管理システムの弱点を暴く",
+          "symptom-vs-systemic-cause",
+          "調査対象としての安全情報システム"
+        ],
+        "why_it_seemed_adequate": "決定論試験の成否と台帳の閉鎖条件により、レーンの健全性は緑で表現されていた。構成要素（分析の生成、台帳の追記、検査の通過）がそれぞれ健全であることが、レーン全体の健全性の証拠として扱われていた。"
+      }
+    ],
+    "hazard": "保証レーンが、自らの統制下にある台帳に記録済みの事故分析の中身（推奨・先行指標・新規仮説）を入力に取らないまま、次の行動を決定論で導いている状態。すなわち統制構造が、フィードバック情報を保持していながら、それを制御アクションの決定に反映しない状態にある。この状態は、統治文書・配布・評価の各層で未検出の欠陥が同時に蓄積する条件下で損失に至る。",
+    "incident_id": "INC-016-cast-analysis-content-unread-by-canon",
+    "leading_indicators": [
+      {
+        "indicator": "スキーマ必須フィールドのうち harness コードから一度も参照されないものの件数",
+        "observable": "assurance/harness/schemas.py が定めるフィールド名一覧を機械生成し、assurance/harness/ 配下の全コードに対して参照を照合した結果の 0 件フィールド数",
+        "threshold": "0 件参照のフィールドが 1 つでも存在し、かつ「読まない理由」の明示が無ければ赤",
+        "version_independent": true,
+        "where": "リポジトリ正本の決定論試験（CI_RELEASE_CHECK のジョブとして）",
+        "why_version_independent": "正本のコードとスキーマだけで完結し、利用者環境の導入複製の版に依存しない"
+      },
+      {
+        "indicator": "未適用の推奨の滞留反復数",
+        "observable": "ledger/cast/*.json の recommendations のうち terminal 状態（機構化済み／却下＋理由／所有者判断済み）に到達していない件の、最古のものが滞留した反復数",
+        "threshold": "3 反復以上滞留した推奨が 1 件でもあれば異常。状態欄そのものが無い場合は測定不能として赤",
+        "version_independent": true,
+        "where": "assurance/ledger/cast/ と保証レーンの反復カウンタ",
+        "why_version_independent": "台帳と正本レーンの内部状態のみで算出でき、配布された複製を参照しない"
+      },
+      {
+        "indicator": "new_scenario_candidates の消費率",
+        "observable": "直近 N 反復に生成された新規仮説候補のうち、対応する scenario または決定論試験に到達した件数の割合",
+        "threshold": "直近 5 反復で生成 >0 かつ到達 0 件なら異常（生成が消費されていない）",
+        "version_independent": true,
+        "where": "assurance/ledger/cast/ と assurance/harness/ の scenario 定義の突合",
+        "why_version_independent": "生成物と試験定義の双方が正本側にあり、複製の版を経由しない"
+      },
+      {
+        "indicator": "次の行動の入力集合に占める cast 由来項目の割合",
+        "observable": "保証レーンが次の行動を導いた際の入力集合の記録に、cast/*.json の generated_at 以外のフィールドに由来する項目が含まれた反復の割合",
+        "threshold": "3 反復連続で 0% なら異常（分析が買われているが行動を変えていない）",
+        "version_independent": true,
+        "where": "assurance/harness/orchestrator.py の決定ログ",
+        "why_version_independent": "レーンの決定ログは正本側の実行で生成される"
+      },
+      {
+        "indicator": "検査の緑と実接続の差分",
+        "observable": "ADR-124 の種別粒度検査が緑を返す種別のうち、フィールド粒度の照合で未接続が検出される種別の数",
+        "threshold": "差分 >0 なら、緑の意味が縮んでいる兆候として検査述語の見直しを起動",
+        "version_independent": true,
+        "where": "CI の docs-audit / release-check 出力と、フィールド粒度照合の結果の突合",
+        "why_version_independent": "両方の検査が正本の CI 上で走る"
+      },
+      {
+        "indicator": "導入複製側で未適用推奨の警告が届いているか",
+        "observable": "HEARTBEAT が読む .claude/.cache/last-audit.json に未適用推奨の件数が載っているか、および導入複製の版と正本の版の差",
+        "threshold": "複製の版が正本より 1 世代でも遅れていれば、この警告の欠落を検出できないものとして扱う",
+        "version_independent": false,
+        "where": "利用者環境の .claude/.cache/last-audit.json と claude plugin update の応答",
+        "why_version_independent": "検出器自身が導入複製の側で動くため、版が遅れれば警告の内容も遅れる。INC-005 と同じ共通原因故障（古びの検出器が古びる）を、この指標は継承する"
+      }
+    ],
+    "loss": "事故分析（CAST）の成果——統制欠陥・先行指標・新規 scenario 候補・推奨——が、生成のコストを毎反復支払われながら、保証レーンの次の行動にも所有者の判断にも入力として届かない。結果として、機構化を要する推奨6件と P1 の新規仮説3件が是正要求に変換されないまま台帳に滞留し、INC-012・INC-015・ADR-124 と同型の未接続が四度目の再発をしている。所有者（ステークホルダー）にとって、分析への支出が防止構造の強化に転化しない状態は許容できない。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "すべての種別で、すべての必須フィールドが harness 内の 1 箇所以上から参照されている。",
+        "hypothesis": "cast 以外の台帳種別にも、読取経路は実在するが読まれるのは鮮度メタデータのみ、という同型のフィールド粒度未接続が存在する。",
+        "oracle": "各種別のスキーマ必須フィールド名を機械生成し、harness 配下の全コードへ参照照合して 0 件参照フィールドの集合を出す。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "少なくとも一つの記載済み先行指標に対して、実際に測定して閾値超過を報じるコードが存在する。",
+        "hypothesis": "leading_indicators フィールドに書かれた閾値を実際に評価・警告する機構が harness に無く、先行指標そのものが本事象と同じ形で死んでいる。",
+        "oracle": "過去の cast/*.json に記載された各先行指標について、対応する測定コードまたは警告経路が harness に存在するかを照合する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "注入テキストに台帳由来の未適用項目が実際に含まれている。",
+        "hypothesis": "SessionStart の注入内容の源が統治木に限られるため、台帳由来の未適用項目はセッションに一度も入らず、走らせ手の行動を変える経路が構造的に存在しない。",
+        "oracle": "inject-contract.py が生成する注入テキストの各項目の出所を分類し、台帳由来項目の件数を数える。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "所有者判断待ちの滞留が 2 反復以内に収束し、最大滞留も有界である。",
+        "hypothesis": "推奨の消費経路を機構化しても、所有者判断待ちの列で同じ死に方をする（人の帯域が新しいボトルネックになり、滞留が無期限化する）。",
+        "oracle": "所有者判断待ち状態の推奨について、状態遷移までの平均・最大滞留反復数を測定する。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "警告の生成を正本側で完結させ、複製側は表示のみを担う設計で一致率が版に依存しない。",
+        "hypothesis": "未適用推奨の警告を導入複製側の HEARTBEAT に載せると、複製の版遅れによって警告自体が古び、INC-005 の共通原因故障が再演される。",
+        "oracle": "複製の版と、そこで表示される未適用推奨の件数を、正本側の実件数と突き合わせて一致率を測る。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "接続後も決定の一致率が接続前と同水準を保つ。",
+        "hypothesis": "中身の接続を実装した後、蓄積済みの未適用推奨が一斉に入力集合へ流入し、同系 model の評価者が生んだ品質のばらつきが次の行動の決定を不安定にする。",
+        "oracle": "接続の前後で、次の行動の決定が反復間でどれだけ変動するか（同一入力に対する決定の一致率）を測る。",
+        "severity": "P3"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "evaluator_outputs_latest を、schemas.py が定める cast の必須フィールド（control_flaws・leading_indicators・new_scenario_candidates・recommendations）を実際に読み、次の行動の候補集合へ入れる形へ拡張する。読まないフィールドがある場合は「読まない理由」を出力に残し、理由の無い未読を許さない。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "recommendations の各件に状態（未着手／機構化済み／所有者判断待ち／却下＋理由）を持たせ、terminal 状態に到達するまで当該事象を閉じない制御を ASSURANCE_LANE に追加する。状態欄の無い既存の台帳項目は移行時に未着手として初期化する。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "ADR-124 の不変条件を、種別粒度からフィールド粒度へ引き上げる。schemas.py のフィールド名一覧を機械生成し、harness 内の参照を照合して 0 件参照を赤にする決定論試験を CI へ追加する。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "台帳の未適用推奨と未検証 P1 仮説を、SessionStart の注入または進捗報告の規定形式のいずれかに載せる経路を設計する。統治木と台帳という二つの貯蔵庫を橋渡しする責任を、どの要素が負うかを明示する。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "未適用推奨の滞留反復数、new_scenario_candidates の消費率、次の行動の入力集合に占める cast 由来項目の割合を、正本側で継続測定する監視を追加する（いずれも版非依存）。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "ADR-124 の検査述語が種別粒度であり「中身が接続されていること」を含意しないという緑の意味の限界を、統治木（decided-facts）へ明記する。同時に、緑の意味の縮みを検出する責任がどこにあるかも記す。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "機構化が必要な6件のうち、互換性を壊す変更・配布境界の変更・評価 model の最低線に触れるものについて、実施可否と優先順位を判断する。推奨は件数を理由に削らず、優先順位付けと長期目標への分類で扱う。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "evidence の grep 走査範囲を確定し、harness 外に cast の中身を読む経路が存在しないことを確認する。あわせて、cast 以外の台帳種別についても同型のフィールド粒度未接続が無いかを照合する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "本事象の分析結果が実際に次の反復の行動を変えたかどうかを、是正の実施後に証拠（決定ログ・監査結果・後続インシデント）を収集して判定する。判定できるまで本事象を有効性未確認として扱う。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "「記録が存在すること」を「伝達され適用されたこと」の代理として扱う設計が、INC-012・INC-015・ADR-124・本件に共通して現れている。これは独立に見える複数の防護（台帳・CI 検査・注入・鼓動）を同時に無効化する共通原因であり、防護の多重化では減らない。",
+      "検査の述語が構造の粒度（ファイル・種別）で書かれ、内容の粒度で書かれない。緑が何を含意しないかは緑からは読めず、述語の縮みは検査を通した人にも見えない。",
+      "生成のコストは毎反復支払われるのに、消費の有無はどの要素の指標にもなっていない。生産側だけに計数がある非対称が、形骸化を無期限に持続させる。",
+      "統治の高帯域な伝達経路（SessionStart の注入）が統治木のみを源とし、台帳を源としない。事象由来の知識と規範由来の知識が別々の貯蔵庫に置かれ、両者を橋渡しする責任がどの要素にも割り当てられていない。",
+      "限界の認識が文書に記録されても機構に変換されない——本件の限界は ADR-124 の帰結に自ら明記されていた。記録から機構への変換経路の欠如が、その欠如自身の是正の起動をも止めるという自己参照がある。",
+      "同型事象の四度目であることは、個々の是正が症状（その回の未接続）に対して行われ、症状を生む体系（内容粒度の接続責任が無割当であること）に到達していないことを示す。"
+    ],
+    "unknowns": [
+      "【実在の未確認】本分析の作業環境（空の一時ディレクトリ）には assurance/ も doctrine_docs/ も存在せず、事象が名指しする evaluator_outputs_latest、schemas.py の new_scenario_candidates／recommendations、ADR-124、ledger/cast/*.json のいずれについても実在を独立に確認できていない。統制構造に実体として現れるのは ASSURANCE_LANE の assurance/harness/orchestrator.py と手掛かり assurance/ledger/ までであり、事象が指す関数名・スキーマ項目・ADR 番号は統制構造の記載には見当たらない。上記の統制欠陥は、事象記録の evidence_kind=measurement の主張を真と仮定したうえで、統制構造に実在する要素へ写して組み立てている。この仮定が崩れれば、少なくとも中身粒度に関する欠陥（1・3・5）は再検討を要する。confidence を low としたのはこの理由による。",
+      "evidence に言う「grep で 0 件」の走査範囲が不明。harness 内のみを見たのか、リポジトリ全体を見たのかで結論が変わる。harness 外に読取経路が存在する可能性を排除できていない。",
+      "「機構化が要る6件」「P1 の新規仮説3件」の内訳と出所が示されておらず、所有者判断を要するものと機構化で足りるものの切り分けを検証できていない。件数の根拠も未確認。",
+      "ADR-124 の不変条件の述語の正確な定義（「読取経路」と判定する条件、「理由」の受理条件）が未確認であり、フィールド粒度へ拡張したときに何が赤になるかを見積もれない。",
+      "過去に所有者が台帳の cast 推奨を人手で拾った実績があるか。人手経路が実質的に働いていたなら損失の規模は小さく、働いていなかったなら四度分の推奨が丸ごと未適用の可能性がある。この区別は測定されていない。",
+      "ASSURANCE_LANE の既知の穴（評価者が同系 model である共通原因故障）が、読まれないまま蓄積した分析の中身の品質にどう効いているかは未測定。中身が接続された時点で、品質の低い推奨が一斉に流入するリスクの大きさが判らない。",
+      "本事象が fixed=false・shipped=false であるため、是正後にこの形の未接続が再発しないことを示す証拠は現時点で存在しない。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は、この形を検出できない述語で書かれていた。ADR-124 の不変条件は「台帳の種別ごとに、読取経路が在るか、無い理由が書かれているか」を問う。cast 種別には evaluator_outputs_latest という読取経路が実在するため、検査は種別粒度で緑を返す。検査が問うのは経路の存在であって、スキーマが定める各フィールドが実際に入力集合へ入るかではない。したがって「ファイルは読まれており、読まれていないのは中身である」という一段深い粒度の未接続は、構造上この検査を赤にできない（この限界は同 ADR の帰結に自ら記載されており、認識ではなく機構が欠けていた）。CI_RELEASE_CHECK が見るのはジョブの成否と docs-audit の JSON であり、レーン内部のフィードバック不足は成否として表現されない。ASSURANCE_LANE 自身も、閉鎖条件を「分析が済むまで閉じない」と定義していたため、分析の生成をもって責任が果たされたと判定できてしまう。さらに、この限界を記録した ADR-124 の帰結それ自体が、記録から機構への変換経路を持たないまま台帳側に留まっていた——本事象の欠陥が、本事象の是正の起動をも止めるという自己参照の構造がある。検出は既存の保証によってではなく、ADR-124 実装直後にその検査の限界を能動的に測るという、統制構造には常設されていない一回限りの活動によって得られた。"
+  }
+}

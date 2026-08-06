@@ -1,0 +1,730 @@
+{
+  "accepted_flaws": [
+    {
+      "control_element_id": "PRE_TOOL_GUARD",
+      "description": "carve-out が status 遷移と superseded_by 付与に限られ、accepted で生まれた文書の本文是正も、accepted → proposed の逆向き遷移も範囲外に置かれている。設計上の想定対象は『合意を経て確定した既存 ADR を後から書き換えさせないこと』だが、実運用の対象には『初回 Write で accepted として生まれ、まだ一度も検査を通っていない文書』が含まれる。事象の記録によれば proposed で起こされた ADR は実測0件であり、木の全 ADR がこの範囲差の側にある。",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "designer-vs-operator-mental-model",
+        "process-model-inconsistency-causes-unsafe-control",
+        "破られた想定の再検討",
+        "monitor-procedure-practice-gap"
+      ],
+      "why_it_seemed_adequate": "accepted という語は合意済み・凍結済みを意味し、その文書に本文改変が来ること自体が統治の逸脱だと読めた。carve-out に status 遷移を残した時点で proposed→accepted という正順の運用が暗黙の前提として置かれ、その前提が実際に守られているかを測る手掛かりが統制構造の側に無かったため、範囲差は誰にも観測されないまま妥当に見え続けた。"
+    },
+    {
+      "control_element_id": "PRE_TOOL_GUARD",
+      "description": "新規文書の初回 Write に対して status の値を検査する制御動作が無く、status: accepted のまま文書が凍結側へ入ることを許している。凍結を作る動作は無検査で通り、凍結を解く動作だけが終了コード2で拒まれるという非対称がある。危険状態（赤いまま凍る）は入口で排除できたが、実際には出口の拒否によって対処されている。",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "危険状態の排除を最優先",
+        "accidents-from-inadequate-constraint-enforcement",
+        "trace-why-design-flaw-was-introduced",
+        "エラー誘発設計要因の排除"
+      ],
+      "why_it_seemed_adequate": "ガードの設計目的は既存文書の保護であり、新規作成の時点では保護すべき既存物がまだ存在しないため拒む理由が無いと読める。新規 Write の適否は配置・命名など他の規範で足りると見え、status の値がその後の可動性を決めるという結合は、carve-out を書いた時点の視野には入りにくかった。"
+    },
+    {
+      "control_element_id": "POST_TOOL_LINTER",
+      "description": "リンタは PostToolUse で走るため、BANNED_SYNONYM の ERROR という手掛かりは書き込みが確定した後にしか出ない。凍結を作る制御アクション（accepted での Write）に対して、その効果を判断するためのフィードバックが制御アクションの後ろに置かれており、書き手が赤を知った時点では既に carve-out の外側にいる。",
+      "flaw_type": "手掛かりが遅い",
+      "normative_refs": [
+        "control-action-requires-feedback",
+        "全コントロールループにフィードバック必須",
+        "モデル一致のためのフィードバック提供"
+      ],
+      "why_it_seemed_adequate": "リンタは助言器として設計され、decision を出さず拒否はガードに委ねるという分担が明示されている（WATCH-001）。編集された一文書だけを見る設計は安価で誤検知の害が小さく、助言が遅れても書き手が直せるという前提は、可動性が制限されない他の文書種では実際に成立していた。"
+    },
+    {
+      "control_element_id": "POST_TOOL_LINTER",
+      "description": "赤を判定する主体（リンタ・事後・助言のみ）と、編集の可否を決める主体（PRE_TOOL_GUARD・事前・拒否のみ）が、時点も権限も分かれており、両者の状態を突き合わせる経路が存在しない。ガードは対象文書が現在リンタで赤かどうかを知らずに拒否を決め、リンタは対象文書がもう動かせない状態かを知らずに助言を出す。結果として『赤いが動かせない』という結合状態は、どちらの単体判定でも異常として現れない。",
+      "flaw_type": "統制どうしの調整の欠如",
+      "normative_refs": [
+        "control-both-behavior-and-interaction",
+        "verify-decomposition-assumptions",
+        "全体構造の分析",
+        "単一コンポーネント集中の回避"
+      ],
+      "why_it_seemed_adequate": "sensor は助言、controller は拒否という責務分離は素直な設計であり、各要素は単体では設計どおりに動作している。単体の正しさを合計すれば全体が安全になるという分解の前提が置かれ、その前提（要素が独立に働き、相互作用が結果を歪めないこと）を検証する工程が無かった。"
+    },
+    {
+      "control_element_id": "GOVERNANCE_TREE",
+      "description": "木の手掛かりは docs-audit の findings と dep-graph の逆依存に限られ、『各 ADR がどの status で生まれたか』『accepted かつ ERROR の文書が何件あるか』を示す手掛かりが無い。文書化された手順（proposed で起こす）と実際の振る舞い（全件が accepted で初回 Write）の乖離が 0件 対 全件という極端な形で存在していたにもかかわらず、木の側からその乖離は観測できない。",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "monitor-procedure-practice-gap",
+        "変化ドリフトの事前検出",
+        "計画外変化の検出手段",
+        "責任割り当ての経時的劣化"
+      ],
+      "why_it_seemed_adequate": "監査は『現在の文書が規範に適合しているか』を問う設計であり、適合しているなら生成経路は問わないという立場は一貫していて妥当に見えた。生成経路は git 履歴の領分であり文書監査の対象外だという線引きも、責務としては自然だった。"
+    },
+    {
+      "control_element_id": "SESSION_END_AUDIT",
+      "description": "全件走査の結果は要約として .claude/.cache へ書かれるが、『正規経路では是正できない指摘』を未クローズ項目として持ち越し、是正完了まで追跡する制御動作が無い。同じ ERROR が次セッション以降も再掲されうる一方で、それが直せない種類の ERROR であることは記録に現れず、再掲の反復が常態として消化される。",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "audit-findings-must-be-closed",
+        "指摘欠点の是正完了追跡",
+        "監査のすり抜け時に監査手順を是正"
+      ],
+      "why_it_seemed_adequate": "監査の役割は現況の要約を次セッションへ渡すことであり、追跡は台帳（ASSURANCE_LANE）側の仕事だという分担が読める。指摘が毎回出続けるならいずれ誰かが直すはずだ、という前提も、可動な文書については実際に成立していた。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "事象は台帳へ積まれるが、本反復で発見された回避策（status: proposed で起こし、緑にしてから accepted へ遷移する）を手順または機構へ反映する制御動作が無い。fixed:false / shipped:false のまま、次に ADR を書く主体は同じ一方通行の扉を通る。統制外経路（未コミット草稿の削除→再作成）という迂回が現に利用可能であることも、迂回が選ばれる理由ごと構造へ還元されていない。",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "教訓の反映手順の確立",
+        "是正措置の責任割当と追跡",
+        "迂回行動からの学習",
+        "例外作業の統制と発生低減"
+      ],
+      "why_it_seemed_adequate": "事象を台帳へ積み分析が済むまで閉じないという規律自体は満たされており、回避策が判明した以上その反復での損失は回避された。分析の完了と機構の変更を別工程に分けるのは、未分析のままの拙速な機構変更を避ける意味で妥当な設計だった。"
+    },
+    {
+      "control_element_id": "SESSION_START_CONTRACT",
+      "description": "注入されるのは確定・非目標・退行監視の要点であり、『accepted で書くと本文は直せなくなる』という可動性の制約は注入されない。書き手は拒否されて初めてその制約を知る。さらに注入は主セッションにしか効かないため（NONGOAL-001）、サブエージェントが文書を起草する経路では制約が一切届かない。",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "supplier-must-communicate-analysis-assumptions",
+        "defects-in-information-providing-systems",
+        "機械的遵守が前提の指示は自動化",
+        "why-it-seemed-right-not-who-failed"
+      ],
+      "why_it_seemed_adequate": "注入できる分量には限りがあり、確定事実と非目標を優先する取捨は合理的だった。可動性の制約はガードが拒否時の文言で呼び出し側のモデルへ返す設計になっており（構造上そう記述されている）、事前に重ねて伝える必要は薄いと読めた。"
+    },
+    {
+      "control_element_id": "OWNER",
+      "description": "『コミット済みの accepted 文書は誤字一つの是正に後継 ADR を要する』という事実上の復旧不能状態に木が入ったことを、所有者へ伝える手掛かりが無い。手掛かりは進捗報告・PR の diff・台帳の三つだが、いずれも『是正経路が塞がった文書の件数』を独立の項目として表面化せず、他の進捗情報の中へ埋没する。復旧不能な削除の可否は所有者の制御事項であるのに、それに隣接する復旧不能状態は判断の場に上がらない。",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "controller-needs-concrete-feedback-channels",
+        "管理者への安全情報伝達",
+        "リスク情報の不透明な集約禁止",
+        "許容可否判断はステークホルダー"
+      ],
+      "why_it_seemed_adequate": "台帳に事象が積まれている以上、所有者が読めば判るという構成になっており、追加の通知経路は冗長に見えた。個々の文書の誤字は影響が軽微に見え、安全に関わる情報として分離して上げる水準には達しないと読めた。"
+    }
+  ],
+  "analysis": {
+    "confidence": "medium",
+    "control_flaws": [
+      {
+        "control_element_id": "PRE_TOOL_GUARD",
+        "description": "carve-out が status 遷移と superseded_by 付与に限られ、accepted で生まれた文書の本文是正も、accepted → proposed の逆向き遷移も範囲外に置かれている。設計上の想定対象は『合意を経て確定した既存 ADR を後から書き換えさせないこと』だが、実運用の対象には『初回 Write で accepted として生まれ、まだ一度も検査を通っていない文書』が含まれる。事象の記録によれば proposed で起こされた ADR は実測0件であり、木の全 ADR がこの範囲差の側にある。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "designer-vs-operator-mental-model",
+          "process-model-inconsistency-causes-unsafe-control",
+          "破られた想定の再検討",
+          "monitor-procedure-practice-gap"
+        ],
+        "why_it_seemed_adequate": "accepted という語は合意済み・凍結済みを意味し、その文書に本文改変が来ること自体が統治の逸脱だと読めた。carve-out に status 遷移を残した時点で proposed→accepted という正順の運用が暗黙の前提として置かれ、その前提が実際に守られているかを測る手掛かりが統制構造の側に無かったため、範囲差は誰にも観測されないまま妥当に見え続けた。"
+      },
+      {
+        "control_element_id": "PRE_TOOL_GUARD",
+        "description": "新規文書の初回 Write に対して status の値を検査する制御動作が無く、status: accepted のまま文書が凍結側へ入ることを許している。凍結を作る動作は無検査で通り、凍結を解く動作だけが終了コード2で拒まれるという非対称がある。危険状態（赤いまま凍る）は入口で排除できたが、実際には出口の拒否によって対処されている。",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "危険状態の排除を最優先",
+          "accidents-from-inadequate-constraint-enforcement",
+          "trace-why-design-flaw-was-introduced",
+          "エラー誘発設計要因の排除"
+        ],
+        "why_it_seemed_adequate": "ガードの設計目的は既存文書の保護であり、新規作成の時点では保護すべき既存物がまだ存在しないため拒む理由が無いと読める。新規 Write の適否は配置・命名など他の規範で足りると見え、status の値がその後の可動性を決めるという結合は、carve-out を書いた時点の視野には入りにくかった。"
+      },
+      {
+        "control_element_id": "POST_TOOL_LINTER",
+        "description": "リンタは PostToolUse で走るため、BANNED_SYNONYM の ERROR という手掛かりは書き込みが確定した後にしか出ない。凍結を作る制御アクション（accepted での Write）に対して、その効果を判断するためのフィードバックが制御アクションの後ろに置かれており、書き手が赤を知った時点では既に carve-out の外側にいる。",
+        "flaw_type": "手掛かりが遅い",
+        "normative_refs": [
+          "control-action-requires-feedback",
+          "全コントロールループにフィードバック必須",
+          "モデル一致のためのフィードバック提供"
+        ],
+        "why_it_seemed_adequate": "リンタは助言器として設計され、decision を出さず拒否はガードに委ねるという分担が明示されている（WATCH-001）。編集された一文書だけを見る設計は安価で誤検知の害が小さく、助言が遅れても書き手が直せるという前提は、可動性が制限されない他の文書種では実際に成立していた。"
+      },
+      {
+        "control_element_id": "POST_TOOL_LINTER",
+        "description": "赤を判定する主体（リンタ・事後・助言のみ）と、編集の可否を決める主体（PRE_TOOL_GUARD・事前・拒否のみ）が、時点も権限も分かれており、両者の状態を突き合わせる経路が存在しない。ガードは対象文書が現在リンタで赤かどうかを知らずに拒否を決め、リンタは対象文書がもう動かせない状態かを知らずに助言を出す。結果として『赤いが動かせない』という結合状態は、どちらの単体判定でも異常として現れない。",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "control-both-behavior-and-interaction",
+          "verify-decomposition-assumptions",
+          "全体構造の分析",
+          "単一コンポーネント集中の回避"
+        ],
+        "why_it_seemed_adequate": "sensor は助言、controller は拒否という責務分離は素直な設計であり、各要素は単体では設計どおりに動作している。単体の正しさを合計すれば全体が安全になるという分解の前提が置かれ、その前提（要素が独立に働き、相互作用が結果を歪めないこと）を検証する工程が無かった。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "木の手掛かりは docs-audit の findings と dep-graph の逆依存に限られ、『各 ADR がどの status で生まれたか』『accepted かつ ERROR の文書が何件あるか』を示す手掛かりが無い。文書化された手順（proposed で起こす）と実際の振る舞い（全件が accepted で初回 Write）の乖離が 0件 対 全件という極端な形で存在していたにもかかわらず、木の側からその乖離は観測できない。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "monitor-procedure-practice-gap",
+          "変化ドリフトの事前検出",
+          "計画外変化の検出手段",
+          "責任割り当ての経時的劣化"
+        ],
+        "why_it_seemed_adequate": "監査は『現在の文書が規範に適合しているか』を問う設計であり、適合しているなら生成経路は問わないという立場は一貫していて妥当に見えた。生成経路は git 履歴の領分であり文書監査の対象外だという線引きも、責務としては自然だった。"
+      },
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "全件走査の結果は要約として .claude/.cache へ書かれるが、『正規経路では是正できない指摘』を未クローズ項目として持ち越し、是正完了まで追跡する制御動作が無い。同じ ERROR が次セッション以降も再掲されうる一方で、それが直せない種類の ERROR であることは記録に現れず、再掲の反復が常態として消化される。",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "audit-findings-must-be-closed",
+          "指摘欠点の是正完了追跡",
+          "監査のすり抜け時に監査手順を是正"
+        ],
+        "why_it_seemed_adequate": "監査の役割は現況の要約を次セッションへ渡すことであり、追跡は台帳（ASSURANCE_LANE）側の仕事だという分担が読める。指摘が毎回出続けるならいずれ誰かが直すはずだ、という前提も、可動な文書については実際に成立していた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "事象は台帳へ積まれるが、本反復で発見された回避策（status: proposed で起こし、緑にしてから accepted へ遷移する）を手順または機構へ反映する制御動作が無い。fixed:false / shipped:false のまま、次に ADR を書く主体は同じ一方通行の扉を通る。統制外経路（未コミット草稿の削除→再作成）という迂回が現に利用可能であることも、迂回が選ばれる理由ごと構造へ還元されていない。",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "教訓の反映手順の確立",
+          "是正措置の責任割当と追跡",
+          "迂回行動からの学習",
+          "例外作業の統制と発生低減"
+        ],
+        "why_it_seemed_adequate": "事象を台帳へ積み分析が済むまで閉じないという規律自体は満たされており、回避策が判明した以上その反復での損失は回避された。分析の完了と機構の変更を別工程に分けるのは、未分析のままの拙速な機構変更を避ける意味で妥当な設計だった。"
+      },
+      {
+        "control_element_id": "SESSION_START_CONTRACT",
+        "description": "注入されるのは確定・非目標・退行監視の要点であり、『accepted で書くと本文は直せなくなる』という可動性の制約は注入されない。書き手は拒否されて初めてその制約を知る。さらに注入は主セッションにしか効かないため（NONGOAL-001）、サブエージェントが文書を起草する経路では制約が一切届かない。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "supplier-must-communicate-analysis-assumptions",
+          "defects-in-information-providing-systems",
+          "機械的遵守が前提の指示は自動化",
+          "why-it-seemed-right-not-who-failed"
+        ],
+        "why_it_seemed_adequate": "注入できる分量には限りがあり、確定事実と非目標を優先する取捨は合理的だった。可動性の制約はガードが拒否時の文言で呼び出し側のモデルへ返す設計になっており（構造上そう記述されている）、事前に重ねて伝える必要は薄いと読めた。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "『コミット済みの accepted 文書は誤字一つの是正に後継 ADR を要する』という事実上の復旧不能状態に木が入ったことを、所有者へ伝える手掛かりが無い。手掛かりは進捗報告・PR の diff・台帳の三つだが、いずれも『是正経路が塞がった文書の件数』を独立の項目として表面化せず、他の進捗情報の中へ埋没する。復旧不能な削除の可否は所有者の制御事項であるのに、それに隣接する復旧不能状態は判断の場に上がらない。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "controller-needs-concrete-feedback-channels",
+          "管理者への安全情報伝達",
+          "リスク情報の不透明な集約禁止",
+          "許容可否判断はステークホルダー"
+        ],
+        "why_it_seemed_adequate": "台帳に事象が積まれている以上、所有者が読めば判るという構成になっており、追加の通知経路は冗長に見えた。個々の文書の誤字は影響が軽微に見え、安全に関わる情報として分離して上げる水準には達しないと読めた。"
+      }
+    ],
+    "hazard": "統治木の中に、リンタが ERROR と判定する内容を含みながら status: accepted で凍結され、PRE_TOOL_GUARD が許す正規経路では本文を是正できない文書が存在する状態（統制下のシステム状態）。この状態は、規範適合を要求する統制と、統制外の書き込みを禁じる統制とが両立不能になる条件下で損失に至る。",
+    "incident_id": "INC-017-accepted-adr-born-red-is-unfixable",
+    "leading_indicators": [
+      {
+        "indicator": "status: accepted かつ docs-linter が ERROR を返す統治文書の件数",
+        "observable": "docs-audit の JSON に、文書ごとの front-matter status と lint 重大度の組を出力し、その積集合の件数を集計する",
+        "threshold": "1件以上で赤。0件を正常とし、1件でも出たら merge を止め、当該文書の是正経路が存在するかを確認するまで進めない",
+        "version_independent": true,
+        "where": "CI_RELEASE_CHECK（.github/workflows で走る docs-audit の JSON 出力。リポジトリ正本を対象とする）",
+        "why_version_independent": "CI はリポジトリ正本を対象に走り、利用者環境へ導入された複製の版に依存しない。指標の計算に必要な情報（front-matter と lint 結果）はいずれも正本に存在する"
+      },
+      {
+        "indicator": "新規統治文書のうち、初回コミット時点の status が accepted であるものの割合",
+        "observable": "git 履歴で各 ADR ファイルの初出コミットを特定し、その版の front-matter status を読む",
+        "threshold": "直近10件で accepted 初回が1件でも出たら警告、3件以上で carve-out の対象範囲の再設計を起動する。目標値は0件",
+        "version_independent": true,
+        "where": "CI_RELEASE_CHECK（正本の git 履歴に対する集計。SESSION_END_AUDIT 側での近似ではなく履歴を一次情報とする）",
+        "why_version_independent": "git 履歴とリポジトリ内の文書のみで計算でき、導入複製の版にも Hook の起動有無にも依存しない。ガードや監査が古い版でも指標の値は変わらない"
+      },
+      {
+        "indicator": "PRE_TOOL_GUARD の拒否のうち『既存ADRは改変できません』理由の発生件数と、その後の是正到達率",
+        "observable": "ガードが終了コード2を返した際の理由コードと対象パスを記録し、同一パスがその後に正規経路で緑になったかを突き合わせる",
+        "threshold": "当該理由の拒否が週1件以上、または拒否後に是正へ到達しなかった件数が1件でも出た時点で carve-out の範囲を再検討する",
+        "version_independent": false,
+        "where": "PRE_TOOL_GUARD（policy-guard.py の拒否地点）および SESSION_END_AUDIT の走査結果",
+        "why_version_independent": "記録も判定も導入複製側の Hook で動くため、複製の版が遅れれば指標の定義も古いままになる（INC-005 と同型の共通原因故障）。Hook が起動しない経路の書き込みは指標の母数にも入らない"
+      },
+      {
+        "indicator": "統治文書が同一セッション内で削除され再作成された回数（ガードを迂回した書き直しの代理観測）",
+        "observable": "SessionStart 時点と SessionEnd 時点の統治木のファイル一覧と内容ハッシュを比較し、パスが同一で内容が全面差替になったものを数える",
+        "threshold": "1件でも検出されたら、その書き直しがなぜ正規経路で行えなかったのかを調査対象にする（件数の多寡ではなく発生の有無を閾値とする）",
+        "version_independent": false,
+        "where": "SESSION_END_AUDIT（全件走査時に SessionStart 側のスナップショットと突合）",
+        "why_version_independent": "スナップショットの取得も比較も導入複製側のフックに依存し、SessionEnd が発火しない終了（INC-001）では走らない。複製の版が遅れれば検出器も遅れる"
+      },
+      {
+        "indicator": "carve-out 述語が許す遷移の集合と、実際に試みられた遷移の集合の差分",
+        "observable": "拒否時に『試みられた status 遷移（from→to）』を記録し、carve-out が許す集合との差分を遷移種別ごとに集計する",
+        "threshold": "carve-out 外の遷移種別が2種類以上現れた時点、または同一種別が3回現れた時点で、想定された運用モデルが実運用と食い違っているとみなし範囲を再設計する",
+        "version_independent": false,
+        "where": "PRE_TOOL_GUARD（拒否判定の直前で from/to を記録）",
+        "why_version_independent": "記録点がガード自身の内部にあるため、導入複製の版が古いと新しい遷移種別を記録するコード自体が存在せず、差分が観測されない"
+      }
+    ],
+    "loss": "統治木の正本である文書が、規範違反（docs-linter の ERROR）を含んだまま固定され、是正の行き先が (a) ガードを通らない統制外経路での削除・再作成、(b) 誤字一つに対する後継 ADR の発行、(c) 赤の放置、のいずれかにしか流れなくなった。これにより「統治木の全文書が規範に適合する」という統制目標と、「統治木への変更はすべてガードを通る」という統制目標の双方が、同時には満たせない状態になった。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "初回 Write の時点で拒否されるか、status の値に対する警告が返る。",
+        "hypothesis": "status: accepted を持つ統治文書の初回 Write は、現状 PRE_TOOL_GUARD を無検査で通過する（凍結の入口が開いている）。",
+        "oracle": "BANNED_SYNONYM を含む本文と status: accepted を持つ新規 ADR を Write し、ガードの終了コードが0であること、直後の Edit が終了コード2で拒まれることを両方観測する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "当該文書種には carve-out が無く本文改変が通る、または新規作成の時点で規範違反が拒まれる。",
+        "hypothesis": "ADR 以外の凍結対象文書（decided-facts.md 等）でも、同じ手順で『赤いまま是正不能』な状態を構成できる。",
+        "oracle": "当該文書種の新規ファイルを規範違反を含む内容で作成し、その後の本文 Edit が carve-out 外として拒まれるかを確認する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "findings に当該組み合わせが独立項目として現れる。",
+        "hypothesis": "docs-audit は『status: accepted かつ lint ERROR』という組み合わせを findings として出力しない（結合状態が監査の視野に無い）。",
+        "oracle": "その状態の文書を木に置いた上で監査を走らせ、.claude/.cache/last-audit.json に当該組み合わせを示す項目が現れるかを検査する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "削除または再 Write のいずれかがガードで拒まれる、あるいは監査が差替を検出して報告する。",
+        "hypothesis": "未コミット草稿の削除→再作成という回避経路は Hook を起動せず、統制の外で本文の全面差替が可能である。",
+        "oracle": "凍結済みの未コミット文書を削除して同一パスに再 Write し、拒否が発生しないことと、監査がその差替を検出しないことを確認する。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "版が遅れても指標が記録される、または指標の欠落が独立の経路で検出される。",
+        "hypothesis": "拒否件数・遷移差分といった指標を導入複製側（Hook）に置くと、複製の版が遅れた時点で指標そのものが停止し、停止したことは古び警告でしか判らない（INC-005 と同型の共通原因）。",
+        "oracle": "導入複製を1世代前に固定した状態で新指標を発火させる操作を行い、指標が記録されるかを観測する。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "サブエージェント経路でも制約が届く、またはその経路では文書の書き込み自体ができない。",
+        "hypothesis": "SESSION_START_CONTRACT が届かないサブエージェント経路では、status に関する運用制約が一切伝わらないまま統治文書が起草されうる。",
+        "oracle": "サブエージェントに統治文書の起草を行わせ、注入された制約の有無と、生成された文書の初回 status を観測する。",
+        "severity": "P2"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "新規文書の初回 Write に対して status を検査し、status: accepted での新規作成を PRE_TOOL_GUARD が拒んで proposed での起票を要求する（危険状態そのものを入口で排除する）。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "carve-out に accepted → proposed の逆向き遷移を追加する。無条件ではなく、リンタが当該文書に ERROR を報告している間に限る条件付き carve-out として、条件と根拠を述語のコメントに残す。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "リンタの ERROR 判定を PreToolUse 側からも呼び出せるようにし、赤を生む書き込み自体を事前に拒む。これにより『凍ってから赤が判る』という手掛かりと制御の順序を逆転させる。実装上の可否（同一入力から lint を再実行できるか）を先に確認する。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "docs-audit の JSON に『status: accepted かつ lint ERROR』の件数を独立項目として出力し、CI_RELEASE_CHECK で1件以上なら赤で止める。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "CI 側で git 履歴から『初回コミット時点の status が accepted である新規文書の割合』を算出し、手順と実践の乖離を継続的に可視化する。導入複製に依存しない位置に置くことを要件とする。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "PRE_TOOL_GUARD の拒否に、試みられた status 遷移（from→to）と拒否理由コードを記録し、carve-out の許容集合との差分を定期に突き合わせる。差分の出現を carve-out 再設計の起動条件とする。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "『統治文書は proposed で起こし、緑にしてから accepted へ遷移する』という運用制約を SESSION_START_CONTRACT の注入内容へ加える。ただしこの制約は判断を伴わない機械的遵守が前提であるため、注入は暫定であり、上記の入口検査（自動化）へ置き換えるまでの繋ぎと位置づける。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "コミット済み accepted 文書の誤字是正に後継 ADR を要求するという現行の代償を許容するか、許容しないなら是正経路として何を認めるかを所有者が判断する。許容可否は分析者ではなくステークホルダーの決定事項である。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "統制外経路（未コミット草稿の削除→再作成）が実際に何回使われているかを観測する手段の有無を調査し、観測できないならその観測不能性自体を非目標ではなく未解決の穴として台帳に残す。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "ADR 以外の凍結対象文書について、同型の『赤いまま凍る』状態が構成可能かを調査し、carve-out を持つ全ての文書種で是正経路の到達可能性を確認する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "編集の可否を決める権限が事前（PRE_TOOL_GUARD）にあり、規範適合の判定が事後（POST_TOOL_LINTER）にあるという時間軸の分離。この配置は ADR に限らず、ガードが凍結する全ての文書種で同型の『赤いまま凍る』状態を生成しうる。",
+      "『凍結』を status の値ひとつで表現し、凍結の強度（本文の可動性）と表明の意味（合意済みであること）を分離していない設計。片方を宣言すると他方が不可逆に付いてくる。",
+      "統制の有効性を『拒否できたか』で測り、『拒否の後に正規の是正経路が残っているか』で測らない評価軸。この軸の下では、拒否範囲を広げるほど評価は良くなり、到達不能状態の生成は評価されない。",
+      "統制外経路（Hook を通らない削除・再作成）が存在するため、正規経路を厳しくすると迂回が合理的になるという圧力。統制の強度が統制外への流出を生む方向に働く。",
+      "非目標（NONGOAL-001 など）として穴を宣言することが、その穴を監視する義務の発生を止める運用。宣言済みの穴は既知として扱われ、実際に何回通られたかは数えられない。",
+      "検出器の多くが導入複製の側で動くという共通原因（INC-005）。複製の版が遅れると、複数の防護が同時に古い定義のまま動き、独立したはずの検出が揃って効かなくなる。",
+      "手順（proposed で起こす）が口伝と回避策として存在し、機構にも注入内容にも入っていないため、書き手が交代するたびに同じ扉を通る。"
+    ],
+    "unknowns": [
+      "本分析の実行環境は空の作業ディレクトリであり、evidence_refs が指す plugin/scripts/policy-guard.py と doctrine_docs/packaging/decisions/ADR-124-*.md を直接確認できていない。PRE_TOOL_GUARD と POST_TOOL_LINTER は統制構造に実体付きの要素として存在するため機構そのものの実在は構造側から支持されるが、_adr_change_is_carveout_only の正確な許容集合（accepted→proposed が本当に範囲外か、status 遷移に方向制限が書かれているか）は事象の記録の記述に依存しており、コードでの裏取りができていない。",
+      "BANNED_SYNONYM が ERROR 重大度である判定基準、および ERROR と WARN の区別が何をもって決まるかが不明。重大度の設計が判らないと、『赤い凍結』を CI で止める閾値が過剰か不足かを評価できない。",
+      "『proposed の ADR は一件も生まれなかった（実測）』の観測時点と母数（ADR の総数）が不明。全件が accepted 初回 Write という乖離の強さは母数に依存する。",
+      "コミット済みの accepted 文書の誤字が、後継 ADR を経ずに是正された前例があるか（すなわち統制外経路が過去に何回通られたか）が不明。",
+      "ガードが PreToolUse の時点でリンタの判定を呼べるか（同一プロセス・同一入力から lint 結果を得られるか）という実装上の制約が不明で、『赤を作る Write を事前に拒む』という是正案の実現可能性を評価できない。",
+      "誤字一つに後継 ADR を要するという代償を所有者が許容するかどうかは、分析者ではなくステークホルダーの判断であり、本分析の時点では取得できていない。",
+      "サブエージェント経路で統治文書が起草された実績があるか（SESSION_START_CONTRACT が届かない経路の実利用率）が不明。",
+      "この一方通行の扉が ADR 以外の凍結対象文書（decided-facts.md 等）にも存在するかどうかを確認できていない。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は「文書が規範に適合しているか」という軸で組まれており、「不適合が判明した後に、正規の道具で是正へ到達できるか」という到達可能性の軸を持っていない。ガードは編集の可否を単体で判定し（その想定対象は熟慮を経た既存 ADR）、リンタは編集後の一文書だけを見て助言を返す。両者の間に「赤い凍結」という結合状態を検査する主体がなく、決定論試験も個々の拒否が正しく起きることは見るが、拒否の集合が是正経路を塞いでいないことは見ない。加えて「ガードが実際に拒否できることは体系側から検出しない」という既知の穴（NONGOAL-001）により、carve-out の許容集合を運用実態へ照らす機会そのものが構造上存在しなかった。手順と実践の乖離（proposed 経由が実測0件）は最も強い先行兆候だったが、木の手掛かりが文書の適合のみで生成経路を含まないため、乖離は数値として表面化しなかった。さらにリンタが PostToolUse に置かれている限り、赤の手掛かりは常に凍結の後に来るため、どれだけ検査を厳密にしても「凍ってから赤が判る」順序自体は改善されない。是正が本反復中に回避策で済んだこと（分析対象としては fixed:false）も、機構の再設計を起動する閾値に達しない事象として処理されうる構造になっている。"
+  },
+  "control_structure_ids": [
+    "OWNER",
+    "CI_RELEASE_CHECK",
+    "SESSION_START_CONTRACT",
+    "HEARTBEAT",
+    "PRE_TOOL_GUARD",
+    "POST_TOOL_LINTER",
+    "SESSION_END_AUDIT",
+    "CAPTURE_NUDGE",
+    "PLUGIN_DISTRIBUTION",
+    "ASSURANCE_LANE",
+    "GOVERNANCE_TREE"
+  ],
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "duration_ms": 330233,
+  "errors": [],
+  "execution_kind": "real-sdk",
+  "flaws_with_citation_defect": [],
+  "generated_at": "2026-08-06T08:53:11Z",
+  "git_dirty": true,
+  "git_sha": "7955ee9e8b5483cb2fac9ed0d4e33608d7189998",
+  "incident_evidence": {
+    "kind": "measurement",
+    "refs": [
+      "plugin/scripts/policy-guard.py",
+      "doctrine_docs/packaging/decisions/ADR-124-ledger-kinds-are-read-or-declared-unread.md"
+    ],
+    "resolved": [
+      "plugin/scripts/policy-guard.py",
+      "doctrine_docs/packaging/decisions/ADR-124-ledger-kinds-are-read-or-declared-unread.md"
+    ],
+    "unresolved": [],
+    "verifiable": true
+  },
+  "incident_id": "INC-017-accepted-adr-born-red-is-unfixable",
+  "incident_sha256": "6109eed11a2611e5c87c25b4df45322c3d313588ca4c9e06e9e63c4bf58dbda7",
+  "init": {
+    "claude_code_version": "2.1.221",
+    "model": "claude-opus-5",
+    "session_id": "013e4023-f2d5-4809-b350-3c6bc49bb9a5",
+    "tools_count": 27
+  },
+  "kind": "cast-analysis",
+  "leading_indicators_defined": true,
+  "options": {
+    "allowed_tools": [],
+    "cwd": "/tmp/assurance-cast-osrrtmsr",
+    "effort": "high",
+    "max_budget_usd": 4.0,
+    "max_turns": 8,
+    "model": "claude-opus-5",
+    "setting_sources": [],
+    "timeout_s": 900
+  },
+  "oracle": "structured_output がレーン側再検証にも適合",
+  "principles_offered": 337,
+  "prompt_sha256": "ceeab666fc02e02b8a37d143ffb28f48e8a2c419a2ff064a06db3411fdccd930",
+  "rejected_flaws": [],
+  "result_meta": {
+    "duration_api_ms": 310962,
+    "is_error": false,
+    "num_turns": 5,
+    "session_id": "013e4023-f2d5-4809-b350-3c6bc49bb9a5",
+    "subtype": "success",
+    "total_cost_usd": 1.1705044999999998,
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 56255,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 56255,
+      "cache_read_input_tokens": 111113,
+      "inference_geo": "not_available",
+      "input_tokens": 6,
+      "iterations": "list",
+      "output_tokens": 20630,
+      "server_tool_use": {
+        "web_fetch_requests": 0,
+        "web_search_requests": 0
+      },
+      "service_tier": "standard",
+      "speed": "standard"
+    }
+  },
+  "schema_sha256": "0d1643d5e16353723405302c1f6ffcf753915e2a4f27a3530e8ef9a9ee45cb46",
+  "sdk_version": "0.2.129",
+  "settled": true,
+  "status": "PASS",
+  "structured_output": {
+    "confidence": "medium",
+    "control_flaws": [
+      {
+        "control_element_id": "PRE_TOOL_GUARD",
+        "description": "carve-out が status 遷移と superseded_by 付与に限られ、accepted で生まれた文書の本文是正も、accepted → proposed の逆向き遷移も範囲外に置かれている。設計上の想定対象は『合意を経て確定した既存 ADR を後から書き換えさせないこと』だが、実運用の対象には『初回 Write で accepted として生まれ、まだ一度も検査を通っていない文書』が含まれる。事象の記録によれば proposed で起こされた ADR は実測0件であり、木の全 ADR がこの範囲差の側にある。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "designer-vs-operator-mental-model",
+          "process-model-inconsistency-causes-unsafe-control",
+          "破られた想定の再検討",
+          "monitor-procedure-practice-gap"
+        ],
+        "why_it_seemed_adequate": "accepted という語は合意済み・凍結済みを意味し、その文書に本文改変が来ること自体が統治の逸脱だと読めた。carve-out に status 遷移を残した時点で proposed→accepted という正順の運用が暗黙の前提として置かれ、その前提が実際に守られているかを測る手掛かりが統制構造の側に無かったため、範囲差は誰にも観測されないまま妥当に見え続けた。"
+      },
+      {
+        "control_element_id": "PRE_TOOL_GUARD",
+        "description": "新規文書の初回 Write に対して status の値を検査する制御動作が無く、status: accepted のまま文書が凍結側へ入ることを許している。凍結を作る動作は無検査で通り、凍結を解く動作だけが終了コード2で拒まれるという非対称がある。危険状態（赤いまま凍る）は入口で排除できたが、実際には出口の拒否によって対処されている。",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "危険状態の排除を最優先",
+          "accidents-from-inadequate-constraint-enforcement",
+          "trace-why-design-flaw-was-introduced",
+          "エラー誘発設計要因の排除"
+        ],
+        "why_it_seemed_adequate": "ガードの設計目的は既存文書の保護であり、新規作成の時点では保護すべき既存物がまだ存在しないため拒む理由が無いと読める。新規 Write の適否は配置・命名など他の規範で足りると見え、status の値がその後の可動性を決めるという結合は、carve-out を書いた時点の視野には入りにくかった。"
+      },
+      {
+        "control_element_id": "POST_TOOL_LINTER",
+        "description": "リンタは PostToolUse で走るため、BANNED_SYNONYM の ERROR という手掛かりは書き込みが確定した後にしか出ない。凍結を作る制御アクション（accepted での Write）に対して、その効果を判断するためのフィードバックが制御アクションの後ろに置かれており、書き手が赤を知った時点では既に carve-out の外側にいる。",
+        "flaw_type": "手掛かりが遅い",
+        "normative_refs": [
+          "control-action-requires-feedback",
+          "全コントロールループにフィードバック必須",
+          "モデル一致のためのフィードバック提供"
+        ],
+        "why_it_seemed_adequate": "リンタは助言器として設計され、decision を出さず拒否はガードに委ねるという分担が明示されている（WATCH-001）。編集された一文書だけを見る設計は安価で誤検知の害が小さく、助言が遅れても書き手が直せるという前提は、可動性が制限されない他の文書種では実際に成立していた。"
+      },
+      {
+        "control_element_id": "POST_TOOL_LINTER",
+        "description": "赤を判定する主体（リンタ・事後・助言のみ）と、編集の可否を決める主体（PRE_TOOL_GUARD・事前・拒否のみ）が、時点も権限も分かれており、両者の状態を突き合わせる経路が存在しない。ガードは対象文書が現在リンタで赤かどうかを知らずに拒否を決め、リンタは対象文書がもう動かせない状態かを知らずに助言を出す。結果として『赤いが動かせない』という結合状態は、どちらの単体判定でも異常として現れない。",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "control-both-behavior-and-interaction",
+          "verify-decomposition-assumptions",
+          "全体構造の分析",
+          "単一コンポーネント集中の回避"
+        ],
+        "why_it_seemed_adequate": "sensor は助言、controller は拒否という責務分離は素直な設計であり、各要素は単体では設計どおりに動作している。単体の正しさを合計すれば全体が安全になるという分解の前提が置かれ、その前提（要素が独立に働き、相互作用が結果を歪めないこと）を検証する工程が無かった。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "木の手掛かりは docs-audit の findings と dep-graph の逆依存に限られ、『各 ADR がどの status で生まれたか』『accepted かつ ERROR の文書が何件あるか』を示す手掛かりが無い。文書化された手順（proposed で起こす）と実際の振る舞い（全件が accepted で初回 Write）の乖離が 0件 対 全件という極端な形で存在していたにもかかわらず、木の側からその乖離は観測できない。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "monitor-procedure-practice-gap",
+          "変化ドリフトの事前検出",
+          "計画外変化の検出手段",
+          "責任割り当ての経時的劣化"
+        ],
+        "why_it_seemed_adequate": "監査は『現在の文書が規範に適合しているか』を問う設計であり、適合しているなら生成経路は問わないという立場は一貫していて妥当に見えた。生成経路は git 履歴の領分であり文書監査の対象外だという線引きも、責務としては自然だった。"
+      },
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "全件走査の結果は要約として .claude/.cache へ書かれるが、『正規経路では是正できない指摘』を未クローズ項目として持ち越し、是正完了まで追跡する制御動作が無い。同じ ERROR が次セッション以降も再掲されうる一方で、それが直せない種類の ERROR であることは記録に現れず、再掲の反復が常態として消化される。",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "audit-findings-must-be-closed",
+          "指摘欠点の是正完了追跡",
+          "監査のすり抜け時に監査手順を是正"
+        ],
+        "why_it_seemed_adequate": "監査の役割は現況の要約を次セッションへ渡すことであり、追跡は台帳（ASSURANCE_LANE）側の仕事だという分担が読める。指摘が毎回出続けるならいずれ誰かが直すはずだ、という前提も、可動な文書については実際に成立していた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "事象は台帳へ積まれるが、本反復で発見された回避策（status: proposed で起こし、緑にしてから accepted へ遷移する）を手順または機構へ反映する制御動作が無い。fixed:false / shipped:false のまま、次に ADR を書く主体は同じ一方通行の扉を通る。統制外経路（未コミット草稿の削除→再作成）という迂回が現に利用可能であることも、迂回が選ばれる理由ごと構造へ還元されていない。",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "教訓の反映手順の確立",
+          "是正措置の責任割当と追跡",
+          "迂回行動からの学習",
+          "例外作業の統制と発生低減"
+        ],
+        "why_it_seemed_adequate": "事象を台帳へ積み分析が済むまで閉じないという規律自体は満たされており、回避策が判明した以上その反復での損失は回避された。分析の完了と機構の変更を別工程に分けるのは、未分析のままの拙速な機構変更を避ける意味で妥当な設計だった。"
+      },
+      {
+        "control_element_id": "SESSION_START_CONTRACT",
+        "description": "注入されるのは確定・非目標・退行監視の要点であり、『accepted で書くと本文は直せなくなる』という可動性の制約は注入されない。書き手は拒否されて初めてその制約を知る。さらに注入は主セッションにしか効かないため（NONGOAL-001）、サブエージェントが文書を起草する経路では制約が一切届かない。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "supplier-must-communicate-analysis-assumptions",
+          "defects-in-information-providing-systems",
+          "機械的遵守が前提の指示は自動化",
+          "why-it-seemed-right-not-who-failed"
+        ],
+        "why_it_seemed_adequate": "注入できる分量には限りがあり、確定事実と非目標を優先する取捨は合理的だった。可動性の制約はガードが拒否時の文言で呼び出し側のモデルへ返す設計になっており（構造上そう記述されている）、事前に重ねて伝える必要は薄いと読めた。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "『コミット済みの accepted 文書は誤字一つの是正に後継 ADR を要する』という事実上の復旧不能状態に木が入ったことを、所有者へ伝える手掛かりが無い。手掛かりは進捗報告・PR の diff・台帳の三つだが、いずれも『是正経路が塞がった文書の件数』を独立の項目として表面化せず、他の進捗情報の中へ埋没する。復旧不能な削除の可否は所有者の制御事項であるのに、それに隣接する復旧不能状態は判断の場に上がらない。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "controller-needs-concrete-feedback-channels",
+          "管理者への安全情報伝達",
+          "リスク情報の不透明な集約禁止",
+          "許容可否判断はステークホルダー"
+        ],
+        "why_it_seemed_adequate": "台帳に事象が積まれている以上、所有者が読めば判るという構成になっており、追加の通知経路は冗長に見えた。個々の文書の誤字は影響が軽微に見え、安全に関わる情報として分離して上げる水準には達しないと読めた。"
+      }
+    ],
+    "hazard": "統治木の中に、リンタが ERROR と判定する内容を含みながら status: accepted で凍結され、PRE_TOOL_GUARD が許す正規経路では本文を是正できない文書が存在する状態（統制下のシステム状態）。この状態は、規範適合を要求する統制と、統制外の書き込みを禁じる統制とが両立不能になる条件下で損失に至る。",
+    "incident_id": "INC-017-accepted-adr-born-red-is-unfixable",
+    "leading_indicators": [
+      {
+        "indicator": "status: accepted かつ docs-linter が ERROR を返す統治文書の件数",
+        "observable": "docs-audit の JSON に、文書ごとの front-matter status と lint 重大度の組を出力し、その積集合の件数を集計する",
+        "threshold": "1件以上で赤。0件を正常とし、1件でも出たら merge を止め、当該文書の是正経路が存在するかを確認するまで進めない",
+        "version_independent": true,
+        "where": "CI_RELEASE_CHECK（.github/workflows で走る docs-audit の JSON 出力。リポジトリ正本を対象とする）",
+        "why_version_independent": "CI はリポジトリ正本を対象に走り、利用者環境へ導入された複製の版に依存しない。指標の計算に必要な情報（front-matter と lint 結果）はいずれも正本に存在する"
+      },
+      {
+        "indicator": "新規統治文書のうち、初回コミット時点の status が accepted であるものの割合",
+        "observable": "git 履歴で各 ADR ファイルの初出コミットを特定し、その版の front-matter status を読む",
+        "threshold": "直近10件で accepted 初回が1件でも出たら警告、3件以上で carve-out の対象範囲の再設計を起動する。目標値は0件",
+        "version_independent": true,
+        "where": "CI_RELEASE_CHECK（正本の git 履歴に対する集計。SESSION_END_AUDIT 側での近似ではなく履歴を一次情報とする）",
+        "why_version_independent": "git 履歴とリポジトリ内の文書のみで計算でき、導入複製の版にも Hook の起動有無にも依存しない。ガードや監査が古い版でも指標の値は変わらない"
+      },
+      {
+        "indicator": "PRE_TOOL_GUARD の拒否のうち『既存ADRは改変できません』理由の発生件数と、その後の是正到達率",
+        "observable": "ガードが終了コード2を返した際の理由コードと対象パスを記録し、同一パスがその後に正規経路で緑になったかを突き合わせる",
+        "threshold": "当該理由の拒否が週1件以上、または拒否後に是正へ到達しなかった件数が1件でも出た時点で carve-out の範囲を再検討する",
+        "version_independent": false,
+        "where": "PRE_TOOL_GUARD（policy-guard.py の拒否地点）および SESSION_END_AUDIT の走査結果",
+        "why_version_independent": "記録も判定も導入複製側の Hook で動くため、複製の版が遅れれば指標の定義も古いままになる（INC-005 と同型の共通原因故障）。Hook が起動しない経路の書き込みは指標の母数にも入らない"
+      },
+      {
+        "indicator": "統治文書が同一セッション内で削除され再作成された回数（ガードを迂回した書き直しの代理観測）",
+        "observable": "SessionStart 時点と SessionEnd 時点の統治木のファイル一覧と内容ハッシュを比較し、パスが同一で内容が全面差替になったものを数える",
+        "threshold": "1件でも検出されたら、その書き直しがなぜ正規経路で行えなかったのかを調査対象にする（件数の多寡ではなく発生の有無を閾値とする）",
+        "version_independent": false,
+        "where": "SESSION_END_AUDIT（全件走査時に SessionStart 側のスナップショットと突合）",
+        "why_version_independent": "スナップショットの取得も比較も導入複製側のフックに依存し、SessionEnd が発火しない終了（INC-001）では走らない。複製の版が遅れれば検出器も遅れる"
+      },
+      {
+        "indicator": "carve-out 述語が許す遷移の集合と、実際に試みられた遷移の集合の差分",
+        "observable": "拒否時に『試みられた status 遷移（from→to）』を記録し、carve-out が許す集合との差分を遷移種別ごとに集計する",
+        "threshold": "carve-out 外の遷移種別が2種類以上現れた時点、または同一種別が3回現れた時点で、想定された運用モデルが実運用と食い違っているとみなし範囲を再設計する",
+        "version_independent": false,
+        "where": "PRE_TOOL_GUARD（拒否判定の直前で from/to を記録）",
+        "why_version_independent": "記録点がガード自身の内部にあるため、導入複製の版が古いと新しい遷移種別を記録するコード自体が存在せず、差分が観測されない"
+      }
+    ],
+    "loss": "統治木の正本である文書が、規範違反（docs-linter の ERROR）を含んだまま固定され、是正の行き先が (a) ガードを通らない統制外経路での削除・再作成、(b) 誤字一つに対する後継 ADR の発行、(c) 赤の放置、のいずれかにしか流れなくなった。これにより「統治木の全文書が規範に適合する」という統制目標と、「統治木への変更はすべてガードを通る」という統制目標の双方が、同時には満たせない状態になった。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "初回 Write の時点で拒否されるか、status の値に対する警告が返る。",
+        "hypothesis": "status: accepted を持つ統治文書の初回 Write は、現状 PRE_TOOL_GUARD を無検査で通過する（凍結の入口が開いている）。",
+        "oracle": "BANNED_SYNONYM を含む本文と status: accepted を持つ新規 ADR を Write し、ガードの終了コードが0であること、直後の Edit が終了コード2で拒まれることを両方観測する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "当該文書種には carve-out が無く本文改変が通る、または新規作成の時点で規範違反が拒まれる。",
+        "hypothesis": "ADR 以外の凍結対象文書（decided-facts.md 等）でも、同じ手順で『赤いまま是正不能』な状態を構成できる。",
+        "oracle": "当該文書種の新規ファイルを規範違反を含む内容で作成し、その後の本文 Edit が carve-out 外として拒まれるかを確認する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "findings に当該組み合わせが独立項目として現れる。",
+        "hypothesis": "docs-audit は『status: accepted かつ lint ERROR』という組み合わせを findings として出力しない（結合状態が監査の視野に無い）。",
+        "oracle": "その状態の文書を木に置いた上で監査を走らせ、.claude/.cache/last-audit.json に当該組み合わせを示す項目が現れるかを検査する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "削除または再 Write のいずれかがガードで拒まれる、あるいは監査が差替を検出して報告する。",
+        "hypothesis": "未コミット草稿の削除→再作成という回避経路は Hook を起動せず、統制の外で本文の全面差替が可能である。",
+        "oracle": "凍結済みの未コミット文書を削除して同一パスに再 Write し、拒否が発生しないことと、監査がその差替を検出しないことを確認する。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "版が遅れても指標が記録される、または指標の欠落が独立の経路で検出される。",
+        "hypothesis": "拒否件数・遷移差分といった指標を導入複製側（Hook）に置くと、複製の版が遅れた時点で指標そのものが停止し、停止したことは古び警告でしか判らない（INC-005 と同型の共通原因）。",
+        "oracle": "導入複製を1世代前に固定した状態で新指標を発火させる操作を行い、指標が記録されるかを観測する。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "サブエージェント経路でも制約が届く、またはその経路では文書の書き込み自体ができない。",
+        "hypothesis": "SESSION_START_CONTRACT が届かないサブエージェント経路では、status に関する運用制約が一切伝わらないまま統治文書が起草されうる。",
+        "oracle": "サブエージェントに統治文書の起草を行わせ、注入された制約の有無と、生成された文書の初回 status を観測する。",
+        "severity": "P2"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "新規文書の初回 Write に対して status を検査し、status: accepted での新規作成を PRE_TOOL_GUARD が拒んで proposed での起票を要求する（危険状態そのものを入口で排除する）。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "carve-out に accepted → proposed の逆向き遷移を追加する。無条件ではなく、リンタが当該文書に ERROR を報告している間に限る条件付き carve-out として、条件と根拠を述語のコメントに残す。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "リンタの ERROR 判定を PreToolUse 側からも呼び出せるようにし、赤を生む書き込み自体を事前に拒む。これにより『凍ってから赤が判る』という手掛かりと制御の順序を逆転させる。実装上の可否（同一入力から lint を再実行できるか）を先に確認する。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "docs-audit の JSON に『status: accepted かつ lint ERROR』の件数を独立項目として出力し、CI_RELEASE_CHECK で1件以上なら赤で止める。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "CI 側で git 履歴から『初回コミット時点の status が accepted である新規文書の割合』を算出し、手順と実践の乖離を継続的に可視化する。導入複製に依存しない位置に置くことを要件とする。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "PRE_TOOL_GUARD の拒否に、試みられた status 遷移（from→to）と拒否理由コードを記録し、carve-out の許容集合との差分を定期に突き合わせる。差分の出現を carve-out 再設計の起動条件とする。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "『統治文書は proposed で起こし、緑にしてから accepted へ遷移する』という運用制約を SESSION_START_CONTRACT の注入内容へ加える。ただしこの制約は判断を伴わない機械的遵守が前提であるため、注入は暫定であり、上記の入口検査（自動化）へ置き換えるまでの繋ぎと位置づける。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "コミット済み accepted 文書の誤字是正に後継 ADR を要求するという現行の代償を許容するか、許容しないなら是正経路として何を認めるかを所有者が判断する。許容可否は分析者ではなくステークホルダーの決定事項である。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "統制外経路（未コミット草稿の削除→再作成）が実際に何回使われているかを観測する手段の有無を調査し、観測できないならその観測不能性自体を非目標ではなく未解決の穴として台帳に残す。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "ADR 以外の凍結対象文書について、同型の『赤いまま凍る』状態が構成可能かを調査し、carve-out を持つ全ての文書種で是正経路の到達可能性を確認する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "編集の可否を決める権限が事前（PRE_TOOL_GUARD）にあり、規範適合の判定が事後（POST_TOOL_LINTER）にあるという時間軸の分離。この配置は ADR に限らず、ガードが凍結する全ての文書種で同型の『赤いまま凍る』状態を生成しうる。",
+      "『凍結』を status の値ひとつで表現し、凍結の強度（本文の可動性）と表明の意味（合意済みであること）を分離していない設計。片方を宣言すると他方が不可逆に付いてくる。",
+      "統制の有効性を『拒否できたか』で測り、『拒否の後に正規の是正経路が残っているか』で測らない評価軸。この軸の下では、拒否範囲を広げるほど評価は良くなり、到達不能状態の生成は評価されない。",
+      "統制外経路（Hook を通らない削除・再作成）が存在するため、正規経路を厳しくすると迂回が合理的になるという圧力。統制の強度が統制外への流出を生む方向に働く。",
+      "非目標（NONGOAL-001 など）として穴を宣言することが、その穴を監視する義務の発生を止める運用。宣言済みの穴は既知として扱われ、実際に何回通られたかは数えられない。",
+      "検出器の多くが導入複製の側で動くという共通原因（INC-005）。複製の版が遅れると、複数の防護が同時に古い定義のまま動き、独立したはずの検出が揃って効かなくなる。",
+      "手順（proposed で起こす）が口伝と回避策として存在し、機構にも注入内容にも入っていないため、書き手が交代するたびに同じ扉を通る。"
+    ],
+    "unknowns": [
+      "本分析の実行環境は空の作業ディレクトリであり、evidence_refs が指す plugin/scripts/policy-guard.py と doctrine_docs/packaging/decisions/ADR-124-*.md を直接確認できていない。PRE_TOOL_GUARD と POST_TOOL_LINTER は統制構造に実体付きの要素として存在するため機構そのものの実在は構造側から支持されるが、_adr_change_is_carveout_only の正確な許容集合（accepted→proposed が本当に範囲外か、status 遷移に方向制限が書かれているか）は事象の記録の記述に依存しており、コードでの裏取りができていない。",
+      "BANNED_SYNONYM が ERROR 重大度である判定基準、および ERROR と WARN の区別が何をもって決まるかが不明。重大度の設計が判らないと、『赤い凍結』を CI で止める閾値が過剰か不足かを評価できない。",
+      "『proposed の ADR は一件も生まれなかった（実測）』の観測時点と母数（ADR の総数）が不明。全件が accepted 初回 Write という乖離の強さは母数に依存する。",
+      "コミット済みの accepted 文書の誤字が、後継 ADR を経ずに是正された前例があるか（すなわち統制外経路が過去に何回通られたか）が不明。",
+      "ガードが PreToolUse の時点でリンタの判定を呼べるか（同一プロセス・同一入力から lint 結果を得られるか）という実装上の制約が不明で、『赤を作る Write を事前に拒む』という是正案の実現可能性を評価できない。",
+      "誤字一つに後継 ADR を要するという代償を所有者が許容するかどうかは、分析者ではなくステークホルダーの判断であり、本分析の時点では取得できていない。",
+      "サブエージェント経路で統治文書が起草された実績があるか（SESSION_START_CONTRACT が届かない経路の実利用率）が不明。",
+      "この一方通行の扉が ADR 以外の凍結対象文書（decided-facts.md 等）にも存在するかどうかを確認できていない。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は「文書が規範に適合しているか」という軸で組まれており、「不適合が判明した後に、正規の道具で是正へ到達できるか」という到達可能性の軸を持っていない。ガードは編集の可否を単体で判定し（その想定対象は熟慮を経た既存 ADR）、リンタは編集後の一文書だけを見て助言を返す。両者の間に「赤い凍結」という結合状態を検査する主体がなく、決定論試験も個々の拒否が正しく起きることは見るが、拒否の集合が是正経路を塞いでいないことは見ない。加えて「ガードが実際に拒否できることは体系側から検出しない」という既知の穴（NONGOAL-001）により、carve-out の許容集合を運用実態へ照らす機会そのものが構造上存在しなかった。手順と実践の乖離（proposed 経由が実測0件）は最も強い先行兆候だったが、木の手掛かりが文書の適合のみで生成経路を含まないため、乖離は数値として表面化しなかった。さらにリンタが PostToolUse に置かれている限り、赤の手掛かりは常に凍結の後に来るため、どれだけ検査を厳密にしても「凍ってから赤が判る」順序自体は改善されない。是正が本反復中に回避策で済んだこと（分析対象としては fixed:false）も、機構の再設計を起動する閾値に達しない事象として処理されうる構造になっている。"
+  }
+}

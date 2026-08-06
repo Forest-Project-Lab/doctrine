@@ -199,6 +199,114 @@ class OrchestratorTest(unittest.TestCase):
         self.assertEqual(ev["CHALLENGE_DONE"]["to"], "FORMALIZE")
 
 
+class RecommendationBacklogTest(unittest.TestCase):
+    """事故分析の推奨は、terminal な処遇に至るまで次の行動に挙がる（ADR-125）。
+
+    ADR-124 の不変条件は種別の粒度までしか見ない。cast/*.json は「読まれている」と
+    宣言できたが、読み手は generated_at だけで、推奨は正本へ一度も届いていなかった
+    （INC-016。同型の四度目）。
+    """
+
+    def _stub(self, tmp, recommendations, dispositions=None):
+        ledger = os.path.join(tmp, "ledger")
+        os.makedirs(os.path.join(ledger, "cast"), exist_ok=True)
+        with open(os.path.join(ledger, "cast", "INC-x.json"),
+                  "w", encoding="utf-8") as f:
+            json.dump({"analysis": {"incident_id": "INC-x",
+                                    "recommendations": recommendations}}, f)
+        if dispositions is not None:
+            with open(os.path.join(ledger, "recommendation-status.json"),
+                      "w", encoding="utf-8") as f:
+                json.dump({"dispositions": dispositions}, f)
+        orig = orchestrator.LANE_DIR
+        orchestrator.LANE_DIR = tmp
+        self.addCleanup(setattr, orchestrator, "LANE_DIR", orig)
+
+    def test_recommendation_without_disposition_is_pending(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self._stub(tmp, [{"action": "a", "kind": "機構の変更",
+                              "owner_decision_required": False}])
+            self.assertEqual(
+                [r["index"] for r in orchestrator.recommendation_backlog()["pending"]],
+                [0])
+
+    def test_owner_decision_is_not_lane_work(self):
+        """所有者判断が要る推奨を、レーンの未着手として並べない。
+
+        並べると、勝手に進めてよい物と判断を仰ぐ物が同じ列に混ざる（§7 の境界）。
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            self._stub(tmp, [{"action": "a", "kind": "所有者判断",
+                              "owner_decision_required": True}])
+            backlog = orchestrator.recommendation_backlog()
+            self.assertEqual(backlog["pending"], [])
+            self.assertEqual(len(backlog["owner"]), 1)
+
+    def test_apply_findings_is_named_while_pending_remains(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self._stub(tmp, [{"action": "a", "kind": "機構の変更",
+                              "owner_decision_required": False}])
+            actions = [a for a in orchestrator.next_actions()
+                       if a.startswith("APPLY_FINDINGS")]
+            self.assertTrue(actions, orchestrator.next_actions())
+            self.assertIn("未着手 1 件", actions[0])
+
+    def test_apply_findings_clears_when_all_are_terminal(self):
+        """処遇が済んだら消える。消えない行動を作らない（INC-006・INC-012）。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            self._stub(tmp,
+                       [{"action": "a", "kind": "機構の変更",
+                         "owner_decision_required": False}],
+                       [{"incident_id": "INC-x", "index": 0, "state": "landed",
+                         "evidence_ref": "assurance/harness/orchestrator.py"}])
+            self.assertEqual([a for a in orchestrator.next_actions()
+                              if a.startswith("APPLY_FINDINGS")], [])
+
+    def test_rejection_without_a_reason_is_red(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self._stub(tmp,
+                       [{"action": "a", "kind": "機構の変更",
+                         "owner_decision_required": False}],
+                       [{"incident_id": "INC-x", "index": 0, "state": "rejected"}])
+            self.assertTrue([p for p in orchestrator.validate()
+                             if "却下に理由が無い" in p], orchestrator.validate())
+
+    def test_landed_without_evidence_is_red(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self._stub(tmp,
+                       [{"action": "a", "kind": "機構の変更",
+                         "owner_decision_required": False}],
+                       [{"incident_id": "INC-x", "index": 0, "state": "landed"}])
+            self.assertTrue([p for p in orchestrator.validate()
+                             if "証拠のポインタが無い" in p], orchestrator.validate())
+
+    def test_disposition_for_a_missing_recommendation_is_red(self):
+        """指す先の無い処遇は、片づいた件数を水増しする。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            self._stub(tmp,
+                       [{"action": "a", "kind": "機構の変更",
+                         "owner_decision_required": False}],
+                       [{"incident_id": "INC-x", "index": 9, "state": "rejected",
+                         "note": "理由"}])
+            self.assertTrue([p for p in orchestrator.validate()
+                             if "存在しない推奨を指している" in p],
+                            orchestrator.validate())
+
+    def test_unknown_disposition_word_is_red(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self._stub(tmp,
+                       [{"action": "a", "kind": "機構の変更",
+                         "owner_decision_required": False}],
+                       [{"incident_id": "INC-x", "index": 0, "state": "done"}])
+            self.assertTrue([p for p in orchestrator.validate()
+                             if "語彙に無い" in p], orchestrator.validate())
+
+    def test_terminal_states_are_a_subset_of_the_vocabulary(self):
+        self.assertTrue(orchestrator.TERMINAL_RECOMMENDATION_STATES
+                        <= set(orchestrator.RECOMMENDATION_STATES))
+        self.assertNotIn("pending", orchestrator.TERMINAL_RECOMMENDATION_STATES)
+
+
 class LedgerKindTest(unittest.TestCase):
     """台帳の成果物種別は、読む経路か読まない理由のどちらかを必ず持つ（ADR-124）。
 

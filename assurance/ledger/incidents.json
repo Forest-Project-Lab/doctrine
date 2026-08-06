@@ -257,7 +257,7 @@
       "fixed": false,
       "shipped": false,
       "pattern_note": "INC-012・INC-015・ADR-124 と同型の四度目。ただし粒度が一段深い —— ファイルは読まれており、読まれていないのは中身である。ADR-124 の検査はこの形を赤にできない（同 ADR の帰結に明記）",
-      "cast_analysis": "pending",
+      "cast_analysis": "done",
       "evidence_kind": "measurement",
       "evidence_refs": [
         "assurance/harness/orchestrator.py",
@@ -265,7 +265,10 @@
         "assurance/ledger/cast/INC-015-discover-output-invisible-to-canon.json",
         "ADR-124"
       ],
-      "evidence": "orchestrator.py の evaluator_outputs_latest は cast/*.json から generated_at のみを取る。schemas.py が定める new_scenario_candidates・recommendations を読む箇所は harness 内に無い（grep で 0 件）"
+      "evidence": "orchestrator.py の evaluator_outputs_latest は cast/*.json から generated_at のみを取る。schemas.py が定める new_scenario_candidates・recommendations を読む箇所は harness 内に無い（grep で 0 件）",
+      "cast_analysis_last_status": "UNKNOWN",
+      "cast_analysis_ref": "assurance/ledger/cast/INC-016-cast-analysis-content-unread-by-canon.json",
+      "cast_analyzed_at": "2026-08-06T08:59:58Z"
     },
     {
       "id": "INC-017-accepted-adr-born-red-is-unfixable",
@@ -276,13 +279,15 @@
       "fixed": false,
       "shipped": false,
       "workaround": "ADR は status: proposed で起こし、リンタを緑にしてから accepted へ遷移する（本反復の ADR-124 はこの道で作り直した）",
-      "cast_analysis": "pending",
+      "cast_analysis": "done",
       "evidence_kind": "measurement",
       "evidence_refs": [
         "plugin/scripts/policy-guard.py",
         "doctrine_docs/packaging/decisions/ADR-124-ledger-kinds-are-read-or-declared-unread.md"
       ],
-      "evidence": "policy-guard.py の _adr_change_is_carveout_only 周辺（『既存ADR %s は改変できません(status遷移とsuperseded_by付与のみ可)。』）と、その直前に出た docs-linter の BANNED_SYNONYM ERROR"
+      "evidence": "policy-guard.py の _adr_change_is_carveout_only 周辺（『既存ADR %s は改変できません(status遷移とsuperseded_by付与のみ可)。』）と、その直前に出た docs-linter の BANNED_SYNONYM ERROR",
+      "cast_analysis_ref": "assurance/ledger/cast/INC-017-accepted-adr-born-red-is-unfixable.json",
+      "cast_analyzed_at": "2026-08-06T08:53:11Z"
     }
   ]
 }
