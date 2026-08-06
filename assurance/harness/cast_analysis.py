@@ -120,7 +120,7 @@ def analyze_one(incident, principle_index, *, timeout_s, budget_usd):
         max_budget_usd=budget_usd,
         cwd=isolated_cwd,
         allowed_tools=(),
-        max_turns=1,
+        max_turns=8,   # 尺度が不明なので余裕を取る(INC-014)
         timeout_s=timeout_s,
     )
 

@@ -70,6 +70,8 @@ FIX → VERIFY → ATTACK_EVALUATOR → RECORD → CURATE（正本: `harness/orc
 - `cast/<事象 id>.json` — 分析の結果（統制欠陥・先行指標・却下された欠陥つき）。
 - `red/<事象 id>.json` — 修正前に FAIL した証拠（最初から緑は再現と認めない）。
 - `smoke-latest.json` / `mutations-*.json` — 煙試験と故障注入の証拠。
+  評価器の成果物が `mutations-*.json` の日付より新しければ、正本が ATTACK_EVALUATOR を
+  次の行動に挙げる（ADR-120）。攻撃の設計に「これは捏造だ」と読める手掛かりを残さない。
 - 状態語彙: PASS / FAIL / UNKNOWN / UNASSESSED / DEGRADED / NOT-APPLICABLE。
   根拠なき PASS を書かない。証拠が消えた PASS は UNKNOWN へ戻す。
   「完璧」「網羅済み」「保証済み」を無根拠に宣言しない（思いつかない≠網羅）。
@@ -85,6 +87,7 @@ assurance/.venv/bin/python assurance/harness/coverage.py init --book jerg      #
 assurance/.venv/bin/python assurance/harness/coverage.py stats                 # 五値の集計
 assurance/.venv/bin/python assurance/harness/cast_analysis.py --all            # 事象の分析 (ADR-117)
 assurance/.venv/bin/python assurance/harness/map_coverage.py --book jerg       # 五値の割当 (ADR-118)
+assurance/.venv/bin/python assurance/harness/attack_evaluator.py               # 評価器への故障注入 (ADR-120)
 assurance/.venv/bin/python assurance/harness/smoke.py            # 実 SDK 煙試験 (0/2/3/4)
 python3 -m unittest discover -s assurance/tests                  # レーン決定論試験
 python3 plugin/run_tests.py                                      # 本体試験

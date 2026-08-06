@@ -109,7 +109,7 @@ def main(argv=None):
             model=run_opts["model"],
             effort=run_opts["effort"],
             max_budget_usd=args.budget_per_call,
-            max_turns=1,
+            max_turns=8,   # 尺度が不明なので余裕を取る(INC-014)
             timeout_s=args.timeout,
             cwd=None,
         )
