@@ -94,10 +94,47 @@ class OrchestratorTest(unittest.TestCase):
                 [a for a in orchestrator.next_actions()
                  if a.startswith("MAP_COVERAGE")], [])
 
+    def test_attack_evaluator_is_nameable(self):
+        """評価器の成果物が、故障注入の証拠より新しければ ATTACK_EVALUATOR を挙げる。
+
+        状態機械に在るのに next_actions が一度も名指しできない状態は、手で選ばない
+        規律（ADR-115）の下では**決して起きない**。ATTACK_EVALUATOR は実際に5反復
+        手つかずだった（事象 INC-012）。
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            self._stub_ledger(tmp, coverage_unknown=0, attack_evidence=None)
+            actions = orchestrator.next_actions()
+            self.assertTrue(
+                [a for a in actions if a.startswith("ATTACK_EVALUATOR")], actions)
+
+    def test_attack_evaluator_clears_when_evidence_is_newer(self):
+        """証拠が成果物より新しければ挙げない（消えない行動を作らない）。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            self._stub_ledger(tmp, coverage_unknown=0,
+                              attack_evidence="2099-01-01")
+            self.assertEqual(
+                [a for a in orchestrator.next_actions()
+                 if a.startswith("ATTACK_EVALUATOR")], [])
+
+    def test_every_state_is_either_nameable_or_declared_unnameable(self):
+        """正本の状態は、名指しできるか、名指しできないと明記されているかのどちらか。
+
+        黙って名指しされない状態を増やさない —— それが ATTACK_EVALUATOR で起きた形。
+        """
+        covered = orchestrator.NAMEABLE_STATES | orchestrator.WITHIN_CYCLE_STATES
+        self.assertEqual(set(orchestrator.STATES) - covered, set())
+
     def _stub_ledger(self, tmp, coverage_unknown, evaluated_unknown=0,
-                     unassessed_disposition=0):
+                     unassessed_disposition=0, attack_evidence="2099-01-01"):
         """実台帳に依存しない一時の帳簿を立てる（三冊とも抽出済み扱い）。"""
+        ledger = os.path.join(tmp, "ledger")
+        os.makedirs(ledger, exist_ok=True)
+        if attack_evidence:
+            with open(os.path.join(ledger, "mutations-x.json"),
+                      "w", encoding="utf-8") as f:
+                json.dump({"date": attack_evidence}, f)
         for attr, value in (("CATALOG_DIR", tmp),
+                            ("LANE_DIR", tmp),
                             ("INCIDENTS_PATH", os.path.join(tmp, "inc.json"))):
             orig = getattr(orchestrator, attr)
             setattr(orchestrator, attr, value)
@@ -120,7 +157,8 @@ class OrchestratorTest(unittest.TestCase):
                          "assigned_at": "2026-08-05T00:00:00Z",
                          "reason": "前提が欠けて評価できない"}
                         for i in range(unassessed_disposition)]
-            entries.append({"key": "done", "disposition": "非該当で理由あり"})
+            entries.append({"key": "done", "disposition": "非該当で理由あり",
+                            "assigned_at": "2026-08-05T00:00:00Z"})
             with open(os.path.join(tmp, "%s-coverage.json" % book),
                       "w", encoding="utf-8") as f:
                 json.dump({"entries": entries}, f)

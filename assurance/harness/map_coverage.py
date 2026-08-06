@@ -158,7 +158,7 @@ def main(argv=None):
             max_budget_usd=args.budget_per_call,
             cwd=tempfile.mkdtemp(prefix="assurance-mapcov-"),
             allowed_tools=(),
-            max_turns=1,
+            max_turns=8,   # 尺度が不明なので余裕を取る(INC-014)
             timeout_s=args.timeout,
         )
         cost = ((record.get("result_meta") or {}).get("total_cost_usd")) or 0.0

@@ -152,6 +152,87 @@ def catalog_status():
     return out
 
 
+# next_actions が名指しできる状態と、できない状態。
+#
+# 「できない」を暗黙にしない。状態機械に在るのに一度も名指しされない状態は、
+# 手で選ばない規律（ADR-115）の下では決して起きない —— ATTACK_EVALUATOR は
+# 実際に5反復手つかずだった（事象 INC-012）。増やすときはどちらかへ明記する。
+NAMEABLE_STATES = frozenset({
+    "INGEST_NORMS", "MAP_COVERAGE", "CAST_ANALYSIS", "DISCOVER",
+    "ATTACK_EVALUATOR",
+})
+
+# 反復の中の遷移。直前の成果物が在って初めて意味を持つので、帳簿だけからは
+# 名指しできない（DISCOVER が scenario を出して初めて CHALLENGE が立つ）。
+# ここに置くことは「名指ししない」ことの明示であって、やらなくてよいという
+# 意味ではない。反復の中で順に踏む。
+WITHIN_CYCLE_STATES = frozenset({
+    "CHALLENGE", "FORMALIZE", "REPRODUCE_RED", "FIX", "VERIFY",
+    "RECORD", "CURATE",
+})
+
+
+def _max_date(values):
+    """ISO の日付・時刻文字列の最大。先頭10文字（YYYY-MM-DD）で比べる。"""
+    days = sorted(v[:10] for v in values if isinstance(v, str) and len(v) >= 10)
+    return days[-1] if days else None
+
+
+def evaluator_outputs_latest():
+    """評価器が最後に何かを出した日。無ければ None。
+
+    対象は評価の成果物だけ（カタログ・事故分析・網羅の割当）。決定論試験や
+    煙試験は評価ではないので数えない。
+    """
+    seen = []
+    for book_id in sorted(books.BOOKS):
+        for name, key in (("%s-principles.json" % book_id, "updated_at"),):
+            path = os.path.join(CATALOG_DIR, name)
+            if not os.path.isfile(path):
+                continue
+            try:
+                with open(path, encoding="utf-8") as f:
+                    seen.append(json.load(f).get(key))
+            except (OSError, ValueError):
+                continue
+        cov_path = os.path.join(CATALOG_DIR, "%s-coverage.json" % book_id)
+        if os.path.isfile(cov_path):
+            try:
+                with open(cov_path, encoding="utf-8") as f:
+                    entries = json.load(f).get("entries", [])
+                seen.append(_max_date([e.get("assigned_at") for e in entries]))
+            except (OSError, ValueError):
+                pass
+    cast_dir = os.path.join(LANE_DIR, "ledger", "cast")
+    if os.path.isdir(cast_dir):
+        for name in sorted(os.listdir(cast_dir)):
+            if not name.endswith(".json"):
+                continue
+            try:
+                with open(os.path.join(cast_dir, name), encoding="utf-8") as f:
+                    seen.append(json.load(f).get("generated_at"))
+            except (OSError, ValueError):
+                continue
+    return _max_date([v for v in seen if v])
+
+
+def attack_evidence_latest():
+    """評価機構への故障注入の証拠の最新日。無ければ None。"""
+    ledger = os.path.join(LANE_DIR, "ledger")
+    if not os.path.isdir(ledger):
+        return None
+    seen = []
+    for name in sorted(os.listdir(ledger)):
+        if not (name.startswith("mutations-") and name.endswith(".json")):
+            continue
+        try:
+            with open(os.path.join(ledger, name), encoding="utf-8") as f:
+                seen.append(json.load(f).get("date"))
+        except (OSError, ValueError):
+            continue
+    return _max_date([v for v in seen if v])
+
+
 def coverage_status():
     """冊子ごとの網羅台帳の状態。骨組みの存在と割当の完了を区別する。
 
@@ -226,6 +307,16 @@ def next_actions():
         elif cov["status"] == "UNKNOWN":
             actions.append("MAP_COVERAGE: %s の台帳が読めない（%s）"
                            % (book_id, cov.get("reason")))
+    # 評価機構自身への故障注入。評価器の成果物が証拠より新しければ、その評価器は
+    # まだ攻撃されていない。AI の判定が「実際に欠陥を捕まえる」ことは、攻撃の証拠
+    # でしか言えない（INC-012）。
+    latest_output = evaluator_outputs_latest()
+    latest_attack = attack_evidence_latest()
+    if latest_output and (latest_attack is None or latest_attack < latest_output):
+        actions.append(
+            "ATTACK_EVALUATOR: 評価器の成果物(%s)が故障注入の証拠(%s)より新しい"
+            % (latest_output, latest_attack or "無し"))
+
     if not actions:
         # 空は「やることが無い」と読める。反復の既定の入口を必ず示す
         # （CAST_DONE・CURATED の遷移先。INC-006）。
