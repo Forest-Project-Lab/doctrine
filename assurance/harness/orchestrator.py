@@ -22,7 +22,7 @@ import sys
 sys.dont_write_bytecode = True
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from harness import books, model_policy  # noqa: E402
+from harness import books, model_policy, prompts  # noqa: E402
 
 LANE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CATALOG_DIR = os.path.join(LANE_DIR, "ledger", "catalogs")
@@ -49,18 +49,20 @@ STATES = (
 # 観点レーン。model 役割は model_policy が正本（ここでは役割名だけを持つ）。
 LANES = {
     "stpa": {
-        "book": "stpa", "role": "evaluation", "fires_on": ("DISCOVER",),
+        "book": "stpa", "role": "evaluation",
+        "fires_on": ("INGEST_NORMS", "DISCOVER"),
         "reads": "システム境界・seed 事実・STPA カタログ",
         "writes": "SCENARIO_SCHEMA の配列（UCA・相互作用・注入点）",
     },
     "jerg": {
         "book": "jerg", "role": "evaluation",
-        "fires_on": ("MAP_COVERAGE", "FORMALIZE", "VERIFY"),
+        "fires_on": ("INGEST_NORMS", "MAP_COVERAGE", "FORMALIZE", "VERIFY"),
         "reads": "scenario/claim・検証計画・証拠の台帳・JERG カタログ",
         "writes": "検証計画の判定・証拠適合の判定（VERDICT_SCHEMA）",
     },
     "cast": {
-        "book": "cast", "role": "evaluation", "fires_on": ("CAST_ANALYSIS",),
+        "book": "cast", "role": "evaluation",
+        "fires_on": ("INGEST_NORMS", "CAST_ANALYSIS"),
         "reads": "事象の記録・統制構造・CAST カタログ",
         "writes": "統制欠陥・先行指標・新 scenario 候補",
     },
@@ -136,6 +138,7 @@ def validate():
             problems.append("遷移 %s の from が未知: %s" % (tr["event"], tr["from"]))
         if tr["to"] not in STATES:
             problems.append("遷移 %s の to が未知: %s" % (tr["event"], tr["to"]))
+    problems.extend(_validate_firing_points())
     problems.extend(_validate_ledger_kinds())
     problems.extend(_validate_recommendation_status())
     problems.extend(_validate_assumptions())
@@ -366,6 +369,126 @@ LEDGER_KINDS = (
          "古いことを正本が見るべきか』は未決の問いとして残る（ATTACK_EVALUATOR "
          "と同型になりうる）。決めるまでは読まない側に置く。"},
 )
+
+
+# 宣言された評価の発火点と、それを実際に走らせる手（ADR-128）。
+#
+# ADR-120 は状態の二分を、ADR-124 は台帳の成果物の二分を課した。どちらも
+# 「在る物」を入力に走るので、走らせ手の無い段は成果物を生まず、台帳に欠落の
+# 記録すら現れない。宣言された発火点と実行器の対応という**三面目**は、両者の
+# 対象範囲の外にあった（INC-021）。
+#
+# 各発火点は「走らせ手の三点（実行器・prompt 組立関数・台帳の成果物種別）」を
+# 持つか、「未実装である旨と理由」を持つかの、ちょうど一方に属する。表の鍵集合は
+# すべてのレーンの fires_on の合併と一致しなければならない（両方向の差集合が空）
+# —— 宣言だけの段も、宣言の無い実行器も許さない。逆向きの穴は実在した:
+# INGEST_NORMS は実 opus セッションを走らせるのに、どの fires_on にも無かった。
+FIRING_POINTS = {
+    "INGEST_NORMS": {
+        "runner": "extract_principles.py",
+        "prompt_builders": ("build_extract_principles_prompt",),
+        "ledger_kind": "catalogs/<book>-principles.json"},
+    "MAP_COVERAGE": {
+        "runner": "map_coverage.py",
+        "prompt_builders": ("build_map_coverage_prompt",),
+        "ledger_kind": "catalogs/<book>-coverage.json"},
+    "DISCOVER": {
+        "runner": "discover.py",
+        "prompt_builders": ("build_discover_prompt",),
+        "ledger_kind": "scenarios/<日付>.json"},
+    "CHALLENGE": {
+        "runner": "discover.py",
+        "prompt_builders": ("build_challenge_prompt",),
+        "ledger_kind": "scenarios/<日付>.json"},
+    "CAST_ANALYSIS": {
+        "runner": "cast_analysis.py",
+        "prompt_builders": ("build_cast_analysis_prompt",),
+        "ledger_kind": "cast/<事象 id>.json"},
+    "ATTACK_EVALUATOR": {
+        # 攻撃は既存の評価器へ故障を注入するので、自前の組み立て関数を持たない
+        # （注入先の関数をそのまま使う。設計上の意図であって欠落ではない）。
+        "runner": "attack_evaluator.py",
+        "prompt_builders": ("build_map_coverage_prompt",
+                            "build_cast_analysis_prompt"),
+        "ledger_kind": "mutations-<日付>.json"},
+    "FORMALIZE": {
+        "unimplemented":
+            "検証計画の審査（jerg）を走らせる実体が無い。schemas.py に成果物の"
+            "スキーマだけが在り、prompt 組立関数も実行器も台帳の種別も無い。"
+            "事象 INC-021 が持つ。実装するか、fires_on から外すかで消える。"},
+    "VERIFY": {
+        "unimplemented":
+            "修正の正しさを別セッションが確かめる段の実体が無い。状態機械は"
+            "FIX_APPLIED → VERIFY → ATTACK_EVALUATOR を持つが、踏む先が無いので"
+            "実際には独立検証を経ずに抜けている。事象 INC-021 が持つ。"
+            "なお実装しても得られるのはセッションの独立までで、独立した組織に"
+            "よる検証（IV&V）にはならない（NONGOAL-001 第17項）。"},
+}
+
+
+def _validate_firing_points():
+    """発火点の宣言と走らせ手の突合（ADR-128）。
+
+    宣言の側（三点そろいか未実装の明記か・名が実在するか）と、レーンの側
+    （fires_on との差集合）の両方を見る。片側だけでは、宣言が実装から離れても、
+    実装だけが増えても、どちらも赤にならない（ADR-124 と同じ形）。
+    """
+    problems = []
+    harness_dir = os.path.dirname(os.path.abspath(__file__))
+    known_kinds = {e["kind"] for e in LEDGER_KINDS}
+    for state, entry in sorted(FIRING_POINTS.items()):
+        runner = entry.get("runner")
+        why = entry.get("unimplemented")
+        if bool(runner) == bool(why):
+            problems.append(
+                "発火点 %s は、走らせ手か未実装の明記のちょうど一方を持つこと"
+                "（今: 走らせ手 %s・理由 %s）"
+                % (state, "有り" if runner else "無し", "有り" if why else "無し"))
+            continue
+        if why:
+            continue
+        if not os.path.isfile(os.path.join(harness_dir, runner)):
+            problems.append("発火点 %s の走らせ手 %r が harness/ に無い"
+                            % (state, runner))
+        for name in entry.get("prompt_builders") or ():
+            if not callable(getattr(prompts, name, None)):
+                problems.append("発火点 %s の組み立て関数 %r が prompts に無い"
+                                % (state, name))
+        kind = entry.get("ledger_kind")
+        if kind not in known_kinds:
+            problems.append("発火点 %s の成果物種別 %r が LEDGER_KINDS に無い"
+                            % (state, kind))
+    declared = set()
+    for lane in LANES.values():
+        declared.update(lane["fires_on"])
+    for state in sorted(declared - set(FIRING_POINTS)):
+        problems.append(
+            "発火点 %s がレーンから宣言されているが FIRING_POINTS に無い" % state)
+    for state in sorted(set(FIRING_POINTS) - declared):
+        problems.append(
+            "発火点 %s が FIRING_POINTS に在るが、どのレーンも宣言していない"
+            % state)
+    for state in sorted(set(FIRING_POINTS) - set(STATES)):
+        problems.append("発火点 %s が状態機械に無い" % state)
+    return problems
+
+
+def _firing_point_summary():
+    """発火点ごとの走らせ手の有無（ADR-128）。
+
+    未実装の段は、次の行動には挙げない —— 是正は事象 INC-021 が持っており、
+    二重に鳴らすとどちらを踏んでも消えない行動になる（ADR-126 と同じ判断）。
+    その代わり status が必ず数えて出す。沈黙と区別が付かなければ、宣言だけが
+    在って実体が無い形をもう一度繰り返す。
+    """
+    return {
+        "total": len(FIRING_POINTS),
+        "runnable": sorted(s for s, e in FIRING_POINTS.items() if e.get("runner")),
+        "unimplemented": {
+            s: e["unimplemented"]
+            for s, e in sorted(FIRING_POINTS.items()) if e.get("unimplemented")},
+        "tracked_by": "INC-021-lane-fires-on-declared-without-a-runner",
+    }
 
 
 def _ledger_dir():
@@ -856,6 +979,10 @@ def main(argv=None):
             # 沈黙と区別が付かなければ登記簿は在っても読まれていないのと同じ
             # （ADR-124 の粒度が種別までしか見なかった形。INC-016）。
             "assumptions": _assumption_summary(),
+            # 走らせ手を持たない発火点も必ず数えて出す（ADR-128）。次の行動に
+            # 挙げないのは事象 INC-021 が是正を持っているからで、沈黙して
+            # よいからではない。
+            "firing_points": _firing_point_summary(),
             # 所有者判断は報告のたびに思い出す物ではない。分析が印した物を
             # 正本が数えて出す（INC-016: 分析の中身が正本へ届いていなかった）。
             "recommendations": _recommendation_summary(),

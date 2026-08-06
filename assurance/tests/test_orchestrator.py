@@ -419,6 +419,85 @@ class LedgerKindTest(unittest.TestCase):
             self.assertEqual(orchestrator.undeclared_ledger_files(ledger), [])
 
 
+class FiringPointTest(unittest.TestCase):
+    """宣言された評価の発火点は、走らせ手を持つか、持たないと明記されるか（ADR-128）。
+
+    ADR-120 は状態の二分を、ADR-124 は台帳の成果物の二分を課した。どちらも
+    「在る物」を入力に走るので、走らせ手の無い段は成果物を生まず、台帳に欠落の
+    記録すら現れない。宣言された発火点と実行器の対応という三面目は、両者の
+    対象範囲の外にあった（INC-021）。
+    """
+
+    def test_every_firing_point_is_either_run_or_declared_unimplemented(self):
+        for state, entry in orchestrator.FIRING_POINTS.items():
+            runs = bool(entry.get("runner"))
+            why = entry.get("unimplemented")
+            self.assertNotEqual(
+                bool(runs), bool(why),
+                "%s は走らせ手か未実装の明記のちょうど一方を持つこと" % state)
+
+    def test_declared_runners_exist_on_disk(self):
+        """宣言が嘘をつけないようにする（ADR-124 と同じ原理）。"""
+        harness_dir = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "harness")
+        for state, entry in orchestrator.FIRING_POINTS.items():
+            runner = entry.get("runner")
+            if not runner:
+                continue
+            self.assertTrue(os.path.isfile(os.path.join(harness_dir, runner)),
+                            "%s の走らせ手 %r が harness/ に無い" % (state, runner))
+
+    def test_declared_prompt_builders_resolve(self):
+        from harness import prompts
+        for state, entry in orchestrator.FIRING_POINTS.items():
+            for name in entry.get("prompt_builders") or ():
+                self.assertTrue(callable(getattr(prompts, name, None)),
+                                "%s の %r が prompts に無い" % (state, name))
+
+    def test_declared_ledger_kinds_are_registered(self):
+        known = {e["kind"] for e in orchestrator.LEDGER_KINDS}
+        for state, entry in orchestrator.FIRING_POINTS.items():
+            kind = entry.get("ledger_kind")
+            if not kind:
+                continue
+            self.assertIn(kind, known, "%s の成果物種別" % state)
+
+    def test_table_matches_the_union_of_lane_firing_points(self):
+        """両方向の差集合が空。宣言だけの段も、宣言の無い実行器も許さない。
+
+        逆向きの穴が実在した —— INGEST_NORMS は extract_principles.py が実 opus
+        セッションを走らせるのに、どのレーンの fires_on にも現れていなかった。
+        """
+        declared = set()
+        for lane in orchestrator.LANES.values():
+            declared.update(lane["fires_on"])
+        self.assertEqual(declared - set(orchestrator.FIRING_POINTS), set())
+        self.assertEqual(set(orchestrator.FIRING_POINTS) - declared, set())
+
+    def test_ingest_norms_is_declared_by_the_book_lanes(self):
+        for name in ("jerg", "stpa", "cast"):
+            self.assertIn("INGEST_NORMS", orchestrator.LANES[name]["fires_on"],
+                          "%s レーンが INGEST_NORMS を宣言していない" % name)
+
+    def test_unimplemented_firing_points_are_visible_in_status(self):
+        """沈黙させない。ただし次の行動には挙げない（INC-021 が持つ）。"""
+        summary = orchestrator._firing_point_summary()
+        self.assertIn("unimplemented", summary)
+        self.assertIn("VERIFY", summary["unimplemented"])
+        self.assertIn("FORMALIZE", summary["unimplemented"])
+
+    def test_a_new_firing_point_without_a_runner_turns_the_canon_red(self):
+        """次に発火点が増えたときにも効く不変条件であることの確認。"""
+        original = dict(orchestrator.FIRING_POINTS)
+        orchestrator.FIRING_POINTS["BRAND_NEW"] = {}
+        try:
+            problems = orchestrator._validate_firing_points()
+        finally:
+            orchestrator.FIRING_POINTS.clear()
+            orchestrator.FIRING_POINTS.update(original)
+        self.assertTrue(any("BRAND_NEW" in p for p in problems), problems)
+
+
 class OwnerDecisionKindTest(unittest.TestCase):
     """所有者判断は、六類型のどれかを名指してはじめて成立する（ADR-127）。
 

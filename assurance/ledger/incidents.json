@@ -362,9 +362,9 @@
       "summary": "レーンが宣言する評価の発火点 5 つのうち 2 つ（FORMALIZE・VERIFY）に走らせ手が無い。jerg レーンは fires_on=('MAP_COVERAGE','FORMALIZE','VERIFY') と宣言するが、実行器も prompts の組み立て関数も台帳の種別も在るのは MAP_COVERAGE だけである。したがって『修正が正しいことを独立に確かめる段』は一度も走っていない",
       "detected_by": "所有者の問い『今の流れはどうなっているのか。宇宙工学の観点で独立検証 —— その結果をそのまま正本にしようとしているのか』を受けて、状態機械と実行器の対応を実測したとき（2026-08-06）",
       "impact": "状態機械は FIX_APPLIED → VERIFY → ATTACK_EVALUATOR の遷移を持ち、運転手順 §2 は VERIFY を『名指しされないが反復の中で順に踏む』側に置く。だが踏む先の実体が無いので、実際には FIX の後に独立検証を経ずに RECORD へ抜けている。ADR-120 の二分（状態）と ADR-124 の二分（台帳の成果物）はどちらもこの面を見ておらず、赤にならない —— 成果物が生まれないので『未宣言のファイル』も出ない。宣言と実装の乖離が沈黙する三つ目の面である",
-      "fixed": false,
+      "fixed": true,
       "shipped": false,
-      "cast_analysis": "pending",
+      "cast_analysis": "done",
       "evidence_kind": "measurement",
       "evidence_refs": [
         "assurance/harness/orchestrator.py",
@@ -373,7 +373,10 @@
       ],
       "evidence": "orchestrator.LANES['jerg']['fires_on'] == ('MAP_COVERAGE','FORMALIZE','VERIFY')。prompts.py の build_* は discover / extract_principles / cast_analysis / map_coverage / challenge の 5 つで、formalize も verify も無い。harness/ の実行器は attack_evaluator・cast_analysis・discover・doctor・extract_principles・map_coverage・smoke の 7 つで、formalize.py も verify.py も無い。schemas.py:109 に VERDICT（CHALLENGE/VERIFY 用）、:290 に FORMALIZE 成果物のスキーマだけが在る。LEDGER_KINDS にも両者の成果物種別は無い",
       "residual": "独立性の水準そのものも別の問題として残る。NONGOAL-001 第17項が IV&V（独立した組織による検証）を採らないと明示しており、いま在るのはセッションの独立（run_one_shot・setting_sources=[]・空の一時 cwd・構造化 JSON だけ）までである。評価役はすべて opus-5 系で、共通原因故障は残余リスクとして残る（運転手順 §4）。走らせ手を作っても『組織的独立』にはならない",
-      "family": "宣言と実装の乖離が沈黙する形。control_structure が .claude/.cache/last-audit.json を feedback と宣言しながら stat する経路が無い件（INC-001 推奨#2 の処遇 note）と同型で、粒度が状態機械の側に在る"
+      "family": "宣言と実装の乖離が沈黙する形。control_structure が .claude/.cache/last-audit.json を feedback と宣言しながら stat する経路が無い件（INC-001 推奨#2 の処遇 note）と同型で、粒度が状態機械の側に在る",
+      "cast_analysis_ref": "assurance/ledger/cast/INC-021-lane-fires-on-declared-without-a-runner.json",
+      "cast_analyzed_at": "2026-08-06T16:28:13Z",
+      "fix_note": "ADR-128 で三面目の不変条件を置いた。発火点は走らせ手の三点を持つか未実装と明記されるかのちょうど一方に属し、表の鍵集合はレーンの fires_on の合併と一致する（両方向の差集合が空）。FORMALIZE・VERIFY は未実装と明記された状態で緑になり、status が理由つきで出し続ける。逆向きの穴（INGEST_NORMS が実行器を持つのにどの fires_on にも無かった）も同じ差分で塞いだ。**走らせ手そのものは作っていない** —— 独立検証の段は依然として存在せず、是正は本事象の推奨（8件）が持つ。"
     }
   ]
 }

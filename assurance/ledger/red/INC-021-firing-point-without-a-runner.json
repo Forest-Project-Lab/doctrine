@@ -1,0 +1,32 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "reproduce-red",
+  "incident_id": "INC-021-lane-fires-on-declared-without-a-runner",
+  "generated_at": "2026-08-06T14:30:00Z",
+  "git_sha": "58cbfdad92bc",
+  "phase": "before-fix",
+  "command": "python3 -m unittest assurance.tests.test_orchestrator.FiringPointTest",
+  "returncode": 1,
+  "expect": "修正前に FAIL すること（最初から緑は再現と認めない）",
+  "procedure_order": "REPRODUCE_RED を FIX の前に実施した（二反復連続で順序を守れている）。",
+  "observed_failures": [
+    "Ran 8 tests — FAILED (failures=1, errors=7)",
+    "AttributeError: module 'harness.orchestrator' has no attribute 'FIRING_POINTS'（発火点と走らせ手の対応表が正本に無い）",
+    "AttributeError: module 'harness.orchestrator' has no attribute '_validate_firing_points'",
+    "AttributeError: module 'harness.orchestrator' has no attribute '_firing_point_summary'（未実装の段が status に一切出ない）",
+    "AssertionError: 'INGEST_NORMS' not found in ('MAP_COVERAGE', 'FORMALIZE', 'VERIFY') : jerg レーンが INGEST_NORMS を宣言していない（逆向きの穴。実行器は在るのに宣言が無い）"
+  ],
+  "measured_before": {
+    "jerg_fires_on": ["MAP_COVERAGE", "FORMALIZE", "VERIFY"],
+    "runners_in_harness": ["attack_evaluator.py", "cast_analysis.py", "discover.py", "doctor.py", "extract_principles.py", "map_coverage.py", "smoke.py"],
+    "prompt_builders": ["build_discover_prompt", "build_extract_principles_prompt", "build_cast_analysis_prompt", "build_map_coverage_prompt", "build_challenge_prompt"],
+    "note": "FORMALIZE と VERIFY はどちらの一覧にも現れない。schemas.py:109（VERDICT）と :290（FORMALIZE 成果物）にスキーマの殻だけが残る。LEDGER_KINDS にも両者の成果物種別は無い。"
+  },
+  "measured_after": {
+    "firing_points_total": 8,
+    "runnable": ["ATTACK_EVALUATOR", "CAST_ANALYSIS", "CHALLENGE", "DISCOVER", "INGEST_NORMS", "MAP_COVERAGE"],
+    "unimplemented": ["FORMALIZE", "VERIFY"],
+    "note": "緑は「実装されている」ではなく「実装されていないことが宣言されている」の意味。status の firing_points.unimplemented に理由つきで出続ける。"
+  },
+  "note": "ADR-120（状態の二分）も ADR-124（台帳の成果物の二分）も、どちらも『在る物』を入力に走るため、走らせ手の無い段を捕まえられなかった。成果物が生まれないので未宣言のファイルも欠落記録も出ず、種別が無いので不在を表す語彙すら無い。三面目の不変条件を ADR-128 として置いた。"
+}
