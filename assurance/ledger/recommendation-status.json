@@ -1,6 +1,49 @@
 {
   "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
   "kind": "recommendation-status",
-  "note": "事故分析が出した推奨の処遇（ADR-125）。鍵は (incident_id, index) で、index は cast/<事象 id>.json の analysis.recommendations の並び順。書かれていない推奨の既定は、分析が owner_decision_required を印していれば owner、それ以外は pending。state は pending / landed / rejected / owner のいずれか。rejected は note に理由を、landed は evidence_ref に証拠のポインタを必ず持つ（持たないと orchestrator.py validate が赤になる）。",
-  "dispositions": []
+  "note": "事故分析が出した推奨の処遇（ADR-125）。鍵は (incident_id, index) で、index は cast/<事象 id>.json の analysis.recommendations の並び順。書かれていない推奨の既定は、分析が owner_decision_required を印していれば owner、それ以外は pending。state は pending / landed / rejected / owner のいずれか。rejected は note に理由を、landed は evidence_ref に証拠のポインタを必ず持つ（持たないと orchestrator.py validate が赤になる）。行が在って state が pending の物は『調べたうえで未着手』、行が無い物は『まだ調べていない』を意味し、正本はこの二つを分けて数える。",
+  "dispositions": [
+    {
+      "incident_id": "INC-001-sessionend-audit-gap",
+      "index": 0,
+      "state": "pending",
+      "note": "半分だけ着地している。ADR-119 で走った証跡（hook_session_end_audit / hook_session_end_write）が入り、checks_run も last-audit.json へ載る（docs-audit.py:1343）。残るのは鼓動の判定基準で、依然として mtime の新しさを見ており『対応する実行記録が存在するか』へは変わっていない。"
+    },
+    {
+      "incident_id": "INC-001-sessionend-audit-gap",
+      "index": 1,
+      "state": "pending",
+      "note": "SessionStart の hook は在るが、前回セッションの監査記録が無いときに全件監査を走らせる補償実行は無い（grep で該当なし）。"
+    },
+    {
+      "incident_id": "INC-001-sessionend-audit-gap",
+      "index": 2,
+      "state": "pending",
+      "note": "宣言と実装が乖離している。control_structure.py:67,100 は .claude/.cache/last-audit.json を feedback として宣言するが、harness にこれを実際に stat する経路は無い。ADR-124 の不変条件は台帳の中しか見ないので、この乖離は赤にならない。"
+    },
+    {
+      "incident_id": "INC-002-termcheck-ascii-substring",
+      "index": 0,
+      "state": "rejected",
+      "note": "害は止まっているが、指定された形では採らない。照合時の一般規則（_termcheck.py:579 _find_ascii_word。ASCII 純字の同義語は語境界を要求する）で解いており、語ごとに文字体系と境界規則を持たせる案は採らない —— 承認辞書をモジュールの中で二重定義してはならない（WATCH-001 第3項）ため、語彙表へ規則データを足すと同じ穴を開ける。定義時点の検査という要求は満たしていない。"
+    },
+    {
+      "incident_id": "INC-002-termcheck-ascii-substring",
+      "index": 1,
+      "state": "pending",
+      "note": "語彙表の各語に対する反例試験の機械生成は無い（plugin/tests に該当なし）。"
+    },
+    {
+      "incident_id": "INC-002-termcheck-ascii-substring",
+      "index": 3,
+      "state": "pending",
+      "note": "WATCH-001 第2項は今も CJK の事例（『入出力』『選択肢』）だけで書かれており、対象文字体系の明示も、照合の単位が語でなく文字列であることに由来する類型としての一般化も入っていない。"
+    },
+    {
+      "incident_id": "INC-003-sdk-error-opacity",
+      "index": 0,
+      "state": "pending",
+      "note": "半分だけ着地している。sdk_lane.classify_error は例外型（構造化属性）で分岐するが、認証の判定は依然として文言の部分一致（_AUTH_MARKERS）に依存し、分類不能は UNKNOWN のまま通過して所有者判断へは回らない。本セッションで実例が出た —— CLI が is_error=true かつ subtype='success'・errors=[] を返し、SDK がそれを『Claude Code returned an error result: success』という文言へ変え、レーンは UNKNOWN と分類した。"
+    }
+  ]
 }

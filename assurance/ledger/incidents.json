@@ -288,6 +288,27 @@
       "evidence": "policy-guard.py の _adr_change_is_carveout_only 周辺（『既存ADR %s は改変できません(status遷移とsuperseded_by付与のみ可)。』）と、その直前に出た docs-linter の BANNED_SYNONYM ERROR",
       "cast_analysis_ref": "assurance/ledger/cast/INC-017-accepted-adr-born-red-is-unfixable.json",
       "cast_analyzed_at": "2026-08-06T08:53:11Z"
+    },
+    {
+      "id": "INC-018-audit-degrades-into-a-tree-finding",
+      "date": "2026-08-06",
+      "summary": "監査は .gitignore を git に訊いて除外集合を作るが、git が答えられないとき（所有権拒否・git 不在・非リポジトリ）その事実を判定へ反映せず、除外されるはずのファイルを『印なし』として数え、木に欠陥があるかのような warn を満信頼で出す。前提が欠けたときに UNASSESSED/DEGRADED へ倒す規律（状態語彙）が、この経路には効いていない",
+      "detected_by": "反復3の §0 前提確認で、同じ --today 2026-08-06 に対し監査が warn 1 を返した（前反復は warn 0）。devcontainer が /workspaces/doctrine の top ディレクトリを root 所有で再マウントし、git が dubious ownership で拒んだことが原因（2026-08-06）",
+      "impact": "運転手順 §0.4 は『error か warn が 1 件でもあれば他の何より先に扱う』と定める。したがって運転者は、実際には .gitignore が除外する使い捨てファイル（assurance/ledger/runs/smoke-20260804T150058Z.json）へ追跡の印を付けに行かされる。環境の故障が、統治木の欠陥として報告される",
+      "fixed": false,
+      "shipped": false,
+      "cast_analysis": "done",
+      "evidence_kind": "measurement",
+      "evidence_refs": [
+        "plugin/scripts/_tracescan.py",
+        "plugin/scripts/_audit_trace.py",
+        "plugin/scripts/docs-audit.py"
+      ],
+      "evidence": "_tracescan.gitignored_paths は決して例外を投げず (frozenset(), 'error'|'no_git'|'not_a_repo') を返す。状態は coverage['gitignore'] に記録されるが、_audit_trace._backlog_finding は trace_mode と unmarked_files だけを見て warn を組み立て、この状態を一度も参照しない",
+      "measured_2026-08-06": "壊れた状態: totals={'error':0,'warn':1,'advisory':0}・trace_coverage.gitignore='error'・unmarked=assurance/ledger/runs/smoke-20260804T150058Z.json。git config --global --add safe.directory /workspaces/doctrine を入れた後、同じ --today で totals={'error':0,'warn':0,'advisory':0}・gitignore='read'。因果は往復で確かめた",
+      "residual": "gitignore の状態は JSON の trace_coverage に載るので完全な沈黙ではない。だが totals にも findings にも現れず、人が読む文言も『悉皆モード』と書くだけで、前提が欠けたことは告げない",
+      "cast_analysis_ref": "assurance/ledger/cast/INC-018-audit-degrades-into-a-tree-finding.json",
+      "cast_analyzed_at": "2026-08-06T11:56:03Z"
     }
   ]
 }

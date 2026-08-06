@@ -1,0 +1,603 @@
+{
+  "accepted_flaws": [
+    {
+      "control_element_id": "SESSION_END_AUDIT",
+      "description": "監査の出力する手掛かりのうち、運転を規定する層（totals・findings・人が読む文言）には、除外集合の取得状態が一度も現れない。取得状態は coverage['gitignore'] として構造化出力の trace_coverage に載るが、warn を組み立てる判断は trace_mode と unmarked_files だけを参照するため、'error'|'no_git'|'not_a_repo' のいずれであっても出力の形は 'read' のときと同一になる。受け手は、目の前の warn が木の状態を表すのか環境の状態を表すのかを、出力からは決定できない。",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "defects-in-information-providing-systems",
+        "リスク情報の不透明な集約禁止",
+        "プロセスモデルと実状態の不整合"
+      ],
+      "why_it_seemed_adequate": "取得状態を JSON に記録した時点で「沈黙ではない」ことは達成されており、観測可能性は確保されたように見えた。監査の出力は機械可読な JSON を正本とし、人が読む文言はその要約であるという設計方針の下では、詳細は JSON を見れば足りるという判断は一貫していた。また totals は「木の欠陥の件数」という単純で安定した意味を保つべきという配慮も、環境状態を totals に混ぜない方向へ働いた。"
+    },
+    {
+      "control_element_id": "SESSION_END_AUDIT",
+      "description": "除外集合が空である状態と、除外集合を取得していない状態が、同一の扱い（空集合）に畳み込まれている。gitignored_paths は例外を投げず (frozenset(), 状態語) を返すため、呼び出し側は状態語を無視しても型上は正常に動作し、除外されるはずのファイルが『印なし』として計数される。欠測が陰性として数えられ、その差が判定に伝播しない。",
+      "flaw_type": "制御動作が誤っている",
+      "normative_refs": [
+        "最悪環境を前提に設計運用",
+        "software-does-not-fail-requirements-defect",
+        "安全想定の記録と失効先行指標の定義"
+      ],
+      "why_it_seemed_adequate": "外部コマンド（git）への依存が監査全体を停止させないための fail-soft は、SessionEnd という走り切ることが価値の経路では妥当な堅牢化である。実際、例外を投げない設計により監査は劣化環境でも完走した。状態語を第二要素として返している以上、呼び出し側が必要なら参照できるという前提も置けた。堅牢化の代償が『沈黙して既定値を使う』ことである点は、正常環境でのみ試験している限り現れない。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "事象記録によれば、保証レーンには『前提が欠けたときは UNASSESSED/DEGRADED へ倒す』という横断規律（状態語彙）が存在する。しかしその規律が、どの経路に適用済みでどの経路に未適用かを機械で照合する仕組みが無く、監査の trace 経路は規律の外に置かれたまま運用された。規約の存在と規約の適用範囲が別々に管理されている。",
+      "flaw_type": "統制どうしの調整の欠如",
+      "normative_refs": [
+        "each-component-enforces-its-constraints",
+        "方針の実践確認プロセス",
+        "横断的な体系的要因の特定"
+      ],
+      "why_it_seemed_adequate": "状態語彙は判定を出す側の規律として導入され、レーン本体の決定論的な出力には適用されていた。監査は独立した sensor であり、その内部の一補助関数の戻り値まで同じ語彙で扱うべきかは、導入時点では判断の要らない細部に見えた。規約は文書として存在し遵守されているという認識と、経路ごとの実適用状態は、照合手段が無ければ食い違ったまま安定する。"
+    },
+    {
+      "control_element_id": "HEARTBEAT",
+      "description": "鼓動が毎ターン監視するのは監査の『古び』と導入複製の『版遅れ』であり、監査が前提を満たして走ったかという妥当性条件は対象に含まれない。したがって、劣化した前提の下で新鮮に走った監査は、鼓動から見て最も健全な状態（新しい・版も同じ）として通過する。鮮度の監視が妥当性の監視の代理として機能しているという暗黙の前提が、この経路では成立していない。",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "リスク先行指標による監査",
+        "計画外変化の検出手段",
+        "設計時想定の運用中再検査"
+      ],
+      "why_it_seemed_adequate": "INC-001・INC-005 の教訓は『監査が走らない』『版が遅れる』という不在と遅延に対する監視であり、鼓動の対象範囲はその教訓に忠実に設計された。走った監査の中身の妥当性まで鼓動が判定すると、鼓動が第二の監査になり毎ターンの負荷と重複責任を生む、という懸念も合理的だった。前提欠落という第三の故障様式は、それまでの事象の母集団に含まれていなかった。"
+    },
+    {
+      "control_element_id": "OWNER",
+      "description": "所有者へ届く手掛かり（進捗報告・PR の diff・台帳）は、監査については要約された totals を経由する。totals は環境劣化に由来する warn と統治木の実欠陥を区別しないため、所有者は『warn が 1 件ある』という事実からリスクの所在を判定できず、環境の故障と統治の欠陥を同じ尺度で受け取る。所有者側に、判定の前提が満たされていたかを問うフィードバック経路が存在しない。",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "controller-needs-concrete-feedback-channels",
+        "要約統計偏重による傾向情報の喪失",
+        "control-action-requires-feedback"
+      ],
+      "why_it_seemed_adequate": "要約統計を上位へ上げる設計は、所有者の可読性と判断速度のために選ばれており、詳細は JSON と台帳に残るという二層構成が担保されている。監査は自動化された sensor であり、その出力の妥当性まで所有者が疑う必要があるという想定は、監査自身が決定論的である限り置く理由が無かった。"
+    },
+    {
+      "control_element_id": "CI_RELEASE_CHECK",
+      "description": "CI は git が正常に応答する環境でのみ監査を実行するため、gitignored_paths が 'error'|'no_git'|'not_a_repo' を返す経路は CI 上で一度も励起されない。縮退した戻り値が判定へどう伝播するかを確かめる試験が体系に存在せず、赤で止める対象にもならない。三つの戻り値のうち二つ（no_git・not_a_repo）は本事象でも観測されておらず、依然として未励起である。",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "verify-all-hazard-preventing-systems",
+        "非定常フェーズへの自動支援の適用",
+        "最悪環境を前提に設計運用"
+      ],
+      "why_it_seemed_adequate": "CI の役割はリポジトリ正本の健全性を merge 前に確認することであり、実行環境は再現性のために正常系へ固定するのが標準的な設計である。環境故障は CI の対象外（利用者環境の問題）と整理することは、既知の穴『CI が見るのは正本であり導入複製の版は見ない』とも整合していた。環境の縮退が正本の判定内容を書き換えるという結合は、その整理からは見えない。"
+    },
+    {
+      "control_element_id": "GOVERNANCE_TREE",
+      "description": "統治木の状態を表す手掛かりとして docs-audit の findings が用いられているが、findings には木に帰属しない事実（実行環境の git 応答性）が混入しうる。測定値の帰属が分離されていないため、木の健全性の指標が環境の健全性の指標と重なり、木の状態についての推論が環境の変動に対して脆くなる。",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "全体健全性と部分健全性の分離評価",
+        "信頼性と安全性の分離",
+        "defects-in-information-providing-systems"
+      ],
+      "why_it_seemed_adequate": "findings は木の走査結果として定義されており、走査に必要な入力が常に得られるという前提の下では帰属の曖昧さは生じない。入力取得の失敗を findings の一種として扱うか、別カテゴリとするかは、失敗が観測されるまでは選択の必要が無かった。"
+    }
+  ],
+  "analysis": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "監査の出力する手掛かりのうち、運転を規定する層（totals・findings・人が読む文言）には、除外集合の取得状態が一度も現れない。取得状態は coverage['gitignore'] として構造化出力の trace_coverage に載るが、warn を組み立てる判断は trace_mode と unmarked_files だけを参照するため、'error'|'no_git'|'not_a_repo' のいずれであっても出力の形は 'read' のときと同一になる。受け手は、目の前の warn が木の状態を表すのか環境の状態を表すのかを、出力からは決定できない。",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "defects-in-information-providing-systems",
+          "リスク情報の不透明な集約禁止",
+          "プロセスモデルと実状態の不整合"
+        ],
+        "why_it_seemed_adequate": "取得状態を JSON に記録した時点で「沈黙ではない」ことは達成されており、観測可能性は確保されたように見えた。監査の出力は機械可読な JSON を正本とし、人が読む文言はその要約であるという設計方針の下では、詳細は JSON を見れば足りるという判断は一貫していた。また totals は「木の欠陥の件数」という単純で安定した意味を保つべきという配慮も、環境状態を totals に混ぜない方向へ働いた。"
+      },
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "除外集合が空である状態と、除外集合を取得していない状態が、同一の扱い（空集合）に畳み込まれている。gitignored_paths は例外を投げず (frozenset(), 状態語) を返すため、呼び出し側は状態語を無視しても型上は正常に動作し、除外されるはずのファイルが『印なし』として計数される。欠測が陰性として数えられ、その差が判定に伝播しない。",
+        "flaw_type": "制御動作が誤っている",
+        "normative_refs": [
+          "最悪環境を前提に設計運用",
+          "software-does-not-fail-requirements-defect",
+          "安全想定の記録と失効先行指標の定義"
+        ],
+        "why_it_seemed_adequate": "外部コマンド（git）への依存が監査全体を停止させないための fail-soft は、SessionEnd という走り切ることが価値の経路では妥当な堅牢化である。実際、例外を投げない設計により監査は劣化環境でも完走した。状態語を第二要素として返している以上、呼び出し側が必要なら参照できるという前提も置けた。堅牢化の代償が『沈黙して既定値を使う』ことである点は、正常環境でのみ試験している限り現れない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "事象記録によれば、保証レーンには『前提が欠けたときは UNASSESSED/DEGRADED へ倒す』という横断規律（状態語彙）が存在する。しかしその規律が、どの経路に適用済みでどの経路に未適用かを機械で照合する仕組みが無く、監査の trace 経路は規律の外に置かれたまま運用された。規約の存在と規約の適用範囲が別々に管理されている。",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "each-component-enforces-its-constraints",
+          "方針の実践確認プロセス",
+          "横断的な体系的要因の特定"
+        ],
+        "why_it_seemed_adequate": "状態語彙は判定を出す側の規律として導入され、レーン本体の決定論的な出力には適用されていた。監査は独立した sensor であり、その内部の一補助関数の戻り値まで同じ語彙で扱うべきかは、導入時点では判断の要らない細部に見えた。規約は文書として存在し遵守されているという認識と、経路ごとの実適用状態は、照合手段が無ければ食い違ったまま安定する。"
+      },
+      {
+        "control_element_id": "HEARTBEAT",
+        "description": "鼓動が毎ターン監視するのは監査の『古び』と導入複製の『版遅れ』であり、監査が前提を満たして走ったかという妥当性条件は対象に含まれない。したがって、劣化した前提の下で新鮮に走った監査は、鼓動から見て最も健全な状態（新しい・版も同じ）として通過する。鮮度の監視が妥当性の監視の代理として機能しているという暗黙の前提が、この経路では成立していない。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "リスク先行指標による監査",
+          "計画外変化の検出手段",
+          "設計時想定の運用中再検査"
+        ],
+        "why_it_seemed_adequate": "INC-001・INC-005 の教訓は『監査が走らない』『版が遅れる』という不在と遅延に対する監視であり、鼓動の対象範囲はその教訓に忠実に設計された。走った監査の中身の妥当性まで鼓動が判定すると、鼓動が第二の監査になり毎ターンの負荷と重複責任を生む、という懸念も合理的だった。前提欠落という第三の故障様式は、それまでの事象の母集団に含まれていなかった。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者へ届く手掛かり（進捗報告・PR の diff・台帳）は、監査については要約された totals を経由する。totals は環境劣化に由来する warn と統治木の実欠陥を区別しないため、所有者は『warn が 1 件ある』という事実からリスクの所在を判定できず、環境の故障と統治の欠陥を同じ尺度で受け取る。所有者側に、判定の前提が満たされていたかを問うフィードバック経路が存在しない。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "controller-needs-concrete-feedback-channels",
+          "要約統計偏重による傾向情報の喪失",
+          "control-action-requires-feedback"
+        ],
+        "why_it_seemed_adequate": "要約統計を上位へ上げる設計は、所有者の可読性と判断速度のために選ばれており、詳細は JSON と台帳に残るという二層構成が担保されている。監査は自動化された sensor であり、その出力の妥当性まで所有者が疑う必要があるという想定は、監査自身が決定論的である限り置く理由が無かった。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "CI は git が正常に応答する環境でのみ監査を実行するため、gitignored_paths が 'error'|'no_git'|'not_a_repo' を返す経路は CI 上で一度も励起されない。縮退した戻り値が判定へどう伝播するかを確かめる試験が体系に存在せず、赤で止める対象にもならない。三つの戻り値のうち二つ（no_git・not_a_repo）は本事象でも観測されておらず、依然として未励起である。",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "verify-all-hazard-preventing-systems",
+          "非定常フェーズへの自動支援の適用",
+          "最悪環境を前提に設計運用"
+        ],
+        "why_it_seemed_adequate": "CI の役割はリポジトリ正本の健全性を merge 前に確認することであり、実行環境は再現性のために正常系へ固定するのが標準的な設計である。環境故障は CI の対象外（利用者環境の問題）と整理することは、既知の穴『CI が見るのは正本であり導入複製の版は見ない』とも整合していた。環境の縮退が正本の判定内容を書き換えるという結合は、その整理からは見えない。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "統治木の状態を表す手掛かりとして docs-audit の findings が用いられているが、findings には木に帰属しない事実（実行環境の git 応答性）が混入しうる。測定値の帰属が分離されていないため、木の健全性の指標が環境の健全性の指標と重なり、木の状態についての推論が環境の変動に対して脆くなる。",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "全体健全性と部分健全性の分離評価",
+          "信頼性と安全性の分離",
+          "defects-in-information-providing-systems"
+        ],
+        "why_it_seemed_adequate": "findings は木の走査結果として定義されており、走査に必要な入力が常に得られるという前提の下では帰属の曖昧さは生じない。入力取得の失敗を findings の一種として扱うか、別カテゴリとするかは、失敗が観測されるまでは選択の必要が無かった。"
+      }
+    ],
+    "hazard": "監査が、判定の前提となる入力（git 由来の除外集合）を取得できていない状態のまま、取得できた場合と形式的に区別できない満信頼の判定（totals・findings・人が読む文言）を出力し、下流の受け手（運転者・OWNER・鼓動・台帳）がその判定を前提充足時の判定と区別できないシステム状態。すなわち「前提が欠けたときに判定不能へ倒す」という制約が、この経路で強制されていない状態。",
+    "incident_id": "INC-018-audit-degrades-into-a-tree-finding",
+    "leading_indicators": [
+      {
+        "indicator": "作業木に対する git の応答性そのもの（所有権拒否・git 不在・非リポジトリ）",
+        "observable": "セッション冒頭で `git -C <作業木> status --porcelain` あるいは `git -C <作業木> check-ignore -q <既知の除外対象>` を実行し、終了コードと stderr に dubious ownership 等が現れるか。併せて作業木ディレクトリの所有 uid と実行 uid の一致。",
+        "threshold": "問い合わせが期待外の終了コードを返す、または作業木の所有 uid が実行 uid と異なる状態が1回でも観測されたら異常として扱い、監査の判定を前提欠落として読む",
+        "version_independent": true,
+        "where": "devcontainer 起動直後およびセッション冒頭の前提確認（監査の実行前）",
+        "why_version_independent": "git と OS の振る舞いだけに依存し、導入複製に含まれるスクリプトの版や出力形式に依存しないため、複製が何世代遅れていても同じ観測ができる"
+      },
+      {
+        "indicator": "監査出力中の除外集合取得状態が 'read' 以外である事象の発生",
+        "observable": "監査 JSON の trace_coverage.gitignore の値（'read'|'error'|'no_git'|'not_a_repo'）、および当該鍵の存在有無",
+        "threshold": "直近の監査実行で 'read' 以外が1回でも現れたら異常。鍵自体が欠落している場合も『判定不能』として異常側に倒す",
+        "version_independent": false,
+        "where": ".claude/.cache/last-audit.json および assurance/ledger/runs/ に残る監査出力",
+        "why_version_independent": "この鍵を書くのは導入複製側の docs-audit.py であり、複製の版が古ければ鍵の名称・値域・存在そのものが異なりうる。検出器が被検出対象と同じ複製に載るという INC-005 と同型の共通原因を持つため、版が遅れると検出器も遅れる"
+      },
+      {
+        "indicator": "同一入力に対する監査 totals の非決定性",
+        "observable": "入力（統治木の内容・--today）が同一である連続実行間の totals（error/warn/advisory）の差分",
+        "threshold": "入力同一で totals に1件でも差が出たら、木の変化ではない要因が判定に入っているとして異常",
+        "version_independent": true,
+        "where": "assurance/ledger/runs/ の連続する監査実行記録どうしの比較",
+        "why_version_independent": "同一版どうしの実行を比較する差分指標であり、版の絶対値に依存しない。ただし比較には同一入力の実行が2回必要で、単発実行では発火しない"
+      },
+      {
+        "indicator": "unmarked_files に生成物置き場のパスが現れる割合",
+        "observable": "監査 findings の unmarked_files に含まれるパスのうち、使い捨て生成物の置き場（assurance/ledger/runs/ 等）に属するものの件数",
+        "threshold": "生成物置き場配下のパスが unmarked_files に1件でも現れたら、除外集合が効いていない疑いとして扱う",
+        "version_independent": false,
+        "where": "監査 JSON の findings（backlog 系の warn の内訳）",
+        "why_version_independent": "何が除外対象かは .gitignore の内容と監査側の走査範囲の版に依存し、両者が改訂されると閾値の意味が変わる。導入複製の版が古い場合、判定の基準自体が古い定義に基づく"
+      }
+    ],
+    "loss": "統治木の状態についての運転上の判断が、環境側の前提欠落に由来する出力によって誤導された。具体的には、監査が返した warn 1 件が運転手順上「他の何より先に扱う」対象となり、.gitignore が除外する使い捨て生成物（assurance/ledger/runs/smoke-20260804T150058Z.json）への追跡の印付けという、統治木の健全性に寄与しない作業へ運転者の順序と時間が振り向けられた。同時に、環境状態が木の欠陥として表示されたことで、監査 totals が「木の状態の指標」として持っていた意味が損なわれ、以後の本物の warn に対する信頼も同じだけ薄まった（保証の信号対雑音比の低下）。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "git 不在・非リポジトリのいずれでも totals が正常時と一致し、かつ trace_coverage が状態を示すか、findings に判定不能が現れる場合、この機序は 'error' 経路に限定される。",
+        "hypothesis": "git を PATH から除いた環境、および非リポジトリのディレクトリでも、同じ機序で除外対象が『印なし』として計数され、満信頼の warn が出る（'error' 以外の二つの縮退でも同一の出力汚染が起きる）。",
+        "oracle": "同一の統治木・同一の --today 2026-08-06 で監査を三通り実行する（正常・git 不在・非リポジトリ）。totals と trace_coverage.gitignore と findings を比較する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "全経路で失敗表現が totals または findings に到達していれば、本事象は単一経路の局所的な欠落である。",
+        "hypothesis": "同型の沈黙（外部取得の失敗が既定値に畳み込まれ判定に到達しない）が、監査の他の外部依存経路にも存在する。",
+        "oracle": "監査の全外部呼び出しについて、戻り値の失敗表現が totals または findings に到達するかを静的に追跡し、到達しない経路を数える。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "いずれかが前提欠落を警告する文言を出すなら、経路は存在しており欠陥は監査側の出力層に限定される。",
+        "hypothesis": "監査出力に前提欠落状態が含まれていても、鼓動と契約注入はそれを読まないため運転者へは届かない。",
+        "oracle": "trace_coverage.gitignore='error' を含む last-audit.json を置いた状態で鼓動と契約注入を起動し、出力文言に前提欠落への言及が現れるかを見る。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "再作成後も設定が保持され git が正常応答するなら、再発条件はより限定的（特定の操作の後だけ）である。",
+        "hypothesis": "devcontainer の再構築のたびに safe.directory の設定が失われ、同じ偽 warn が周期的に再発する（今回の修正は環境側の一回限りの回避にすぎない）。",
+        "oracle": "コンテナを再作成した直後に、設定を入れる前の状態で作業木の所有 uid と git status の終了コードを確認する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "運転記録に原因分類の判断が残っており、環境起因の warn が最優先から外された事例があれば、増幅は自動的ではない。",
+        "hypothesis": "監査 totals の warn は、運転手順 §0.4 を通じて、原因の別を問わず運転順序を書き換える。すなわち環境起因の warn は必ず最優先の作業を発生させる。",
+        "oracle": "§0.4 の条文と、過去の反復で warn が出た回の運転記録を突き合わせ、warn の原因分類が行われた形跡があるかを確認する。",
+        "severity": "P2"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "除外集合の取得状態を判定へ伝播させ、'read' 以外のときは unmarked_files に基づく warn を生成せず、当該判定を UNASSESSED/DEGRADED として totals とは別枠に出す。人が読む文言にも『前提が欠けたため悉皆判定を行っていない』ことを明記する。totals の意味と運転手順 §0.4 の駆動条件に触れる出力契約の変更であるため、所有者の可否判断を要する。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "外部問い合わせの縮退戻り値を呼び出し側が無視できない形にする（状態を伴う値型を返し、状態を分岐せずに集合部分だけを取り出す経路を作れなくする）。gitignored_paths を最初の適用対象とし、同型の経路を順次移行する。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "CI に劣化環境の試験を追加する。git を PATH から外した場合・非リポジトリで実行した場合・所有権拒否を再現した場合の三つについて、監査の totals と findings が前提欠落を表現することを赤で検証する。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "先行指標1（作業木に対する git の応答性）をセッション冒頭の前提確認に組み込み、監査の実行前に判定する。導入複製の版に依存しない唯一の指標であるため、他の指標より優先して配置する。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "先行指標3（同一入力に対する totals の非決定性）を台帳の連続実行記録に対して自動照合する。木の変化以外の要因が判定へ入ったことを、原因を特定せずとも検出できる。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "安全上の想定『監査の実行環境で git が作業木について答えられる』を明示的に記録し、その失効を示す先行指標を併記する。環境（devcontainer のマウント・所有権）の変更を、想定の再評価を要する変更として変更管理の対象に含める。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "warn の意味論を決める。環境劣化を warn として扱い §0.4 で最優先とするのか、別カテゴリ（判定不能）として扱い別の運転規律を与えるのかは、運転の優先順位の設計であり所有者の判断に属する。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "監査の全外部依存（git 問い合わせ、版取得、dep-graph 生成、日付処理）を棚卸しし、各経路について『取得できなかった場合の戻り値が判定に到達するか』を追跡する。到達しない経路を一覧として残す。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "last-audit.json に前提充足状態が含まれるかを確認し、含まれるなら鼓動が古び・版に加えて前提欠落を警告できるかを検討する。含まれないなら、含める変更の可否を先行指標2の成立条件として扱う。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "外部への問い合わせが失敗したときに例外を投げず既定値を返す fail-soft が、劣化を呼び出し側へ伝える型を伴わずに採用されている。堅牢化（走り切ること）が沈黙化（前提欠落を無視できること）と同義になる構造で、同じ形は他の外部依存経路にも複製されうる。",
+      "状態が構造化出力に載っていることを『報告済み』と見なす慣行。運転を実際に駆動するのは totals と人が読む文言であり、そこに現れない情報は運転を変えない。詳細は JSON にあるという二層構成が、上層の意味の欠落を正当化する働きをしている。",
+      "検出器が被検出対象と同じ導入複製・同じ環境の上で動く共通原因（INC-005 と同型）。監査の健全性を監査自身の出力で見る限り、環境劣化は検出器も同時に劣化させうる。",
+      "実行環境（devcontainer のマウント・所有権）の変更が変更管理の対象に入っておらず、変更後に安全上の想定（git が作業木に答えられる）が再評価されない。事象は環境の変化の直後に生じている。",
+      "保証の試験環境が正常系に固定されており、縮退環境が試験の母集団に含まれない。CI が正本のみを見るという整理が、環境起因の判定汚染という結合を視野の外へ置いた。",
+      "監査 totals が『木の欠陥の件数』と『最優先で扱うべき事項の件数』という二つの意味を兼ねているため、片方に環境要因が混入すると運転手順が直ちに駆動される。意味の兼務が誤導の増幅器になっている。"
+    ],
+    "unknowns": [
+      "【実在の未確認】事象が名指す機構のうち、統制構造に実体として現れるのは plugin/scripts/docs-audit.py（SESSION_END_AUDIT）だけである。_tracescan.py・_audit_trace.py、関数 gitignored_paths・_backlog_finding、運転手順 §0.4（error か warn が1件でもあれば最優先）、および状態語彙 UNASSESSED/DEGRADED の規律は、与えられた統制構造のどの要素の実体にも現れない。さらに本分析の作業ディレクトリは空であり（/tmp/assurance-cast-ysm37pb_）、リポジトリの読み取りは環境上許可されなかったため、これらの実在も、記録された振る舞い（例外を投げない戻り値、判定が状態を参照しないこと）も独立に確認できていない。以下の分析は、これらが実在するという事象記録の主張に依存する。docs-audit.py に帰属させた統制欠陥のみ、要素の実在という点では裏付けがある。",
+      "last-audit.json に trace_coverage（および gitignore の状態）が含まれるかどうか。含まれないなら、鼓動と SessionStart の契約注入は原理的に前提欠落を読めず、指標2は成立しない。",
+      "三つの縮退のうち実測されたのは 'error'（所有権拒否）のみである。'no_git'・'not_a_repo' が同じ経路で同じ出力を生むかは未確認で、別経路で早期に停止する可能性も排除できていない。",
+      "運転手順 §0.4 が本事象で実際に運転者の行動順序を規定したか（追跡の印を付けに行ったのか、途中で環境要因に気づいたのか）。impact の記述は手順からの推論であり、行動の記録は入力に含まれない。",
+      "除外集合を自前で .gitignore を解釈せず git に問い合わせる設計が選ばれた理由。理由が判らないと、状態を判定へ伝播させる修正が元の設計意図（git の解釈と一致させる）と衝突しないかを評価できない。",
+      "同型の『前提が欠けたのに満信頼で判定する』経路が監査の他の部分（dep-graph の逆依存、版比較、日付処理）にも存在するかは未調査である。",
+      "devcontainer が top ディレクトリを root 所有で再マウントする条件（再構築ごとか、特定の操作の後だけか）。再発頻度が判らないと指標1の観測間隔を決められない。"
+    ],
+    "why_existing_assurance_missed": "この事象を見つけたのは保証機構ではなく、反復3の §0 前提確認という人手の手順であり、しかも前反復との差分（同じ --today で warn 0 → warn 1）という偶然に依存した比較であった。既存の保証がこの経路を通さなかった理由は三つある。第一に、決定論試験も CI も git が正常応答する環境でのみ監査を走らせるため、縮退した三つの戻り値が判定へ伝播する経路が一度も励起されない。試験の母集団に劣化環境が含まれていない。第二に、監査の自己点検は『監査が走ったか（鮮度）』『版が同じか』を問い、『監査が前提を満たして走ったか』を問わない。走ったことが健全であることの代理指標として使われている。第三に、取得状態が構造化出力に載っていることが『報告済み』と読み替えられた。JSON の一鍵として存在することは、運転を規定する totals・findings・人が読む文言に現れることと同じではなく、実際この事象では運転手順を駆動したのは totals の warn 1 だけであった。加えて、事象が修正されていない（fixed: false）ため、同じ devcontainer 再構築が起きれば同一の出力が再び生じる。safe.directory の追加は環境側の回避であって、監査が前提欠落を判定へ反映しないという構造は変わっていない。"
+  },
+  "control_structure_ids": [
+    "OWNER",
+    "CI_RELEASE_CHECK",
+    "SESSION_START_CONTRACT",
+    "HEARTBEAT",
+    "PRE_TOOL_GUARD",
+    "POST_TOOL_LINTER",
+    "SESSION_END_AUDIT",
+    "CAPTURE_NUDGE",
+    "PLUGIN_DISTRIBUTION",
+    "ASSURANCE_LANE",
+    "GOVERNANCE_TREE"
+  ],
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "duration_ms": 288146,
+  "errors": [],
+  "execution_kind": "real-sdk",
+  "flaws_with_citation_defect": [],
+  "generated_at": "2026-08-06T11:56:03Z",
+  "git_dirty": true,
+  "git_sha": "66057bcf328208e8e9192d7df351eb8ce383f47e",
+  "incident_evidence": {
+    "kind": "measurement",
+    "refs": [
+      "plugin/scripts/_tracescan.py",
+      "plugin/scripts/_audit_trace.py",
+      "plugin/scripts/docs-audit.py"
+    ],
+    "resolved": [
+      "plugin/scripts/_tracescan.py",
+      "plugin/scripts/_audit_trace.py",
+      "plugin/scripts/docs-audit.py"
+    ],
+    "unresolved": [],
+    "verifiable": true
+  },
+  "incident_id": "INC-018-audit-degrades-into-a-tree-finding",
+  "incident_sha256": "d39a56adc9e6067111bc8cc807ee84c9d9380816ea637a0ce22197eccb7cdc51",
+  "init": {
+    "claude_code_version": "2.1.221",
+    "model": "claude-opus-5",
+    "session_id": "362976e1-65bd-4798-b135-f79a624f20a0",
+    "tools_count": 27
+  },
+  "kind": "cast-analysis",
+  "leading_indicators_defined": true,
+  "options": {
+    "allowed_tools": [],
+    "cwd": "/tmp/assurance-cast-ysm37pb_",
+    "effort": "high",
+    "max_budget_usd": 4.0,
+    "max_turns": 8,
+    "model": "claude-opus-5",
+    "setting_sources": [],
+    "timeout_s": 900
+  },
+  "oracle": "structured_output がレーン側再検証にも適合",
+  "principles_offered": 337,
+  "prompt_sha256": "c85ee0de6ab0425fbf2afd55759ae9ae9448176d141b1e1df6a4b98aee49db46",
+  "rejected_flaws": [],
+  "result_meta": {
+    "duration_api_ms": 272239,
+    "is_error": false,
+    "num_turns": 5,
+    "session_id": "362976e1-65bd-4798-b135-f79a624f20a0",
+    "subtype": "success",
+    "total_cost_usd": 1.0739874999999999,
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 56719,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 56719,
+      "cache_read_input_tokens": 168641,
+      "inference_geo": "not_available",
+      "input_tokens": 8,
+      "iterations": "list",
+      "output_tokens": 15423,
+      "server_tool_use": {
+        "web_fetch_requests": 0,
+        "web_search_requests": 0
+      },
+      "service_tier": "standard",
+      "speed": "standard"
+    }
+  },
+  "schema_sha256": "0d1643d5e16353723405302c1f6ffcf753915e2a4f27a3530e8ef9a9ee45cb46",
+  "sdk_version": "0.2.129",
+  "settled": true,
+  "status": "PASS",
+  "structured_output": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "監査の出力する手掛かりのうち、運転を規定する層（totals・findings・人が読む文言）には、除外集合の取得状態が一度も現れない。取得状態は coverage['gitignore'] として構造化出力の trace_coverage に載るが、warn を組み立てる判断は trace_mode と unmarked_files だけを参照するため、'error'|'no_git'|'not_a_repo' のいずれであっても出力の形は 'read' のときと同一になる。受け手は、目の前の warn が木の状態を表すのか環境の状態を表すのかを、出力からは決定できない。",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "defects-in-information-providing-systems",
+          "リスク情報の不透明な集約禁止",
+          "プロセスモデルと実状態の不整合"
+        ],
+        "why_it_seemed_adequate": "取得状態を JSON に記録した時点で「沈黙ではない」ことは達成されており、観測可能性は確保されたように見えた。監査の出力は機械可読な JSON を正本とし、人が読む文言はその要約であるという設計方針の下では、詳細は JSON を見れば足りるという判断は一貫していた。また totals は「木の欠陥の件数」という単純で安定した意味を保つべきという配慮も、環境状態を totals に混ぜない方向へ働いた。"
+      },
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "除外集合が空である状態と、除外集合を取得していない状態が、同一の扱い（空集合）に畳み込まれている。gitignored_paths は例外を投げず (frozenset(), 状態語) を返すため、呼び出し側は状態語を無視しても型上は正常に動作し、除外されるはずのファイルが『印なし』として計数される。欠測が陰性として数えられ、その差が判定に伝播しない。",
+        "flaw_type": "制御動作が誤っている",
+        "normative_refs": [
+          "最悪環境を前提に設計運用",
+          "software-does-not-fail-requirements-defect",
+          "安全想定の記録と失効先行指標の定義"
+        ],
+        "why_it_seemed_adequate": "外部コマンド（git）への依存が監査全体を停止させないための fail-soft は、SessionEnd という走り切ることが価値の経路では妥当な堅牢化である。実際、例外を投げない設計により監査は劣化環境でも完走した。状態語を第二要素として返している以上、呼び出し側が必要なら参照できるという前提も置けた。堅牢化の代償が『沈黙して既定値を使う』ことである点は、正常環境でのみ試験している限り現れない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "事象記録によれば、保証レーンには『前提が欠けたときは UNASSESSED/DEGRADED へ倒す』という横断規律（状態語彙）が存在する。しかしその規律が、どの経路に適用済みでどの経路に未適用かを機械で照合する仕組みが無く、監査の trace 経路は規律の外に置かれたまま運用された。規約の存在と規約の適用範囲が別々に管理されている。",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "each-component-enforces-its-constraints",
+          "方針の実践確認プロセス",
+          "横断的な体系的要因の特定"
+        ],
+        "why_it_seemed_adequate": "状態語彙は判定を出す側の規律として導入され、レーン本体の決定論的な出力には適用されていた。監査は独立した sensor であり、その内部の一補助関数の戻り値まで同じ語彙で扱うべきかは、導入時点では判断の要らない細部に見えた。規約は文書として存在し遵守されているという認識と、経路ごとの実適用状態は、照合手段が無ければ食い違ったまま安定する。"
+      },
+      {
+        "control_element_id": "HEARTBEAT",
+        "description": "鼓動が毎ターン監視するのは監査の『古び』と導入複製の『版遅れ』であり、監査が前提を満たして走ったかという妥当性条件は対象に含まれない。したがって、劣化した前提の下で新鮮に走った監査は、鼓動から見て最も健全な状態（新しい・版も同じ）として通過する。鮮度の監視が妥当性の監視の代理として機能しているという暗黙の前提が、この経路では成立していない。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "リスク先行指標による監査",
+          "計画外変化の検出手段",
+          "設計時想定の運用中再検査"
+        ],
+        "why_it_seemed_adequate": "INC-001・INC-005 の教訓は『監査が走らない』『版が遅れる』という不在と遅延に対する監視であり、鼓動の対象範囲はその教訓に忠実に設計された。走った監査の中身の妥当性まで鼓動が判定すると、鼓動が第二の監査になり毎ターンの負荷と重複責任を生む、という懸念も合理的だった。前提欠落という第三の故障様式は、それまでの事象の母集団に含まれていなかった。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者へ届く手掛かり（進捗報告・PR の diff・台帳）は、監査については要約された totals を経由する。totals は環境劣化に由来する warn と統治木の実欠陥を区別しないため、所有者は『warn が 1 件ある』という事実からリスクの所在を判定できず、環境の故障と統治の欠陥を同じ尺度で受け取る。所有者側に、判定の前提が満たされていたかを問うフィードバック経路が存在しない。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "controller-needs-concrete-feedback-channels",
+          "要約統計偏重による傾向情報の喪失",
+          "control-action-requires-feedback"
+        ],
+        "why_it_seemed_adequate": "要約統計を上位へ上げる設計は、所有者の可読性と判断速度のために選ばれており、詳細は JSON と台帳に残るという二層構成が担保されている。監査は自動化された sensor であり、その出力の妥当性まで所有者が疑う必要があるという想定は、監査自身が決定論的である限り置く理由が無かった。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "CI は git が正常に応答する環境でのみ監査を実行するため、gitignored_paths が 'error'|'no_git'|'not_a_repo' を返す経路は CI 上で一度も励起されない。縮退した戻り値が判定へどう伝播するかを確かめる試験が体系に存在せず、赤で止める対象にもならない。三つの戻り値のうち二つ（no_git・not_a_repo）は本事象でも観測されておらず、依然として未励起である。",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "verify-all-hazard-preventing-systems",
+          "非定常フェーズへの自動支援の適用",
+          "最悪環境を前提に設計運用"
+        ],
+        "why_it_seemed_adequate": "CI の役割はリポジトリ正本の健全性を merge 前に確認することであり、実行環境は再現性のために正常系へ固定するのが標準的な設計である。環境故障は CI の対象外（利用者環境の問題）と整理することは、既知の穴『CI が見るのは正本であり導入複製の版は見ない』とも整合していた。環境の縮退が正本の判定内容を書き換えるという結合は、その整理からは見えない。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "統治木の状態を表す手掛かりとして docs-audit の findings が用いられているが、findings には木に帰属しない事実（実行環境の git 応答性）が混入しうる。測定値の帰属が分離されていないため、木の健全性の指標が環境の健全性の指標と重なり、木の状態についての推論が環境の変動に対して脆くなる。",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "全体健全性と部分健全性の分離評価",
+          "信頼性と安全性の分離",
+          "defects-in-information-providing-systems"
+        ],
+        "why_it_seemed_adequate": "findings は木の走査結果として定義されており、走査に必要な入力が常に得られるという前提の下では帰属の曖昧さは生じない。入力取得の失敗を findings の一種として扱うか、別カテゴリとするかは、失敗が観測されるまでは選択の必要が無かった。"
+      }
+    ],
+    "hazard": "監査が、判定の前提となる入力（git 由来の除外集合）を取得できていない状態のまま、取得できた場合と形式的に区別できない満信頼の判定（totals・findings・人が読む文言）を出力し、下流の受け手（運転者・OWNER・鼓動・台帳）がその判定を前提充足時の判定と区別できないシステム状態。すなわち「前提が欠けたときに判定不能へ倒す」という制約が、この経路で強制されていない状態。",
+    "incident_id": "INC-018-audit-degrades-into-a-tree-finding",
+    "leading_indicators": [
+      {
+        "indicator": "作業木に対する git の応答性そのもの（所有権拒否・git 不在・非リポジトリ）",
+        "observable": "セッション冒頭で `git -C <作業木> status --porcelain` あるいは `git -C <作業木> check-ignore -q <既知の除外対象>` を実行し、終了コードと stderr に dubious ownership 等が現れるか。併せて作業木ディレクトリの所有 uid と実行 uid の一致。",
+        "threshold": "問い合わせが期待外の終了コードを返す、または作業木の所有 uid が実行 uid と異なる状態が1回でも観測されたら異常として扱い、監査の判定を前提欠落として読む",
+        "version_independent": true,
+        "where": "devcontainer 起動直後およびセッション冒頭の前提確認（監査の実行前）",
+        "why_version_independent": "git と OS の振る舞いだけに依存し、導入複製に含まれるスクリプトの版や出力形式に依存しないため、複製が何世代遅れていても同じ観測ができる"
+      },
+      {
+        "indicator": "監査出力中の除外集合取得状態が 'read' 以外である事象の発生",
+        "observable": "監査 JSON の trace_coverage.gitignore の値（'read'|'error'|'no_git'|'not_a_repo'）、および当該鍵の存在有無",
+        "threshold": "直近の監査実行で 'read' 以外が1回でも現れたら異常。鍵自体が欠落している場合も『判定不能』として異常側に倒す",
+        "version_independent": false,
+        "where": ".claude/.cache/last-audit.json および assurance/ledger/runs/ に残る監査出力",
+        "why_version_independent": "この鍵を書くのは導入複製側の docs-audit.py であり、複製の版が古ければ鍵の名称・値域・存在そのものが異なりうる。検出器が被検出対象と同じ複製に載るという INC-005 と同型の共通原因を持つため、版が遅れると検出器も遅れる"
+      },
+      {
+        "indicator": "同一入力に対する監査 totals の非決定性",
+        "observable": "入力（統治木の内容・--today）が同一である連続実行間の totals（error/warn/advisory）の差分",
+        "threshold": "入力同一で totals に1件でも差が出たら、木の変化ではない要因が判定に入っているとして異常",
+        "version_independent": true,
+        "where": "assurance/ledger/runs/ の連続する監査実行記録どうしの比較",
+        "why_version_independent": "同一版どうしの実行を比較する差分指標であり、版の絶対値に依存しない。ただし比較には同一入力の実行が2回必要で、単発実行では発火しない"
+      },
+      {
+        "indicator": "unmarked_files に生成物置き場のパスが現れる割合",
+        "observable": "監査 findings の unmarked_files に含まれるパスのうち、使い捨て生成物の置き場（assurance/ledger/runs/ 等）に属するものの件数",
+        "threshold": "生成物置き場配下のパスが unmarked_files に1件でも現れたら、除外集合が効いていない疑いとして扱う",
+        "version_independent": false,
+        "where": "監査 JSON の findings（backlog 系の warn の内訳）",
+        "why_version_independent": "何が除外対象かは .gitignore の内容と監査側の走査範囲の版に依存し、両者が改訂されると閾値の意味が変わる。導入複製の版が古い場合、判定の基準自体が古い定義に基づく"
+      }
+    ],
+    "loss": "統治木の状態についての運転上の判断が、環境側の前提欠落に由来する出力によって誤導された。具体的には、監査が返した warn 1 件が運転手順上「他の何より先に扱う」対象となり、.gitignore が除外する使い捨て生成物（assurance/ledger/runs/smoke-20260804T150058Z.json）への追跡の印付けという、統治木の健全性に寄与しない作業へ運転者の順序と時間が振り向けられた。同時に、環境状態が木の欠陥として表示されたことで、監査 totals が「木の状態の指標」として持っていた意味が損なわれ、以後の本物の warn に対する信頼も同じだけ薄まった（保証の信号対雑音比の低下）。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "git 不在・非リポジトリのいずれでも totals が正常時と一致し、かつ trace_coverage が状態を示すか、findings に判定不能が現れる場合、この機序は 'error' 経路に限定される。",
+        "hypothesis": "git を PATH から除いた環境、および非リポジトリのディレクトリでも、同じ機序で除外対象が『印なし』として計数され、満信頼の warn が出る（'error' 以外の二つの縮退でも同一の出力汚染が起きる）。",
+        "oracle": "同一の統治木・同一の --today 2026-08-06 で監査を三通り実行する（正常・git 不在・非リポジトリ）。totals と trace_coverage.gitignore と findings を比較する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "全経路で失敗表現が totals または findings に到達していれば、本事象は単一経路の局所的な欠落である。",
+        "hypothesis": "同型の沈黙（外部取得の失敗が既定値に畳み込まれ判定に到達しない）が、監査の他の外部依存経路にも存在する。",
+        "oracle": "監査の全外部呼び出しについて、戻り値の失敗表現が totals または findings に到達するかを静的に追跡し、到達しない経路を数える。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "いずれかが前提欠落を警告する文言を出すなら、経路は存在しており欠陥は監査側の出力層に限定される。",
+        "hypothesis": "監査出力に前提欠落状態が含まれていても、鼓動と契約注入はそれを読まないため運転者へは届かない。",
+        "oracle": "trace_coverage.gitignore='error' を含む last-audit.json を置いた状態で鼓動と契約注入を起動し、出力文言に前提欠落への言及が現れるかを見る。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "再作成後も設定が保持され git が正常応答するなら、再発条件はより限定的（特定の操作の後だけ）である。",
+        "hypothesis": "devcontainer の再構築のたびに safe.directory の設定が失われ、同じ偽 warn が周期的に再発する（今回の修正は環境側の一回限りの回避にすぎない）。",
+        "oracle": "コンテナを再作成した直後に、設定を入れる前の状態で作業木の所有 uid と git status の終了コードを確認する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "運転記録に原因分類の判断が残っており、環境起因の warn が最優先から外された事例があれば、増幅は自動的ではない。",
+        "hypothesis": "監査 totals の warn は、運転手順 §0.4 を通じて、原因の別を問わず運転順序を書き換える。すなわち環境起因の warn は必ず最優先の作業を発生させる。",
+        "oracle": "§0.4 の条文と、過去の反復で warn が出た回の運転記録を突き合わせ、warn の原因分類が行われた形跡があるかを確認する。",
+        "severity": "P2"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "除外集合の取得状態を判定へ伝播させ、'read' 以外のときは unmarked_files に基づく warn を生成せず、当該判定を UNASSESSED/DEGRADED として totals とは別枠に出す。人が読む文言にも『前提が欠けたため悉皆判定を行っていない』ことを明記する。totals の意味と運転手順 §0.4 の駆動条件に触れる出力契約の変更であるため、所有者の可否判断を要する。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "外部問い合わせの縮退戻り値を呼び出し側が無視できない形にする（状態を伴う値型を返し、状態を分岐せずに集合部分だけを取り出す経路を作れなくする）。gitignored_paths を最初の適用対象とし、同型の経路を順次移行する。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "CI に劣化環境の試験を追加する。git を PATH から外した場合・非リポジトリで実行した場合・所有権拒否を再現した場合の三つについて、監査の totals と findings が前提欠落を表現することを赤で検証する。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "先行指標1（作業木に対する git の応答性）をセッション冒頭の前提確認に組み込み、監査の実行前に判定する。導入複製の版に依存しない唯一の指標であるため、他の指標より優先して配置する。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "先行指標3（同一入力に対する totals の非決定性）を台帳の連続実行記録に対して自動照合する。木の変化以外の要因が判定へ入ったことを、原因を特定せずとも検出できる。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "安全上の想定『監査の実行環境で git が作業木について答えられる』を明示的に記録し、その失効を示す先行指標を併記する。環境（devcontainer のマウント・所有権）の変更を、想定の再評価を要する変更として変更管理の対象に含める。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "warn の意味論を決める。環境劣化を warn として扱い §0.4 で最優先とするのか、別カテゴリ（判定不能）として扱い別の運転規律を与えるのかは、運転の優先順位の設計であり所有者の判断に属する。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "監査の全外部依存（git 問い合わせ、版取得、dep-graph 生成、日付処理）を棚卸しし、各経路について『取得できなかった場合の戻り値が判定に到達するか』を追跡する。到達しない経路を一覧として残す。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "last-audit.json に前提充足状態が含まれるかを確認し、含まれるなら鼓動が古び・版に加えて前提欠落を警告できるかを検討する。含まれないなら、含める変更の可否を先行指標2の成立条件として扱う。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "外部への問い合わせが失敗したときに例外を投げず既定値を返す fail-soft が、劣化を呼び出し側へ伝える型を伴わずに採用されている。堅牢化（走り切ること）が沈黙化（前提欠落を無視できること）と同義になる構造で、同じ形は他の外部依存経路にも複製されうる。",
+      "状態が構造化出力に載っていることを『報告済み』と見なす慣行。運転を実際に駆動するのは totals と人が読む文言であり、そこに現れない情報は運転を変えない。詳細は JSON にあるという二層構成が、上層の意味の欠落を正当化する働きをしている。",
+      "検出器が被検出対象と同じ導入複製・同じ環境の上で動く共通原因（INC-005 と同型）。監査の健全性を監査自身の出力で見る限り、環境劣化は検出器も同時に劣化させうる。",
+      "実行環境（devcontainer のマウント・所有権）の変更が変更管理の対象に入っておらず、変更後に安全上の想定（git が作業木に答えられる）が再評価されない。事象は環境の変化の直後に生じている。",
+      "保証の試験環境が正常系に固定されており、縮退環境が試験の母集団に含まれない。CI が正本のみを見るという整理が、環境起因の判定汚染という結合を視野の外へ置いた。",
+      "監査 totals が『木の欠陥の件数』と『最優先で扱うべき事項の件数』という二つの意味を兼ねているため、片方に環境要因が混入すると運転手順が直ちに駆動される。意味の兼務が誤導の増幅器になっている。"
+    ],
+    "unknowns": [
+      "【実在の未確認】事象が名指す機構のうち、統制構造に実体として現れるのは plugin/scripts/docs-audit.py（SESSION_END_AUDIT）だけである。_tracescan.py・_audit_trace.py、関数 gitignored_paths・_backlog_finding、運転手順 §0.4（error か warn が1件でもあれば最優先）、および状態語彙 UNASSESSED/DEGRADED の規律は、与えられた統制構造のどの要素の実体にも現れない。さらに本分析の作業ディレクトリは空であり（/tmp/assurance-cast-ysm37pb_）、リポジトリの読み取りは環境上許可されなかったため、これらの実在も、記録された振る舞い（例外を投げない戻り値、判定が状態を参照しないこと）も独立に確認できていない。以下の分析は、これらが実在するという事象記録の主張に依存する。docs-audit.py に帰属させた統制欠陥のみ、要素の実在という点では裏付けがある。",
+      "last-audit.json に trace_coverage（および gitignore の状態）が含まれるかどうか。含まれないなら、鼓動と SessionStart の契約注入は原理的に前提欠落を読めず、指標2は成立しない。",
+      "三つの縮退のうち実測されたのは 'error'（所有権拒否）のみである。'no_git'・'not_a_repo' が同じ経路で同じ出力を生むかは未確認で、別経路で早期に停止する可能性も排除できていない。",
+      "運転手順 §0.4 が本事象で実際に運転者の行動順序を規定したか（追跡の印を付けに行ったのか、途中で環境要因に気づいたのか）。impact の記述は手順からの推論であり、行動の記録は入力に含まれない。",
+      "除外集合を自前で .gitignore を解釈せず git に問い合わせる設計が選ばれた理由。理由が判らないと、状態を判定へ伝播させる修正が元の設計意図（git の解釈と一致させる）と衝突しないかを評価できない。",
+      "同型の『前提が欠けたのに満信頼で判定する』経路が監査の他の部分（dep-graph の逆依存、版比較、日付処理）にも存在するかは未調査である。",
+      "devcontainer が top ディレクトリを root 所有で再マウントする条件（再構築ごとか、特定の操作の後だけか）。再発頻度が判らないと指標1の観測間隔を決められない。"
+    ],
+    "why_existing_assurance_missed": "この事象を見つけたのは保証機構ではなく、反復3の §0 前提確認という人手の手順であり、しかも前反復との差分（同じ --today で warn 0 → warn 1）という偶然に依存した比較であった。既存の保証がこの経路を通さなかった理由は三つある。第一に、決定論試験も CI も git が正常応答する環境でのみ監査を走らせるため、縮退した三つの戻り値が判定へ伝播する経路が一度も励起されない。試験の母集団に劣化環境が含まれていない。第二に、監査の自己点検は『監査が走ったか（鮮度）』『版が同じか』を問い、『監査が前提を満たして走ったか』を問わない。走ったことが健全であることの代理指標として使われている。第三に、取得状態が構造化出力に載っていることが『報告済み』と読み替えられた。JSON の一鍵として存在することは、運転を規定する totals・findings・人が読む文言に現れることと同じではなく、実際この事象では運転手順を駆動したのは totals の warn 1 だけであった。加えて、事象が修正されていない（fixed: false）ため、同じ devcontainer 再構築が起きれば同一の出力が再び生じる。safe.directory の追加は環境側の回避であって、監査が前提欠落を判定へ反映しないという構造は変わっていない。"
+  }
+}
