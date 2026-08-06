@@ -14,6 +14,7 @@
 このモジュールは帳簿と門番だけを持つ。SDK 呼び出しは各 CLI（抽出・煙試験・
 今後の discover/challenge 実行器）が行う。
 """
+import fnmatch
 import json
 import os
 import sys
@@ -126,6 +127,39 @@ def validate():
             problems.append("遷移 %s の from が未知: %s" % (tr["event"], tr["from"]))
         if tr["to"] not in STATES:
             problems.append("遷移 %s の to が未知: %s" % (tr["event"], tr["to"]))
+    problems.extend(_validate_ledger_kinds())
+    return problems
+
+
+def _validate_ledger_kinds():
+    """台帳の成果物種別の宣言と、実際に在る物との突合（ADR-124）。
+
+    宣言の側（読む経路か読まない理由か・名が実在するか）と、台帳の側
+    （宣言に当たらない物が在るか）の両方を見る。片側だけでは、宣言が
+    実装から離れても、台帳に新種が増えても、どちらも赤にならない。
+    """
+    problems = []
+    seen_kinds = set()
+    for entry in LEDGER_KINDS:
+        kind = entry["kind"]
+        if kind in seen_kinds:
+            problems.append("台帳種別 %s の宣言が重複している" % kind)
+        seen_kinds.add(kind)
+        read_by = entry.get("read_by") or ()
+        why = entry.get("why_not_read")
+        if bool(read_by) == bool(why):
+            problems.append(
+                "台帳種別 %s は、読取経路か読まない理由のちょうど一方を持つこと"
+                "（今: 読取 %d 件・理由 %s）"
+                % (kind, len(read_by), "有り" if why else "無し"))
+        for fn_name in read_by:
+            if not callable(globals().get(fn_name)):
+                problems.append(
+                    "台帳種別 %s の読取経路 %r が本モジュールに無い" % (kind, fn_name))
+    for rel in undeclared_ledger_files():
+        problems.append(
+            "台帳に在るが種別が未宣言: %s（LEDGER_KINDS へ、読む経路か"
+            "読まない理由のどちらかを明記すること）" % rel)
     return problems
 
 
@@ -169,6 +203,107 @@ NAMEABLE_STATES = frozenset({
 WITHIN_CYCLE_STATES = frozenset({
     "CHALLENGE", "REPRODUCE_RED", "FIX", "VERIFY", "RECORD", "CURATE",
 })
+
+# 台帳に在る成果物の種別と、正本がそれを読む経路。
+#
+# 走らせ手（成果物を生む段）を足したのに、その成果を正本が読む段を足さないと、
+# 同じ行動を毎回買い直す「消えない行動」になる。この形は INC-012・INC-015 で
+# 同型が三度通った。一段ごとの受入試験は、その一段しか守らない。ここでは種別
+# ごとに「読む関数の名」か「読まない理由」のどちらかを必ず持たせ、どちらも
+# 持たない種別と、台帳に現れて match のどれにも当たらない物を禁ずる。
+# 差集合が空でなければ赤（INC-015 の事故分析が定めた先行指標）。
+#
+# read_by は関数名の列。名は本モジュールの呼べる属性へ解決できなければならない
+# （宣言が嘘をつけないようにする。ADR-124）。
+LEDGER_KINDS = (
+    {"kind": "catalogs/<book>-principles.json",
+     "match": "catalogs/*-principles.json",
+     "read_by": ("catalog_status", "evaluator_outputs_latest"),
+     "why_not_read": None},
+    {"kind": "catalogs/<book>-coverage.json",
+     "match": "catalogs/*-coverage.json",
+     "read_by": ("coverage_status", "evaluator_outputs_latest"),
+     "why_not_read": None},
+    {"kind": "incidents.json",
+     "match": "incidents.json",
+     "read_by": ("load_incidents",),
+     "why_not_read": None},
+    {"kind": "cast/<事象 id>.json",
+     "match": "cast/*.json",
+     "read_by": ("evaluator_outputs_latest",),
+     "why_not_read": None},
+    {"kind": "scenarios/<日付>.json",
+     "match": "scenarios/*.json",
+     "read_by": ("latest_scenarios",),
+     "why_not_read": None},
+    {"kind": "mutations-<日付>.json",
+     "match": "mutations-*.json",
+     "read_by": ("attack_evidence_latest",),
+     "why_not_read": None},
+    {"kind": "red/<事象 id>.json",
+     "match": "red/*.json",
+     "read_by": (),
+     "why_not_read":
+         "修正前 FAIL の証拠。これを読む段（REPRODUCE_RED・FIX・VERIFY）は"
+         "WITHIN_CYCLE_STATES であり、帳簿だけからは指せないと ADR-120 で"
+         "明記済み。証拠は反復の中で作られ、その反復の中で読まれる。"},
+    {"kind": "runs/<実行 id>.json",
+     "match": "runs/*.json",
+     "read_by": (),
+     "why_not_read":
+         ".gitignore 対象の実行時生成物であり、選別を経ていない。正本が読むのは"
+         "選別済みの証拠（台帳直下）だけとする。ここを読むと、コミットされない"
+         "手元の残骸で次の行動が変わる。"},
+    {"kind": "smoke-latest.json",
+     "match": "smoke-latest.json",
+     "read_by": (),
+     "why_not_read":
+         "配管確認（煙試験）の証拠。レーン前提の診断は doctor.py が毎反復持ち、"
+         "次の行動を導く材料ではない。ただし『煙の証拠が harness の変更より"
+         "古いことを正本が見るべきか』は未決の問いとして残る（ATTACK_EVALUATOR "
+         "と同型になりうる）。決めるまでは読まない側に置く。"},
+)
+
+
+def _ledger_dir():
+    return os.path.join(LANE_DIR, "ledger")
+
+
+def ledger_files(ledger_dir=None):
+    """台帳に現在在る成果物の相対パス（POSIX 区切り・辞書順）。
+
+    隠しファイルと隠しディレクトリは数えない（編集器の残骸は成果物ではない）。
+    """
+    root = ledger_dir or _ledger_dir()
+    out = []
+    if not os.path.isdir(root):
+        return out
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = sorted(d for d in dirnames if not d.startswith("."))
+        for name in sorted(filenames):
+            if name.startswith("."):
+                continue
+            rel = os.path.relpath(os.path.join(dirpath, name), root)
+            out.append(rel.replace(os.sep, "/"))
+    return sorted(out)
+
+
+def ledger_kind_of(rel_path):
+    """相対パスに当たる宣言。当たらなければ None。"""
+    for entry in LEDGER_KINDS:
+        if fnmatch.fnmatchcase(rel_path, entry["match"]):
+            return entry
+    return None
+
+
+def undeclared_ledger_files(ledger_dir=None):
+    """台帳に在るのに、どの種別の宣言にも当たらない成果物。
+
+    「読む」でも「読まない理由」でもなく、そもそも宣言が無い状態を指す。
+    これが空でない間は、正本の外に成果物が滞留しうる（INC-015）。
+    """
+    return [rel for rel in ledger_files(ledger_dir)
+            if ledger_kind_of(rel) is None]
 
 
 def _max_date(values):

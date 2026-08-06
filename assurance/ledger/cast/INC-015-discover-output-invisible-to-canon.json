@@ -1,0 +1,628 @@
+{
+  "accepted_flaws": [
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "ASSURANCE_LANE は「assurance/ledger/」を手掛かりとして持つと宣言されているが、その手掛かりのうち新しく生まれた成果物（走らせ手が生んだ scenarios の記録）を読み取って次行動決定に入力する経路が存在しなかった。制御アクション（次の行動を決定論で導く）に対応するフィードバック経路が、成果物の種別が増えた時点で片側だけ欠けた状態になっていた。",
+      "evidence_ref": "assurance/harness/orchestrator.py",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "全コントロールループにフィードバック必須",
+        "control-action-requires-feedback",
+        "モデル一致のためのフィードバック提供"
+      ],
+      "why_it_seemed_adequate": "台帳という手掛かり自体は既に接続済みであり、事象・分析状態は正しく読めていた。手掛かりは『台帳を読む』という粒度で宣言されていたため、台帳に新しい種類の記録が増えたときに読み取り側の追加が要るという差分は、宣言の粒度からは見えなかった。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "生き残った候補が台帳に在る状態でも、next_actions は DISCOVER（創出）を提示し続けた。プロセスモデル上その状態は「まだ何も無い」と同一視されており、実状態と矛盾したモデルに基づいて、形式的には決定論的で正しい出力が生成されていた。",
+      "evidence_ref": "assurance/harness/orchestrator.py",
+      "flaw_type": "制御動作が誤っている",
+      "normative_refs": [
+        "process-model-inconsistency-causes-unsafe-control",
+        "プロセスモデルと実状態の不整合",
+        "信頼性と安全性の分離"
+      ],
+      "why_it_seemed_adequate": "出力は決定論であり、規則どおりに導かれていた。決定論であることは再現性を保証するが、モデルが実状態と一致していることは保証しない。信頼して同じ答えを返す装置は、モデルが古いときにも信頼して古い答えを返す。"
+    },
+    {
+      "control_element_id": "GOVERNANCE_TREE",
+      "description": "ADR-120 は『状態は名指しできるか、できないと明記されるか』という二分を統治木上の決定として置いた。この二分は決定時点の静的な分類として書かれ、運用中に成果物が生まれて名指し可能性そのものが変化するという時間軸を対象範囲に含めていなかった。そのため FORMALIZE は『帳簿だけからは指せない』側に固定され、指せる材料が台帳にできても分類が追随しなかった。",
+      "evidence_ref": "ADR-120",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "破られた想定の再検討",
+        "安全想定の記録と失効先行指標の定義",
+        "trace-why-design-flaw-was-introduced"
+      ],
+      "why_it_seemed_adequate": "決定時点では FORMALIZE を指すための材料は実際に存在せず、分類は事実に一致していた。決定は正しい観察に基づいており、誤っていたのは分類の内容ではなく、分類が状態変化に追随する段を持たなかったことである。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "走らせ手（実行系）を足す変更と、その成果を正本が読む段（読取系）を足す変更が、同一の変更単位として要求されていなかった。片側だけの変更が単体で完結・受入可能であったため、統制ループの一方の腕だけが伸びた構造変更が正規の手順を通って成立した。",
+      "evidence_ref": "assurance/harness/orchestrator.py",
+      "flaw_type": "統制どうしの調整の欠如",
+      "normative_refs": [
+        "変更後に事故が起きる前提の変更管理",
+        "全変更のハザード分析と承認",
+        "変更時のフィードバック経路維持"
+      ],
+      "why_it_seemed_adequate": "走らせ手の追加は、それ単体で試験でき、単体では正しく動いた。変更管理の観点からは自己完結した増分に見え、ループの反対側が未接続であることは、その増分の受入条件の外側にあった。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "本事象は INC-012（状態が名指しできない）と同型の三度目である。台帳には過去の同型事象が記録されていたが、その分析結果を新しい構造変更の設計時点に適用させる段（教訓を取り込む手順）が統制側に存在せず、同型の欠陥が三度通過した。記録は在り、伝達と適用が無かった。",
+      "evidence_ref": "INC-012",
+      "flaw_type": "統制自身の劣化を検出できない",
+      "normative_refs": [
+        "learning-failure-decomposed-into-info-system-questions",
+        "教訓を適用する手順の確立",
+        "情報システム保有と有用性の乖離"
+      ],
+      "why_it_seemed_adequate": "事象は台帳へ積まれ、分析が済むまで閉じない規律も働いていた。記録制度が機能している以上、学習も働いているように見えた。記録の存在は、記録が次の設計判断に届き使われることを保証しない。"
+    },
+    {
+      "control_element_id": "CI_RELEASE_CHECK",
+      "description": "merge 前に赤で止める統制は、各段が呼ばれたときに正しく振る舞うかを見る試験群を手掛かりとしていた。台帳の状態が変化したときに到達可能な段が増えること（到達不能な段が残っていないこと）を検査する手掛かりは無く、欠陥は人が status を目視した偶然によって検出された。",
+      "evidence_ref": "assurance/harness/orchestrator.py",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "全体健全性と部分健全性の分離評価",
+        "安全立証でなく非安全状態の探索",
+        "監査の検出力評価"
+      ],
+      "why_it_seemed_adequate": "試験は緑であり、追加された走らせ手も個別に検証されていた。部品の健全性が全て確認されている状態は、全体の健全性が確認された状態のように見える。"
+    },
+    {
+      "control_element_id": "OWNER",
+      "description": "OWNER の手掛かりは進捗報告・PR の diff・台帳であり、いずれも各時点のスナップショットである。『同じ next_action が、成果物が増えているにもかかわらず繰り返し提示されている』という経時変化を示す手掛かりが無く、同じ創出を買い直している状態は、人が個別の実行を見比べるまで可視化されなかった。",
+      "evidence_ref": "assurance/ledger/",
+      "flaw_type": "手掛かりが遅い",
+      "normative_refs": [
+        "要約統計偏重による傾向情報の喪失",
+        "controller-needs-concrete-feedback-channels",
+        "変化ドリフトの事前検出"
+      ],
+      "why_it_seemed_adequate": "各回の次行動提示は、単独で見れば規則どおりの妥当な提案であり、報告も台帳も個別には正しい。異常は一回の観測にではなく系列にのみ現れるため、スナップショット型の手掛かりでは原理的に映らない。"
+    }
+  ],
+  "analysis": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "ASSURANCE_LANE は「assurance/ledger/」を手掛かりとして持つと宣言されているが、その手掛かりのうち新しく生まれた成果物（走らせ手が生んだ scenarios の記録）を読み取って次行動決定に入力する経路が存在しなかった。制御アクション（次の行動を決定論で導く）に対応するフィードバック経路が、成果物の種別が増えた時点で片側だけ欠けた状態になっていた。",
+        "evidence_ref": "assurance/harness/orchestrator.py",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "全コントロールループにフィードバック必須",
+          "control-action-requires-feedback",
+          "モデル一致のためのフィードバック提供"
+        ],
+        "why_it_seemed_adequate": "台帳という手掛かり自体は既に接続済みであり、事象・分析状態は正しく読めていた。手掛かりは『台帳を読む』という粒度で宣言されていたため、台帳に新しい種類の記録が増えたときに読み取り側の追加が要るという差分は、宣言の粒度からは見えなかった。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "生き残った候補が台帳に在る状態でも、next_actions は DISCOVER（創出）を提示し続けた。プロセスモデル上その状態は「まだ何も無い」と同一視されており、実状態と矛盾したモデルに基づいて、形式的には決定論的で正しい出力が生成されていた。",
+        "evidence_ref": "assurance/harness/orchestrator.py",
+        "flaw_type": "制御動作が誤っている",
+        "normative_refs": [
+          "process-model-inconsistency-causes-unsafe-control",
+          "プロセスモデルと実状態の不整合",
+          "信頼性と安全性の分離"
+        ],
+        "why_it_seemed_adequate": "出力は決定論であり、規則どおりに導かれていた。決定論であることは再現性を保証するが、モデルが実状態と一致していることは保証しない。信頼して同じ答えを返す装置は、モデルが古いときにも信頼して古い答えを返す。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "ADR-120 は『状態は名指しできるか、できないと明記されるか』という二分を統治木上の決定として置いた。この二分は決定時点の静的な分類として書かれ、運用中に成果物が生まれて名指し可能性そのものが変化するという時間軸を対象範囲に含めていなかった。そのため FORMALIZE は『帳簿だけからは指せない』側に固定され、指せる材料が台帳にできても分類が追随しなかった。",
+        "evidence_ref": "ADR-120",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "破られた想定の再検討",
+          "安全想定の記録と失効先行指標の定義",
+          "trace-why-design-flaw-was-introduced"
+        ],
+        "why_it_seemed_adequate": "決定時点では FORMALIZE を指すための材料は実際に存在せず、分類は事実に一致していた。決定は正しい観察に基づいており、誤っていたのは分類の内容ではなく、分類が状態変化に追随する段を持たなかったことである。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "走らせ手（実行系）を足す変更と、その成果を正本が読む段（読取系）を足す変更が、同一の変更単位として要求されていなかった。片側だけの変更が単体で完結・受入可能であったため、統制ループの一方の腕だけが伸びた構造変更が正規の手順を通って成立した。",
+        "evidence_ref": "assurance/harness/orchestrator.py",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "変更後に事故が起きる前提の変更管理",
+          "全変更のハザード分析と承認",
+          "変更時のフィードバック経路維持"
+        ],
+        "why_it_seemed_adequate": "走らせ手の追加は、それ単体で試験でき、単体では正しく動いた。変更管理の観点からは自己完結した増分に見え、ループの反対側が未接続であることは、その増分の受入条件の外側にあった。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "本事象は INC-012（状態が名指しできない）と同型の三度目である。台帳には過去の同型事象が記録されていたが、その分析結果を新しい構造変更の設計時点に適用させる段（教訓を取り込む手順）が統制側に存在せず、同型の欠陥が三度通過した。記録は在り、伝達と適用が無かった。",
+        "evidence_ref": "INC-012",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "learning-failure-decomposed-into-info-system-questions",
+          "教訓を適用する手順の確立",
+          "情報システム保有と有用性の乖離"
+        ],
+        "why_it_seemed_adequate": "事象は台帳へ積まれ、分析が済むまで閉じない規律も働いていた。記録制度が機能している以上、学習も働いているように見えた。記録の存在は、記録が次の設計判断に届き使われることを保証しない。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "merge 前に赤で止める統制は、各段が呼ばれたときに正しく振る舞うかを見る試験群を手掛かりとしていた。台帳の状態が変化したときに到達可能な段が増えること（到達不能な段が残っていないこと）を検査する手掛かりは無く、欠陥は人が status を目視した偶然によって検出された。",
+        "evidence_ref": "assurance/harness/orchestrator.py",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "全体健全性と部分健全性の分離評価",
+          "安全立証でなく非安全状態の探索",
+          "監査の検出力評価"
+        ],
+        "why_it_seemed_adequate": "試験は緑であり、追加された走らせ手も個別に検証されていた。部品の健全性が全て確認されている状態は、全体の健全性が確認された状態のように見える。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "OWNER の手掛かりは進捗報告・PR の diff・台帳であり、いずれも各時点のスナップショットである。『同じ next_action が、成果物が増えているにもかかわらず繰り返し提示されている』という経時変化を示す手掛かりが無く、同じ創出を買い直している状態は、人が個別の実行を見比べるまで可視化されなかった。",
+        "evidence_ref": "assurance/ledger/",
+        "flaw_type": "手掛かりが遅い",
+        "normative_refs": [
+          "要約統計偏重による傾向情報の喪失",
+          "controller-needs-concrete-feedback-channels",
+          "変化ドリフトの事前検出"
+        ],
+        "why_it_seemed_adequate": "各回の次行動提示は、単独で見れば規則どおりの妥当な提案であり、報告も台帳も個別には正しい。異常は一回の観測にではなく系列にのみ現れるため、スナップショット型の手掛かりでは原理的に映らない。"
+      }
+    ],
+    "hazard": "統制下の状態として：ASSURANCE_LANE が次行動を導くときに保持するプロセスモデル（どの状態が名指しできるか）が、台帳 assurance/ledger/ の実状態（生き残った候補が既に在る）と矛盾したまま、決定論で次行動を出力できる状態。この状態では、成果物の有無にかかわらず同一の行動が正当な出力として出続ける。",
+    "incident_id": "INC-015-discover-output-invisible-to-canon",
+    "leading_indicators": [
+      {
+        "indicator": "台帳に在るが正本のどの読取経路からも参照されていない成果物種の数",
+        "observable": "assurance/ledger/ に現れる記録の種別集合と、正本（次行動決定器）が読む述語が参照する種別集合の差分",
+        "threshold": "差集合の要素数が1以上で赤。新種の記録が台帳に初出した時点から差分が解消されるまでの経過を日数でも記録し、3日を超えたら警告",
+        "version_independent": true,
+        "where": "リポジトリ正本に対する CI ジョブ（CI_RELEASE_CHECK）",
+        "why_version_independent": "リポジトリ正本のみを入力とし、利用者環境へ導入された複製の版に依存しない"
+      },
+      {
+        "indicator": "成果物が増えているのに同一の次行動が提示され続ける連続回数",
+        "observable": "次行動提示の履歴と、その間の台帳の成果物件数の増減",
+        "threshold": "同一 action が、対応する成果物件数の増加を伴って3回連続で提示されたら異常として起票",
+        "version_independent": true,
+        "where": "assurance/ledger/ に残る行動提示の系列（ASSURANCE_LANE の出力履歴）",
+        "why_version_independent": "観測対象は正本側の台帳と出力履歴であり、複製の版に依存しない"
+      },
+      {
+        "indicator": "実行系（走らせ手）の追加を含む差分のうち、読取系の追加を伴わないものの割合",
+        "observable": "PR の diff における実行段の新規追加と、正本の読取述語の新規追加の同梱有無",
+        "threshold": "実行段の追加が1件以上あり読取述語の追加が0件の差分は、理由の明示的記載が無い限り赤",
+        "version_independent": true,
+        "where": "PR の diff を検査する CI_RELEASE_CHECK のジョブ（OWNER の手掛かりにも同じ判定結果を出す）",
+        "why_version_independent": "検査対象がリポジトリ正本の差分そのものであるため"
+      },
+      {
+        "indicator": "『帳簿だけからは指せない』側に分類されている段のうち、実際には台帳に指すための材料が存在するものの件数",
+        "observable": "名指し不能側の分類集合と、台帳に現存する材料との突き合わせ結果",
+        "threshold": "1件でも該当があれば赤。分類の再評価を要求する",
+        "version_independent": true,
+        "where": "CI_RELEASE_CHECK で走る、統治木の分類（ADR-120 系の決定）と台帳の突合検査",
+        "why_version_independent": "統治木の文書と台帳の双方が正本側にあり、複製の版を参照しない"
+      },
+      {
+        "indicator": "上記の突合検査を導入複製の側（鼓動）で警告として出す場合の、警告の実効性",
+        "observable": "HEARTBEAT が読む導入複製の版と、正本で当該検査が導入された版との差",
+        "threshold": "複製の版が、当該検査を含む版より1世代でも古い間は、この指標の無警告を健全の証拠として扱わない",
+        "version_independent": false,
+        "where": "HEARTBEAT（plugin/scripts/gov-heartbeat.py）が参照する導入複製の版",
+        "why_version_independent": "検出器自身が導入複製の側で動くため、複製の更新が利用者の操作に依存する限り、版が遅れると検出も遅れる（INC-005 と同じ共通原因故障の系列にある）"
+      }
+    ],
+    "loss": "保証レーンに投じた資源が、既に得られている成果（生き残った候補＝scenarios）を再取得することに繰り返し費やされ、その成果が次段（形式化・批判）へ入力されないまま滞留した。結果として、保証キャンペーンが「創出は進むが、創出物がハザード分析・安全制約の導出に接続しない」状態に置かれ、費用を払っても防護は増えなかった。違反された制約は「保証レーンが導く次の行動は、台帳に既に在る成果を前提として前進しなければならない」である。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "差集合が空である（全種別が少なくとも一つの読取述語から参照されている）",
+        "hypothesis": "DISCOVER 以外にも、成果物を生む段が存在し、その成果を正本が読まないまま放置されている組が他にもある",
+        "oracle": "台帳に現れる記録種別の集合と、正本の読取述語が参照する種別集合の差集合を全数計算する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "名指し不能側の全分類について、材料の述語が偽である",
+        "hypothesis": "『帳簿だけからは指せない』側に分類された段のうち、FORMALIZE 以外にも、既に台帳へ材料が出現して名指し可能になっているものがある",
+        "oracle": "名指し不能側の分類ごとに、指すために必要な材料の述語を書き下し、現在の台帳に対して評価する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "注入した新種に対しても検査が赤で止まる",
+        "hypothesis": "受入試験は今回の具体条件（生き残りが在れば FORMALIZE）だけを固定しており、成果物種別が今後さらに増えたときには同型の未接続を再び通す",
+        "oracle": "仮の新種成果物を台帳へ注入し、次行動が前進するか、または『読まれない種別が在る』として赤になるかを見る",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "成果物の増加に応じて必ず提示行動が遷移する",
+        "hypothesis": "同一行動の反復提示は、成果物の滞留以外の原因（前提条件の判定順序など）でも生じうる",
+        "oracle": "台帳の状態を段階的に変化させながら次行動の系列を記録し、反復が解消される条件を同定する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "該当が本事象のみ、かつ次の配布に含まれることが確定している",
+        "hypothesis": "fixed だが shipped=false の是正が複数積み上がっており、導入複製の側では統制構造の宣言と実効が乖離している",
+        "oracle": "fixed かつ shipped=false の事象を台帳から列挙し、各是正が複製へ届くまでの世代差を数える",
+        "severity": "P2"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "実行系（走らせ手）を追加する差分に対し、その成果を読む述語の追加を同梱するか、同梱しない理由を明示することを、CI_RELEASE_CHECK の受入条件として機構化する。人の注意ではなく差分の形で強制する。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "台帳の記録種別と、正本の読取述語が参照する種別との差集合を計算する検査を CI に追加し、差集合が空でない間は赤で止める。今回の一段（FORMALIZE）の受入試験を、この不変条件検査へ一般化する。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "次行動提示の系列を台帳に残し、成果物件数の増加を伴いながら同一行動が連続提示される状態を検出して起票する監視を足す。スナップショットにしか映らない観測面へ、経時の面を一つ加える。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "ADR-120 系の『名指しできる／できない』分類について、その分類が依拠する想定（指すための材料が台帳に無い）を明文で記録し、その想定が失効したことを示す先行指標（材料の出現）を分類ごとに定義する。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "INC-012 と本事象の同型性を、次の構造変更時に自動で提示される形（設計時に読まれる場所）へ載せる。教訓を記録する段だけでなく、教訓が設計判断へ届く段を確立する。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "DISCOVER 以外の走らせ手・成果物についても同型の未接続が無いかを、上記の差集合検査を用いて全数で確認する。三度目という反復を、単発の修正で閉じない。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "fixed=true / shipped=false の状態にある是正について、導入複製へ届くまでの間をどう扱うか（配布を待つ／正本側だけで運用する）を決める。検出器を複製側に置く場合は版遅れによる検出遅れを受容リスクとして明示する。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "本分析が前提とした内部機構（走らせ手、latest_scenarios、NAMEABLE_STATES、ADR-120）の実在を、正本のリポジトリに対して確認し、確認結果を本分析へ差し戻す。未確認のまま結論を確定させない。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "構造変更の受入条件が『追加した部品が単体で正しく動くこと』で閉じており、『ループの反対側が接続されていること』を含まない。この条件形状は今回の走らせ手に限らず、あらゆる実行系の追加に同じ穴を開ける。",
+      "統制の宣言粒度が『台帳を読む』のような集合単位であり、台帳に増えた種別ごとの読取有無を表現しない。宣言が粗いため、宣言と実装の乖離が宣言のレビューでは検出できない。",
+      "決定（ADR）が静的な分類として書かれ、分類の前提が変化したときに再評価を起動する仕掛けを伴っていない。決定は正しく記録され、正しく古びる。",
+      "保証の観測面がすべてスナップショットであり、経時変化（同じ行動が繰り返される、成果物が滞留する）を映す面が無い。",
+      "事象の記録制度は機能しているが、記録から次の設計判断へ届く経路が人の記憶に依存している。同型三度目という反復自体が、この経路の不在を示す指標になっている。",
+      "修正が個別事象の症状（FORMALIZE 一段の分類）に対して行われ、同型の未接続が他に無いことを検査する不変条件へは到達していない。"
+    ],
+    "unknowns": [
+      "与えられた統制構造には、本事象が名指しする DISCOVER の走らせ手・latest_scenarios()・NAMEABLE_STATES・FORMALIZE の段・ADR-120 のいずれも、独立した要素としては現れない。現れるのは、それらを内包すると宣言された ASSURANCE_LANE（実体 assurance/harness/orchestrator.py）と GOVERNANCE_TREE だけである。さらに本分析の実行環境は空の作業ディレクトリ（/tmp/assurance-cast-vs220hq2）であり、assurance/harness/orchestrator.py も doctrine_docs も ADR-120 も存在を確認できなかった。したがって本分析は、事象の記録が述べる内部機構が実在するという前提の上に組み立てられており、その前提は未検証である。confidence を low としたのはこの理由による。",
+      "INC-012 の分析がどのような推奨事項を出したか、それが実施され有効性まで追跡されたかが不明。同型が三度目という事実は記録されているが、二度目までの是正が『実施されなかった』のか『実施されたが今回の形の欠陥には効かなかった』のかを区別できない。",
+      "生き残った候補（scenarios）が読まれないまま滞留した回数と期間が不明。損失の規模（買い直された創出の回数）を定量できない。",
+      "fixed=true / shipped=false であるため、利用者環境へ導入された複製が何世代この欠陥を保持し続けるかが観測できない（PLUGIN_DISTRIBUTION の既知の穴と重なる）。",
+      "ADR-120 を定めた時点で、成果物の生成によって名指し可能性が変化しうるという論点が検討されたうえで対象外にされたのか、論点として現れなかったのかが不明。前者なら想定の記録の問題、後者なら分析の網羅の問題であり、必要な是正が異なる。",
+      "ASSURANCE_LANE の既知の穴（評価者が同系 model である共通原因故障）が、この未接続を三度見逃したことに寄与したかどうかを判定する材料が無い。",
+      "この未接続が、DISCOVER 以外の走らせ手にも存在するかどうかを、本分析の入力からは判定できない。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は「各段が呼ばれたら正しく振る舞うか」という部品単位の決定論試験と、文書間の整合を見る監査で構成されていた。今回欠けていたのは部品の振る舞いではなく部品間の接続（生成された成果物と、それを読む段との間のフィードバック経路）であり、どの部品も単体では正しく動いていたため、緑の試験群と整合した文書がそのまま『健全』の証拠として読めてしまった。加えて ADR-120 の分類は決定時点では事実に一致していたので、文書監査から見ても矛盾は現れない。欠陥は静的な記述の誤りではなく、状態が変化したときに分類が追随しないという時間依存の性質であり、スナップショットを対象とする監査・試験・報告のいずれの観測面にも像を結ばなかった。修正済み（fixed）であることは、この観測面の穴を塞いでいない。受入試験は今回の一段（FORMALIZE）についての具体条件であって、同型の未接続がほかに無いことを検査する不変条件ではない。"
+  },
+  "control_structure_ids": [
+    "OWNER",
+    "CI_RELEASE_CHECK",
+    "SESSION_START_CONTRACT",
+    "HEARTBEAT",
+    "PRE_TOOL_GUARD",
+    "POST_TOOL_LINTER",
+    "SESSION_END_AUDIT",
+    "CAPTURE_NUDGE",
+    "PLUGIN_DISTRIBUTION",
+    "ASSURANCE_LANE",
+    "GOVERNANCE_TREE"
+  ],
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "duration_ms": 219487,
+  "errors": [],
+  "execution_kind": "real-sdk",
+  "flaws_with_citation_defect": [],
+  "generated_at": "2026-08-06T06:57:28Z",
+  "git_dirty": false,
+  "git_sha": "e06964a0dc83d90e3354526fda3f64df938e68de",
+  "incident_evidence": {
+    "kind": null,
+    "refs": [
+      "assurance/harness/orchestrator.py",
+      "ADR-120"
+    ],
+    "resolved": [
+      "assurance/harness/orchestrator.py",
+      "ADR-120"
+    ],
+    "unresolved": [],
+    "verifiable": true
+  },
+  "incident_id": "INC-015-discover-output-invisible-to-canon",
+  "incident_sha256": "f943e9517c869f8c8a948158e29b5abd9fb1dd3b9590852d0617cafb11e2809f",
+  "init": {
+    "claude_code_version": "2.1.221",
+    "model": "claude-opus-5",
+    "session_id": "6154548c-f39d-4493-89ed-9723bcce7f8b",
+    "tools_count": 27
+  },
+  "kind": "cast-analysis",
+  "leading_indicators_defined": true,
+  "options": {
+    "allowed_tools": [],
+    "cwd": "/tmp/assurance-cast-vs220hq2",
+    "effort": "high",
+    "max_budget_usd": 4.0,
+    "max_turns": 8,
+    "model": "claude-opus-5",
+    "setting_sources": [],
+    "timeout_s": 900
+  },
+  "oracle": "structured_output がレーン側再検証にも適合",
+  "principles_offered": 337,
+  "prompt_sha256": "c8adc3ed867cfdd1cec3b6dccfed79af37ae94bf0f5bb067e5115c3a00197dc4",
+  "rejected_flaws": [],
+  "result_meta": {
+    "duration_api_ms": 206274,
+    "is_error": false,
+    "num_turns": 5,
+    "session_id": "6154548c-f39d-4493-89ed-9723bcce7f8b",
+    "subtype": "success",
+    "total_cost_usd": 1.0261764999999998,
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 59834,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 59834,
+      "cache_read_input_tokens": 174375,
+      "inference_geo": "not_available",
+      "input_tokens": 8,
+      "iterations": "list",
+      "output_tokens": 12165,
+      "server_tool_use": {
+        "web_fetch_requests": 0,
+        "web_search_requests": 0
+      },
+      "service_tier": "standard",
+      "speed": "standard"
+    }
+  },
+  "schema_sha256": "0d1643d5e16353723405302c1f6ffcf753915e2a4f27a3530e8ef9a9ee45cb46",
+  "sdk_version": "0.2.129",
+  "settled": true,
+  "status": "PASS",
+  "structured_output": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "ASSURANCE_LANE は「assurance/ledger/」を手掛かりとして持つと宣言されているが、その手掛かりのうち新しく生まれた成果物（走らせ手が生んだ scenarios の記録）を読み取って次行動決定に入力する経路が存在しなかった。制御アクション（次の行動を決定論で導く）に対応するフィードバック経路が、成果物の種別が増えた時点で片側だけ欠けた状態になっていた。",
+        "evidence_ref": "assurance/harness/orchestrator.py",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "全コントロールループにフィードバック必須",
+          "control-action-requires-feedback",
+          "モデル一致のためのフィードバック提供"
+        ],
+        "why_it_seemed_adequate": "台帳という手掛かり自体は既に接続済みであり、事象・分析状態は正しく読めていた。手掛かりは『台帳を読む』という粒度で宣言されていたため、台帳に新しい種類の記録が増えたときに読み取り側の追加が要るという差分は、宣言の粒度からは見えなかった。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "生き残った候補が台帳に在る状態でも、next_actions は DISCOVER（創出）を提示し続けた。プロセスモデル上その状態は「まだ何も無い」と同一視されており、実状態と矛盾したモデルに基づいて、形式的には決定論的で正しい出力が生成されていた。",
+        "evidence_ref": "assurance/harness/orchestrator.py",
+        "flaw_type": "制御動作が誤っている",
+        "normative_refs": [
+          "process-model-inconsistency-causes-unsafe-control",
+          "プロセスモデルと実状態の不整合",
+          "信頼性と安全性の分離"
+        ],
+        "why_it_seemed_adequate": "出力は決定論であり、規則どおりに導かれていた。決定論であることは再現性を保証するが、モデルが実状態と一致していることは保証しない。信頼して同じ答えを返す装置は、モデルが古いときにも信頼して古い答えを返す。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "ADR-120 は『状態は名指しできるか、できないと明記されるか』という二分を統治木上の決定として置いた。この二分は決定時点の静的な分類として書かれ、運用中に成果物が生まれて名指し可能性そのものが変化するという時間軸を対象範囲に含めていなかった。そのため FORMALIZE は『帳簿だけからは指せない』側に固定され、指せる材料が台帳にできても分類が追随しなかった。",
+        "evidence_ref": "ADR-120",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "破られた想定の再検討",
+          "安全想定の記録と失効先行指標の定義",
+          "trace-why-design-flaw-was-introduced"
+        ],
+        "why_it_seemed_adequate": "決定時点では FORMALIZE を指すための材料は実際に存在せず、分類は事実に一致していた。決定は正しい観察に基づいており、誤っていたのは分類の内容ではなく、分類が状態変化に追随する段を持たなかったことである。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "走らせ手（実行系）を足す変更と、その成果を正本が読む段（読取系）を足す変更が、同一の変更単位として要求されていなかった。片側だけの変更が単体で完結・受入可能であったため、統制ループの一方の腕だけが伸びた構造変更が正規の手順を通って成立した。",
+        "evidence_ref": "assurance/harness/orchestrator.py",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "変更後に事故が起きる前提の変更管理",
+          "全変更のハザード分析と承認",
+          "変更時のフィードバック経路維持"
+        ],
+        "why_it_seemed_adequate": "走らせ手の追加は、それ単体で試験でき、単体では正しく動いた。変更管理の観点からは自己完結した増分に見え、ループの反対側が未接続であることは、その増分の受入条件の外側にあった。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "本事象は INC-012（状態が名指しできない）と同型の三度目である。台帳には過去の同型事象が記録されていたが、その分析結果を新しい構造変更の設計時点に適用させる段（教訓を取り込む手順）が統制側に存在せず、同型の欠陥が三度通過した。記録は在り、伝達と適用が無かった。",
+        "evidence_ref": "INC-012",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "learning-failure-decomposed-into-info-system-questions",
+          "教訓を適用する手順の確立",
+          "情報システム保有と有用性の乖離"
+        ],
+        "why_it_seemed_adequate": "事象は台帳へ積まれ、分析が済むまで閉じない規律も働いていた。記録制度が機能している以上、学習も働いているように見えた。記録の存在は、記録が次の設計判断に届き使われることを保証しない。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "merge 前に赤で止める統制は、各段が呼ばれたときに正しく振る舞うかを見る試験群を手掛かりとしていた。台帳の状態が変化したときに到達可能な段が増えること（到達不能な段が残っていないこと）を検査する手掛かりは無く、欠陥は人が status を目視した偶然によって検出された。",
+        "evidence_ref": "assurance/harness/orchestrator.py",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "全体健全性と部分健全性の分離評価",
+          "安全立証でなく非安全状態の探索",
+          "監査の検出力評価"
+        ],
+        "why_it_seemed_adequate": "試験は緑であり、追加された走らせ手も個別に検証されていた。部品の健全性が全て確認されている状態は、全体の健全性が確認された状態のように見える。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "OWNER の手掛かりは進捗報告・PR の diff・台帳であり、いずれも各時点のスナップショットである。『同じ next_action が、成果物が増えているにもかかわらず繰り返し提示されている』という経時変化を示す手掛かりが無く、同じ創出を買い直している状態は、人が個別の実行を見比べるまで可視化されなかった。",
+        "evidence_ref": "assurance/ledger/",
+        "flaw_type": "手掛かりが遅い",
+        "normative_refs": [
+          "要約統計偏重による傾向情報の喪失",
+          "controller-needs-concrete-feedback-channels",
+          "変化ドリフトの事前検出"
+        ],
+        "why_it_seemed_adequate": "各回の次行動提示は、単独で見れば規則どおりの妥当な提案であり、報告も台帳も個別には正しい。異常は一回の観測にではなく系列にのみ現れるため、スナップショット型の手掛かりでは原理的に映らない。"
+      }
+    ],
+    "hazard": "統制下の状態として：ASSURANCE_LANE が次行動を導くときに保持するプロセスモデル（どの状態が名指しできるか）が、台帳 assurance/ledger/ の実状態（生き残った候補が既に在る）と矛盾したまま、決定論で次行動を出力できる状態。この状態では、成果物の有無にかかわらず同一の行動が正当な出力として出続ける。",
+    "incident_id": "INC-015-discover-output-invisible-to-canon",
+    "leading_indicators": [
+      {
+        "indicator": "台帳に在るが正本のどの読取経路からも参照されていない成果物種の数",
+        "observable": "assurance/ledger/ に現れる記録の種別集合と、正本（次行動決定器）が読む述語が参照する種別集合の差分",
+        "threshold": "差集合の要素数が1以上で赤。新種の記録が台帳に初出した時点から差分が解消されるまでの経過を日数でも記録し、3日を超えたら警告",
+        "version_independent": true,
+        "where": "リポジトリ正本に対する CI ジョブ（CI_RELEASE_CHECK）",
+        "why_version_independent": "リポジトリ正本のみを入力とし、利用者環境へ導入された複製の版に依存しない"
+      },
+      {
+        "indicator": "成果物が増えているのに同一の次行動が提示され続ける連続回数",
+        "observable": "次行動提示の履歴と、その間の台帳の成果物件数の増減",
+        "threshold": "同一 action が、対応する成果物件数の増加を伴って3回連続で提示されたら異常として起票",
+        "version_independent": true,
+        "where": "assurance/ledger/ に残る行動提示の系列（ASSURANCE_LANE の出力履歴）",
+        "why_version_independent": "観測対象は正本側の台帳と出力履歴であり、複製の版に依存しない"
+      },
+      {
+        "indicator": "実行系（走らせ手）の追加を含む差分のうち、読取系の追加を伴わないものの割合",
+        "observable": "PR の diff における実行段の新規追加と、正本の読取述語の新規追加の同梱有無",
+        "threshold": "実行段の追加が1件以上あり読取述語の追加が0件の差分は、理由の明示的記載が無い限り赤",
+        "version_independent": true,
+        "where": "PR の diff を検査する CI_RELEASE_CHECK のジョブ（OWNER の手掛かりにも同じ判定結果を出す）",
+        "why_version_independent": "検査対象がリポジトリ正本の差分そのものであるため"
+      },
+      {
+        "indicator": "『帳簿だけからは指せない』側に分類されている段のうち、実際には台帳に指すための材料が存在するものの件数",
+        "observable": "名指し不能側の分類集合と、台帳に現存する材料との突き合わせ結果",
+        "threshold": "1件でも該当があれば赤。分類の再評価を要求する",
+        "version_independent": true,
+        "where": "CI_RELEASE_CHECK で走る、統治木の分類（ADR-120 系の決定）と台帳の突合検査",
+        "why_version_independent": "統治木の文書と台帳の双方が正本側にあり、複製の版を参照しない"
+      },
+      {
+        "indicator": "上記の突合検査を導入複製の側（鼓動）で警告として出す場合の、警告の実効性",
+        "observable": "HEARTBEAT が読む導入複製の版と、正本で当該検査が導入された版との差",
+        "threshold": "複製の版が、当該検査を含む版より1世代でも古い間は、この指標の無警告を健全の証拠として扱わない",
+        "version_independent": false,
+        "where": "HEARTBEAT（plugin/scripts/gov-heartbeat.py）が参照する導入複製の版",
+        "why_version_independent": "検出器自身が導入複製の側で動くため、複製の更新が利用者の操作に依存する限り、版が遅れると検出も遅れる（INC-005 と同じ共通原因故障の系列にある）"
+      }
+    ],
+    "loss": "保証レーンに投じた資源が、既に得られている成果（生き残った候補＝scenarios）を再取得することに繰り返し費やされ、その成果が次段（形式化・批判）へ入力されないまま滞留した。結果として、保証キャンペーンが「創出は進むが、創出物がハザード分析・安全制約の導出に接続しない」状態に置かれ、費用を払っても防護は増えなかった。違反された制約は「保証レーンが導く次の行動は、台帳に既に在る成果を前提として前進しなければならない」である。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "差集合が空である（全種別が少なくとも一つの読取述語から参照されている）",
+        "hypothesis": "DISCOVER 以外にも、成果物を生む段が存在し、その成果を正本が読まないまま放置されている組が他にもある",
+        "oracle": "台帳に現れる記録種別の集合と、正本の読取述語が参照する種別集合の差集合を全数計算する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "名指し不能側の全分類について、材料の述語が偽である",
+        "hypothesis": "『帳簿だけからは指せない』側に分類された段のうち、FORMALIZE 以外にも、既に台帳へ材料が出現して名指し可能になっているものがある",
+        "oracle": "名指し不能側の分類ごとに、指すために必要な材料の述語を書き下し、現在の台帳に対して評価する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "注入した新種に対しても検査が赤で止まる",
+        "hypothesis": "受入試験は今回の具体条件（生き残りが在れば FORMALIZE）だけを固定しており、成果物種別が今後さらに増えたときには同型の未接続を再び通す",
+        "oracle": "仮の新種成果物を台帳へ注入し、次行動が前進するか、または『読まれない種別が在る』として赤になるかを見る",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "成果物の増加に応じて必ず提示行動が遷移する",
+        "hypothesis": "同一行動の反復提示は、成果物の滞留以外の原因（前提条件の判定順序など）でも生じうる",
+        "oracle": "台帳の状態を段階的に変化させながら次行動の系列を記録し、反復が解消される条件を同定する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "該当が本事象のみ、かつ次の配布に含まれることが確定している",
+        "hypothesis": "fixed だが shipped=false の是正が複数積み上がっており、導入複製の側では統制構造の宣言と実効が乖離している",
+        "oracle": "fixed かつ shipped=false の事象を台帳から列挙し、各是正が複製へ届くまでの世代差を数える",
+        "severity": "P2"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "実行系（走らせ手）を追加する差分に対し、その成果を読む述語の追加を同梱するか、同梱しない理由を明示することを、CI_RELEASE_CHECK の受入条件として機構化する。人の注意ではなく差分の形で強制する。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "台帳の記録種別と、正本の読取述語が参照する種別との差集合を計算する検査を CI に追加し、差集合が空でない間は赤で止める。今回の一段（FORMALIZE）の受入試験を、この不変条件検査へ一般化する。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "次行動提示の系列を台帳に残し、成果物件数の増加を伴いながら同一行動が連続提示される状態を検出して起票する監視を足す。スナップショットにしか映らない観測面へ、経時の面を一つ加える。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "ADR-120 系の『名指しできる／できない』分類について、その分類が依拠する想定（指すための材料が台帳に無い）を明文で記録し、その想定が失効したことを示す先行指標（材料の出現）を分類ごとに定義する。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "INC-012 と本事象の同型性を、次の構造変更時に自動で提示される形（設計時に読まれる場所）へ載せる。教訓を記録する段だけでなく、教訓が設計判断へ届く段を確立する。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "DISCOVER 以外の走らせ手・成果物についても同型の未接続が無いかを、上記の差集合検査を用いて全数で確認する。三度目という反復を、単発の修正で閉じない。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "fixed=true / shipped=false の状態にある是正について、導入複製へ届くまでの間をどう扱うか（配布を待つ／正本側だけで運用する）を決める。検出器を複製側に置く場合は版遅れによる検出遅れを受容リスクとして明示する。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "本分析が前提とした内部機構（走らせ手、latest_scenarios、NAMEABLE_STATES、ADR-120）の実在を、正本のリポジトリに対して確認し、確認結果を本分析へ差し戻す。未確認のまま結論を確定させない。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "構造変更の受入条件が『追加した部品が単体で正しく動くこと』で閉じており、『ループの反対側が接続されていること』を含まない。この条件形状は今回の走らせ手に限らず、あらゆる実行系の追加に同じ穴を開ける。",
+      "統制の宣言粒度が『台帳を読む』のような集合単位であり、台帳に増えた種別ごとの読取有無を表現しない。宣言が粗いため、宣言と実装の乖離が宣言のレビューでは検出できない。",
+      "決定（ADR）が静的な分類として書かれ、分類の前提が変化したときに再評価を起動する仕掛けを伴っていない。決定は正しく記録され、正しく古びる。",
+      "保証の観測面がすべてスナップショットであり、経時変化（同じ行動が繰り返される、成果物が滞留する）を映す面が無い。",
+      "事象の記録制度は機能しているが、記録から次の設計判断へ届く経路が人の記憶に依存している。同型三度目という反復自体が、この経路の不在を示す指標になっている。",
+      "修正が個別事象の症状（FORMALIZE 一段の分類）に対して行われ、同型の未接続が他に無いことを検査する不変条件へは到達していない。"
+    ],
+    "unknowns": [
+      "与えられた統制構造には、本事象が名指しする DISCOVER の走らせ手・latest_scenarios()・NAMEABLE_STATES・FORMALIZE の段・ADR-120 のいずれも、独立した要素としては現れない。現れるのは、それらを内包すると宣言された ASSURANCE_LANE（実体 assurance/harness/orchestrator.py）と GOVERNANCE_TREE だけである。さらに本分析の実行環境は空の作業ディレクトリ（/tmp/assurance-cast-vs220hq2）であり、assurance/harness/orchestrator.py も doctrine_docs も ADR-120 も存在を確認できなかった。したがって本分析は、事象の記録が述べる内部機構が実在するという前提の上に組み立てられており、その前提は未検証である。confidence を low としたのはこの理由による。",
+      "INC-012 の分析がどのような推奨事項を出したか、それが実施され有効性まで追跡されたかが不明。同型が三度目という事実は記録されているが、二度目までの是正が『実施されなかった』のか『実施されたが今回の形の欠陥には効かなかった』のかを区別できない。",
+      "生き残った候補（scenarios）が読まれないまま滞留した回数と期間が不明。損失の規模（買い直された創出の回数）を定量できない。",
+      "fixed=true / shipped=false であるため、利用者環境へ導入された複製が何世代この欠陥を保持し続けるかが観測できない（PLUGIN_DISTRIBUTION の既知の穴と重なる）。",
+      "ADR-120 を定めた時点で、成果物の生成によって名指し可能性が変化しうるという論点が検討されたうえで対象外にされたのか、論点として現れなかったのかが不明。前者なら想定の記録の問題、後者なら分析の網羅の問題であり、必要な是正が異なる。",
+      "ASSURANCE_LANE の既知の穴（評価者が同系 model である共通原因故障）が、この未接続を三度見逃したことに寄与したかどうかを判定する材料が無い。",
+      "この未接続が、DISCOVER 以外の走らせ手にも存在するかどうかを、本分析の入力からは判定できない。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は「各段が呼ばれたら正しく振る舞うか」という部品単位の決定論試験と、文書間の整合を見る監査で構成されていた。今回欠けていたのは部品の振る舞いではなく部品間の接続（生成された成果物と、それを読む段との間のフィードバック経路）であり、どの部品も単体では正しく動いていたため、緑の試験群と整合した文書がそのまま『健全』の証拠として読めてしまった。加えて ADR-120 の分類は決定時点では事実に一致していたので、文書監査から見ても矛盾は現れない。欠陥は静的な記述の誤りではなく、状態が変化したときに分類が追随しないという時間依存の性質であり、スナップショットを対象とする監査・試験・報告のいずれの観測面にも像を結ばなかった。修正済み（fixed）であることは、この観測面の穴を塞いでいない。受入試験は今回の一段（FORMALIZE）についての具体条件であって、同型の未接続がほかに無いことを検査する不変条件ではない。"
+  }
+}

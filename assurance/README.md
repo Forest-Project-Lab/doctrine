@@ -115,6 +115,10 @@ PASS（適合の証拠あり）/ FAIL（走ったが不適合）/ UNKNOWN（観�
 - `assurance/ledger/` — 選別した証拠（コミットする）。`smoke-latest.json` は直近の煙試験の記録。
 - `assurance/ledger/runs/` — 生の実行記録（コミットしない。使い捨て）。
 - 各記録は commit SHA（コミットの識別子）・SDK 版・model・プロンプトの sha256（内容の指紋）・費用・所要時間を持つ。
+- 台帳に置く成果物の種別は、正本が**読む関数の名**を持つか、**読まない理由**を持つかの
+  ちょうど一方に属する（ADR-124）。表は `harness/orchestrator.py` の `LEDGER_KINDS`。
+  どちらも無い種別と、どの宣言にも当たらないファイルが在る間は `orchestrator.py validate`
+  が赤になる。走らせ手を足すときは、その成果を正本が読む段を同じ差分で足すこと。
 
 ## してはならないこと
 

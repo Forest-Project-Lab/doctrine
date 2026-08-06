@@ -240,11 +240,49 @@
       "shipped": false,
       "fix_note": "latest_scenarios() を足し、生き残りが在れば FORMALIZE を、無ければ DISCOVER を挙げる。FORMALIZE を NAMEABLE_STATES へ移した。受入は test_formalize_is_named_when_survivors_exist ほか1件",
       "pattern_note": "INC-012（状態が名指しできない）と同型の三度目。走らせ手を足すときは、その成果を正本が読む段も同時に足す",
-      "cast_analysis": "pending",
+      "cast_analysis": "done",
       "evidence_refs": [
         "assurance/harness/orchestrator.py",
         "ADR-120"
-      ]
+      ],
+      "cast_analysis_ref": "assurance/ledger/cast/INC-015-discover-output-invisible-to-canon.json",
+      "cast_analyzed_at": "2026-08-06T06:57:28Z"
+    },
+    {
+      "id": "INC-016-cast-analysis-content-unread-by-canon",
+      "date": "2026-08-06",
+      "summary": "事故分析の記録 ledger/cast/*.json は正本に『読まれている』と宣言できるが、読み手 evaluator_outputs_latest が見るのは generated_at だけである。統制欠陥・先行指標・新規 scenario 候補・推奨は、正本にも走らせ手にも一度も入力されない。分析は毎反復買われるが、その中身は次の行動を変えない",
+      "detected_by": "ADR-124 の不変条件（台帳の種別ごとに読取経路か理由か）を実装した直後、その検査の限界を測って見つけた（2026-08-06）。種別の粒度では緑になるが、中身の粒度では未接続が残る",
+      "impact": "CAST の推奨のうち機構化が要る6件と、P1 の新規仮説3件が、人が読んで手で拾わない限り死ぬ。INC-015 の分析が名指しした『記録は在り、伝達と適用が無い』が、事故分析の成果そのものについても成り立っている",
+      "fixed": false,
+      "shipped": false,
+      "pattern_note": "INC-012・INC-015・ADR-124 と同型の四度目。ただし粒度が一段深い —— ファイルは読まれており、読まれていないのは中身である。ADR-124 の検査はこの形を赤にできない（同 ADR の帰結に明記）",
+      "cast_analysis": "pending",
+      "evidence_kind": "measurement",
+      "evidence_refs": [
+        "assurance/harness/orchestrator.py",
+        "assurance/harness/schemas.py",
+        "assurance/ledger/cast/INC-015-discover-output-invisible-to-canon.json",
+        "ADR-124"
+      ],
+      "evidence": "orchestrator.py の evaluator_outputs_latest は cast/*.json から generated_at のみを取る。schemas.py が定める new_scenario_candidates・recommendations を読む箇所は harness 内に無い（grep で 0 件）"
+    },
+    {
+      "id": "INC-017-accepted-adr-born-red-is-unfixable",
+      "date": "2026-08-06",
+      "summary": "status: accepted で新規作成した ADR がリンタの ERROR を持つと、正規の道具では直せない。ガードは既存 ADR の本文改変を拒み（carve-out は status 遷移と superseded_by 付与だけ）、accepted → proposed の逆向きは carve-out の外にある。リンタは PostToolUse なので、赤が判るのは凍った後である",
+      "detected_by": "ADR-124 を accepted で書き、BANNED_SYNONYM の ERROR を直そうとして Edit が拒まれた（2026-08-06、本反復中の実測）",
+      "impact": "未コミットの草稿なら消して書き直せるが、その経路はガードを通らない（NONGOAL-001 が認める穴）。コミット済みなら誤字一つに後継 ADR が要る。ガード自身の註記は『proposed の ADR は一件も生まれなかった(実測)』と記しており、木の全 ADR がこの一方通行の扉を初回の Write で通っている",
+      "fixed": false,
+      "shipped": false,
+      "workaround": "ADR は status: proposed で起こし、リンタを緑にしてから accepted へ遷移する（本反復の ADR-124 はこの道で作り直した）",
+      "cast_analysis": "pending",
+      "evidence_kind": "measurement",
+      "evidence_refs": [
+        "plugin/scripts/policy-guard.py",
+        "doctrine_docs/packaging/decisions/ADR-124-ledger-kinds-are-read-or-declared-unread.md"
+      ],
+      "evidence": "policy-guard.py の _adr_change_is_carveout_only 周辺（『既存ADR %s は改変できません(status遷移とsuperseded_by付与のみ可)。』）と、その直前に出た docs-linter の BANNED_SYNONYM ERROR"
     }
   ]
 }
