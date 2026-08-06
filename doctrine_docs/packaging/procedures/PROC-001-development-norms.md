@@ -6,7 +6,7 @@ domain: packaging
 status: current
 owner: doctrine-maintainers
 created: 2026-07-28
-updated: 2026-08-05
+updated: 2026-08-06
 sources: [doctrine_docs/packaging/decisions/ADR-047-development-methodology.md, doctrine_docs/packaging/decisions/ADR-068-code-audit-residues.md, doctrine_docs/packaging/decisions/ADR-071-release-integrity-gate.md, doctrine_docs/packaging/decisions/ADR-114-assurance-sdk-lane.md, doctrine_docs/packaging/decisions/ADR-115-viewpoint-lane-orchestration.md, doctrine_docs/packaging/decisions/ADR-116-evaluation-model-floor.md]
 depends_on: [ICD-008]
 llm_context: task
@@ -81,6 +81,11 @@ per-turn の性能は受入の門で凍結する: 合成 1,500 文書で 1 編�
   （ADR-125）。処遇は事故分析の記録へ書き戻さず、別の台帳に置く。却下は理由を、
   機構化済みは証拠のポインタを持つ。所有者判断を要すると分析が印した推奨は、
   レーンの未着手に混ぜず、正本が数えて一覧に載せる。
+- 保証が寄りかかる想定は、決定でも非目標でもなく想定として登記簿に名指しする
+  （ADR-126）。各項は検証者の欄（居なければ null と明記）と、二条件を満たす
+  先行指標を一つ以上持つ。観測には日付と状態語彙を添え、成り立たないと判った
+  指標も理由つきで残す。PASS（適合の証拠あり）でない観測を持つ想定は、対応する事象が立っていない
+  かぎり次の行動に挙がり続け、その位置は推奨の山より前とする。
 - 証拠の照合は主張を単位とする（ADR-121）。解決する出典を一つでも保つ主張は残し、
   解決しない出典は外して刻む。刻まれた主張だけでは事象を閉じない。事象の証拠は
   構造化した参照が索引で解決するか、体系の外の証拠として宣言されていること。

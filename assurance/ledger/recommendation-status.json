@@ -44,6 +44,19 @@
       "index": 0,
       "state": "pending",
       "note": "半分だけ着地している。sdk_lane.classify_error は例外型（構造化属性）で分岐するが、認証の判定は依然として文言の部分一致（_AUTH_MARKERS）に依存し、分類不能は UNKNOWN のまま通過して所有者判断へは回らない。本セッションで実例が出た —— CLI が is_error=true かつ subtype='success'・errors=[] を返し、SDK がそれを『Claude Code returned an error result: success』という文言へ変え、レーンは UNKNOWN と分類した。"
+    },
+    {
+      "incident_id": "INC-001-sessionend-audit-gap",
+      "index": 5,
+      "state": "landed",
+      "evidence_ref": "assurance/ledger/assumptions.json（ASM-001・ASM-002）／doctrine_docs/packaging/decisions/ADR-126-assurance-assumptions-are-named.md／assurance/harness/orchestrator.py の load_assumptions・assumption_backlog・REVIEW_ASSUMPTION",
+      "note": "二つの想定を ASM-001・ASM-002 として登記簿へ載せ、失効の先行指標を併記した。初回の観測は実測で埋めてある —— ASM-001 は FAIL と UNKNOWN、ASM-002 は PASS。指標として成り立たない案は rejected_indicators に理由つきで残した（『mtime が generated_at より新しければ監査以外が触った』は測定で反証。generated_at は当日 0 時であって書き込み時刻ではない）。正本が読む段も同じ差分で足した。"
+    },
+    {
+      "incident_id": "INC-001-sessionend-audit-gap",
+      "index": 6,
+      "state": "pending",
+      "note": "切り分けは進んだが結論には至っていない。2026-08-06 に実測: (a) 導入複製 (67475de) の docs-audit.py を hook と同一の引数で走らせると exit 0 で要約を書く —— コマンドの失敗説は二度目の反証。(b) 要約は 2026-08-04 のまま、08-05・08-06 のセッションは書いていない —— 不実行は継続。(c) ADR-119 の印は現場に無いが、理由は不実行ではなく導入複製に印のコードが無いこと。**そして本件の 2026-08-05 の結論『導入複製は 0.10.0 に追いついているので版とは無関係』は成り立たない** —— 版番号は 15 コミットにわたって同じで、複製の同一性を判定しない（INC-019 として分離）。版の遅れ説は反証されておらず、反証済みとして扱っていた。"
     }
   ]
 }

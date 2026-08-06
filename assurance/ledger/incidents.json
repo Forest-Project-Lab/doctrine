@@ -20,6 +20,10 @@
       "evidence_refs": [
         ".claude/.cache/last-audit.json",
         "SessionEnd"
+      ],
+      "refuted_2026-08-06": "上の gap_still_open_2026-08-05 の根拠が成り立たない。『導入複製は 0.10.0 に追いついている(hook-stamps の hook_inject_version)ので版とは無関係』と書いたが、0.10.0 という版番号は 15 コミットにわたって同じであり、複製の同一性を判定しない。実際の複製は gitCommitSha 67475de(HEAD b00e085 より 15 コミット前)である。版の遅れ説は反証されていない。この取り違えは INC-019 として分離した。",
+      "assumption_refs": [
+        "ASM-001-sessionend-always-fires"
       ]
     },
     {
@@ -309,6 +313,24 @@
       "residual": "gitignore の状態は JSON の trace_coverage に載るので完全な沈黙ではない。だが totals にも findings にも現れず、人が読む文言も『悉皆モード』と書くだけで、前提が欠けたことは告げない",
       "cast_analysis_ref": "assurance/ledger/cast/INC-018-audit-degrades-into-a-tree-finding.json",
       "cast_analyzed_at": "2026-08-06T11:56:03Z"
+    },
+    {
+      "id": "INC-019-version-string-does-not-identify-the-copy",
+      "date": "2026-08-06",
+      "summary": "導入複製の同一性を版番号で判ずる前提が成り立たない。複製は gitCommitSha 67475de・version 0.10.0、リポジトリは HEAD b00e085・version 0.10.0 で、その間に 15 コミット在るのに版番号は等しい。版遅れの検出（ADR-070）は黙り、後から入れた検出器（ADR-119 の SessionEnd 印）は現場に存在しないまま『前方寛容』の不在と見分けがつかない",
+      "detected_by": "反復4の APPLY_FINDINGS（INC-001 推奨#5）で想定の登記簿を作り、その初回観測として ASM-003 を実測したとき（2026-08-06）",
+      "impact": "INC-001 が 2026-08-05 に記録した結論『導入複製は 0.10.0 に追いついている(hook-stamps の hook_inject_version)ので、版とは無関係に空いている』が成り立たない。この結論は hook_inject_version に寄りかかっており、その値は 15 コミットにわたって同じである。INC-001 の切り分け（推奨#6）は、反証されていない仮説を反証済みとして扱っていた",
+      "fixed": false,
+      "shipped": false,
+      "cast_analysis": "pending",
+      "evidence_kind": "measurement",
+      "evidence_refs": [
+        "assurance/ledger/assumptions.json",
+        "doctrine_docs/packaging/decisions/ADR-070-version-lag-detection.md",
+        "doctrine_docs/packaging/decisions/ADR-119-audit-execution-stamp.md"
+      ],
+      "evidence": "~/.claude/plugins/installed_plugins.json: installPath .../doctrine/0.10.0・version 0.10.0・gitCommitSha 67475de7fddf174b43d6a4dc79cb899dcd24cfc5・lastUpdated 2026-08-05T05:02:48Z。git rev-list --count 67475de..HEAD = 15。git log 67475de..HEAD -- plugin/.claude-plugin/plugin.json は空（版は動いていない）。導入複製の scripts/docs-audit.py に hook_session_end_audit は 0 件、リポジトリ側は 1 件",
+      "residual": "版番号を毎コミット動かす案は配布物の版番号の変更に当たり所有者判断（ADR-116 と同じ区分）。gitCommitSha は installed_plugins.json に在るので、複製の同一性を SHA で見る経路は作りうるが、それが配布境界の観測に当たるかは INC-001 推奨#3（所有者判断）と重なる"
     }
   ]
 }
