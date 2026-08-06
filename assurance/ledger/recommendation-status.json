@@ -111,6 +111,19 @@
       "index": 5,
       "state": "pending",
       "note": "所有者判断ではない（ADR-127 の六類型に当たらない）が、決定は要る。木の既定はNONGOAL-001 第9項が『拒否の往復の証跡は持たない』側に置いており、再検討の条件は『機能カナリアが入るまで』である。過検出の代理指標はそれとは別の問いで、記録を.claude/.cache に閉じれば DECIDED-001 事実7（通信しない）にも NONGOAL 第15項（承認なしの外部送信をしない）にも触れない。ただし代理指標を真の指標と読ませない書き方が要る。設計を ADR で下すべき案件として未着手に残す。"
+    },
+    {
+      "incident_id": "INC-002-termcheck-ascii-substring",
+      "index": 6,
+      "state": "landed",
+      "evidence_ref": "plugin/scripts/_termcheck.py の _find_ascii_word（af9c858）／doctrine_docs/_system/watchlist.md 第2項",
+      "note": "判定した: **一般規則であり個別除外ではない**。af9c858 が入れた _find_ascii_word は _ASCII_SYNONYM_RE（^[A-Za-z0-9]+$）に当たる同義語**すべて**に ASCII の語境界を要求する 一般規則で、`IF` を除外表へ足してはいない。コミットの本文も『承認複合語の覆いへ英単語は 足さない（ADR-082 の「覆いは雛形・仕様が定める語に限る」を維持）』と明記している。WATCH-001 第2項も事例ではなく軸として記録済み。よって推奨が付けた条件『個別除外であれば 同型再発の未閉事象として台帳に残す』の前件が成り立たず、新しい未閉事象は立てない。"
+    },
+    {
+      "incident_id": "INC-002-termcheck-ascii-substring",
+      "index": 7,
+      "state": "pending",
+      "note": "洗い出しは行い、反例はまだ当てていない（半分）。推奨が名指した二箇所を実測した: (a) docs-audit の findings 判定 —— 部分一致で語を判ずる箇所は無い。近似重複は _check_near_duplicate が語の Jaccard で判じ、部分文字列を見ない。`_CTX_BEGIN not in body` は 印の有無であって語の照合ではない。(b) dep-graph の逆依存解析 —— _dep_in は id の完全一致の 写像で、部分一致を使わない。加えて同じ軸を持つ第三の箇所を見つけた: docs-linter の _DECISION_HEADING_RE（`決定(?![的論])`。ADR-082・WATCH-001 第10項）で、こちらも既に 一般規則になっている。**限界を明記する**: この洗い出しは三ファイルへの grep であって網羅では ない（思いつかない≠網羅）。残る作業は、見つけた二箇所（_find_ascii_word・_DECISION_HEADING_RE）へ失敗様式の軸から生成した反例を当てることで、これは INC-002#2 / INC-011#1（軸への展開を手順へ組み込む）と同じ作業に合流する。"
     }
   ]
 }
