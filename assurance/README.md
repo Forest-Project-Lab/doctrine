@@ -82,6 +82,14 @@ APPLY_FINDINGS（推奨の処遇決め）・FAIL（不適合）・UNASSESSED（�
 | cast | CAST ハンドブック | CAST_ANALYSIS（FAIL・事象の後） | 事象と統制構造 → 統制欠陥・先行指標 |
 | challenge | （共通） | CHALLENGE | DISCOVER の構造化 JSON だけ → 判定 |
 
+発火点ごとの走らせ手の対応は `harness/orchestrator.py` の `FIRING_POINTS` が正本である
+（ADR-128）。各発火点は「実行器・prompt 組み立て関数・台帳の成果物種別」の三点を持つか、
+「未実装である旨と理由」を持つかのちょうど一方に属し、表の鍵集合はレーンの `fires_on` の
+合併と一致する（両方向の差集合が空）。**現状 `FORMALIZE` と `VERIFY` は未実装と明記された
+状態で緑になる** —— 緑は「実装されている」ではなく「実装されていないことが宣言されている」
+の意味であり、`status` の `firing_points.unimplemented` に理由つきで出続ける。是正は
+事象 INC-021 が持つ。
+
 冊子の取り込みは jerg → stpa → cast の順。事象は `ledger/incidents.json` に積み、
 cast 分析が済むまで閉じない。「済んだ」の定義は ADR-117 と ADR-121 が持つ —— 応答が
 `CAST_ANALYSIS_SCHEMA` へ適合し、参照照合を通った統制欠陥が一つ以上残り、

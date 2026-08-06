@@ -1,0 +1,669 @@
+{
+  "accepted_flaws": [
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "jerg レーンは fires_on=('MAP_COVERAGE','FORMALIZE','VERIFY') を宣言するが、harness/ の実行器（7つ）にも prompts.build_*（5つ）にも FORMALIZE・VERIFY に対応する実体が無い。状態機械が持つ FIX_APPLIED → VERIFY → ATTACK_EVALUATOR の遷移のうち、VERIFY で実行される制御動作（修正の独立な確認）が存在せず、反復は FIX の後そのまま RECORD へ抜けている。安全制約『修正は、それを作った経路とは別の経路で確かめてから正本にする』が強制される地点が構造上どこにも無い。",
+      "evidence_ref": "assurance/harness/orchestrator.py, prompts.py, schemas.py（事象の記録による。本セッションからは未検証）",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "accidents-from-inadequate-constraint-enforcement",
+        "安全活動の独立確認",
+        "each-component-enforces-its-constraints",
+        "宣言された設計と実動作の突合"
+      ],
+      "why_it_seemed_adequate": "fires_on のタプルは宣言のみで実装の存在を要求しない書式であり、レーン表を読む側には段が構成済みに見える。宣言のうち MAP_COVERAGE は実際に走るためレーン自体は生きており、決定論試験も既存の経路を通って緑になる。schemas.py:290 に FORMALIZE 成果物のスキーマが、:109 に VERDICT（CHALLENGE/VERIFY 用）が在ることは、段が用意されつつあるという読み方と整合する。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "レーンのフィードバック手段は assurance/ledger/ と決定論試験の成否だが、走らせ手の無い段は成果物を生まないため、台帳には『VERIFY の成果物が欠けている』という形の記録すら現れない。LEDGER_KINDS に両段の成果物種別が無い以上、不在を不在として観測する語彙が台帳側に存在しない。制御動作の不実行が、無音のまま経過する。",
+      "evidence_ref": "schemas.py の LEDGER_KINDS（FORMALIZE・VERIFY の成果物種別なし）",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "全コントロールループにフィードバック必須",
+        "controller-needs-concrete-feedback-channels",
+        "欠落・不十分なコントロールの明示的表示"
+      ],
+      "why_it_seemed_adequate": "台帳は『積まれたもの』を見る設計で、これまでの事象は積まれた物の不足や誤りとして現れてきた。生まれなかった成果物という形の欠落は、それまでの事象群の中に前例が無く、台帳の設計時に想定する対象の外に落ちていた。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "宣言と実装の乖離に対しては既に二つの検出（ADR-120 の状態の二分、ADR-124 の台帳の成果物の二分）が置かれている。前者は状態の側だけを、後者は生まれた成果物の側だけを対象にするため、『宣言された発火点に走らせ手が対応しているか』という第三の面はいずれの対象範囲にも入らない。成果物が生まれないので未宣言のファイルも出ず、二つの検出はどちらも赤にならない。",
+      "evidence_ref": "事象の記録 impact 節（ADR-120・ADR-124 の二分。本セッションからは未検証）",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "監査の検出力評価",
+        "監査のすり抜け時に監査手順を是正",
+        "全体健全性と部分健全性の分離評価",
+        "共通の体系的要因による多重防護の無効化"
+      ],
+      "why_it_seemed_adequate": "二つの二分は、それぞれが遭遇した実際の乖離事象に対して設計され、その事象を確かに捉えた。二つが並んで在ることは、乖離という族が二方向から挟まれているという読み方を与え、三つ目の面が残っていることは、その面で事象が起きるまで観測点を持たなかった。"
+    },
+    {
+      "control_element_id": "OWNER",
+      "description": "所有者へ届く手掛かりは進捗報告・PR の diff・台帳の三つである。状態機械が VERIFY を含み、運転手順 §2 が VERIFY を『名指しされないが反復の中で順に踏む』側に置いているため、これら三つの手掛かりからは反復が独立検証を経たと読める。所有者のプロセスモデルには独立検証の段が入っているが、実状態にはそれが無い。既知の穴『報告が実施ではなく意図を書いていても人からは見分けにくい』と同じ面に、報告者の意図とは無関係に、構造の側から同じ形の像が作られている。",
+      "evidence_ref": "事象の記録 impact 節（状態機械の遷移・運転手順 §2）",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "プロセスモデルと実状態の不整合",
+        "process-model-inconsistency-causes-unsafe-control",
+        "defects-in-information-providing-systems",
+        "include-information-supplier-defect"
+      ],
+      "why_it_seemed_adequate": "状態機械と運転手順は統治木の側で承認された記述であり、所有者にとってそれらは実装の仕様として読める。台帳に VERIFY 由来の成果物が無いことは、その種別が台帳の語彙に無い以上、欠落としては見えない。"
+    },
+    {
+      "control_element_id": "CI_RELEASE_CHECK",
+      "description": "CI は merge 前に赤で止める権限を持つが、その判定材料（ジョブの成否・docs-audit の JSON）に、レーンが宣言する発火点と実行器・prompt 組立関数・台帳種別の対応を突き合わせる検査が含まれていない。実行器の不在はファイルの不在であり、既存の試験と監査はいずれも存在するファイルを入力とするため、不在は入力にならない。",
+      "evidence_ref": ".github/workflows（統制構造の記述による）",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "手順の存在確認でなく適用確認",
+        "監査の検出力評価",
+        "検出失敗の原因調査",
+        "宣言された設計と実動作の突合"
+      ],
+      "why_it_seemed_adequate": "CI はリポジトリ正本を対象とし、決定論試験は在る経路を通して緑になる。宣言と実装の対応は、これまで人が読めば判る種類の一致として扱われ、機械照合の対象として定式化された前例が無い。"
+    },
+    {
+      "control_element_id": "GOVERNANCE_TREE",
+      "description": "運転手順 §2（文書）・状態機械（orchestrator.py）・実行器群（harness/）の三者は別々に改訂され、三者の集合が一致することを要求する経路が無い。文書側は VERIFY を『名指しされないが順に踏む』側へ置くことで、実体の有無を問わない記述に到達している。手順と実際の振る舞いのギャップを継続的に観測する仕組みが統治木の側にも無い。",
+      "evidence_ref": "運転手順 §2（事象の記録による。本セッションからは未検証）",
+      "flaw_type": "統制どうしの調整の欠如",
+      "normative_refs": [
+        "monitor-procedure-practice-gap",
+        "設計上と実際の伝達経路の照合",
+        "全変更のハザード分析と承認"
+      ],
+      "why_it_seemed_adequate": "『名指しされないが順に踏む』という記述は、反復の柔軟性を保つための表現として妥当であり、名指しを減らすことは手順の劈齒化を防ぐ方向の変更に見える。文書は docs-audit と docs-linter の対象だが、両者が見るのは文書の内部整合と統治木の依存であって、文書が名指しする段の実体ではない。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "発火点の宣言が先に増え、走らせ手が後から付いてこない、あるいは付いてこないまま据え置かれるという漸進的な乖離を、レーン自身が検出する手段を持たない。同型は既に一度観測されている（control_structure が .claude/.cache/last-audit.json を feedback と宣言しながら stat する経路が無い件、INC-001 推奨#2 の処遇 note）が、その観測は当該の宣言一件の処遇に留まり、『宣言が実体を持たない箇所を列挙する』という一般化された検査へは接続していない。",
+      "evidence_ref": "事象の記録 family 節（INC-001 推奨#2 の処遇 note）",
+      "flaw_type": "統制自身の劣化を検出できない",
+      "normative_refs": [
+        "計画外変化の検出手段",
+        "変化ドリフトの事前検出",
+        "クリティカル条項の静かな削除の検出",
+        "audit-findings-must-be-closed"
+      ],
+      "why_it_seemed_adequate": "INC-001 の該当箇所は note として処遇され、個別の記述として閉じた。個別事象の処遇として妥当であり、そこから族を抽出する工程は、二例目が現れるまで起動条件を持たなかった。"
+    },
+    {
+      "control_element_id": "OWNER",
+      "description": "所有者には互換性・配布境界・評価 model の最低線・push/PR/merge の範囲について決める権限が割り当てられているが、『宣言された評価段が実体を伴うことを誰が担保するか』という責任は、統制構造のどの要素の仕様にも書かれていない。担い手の不在は、ASSURANCE_LANE・CI_RELEASE_CHECK・GOVERNANCE_TREE のいずれもが、その面を他が見ていると読める状態を作る。",
+      "evidence_ref": "統制構造一覧（当該の担い手の記述が見当たらない）",
+      "flaw_type": "統制どうしの調整の欠如",
+      "normative_refs": [
+        "responsibility-authority-accountability-in-spec",
+        "責任の空白は構造再設計",
+        "監視責任の空白排除"
+      ],
+      "why_it_seemed_adequate": "三つの要素がそれぞれ隣接する面（状態・成果物・文書）を見ているため、構造図の上では乖離の族が覆われているように見える。責任の割当は、覆われていない面が事象として現れるまで、空白として可視化されない。"
+    }
+  ],
+  "analysis": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "jerg レーンは fires_on=('MAP_COVERAGE','FORMALIZE','VERIFY') を宣言するが、harness/ の実行器（7つ）にも prompts.build_*（5つ）にも FORMALIZE・VERIFY に対応する実体が無い。状態機械が持つ FIX_APPLIED → VERIFY → ATTACK_EVALUATOR の遷移のうち、VERIFY で実行される制御動作（修正の独立な確認）が存在せず、反復は FIX の後そのまま RECORD へ抜けている。安全制約『修正は、それを作った経路とは別の経路で確かめてから正本にする』が強制される地点が構造上どこにも無い。",
+        "evidence_ref": "assurance/harness/orchestrator.py, prompts.py, schemas.py（事象の記録による。本セッションからは未検証）",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "accidents-from-inadequate-constraint-enforcement",
+          "安全活動の独立確認",
+          "each-component-enforces-its-constraints",
+          "宣言された設計と実動作の突合"
+        ],
+        "why_it_seemed_adequate": "fires_on のタプルは宣言のみで実装の存在を要求しない書式であり、レーン表を読む側には段が構成済みに見える。宣言のうち MAP_COVERAGE は実際に走るためレーン自体は生きており、決定論試験も既存の経路を通って緑になる。schemas.py:290 に FORMALIZE 成果物のスキーマが、:109 に VERDICT（CHALLENGE/VERIFY 用）が在ることは、段が用意されつつあるという読み方と整合する。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "レーンのフィードバック手段は assurance/ledger/ と決定論試験の成否だが、走らせ手の無い段は成果物を生まないため、台帳には『VERIFY の成果物が欠けている』という形の記録すら現れない。LEDGER_KINDS に両段の成果物種別が無い以上、不在を不在として観測する語彙が台帳側に存在しない。制御動作の不実行が、無音のまま経過する。",
+        "evidence_ref": "schemas.py の LEDGER_KINDS（FORMALIZE・VERIFY の成果物種別なし）",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "全コントロールループにフィードバック必須",
+          "controller-needs-concrete-feedback-channels",
+          "欠落・不十分なコントロールの明示的表示"
+        ],
+        "why_it_seemed_adequate": "台帳は『積まれたもの』を見る設計で、これまでの事象は積まれた物の不足や誤りとして現れてきた。生まれなかった成果物という形の欠落は、それまでの事象群の中に前例が無く、台帳の設計時に想定する対象の外に落ちていた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "宣言と実装の乖離に対しては既に二つの検出（ADR-120 の状態の二分、ADR-124 の台帳の成果物の二分）が置かれている。前者は状態の側だけを、後者は生まれた成果物の側だけを対象にするため、『宣言された発火点に走らせ手が対応しているか』という第三の面はいずれの対象範囲にも入らない。成果物が生まれないので未宣言のファイルも出ず、二つの検出はどちらも赤にならない。",
+        "evidence_ref": "事象の記録 impact 節（ADR-120・ADR-124 の二分。本セッションからは未検証）",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "監査の検出力評価",
+          "監査のすり抜け時に監査手順を是正",
+          "全体健全性と部分健全性の分離評価",
+          "共通の体系的要因による多重防護の無効化"
+        ],
+        "why_it_seemed_adequate": "二つの二分は、それぞれが遭遇した実際の乖離事象に対して設計され、その事象を確かに捉えた。二つが並んで在ることは、乖離という族が二方向から挟まれているという読み方を与え、三つ目の面が残っていることは、その面で事象が起きるまで観測点を持たなかった。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者へ届く手掛かりは進捗報告・PR の diff・台帳の三つである。状態機械が VERIFY を含み、運転手順 §2 が VERIFY を『名指しされないが反復の中で順に踏む』側に置いているため、これら三つの手掛かりからは反復が独立検証を経たと読める。所有者のプロセスモデルには独立検証の段が入っているが、実状態にはそれが無い。既知の穴『報告が実施ではなく意図を書いていても人からは見分けにくい』と同じ面に、報告者の意図とは無関係に、構造の側から同じ形の像が作られている。",
+        "evidence_ref": "事象の記録 impact 節（状態機械の遷移・運転手順 §2）",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "プロセスモデルと実状態の不整合",
+          "process-model-inconsistency-causes-unsafe-control",
+          "defects-in-information-providing-systems",
+          "include-information-supplier-defect"
+        ],
+        "why_it_seemed_adequate": "状態機械と運転手順は統治木の側で承認された記述であり、所有者にとってそれらは実装の仕様として読める。台帳に VERIFY 由来の成果物が無いことは、その種別が台帳の語彙に無い以上、欠落としては見えない。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "CI は merge 前に赤で止める権限を持つが、その判定材料（ジョブの成否・docs-audit の JSON）に、レーンが宣言する発火点と実行器・prompt 組立関数・台帳種別の対応を突き合わせる検査が含まれていない。実行器の不在はファイルの不在であり、既存の試験と監査はいずれも存在するファイルを入力とするため、不在は入力にならない。",
+        "evidence_ref": ".github/workflows（統制構造の記述による）",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "手順の存在確認でなく適用確認",
+          "監査の検出力評価",
+          "検出失敗の原因調査",
+          "宣言された設計と実動作の突合"
+        ],
+        "why_it_seemed_adequate": "CI はリポジトリ正本を対象とし、決定論試験は在る経路を通して緑になる。宣言と実装の対応は、これまで人が読めば判る種類の一致として扱われ、機械照合の対象として定式化された前例が無い。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "運転手順 §2（文書）・状態機械（orchestrator.py）・実行器群（harness/）の三者は別々に改訂され、三者の集合が一致することを要求する経路が無い。文書側は VERIFY を『名指しされないが順に踏む』側へ置くことで、実体の有無を問わない記述に到達している。手順と実際の振る舞いのギャップを継続的に観測する仕組みが統治木の側にも無い。",
+        "evidence_ref": "運転手順 §2（事象の記録による。本セッションからは未検証）",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "monitor-procedure-practice-gap",
+          "設計上と実際の伝達経路の照合",
+          "全変更のハザード分析と承認"
+        ],
+        "why_it_seemed_adequate": "『名指しされないが順に踏む』という記述は、反復の柔軟性を保つための表現として妥当であり、名指しを減らすことは手順の劈齒化を防ぐ方向の変更に見える。文書は docs-audit と docs-linter の対象だが、両者が見るのは文書の内部整合と統治木の依存であって、文書が名指しする段の実体ではない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "発火点の宣言が先に増え、走らせ手が後から付いてこない、あるいは付いてこないまま据え置かれるという漸進的な乖離を、レーン自身が検出する手段を持たない。同型は既に一度観測されている（control_structure が .claude/.cache/last-audit.json を feedback と宣言しながら stat する経路が無い件、INC-001 推奨#2 の処遇 note）が、その観測は当該の宣言一件の処遇に留まり、『宣言が実体を持たない箇所を列挙する』という一般化された検査へは接続していない。",
+        "evidence_ref": "事象の記録 family 節（INC-001 推奨#2 の処遇 note）",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "計画外変化の検出手段",
+          "変化ドリフトの事前検出",
+          "クリティカル条項の静かな削除の検出",
+          "audit-findings-must-be-closed"
+        ],
+        "why_it_seemed_adequate": "INC-001 の該当箇所は note として処遇され、個別の記述として閉じた。個別事象の処遇として妥当であり、そこから族を抽出する工程は、二例目が現れるまで起動条件を持たなかった。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者には互換性・配布境界・評価 model の最低線・push/PR/merge の範囲について決める権限が割り当てられているが、『宣言された評価段が実体を伴うことを誰が担保するか』という責任は、統制構造のどの要素の仕様にも書かれていない。担い手の不在は、ASSURANCE_LANE・CI_RELEASE_CHECK・GOVERNANCE_TREE のいずれもが、その面を他が見ていると読める状態を作る。",
+        "evidence_ref": "統制構造一覧（当該の担い手の記述が見当たらない）",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "responsibility-authority-accountability-in-spec",
+          "責任の空白は構造再設計",
+          "監視責任の空白排除"
+        ],
+        "why_it_seemed_adequate": "三つの要素がそれぞれ隣接する面（状態・成果物・文書）を見ているため、構造図の上では乖離の族が覆われているように見える。責任の割当は、覆われていない面が事象として現れるまで、空白として可視化されない。"
+      }
+    ],
+    "hazard": "保証レーンが、宣言された評価段のうち走らせ手を持たない段（FORMALIZE・VERIFY）を含んだまま運転され、その段を通過したという外観（状態機械の遷移・運転手順の記述）だけが生成される状態。すなわち、統制構造が自身の宣言と実装の一致を保証しないまま、宣言の側だけを所有者と後続の統制へ提示している状態。",
+    "incident_id": "INC-021-lane-fires-on-declared-without-a-runner",
+    "leading_indicators": [
+      {
+        "indicator": "宣言された発火点のうち、実行器・prompt 組立関数・台帳種別の三点すべてを解決できない発火点の件数",
+        "observable": "orchestrator.LANES の全 fires_on 要素の和集合（および状態機械の状態集合）に対し、harness/ のモジュール名・prompts.build_* の関数名・schemas.LEDGER_KINDS の種別を名前解決した結果の欠落数",
+        "threshold": "三点のいずれかを解決できない発火点が 1 件でも在れば赤（merge を止める）。件数の推移ではなく 0 か否かで判定する",
+        "version_independent": true,
+        "where": "CI（.github/workflows）内でリポジトリ正本に対して実行する突合ジョブ",
+        "why_version_independent": "CI はリポジトリ正本を対象に走り、判定材料は同一コミット内の宣言と実装のみで閉じる。利用者環境の導入複製の版に依存しない"
+      },
+      {
+        "indicator": "状態機械が宣言する遷移のうち、直近の反復で一度も観測されていない遷移の集合",
+        "observable": "assurance/ledger/ に残る反復記録から復元した状態遷移の集合と、orchestrator の状態機械が宣言する遷移集合の差",
+        "threshold": "直近 20 反復で一度も観測されない遷移が在れば警告。そのうち独立検証に相当する段（FIX_APPLIED → VERIFY）を含む場合は赤",
+        "version_independent": true,
+        "where": "assurance/ledger/ を入力とする集計（レーン起動時、および CI）",
+        "why_version_independent": "台帳とオーケストレータはいずれもリポジトリ側の資産であり、導入複製の更新状況を参照しない"
+      },
+      {
+        "indicator": "台帳の成果物種別ごとの休眠期間と、対応種別を持たない段の件数",
+        "observable": "LEDGER_KINDS の各種別について、最後に成果物が積まれてからの反復数。並びに、状態機械が到達可能と宣言する段のうち LEDGER_KINDS に対応種別を持たないものの件数",
+        "threshold": "到達可能と宣言される段の種別が 10 反復連続でゼロなら警告。対応種別が LEDGER_KINDS に存在しない段が 1 件でも在れば赤",
+        "version_independent": true,
+        "where": "assurance/ledger/ と schemas.LEDGER_KINDS の突合",
+        "why_version_independent": "台帳と種別定義は同一リポジトリ内で完結し、導入複製の版に依存しない"
+      },
+      {
+        "indicator": "fires_on・状態集合への要素追加に、対応実装が同一変更内で同伴する率",
+        "observable": "PR の diff における fires_on タプルまたは状態集合への要素追加と、同一 diff 内の実行器モジュール・prompts.build_*・LEDGER_KINDS 追加の同伴有無",
+        "threshold": "同伴しない追加が 1 件でも在れば赤。同伴を欠く場合は、その段を明示的に未実装と印付けする変更を同一 diff に含めることを要求する",
+        "version_independent": true,
+        "where": "PR の diff（所有者の手掛かり）および CI の diff 検査",
+        "why_version_independent": "判定は PR の差分のみで閉じ、導入複製を参照しない"
+      },
+      {
+        "indicator": "運転手順が名指しする段の集合と、実行器集合の差",
+        "observable": "doctrine_docs の運転手順（§2 を含む）が言及する段名の抽出結果と、harness/ の実行器名の差集合を docs-audit の findings に追加した項目",
+        "threshold": "差集合が空でなければ findings に赤を立て、鼓動でターンごとに提示する",
+        "version_independent": false,
+        "where": "plugin/scripts/docs-audit.py が SessionEnd に走査し、.claude/.cache/last-audit.json 経由で次セッションの注入と鼓動へ渡す",
+        "why_version_independent": "この検出器は導入複製の側（plugin/scripts/）で動くため、複製の版が遅れると新設の検査項目自体が利用者環境へ届かない。INC-005 の『古びの検出器が古びる』共通原因故障をそのまま引き継ぐ。指標 1・4 を CI 側に置くのは、この面を版に依存しない経路で二重化するためである"
+      }
+    ],
+    "loss": "修正が正しいことを独立に確かめる段を一度も経ないまま、保証レーンの成果（適用済みの修正とその判定）が台帳へ記録され、所有者へ正本として渡る。独立検証を前提に読まれる成果が、実際にはその前提を伴わずに流通している。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "列挙したすべての宣言が実行経路を解決できれば、族としての一般化は棄却される",
+        "hypothesis": "fires_on 以外にも、宣言だけが在って実行経路を解決できない結線が統制構造の各所に在る（control_structure の feedback 宣言と .claude/.cache/last-audit.json を stat する経路の不在と同型）",
+        "oracle": "全宣言（レーンの fires_on、状態機械の遷移、control_structure の feedback、LEDGER_KINDS、手順文書が名指しする段）を列挙し、各々について対応する実行経路を名前解決する一覧表を作る",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "jerg 以外のレーンで欠落が 0 件なら、本件は当該レーン固有の未完成として扱える",
+        "hypothesis": "走らせ手を欠く段は jerg レーンの FORMALIZE・VERIFY だけではなく、他レーンの宣言にも同種の欠落が在る",
+        "oracle": "orchestrator.LANES の全レーンについて fires_on × 三点解決（実行器・prompt・台帳種別）の表を作成する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "片方だけが検出する欠陥が有意に存在すれば、追加検出力ありとして仮説は棄却される",
+        "hypothesis": "VERIFY 段を実装しても、評価役が同系 model であるため、検出できる欠陥の集合が CHALLENGE のそれと強く相関し、独立検証としての追加検出力が小さい",
+        "oracle": "既知の欠陥を注入した修正を VERIFY 相当と CHALLENGE に同時に掛け、検出の一致率と、片方だけが検出した欠陥の件数を測る",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "版遅れが観測されない、あるいは更新が即時であれば棄却される",
+        "hypothesis": "導入複製側で走る検出器（docs-audit・鼓動）に新しい検査項目を追加しても、複製の版遅れにより一定期間は利用者環境で無効である",
+        "oracle": "marketplace への反映から、利用者環境で新項目が発火するまでの世代差と経過時間を計測する",
+        "severity": "P2"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "orchestrator の起動時に、全レーンの fires_on と状態機械の状態集合について、実行器モジュール・prompts.build_*・LEDGER_KINDS の三点を名前解決し、解決できない発火点が在る場合は起動を止める（宣言の成立を実装の存在に依存させ、乖離が沈黙できない形にする）",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "CI に、宣言された発火点と走らせ手の三点対応を突き合わせるジョブを追加し、欠落 1 件で赤にする（先行指標 1）。導入複製側の docs-audit ではなく CI 側に置き、版遅れに依存しない経路で観測する",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "台帳に、成果物の不在を記録する語彙を設ける（状態機械が到達可能と宣言する段について成果物種別を LEDGER_KINDS に登録し、未実行を未実行として積む）。生まれなかった成果物が沈黙しない形にする",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "走らせ手の無い FORMALIZE・VERIFY について、(a) 実行器を実装する、(b) 宣言から外す、(c) 当面は明示的に未実装と印を付けて運転手順と状態機械の双方に反映する、のいずれを採るかを決める。独立検証を経ない成果を正本として扱う期間をどこまで許容するかの判断を含む",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "運転手順 §2 に、名指しされない段の扱い（実体の有無を問わない記述をどこまで認めるか）と、VERIFY が担う独立性の水準（セッションの独立までであり IV&V は非目標であること）を段の定義として併記する",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "宣言と実装の乖離が沈黙する族について、fires_on 以外の宣言（control_structure の feedback、状態機械の遷移、手順文書の段名）を全件列挙し、実行経路を解決できない箇所の一覧を作る。INC-001 推奨#2 の処遇 note を本件と同じ族として接続する",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "VERIFY を経ずに RECORD へ抜けた反復の件数と、その成果が正本として渡った範囲を台帳から遡って測り、損失の広がりを確定する",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "評価役がすべて opus-5 系であることによる共通原因故障の残余リスクについて、走らせ手を追加した後も独立性がセッションの独立に留まる前提を維持するかを決める",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      }
+    ],
+    "systemic_factors": [
+      "宣言（レーン表の fires_on・状態機械の遷移・手順文書の段名）が、対応する実装の存在を要求しない書式で書かれている。宣言を書く行為と実装を置く行為が別々に完了でき、両者の一致を保つ責任がどの統制要素の仕様にも割り当てられていない",
+      "既存の乖離検出はいずれも『在る物』を入力として走る形をしており、生まれなかった成果物という不在は、どの検出器の入力にもならない。台帳の語彙（LEDGER_KINDS）に種別が無い段については、欠落を記述する言葉自体が構造に存在しない",
+      "レーン単位の健全性（jerg が MAP_COVERAGE で実際に走ること）が、段単位の健全性の代理として読まれている。構成要素の健全性とシステム全体の健全性が分離して評価されていない",
+      "検出器の一部（docs-audit・鼓動）が導入複製の側で動くため、複製の版遅れが検出器の遅れを伴う。新しい検査を足しても、その到達はリポジトリ側から観測できない（INC-005）",
+      "評価役がすべて同系 model であり、独立性はセッションの独立（run_one_shot・setting_sources=[]・空の一時 cwd・構造化 JSON）までに留まる。NONGOAL-001 第17項が IV&V を非目標と明示しているため、走らせ手を追加しても組織的独立には届かず、共通原因故障は残余リスクとして残る",
+      "同型の先行事例（control_structure が feedback と宣言しながら stat する経路が無い件）が note として個別処遇され、族として一般化する工程が起動しなかった。個別処遇と族の抽出を接続する経路が構造に無い"
+    ],
+    "unknowns": [
+      "【実在の未確認】本分析は与えられた統制構造と事象の記録のみに依拠しており、実測を行えていない。本セッションの作業ディレクトリは空の一時ディレクトリで、assurance/harness/orchestrator.py・prompts.py・schemas.py のいずれも参照できなかった（これはセッションの独立という設計と整合するが、独立確認ができないことは変わらない）。事象が名指しする機構のうち、統制構造に要素として実在が示されているのは ASSURANCE_LANE（実体 assurance/harness/orchestrator.py）のみであり、状態機械の状態集合と遷移、prompts.build_*、LEDGER_KINDS、ADR-120、ADR-124、NONGOAL-001 第17項、運転手順 §2 は統制構造の一覧に現れず、本分析ではその実在を確かめていない。上記の統制欠陥は、これらが事象の記録どおり実在するという前提の上に立つ。前提が崩れる場合、少なくとも欠陥の第3・第4・第6 項は成立しない。confidence を low としたのはこのためである",
+      "assurance/ledger/ に状態遷移そのものが記録されているか。記録されていない場合、先行指標 2 は観測手段の追加を先に要する",
+      "schemas.py:290 に FORMALIZE 成果物のスキーマが在り実行器が無い経緯 — スキーマが先に書かれて実行器が続かなかったのか、実行器が後から取り除かれたのか。導入の経緯が判れば同型の乖離が生じる時点を特定できる",
+      "VERIFY を経ずに RECORD へ抜けた反復が何件在り、そのうち何件の成果が所有者へ正本として渡ったか。損失の広がりが未測である",
+      "schemas.py:109 の VERDICT が CHALLENGE 側で実際に使用されているか。使用されているなら、VERIFY の走らせ手は既存部品の再構成で足りる可能性がある",
+      "ADR-120 と ADR-124 が、対象範囲を状態と成果物に限ることを明示的に決めていたのか、暗黙にそうなっていたのか。明示されていた場合、範囲外の面を誰が見るかの決定が併せて記録されているか",
+      "運転手順 §2 の『名指しされないが反復の中で順に踏む』という記述が、実体の有無を問わない意図で書かれたのか、実体が在る前提で書かれたのか"
+    ],
+    "why_existing_assurance_missed": "既存の保証は、ADR-120 の二分（状態）、ADR-124 の二分（台帳の成果物）、決定論試験、docs-audit の四つで構成され、いずれも「在る物」を入力として走る形をしている。走らせ手の無い段は成果物を生まないため、台帳に未宣言のファイルも欠落記録も現れず、LEDGER_KINDS に種別が無いので不在を表す語彙すら無い。状態の側では遷移が宣言どおり定義されているため矛盾も出ない。加えて、jerg レーンは MAP_COVERAGE で実際に走るため、レーン単位の健全性が段単位の健全性の代理として読める状態にあった。結果として、宣言と実装の乖離という族に対して二つの検出器が置かれていたにもかかわらず、両者の対象範囲の外にある第三の面（宣言された発火点と走らせ手の対応）は、所有者の問いを契機に状態機械と実行器の対応を実測するまで観測点を持たなかった。修正が未了（fixed=false）である現時点でも、この観測点の不在は保証側の構造としてそのまま残っている。"
+  },
+  "control_structure_ids": [
+    "OWNER",
+    "CI_RELEASE_CHECK",
+    "SESSION_START_CONTRACT",
+    "HEARTBEAT",
+    "PRE_TOOL_GUARD",
+    "POST_TOOL_LINTER",
+    "SESSION_END_AUDIT",
+    "CAPTURE_NUDGE",
+    "PLUGIN_DISTRIBUTION",
+    "ASSURANCE_LANE",
+    "GOVERNANCE_TREE"
+  ],
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "duration_ms": 723109,
+  "errors": [],
+  "execution_kind": "real-sdk",
+  "flaws_with_citation_defect": [],
+  "generated_at": "2026-08-06T16:28:13Z",
+  "git_dirty": false,
+  "git_sha": "58cbfdad92bc6f8a7399107094eccdf547d93075",
+  "incident_evidence": {
+    "kind": "measurement",
+    "refs": [
+      "assurance/harness/orchestrator.py",
+      "assurance/harness/prompts.py",
+      "assurance/harness/schemas.py"
+    ],
+    "resolved": [
+      "assurance/harness/orchestrator.py",
+      "assurance/harness/prompts.py",
+      "assurance/harness/schemas.py"
+    ],
+    "unresolved": [],
+    "verifiable": true
+  },
+  "incident_id": "INC-021-lane-fires-on-declared-without-a-runner",
+  "incident_sha256": "f176ed66c7ec4547c90f947915e0d697118d994d27fc817ba000a2375a7d2c77",
+  "init": {
+    "claude_code_version": "2.1.221",
+    "model": "claude-opus-5",
+    "session_id": "87f990d8-2bdd-44f9-b542-6d2d87d2daa5",
+    "tools_count": 27
+  },
+  "kind": "cast-analysis",
+  "leading_indicators_defined": true,
+  "options": {
+    "allowed_tools": [],
+    "cwd": "/tmp/assurance-cast-m7xlpt_p",
+    "effort": "high",
+    "max_budget_usd": 4.0,
+    "max_turns": 8,
+    "model": "claude-opus-5",
+    "setting_sources": [],
+    "timeout_s": 900
+  },
+  "oracle": "structured_output がレーン側再検証にも適合",
+  "principles_offered": 337,
+  "prompt_sha256": "9166b54ad8e601fdeb25b859097d2e4c8da7b459e5ebc36eb9d50ee28d2585e6",
+  "rejected_flaws": [],
+  "result_meta": {
+    "duration_api_ms": 716375,
+    "is_error": false,
+    "num_turns": 5,
+    "session_id": "87f990d8-2bdd-44f9-b542-6d2d87d2daa5",
+    "subtype": "success",
+    "total_cost_usd": 2.2926965,
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 96253,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 96253,
+      "cache_read_input_tokens": 115459,
+      "inference_geo": "not_available",
+      "input_tokens": 6,
+      "iterations": "list",
+      "output_tokens": 49415,
+      "server_tool_use": {
+        "web_fetch_requests": 0,
+        "web_search_requests": 0
+      },
+      "service_tier": "standard",
+      "speed": "standard"
+    }
+  },
+  "schema_sha256": "0d1643d5e16353723405302c1f6ffcf753915e2a4f27a3530e8ef9a9ee45cb46",
+  "sdk_version": "0.2.129",
+  "settled": true,
+  "status": "PASS",
+  "structured_output": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "jerg レーンは fires_on=('MAP_COVERAGE','FORMALIZE','VERIFY') を宣言するが、harness/ の実行器（7つ）にも prompts.build_*（5つ）にも FORMALIZE・VERIFY に対応する実体が無い。状態機械が持つ FIX_APPLIED → VERIFY → ATTACK_EVALUATOR の遷移のうち、VERIFY で実行される制御動作（修正の独立な確認）が存在せず、反復は FIX の後そのまま RECORD へ抜けている。安全制約『修正は、それを作った経路とは別の経路で確かめてから正本にする』が強制される地点が構造上どこにも無い。",
+        "evidence_ref": "assurance/harness/orchestrator.py, prompts.py, schemas.py（事象の記録による。本セッションからは未検証）",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "accidents-from-inadequate-constraint-enforcement",
+          "安全活動の独立確認",
+          "each-component-enforces-its-constraints",
+          "宣言された設計と実動作の突合"
+        ],
+        "why_it_seemed_adequate": "fires_on のタプルは宣言のみで実装の存在を要求しない書式であり、レーン表を読む側には段が構成済みに見える。宣言のうち MAP_COVERAGE は実際に走るためレーン自体は生きており、決定論試験も既存の経路を通って緑になる。schemas.py:290 に FORMALIZE 成果物のスキーマが、:109 に VERDICT（CHALLENGE/VERIFY 用）が在ることは、段が用意されつつあるという読み方と整合する。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "レーンのフィードバック手段は assurance/ledger/ と決定論試験の成否だが、走らせ手の無い段は成果物を生まないため、台帳には『VERIFY の成果物が欠けている』という形の記録すら現れない。LEDGER_KINDS に両段の成果物種別が無い以上、不在を不在として観測する語彙が台帳側に存在しない。制御動作の不実行が、無音のまま経過する。",
+        "evidence_ref": "schemas.py の LEDGER_KINDS（FORMALIZE・VERIFY の成果物種別なし）",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "全コントロールループにフィードバック必須",
+          "controller-needs-concrete-feedback-channels",
+          "欠落・不十分なコントロールの明示的表示"
+        ],
+        "why_it_seemed_adequate": "台帳は『積まれたもの』を見る設計で、これまでの事象は積まれた物の不足や誤りとして現れてきた。生まれなかった成果物という形の欠落は、それまでの事象群の中に前例が無く、台帳の設計時に想定する対象の外に落ちていた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "宣言と実装の乖離に対しては既に二つの検出（ADR-120 の状態の二分、ADR-124 の台帳の成果物の二分）が置かれている。前者は状態の側だけを、後者は生まれた成果物の側だけを対象にするため、『宣言された発火点に走らせ手が対応しているか』という第三の面はいずれの対象範囲にも入らない。成果物が生まれないので未宣言のファイルも出ず、二つの検出はどちらも赤にならない。",
+        "evidence_ref": "事象の記録 impact 節（ADR-120・ADR-124 の二分。本セッションからは未検証）",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "監査の検出力評価",
+          "監査のすり抜け時に監査手順を是正",
+          "全体健全性と部分健全性の分離評価",
+          "共通の体系的要因による多重防護の無効化"
+        ],
+        "why_it_seemed_adequate": "二つの二分は、それぞれが遭遇した実際の乖離事象に対して設計され、その事象を確かに捉えた。二つが並んで在ることは、乖離という族が二方向から挟まれているという読み方を与え、三つ目の面が残っていることは、その面で事象が起きるまで観測点を持たなかった。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者へ届く手掛かりは進捗報告・PR の diff・台帳の三つである。状態機械が VERIFY を含み、運転手順 §2 が VERIFY を『名指しされないが反復の中で順に踏む』側に置いているため、これら三つの手掛かりからは反復が独立検証を経たと読める。所有者のプロセスモデルには独立検証の段が入っているが、実状態にはそれが無い。既知の穴『報告が実施ではなく意図を書いていても人からは見分けにくい』と同じ面に、報告者の意図とは無関係に、構造の側から同じ形の像が作られている。",
+        "evidence_ref": "事象の記録 impact 節（状態機械の遷移・運転手順 §2）",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "プロセスモデルと実状態の不整合",
+          "process-model-inconsistency-causes-unsafe-control",
+          "defects-in-information-providing-systems",
+          "include-information-supplier-defect"
+        ],
+        "why_it_seemed_adequate": "状態機械と運転手順は統治木の側で承認された記述であり、所有者にとってそれらは実装の仕様として読める。台帳に VERIFY 由来の成果物が無いことは、その種別が台帳の語彙に無い以上、欠落としては見えない。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "CI は merge 前に赤で止める権限を持つが、その判定材料（ジョブの成否・docs-audit の JSON）に、レーンが宣言する発火点と実行器・prompt 組立関数・台帳種別の対応を突き合わせる検査が含まれていない。実行器の不在はファイルの不在であり、既存の試験と監査はいずれも存在するファイルを入力とするため、不在は入力にならない。",
+        "evidence_ref": ".github/workflows（統制構造の記述による）",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "手順の存在確認でなく適用確認",
+          "監査の検出力評価",
+          "検出失敗の原因調査",
+          "宣言された設計と実動作の突合"
+        ],
+        "why_it_seemed_adequate": "CI はリポジトリ正本を対象とし、決定論試験は在る経路を通して緑になる。宣言と実装の対応は、これまで人が読めば判る種類の一致として扱われ、機械照合の対象として定式化された前例が無い。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "運転手順 §2（文書）・状態機械（orchestrator.py）・実行器群（harness/）の三者は別々に改訂され、三者の集合が一致することを要求する経路が無い。文書側は VERIFY を『名指しされないが順に踏む』側へ置くことで、実体の有無を問わない記述に到達している。手順と実際の振る舞いのギャップを継続的に観測する仕組みが統治木の側にも無い。",
+        "evidence_ref": "運転手順 §2（事象の記録による。本セッションからは未検証）",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "monitor-procedure-practice-gap",
+          "設計上と実際の伝達経路の照合",
+          "全変更のハザード分析と承認"
+        ],
+        "why_it_seemed_adequate": "『名指しされないが順に踏む』という記述は、反復の柔軟性を保つための表現として妥当であり、名指しを減らすことは手順の劈齒化を防ぐ方向の変更に見える。文書は docs-audit と docs-linter の対象だが、両者が見るのは文書の内部整合と統治木の依存であって、文書が名指しする段の実体ではない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "発火点の宣言が先に増え、走らせ手が後から付いてこない、あるいは付いてこないまま据え置かれるという漸進的な乖離を、レーン自身が検出する手段を持たない。同型は既に一度観測されている（control_structure が .claude/.cache/last-audit.json を feedback と宣言しながら stat する経路が無い件、INC-001 推奨#2 の処遇 note）が、その観測は当該の宣言一件の処遇に留まり、『宣言が実体を持たない箇所を列挙する』という一般化された検査へは接続していない。",
+        "evidence_ref": "事象の記録 family 節（INC-001 推奨#2 の処遇 note）",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "計画外変化の検出手段",
+          "変化ドリフトの事前検出",
+          "クリティカル条項の静かな削除の検出",
+          "audit-findings-must-be-closed"
+        ],
+        "why_it_seemed_adequate": "INC-001 の該当箇所は note として処遇され、個別の記述として閉じた。個別事象の処遇として妥当であり、そこから族を抽出する工程は、二例目が現れるまで起動条件を持たなかった。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者には互換性・配布境界・評価 model の最低線・push/PR/merge の範囲について決める権限が割り当てられているが、『宣言された評価段が実体を伴うことを誰が担保するか』という責任は、統制構造のどの要素の仕様にも書かれていない。担い手の不在は、ASSURANCE_LANE・CI_RELEASE_CHECK・GOVERNANCE_TREE のいずれもが、その面を他が見ていると読める状態を作る。",
+        "evidence_ref": "統制構造一覧（当該の担い手の記述が見当たらない）",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "responsibility-authority-accountability-in-spec",
+          "責任の空白は構造再設計",
+          "監視責任の空白排除"
+        ],
+        "why_it_seemed_adequate": "三つの要素がそれぞれ隣接する面（状態・成果物・文書）を見ているため、構造図の上では乖離の族が覆われているように見える。責任の割当は、覆われていない面が事象として現れるまで、空白として可視化されない。"
+      }
+    ],
+    "hazard": "保証レーンが、宣言された評価段のうち走らせ手を持たない段（FORMALIZE・VERIFY）を含んだまま運転され、その段を通過したという外観（状態機械の遷移・運転手順の記述）だけが生成される状態。すなわち、統制構造が自身の宣言と実装の一致を保証しないまま、宣言の側だけを所有者と後続の統制へ提示している状態。",
+    "incident_id": "INC-021-lane-fires-on-declared-without-a-runner",
+    "leading_indicators": [
+      {
+        "indicator": "宣言された発火点のうち、実行器・prompt 組立関数・台帳種別の三点すべてを解決できない発火点の件数",
+        "observable": "orchestrator.LANES の全 fires_on 要素の和集合（および状態機械の状態集合）に対し、harness/ のモジュール名・prompts.build_* の関数名・schemas.LEDGER_KINDS の種別を名前解決した結果の欠落数",
+        "threshold": "三点のいずれかを解決できない発火点が 1 件でも在れば赤（merge を止める）。件数の推移ではなく 0 か否かで判定する",
+        "version_independent": true,
+        "where": "CI（.github/workflows）内でリポジトリ正本に対して実行する突合ジョブ",
+        "why_version_independent": "CI はリポジトリ正本を対象に走り、判定材料は同一コミット内の宣言と実装のみで閉じる。利用者環境の導入複製の版に依存しない"
+      },
+      {
+        "indicator": "状態機械が宣言する遷移のうち、直近の反復で一度も観測されていない遷移の集合",
+        "observable": "assurance/ledger/ に残る反復記録から復元した状態遷移の集合と、orchestrator の状態機械が宣言する遷移集合の差",
+        "threshold": "直近 20 反復で一度も観測されない遷移が在れば警告。そのうち独立検証に相当する段（FIX_APPLIED → VERIFY）を含む場合は赤",
+        "version_independent": true,
+        "where": "assurance/ledger/ を入力とする集計（レーン起動時、および CI）",
+        "why_version_independent": "台帳とオーケストレータはいずれもリポジトリ側の資産であり、導入複製の更新状況を参照しない"
+      },
+      {
+        "indicator": "台帳の成果物種別ごとの休眠期間と、対応種別を持たない段の件数",
+        "observable": "LEDGER_KINDS の各種別について、最後に成果物が積まれてからの反復数。並びに、状態機械が到達可能と宣言する段のうち LEDGER_KINDS に対応種別を持たないものの件数",
+        "threshold": "到達可能と宣言される段の種別が 10 反復連続でゼロなら警告。対応種別が LEDGER_KINDS に存在しない段が 1 件でも在れば赤",
+        "version_independent": true,
+        "where": "assurance/ledger/ と schemas.LEDGER_KINDS の突合",
+        "why_version_independent": "台帳と種別定義は同一リポジトリ内で完結し、導入複製の版に依存しない"
+      },
+      {
+        "indicator": "fires_on・状態集合への要素追加に、対応実装が同一変更内で同伴する率",
+        "observable": "PR の diff における fires_on タプルまたは状態集合への要素追加と、同一 diff 内の実行器モジュール・prompts.build_*・LEDGER_KINDS 追加の同伴有無",
+        "threshold": "同伴しない追加が 1 件でも在れば赤。同伴を欠く場合は、その段を明示的に未実装と印付けする変更を同一 diff に含めることを要求する",
+        "version_independent": true,
+        "where": "PR の diff（所有者の手掛かり）および CI の diff 検査",
+        "why_version_independent": "判定は PR の差分のみで閉じ、導入複製を参照しない"
+      },
+      {
+        "indicator": "運転手順が名指しする段の集合と、実行器集合の差",
+        "observable": "doctrine_docs の運転手順（§2 を含む）が言及する段名の抽出結果と、harness/ の実行器名の差集合を docs-audit の findings に追加した項目",
+        "threshold": "差集合が空でなければ findings に赤を立て、鼓動でターンごとに提示する",
+        "version_independent": false,
+        "where": "plugin/scripts/docs-audit.py が SessionEnd に走査し、.claude/.cache/last-audit.json 経由で次セッションの注入と鼓動へ渡す",
+        "why_version_independent": "この検出器は導入複製の側（plugin/scripts/）で動くため、複製の版が遅れると新設の検査項目自体が利用者環境へ届かない。INC-005 の『古びの検出器が古びる』共通原因故障をそのまま引き継ぐ。指標 1・4 を CI 側に置くのは、この面を版に依存しない経路で二重化するためである"
+      }
+    ],
+    "loss": "修正が正しいことを独立に確かめる段を一度も経ないまま、保証レーンの成果（適用済みの修正とその判定）が台帳へ記録され、所有者へ正本として渡る。独立検証を前提に読まれる成果が、実際にはその前提を伴わずに流通している。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "列挙したすべての宣言が実行経路を解決できれば、族としての一般化は棄却される",
+        "hypothesis": "fires_on 以外にも、宣言だけが在って実行経路を解決できない結線が統制構造の各所に在る（control_structure の feedback 宣言と .claude/.cache/last-audit.json を stat する経路の不在と同型）",
+        "oracle": "全宣言（レーンの fires_on、状態機械の遷移、control_structure の feedback、LEDGER_KINDS、手順文書が名指しする段）を列挙し、各々について対応する実行経路を名前解決する一覧表を作る",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "jerg 以外のレーンで欠落が 0 件なら、本件は当該レーン固有の未完成として扱える",
+        "hypothesis": "走らせ手を欠く段は jerg レーンの FORMALIZE・VERIFY だけではなく、他レーンの宣言にも同種の欠落が在る",
+        "oracle": "orchestrator.LANES の全レーンについて fires_on × 三点解決（実行器・prompt・台帳種別）の表を作成する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "片方だけが検出する欠陥が有意に存在すれば、追加検出力ありとして仮説は棄却される",
+        "hypothesis": "VERIFY 段を実装しても、評価役が同系 model であるため、検出できる欠陥の集合が CHALLENGE のそれと強く相関し、独立検証としての追加検出力が小さい",
+        "oracle": "既知の欠陥を注入した修正を VERIFY 相当と CHALLENGE に同時に掛け、検出の一致率と、片方だけが検出した欠陥の件数を測る",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "版遅れが観測されない、あるいは更新が即時であれば棄却される",
+        "hypothesis": "導入複製側で走る検出器（docs-audit・鼓動）に新しい検査項目を追加しても、複製の版遅れにより一定期間は利用者環境で無効である",
+        "oracle": "marketplace への反映から、利用者環境で新項目が発火するまでの世代差と経過時間を計測する",
+        "severity": "P2"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "orchestrator の起動時に、全レーンの fires_on と状態機械の状態集合について、実行器モジュール・prompts.build_*・LEDGER_KINDS の三点を名前解決し、解決できない発火点が在る場合は起動を止める（宣言の成立を実装の存在に依存させ、乖離が沈黙できない形にする）",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "CI に、宣言された発火点と走らせ手の三点対応を突き合わせるジョブを追加し、欠落 1 件で赤にする（先行指標 1）。導入複製側の docs-audit ではなく CI 側に置き、版遅れに依存しない経路で観測する",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "台帳に、成果物の不在を記録する語彙を設ける（状態機械が到達可能と宣言する段について成果物種別を LEDGER_KINDS に登録し、未実行を未実行として積む）。生まれなかった成果物が沈黙しない形にする",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "走らせ手の無い FORMALIZE・VERIFY について、(a) 実行器を実装する、(b) 宣言から外す、(c) 当面は明示的に未実装と印を付けて運転手順と状態機械の双方に反映する、のいずれを採るかを決める。独立検証を経ない成果を正本として扱う期間をどこまで許容するかの判断を含む",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "運転手順 §2 に、名指しされない段の扱い（実体の有無を問わない記述をどこまで認めるか）と、VERIFY が担う独立性の水準（セッションの独立までであり IV&V は非目標であること）を段の定義として併記する",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "宣言と実装の乖離が沈黙する族について、fires_on 以外の宣言（control_structure の feedback、状態機械の遷移、手順文書の段名）を全件列挙し、実行経路を解決できない箇所の一覧を作る。INC-001 推奨#2 の処遇 note を本件と同じ族として接続する",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "VERIFY を経ずに RECORD へ抜けた反復の件数と、その成果が正本として渡った範囲を台帳から遡って測り、損失の広がりを確定する",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "評価役がすべて opus-5 系であることによる共通原因故障の残余リスクについて、走らせ手を追加した後も独立性がセッションの独立に留まる前提を維持するかを決める",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      }
+    ],
+    "systemic_factors": [
+      "宣言（レーン表の fires_on・状態機械の遷移・手順文書の段名）が、対応する実装の存在を要求しない書式で書かれている。宣言を書く行為と実装を置く行為が別々に完了でき、両者の一致を保つ責任がどの統制要素の仕様にも割り当てられていない",
+      "既存の乖離検出はいずれも『在る物』を入力として走る形をしており、生まれなかった成果物という不在は、どの検出器の入力にもならない。台帳の語彙（LEDGER_KINDS）に種別が無い段については、欠落を記述する言葉自体が構造に存在しない",
+      "レーン単位の健全性（jerg が MAP_COVERAGE で実際に走ること）が、段単位の健全性の代理として読まれている。構成要素の健全性とシステム全体の健全性が分離して評価されていない",
+      "検出器の一部（docs-audit・鼓動）が導入複製の側で動くため、複製の版遅れが検出器の遅れを伴う。新しい検査を足しても、その到達はリポジトリ側から観測できない（INC-005）",
+      "評価役がすべて同系 model であり、独立性はセッションの独立（run_one_shot・setting_sources=[]・空の一時 cwd・構造化 JSON）までに留まる。NONGOAL-001 第17項が IV&V を非目標と明示しているため、走らせ手を追加しても組織的独立には届かず、共通原因故障は残余リスクとして残る",
+      "同型の先行事例（control_structure が feedback と宣言しながら stat する経路が無い件）が note として個別処遇され、族として一般化する工程が起動しなかった。個別処遇と族の抽出を接続する経路が構造に無い"
+    ],
+    "unknowns": [
+      "【実在の未確認】本分析は与えられた統制構造と事象の記録のみに依拠しており、実測を行えていない。本セッションの作業ディレクトリは空の一時ディレクトリで、assurance/harness/orchestrator.py・prompts.py・schemas.py のいずれも参照できなかった（これはセッションの独立という設計と整合するが、独立確認ができないことは変わらない）。事象が名指しする機構のうち、統制構造に要素として実在が示されているのは ASSURANCE_LANE（実体 assurance/harness/orchestrator.py）のみであり、状態機械の状態集合と遷移、prompts.build_*、LEDGER_KINDS、ADR-120、ADR-124、NONGOAL-001 第17項、運転手順 §2 は統制構造の一覧に現れず、本分析ではその実在を確かめていない。上記の統制欠陥は、これらが事象の記録どおり実在するという前提の上に立つ。前提が崩れる場合、少なくとも欠陥の第3・第4・第6 項は成立しない。confidence を low としたのはこのためである",
+      "assurance/ledger/ に状態遷移そのものが記録されているか。記録されていない場合、先行指標 2 は観測手段の追加を先に要する",
+      "schemas.py:290 に FORMALIZE 成果物のスキーマが在り実行器が無い経緯 — スキーマが先に書かれて実行器が続かなかったのか、実行器が後から取り除かれたのか。導入の経緯が判れば同型の乖離が生じる時点を特定できる",
+      "VERIFY を経ずに RECORD へ抜けた反復が何件在り、そのうち何件の成果が所有者へ正本として渡ったか。損失の広がりが未測である",
+      "schemas.py:109 の VERDICT が CHALLENGE 側で実際に使用されているか。使用されているなら、VERIFY の走らせ手は既存部品の再構成で足りる可能性がある",
+      "ADR-120 と ADR-124 が、対象範囲を状態と成果物に限ることを明示的に決めていたのか、暗黙にそうなっていたのか。明示されていた場合、範囲外の面を誰が見るかの決定が併せて記録されているか",
+      "運転手順 §2 の『名指しされないが反復の中で順に踏む』という記述が、実体の有無を問わない意図で書かれたのか、実体が在る前提で書かれたのか"
+    ],
+    "why_existing_assurance_missed": "既存の保証は、ADR-120 の二分（状態）、ADR-124 の二分（台帳の成果物）、決定論試験、docs-audit の四つで構成され、いずれも「在る物」を入力として走る形をしている。走らせ手の無い段は成果物を生まないため、台帳に未宣言のファイルも欠落記録も現れず、LEDGER_KINDS に種別が無いので不在を表す語彙すら無い。状態の側では遷移が宣言どおり定義されているため矛盾も出ない。加えて、jerg レーンは MAP_COVERAGE で実際に走るため、レーン単位の健全性が段単位の健全性の代理として読める状態にあった。結果として、宣言と実装の乖離という族に対して二つの検出器が置かれていたにもかかわらず、両者の対象範囲の外にある第三の面（宣言された発火点と走らせ手の対応）は、所有者の問いを契機に状態機械と実行器の対応を実測するまで観測点を持たなかった。修正が未了（fixed=false）である現時点でも、この観測点の不在は保証側の構造としてそのまま残っている。"
+  }
+}
