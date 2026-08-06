@@ -71,6 +71,8 @@ FIX → VERIFY → ATTACK_EVALUATOR → RECORD → CURATE（正本: `harness/orc
   解決する参照）か `evidence_kind`（external / conversational / measurement）を必ず持たせる。
 - `cast/<事象 id>.json` — 分析の結果（統制欠陥・先行指標・却下された欠陥つき）。
 - `red/<事象 id>.json` — 修正前に FAIL した証拠（最初から緑は再現と認めない）。
+- `scenarios/<日付>.json` — 創出した候補と独立批判の判定。生き残りが在れば正本が
+  FORMALIZE を挙げる（沈黙は ACCEPT と読まない。判定の無い候補は missing に残る）。
 - `smoke-latest.json` / `mutations-*.json` — 煙試験と故障注入の証拠。
   評価器の成果物が `mutations-*.json` の日付より新しければ、正本が ATTACK_EVALUATOR を
   次の行動に挙げる（ADR-120）。攻撃の設計に「これは捏造だ」と読める手掛かりを残さない。
@@ -89,6 +91,7 @@ assurance/.venv/bin/python assurance/harness/coverage.py init --book jerg      #
 assurance/.venv/bin/python assurance/harness/coverage.py stats                 # 五値の集計
 assurance/.venv/bin/python assurance/harness/cast_analysis.py --all            # 事象の分析 (ADR-117)
 assurance/.venv/bin/python assurance/harness/map_coverage.py --book jerg       # 五値の割当 (ADR-118)
+assurance/.venv/bin/python assurance/harness/discover.py                      # 創出と独立批判
 assurance/.venv/bin/python assurance/harness/attack_evaluator.py               # 評価器への故障注入 (ADR-120)
 assurance/.venv/bin/python assurance/harness/smoke.py            # 実 SDK 煙試験 (0/2/3/4)
 python3 -m unittest discover -s assurance/tests                  # レーン決定論試験

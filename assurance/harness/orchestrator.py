@@ -159,7 +159,7 @@ def catalog_status():
 # 実際に5反復手つかずだった（事象 INC-012）。増やすときはどちらかへ明記する。
 NAMEABLE_STATES = frozenset({
     "INGEST_NORMS", "MAP_COVERAGE", "CAST_ANALYSIS", "DISCOVER",
-    "ATTACK_EVALUATOR",
+    "ATTACK_EVALUATOR", "FORMALIZE",
 })
 
 # 反復の中の遷移。直前の成果物が在って初めて意味を持つので、帳簿だけからは
@@ -167,8 +167,7 @@ NAMEABLE_STATES = frozenset({
 # ここに置くことは「名指ししない」ことの明示であって、やらなくてよいという
 # 意味ではない。反復の中で順に踏む。
 WITHIN_CYCLE_STATES = frozenset({
-    "CHALLENGE", "FORMALIZE", "REPRODUCE_RED", "FIX", "VERIFY",
-    "RECORD", "CURATE",
+    "CHALLENGE", "REPRODUCE_RED", "FIX", "VERIFY", "RECORD", "CURATE",
 })
 
 
@@ -214,6 +213,26 @@ def evaluator_outputs_latest():
             except (OSError, ValueError):
                 continue
     return _max_date([v for v in seen if v])
+
+
+def latest_scenarios():
+    """直近の創出と批判の記録。無ければ None。
+
+    走らせ手を作っても、その成果を正本が見なければ同じ創出を毎回買い直す
+    （INC-012 と同型。事象 INC-015）。生き残った候補が在るなら次は定式化であり、
+    創出をもう一度挙げてはならない。
+    """
+    scn_dir = os.path.join(LANE_DIR, "ledger", "scenarios")
+    if not os.path.isdir(scn_dir):
+        return None
+    names = sorted(n for n in os.listdir(scn_dir) if n.endswith(".json"))
+    if not names:
+        return None
+    try:
+        with open(os.path.join(scn_dir, names[-1]), encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return None
 
 
 def attack_evidence_latest():
@@ -320,7 +339,16 @@ def next_actions():
     if not actions:
         # 空は「やることが無い」と読める。反復の既定の入口を必ず示す
         # （CAST_DONE・CURATED の遷移先。INC-006）。
-        actions.append("DISCOVER: 新しい失敗仮説の創出（前提はすべて充足）")
+        scn = latest_scenarios()
+        survivors = (scn or {}).get("survivors") or []
+        if survivors:
+            actions.append(
+                "FORMALIZE: 批判を生き残った候補 %d 件の定式化（%s の創出。%s）"
+                % (len(survivors), (scn or {}).get("date"),
+                   ", ".join(survivors[:3])
+                   + (" ほか" if len(survivors) > 3 else "")))
+        else:
+            actions.append("DISCOVER: 新しい失敗仮説の創出（前提はすべて充足）")
     return actions
 
 

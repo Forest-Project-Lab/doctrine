@@ -229,6 +229,22 @@
       "cast_analysis_ref": "assurance/ledger/cast/INC-014-evaluation-max-turns-marginal.json",
       "cast_analyzed_at": "2026-08-06T03:00:20Z",
       "evidence_kind": "measurement"
+    },
+    {
+      "id": "INC-015-discover-output-invisible-to-canon",
+      "date": "2026-08-06",
+      "summary": "DISCOVER の走らせ手を作ったのに、正本がその成果（scenarios の記録）を見ていなかった。創出と批判が済んだ直後も next_actions は DISCOVER を挙げ続け、同じ創出を毎回買い直す形になっていた",
+      "detected_by": "DISCOVER を初めて走らせた直後に status を見て気づいた（2026-08-06、merge 前）",
+      "root_cause_observed": "ADR-120 で『状態は名指しできるか、できないと明記されるか』を決めたが、成果物が生まれて名指しできるようになった状態を移す段が無かった。FORMALIZE は『帳簿だけからは指せない』側に置いたまま、指せる材料（生き残った候補）が台帳にできていた",
+      "fixed": true,
+      "shipped": false,
+      "fix_note": "latest_scenarios() を足し、生き残りが在れば FORMALIZE を、無ければ DISCOVER を挙げる。FORMALIZE を NAMEABLE_STATES へ移した。受入は test_formalize_is_named_when_survivors_exist ほか1件",
+      "pattern_note": "INC-012（状態が名指しできない）と同型の三度目。走らせ手を足すときは、その成果を正本が読む段も同時に足す",
+      "cast_analysis": "pending",
+      "evidence_refs": [
+        "assurance/harness/orchestrator.py",
+        "ADR-120"
+      ]
     }
   ]
 }

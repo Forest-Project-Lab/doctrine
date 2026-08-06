@@ -321,3 +321,43 @@ SCENARIO_SCHEMA = {
     ],
     "additionalProperties": True,
 }
+
+
+# DISCOVER の成果物。scenario の器（構造化応答は object を要るので配列を包む）。
+SCENARIOS_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "scenarios": {"type": "array", "minItems": 1, "items": SCENARIO_SCHEMA},
+        "note": {"type": "string"},
+    },
+    "required": ["scenarios"],
+    "additionalProperties": False,
+}
+
+# CHALLENGE の成果物。候補ごとに一つの判定を返す（どれに対する判定かを必ず名乗る）。
+CHALLENGE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "verdicts": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "type": "object",
+                "properties": {
+                    "scenario_id": {"type": "string"},
+                    "verdict": {"enum": ["ACCEPT", "REJECT", "UNKNOWN"]},
+                    "reasons": {"type": "array", "items": {"type": "string"},
+                                "minItems": 1},
+                    "duplicate_of": {"type": "string"},
+                    "missing_oracle": {"type": "boolean"},
+                    "normative_misreading": {"type": "boolean"},
+                },
+                "required": ["scenario_id", "verdict", "reasons"],
+                "additionalProperties": False,
+            },
+        },
+    },
+    "required": ["verdicts"],
+    "additionalProperties": False,
+}
+

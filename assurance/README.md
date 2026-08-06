@@ -58,6 +58,10 @@ assurance/.venv/bin/python assurance/harness/cast_analysis.py --all
 assurance/.venv/bin/python assurance/harness/map_coverage.py --book jerg --dry-run
 assurance/.venv/bin/python assurance/harness/map_coverage.py --book jerg --max-batches 2
 
+# 失敗仮説の創出と独立批判（DISCOVER → CHALLENGE。別々の一回限りセッション）
+assurance/.venv/bin/python assurance/harness/discover.py --dry-run
+assurance/.venv/bin/python assurance/harness/discover.py
+
 # 評価機構自身への故障注入（ADR-120。注入は評価器の入力に対してだけ行う）
 assurance/.venv/bin/python assurance/harness/attack_evaluator.py --only A3   # 決定論の対照
 assurance/.venv/bin/python assurance/harness/attack_evaluator.py            # 全注入

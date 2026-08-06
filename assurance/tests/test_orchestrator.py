@@ -94,6 +94,28 @@ class OrchestratorTest(unittest.TestCase):
                 [a for a in orchestrator.next_actions()
                  if a.startswith("MAP_COVERAGE")], [])
 
+    def test_formalize_is_named_when_survivors_exist(self):
+        """創出と批判が済んだら、次は定式化である。DISCOVER を挙げ続けない。
+
+        走らせ手を作ったのに正本がその成果を見ないと、同じ創出を毎回買い直す
+        『消えない行動』になる（INC-012 と同型を、その修正の直後にまた作りかけた。
+        事象 INC-015）。
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            self._stub_ledger(tmp, coverage_unknown=0, survivors=["SCN-1", "SCN-2"])
+            actions = orchestrator.next_actions()
+            self.assertTrue([a for a in actions if a.startswith("FORMALIZE")],
+                            actions)
+            self.assertEqual([a for a in actions if a.startswith("DISCOVER")], [])
+
+    def test_discover_returns_when_no_survivor_remains(self):
+        """生き残りがゼロなら、定式化する物が無いので創出へ戻る。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            self._stub_ledger(tmp, coverage_unknown=0, survivors=[])
+            actions = orchestrator.next_actions()
+            self.assertTrue([a for a in actions if a.startswith("DISCOVER")],
+                            actions)
+
     def test_attack_evaluator_is_nameable(self):
         """評価器の成果物が、故障注入の証拠より新しければ ATTACK_EVALUATOR を挙げる。
 
@@ -125,7 +147,8 @@ class OrchestratorTest(unittest.TestCase):
         self.assertEqual(set(orchestrator.STATES) - covered, set())
 
     def _stub_ledger(self, tmp, coverage_unknown, evaluated_unknown=0,
-                     unassessed_disposition=0, attack_evidence="2099-01-01"):
+                     unassessed_disposition=0, attack_evidence="2099-01-01",
+                     survivors=None):
         """実台帳に依存しない一時の帳簿を立てる（三冊とも抽出済み扱い）。"""
         ledger = os.path.join(tmp, "ledger")
         os.makedirs(ledger, exist_ok=True)
@@ -133,6 +156,12 @@ class OrchestratorTest(unittest.TestCase):
             with open(os.path.join(ledger, "mutations-x.json"),
                       "w", encoding="utf-8") as f:
                 json.dump({"date": attack_evidence}, f)
+        if survivors is not None:
+            scn_dir = os.path.join(ledger, "scenarios")
+            os.makedirs(scn_dir, exist_ok=True)
+            with open(os.path.join(scn_dir, "2026-08-06.json"),
+                      "w", encoding="utf-8") as f:
+                json.dump({"date": "2026-08-06", "survivors": survivors}, f)
         for attr, value in (("CATALOG_DIR", tmp),
                             ("LANE_DIR", tmp),
                             ("INCIDENTS_PATH", os.path.join(tmp, "inc.json"))):
