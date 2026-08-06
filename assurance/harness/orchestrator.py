@@ -39,6 +39,7 @@ STATES = (
     "VERIFY",            # 独立検証 + jerg レーンによる証拠の審査
     "ATTACK_EVALUATOR",  # 保証機構自身への故障注入
     "CAST_ANALYSIS",     # 失敗・事象からの統制分析（cast レーン）
+    "APPLY_FINDINGS",    # 事故分析の推奨の処遇決め（ADR-125）
     "RECORD",            # 恒久化（限定列挙）
     "CURATE",            # 重複統合・archive・平時コンテキスト最小化
 )
@@ -98,8 +99,10 @@ TRANSITIONS = (
      "guard": "attack_evidence_saved"},
     {"event": "INCIDENT",         "from": "*",             "to": "CAST_ANALYSIS",
      "guard": "incident_recorded"},   # 失敗はどの状態からでも CAST へ
-    {"event": "CAST_DONE",        "from": "CAST_ANALYSIS", "to": "DISCOVER",
+    {"event": "CAST_DONE",        "from": "CAST_ANALYSIS", "to": "APPLY_FINDINGS",
      "guard": "leading_indicators_defined"},
+    {"event": "FINDINGS_TRIAGED", "from": "APPLY_FINDINGS", "to": "DISCOVER",
+     "guard": "no_pending_recommendation"},
     {"event": "RECORDED",         "from": "RECORD",        "to": "CURATE",
      "guard": None},
     {"event": "CURATED",          "from": "CURATE",        "to": "DISCOVER",
@@ -128,6 +131,32 @@ def validate():
         if tr["to"] not in STATES:
             problems.append("遷移 %s の to が未知: %s" % (tr["event"], tr["to"]))
     problems.extend(_validate_ledger_kinds())
+    problems.extend(_validate_recommendation_status())
+    return problems
+
+
+def _validate_recommendation_status():
+    """推奨の処遇の書き方の検査（ADR-125）。
+
+    却下は理由を、機構化済みは証拠のポインタを必ず持つ。持たない処遇は
+    「片づいた」と読めてしまうので、根拠なき PASS と同じ扱いで赤にする。
+    """
+    problems = []
+    keys = {(r["incident_id"], r["index"]) for r in cast_recommendations()}
+    for (incident_id, index), row in sorted(
+            load_recommendation_status().items(), key=lambda kv: repr(kv[0])):
+        state = row.get("state")
+        where = "%s#%s" % (incident_id, index)
+        if state not in RECOMMENDATION_STATES:
+            problems.append("推奨 %s の処遇 %r が語彙に無い（%s）"
+                            % (where, state, "/".join(RECOMMENDATION_STATES)))
+            continue
+        if (incident_id, index) not in keys:
+            problems.append("推奨 %s の処遇が、存在しない推奨を指している" % where)
+        if state == "rejected" and not (row.get("note") or "").strip():
+            problems.append("推奨 %s の却下に理由が無い" % where)
+        if state == "landed" and not (row.get("evidence_ref") or "").strip():
+            problems.append("推奨 %s の『機構化済み』に証拠のポインタが無い" % where)
     return problems
 
 
@@ -193,7 +222,7 @@ def catalog_status():
 # 実際に5反復手つかずだった（事象 INC-012）。増やすときはどちらかへ明記する。
 NAMEABLE_STATES = frozenset({
     "INGEST_NORMS", "MAP_COVERAGE", "CAST_ANALYSIS", "DISCOVER",
-    "ATTACK_EVALUATOR", "FORMALIZE",
+    "ATTACK_EVALUATOR", "FORMALIZE", "APPLY_FINDINGS",
 })
 
 # 反復の中の遷移。直前の成果物が在って初めて意味を持つので、帳簿だけからは
@@ -239,6 +268,10 @@ LEDGER_KINDS = (
     {"kind": "mutations-<日付>.json",
      "match": "mutations-*.json",
      "read_by": ("attack_evidence_latest",),
+     "why_not_read": None},
+    {"kind": "recommendation-status.json",
+     "match": "recommendation-status.json",
+     "read_by": ("load_recommendation_status",),
      "why_not_read": None},
     {"kind": "red/<事象 id>.json",
      "match": "red/*.json",
@@ -370,6 +403,88 @@ def latest_scenarios():
         return None
 
 
+# 推奨の処遇。terminal は landed / rejected / owner の三つ。
+# owner が terminal なのは「レーンとしてはここで止まり、判断を仰ぐ」の意味であって、
+# 片づいたという意味ではない（status は別項として所有者へ列挙する）。
+RECOMMENDATION_STATES = ("pending", "landed", "rejected", "owner")
+TERMINAL_RECOMMENDATION_STATES = frozenset({"landed", "rejected", "owner"})
+
+
+def cast_recommendations():
+    """事故分析が出した推奨の全件。事象 id と番号で一意に指す。
+
+    事故分析の記録は日付だけが読まれ、統制欠陥・先行指標・新規仮説・推奨は
+    正本へ一度も入力されていなかった（INC-016。同型の四度目）。ADR-124 の
+    不変条件は種別の粒度までしか見ず、この形を赤にできなかった。
+    """
+    out = []
+    cast_dir = os.path.join(LANE_DIR, "ledger", "cast")
+    if not os.path.isdir(cast_dir):
+        return out
+    for name in sorted(os.listdir(cast_dir)):
+        if not name.endswith(".json"):
+            continue
+        try:
+            with open(os.path.join(cast_dir, name), encoding="utf-8") as f:
+                doc = json.load(f)
+        except (OSError, ValueError):
+            continue
+        analysis = doc.get("analysis") or {}
+        incident_id = analysis.get("incident_id") or doc.get("incident_id") or name
+        for index, rec in enumerate(analysis.get("recommendations") or []):
+            if not isinstance(rec, dict):
+                continue
+            out.append({
+                "incident_id": incident_id,
+                "index": index,
+                "action": rec.get("action") or "",
+                "kind": rec.get("kind") or "",
+                "owner_decision_required": bool(rec.get("owner_decision_required")),
+            })
+    return out
+
+
+def load_recommendation_status():
+    """推奨の処遇の台帳。鍵は (事象 id, 番号)。無ければ空。"""
+    path = os.path.join(LANE_DIR, "ledger", "recommendation-status.json")
+    if not os.path.isfile(path):
+        return {}
+    try:
+        with open(path, encoding="utf-8") as f:
+            rows = json.load(f).get("dispositions", [])
+    except (OSError, ValueError):
+        return {}
+    out = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        out[(row.get("incident_id"), row.get("index"))] = row
+    return out
+
+
+def recommendation_backlog():
+    """推奨を処遇ごとに分ける。
+
+    書かれた処遇が無い推奨は、所有者判断が要ると分析が印した物なら owner、
+    それ以外は pending（未着手）として扱う。既存の 146 件に移行の行を書かせない
+    ための既定であって、「状態欄が無い」ことを黙認するのではない —— 既定の側も
+    ここで明示している。
+    """
+    known = load_recommendation_status()
+    buckets = {state: [] for state in RECOMMENDATION_STATES}
+    for rec in cast_recommendations():
+        row = known.get((rec["incident_id"], rec["index"]))
+        state = (row or {}).get("state")
+        if state not in RECOMMENDATION_STATES:
+            state = "owner" if rec["owner_decision_required"] else "pending"
+        item = dict(rec)
+        item["state"] = state
+        item["note"] = (row or {}).get("note")
+        item["evidence_ref"] = (row or {}).get("evidence_ref")
+        buckets[state].append(item)
+    return buckets
+
+
 def attack_evidence_latest():
     """評価機構への故障注入の証拠の最新日。無ければ None。"""
     ledger = os.path.join(LANE_DIR, "ledger")
@@ -447,6 +562,19 @@ def next_actions():
     for inc in load_incidents():
         if inc.get("cast_analysis") in (None, "pending"):
             actions.append("CAST_ANALYSIS: %s" % inc["id"])
+    # 事故分析の推奨は、terminal な処遇に至るまで次の行動に挙がり続ける（ADR-125）。
+    # 先頭の一件だけを名指しし、残りの件数も必ず添える —— 短い行動列を「済んだ」と
+    # 読ませない（INC-006 の統制欠陥）。
+    backlog = recommendation_backlog()
+    pending = backlog["pending"]
+    if pending:
+        head = pending[0]
+        actions.append(
+            "APPLY_FINDINGS: %s の推奨#%d（%s）「%s」／未着手 %d 件・"
+            "所有者判断待ち %d 件・処遇済み %d 件"
+            % (head["incident_id"], head["index"], head["kind"],
+               head["action"][:70], len(pending), len(backlog["owner"]),
+               len(backlog["landed"]) + len(backlog["rejected"])))
     covs = coverage_status()
     for book_id in ("jerg", "stpa", "cast"):
         if cats[book_id]["status"] != "PRESENT":
@@ -487,6 +615,18 @@ def next_actions():
     return actions
 
 
+def _recommendation_summary():
+    """推奨の処遇の集計と、所有者へ渡す一覧。"""
+    backlog = recommendation_backlog()
+    return {
+        "counts": {state: len(backlog[state]) for state in RECOMMENDATION_STATES},
+        "owner_decisions": [
+            {"incident_id": r["incident_id"], "index": r["index"],
+             "kind": r["kind"], "action": r["action"]}
+            for r in backlog["owner"]],
+    }
+
+
 def main(argv=None):
     cmd = (argv or sys.argv[1:] or ["status"])[0]
     if cmd == "validate":
@@ -503,6 +643,9 @@ def main(argv=None):
                 {"id": i["id"], "cast_analysis": i.get("cast_analysis")}
                 for i in load_incidents()],
             "next_actions": next_actions(),
+            # 所有者判断は報告のたびに思い出す物ではない。分析が印した物を
+            # 正本が数えて出す（INC-016: 分析の中身が正本へ届いていなかった）。
+            "recommendations": _recommendation_summary(),
         }, ensure_ascii=False, indent=2))
         return 0
     print("usage: orchestrator.py [status|validate]")

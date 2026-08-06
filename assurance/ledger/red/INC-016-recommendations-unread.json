@@ -1,0 +1,21 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "reproduce-red",
+  "incident_id": "INC-016-cast-analysis-content-unread-by-canon",
+  "generated_at": "2026-08-06T09:05:00Z",
+  "git_sha": "7955ee9e8b5483cb2fac9ed0d4e33608d7189998",
+  "phase": "before-fix",
+  "command": "git stash push assurance/harness/orchestrator.py && python3 -m unittest assurance.tests.test_orchestrator.RecommendationBacklogTest",
+  "returncode": 1,
+  "expect": "修正前に FAIL すること（最初から緑は再現と認めない）",
+  "observed_failures": [
+    "AttributeError: module 'harness.orchestrator' has no attribute 'recommendation_backlog'（正本に推奨を読む口が無い）",
+    "AttributeError: module 'harness.orchestrator' has no attribute 'TERMINAL_RECOMMENDATION_STATES'",
+    "AssertionError: APPLY_FINDINGS が next_actions に無い（挙がったのは ATTACK_EVALUATOR だけ）",
+    "AssertionError: 却下に理由が無い／機構化済みに証拠が無い／存在しない推奨を指す／語彙に無い処遇 —— いずれも赤にならない",
+    "AssertionError: 台帳に在るが種別が未宣言: recommendation-status.json"
+  ],
+  "note": "手順の逸脱を記す: 本来 REPRODUCE_RED は修正の前に踏むが、今回はコードを先に書き、後から orchestrator.py だけを stash して赤を取った。証拠としては成立するが、順序は守れていない。\n最後の失敗は前反復で入れた ADR-124 の不変条件によるもので、今回の新しい成果物recommendation-status.json を『読取経路の宣言が無い』として自ら捕まえた。走らせ手を足して読取側を足し忘れる形は、この差分では機構が止めた。",
+  "procedure_deviation": "REPRODUCE_RED を FIX の後に実施した（順序の逸脱）",
+  "tail": "======================================================================\nFAIL: test_rejection_without_a_reason_is_red (assurance.tests.test_orchestrator.RecommendationBacklogTest.test_rejection_without_a_reason_is_red)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/workspaces/doctrine/assurance/tests/test_orchestrator.py\", line 271, in test_rejection_without_a_reason_is_red\n    self.assertTrue([p for p in orchestrator.validate()\nAssertionError: [] is not true : ['台帳に在るが種別が未宣言: recommendation-status.json（LEDGER_KINDS へ、読む経路か読まない理由のどちらかを明記すること）']\n\n======================================================================\nFAIL: test_unknown_disposition_word_is_red (assurance.tests.test_orchestrator.RecommendationBacklogTest.test_unknown_disposition_word_is_red)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/workspaces/doctrine/assurance/tests/test_orchestrator.py\", line 301, in test_unknown_disposition_word_is_red\n    self.assertTrue([p for p in orchestrator.validate()\nAssertionError: [] is not true : ['台帳に在るが種別が未宣言: recommendation-status.json（LEDGER_KINDS へ、読む経路か読まない理由のどちらかを明記すること）']\n\n----------------------------------------------------------------------\nRan 9 tests in 0.216s\n\nFAILED (failures=5, errors=3)\n"
+}

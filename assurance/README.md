@@ -73,7 +73,7 @@ assurance/.venv/bin/python assurance/harness/attack_evaluator.py            # �
 「どの状態で・どのレーンが・何を見るか」の正本は `harness/orchestrator.py`。
 語の読み: 冊子は JERG（宇宙機関の検証標準）・STPA（危険要因分析）・CAST（事故分析）、
 状態は DISCOVER（創出）・CHALLENGE（独立批判）・FORMALIZE（定式化）・VERIFY（独立検証）・
-FAIL（不適合）・UNASSESSED（前提欠如で未評価）。
+APPLY_FINDINGS（推奨の処遇決め）・FAIL（不適合）・UNASSESSED（前提欠如で未評価）。
 
 | レーン | 冊子 | 発火する状態 | 見るもの → 出すもの |
 |---|---|---|---|
@@ -119,6 +119,10 @@ PASS（適合の証拠あり）/ FAIL（走ったが不適合）/ UNKNOWN（観�
   ちょうど一方に属する（ADR-124）。表は `harness/orchestrator.py` の `LEDGER_KINDS`。
   どちらも無い種別と、どの宣言にも当たらないファイルが在る間は `orchestrator.py validate`
   が赤になる。走らせ手を足すときは、その成果を正本が読む段を同じ差分で足すこと。
+- `recommendation-status.json` — 事故分析が出した推奨の処遇（ADR-125）。鍵は
+  `(事象 id, 番号)`、語彙は pending / landed / rejected / owner。未着手が残る間は正本が
+  `APPLY_FINDINGS` を次の行動に挙げる。却下は理由を、機構化済みは証拠のポインタを持つ。
+  所有者判断を要する推奨はレーンの未着手に混ぜず、`orchestrator.py status` が数えて出す。
 
 ## してはならないこと
 
