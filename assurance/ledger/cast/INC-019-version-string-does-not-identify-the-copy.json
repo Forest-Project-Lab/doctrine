@@ -1,0 +1,710 @@
+{
+  "accepted_flaws": [
+    {
+      "control_element_id": "HEARTBEAT",
+      "description": "版遅れ判定の手掛かりが「導入複製の版」（版番号文字列）であり、plugin.json の版が 67475de..HEAD の 15 コミットにわたり動いていないため、複製とリポジトリの版番号は等値になる。遅れが実在しても差分が 0 として観測され、警告が生成されない。",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "先行指標の妥当性・代理指標の禁止",
+        "プロセスモデルと実状態の不整合",
+        "リスクの先行指標の妥当性検証"
+      ],
+      "why_it_seemed_adequate": "配布物の版番号は出荷のたびに繰り上がるという運用前提の下では、版番号は複製の同一性の十分な代理であった。版番号を配布境界の変更（所有者判断・ADR-116 区分）として保護した結果、版が据え置かれる期間が生じたが、その保護が代理指標の分解能を奪うという結び付きは、どちらの決定の側からも見える位置に無かった。"
+    },
+    {
+      "control_element_id": "HEARTBEAT",
+      "description": "版遅れの検出器自身が導入複製の側で動く（INC-005 の共通原因故障）。複製が遅れれば検出器も遅れ、かつ「検出器が旧版で黙っている」状態と「遅れが無く黙っている」状態が同一の沈黙として現れる。沈黙から検出器の生存を区別する経路が構造に無い。",
+      "flaw_type": "統制自身の劣化を検出できない",
+      "normative_refs": [
+        "共通の体系的要因による多重防護の無効化",
+        "監査のすり抜け時に監査手順を是正",
+        "計画外変化の検出手段"
+      ],
+      "why_it_seemed_adequate": "検出はターンごとに走る安価な機構であり、鼓動が出続けていること自体が生存の証（R11 と同型の考え方）と受け取れた。鼓動の生成と鼓動の内容の正しさが別問題であることは、鼓動が実際に古い複製から出るまで観測に現れなかった。"
+    },
+    {
+      "control_element_id": "SESSION_END_AUDIT",
+      "description": "リポジトリ正本の docs-audit.py には hook_session_end_audit が 1 件在るが、導入複製の同ファイルには 0 件である。現場で走る監査は正本の監査とは別物であり、正本の実装を根拠に現場の監査挙動を論じる経路が成り立たない。さらに、印が返らないことは「後から入った検出器が未配布」なのか「前方寛容として印を出さない設計」なのかを区別しない。",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "宣言された設計と実動作の突合",
+        "designer-vs-operator-mental-model",
+        "defects-in-information-providing-systems"
+      ],
+      "why_it_seemed_adequate": "監査スクリプトは統治木と同じリポジトリで版管理されており、正本を読めば現場の挙動が判るという前提は、配布が即時であった期間には実際に成り立っていた。前方寛容（古い受け手でも壊れないこと）は良い設計として意図されており、その寛容さが未配布と同じ観測を生むことは設計時の関心の外にあった。"
+    },
+    {
+      "control_element_id": "SESSION_START_CONTRACT",
+      "description": "INC-001 の結論が依拠した hook_inject_version は、注入器が出す印であるが、その値は 15 コミットにわたり同一である。この印は「注入が走ったこと」は示すが「どの内容の注入が走ったか」を識別しない。にもかかわらず、複製の同一性の証拠として台帳の切り分けに用いられた。",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "include-information-supplier-defect",
+        "プロセスモデルと実状態の不整合",
+        "先行指標の妥当性・代理指標の禁止"
+      ],
+      "why_it_seemed_adequate": "注入の有無そのものが統治の生存の指標（R11）という規約があり、印に版が併記されていれば同一性まで判ると読めた。印に版が入っていることは、それが同一性を識別することの根拠として自然に見えた。"
+    },
+    {
+      "control_element_id": "PLUGIN_DISTRIBUTION",
+      "description": "installed_plugins.json には gitCommitSha（67475de…）が実在し、複製の同一性を一意に指す値が配布側には在る。しかし鼓動・監査・保証レーンのいずれもこの値を判定に用いておらず、配布側が保持する識別子と検出側が使う識別子が異なる。複製が何世代遅れているかをリポジトリ側から観測する経路が結線されていない。",
+      "flaw_type": "統制どうしの調整の欠如",
+      "normative_refs": [
+        "全コントロールループにフィードバック必須",
+        "設計上と実際の伝達経路の照合",
+        "supplier-must-communicate-analysis-assumptions"
+      ],
+      "why_it_seemed_adequate": "配布と更新は利用者の操作に属し、リポジトリ側から観測する経路を作ることは配布境界の観測にあたり得る（INC-001 推奨#3・所有者判断）。境界に触れないための自制が、境界の向こう側を見る手掛かりの不在として現れた。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "レーンは事象を積み分析が済むまで閉じない統制を持つが、結論を確定する際に「その結論が依拠する観測が対象を識別できるか（分解能）」を問う関門を持たない。そのため INC-001 推奨#6 の切り分けで、未反証の仮説が反証済みとして閉じられ、その閉じ方自体は決定論試験にも掛からなかった。",
+      "flaw_type": "制御動作が誤っている",
+      "normative_refs": [
+        "safety-review-of-work-instructions",
+        "安全立証でなく非安全状態の探索",
+        "verify-decomposition-assumptions"
+      ],
+      "why_it_seemed_adequate": "証拠は実測（hook-stamps の実値）であり、憶測ではなく計測に基づく切り分けとして、レーンが要求する証拠水準を満たしていた。証拠の存在と証拠の識別力は別の性質だが、台帳の様式は前者だけを記録していた。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "安全上の想定を明示登記する場（想定の登記簿・ASM-003 を含む）は反復4の APPLY_FINDINGS で初めて作られ、その初回観測でこの食い違いが露見した。それ以前、「版番号は複製を識別する」という想定は文書化されておらず、失効を示す先行指標も定義されていなかったため、想定が破れてから露見するまで少なくとも 1 日（INC-001 記録の 2026-08-05 から 08-06）遅れた。",
+      "flaw_type": "手掛かりが遅い",
+      "normative_refs": [
+        "安全想定の記録と失効先行指標の定義",
+        "想定の記録と変更時再検査",
+        "反証証拠による想定再評価"
+      ],
+      "why_it_seemed_adequate": "想定は各 ADR の文脈内では自明であり、別立ての登記簿を作る費用に見合う不確かさが在るとは見えなかった。登記簿は INC-001 の推奨として導かれた改善であり、その必要性はまさに今回の観測で初めて実証された。"
+    },
+    {
+      "control_element_id": "CI_RELEASE_CHECK",
+      "description": "CI が見るのはリポジトリ正本であり、利用者環境の複製は見ない。したがって CI の緑は現場で走っている統制の性質について何も含意しないが、保証の議論では緑と沈黙と印の不在が等しく「異常なし」の形で現れ、区別されないまま健全性の像を作った。",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "全体健全性と部分健全性の分離評価",
+        "scope-beyond-operating-process",
+        "共通の体系的要因による多重防護の無効化"
+      ],
+      "why_it_seemed_adequate": "CI の責務は merge 前に赤で止めることであり、既知の穴として範囲外は明記されていた。明記された穴は認識されている以上その分は割り引かれるはずだが、他の統制が同じ盲点を持つため、割り引きを補う観測が構造のどこにも無かった。"
+    },
+    {
+      "control_element_id": "OWNER",
+      "description": "所有者の手掛かり（進捗報告・PR の diff・台帳）はいずれもリポジトリ正本の像であり、利用者環境の複製の状態を映す経路が無い。版番号を毎コミット動かすか、SHA を同一性の観測に使うかという所有者判断が要る状態に在ること自体が、所有者へ届く形になっていない（残余として事象記録の中にのみ在る）。",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "controller-needs-concrete-feedback-channels",
+        "モデル一致のためのフィードバック提供",
+        "責任と権限とフィードバックの一体化"
+      ],
+      "why_it_seemed_adequate": "三つの手掛かりは配布前の変更をすべて通す経路であり、配布後の状態は配布物が正しく作られていれば従属すると読めた。配布物の同一性が版番号で表せる限り、この従属関係は成立していた。"
+    },
+    {
+      "control_element_id": "GOVERNANCE_TREE",
+      "description": "版で遅れを見る決定（ADR-070）と、印で監査実行を見る決定（ADR-119）が別々に確定しているが、両者が前提とする「導入複製の同一性とは何か」を突き合わせる記述が統治木に無く、印の不在を前方寛容と未配布のどちらに読むかの規約も無い。統制の間の意味の整合を保つ責任の所在が構造上どこにも割り当てられていない。",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "責任の空白は構造再設計",
+        "横断的な体系的要因の特定",
+        "control-both-behavior-and-interaction"
+      ],
+      "why_it_seemed_adequate": "各 ADR は自身の範囲で完結して読め、docs-audit と dep-graph は文書の存在と依存を検査するが、二つの決定が同じ語（複製・版）を別の意味で使っていることは、文書単体の検査では現れない性質である。"
+    }
+  ],
+  "analysis": {
+    "confidence": "medium",
+    "control_flaws": [
+      {
+        "control_element_id": "HEARTBEAT",
+        "description": "版遅れ判定の手掛かりが「導入複製の版」（版番号文字列）であり、plugin.json の版が 67475de..HEAD の 15 コミットにわたり動いていないため、複製とリポジトリの版番号は等値になる。遅れが実在しても差分が 0 として観測され、警告が生成されない。",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "先行指標の妥当性・代理指標の禁止",
+          "プロセスモデルと実状態の不整合",
+          "リスクの先行指標の妥当性検証"
+        ],
+        "why_it_seemed_adequate": "配布物の版番号は出荷のたびに繰り上がるという運用前提の下では、版番号は複製の同一性の十分な代理であった。版番号を配布境界の変更（所有者判断・ADR-116 区分）として保護した結果、版が据え置かれる期間が生じたが、その保護が代理指標の分解能を奪うという結び付きは、どちらの決定の側からも見える位置に無かった。"
+      },
+      {
+        "control_element_id": "HEARTBEAT",
+        "description": "版遅れの検出器自身が導入複製の側で動く（INC-005 の共通原因故障）。複製が遅れれば検出器も遅れ、かつ「検出器が旧版で黙っている」状態と「遅れが無く黙っている」状態が同一の沈黙として現れる。沈黙から検出器の生存を区別する経路が構造に無い。",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "共通の体系的要因による多重防護の無効化",
+          "監査のすり抜け時に監査手順を是正",
+          "計画外変化の検出手段"
+        ],
+        "why_it_seemed_adequate": "検出はターンごとに走る安価な機構であり、鼓動が出続けていること自体が生存の証（R11 と同型の考え方）と受け取れた。鼓動の生成と鼓動の内容の正しさが別問題であることは、鼓動が実際に古い複製から出るまで観測に現れなかった。"
+      },
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "リポジトリ正本の docs-audit.py には hook_session_end_audit が 1 件在るが、導入複製の同ファイルには 0 件である。現場で走る監査は正本の監査とは別物であり、正本の実装を根拠に現場の監査挙動を論じる経路が成り立たない。さらに、印が返らないことは「後から入った検出器が未配布」なのか「前方寛容として印を出さない設計」なのかを区別しない。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "宣言された設計と実動作の突合",
+          "designer-vs-operator-mental-model",
+          "defects-in-information-providing-systems"
+        ],
+        "why_it_seemed_adequate": "監査スクリプトは統治木と同じリポジトリで版管理されており、正本を読めば現場の挙動が判るという前提は、配布が即時であった期間には実際に成り立っていた。前方寛容（古い受け手でも壊れないこと）は良い設計として意図されており、その寛容さが未配布と同じ観測を生むことは設計時の関心の外にあった。"
+      },
+      {
+        "control_element_id": "SESSION_START_CONTRACT",
+        "description": "INC-001 の結論が依拠した hook_inject_version は、注入器が出す印であるが、その値は 15 コミットにわたり同一である。この印は「注入が走ったこと」は示すが「どの内容の注入が走ったか」を識別しない。にもかかわらず、複製の同一性の証拠として台帳の切り分けに用いられた。",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "include-information-supplier-defect",
+          "プロセスモデルと実状態の不整合",
+          "先行指標の妥当性・代理指標の禁止"
+        ],
+        "why_it_seemed_adequate": "注入の有無そのものが統治の生存の指標（R11）という規約があり、印に版が併記されていれば同一性まで判ると読めた。印に版が入っていることは、それが同一性を識別することの根拠として自然に見えた。"
+      },
+      {
+        "control_element_id": "PLUGIN_DISTRIBUTION",
+        "description": "installed_plugins.json には gitCommitSha（67475de…）が実在し、複製の同一性を一意に指す値が配布側には在る。しかし鼓動・監査・保証レーンのいずれもこの値を判定に用いておらず、配布側が保持する識別子と検出側が使う識別子が異なる。複製が何世代遅れているかをリポジトリ側から観測する経路が結線されていない。",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "全コントロールループにフィードバック必須",
+          "設計上と実際の伝達経路の照合",
+          "supplier-must-communicate-analysis-assumptions"
+        ],
+        "why_it_seemed_adequate": "配布と更新は利用者の操作に属し、リポジトリ側から観測する経路を作ることは配布境界の観測にあたり得る（INC-001 推奨#3・所有者判断）。境界に触れないための自制が、境界の向こう側を見る手掛かりの不在として現れた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "レーンは事象を積み分析が済むまで閉じない統制を持つが、結論を確定する際に「その結論が依拠する観測が対象を識別できるか（分解能）」を問う関門を持たない。そのため INC-001 推奨#6 の切り分けで、未反証の仮説が反証済みとして閉じられ、その閉じ方自体は決定論試験にも掛からなかった。",
+        "flaw_type": "制御動作が誤っている",
+        "normative_refs": [
+          "safety-review-of-work-instructions",
+          "安全立証でなく非安全状態の探索",
+          "verify-decomposition-assumptions"
+        ],
+        "why_it_seemed_adequate": "証拠は実測（hook-stamps の実値）であり、憶測ではなく計測に基づく切り分けとして、レーンが要求する証拠水準を満たしていた。証拠の存在と証拠の識別力は別の性質だが、台帳の様式は前者だけを記録していた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "安全上の想定を明示登記する場（想定の登記簿・ASM-003 を含む）は反復4の APPLY_FINDINGS で初めて作られ、その初回観測でこの食い違いが露見した。それ以前、「版番号は複製を識別する」という想定は文書化されておらず、失効を示す先行指標も定義されていなかったため、想定が破れてから露見するまで少なくとも 1 日（INC-001 記録の 2026-08-05 から 08-06）遅れた。",
+        "flaw_type": "手掛かりが遅い",
+        "normative_refs": [
+          "安全想定の記録と失効先行指標の定義",
+          "想定の記録と変更時再検査",
+          "反証証拠による想定再評価"
+        ],
+        "why_it_seemed_adequate": "想定は各 ADR の文脈内では自明であり、別立ての登記簿を作る費用に見合う不確かさが在るとは見えなかった。登記簿は INC-001 の推奨として導かれた改善であり、その必要性はまさに今回の観測で初めて実証された。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "CI が見るのはリポジトリ正本であり、利用者環境の複製は見ない。したがって CI の緑は現場で走っている統制の性質について何も含意しないが、保証の議論では緑と沈黙と印の不在が等しく「異常なし」の形で現れ、区別されないまま健全性の像を作った。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "全体健全性と部分健全性の分離評価",
+          "scope-beyond-operating-process",
+          "共通の体系的要因による多重防護の無効化"
+        ],
+        "why_it_seemed_adequate": "CI の責務は merge 前に赤で止めることであり、既知の穴として範囲外は明記されていた。明記された穴は認識されている以上その分は割り引かれるはずだが、他の統制が同じ盲点を持つため、割り引きを補う観測が構造のどこにも無かった。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者の手掛かり（進捗報告・PR の diff・台帳）はいずれもリポジトリ正本の像であり、利用者環境の複製の状態を映す経路が無い。版番号を毎コミット動かすか、SHA を同一性の観測に使うかという所有者判断が要る状態に在ること自体が、所有者へ届く形になっていない（残余として事象記録の中にのみ在る）。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "controller-needs-concrete-feedback-channels",
+          "モデル一致のためのフィードバック提供",
+          "責任と権限とフィードバックの一体化"
+        ],
+        "why_it_seemed_adequate": "三つの手掛かりは配布前の変更をすべて通す経路であり、配布後の状態は配布物が正しく作られていれば従属すると読めた。配布物の同一性が版番号で表せる限り、この従属関係は成立していた。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "版で遅れを見る決定（ADR-070）と、印で監査実行を見る決定（ADR-119）が別々に確定しているが、両者が前提とする「導入複製の同一性とは何か」を突き合わせる記述が統治木に無く、印の不在を前方寛容と未配布のどちらに読むかの規約も無い。統制の間の意味の整合を保つ責任の所在が構造上どこにも割り当てられていない。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "責任の空白は構造再設計",
+          "横断的な体系的要因の特定",
+          "control-both-behavior-and-interaction"
+        ],
+        "why_it_seemed_adequate": "各 ADR は自身の範囲で完結して読め、docs-audit と dep-graph は文書の存在と依存を検査するが、二つの決定が同じ語（複製・版）を別の意味で使っていることは、文書単体の検査では現れない性質である。"
+      }
+    ],
+    "hazard": "統治対象（利用者環境の導入複製）の同一性を識別する観測が統制構造のどこにも接続されていないまま、版番号を同一性の代理として用いる状態。すなわち、統治側コントローラのプロセスモデルが「複製＝リポジトリ正本と同一」であるのに対し、実際には 15 コミット分の差があり、その差を示す手掛かりが構造上どこからも返らない状態。",
+    "incident_id": "INC-019-version-string-does-not-identify-the-copy",
+    "leading_indicators": [
+      {
+        "indicator": "導入複製の gitCommitSha とリポジトリ HEAD のコミット距離",
+        "observable": "installed_plugins.json の gitCommitSha を読み、git rev-list --count <sha>..HEAD を算出した値",
+        "threshold": "距離 > 0 で台帳に記録、距離 >= 5 または前回観測から距離が増加し続けた 2 反復連続で、複製に基づく結論を保留扱いにする",
+        "version_independent": true,
+        "where": "保証レーン（assurance/harness）の反復ごとの観測として記録し、assurance/ledger/ に時系列で残す",
+        "why_version_independent": "SHA は plugin.json の版番号とは独立に毎コミット変わるため、版番号が据え置かれても分解能を失わない。ただし installed_plugins.json に gitCommitSha が書かれ続けることには依存する（下の unknowns 参照）"
+      },
+      {
+        "indicator": "版番号が据え置かれたままリポジトリが進んだコミット数（版番号の分解能）",
+        "observable": "plugin/.claude-plugin/plugin.json の version が最後に変わったコミットから HEAD までのコミット数",
+        "threshold": "1 コミット以上で「版番号は複製の同一性を識別しない」ことが成立するため記録、10 以上で警告",
+        "version_independent": true,
+        "where": "CI（.github/workflows）のジョブとして正本側で算出。複製に一切依存しない",
+        "why_version_independent": "リポジトリ正本のみで計算でき、導入複製の版にも配布状態にも依存しない"
+      },
+      {
+        "indicator": "複製側フックスクリプトと正本の内容一致",
+        "observable": "導入複製の plugin/scripts/*.py と正本の同名ファイルの内容ハッシュ（sha256）の一致件数・不一致ファイル名",
+        "threshold": "不一致 1 件で、そのスクリプトが担う統制（監査・ガード・鼓動・注入）に関する結論を保留",
+        "version_independent": true,
+        "where": "複製側でハッシュを算出し、保証レーンで正本のハッシュと突合",
+        "why_version_independent": "ハッシュ比較は版番号にも印の有無にも依存せず、印を持たない旧版の複製でも算出できる"
+      },
+      {
+        "indicator": "版遅れ警告の沈黙の持続",
+        "observable": "鼓動が版遅れ警告を出した回数（0 が続くセッション数）と、同期間の上記コミット距離の対",
+        "threshold": "距離 > 0 が観測されている期間に警告 0 が 1 セッション続けば、検出器側の劣化として扱う",
+        "version_independent": false,
+        "where": "複製側の警告出力と、レーン側の距離観測を並べて記録",
+        "why_version_independent": "警告を生成するのは複製側の gov-heartbeat.py であり、複製が遅れれば検出器の判定規則も遅れる（INC-005 の共通原因）。沈黙の観測そのものはレーン側で可能だが、沈黙の意味は複製の版に依存する"
+      },
+      {
+        "indicator": "SessionEnd 監査の実行印の出現",
+        "observable": "導入複製の docs-audit.py 内の hook_session_end_audit 相当の件数と、.claude/.cache/last-audit.json 上の印の有無",
+        "threshold": "スクリプト側に印が 0 件なら、キャッシュ上の印の不在を「監査未実行」の証拠として用いない（不明として扱う）",
+        "version_independent": false,
+        "where": "複製側のスクリプト実体とキャッシュの両方",
+        "why_version_independent": "この印は ADR-119 以降の版にしか存在せず、複製が遅れている間は指標自体が現場に無い。古びの検出器が古びる関係がこの指標にもそのまま当てはまる"
+      }
+    ],
+    "loss": "導入複製の実状態に関する結論（INC-001 の「複製は 0.10.0 に追いついているので版とは無関係」）が、その状態を識別できない観測に依拠したまま台帳へ確定として積まれ、未反証の仮説が反証済みとして扱われた。以後の保証判断・所有者判断が実状態と食い違う像の上で行われる状態が生じている（事象は未修正・未出荷）。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "版番号・複製側の印に依拠する結論が INC-001 の一件のみで、他に 0 件であること。",
+        "hypothesis": "複製側が出す他の印（注入・鼓動・ガードの各印）も同様に対象を識別しないため、複製の状態に関する台帳の他の結論も同型に崩れる。",
+        "oracle": "台帳の全結論を、根拠となる観測ごとに分類し、版番号または複製側の印に依拠するものを列挙する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "両者で観測が異なり、区別可能であること。",
+        "hypothesis": "SessionEnd が発火しない終了（INC-001 の既知の穴）と、印を持たない旧版の複製が動いている状態は、last-audit.json の上で区別できない。",
+        "oracle": "印を持たない版の複製で 1 セッションを正常終了させ、last-audit.json の観測が強制終了時と一致するかを見る。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "全スクリプトのハッシュが一致すること。",
+        "hypothesis": "policy-guard.py など他の複製側フックも旧版のまま動いており、現場で強制されている統制が正本の規約より弱い。",
+        "oracle": "複製と正本の各スクリプトの内容ハッシュを突合し、差分のあるファイルの変更内容を読む。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "距離が観測のたびに 0 に戻り、遅れが一時的であること。",
+        "hypothesis": "複製の更新は利用者操作に依存するため、marketplace 更新後も複製が数世代遅れたまま常態化しており、本件は例外ではなく定常状態である。",
+        "oracle": "installed_plugins.json の lastUpdated と、その時点の HEAD 日時・コミット距離を複数回にわたり記録して分布を見る。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "該当箇所が ADR-070 の範囲内に閉じていること。",
+        "hypothesis": "版番号を同一性の代理として使う想定は、鼓動・注入・監査以外の場所（文書内の記述、決定文の前提）にも埋め込まれている。",
+        "oracle": "統治木を version / 版 の語で走査し、複製の同一性の意味で使われている箇所を列挙する。",
+        "severity": "P3"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "導入複製の gitCommitSha とリポジトリ HEAD のコミット距離を、保証レーンの反復ごとの必須観測として結線し、距離が算出できない場合は「複製の状態は不明」として台帳に記録する（不明を健全と読ませない）。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "複製側フックスクリプトの内容ハッシュと正本のハッシュを突合する観測を追加し、不一致のスクリプトが担う統制についての結論を保留扱いにする。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "印の解釈を二値（在る／無い）から三値（在る／無い／その版に印が存在しない＝不明）へ改める。前方寛容による不在と未配布による不在を、観測の側で区別できるようにする。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "台帳へ結論を確定する前に「その結論が依拠する観測は対象を識別できるか（分解能）」を問う関門を保証レーンに設け、識別力が示せない結論は未反証として開いたままにする。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "INC-001 推奨#6 の切り分けを未反証へ戻し、同じ根拠（hook_inject_version・版番号）に寄りかかった他の結論を台帳から洗い出す。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "想定の登記簿に「版番号は導入複製を識別しない」を明示登記し、失効先行指標（版据え置きのコミット数、SHA 距離）を各想定に添える。ADR-070 と ADR-119 の間の同一性の定義差も統治木に記す。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "版番号を毎コミット動かすか（配布物の版番号の変更・ADR-116 区分）、あるいは gitCommitSha を複製の同一性の観測に用いるか（配布境界の観測にあたるか・INC-001 推奨#3）を決める。どちらも採らない場合、複製の状態は原理的に観測できないことを確定事実として残す必要がある。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "67475de..HEAD の 15 コミットのうち現場の統制挙動に影響する変更を列挙し、像の食い違いに留まるか、現場の強制力の差になっているかを判定する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "複製の同一性を版番号で表すという単一の想定を、CI・鼓動・注入印・監査印の四経路が共有しており、独立した防護に見えて一つの想定の破れで同時に無効化される（共通原因）。",
+      "検出器を被検出対象と同じ場所（導入複製）に置く設計が繰り返し採られており、検出器の劣化が検出対象の劣化と同時に進む（INC-005 と本件が同型）。",
+      "統制が無音であることを健全と読む既定解釈が構造全体に埋め込まれ、「無音の理由が区別できるか」を問う工程がどの統制にも無い。",
+      "後から入れた検出器の不在（未配布）と、設計上の寛容（印を出さない）が同一の観測を生む。新旧の統制が混在する期間の解釈規約が決定文書の間に無い。",
+      "配布境界に触れないための自制（所有者判断の尊重）が、境界の向こう側を観測する手掛かりの不在として固定化し、判断が要る状態にあること自体が所有者へ上がらない。",
+      "安全上の想定を明示登記する場が反復4まで存在せず、想定の失効を示す先行指標が定義される前に想定に依拠した結論が確定していた。"
+    ],
+    "unknowns": [
+      "【最優先】本分析は空の作業ディレクトリ（/tmp/assurance-cast-n4pzkfs4）で実施しており、リポジトリも導入複製も参照できていない。ADR-070・ADR-119・assurance/ledger/assumptions.json・installed_plugins.json・docs-audit.py の実在と内容、および 15 コミット・印 0 件という測定値を独立に確認していない。事象記録の測定をそのまま前提としている。ただし事象が名指しする機構は、役割としては統制構造に対応要素が在る（版遅れ検出＝HEARTBEAT、SessionEnd 監査＝SESSION_END_AUDIT、想定台帳＝ASSURANCE_LANE、配布＝PLUGIN_DISTRIBUTION）ため、実在しない機構についての分析ではないと判断した。",
+      "hook_inject_version がどの入力から生成されるか（版番号のみか、SHA を含み得るか）は未確認であり、この印に識別力を持たせる改修が容易かどうかは判らない。",
+      "導入複製の docs-audit.py に印が 0 件である理由が、版遅れによる未配布なのか、別経路での書き換えや導入不全なのかは、内容ハッシュの突合をしていないため断定できない。",
+      "installed_plugins.json の gitCommitSha が、すべての導入経路・すべての Claude Code の版で常に書かれるかは未確認。書かれない環境が在れば、SHA 起点の先行指標は静かに欠測する。",
+      "67475de..HEAD の 15 コミットのうち、現場の統制挙動（ガード・監査・鼓動・注入）に影響する変更が何件在るかを評価していない。影響 0 件なら損失は像の食い違いに留まり、影響が在れば現場の強制力自体が正本より弱い。",
+      "INC-001 推奨#6 の切り分けが、台帳の他のどの結論・どの推奨に波及しているかを追跡していない。同じ根拠に寄りかかった結論が他に在るかは未調査。",
+      "ADR-116 の所有者判断区分が、版番号の刻み方の変更と SHA の観測利用の双方に及ぶかどうかは、原文を参照していないため確定できない。",
+      "この食い違いが 2026-08-05 の INC-001 記録より前から在ったのか、その時点で初めて生じたのか（版が据え置かれ始めた時期）は未確認。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は「異常が在れば何かが鳴る」構成だが、この事象では四つの経路が同時に無音になる。CI は正本しか見ないので緑、鼓動は版番号を比べるので差 0、SessionEnd の印は複製に存在しないので不在、注入の印は 15 コミット不変なので一致。四つの無音はいずれも「異常なし」と同じ形をしており、無音の理由を区別する観測が構造に無い。加えて、これらの経路は独立した防護に見えて、実際には「導入複製の同一性は版番号で表せる」という単一の想定を共有しており（複製側で動く検出器という共通の設置場所も共有している）、その想定が破れた瞬間に一斉に効かなくなる共通原因を成す。保証の運用も、非安全状態を探すのではなく健全性を確認する向きに寄っており、実測（hook-stamps）が在ることをもって切り分けが成立したと扱った結果、証拠の識別力を問う工程が発生しなかった。修正が未着手であること自体より、無音を健全と読む構造が残っていることが本質である。"
+  },
+  "control_structure_ids": [
+    "OWNER",
+    "CI_RELEASE_CHECK",
+    "SESSION_START_CONTRACT",
+    "HEARTBEAT",
+    "PRE_TOOL_GUARD",
+    "POST_TOOL_LINTER",
+    "SESSION_END_AUDIT",
+    "CAPTURE_NUDGE",
+    "PLUGIN_DISTRIBUTION",
+    "ASSURANCE_LANE",
+    "GOVERNANCE_TREE"
+  ],
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "duration_ms": 284776,
+  "errors": [],
+  "execution_kind": "real-sdk",
+  "flaws_with_citation_defect": [],
+  "generated_at": "2026-08-06T14:21:01Z",
+  "git_dirty": false,
+  "git_sha": "cf68f179c55497b3b62a2d3bc10c996e9405f78b",
+  "incident_evidence": {
+    "kind": "measurement",
+    "refs": [
+      "assurance/ledger/assumptions.json",
+      "doctrine_docs/packaging/decisions/ADR-070-version-lag-detection.md",
+      "doctrine_docs/packaging/decisions/ADR-119-audit-execution-stamp.md"
+    ],
+    "resolved": [
+      "assurance/ledger/assumptions.json",
+      "doctrine_docs/packaging/decisions/ADR-070-version-lag-detection.md",
+      "doctrine_docs/packaging/decisions/ADR-119-audit-execution-stamp.md"
+    ],
+    "unresolved": [],
+    "verifiable": true
+  },
+  "incident_id": "INC-019-version-string-does-not-identify-the-copy",
+  "incident_sha256": "f9b67821272d61b9a02782fa4ec72b64380b18b59c6b293a3d1dffb702845cce",
+  "init": {
+    "claude_code_version": "2.1.221",
+    "model": "claude-opus-5",
+    "session_id": "4cb55b3e-241d-45e3-bcb0-b0880e487e03",
+    "tools_count": 27
+  },
+  "kind": "cast-analysis",
+  "leading_indicators_defined": true,
+  "options": {
+    "allowed_tools": [],
+    "cwd": "/tmp/assurance-cast-n4pzkfs4",
+    "effort": "high",
+    "max_budget_usd": 4.0,
+    "max_turns": 8,
+    "model": "claude-opus-5",
+    "setting_sources": [],
+    "timeout_s": 900
+  },
+  "oracle": "structured_output がレーン側再検証にも適合",
+  "principles_offered": 337,
+  "prompt_sha256": "949551bdb2184e7a4397bbfa68324aa6c104b2ecae70fcb798c92170ba7932df",
+  "rejected_flaws": [],
+  "result_meta": {
+    "duration_api_ms": 277207,
+    "is_error": false,
+    "num_turns": 6,
+    "session_id": "4cb55b3e-241d-45e3-bcb0-b0880e487e03",
+    "subtype": "success",
+    "total_cost_usd": 1.0981285,
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 56728,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 56728,
+      "cache_read_input_tokens": 168761,
+      "inference_geo": "not_available",
+      "input_tokens": 8,
+      "iterations": "list",
+      "output_tokens": 16383,
+      "server_tool_use": {
+        "web_fetch_requests": 0,
+        "web_search_requests": 0
+      },
+      "service_tier": "standard",
+      "speed": "standard"
+    }
+  },
+  "schema_sha256": "0d1643d5e16353723405302c1f6ffcf753915e2a4f27a3530e8ef9a9ee45cb46",
+  "sdk_version": "0.2.129",
+  "settled": true,
+  "status": "PASS",
+  "structured_output": {
+    "confidence": "medium",
+    "control_flaws": [
+      {
+        "control_element_id": "HEARTBEAT",
+        "description": "版遅れ判定の手掛かりが「導入複製の版」（版番号文字列）であり、plugin.json の版が 67475de..HEAD の 15 コミットにわたり動いていないため、複製とリポジトリの版番号は等値になる。遅れが実在しても差分が 0 として観測され、警告が生成されない。",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "先行指標の妥当性・代理指標の禁止",
+          "プロセスモデルと実状態の不整合",
+          "リスクの先行指標の妥当性検証"
+        ],
+        "why_it_seemed_adequate": "配布物の版番号は出荷のたびに繰り上がるという運用前提の下では、版番号は複製の同一性の十分な代理であった。版番号を配布境界の変更（所有者判断・ADR-116 区分）として保護した結果、版が据え置かれる期間が生じたが、その保護が代理指標の分解能を奪うという結び付きは、どちらの決定の側からも見える位置に無かった。"
+      },
+      {
+        "control_element_id": "HEARTBEAT",
+        "description": "版遅れの検出器自身が導入複製の側で動く（INC-005 の共通原因故障）。複製が遅れれば検出器も遅れ、かつ「検出器が旧版で黙っている」状態と「遅れが無く黙っている」状態が同一の沈黙として現れる。沈黙から検出器の生存を区別する経路が構造に無い。",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "共通の体系的要因による多重防護の無効化",
+          "監査のすり抜け時に監査手順を是正",
+          "計画外変化の検出手段"
+        ],
+        "why_it_seemed_adequate": "検出はターンごとに走る安価な機構であり、鼓動が出続けていること自体が生存の証（R11 と同型の考え方）と受け取れた。鼓動の生成と鼓動の内容の正しさが別問題であることは、鼓動が実際に古い複製から出るまで観測に現れなかった。"
+      },
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "リポジトリ正本の docs-audit.py には hook_session_end_audit が 1 件在るが、導入複製の同ファイルには 0 件である。現場で走る監査は正本の監査とは別物であり、正本の実装を根拠に現場の監査挙動を論じる経路が成り立たない。さらに、印が返らないことは「後から入った検出器が未配布」なのか「前方寛容として印を出さない設計」なのかを区別しない。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "宣言された設計と実動作の突合",
+          "designer-vs-operator-mental-model",
+          "defects-in-information-providing-systems"
+        ],
+        "why_it_seemed_adequate": "監査スクリプトは統治木と同じリポジトリで版管理されており、正本を読めば現場の挙動が判るという前提は、配布が即時であった期間には実際に成り立っていた。前方寛容（古い受け手でも壊れないこと）は良い設計として意図されており、その寛容さが未配布と同じ観測を生むことは設計時の関心の外にあった。"
+      },
+      {
+        "control_element_id": "SESSION_START_CONTRACT",
+        "description": "INC-001 の結論が依拠した hook_inject_version は、注入器が出す印であるが、その値は 15 コミットにわたり同一である。この印は「注入が走ったこと」は示すが「どの内容の注入が走ったか」を識別しない。にもかかわらず、複製の同一性の証拠として台帳の切り分けに用いられた。",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "include-information-supplier-defect",
+          "プロセスモデルと実状態の不整合",
+          "先行指標の妥当性・代理指標の禁止"
+        ],
+        "why_it_seemed_adequate": "注入の有無そのものが統治の生存の指標（R11）という規約があり、印に版が併記されていれば同一性まで判ると読めた。印に版が入っていることは、それが同一性を識別することの根拠として自然に見えた。"
+      },
+      {
+        "control_element_id": "PLUGIN_DISTRIBUTION",
+        "description": "installed_plugins.json には gitCommitSha（67475de…）が実在し、複製の同一性を一意に指す値が配布側には在る。しかし鼓動・監査・保証レーンのいずれもこの値を判定に用いておらず、配布側が保持する識別子と検出側が使う識別子が異なる。複製が何世代遅れているかをリポジトリ側から観測する経路が結線されていない。",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "全コントロールループにフィードバック必須",
+          "設計上と実際の伝達経路の照合",
+          "supplier-must-communicate-analysis-assumptions"
+        ],
+        "why_it_seemed_adequate": "配布と更新は利用者の操作に属し、リポジトリ側から観測する経路を作ることは配布境界の観測にあたり得る（INC-001 推奨#3・所有者判断）。境界に触れないための自制が、境界の向こう側を見る手掛かりの不在として現れた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "レーンは事象を積み分析が済むまで閉じない統制を持つが、結論を確定する際に「その結論が依拠する観測が対象を識別できるか（分解能）」を問う関門を持たない。そのため INC-001 推奨#6 の切り分けで、未反証の仮説が反証済みとして閉じられ、その閉じ方自体は決定論試験にも掛からなかった。",
+        "flaw_type": "制御動作が誤っている",
+        "normative_refs": [
+          "safety-review-of-work-instructions",
+          "安全立証でなく非安全状態の探索",
+          "verify-decomposition-assumptions"
+        ],
+        "why_it_seemed_adequate": "証拠は実測（hook-stamps の実値）であり、憶測ではなく計測に基づく切り分けとして、レーンが要求する証拠水準を満たしていた。証拠の存在と証拠の識別力は別の性質だが、台帳の様式は前者だけを記録していた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "安全上の想定を明示登記する場（想定の登記簿・ASM-003 を含む）は反復4の APPLY_FINDINGS で初めて作られ、その初回観測でこの食い違いが露見した。それ以前、「版番号は複製を識別する」という想定は文書化されておらず、失効を示す先行指標も定義されていなかったため、想定が破れてから露見するまで少なくとも 1 日（INC-001 記録の 2026-08-05 から 08-06）遅れた。",
+        "flaw_type": "手掛かりが遅い",
+        "normative_refs": [
+          "安全想定の記録と失効先行指標の定義",
+          "想定の記録と変更時再検査",
+          "反証証拠による想定再評価"
+        ],
+        "why_it_seemed_adequate": "想定は各 ADR の文脈内では自明であり、別立ての登記簿を作る費用に見合う不確かさが在るとは見えなかった。登記簿は INC-001 の推奨として導かれた改善であり、その必要性はまさに今回の観測で初めて実証された。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "CI が見るのはリポジトリ正本であり、利用者環境の複製は見ない。したがって CI の緑は現場で走っている統制の性質について何も含意しないが、保証の議論では緑と沈黙と印の不在が等しく「異常なし」の形で現れ、区別されないまま健全性の像を作った。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "全体健全性と部分健全性の分離評価",
+          "scope-beyond-operating-process",
+          "共通の体系的要因による多重防護の無効化"
+        ],
+        "why_it_seemed_adequate": "CI の責務は merge 前に赤で止めることであり、既知の穴として範囲外は明記されていた。明記された穴は認識されている以上その分は割り引かれるはずだが、他の統制が同じ盲点を持つため、割り引きを補う観測が構造のどこにも無かった。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者の手掛かり（進捗報告・PR の diff・台帳）はいずれもリポジトリ正本の像であり、利用者環境の複製の状態を映す経路が無い。版番号を毎コミット動かすか、SHA を同一性の観測に使うかという所有者判断が要る状態に在ること自体が、所有者へ届く形になっていない（残余として事象記録の中にのみ在る）。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "controller-needs-concrete-feedback-channels",
+          "モデル一致のためのフィードバック提供",
+          "責任と権限とフィードバックの一体化"
+        ],
+        "why_it_seemed_adequate": "三つの手掛かりは配布前の変更をすべて通す経路であり、配布後の状態は配布物が正しく作られていれば従属すると読めた。配布物の同一性が版番号で表せる限り、この従属関係は成立していた。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "版で遅れを見る決定（ADR-070）と、印で監査実行を見る決定（ADR-119）が別々に確定しているが、両者が前提とする「導入複製の同一性とは何か」を突き合わせる記述が統治木に無く、印の不在を前方寛容と未配布のどちらに読むかの規約も無い。統制の間の意味の整合を保つ責任の所在が構造上どこにも割り当てられていない。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "責任の空白は構造再設計",
+          "横断的な体系的要因の特定",
+          "control-both-behavior-and-interaction"
+        ],
+        "why_it_seemed_adequate": "各 ADR は自身の範囲で完結して読め、docs-audit と dep-graph は文書の存在と依存を検査するが、二つの決定が同じ語（複製・版）を別の意味で使っていることは、文書単体の検査では現れない性質である。"
+      }
+    ],
+    "hazard": "統治対象（利用者環境の導入複製）の同一性を識別する観測が統制構造のどこにも接続されていないまま、版番号を同一性の代理として用いる状態。すなわち、統治側コントローラのプロセスモデルが「複製＝リポジトリ正本と同一」であるのに対し、実際には 15 コミット分の差があり、その差を示す手掛かりが構造上どこからも返らない状態。",
+    "incident_id": "INC-019-version-string-does-not-identify-the-copy",
+    "leading_indicators": [
+      {
+        "indicator": "導入複製の gitCommitSha とリポジトリ HEAD のコミット距離",
+        "observable": "installed_plugins.json の gitCommitSha を読み、git rev-list --count <sha>..HEAD を算出した値",
+        "threshold": "距離 > 0 で台帳に記録、距離 >= 5 または前回観測から距離が増加し続けた 2 反復連続で、複製に基づく結論を保留扱いにする",
+        "version_independent": true,
+        "where": "保証レーン（assurance/harness）の反復ごとの観測として記録し、assurance/ledger/ に時系列で残す",
+        "why_version_independent": "SHA は plugin.json の版番号とは独立に毎コミット変わるため、版番号が据え置かれても分解能を失わない。ただし installed_plugins.json に gitCommitSha が書かれ続けることには依存する（下の unknowns 参照）"
+      },
+      {
+        "indicator": "版番号が据え置かれたままリポジトリが進んだコミット数（版番号の分解能）",
+        "observable": "plugin/.claude-plugin/plugin.json の version が最後に変わったコミットから HEAD までのコミット数",
+        "threshold": "1 コミット以上で「版番号は複製の同一性を識別しない」ことが成立するため記録、10 以上で警告",
+        "version_independent": true,
+        "where": "CI（.github/workflows）のジョブとして正本側で算出。複製に一切依存しない",
+        "why_version_independent": "リポジトリ正本のみで計算でき、導入複製の版にも配布状態にも依存しない"
+      },
+      {
+        "indicator": "複製側フックスクリプトと正本の内容一致",
+        "observable": "導入複製の plugin/scripts/*.py と正本の同名ファイルの内容ハッシュ（sha256）の一致件数・不一致ファイル名",
+        "threshold": "不一致 1 件で、そのスクリプトが担う統制（監査・ガード・鼓動・注入）に関する結論を保留",
+        "version_independent": true,
+        "where": "複製側でハッシュを算出し、保証レーンで正本のハッシュと突合",
+        "why_version_independent": "ハッシュ比較は版番号にも印の有無にも依存せず、印を持たない旧版の複製でも算出できる"
+      },
+      {
+        "indicator": "版遅れ警告の沈黙の持続",
+        "observable": "鼓動が版遅れ警告を出した回数（0 が続くセッション数）と、同期間の上記コミット距離の対",
+        "threshold": "距離 > 0 が観測されている期間に警告 0 が 1 セッション続けば、検出器側の劣化として扱う",
+        "version_independent": false,
+        "where": "複製側の警告出力と、レーン側の距離観測を並べて記録",
+        "why_version_independent": "警告を生成するのは複製側の gov-heartbeat.py であり、複製が遅れれば検出器の判定規則も遅れる（INC-005 の共通原因）。沈黙の観測そのものはレーン側で可能だが、沈黙の意味は複製の版に依存する"
+      },
+      {
+        "indicator": "SessionEnd 監査の実行印の出現",
+        "observable": "導入複製の docs-audit.py 内の hook_session_end_audit 相当の件数と、.claude/.cache/last-audit.json 上の印の有無",
+        "threshold": "スクリプト側に印が 0 件なら、キャッシュ上の印の不在を「監査未実行」の証拠として用いない（不明として扱う）",
+        "version_independent": false,
+        "where": "複製側のスクリプト実体とキャッシュの両方",
+        "why_version_independent": "この印は ADR-119 以降の版にしか存在せず、複製が遅れている間は指標自体が現場に無い。古びの検出器が古びる関係がこの指標にもそのまま当てはまる"
+      }
+    ],
+    "loss": "導入複製の実状態に関する結論（INC-001 の「複製は 0.10.0 に追いついているので版とは無関係」）が、その状態を識別できない観測に依拠したまま台帳へ確定として積まれ、未反証の仮説が反証済みとして扱われた。以後の保証判断・所有者判断が実状態と食い違う像の上で行われる状態が生じている（事象は未修正・未出荷）。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "版番号・複製側の印に依拠する結論が INC-001 の一件のみで、他に 0 件であること。",
+        "hypothesis": "複製側が出す他の印（注入・鼓動・ガードの各印）も同様に対象を識別しないため、複製の状態に関する台帳の他の結論も同型に崩れる。",
+        "oracle": "台帳の全結論を、根拠となる観測ごとに分類し、版番号または複製側の印に依拠するものを列挙する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "両者で観測が異なり、区別可能であること。",
+        "hypothesis": "SessionEnd が発火しない終了（INC-001 の既知の穴）と、印を持たない旧版の複製が動いている状態は、last-audit.json の上で区別できない。",
+        "oracle": "印を持たない版の複製で 1 セッションを正常終了させ、last-audit.json の観測が強制終了時と一致するかを見る。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "全スクリプトのハッシュが一致すること。",
+        "hypothesis": "policy-guard.py など他の複製側フックも旧版のまま動いており、現場で強制されている統制が正本の規約より弱い。",
+        "oracle": "複製と正本の各スクリプトの内容ハッシュを突合し、差分のあるファイルの変更内容を読む。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "距離が観測のたびに 0 に戻り、遅れが一時的であること。",
+        "hypothesis": "複製の更新は利用者操作に依存するため、marketplace 更新後も複製が数世代遅れたまま常態化しており、本件は例外ではなく定常状態である。",
+        "oracle": "installed_plugins.json の lastUpdated と、その時点の HEAD 日時・コミット距離を複数回にわたり記録して分布を見る。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "該当箇所が ADR-070 の範囲内に閉じていること。",
+        "hypothesis": "版番号を同一性の代理として使う想定は、鼓動・注入・監査以外の場所（文書内の記述、決定文の前提）にも埋め込まれている。",
+        "oracle": "統治木を version / 版 の語で走査し、複製の同一性の意味で使われている箇所を列挙する。",
+        "severity": "P3"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "導入複製の gitCommitSha とリポジトリ HEAD のコミット距離を、保証レーンの反復ごとの必須観測として結線し、距離が算出できない場合は「複製の状態は不明」として台帳に記録する（不明を健全と読ませない）。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "複製側フックスクリプトの内容ハッシュと正本のハッシュを突合する観測を追加し、不一致のスクリプトが担う統制についての結論を保留扱いにする。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "印の解釈を二値（在る／無い）から三値（在る／無い／その版に印が存在しない＝不明）へ改める。前方寛容による不在と未配布による不在を、観測の側で区別できるようにする。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "台帳へ結論を確定する前に「その結論が依拠する観測は対象を識別できるか（分解能）」を問う関門を保証レーンに設け、識別力が示せない結論は未反証として開いたままにする。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "INC-001 推奨#6 の切り分けを未反証へ戻し、同じ根拠（hook_inject_version・版番号）に寄りかかった他の結論を台帳から洗い出す。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "想定の登記簿に「版番号は導入複製を識別しない」を明示登記し、失効先行指標（版据え置きのコミット数、SHA 距離）を各想定に添える。ADR-070 と ADR-119 の間の同一性の定義差も統治木に記す。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "版番号を毎コミット動かすか（配布物の版番号の変更・ADR-116 区分）、あるいは gitCommitSha を複製の同一性の観測に用いるか（配布境界の観測にあたるか・INC-001 推奨#3）を決める。どちらも採らない場合、複製の状態は原理的に観測できないことを確定事実として残す必要がある。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "67475de..HEAD の 15 コミットのうち現場の統制挙動に影響する変更を列挙し、像の食い違いに留まるか、現場の強制力の差になっているかを判定する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "複製の同一性を版番号で表すという単一の想定を、CI・鼓動・注入印・監査印の四経路が共有しており、独立した防護に見えて一つの想定の破れで同時に無効化される（共通原因）。",
+      "検出器を被検出対象と同じ場所（導入複製）に置く設計が繰り返し採られており、検出器の劣化が検出対象の劣化と同時に進む（INC-005 と本件が同型）。",
+      "統制が無音であることを健全と読む既定解釈が構造全体に埋め込まれ、「無音の理由が区別できるか」を問う工程がどの統制にも無い。",
+      "後から入れた検出器の不在（未配布）と、設計上の寛容（印を出さない）が同一の観測を生む。新旧の統制が混在する期間の解釈規約が決定文書の間に無い。",
+      "配布境界に触れないための自制（所有者判断の尊重）が、境界の向こう側を観測する手掛かりの不在として固定化し、判断が要る状態にあること自体が所有者へ上がらない。",
+      "安全上の想定を明示登記する場が反復4まで存在せず、想定の失効を示す先行指標が定義される前に想定に依拠した結論が確定していた。"
+    ],
+    "unknowns": [
+      "【最優先】本分析は空の作業ディレクトリ（/tmp/assurance-cast-n4pzkfs4）で実施しており、リポジトリも導入複製も参照できていない。ADR-070・ADR-119・assurance/ledger/assumptions.json・installed_plugins.json・docs-audit.py の実在と内容、および 15 コミット・印 0 件という測定値を独立に確認していない。事象記録の測定をそのまま前提としている。ただし事象が名指しする機構は、役割としては統制構造に対応要素が在る（版遅れ検出＝HEARTBEAT、SessionEnd 監査＝SESSION_END_AUDIT、想定台帳＝ASSURANCE_LANE、配布＝PLUGIN_DISTRIBUTION）ため、実在しない機構についての分析ではないと判断した。",
+      "hook_inject_version がどの入力から生成されるか（版番号のみか、SHA を含み得るか）は未確認であり、この印に識別力を持たせる改修が容易かどうかは判らない。",
+      "導入複製の docs-audit.py に印が 0 件である理由が、版遅れによる未配布なのか、別経路での書き換えや導入不全なのかは、内容ハッシュの突合をしていないため断定できない。",
+      "installed_plugins.json の gitCommitSha が、すべての導入経路・すべての Claude Code の版で常に書かれるかは未確認。書かれない環境が在れば、SHA 起点の先行指標は静かに欠測する。",
+      "67475de..HEAD の 15 コミットのうち、現場の統制挙動（ガード・監査・鼓動・注入）に影響する変更が何件在るかを評価していない。影響 0 件なら損失は像の食い違いに留まり、影響が在れば現場の強制力自体が正本より弱い。",
+      "INC-001 推奨#6 の切り分けが、台帳の他のどの結論・どの推奨に波及しているかを追跡していない。同じ根拠に寄りかかった結論が他に在るかは未調査。",
+      "ADR-116 の所有者判断区分が、版番号の刻み方の変更と SHA の観測利用の双方に及ぶかどうかは、原文を参照していないため確定できない。",
+      "この食い違いが 2026-08-05 の INC-001 記録より前から在ったのか、その時点で初めて生じたのか（版が据え置かれ始めた時期）は未確認。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は「異常が在れば何かが鳴る」構成だが、この事象では四つの経路が同時に無音になる。CI は正本しか見ないので緑、鼓動は版番号を比べるので差 0、SessionEnd の印は複製に存在しないので不在、注入の印は 15 コミット不変なので一致。四つの無音はいずれも「異常なし」と同じ形をしており、無音の理由を区別する観測が構造に無い。加えて、これらの経路は独立した防護に見えて、実際には「導入複製の同一性は版番号で表せる」という単一の想定を共有しており（複製側で動く検出器という共通の設置場所も共有している）、その想定が破れた瞬間に一斉に効かなくなる共通原因を成す。保証の運用も、非安全状態を探すのではなく健全性を確認する向きに寄っており、実測（hook-stamps）が在ることをもって切り分けが成立したと扱った結果、証拠の識別力を問う工程が発生しなかった。修正が未着手であること自体より、無音を健全と読む構造が残っていることが本質である。"
+  }
+}

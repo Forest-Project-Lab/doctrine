@@ -1,0 +1,758 @@
+{
+  "accepted_flaws": [
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "CAST 分析の評価者へ渡る入力は、事象の記録・統制構造・原則索引の三つで、統治木の既決（確定事実12・非目標18・退行監視12・ADR 126件）は一件も含まれていない。評価者のプロセスモデルは「何も決まっていない世界」となり、既に決着した事項も未決として観測される。owner_decision_required は権限の判定ではなく、この視野欠損の申告として出力されていた。",
+      "evidence_ref": "assurance/harness/prompts.py（build_cast_analysis_prompt の入力は incident・control_structure_text・principle_index の三つ）",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "プロセスモデルと実状態の不整合",
+        "モデル一致のためのフィードバック提供",
+        "defects-in-information-providing-systems"
+      ],
+      "why_it_seemed_adequate": "評価の独立性を保つには、実装者側の材料を評価者に渡さないことが汚染の防止として理にかなって見えた。既決（構造化された正本）と弁明（当事者の申告）は性質が異なるが、入力を絞るという一つの軸の上に両方が乗っていたため、既決を渡さないことは独立性の代償ではなく独立性そのものに見えていた。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "orchestrator の recommendation_backlog は、評価者が付けた申告をそのまま所有者の権限判定として読み替え、owner を既定の行き先にしていた。申告が指しているのは「私にはここから先が見えない」であって「所有者が決める事項である」ではない。生成元と検証者が同一（評価者の申告を体系が検証しない）であり、申告の意味論が処遇の権限に横滑りしていた。",
+      "evidence_ref": "assurance/harness/orchestrator.py（recommendation_backlog）",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "申告でなく行動観測による評価",
+        "自発報告のみによる評価の禁止",
+        "被審査者提供情報への単独依存の禁止"
+      ],
+      "why_it_seemed_adequate": "未決のものを人へ回すのは、機械が勝手に決めないという安全側の既定に見えた。判断を保留して人へ上げる動作は、通常は保守的で望ましい向きであり、その保留先が実際には読まれない棚であることは、棚の滞留を観測する手段が無い限り現れない。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "schemas.py:239 の owner_decision_required は定義ゼロの裸の boolean であり、所有者の権限の六類型との対応が schema にも _CAST_CHARTER にも無い。真偽値は「どの制約に照らして所有者の判断を要するのか」を運べないため、下流はその一ビットを権限の判定として解釈するほかなくなる。_CAST_CHARTER には「既に決まっていないか検めよ」に相当する規律も無い。",
+      "evidence_ref": "assurance/harness/schemas.py:239",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "用語定義のスコープ限定",
+        "リスク情報の不透明な集約禁止",
+        "失敗記述に違反制約の明記"
+      ],
+      "why_it_seemed_adequate": "真偽値は最も検証しやすい型に見え、schema 適合の決定論試験も緑になる。用語の定義を憲章側に置かなかったのは、フィールド名が自明に読めるという想定によるもので、その想定は書き手（設計者）と読み手（評価者・下流）のモデルが一致している限り破れない。"
+    },
+    {
+      "control_element_id": "OWNER",
+      "description": "所有者の手掛かりは進捗報告・PR の diff・台帳の三つで、いずれも「棚に何件積まれ、そのうち構造から導けるものが何件で、真に権限を要するものが何件か」を分離して示さない。45 件は単一のラベルへ丸め込まれ、所有者には判断すべき対象の実像が届いていなかった。判断の責任だけが委ねられ、判断に要る材料が伴っていない。",
+      "evidence_ref": "assurance/ledger/",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "責任委譲には情報と訓練を伴わせる",
+        "controller-needs-concrete-feedback-channels",
+        "リスク情報の不透明な集約禁止"
+      ],
+      "why_it_seemed_adequate": "台帳は全件が残る設計であり、記録されている以上は所有者から見えているという想定が成り立って見えた。この元素には既に「報告が実施ではなく意図を書いていても人からは見分けにくい」という穴が記録されており、今回の欠損はその同型（申告の分類と実像の乖離）である。"
+    },
+    {
+      "control_element_id": "SESSION_START_CONTRACT",
+      "description": "確定・非目標・退行監視の要点を注入する経路は主セッションにだけ効き、サブエージェント（評価者）には届かない（NONGOAL-001 の既知の穴）。統治の既決を運ぶ唯一の能動的な経路がこの注入であるため、評価者は構造上、既決に触れられない位置で動いていた。設計上の伝達経路と、実際に既決が流れた経路が一致していない。",
+      "evidence_ref": "plugin/scripts/inject-contract.py（NONGOAL-001）",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "設計上と実際の伝達経路の照合",
+        "全コントロールループにフィードバック必須",
+        "共通の体系的要因による多重防護の無効化"
+      ],
+      "why_it_seemed_adequate": "注入は統治の生存指標（R11）として主セッションで機能しており、届いている実績があった。届いていない先（サブエージェント）は、届かないこと自体が沈黙として現れるため、注入の成功だけを見ている限り欠損は観測されない。"
+    },
+    {
+      "control_element_id": "GOVERNANCE_TREE",
+      "description": "統治木は既決の正本を保持しているが、その既決を保証レーンの評価入力へ供給する経路が設計として存在しない。正本の保有と、正本が判断の場で使われることが別であり、今回は保有側は健全なまま、利用側が空だった。",
+      "evidence_ref": "doctrine_docs/_system/decided-facts.md",
+      "flaw_type": "統制どうしの調整の欠如",
+      "normative_refs": [
+        "情報システム保有と有用性の乖離",
+        "情報活用のための構造とプロセス",
+        "教訓の記録と伝達と活用"
+      ],
+      "why_it_seemed_adequate": "全件監査（docs-audit）が統治木を走査し要約を出しているため、統治木は「読まれている」状態に見えた。監査が読む先と評価が読む先が別であることは、両者を突き合わせる観測が無い限り区別されない。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "事象は分析が済むまで閉じない設計がある一方、分析が生んだ推奨事項の側には、実施責任の割当・実施状況の検査・有効性のフィードバックがいずれも無い。棚に入った時点で追跡が終わるため、45 件は指摘のまま未処理で残り続けた。",
+      "evidence_ref": "assurance/harness/orchestrator.py（recommendation_backlog）",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "推奨事項の責任割当実施検査フィードバック",
+        "audit-findings-must-be-closed",
+        "指摘欠点の是正完了追跡"
+      ],
+      "why_it_seemed_adequate": "閉じない仕組みは事象の側に既に備わっており、推奨事項は事象の従属物として同じ規律の下にあると読めた。事象と推奨事項が別々の寿命を持つことは、推奨事項が滞留し始めるまで表に出ない。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "棚の滞留件数・滞留齢・owner 分類率のいずれも体系側の観測対象になっておらず、45 件まで積み上がる過程が異常として立たなかった。検出は所有者からの問い（『これは本当に人間が判断しないといけないものなの？』）という外部指摘であり、体系は自分の出力の偏りを能動的に探していない。",
+      "evidence_ref": "detected_by（所有者の問い、2026-08-06）",
+      "flaw_type": "統制自身の劣化を検出できない",
+      "normative_refs": [
+        "外部指摘依存でなく能動的探索",
+        "検出失敗の原因調査",
+        "監査のすり抜け時に監査手順を是正"
+      ],
+      "why_it_seemed_adequate": "決定論試験が緑であり、schema 適合と引用の実在照合も通っていた。保証の緑は「形式が整っている」ことの緑であって「出力が有意である」ことの緑ではないが、両者を分けて観測する指標が置かれていなかった。"
+    },
+    {
+      "control_element_id": "CI_RELEASE_CHECK",
+      "description": "merge 前に赤で止める門は、schema 適合と引用の実在は見るが、判定に用いられるフィールドが憲章上の定義を持つかどうかは見ない。定義ゼロの boolean が処遇の既定を左右する位置に入った状態で緑を通過している。照合は「引用が実在するか」を検めるが「申告の対象が実在するか・意味が定義されているか」を検めない。",
+      "evidence_ref": ".github/workflows / assurance/harness/schemas.py:239",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "手順の書式適合と必須項目欠落検査",
+        "形式承認の禁止・実質審査の証跡",
+        "最低限準拠を超える安全活動の実効性"
+      ],
+      "why_it_seemed_adequate": "機械照合できるもの（schema・dedupe_key）を厳格に照合することは、検証可能性の規律として一貫していた。定義の有無は機械照合の対象として立てられていなかったため、門の視野の外にあり、視野の外は緑として現れる。"
+    }
+  ],
+  "analysis": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "CAST 分析の評価者へ渡る入力は、事象の記録・統制構造・原則索引の三つで、統治木の既決（確定事実12・非目標18・退行監視12・ADR 126件）は一件も含まれていない。評価者のプロセスモデルは「何も決まっていない世界」となり、既に決着した事項も未決として観測される。owner_decision_required は権限の判定ではなく、この視野欠損の申告として出力されていた。",
+        "evidence_ref": "assurance/harness/prompts.py（build_cast_analysis_prompt の入力は incident・control_structure_text・principle_index の三つ）",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "プロセスモデルと実状態の不整合",
+          "モデル一致のためのフィードバック提供",
+          "defects-in-information-providing-systems"
+        ],
+        "why_it_seemed_adequate": "評価の独立性を保つには、実装者側の材料を評価者に渡さないことが汚染の防止として理にかなって見えた。既決（構造化された正本）と弁明（当事者の申告）は性質が異なるが、入力を絞るという一つの軸の上に両方が乗っていたため、既決を渡さないことは独立性の代償ではなく独立性そのものに見えていた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "orchestrator の recommendation_backlog は、評価者が付けた申告をそのまま所有者の権限判定として読み替え、owner を既定の行き先にしていた。申告が指しているのは「私にはここから先が見えない」であって「所有者が決める事項である」ではない。生成元と検証者が同一（評価者の申告を体系が検証しない）であり、申告の意味論が処遇の権限に横滑りしていた。",
+        "evidence_ref": "assurance/harness/orchestrator.py（recommendation_backlog）",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "申告でなく行動観測による評価",
+          "自発報告のみによる評価の禁止",
+          "被審査者提供情報への単独依存の禁止"
+        ],
+        "why_it_seemed_adequate": "未決のものを人へ回すのは、機械が勝手に決めないという安全側の既定に見えた。判断を保留して人へ上げる動作は、通常は保守的で望ましい向きであり、その保留先が実際には読まれない棚であることは、棚の滞留を観測する手段が無い限り現れない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "schemas.py:239 の owner_decision_required は定義ゼロの裸の boolean であり、所有者の権限の六類型との対応が schema にも _CAST_CHARTER にも無い。真偽値は「どの制約に照らして所有者の判断を要するのか」を運べないため、下流はその一ビットを権限の判定として解釈するほかなくなる。_CAST_CHARTER には「既に決まっていないか検めよ」に相当する規律も無い。",
+        "evidence_ref": "assurance/harness/schemas.py:239",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "用語定義のスコープ限定",
+          "リスク情報の不透明な集約禁止",
+          "失敗記述に違反制約の明記"
+        ],
+        "why_it_seemed_adequate": "真偽値は最も検証しやすい型に見え、schema 適合の決定論試験も緑になる。用語の定義を憲章側に置かなかったのは、フィールド名が自明に読めるという想定によるもので、その想定は書き手（設計者）と読み手（評価者・下流）のモデルが一致している限り破れない。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者の手掛かりは進捗報告・PR の diff・台帳の三つで、いずれも「棚に何件積まれ、そのうち構造から導けるものが何件で、真に権限を要するものが何件か」を分離して示さない。45 件は単一のラベルへ丸め込まれ、所有者には判断すべき対象の実像が届いていなかった。判断の責任だけが委ねられ、判断に要る材料が伴っていない。",
+        "evidence_ref": "assurance/ledger/",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "責任委譲には情報と訓練を伴わせる",
+          "controller-needs-concrete-feedback-channels",
+          "リスク情報の不透明な集約禁止"
+        ],
+        "why_it_seemed_adequate": "台帳は全件が残る設計であり、記録されている以上は所有者から見えているという想定が成り立って見えた。この元素には既に「報告が実施ではなく意図を書いていても人からは見分けにくい」という穴が記録されており、今回の欠損はその同型（申告の分類と実像の乖離）である。"
+      },
+      {
+        "control_element_id": "SESSION_START_CONTRACT",
+        "description": "確定・非目標・退行監視の要点を注入する経路は主セッションにだけ効き、サブエージェント（評価者）には届かない（NONGOAL-001 の既知の穴）。統治の既決を運ぶ唯一の能動的な経路がこの注入であるため、評価者は構造上、既決に触れられない位置で動いていた。設計上の伝達経路と、実際に既決が流れた経路が一致していない。",
+        "evidence_ref": "plugin/scripts/inject-contract.py（NONGOAL-001）",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "設計上と実際の伝達経路の照合",
+          "全コントロールループにフィードバック必須",
+          "共通の体系的要因による多重防護の無効化"
+        ],
+        "why_it_seemed_adequate": "注入は統治の生存指標（R11）として主セッションで機能しており、届いている実績があった。届いていない先（サブエージェント）は、届かないこと自体が沈黙として現れるため、注入の成功だけを見ている限り欠損は観測されない。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "統治木は既決の正本を保持しているが、その既決を保証レーンの評価入力へ供給する経路が設計として存在しない。正本の保有と、正本が判断の場で使われることが別であり、今回は保有側は健全なまま、利用側が空だった。",
+        "evidence_ref": "doctrine_docs/_system/decided-facts.md",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "情報システム保有と有用性の乖離",
+          "情報活用のための構造とプロセス",
+          "教訓の記録と伝達と活用"
+        ],
+        "why_it_seemed_adequate": "全件監査（docs-audit）が統治木を走査し要約を出しているため、統治木は「読まれている」状態に見えた。監査が読む先と評価が読む先が別であることは、両者を突き合わせる観測が無い限り区別されない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "事象は分析が済むまで閉じない設計がある一方、分析が生んだ推奨事項の側には、実施責任の割当・実施状況の検査・有効性のフィードバックがいずれも無い。棚に入った時点で追跡が終わるため、45 件は指摘のまま未処理で残り続けた。",
+        "evidence_ref": "assurance/harness/orchestrator.py（recommendation_backlog）",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "推奨事項の責任割当実施検査フィードバック",
+          "audit-findings-must-be-closed",
+          "指摘欠点の是正完了追跡"
+        ],
+        "why_it_seemed_adequate": "閉じない仕組みは事象の側に既に備わっており、推奨事項は事象の従属物として同じ規律の下にあると読めた。事象と推奨事項が別々の寿命を持つことは、推奨事項が滞留し始めるまで表に出ない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "棚の滞留件数・滞留齢・owner 分類率のいずれも体系側の観測対象になっておらず、45 件まで積み上がる過程が異常として立たなかった。検出は所有者からの問い（『これは本当に人間が判断しないといけないものなの？』）という外部指摘であり、体系は自分の出力の偏りを能動的に探していない。",
+        "evidence_ref": "detected_by（所有者の問い、2026-08-06）",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "外部指摘依存でなく能動的探索",
+          "検出失敗の原因調査",
+          "監査のすり抜け時に監査手順を是正"
+        ],
+        "why_it_seemed_adequate": "決定論試験が緑であり、schema 適合と引用の実在照合も通っていた。保証の緑は「形式が整っている」ことの緑であって「出力が有意である」ことの緑ではないが、両者を分けて観測する指標が置かれていなかった。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "merge 前に赤で止める門は、schema 適合と引用の実在は見るが、判定に用いられるフィールドが憲章上の定義を持つかどうかは見ない。定義ゼロの boolean が処遇の既定を左右する位置に入った状態で緑を通過している。照合は「引用が実在するか」を検めるが「申告の対象が実在するか・意味が定義されているか」を検めない。",
+        "evidence_ref": ".github/workflows / assurance/harness/schemas.py:239",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "手順の書式適合と必須項目欠落検査",
+          "形式承認の禁止・実質審査の証跡",
+          "最低限準拠を超える安全活動の実効性"
+        ],
+        "why_it_seemed_adequate": "機械照合できるもの（schema・dedupe_key）を厳格に照合することは、検証可能性の規律として一貫していた。定義の有無は機械照合の対象として立てられていなかったため、門の視野の外にあり、視野の外は緑として現れる。"
+      }
+    ],
+    "hazard": "保証レーンが、統治木の既決を渡されていない評価者の自己申告（owner_decision_required）を、検証せずに処遇の既定として用い、是正要求の行き先が「所有者判断待ち」へ一括して吸い込まれる状態。この状態では、構造から導ける処遇と、真に所有者の権限を要する処遇とが同一のラベルに丸め込まれ、どちらも起動しない。",
+    "incident_id": "INC-020-evaluator-blindness-read-as-owner-authority",
+    "leading_indicators": [
+      {
+        "indicator": "推奨事項のうち owner へ分類される割合",
+        "observable": "1 事象あたりの新規推奨事項に占める owner 分類の比率、および直近 5 事象での推移",
+        "threshold": "1 事象で owner 率が 20% を超える、または直近 5 事象で owner が新規推奨の最多分類になった時点で異常",
+        "version_independent": true,
+        "where": "assurance/ledger/ を集計する status 出力（orchestrator）",
+        "why_version_independent": "リポジトリ正本側の台帳と orchestrator で完結して計算でき、導入複製の版に依存しない"
+      },
+      {
+        "indicator": "owner の申告件数と成立件数の差",
+        "observable": "status が別々に出す申告件数と、明示の処遇行が六類型のいずれかを名指した成立件数の差分",
+        "threshold": "差分が 1 件でも生じたら異常（申告が成立へ落ちない＝既定復活または視野欠損の兆候）",
+        "version_independent": true,
+        "where": "assurance/harness/orchestrator.py の status 出力（ADR-127 で分離済み）",
+        "why_version_independent": "正本側の出力どうしの突合であり、複製の版に依存しない"
+      },
+      {
+        "indicator": "評価入力に含まれる統治木の既決の件数",
+        "observable": "CAST 分析実行ごとに、評価者へ渡ったプロンプトに含まれる既決（確定事実・非目標・退行監視・ADR）の件数をダンプして記録",
+        "threshold": "既決 0 件のまま CAST 分析が 1 件でも実行されたら異常",
+        "version_independent": true,
+        "where": "assurance/harness/prompts.py の build_cast_analysis_prompt が組み立てた入力のログ",
+        "why_version_independent": "ハーネスはリポジトリ正本側で実行され、導入複製の版と独立に観測できる"
+      },
+      {
+        "indicator": "棚の滞留齢と滞留の増減",
+        "observable": "未処理推奨事項の最古齢（日数）と、週次の新規流入件数対処理件数",
+        "threshold": "最古齢 30 日超が 1 件でも存在する、または流入が処理を上回る週が 2 週連続した時点で異常",
+        "version_independent": true,
+        "where": "assurance/ledger/",
+        "why_version_independent": "台帳は正本側にあり、複製の更新状況と無関係に読める"
+      },
+      {
+        "indicator": "判定に使われるが憲章に定義を持たないフィールドの数",
+        "observable": "schema の各フィールド名と _CAST_CHARTER の定義項目の突合結果",
+        "threshold": "下流の処遇分岐に使われるフィールドで憲章に定義が無いものが 1 件でもあれば赤",
+        "version_independent": true,
+        "where": "assurance/harness/schemas.py と _CAST_CHARTER の照合（CI_RELEASE_CHECK に追加）",
+        "why_version_independent": "リポジトリ内の二つの正本の突合であり外部配布に依存しない"
+      },
+      {
+        "indicator": "サブエージェント（評価者）への契約注入の到達",
+        "observable": "評価者実行時のプロンプト先頭に注入マーカーが存在するか、および導入複製側の inject-contract.py の版",
+        "threshold": "注入マーカーが不在、または導入複製の版がリポジトリ正本より 1 世代でも遅れている時点で異常",
+        "version_independent": false,
+        "where": "plugin/scripts/inject-contract.py の実行記録と、導入複製の版（HEARTBEAT が読む値）",
+        "why_version_independent": "注入も版の警告も導入複製の側で走るため、複製の版が遅れると検出器自身が古い定義で判定し、欠損を欠損として表示できない（INC-005 の『古びの検出器が古びる』と同型の共通原因故障。PLUGIN_DISTRIBUTION の穴により、複製が何世代遅れているかはリポジトリ側から観測できない）"
+      },
+      {
+        "indicator": "owner 分類に対して所有者の裁定が記録された比率",
+        "observable": "owner へ分類された推奨事項のうち、所有者の裁定（可否・保留の理由）が台帳に記録されたものの割合",
+        "threshold": "直近 20 件の owner 分類のうち裁定記録が 0 件なら異常（棚が判断の場ではなく滞留先になっている兆候）",
+        "version_independent": true,
+        "where": "assurance/ledger/",
+        "why_version_independent": "台帳の記録有無のみで判定でき、複製の版に依存しない"
+      }
+    ],
+    "loss": "保証レーンが生んだ是正要求 45 件が、誰も読まない「所有者判断待ち」の棚へ既定で落ち、是正が一度も起動しないまま滞留した。実際に統治木を当てて裁いた 3 件（INC-001#3・INC-007#3・INC-008#8）はいずれも既決または観測で消えており、棚は判断待ちではなく材料が届いていない未処理の山だった。所有者は意思決定者としてではなく構造の欠損の受け皿として扱われ、所有者が本当に決めるべき事項（互換性・配布境界・復旧不能な削除・評価 model の最低線）が同じ棚の中に埋没した。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "下流の分岐に使われる全フィールドが憲章に定義を持ち、かつ申告以外の照合点を一つ以上持っていること。",
+        "hypothesis": "評価者が出す他の無検証フィールド（confidence・evidence_kind・version_independent・severity）も、下流で意味を読み替えられたまま処遇の既定に使われている。",
+        "oracle": "schema の全フィールドについて、(a) 憲章に定義があるか、(b) 下流の分岐に使われるか、(c) 使われる場合その分岐が申告以外の照合を伴うか、を機械照合する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "既決ありの条件で、既決の誤りへの指摘率が既決なし条件と同等以上に保たれること。",
+        "hypothesis": "既決を評価者へ渡すと、評価者は既決に寄りかかり、既決自体の誤りを指摘しなくなる（残余に記された共通原因故障が実際に立つ）。",
+        "oracle": "既決に既知の誤りを仕込んだ対照事象を用意し、既決あり／なしの二条件で『既決の誤りへの指摘率』と『既決で消える推奨の判定精度』を比較する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "成立した owner 行の類型名指しが、再裁定でいずれも妥当と判定されること。",
+        "hypothesis": "ADR-127 の既定廃止後も、評価者は六類型のいずれかを名指す処遇行を書けてしまい（視野が狭いままなので誤った類型を名指す）、owner 成立件数が申告件数に追随して戻る。",
+        "oracle": "ADR-127 適用後の CAST 分析で、成立した owner 行の名指した類型を統治木の既決に照らして再裁定し、誤った類型名指しの割合を測る。",
+        "severity": "P0"
+      },
+      {
+        "falsification_signal": "再裁定後も過半が『真に所有者』に残ること。",
+        "hypothesis": "過去の全 CAST 分析が同じ既定に汚染されており、棚の 45 件の大半は統治木を当てるだけで消える（3 件の実測が全体の傾向を代表する）。",
+        "oracle": "45 件全件に統治木の既決を当てて再裁定し、既決で消える／観測で消える／材料が足りない／真に所有者、の四分に分類する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "CAST 評価者以外の経路では既決が別手段で届いていること。",
+        "hypothesis": "サブエージェント境界を越える情報欠損は CAST 評価者だけでなく、他のサブエージェント経路（リンタ助言・捕捉ナッジ等）にも同型に存在し、統治の外で判断が行われている。",
+        "oracle": "サブエージェントを起動する全経路について、注入マーカーの有無と、既決を参照した形跡の有無を実行ごとに記録する。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "過去の推奨事項がすべて裁定の記録を伴って閉じていること。",
+        "hypothesis": "棚の滞留は今回が初めてではなく、過去にも同型の滞留があって別の理由（事象の閉鎖・棚の再構築）で消えており、記録が残っていない。",
+        "oracle": "台帳の履歴から、推奨事項の生成時刻・分類・消滅時刻を再構成し、消滅が裁定によるものか非裁定によるものかを分類する。",
+        "severity": "P2"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "統治木の既決（確定事実・非目標・退行監視・ADR の決定文）を構造化された正本チャネルとして評価入力へ供給し、実装者の弁明チャネルとは schema 上の型で区別する。build_cast_analysis_prompt の入力に既決チャネルを追加し、渡した既決の件数と出典を実行ごとに記録する。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "_CAST_CHARTER に「所有者判断と書く前に既決を検め、導けるものは導き、導けない場合はその理由と、どの類型に該当するかを書く」規律を追加し、所有者の権限の六類型を schemas.py の owner_decision_required のフィールド説明として定義する（裸の boolean を定義付きの列挙へ置き換える）。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "棚の滞留齢・owner 分類率・申告件数と成立件数の差分を status の定常出力に加え、閾値超過を退行監視へ登録して、外部からの問いを待たずに体系側で立つようにする。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "下流の処遇分岐に使われる schema フィールドが憲章上の定義を持つかを CI の照合対象に加え、定義ゼロのフィールドが分岐に使われる状態を赤で止める。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "評価者へ渡ったプロンプトに既決が含まれていたか（注入マーカー・既決件数）を実行ごとに記録し、サブエージェント境界での欠損を沈黙ではなく観測値にする。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "棚の 45 件に統治木を当てて全件再裁定し、既決で消える／観測で消える／材料が足りない／真に所有者、の四分に分類した結果を台帳へ残す。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "既決を渡した後の「既決への寄りかかり」を測る対照試験（既決に既知の誤りを仕込んだ事象で、既決あり／なしの指摘率を比較）を決定論試験へ組み込む。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "再裁定で「既決により消えた」と判定された推奨事項を台帳から取り下げる可否を決める（台帳からの除去は復旧不能な削除に当たるため、OWNER の制御範囲に該当する）。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "「検証できない申告を信じる」家系（ADR-050／NONGOAL-001 第9・14・16項／INC-013／本件）の登録に、評価者自身の出力フィールドを点検対象として明記し、家系の再発点検が保証レーンの内側も走査するようにする。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "申告の生成元と検証者が同一である——評価者が出した owner_decision_required を体系が検証せずに処遇の既定へ変換していた。これは ADR-050／NONGOAL-001 第9・14・16項／INC-013 と同じ家系の四度目であり、家系として登録されているにもかかわらず、評価者自身の出力フィールドがその点検対象に入っていなかった。",
+      "独立性の規律が『入力を絞る』という単一の軸で実装され、既決（構造化された正本）と弁明（当事者の申告）が型として区別されていない。汚染の防止と視野の確保が同じダイヤルの両端に置かれているため、独立性を上げると必ず視野が落ちる。",
+      "未決の既定の受け皿を人（所有者）に置く設計は、構造の欠損を『人の判断待ち』という正当な状態に化けさせる。欠損が待ち行列の形をとると、欠損として観測されなくなる。",
+      "統治の既決を運ぶ能動的な経路が主セッションへの注入ひとつしかなく、サブエージェント境界の向こうは統治の外になる（NONGOAL-001）。境界を越える経路の不在は、越えられなかったことが沈黙として現れるため単独では検出されない。",
+      "保証の緑が『形式の整合』の緑であって『出力の有意性』の緑ではない。schema 適合・引用の実在照合・決定論試験のいずれも、対象の実在と用語の定義を検める位置に置かれていない。",
+      "評価者が同系 model であることによる共通原因故障が残余として明示されているが、その残余が具体的にどのフィールドに現れるかは列挙されておらず、残余の宣言が点検の代わりになっていた。"
+    ],
+    "unknowns": [
+      "【実在の未検証】事象が名指す機構のうち、統制構造に実在として列挙されているのは ASSURANCE_LANE（assurance/harness/orchestrator.py）と GOVERNANCE_TREE（doctrine_docs/_system/decided-facts.md）だけである。prompts.build_cast_analysis_prompt、_CAST_CHARTER、schemas.py:239 の owner_decision_required、recommendation_backlog、ADR-127、および『所有者の権限の六類型』は、統制構造の要素としても実体としても列挙されていない。本分析の作業ディレクトリは空であり（リポジトリが存在しない）、これらの実在をファイル上で確認できなかった。上記の統制欠陥は、事象の記録が述べるこれらの機構が実在するという未検証の前提の上に立っている。confidence を low とした理由はこれである。",
+      "45 件の内訳（どの事象由来か、どの分類か）は与えられていない。統治木を当てて実際に裁いたのは 3 件のみであり、残り 42 件のうち何件が既決で消えるか、何件が観測で消えるか、何件が真に所有者の権限を要するかは未測定である。",
+      "『所有者の権限の六類型』の定義がどの文書にあり、統制構造の OWNER に記された四つの制御（互換性・配布境界・復旧不能な削除／評価 model の最低線／push・PR・merge の範囲）とどう対応するかは、与えられた統制構造からは辿れない。",
+      "ADR-127 は fixed=true・shipped=false であり、導入複製へいつ届くかは PLUGIN_DISTRIBUTION の既知の穴（複製が何世代遅れているかをリポジトリ側から観測できない）により不明である。",
+      "既決を評価者へ渡した後に立つとされる共通原因故障（既決に寄りかかり、既決自体の誤りを指摘できなくなる）について、その発生率も検出手段も未設計であり、渡す前と後のどちらが残余リスクとして大きいかは判定できない。",
+      "評価者が同系 model であるとき、自らの視野欠損を『見えていない』と申告できるかどうかは未検証である。今回は所有者の外部からの問いによってのみ表面化した。",
+      "owner_decision_required 以外の無検証フィールド（confidence・evidence_kind・version_independent・severity など）が同型の申告になっているかは未調査である。",
+      "棚に落ちた 45 件が『誰も読まない』状態であったことは所有者の問いから遡って判明したが、いつからその状態であったか（最初の 1 件が滞留し始めた時点）は台帳から再構成できるか不明である。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は三つの形式検査で構成されていた——schema 適合、引用（dedupe_key）の実在照合、決定論試験の成否。いずれも「書式が整っているか」を見る検査であり、「申告の中身が構造から導けるか」「申告が指す対象が実在するか」は視野の外にある。owner_decision_required は定義ゼロの裸 boolean であるがゆえに、どんな値でも schema に適合し、常に緑を返した。照合の側も、引用の実在は検めるが対象の実在は検めない（A2 で入った規律の対象そのもの）。さらに、この申告は評価者自身が生成し、体系が検証せずに処遇の既定へ変換していたため、生成元と検証者が同一であり、独立した反証点が構造に存在しなかった。決定的なのは、視野の欠損は自己申告できないという点である——既決を渡されていない評価者から見れば全てが未決であり、その状態は評価者にとって内的に矛盾がない。修正（ADR-127、既定の廃止と申告件数・成立件数の分離出力）は読み替えを止めるが、視野そのものは狭いままであり、同型の無検証申告は別のフィールドで再び成立しうる。本件は「検証できない申告を信じる」形の四度目（ADR-050／NONGOAL-001 第9・14・16項／INC-013）であり、家系として既に三度観測されているにもかかわらず、評価者自身の出力フィールドはその家系の点検対象に入っていなかった。"
+  },
+  "control_structure_ids": [
+    "OWNER",
+    "CI_RELEASE_CHECK",
+    "SESSION_START_CONTRACT",
+    "HEARTBEAT",
+    "PRE_TOOL_GUARD",
+    "POST_TOOL_LINTER",
+    "SESSION_END_AUDIT",
+    "CAPTURE_NUDGE",
+    "PLUGIN_DISTRIBUTION",
+    "ASSURANCE_LANE",
+    "GOVERNANCE_TREE"
+  ],
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "duration_ms": 347644,
+  "errors": [],
+  "execution_kind": "real-sdk",
+  "flaws_with_citation_defect": [],
+  "generated_at": "2026-08-06T14:26:57Z",
+  "git_dirty": true,
+  "git_sha": "cf68f179c55497b3b62a2d3bc10c996e9405f78b",
+  "incident_evidence": {
+    "kind": "measurement",
+    "refs": [
+      "assurance/harness/prompts.py",
+      "assurance/harness/schemas.py",
+      "assurance/harness/orchestrator.py"
+    ],
+    "resolved": [
+      "assurance/harness/prompts.py",
+      "assurance/harness/schemas.py",
+      "assurance/harness/orchestrator.py"
+    ],
+    "unresolved": [],
+    "verifiable": true
+  },
+  "incident_id": "INC-020-evaluator-blindness-read-as-owner-authority",
+  "incident_sha256": "71a91642d9ff57c499e982bb046988f8fd201ad8144cd9ff06fa18b9071bf6a7",
+  "init": {
+    "claude_code_version": "2.1.221",
+    "model": "claude-opus-5",
+    "session_id": "22d5c1f5-11f5-4328-a334-7e806d06cdb3",
+    "tools_count": 27
+  },
+  "kind": "cast-analysis",
+  "leading_indicators_defined": true,
+  "options": {
+    "allowed_tools": [],
+    "cwd": "/tmp/assurance-cast-jk0x3lk5",
+    "effort": "high",
+    "max_budget_usd": 4.0,
+    "max_turns": 8,
+    "model": "claude-opus-5",
+    "setting_sources": [],
+    "timeout_s": 900
+  },
+  "oracle": "structured_output がレーン側再検証にも適合",
+  "principles_offered": 337,
+  "prompt_sha256": "ed5173531ec14e931fbfba108c4be47bf011593562789fa2cca1019278599dce",
+  "rejected_flaws": [],
+  "result_meta": {
+    "duration_api_ms": 339857,
+    "is_error": false,
+    "num_turns": 5,
+    "session_id": "22d5c1f5-11f5-4328-a334-7e806d06cdb3",
+    "subtype": "success",
+    "total_cost_usd": 1.0757664999999998,
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 45780,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 45780,
+      "cache_read_input_tokens": 132521,
+      "inference_geo": "not_available",
+      "input_tokens": 6,
+      "iterations": "list",
+      "output_tokens": 20585,
+      "server_tool_use": {
+        "web_fetch_requests": 0,
+        "web_search_requests": 0
+      },
+      "service_tier": "standard",
+      "speed": "standard"
+    }
+  },
+  "schema_sha256": "0d1643d5e16353723405302c1f6ffcf753915e2a4f27a3530e8ef9a9ee45cb46",
+  "sdk_version": "0.2.129",
+  "settled": true,
+  "status": "PASS",
+  "structured_output": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "CAST 分析の評価者へ渡る入力は、事象の記録・統制構造・原則索引の三つで、統治木の既決（確定事実12・非目標18・退行監視12・ADR 126件）は一件も含まれていない。評価者のプロセスモデルは「何も決まっていない世界」となり、既に決着した事項も未決として観測される。owner_decision_required は権限の判定ではなく、この視野欠損の申告として出力されていた。",
+        "evidence_ref": "assurance/harness/prompts.py（build_cast_analysis_prompt の入力は incident・control_structure_text・principle_index の三つ）",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "プロセスモデルと実状態の不整合",
+          "モデル一致のためのフィードバック提供",
+          "defects-in-information-providing-systems"
+        ],
+        "why_it_seemed_adequate": "評価の独立性を保つには、実装者側の材料を評価者に渡さないことが汚染の防止として理にかなって見えた。既決（構造化された正本）と弁明（当事者の申告）は性質が異なるが、入力を絞るという一つの軸の上に両方が乗っていたため、既決を渡さないことは独立性の代償ではなく独立性そのものに見えていた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "orchestrator の recommendation_backlog は、評価者が付けた申告をそのまま所有者の権限判定として読み替え、owner を既定の行き先にしていた。申告が指しているのは「私にはここから先が見えない」であって「所有者が決める事項である」ではない。生成元と検証者が同一（評価者の申告を体系が検証しない）であり、申告の意味論が処遇の権限に横滑りしていた。",
+        "evidence_ref": "assurance/harness/orchestrator.py（recommendation_backlog）",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "申告でなく行動観測による評価",
+          "自発報告のみによる評価の禁止",
+          "被審査者提供情報への単独依存の禁止"
+        ],
+        "why_it_seemed_adequate": "未決のものを人へ回すのは、機械が勝手に決めないという安全側の既定に見えた。判断を保留して人へ上げる動作は、通常は保守的で望ましい向きであり、その保留先が実際には読まれない棚であることは、棚の滞留を観測する手段が無い限り現れない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "schemas.py:239 の owner_decision_required は定義ゼロの裸の boolean であり、所有者の権限の六類型との対応が schema にも _CAST_CHARTER にも無い。真偽値は「どの制約に照らして所有者の判断を要するのか」を運べないため、下流はその一ビットを権限の判定として解釈するほかなくなる。_CAST_CHARTER には「既に決まっていないか検めよ」に相当する規律も無い。",
+        "evidence_ref": "assurance/harness/schemas.py:239",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "用語定義のスコープ限定",
+          "リスク情報の不透明な集約禁止",
+          "失敗記述に違反制約の明記"
+        ],
+        "why_it_seemed_adequate": "真偽値は最も検証しやすい型に見え、schema 適合の決定論試験も緑になる。用語の定義を憲章側に置かなかったのは、フィールド名が自明に読めるという想定によるもので、その想定は書き手（設計者）と読み手（評価者・下流）のモデルが一致している限り破れない。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者の手掛かりは進捗報告・PR の diff・台帳の三つで、いずれも「棚に何件積まれ、そのうち構造から導けるものが何件で、真に権限を要するものが何件か」を分離して示さない。45 件は単一のラベルへ丸め込まれ、所有者には判断すべき対象の実像が届いていなかった。判断の責任だけが委ねられ、判断に要る材料が伴っていない。",
+        "evidence_ref": "assurance/ledger/",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "責任委譲には情報と訓練を伴わせる",
+          "controller-needs-concrete-feedback-channels",
+          "リスク情報の不透明な集約禁止"
+        ],
+        "why_it_seemed_adequate": "台帳は全件が残る設計であり、記録されている以上は所有者から見えているという想定が成り立って見えた。この元素には既に「報告が実施ではなく意図を書いていても人からは見分けにくい」という穴が記録されており、今回の欠損はその同型（申告の分類と実像の乖離）である。"
+      },
+      {
+        "control_element_id": "SESSION_START_CONTRACT",
+        "description": "確定・非目標・退行監視の要点を注入する経路は主セッションにだけ効き、サブエージェント（評価者）には届かない（NONGOAL-001 の既知の穴）。統治の既決を運ぶ唯一の能動的な経路がこの注入であるため、評価者は構造上、既決に触れられない位置で動いていた。設計上の伝達経路と、実際に既決が流れた経路が一致していない。",
+        "evidence_ref": "plugin/scripts/inject-contract.py（NONGOAL-001）",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "設計上と実際の伝達経路の照合",
+          "全コントロールループにフィードバック必須",
+          "共通の体系的要因による多重防護の無効化"
+        ],
+        "why_it_seemed_adequate": "注入は統治の生存指標（R11）として主セッションで機能しており、届いている実績があった。届いていない先（サブエージェント）は、届かないこと自体が沈黙として現れるため、注入の成功だけを見ている限り欠損は観測されない。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "統治木は既決の正本を保持しているが、その既決を保証レーンの評価入力へ供給する経路が設計として存在しない。正本の保有と、正本が判断の場で使われることが別であり、今回は保有側は健全なまま、利用側が空だった。",
+        "evidence_ref": "doctrine_docs/_system/decided-facts.md",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "情報システム保有と有用性の乖離",
+          "情報活用のための構造とプロセス",
+          "教訓の記録と伝達と活用"
+        ],
+        "why_it_seemed_adequate": "全件監査（docs-audit）が統治木を走査し要約を出しているため、統治木は「読まれている」状態に見えた。監査が読む先と評価が読む先が別であることは、両者を突き合わせる観測が無い限り区別されない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "事象は分析が済むまで閉じない設計がある一方、分析が生んだ推奨事項の側には、実施責任の割当・実施状況の検査・有効性のフィードバックがいずれも無い。棚に入った時点で追跡が終わるため、45 件は指摘のまま未処理で残り続けた。",
+        "evidence_ref": "assurance/harness/orchestrator.py（recommendation_backlog）",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "推奨事項の責任割当実施検査フィードバック",
+          "audit-findings-must-be-closed",
+          "指摘欠点の是正完了追跡"
+        ],
+        "why_it_seemed_adequate": "閉じない仕組みは事象の側に既に備わっており、推奨事項は事象の従属物として同じ規律の下にあると読めた。事象と推奨事項が別々の寿命を持つことは、推奨事項が滞留し始めるまで表に出ない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "棚の滞留件数・滞留齢・owner 分類率のいずれも体系側の観測対象になっておらず、45 件まで積み上がる過程が異常として立たなかった。検出は所有者からの問い（『これは本当に人間が判断しないといけないものなの？』）という外部指摘であり、体系は自分の出力の偏りを能動的に探していない。",
+        "evidence_ref": "detected_by（所有者の問い、2026-08-06）",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "外部指摘依存でなく能動的探索",
+          "検出失敗の原因調査",
+          "監査のすり抜け時に監査手順を是正"
+        ],
+        "why_it_seemed_adequate": "決定論試験が緑であり、schema 適合と引用の実在照合も通っていた。保証の緑は「形式が整っている」ことの緑であって「出力が有意である」ことの緑ではないが、両者を分けて観測する指標が置かれていなかった。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "merge 前に赤で止める門は、schema 適合と引用の実在は見るが、判定に用いられるフィールドが憲章上の定義を持つかどうかは見ない。定義ゼロの boolean が処遇の既定を左右する位置に入った状態で緑を通過している。照合は「引用が実在するか」を検めるが「申告の対象が実在するか・意味が定義されているか」を検めない。",
+        "evidence_ref": ".github/workflows / assurance/harness/schemas.py:239",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "手順の書式適合と必須項目欠落検査",
+          "形式承認の禁止・実質審査の証跡",
+          "最低限準拠を超える安全活動の実効性"
+        ],
+        "why_it_seemed_adequate": "機械照合できるもの（schema・dedupe_key）を厳格に照合することは、検証可能性の規律として一貫していた。定義の有無は機械照合の対象として立てられていなかったため、門の視野の外にあり、視野の外は緑として現れる。"
+      }
+    ],
+    "hazard": "保証レーンが、統治木の既決を渡されていない評価者の自己申告（owner_decision_required）を、検証せずに処遇の既定として用い、是正要求の行き先が「所有者判断待ち」へ一括して吸い込まれる状態。この状態では、構造から導ける処遇と、真に所有者の権限を要する処遇とが同一のラベルに丸め込まれ、どちらも起動しない。",
+    "incident_id": "INC-020-evaluator-blindness-read-as-owner-authority",
+    "leading_indicators": [
+      {
+        "indicator": "推奨事項のうち owner へ分類される割合",
+        "observable": "1 事象あたりの新規推奨事項に占める owner 分類の比率、および直近 5 事象での推移",
+        "threshold": "1 事象で owner 率が 20% を超える、または直近 5 事象で owner が新規推奨の最多分類になった時点で異常",
+        "version_independent": true,
+        "where": "assurance/ledger/ を集計する status 出力（orchestrator）",
+        "why_version_independent": "リポジトリ正本側の台帳と orchestrator で完結して計算でき、導入複製の版に依存しない"
+      },
+      {
+        "indicator": "owner の申告件数と成立件数の差",
+        "observable": "status が別々に出す申告件数と、明示の処遇行が六類型のいずれかを名指した成立件数の差分",
+        "threshold": "差分が 1 件でも生じたら異常（申告が成立へ落ちない＝既定復活または視野欠損の兆候）",
+        "version_independent": true,
+        "where": "assurance/harness/orchestrator.py の status 出力（ADR-127 で分離済み）",
+        "why_version_independent": "正本側の出力どうしの突合であり、複製の版に依存しない"
+      },
+      {
+        "indicator": "評価入力に含まれる統治木の既決の件数",
+        "observable": "CAST 分析実行ごとに、評価者へ渡ったプロンプトに含まれる既決（確定事実・非目標・退行監視・ADR）の件数をダンプして記録",
+        "threshold": "既決 0 件のまま CAST 分析が 1 件でも実行されたら異常",
+        "version_independent": true,
+        "where": "assurance/harness/prompts.py の build_cast_analysis_prompt が組み立てた入力のログ",
+        "why_version_independent": "ハーネスはリポジトリ正本側で実行され、導入複製の版と独立に観測できる"
+      },
+      {
+        "indicator": "棚の滞留齢と滞留の増減",
+        "observable": "未処理推奨事項の最古齢（日数）と、週次の新規流入件数対処理件数",
+        "threshold": "最古齢 30 日超が 1 件でも存在する、または流入が処理を上回る週が 2 週連続した時点で異常",
+        "version_independent": true,
+        "where": "assurance/ledger/",
+        "why_version_independent": "台帳は正本側にあり、複製の更新状況と無関係に読める"
+      },
+      {
+        "indicator": "判定に使われるが憲章に定義を持たないフィールドの数",
+        "observable": "schema の各フィールド名と _CAST_CHARTER の定義項目の突合結果",
+        "threshold": "下流の処遇分岐に使われるフィールドで憲章に定義が無いものが 1 件でもあれば赤",
+        "version_independent": true,
+        "where": "assurance/harness/schemas.py と _CAST_CHARTER の照合（CI_RELEASE_CHECK に追加）",
+        "why_version_independent": "リポジトリ内の二つの正本の突合であり外部配布に依存しない"
+      },
+      {
+        "indicator": "サブエージェント（評価者）への契約注入の到達",
+        "observable": "評価者実行時のプロンプト先頭に注入マーカーが存在するか、および導入複製側の inject-contract.py の版",
+        "threshold": "注入マーカーが不在、または導入複製の版がリポジトリ正本より 1 世代でも遅れている時点で異常",
+        "version_independent": false,
+        "where": "plugin/scripts/inject-contract.py の実行記録と、導入複製の版（HEARTBEAT が読む値）",
+        "why_version_independent": "注入も版の警告も導入複製の側で走るため、複製の版が遅れると検出器自身が古い定義で判定し、欠損を欠損として表示できない（INC-005 の『古びの検出器が古びる』と同型の共通原因故障。PLUGIN_DISTRIBUTION の穴により、複製が何世代遅れているかはリポジトリ側から観測できない）"
+      },
+      {
+        "indicator": "owner 分類に対して所有者の裁定が記録された比率",
+        "observable": "owner へ分類された推奨事項のうち、所有者の裁定（可否・保留の理由）が台帳に記録されたものの割合",
+        "threshold": "直近 20 件の owner 分類のうち裁定記録が 0 件なら異常（棚が判断の場ではなく滞留先になっている兆候）",
+        "version_independent": true,
+        "where": "assurance/ledger/",
+        "why_version_independent": "台帳の記録有無のみで判定でき、複製の版に依存しない"
+      }
+    ],
+    "loss": "保証レーンが生んだ是正要求 45 件が、誰も読まない「所有者判断待ち」の棚へ既定で落ち、是正が一度も起動しないまま滞留した。実際に統治木を当てて裁いた 3 件（INC-001#3・INC-007#3・INC-008#8）はいずれも既決または観測で消えており、棚は判断待ちではなく材料が届いていない未処理の山だった。所有者は意思決定者としてではなく構造の欠損の受け皿として扱われ、所有者が本当に決めるべき事項（互換性・配布境界・復旧不能な削除・評価 model の最低線）が同じ棚の中に埋没した。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "下流の分岐に使われる全フィールドが憲章に定義を持ち、かつ申告以外の照合点を一つ以上持っていること。",
+        "hypothesis": "評価者が出す他の無検証フィールド（confidence・evidence_kind・version_independent・severity）も、下流で意味を読み替えられたまま処遇の既定に使われている。",
+        "oracle": "schema の全フィールドについて、(a) 憲章に定義があるか、(b) 下流の分岐に使われるか、(c) 使われる場合その分岐が申告以外の照合を伴うか、を機械照合する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "既決ありの条件で、既決の誤りへの指摘率が既決なし条件と同等以上に保たれること。",
+        "hypothesis": "既決を評価者へ渡すと、評価者は既決に寄りかかり、既決自体の誤りを指摘しなくなる（残余に記された共通原因故障が実際に立つ）。",
+        "oracle": "既決に既知の誤りを仕込んだ対照事象を用意し、既決あり／なしの二条件で『既決の誤りへの指摘率』と『既決で消える推奨の判定精度』を比較する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "成立した owner 行の類型名指しが、再裁定でいずれも妥当と判定されること。",
+        "hypothesis": "ADR-127 の既定廃止後も、評価者は六類型のいずれかを名指す処遇行を書けてしまい（視野が狭いままなので誤った類型を名指す）、owner 成立件数が申告件数に追随して戻る。",
+        "oracle": "ADR-127 適用後の CAST 分析で、成立した owner 行の名指した類型を統治木の既決に照らして再裁定し、誤った類型名指しの割合を測る。",
+        "severity": "P0"
+      },
+      {
+        "falsification_signal": "再裁定後も過半が『真に所有者』に残ること。",
+        "hypothesis": "過去の全 CAST 分析が同じ既定に汚染されており、棚の 45 件の大半は統治木を当てるだけで消える（3 件の実測が全体の傾向を代表する）。",
+        "oracle": "45 件全件に統治木の既決を当てて再裁定し、既決で消える／観測で消える／材料が足りない／真に所有者、の四分に分類する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "CAST 評価者以外の経路では既決が別手段で届いていること。",
+        "hypothesis": "サブエージェント境界を越える情報欠損は CAST 評価者だけでなく、他のサブエージェント経路（リンタ助言・捕捉ナッジ等）にも同型に存在し、統治の外で判断が行われている。",
+        "oracle": "サブエージェントを起動する全経路について、注入マーカーの有無と、既決を参照した形跡の有無を実行ごとに記録する。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "過去の推奨事項がすべて裁定の記録を伴って閉じていること。",
+        "hypothesis": "棚の滞留は今回が初めてではなく、過去にも同型の滞留があって別の理由（事象の閉鎖・棚の再構築）で消えており、記録が残っていない。",
+        "oracle": "台帳の履歴から、推奨事項の生成時刻・分類・消滅時刻を再構成し、消滅が裁定によるものか非裁定によるものかを分類する。",
+        "severity": "P2"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "統治木の既決（確定事実・非目標・退行監視・ADR の決定文）を構造化された正本チャネルとして評価入力へ供給し、実装者の弁明チャネルとは schema 上の型で区別する。build_cast_analysis_prompt の入力に既決チャネルを追加し、渡した既決の件数と出典を実行ごとに記録する。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "_CAST_CHARTER に「所有者判断と書く前に既決を検め、導けるものは導き、導けない場合はその理由と、どの類型に該当するかを書く」規律を追加し、所有者の権限の六類型を schemas.py の owner_decision_required のフィールド説明として定義する（裸の boolean を定義付きの列挙へ置き換える）。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "棚の滞留齢・owner 分類率・申告件数と成立件数の差分を status の定常出力に加え、閾値超過を退行監視へ登録して、外部からの問いを待たずに体系側で立つようにする。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "下流の処遇分岐に使われる schema フィールドが憲章上の定義を持つかを CI の照合対象に加え、定義ゼロのフィールドが分岐に使われる状態を赤で止める。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "評価者へ渡ったプロンプトに既決が含まれていたか（注入マーカー・既決件数）を実行ごとに記録し、サブエージェント境界での欠損を沈黙ではなく観測値にする。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "棚の 45 件に統治木を当てて全件再裁定し、既決で消える／観測で消える／材料が足りない／真に所有者、の四分に分類した結果を台帳へ残す。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "既決を渡した後の「既決への寄りかかり」を測る対照試験（既決に既知の誤りを仕込んだ事象で、既決あり／なしの指摘率を比較）を決定論試験へ組み込む。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "再裁定で「既決により消えた」と判定された推奨事項を台帳から取り下げる可否を決める（台帳からの除去は復旧不能な削除に当たるため、OWNER の制御範囲に該当する）。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "「検証できない申告を信じる」家系（ADR-050／NONGOAL-001 第9・14・16項／INC-013／本件）の登録に、評価者自身の出力フィールドを点検対象として明記し、家系の再発点検が保証レーンの内側も走査するようにする。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "申告の生成元と検証者が同一である——評価者が出した owner_decision_required を体系が検証せずに処遇の既定へ変換していた。これは ADR-050／NONGOAL-001 第9・14・16項／INC-013 と同じ家系の四度目であり、家系として登録されているにもかかわらず、評価者自身の出力フィールドがその点検対象に入っていなかった。",
+      "独立性の規律が『入力を絞る』という単一の軸で実装され、既決（構造化された正本）と弁明（当事者の申告）が型として区別されていない。汚染の防止と視野の確保が同じダイヤルの両端に置かれているため、独立性を上げると必ず視野が落ちる。",
+      "未決の既定の受け皿を人（所有者）に置く設計は、構造の欠損を『人の判断待ち』という正当な状態に化けさせる。欠損が待ち行列の形をとると、欠損として観測されなくなる。",
+      "統治の既決を運ぶ能動的な経路が主セッションへの注入ひとつしかなく、サブエージェント境界の向こうは統治の外になる（NONGOAL-001）。境界を越える経路の不在は、越えられなかったことが沈黙として現れるため単独では検出されない。",
+      "保証の緑が『形式の整合』の緑であって『出力の有意性』の緑ではない。schema 適合・引用の実在照合・決定論試験のいずれも、対象の実在と用語の定義を検める位置に置かれていない。",
+      "評価者が同系 model であることによる共通原因故障が残余として明示されているが、その残余が具体的にどのフィールドに現れるかは列挙されておらず、残余の宣言が点検の代わりになっていた。"
+    ],
+    "unknowns": [
+      "【実在の未検証】事象が名指す機構のうち、統制構造に実在として列挙されているのは ASSURANCE_LANE（assurance/harness/orchestrator.py）と GOVERNANCE_TREE（doctrine_docs/_system/decided-facts.md）だけである。prompts.build_cast_analysis_prompt、_CAST_CHARTER、schemas.py:239 の owner_decision_required、recommendation_backlog、ADR-127、および『所有者の権限の六類型』は、統制構造の要素としても実体としても列挙されていない。本分析の作業ディレクトリは空であり（リポジトリが存在しない）、これらの実在をファイル上で確認できなかった。上記の統制欠陥は、事象の記録が述べるこれらの機構が実在するという未検証の前提の上に立っている。confidence を low とした理由はこれである。",
+      "45 件の内訳（どの事象由来か、どの分類か）は与えられていない。統治木を当てて実際に裁いたのは 3 件のみであり、残り 42 件のうち何件が既決で消えるか、何件が観測で消えるか、何件が真に所有者の権限を要するかは未測定である。",
+      "『所有者の権限の六類型』の定義がどの文書にあり、統制構造の OWNER に記された四つの制御（互換性・配布境界・復旧不能な削除／評価 model の最低線／push・PR・merge の範囲）とどう対応するかは、与えられた統制構造からは辿れない。",
+      "ADR-127 は fixed=true・shipped=false であり、導入複製へいつ届くかは PLUGIN_DISTRIBUTION の既知の穴（複製が何世代遅れているかをリポジトリ側から観測できない）により不明である。",
+      "既決を評価者へ渡した後に立つとされる共通原因故障（既決に寄りかかり、既決自体の誤りを指摘できなくなる）について、その発生率も検出手段も未設計であり、渡す前と後のどちらが残余リスクとして大きいかは判定できない。",
+      "評価者が同系 model であるとき、自らの視野欠損を『見えていない』と申告できるかどうかは未検証である。今回は所有者の外部からの問いによってのみ表面化した。",
+      "owner_decision_required 以外の無検証フィールド（confidence・evidence_kind・version_independent・severity など）が同型の申告になっているかは未調査である。",
+      "棚に落ちた 45 件が『誰も読まない』状態であったことは所有者の問いから遡って判明したが、いつからその状態であったか（最初の 1 件が滞留し始めた時点）は台帳から再構成できるか不明である。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は三つの形式検査で構成されていた——schema 適合、引用（dedupe_key）の実在照合、決定論試験の成否。いずれも「書式が整っているか」を見る検査であり、「申告の中身が構造から導けるか」「申告が指す対象が実在するか」は視野の外にある。owner_decision_required は定義ゼロの裸 boolean であるがゆえに、どんな値でも schema に適合し、常に緑を返した。照合の側も、引用の実在は検めるが対象の実在は検めない（A2 で入った規律の対象そのもの）。さらに、この申告は評価者自身が生成し、体系が検証せずに処遇の既定へ変換していたため、生成元と検証者が同一であり、独立した反証点が構造に存在しなかった。決定的なのは、視野の欠損は自己申告できないという点である——既決を渡されていない評価者から見れば全てが未決であり、その状態は評価者にとって内的に矛盾がない。修正（ADR-127、既定の廃止と申告件数・成立件数の分離出力）は読み替えを止めるが、視野そのものは狭いままであり、同型の無検証申告は別のフィールドで再び成立しうる。本件は「検証できない申告を信じる」形の四度目（ADR-050／NONGOAL-001 第9・14・16項／INC-013）であり、家系として既に三度観測されているにもかかわらず、評価者自身の出力フィールドはその家系の点検対象に入っていなかった。"
+  }
+}
