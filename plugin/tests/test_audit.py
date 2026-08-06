@@ -1332,8 +1332,13 @@ class SummaryHandshakeTest(AuditBase):
         self.assertEqual(data["totals"]["error"], 0)
         self.assertEqual(code, 0)
 
-    def test_atomic_write_failure_still_exit_zero(self):
-        """Write fail (summary-out under a path that is a file) -> exit 0 anyway."""
+    def test_atomic_write_failure_is_reported_as_missing_precondition(self):
+        """Write fail (summary-out under a path that is a file) -> exit 3.
+
+        2026-08-06 に決定を置換した(ADR-121)。以前はここで 0 を返しており、
+        書けたときと外から区別がつかなかった。所見の重さとは分け、前提の欠如の
+        規約(3)へ倒す。要約の内容と標準出力は従来どおり出す。
+        """
         root = self.build(self._docs())
         # Point summary-out into a path whose parent is a regular file.
         blocker = os.path.join(_util.mkdtemp(), "blocker")
@@ -1342,8 +1347,9 @@ class SummaryHandshakeTest(AuditBase):
         bad_out = os.path.join(blocker, "sub", "last-audit.json")
         argv = ["--root", root, "--json", "--summary-out", bad_out,
                 "--fail-on", "never", "--today", TODAY]
-        _out, code = _util.invoke("docs-audit", argv)
-        self.assertEqual(code, 0)
+        out, code = _util.invoke("docs-audit", argv)
+        self.assertEqual(code, 3)
+        self.assertIn("docs-audit/1", out)   # 要約そのものは出し続ける
 
 
 # --- determinism + config knobs -------------------------------------------
@@ -1522,6 +1528,40 @@ class AuditChecksFreezeTest(AuditBase):
                         "消費側だけにあるコードは産出されない死文である")
         self.assertIn("trace_marker_suspect", codes)
         self.assertIn("trace_scan_truncated", codes)
+
+
+class SummaryWriteFailureTest(AuditBase):
+    """要約を書けなかったことを沈黙させない(ADR-121)。
+
+    規範の根拠: 送ったコントロールアクションが守られたと仮定しない(STPA L143)、
+    フィードバックの欠如がプロセスモデルを歪める(STPA L552)、提供しない状態を
+    仮定で片付けない(STPA L859)。統治の唯一の全体像を書けなかった実行が 0 を
+    返すと、書けたときと外から区別がつかない。
+    """
+
+    def _root(self):
+        return self.build([({"id": "REQ-001", "title": "t", "type": "REQ",
+                             "domain": "audit", "status": "current",
+                             "owner": "o", "updated": TODAY,
+                             "sources": "[x]"}, "本文\n")])
+
+    def test_unwritable_summary_out_is_not_zero(self):
+        root = self._root()
+        blocker = os.path.join(_util.mkdtemp(), "blocker")
+        with open(blocker, "w") as fh:
+            fh.write("x")
+        _data, code = self.audit_json(
+            root, ["--fail-on", "never",
+                   "--summary-out", os.path.join(blocker, "sub", "s.json")])
+        self.assertEqual(code, 3)
+
+    def test_writable_summary_out_stays_zero(self):
+        root = self._root()
+        target = os.path.join(root, "summary.json")
+        _data, code = self.audit_json(
+            root, ["--fail-on", "never", "--summary-out", target])
+        self.assertEqual(code, 0)
+        self.assertTrue(os.path.isfile(target))
 
 
 class GuardLivenessTest(AuditBase):

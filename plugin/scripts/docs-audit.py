@@ -1479,9 +1479,9 @@ def main(argv=None):
         return 0
 
     # 要約の永続化(--summary-out)。原子的に書き、失敗しても 0 を保つ(§5.5)。
+    write_ok = True
     if opts["summary_out"]:
         proj = opts["root_from"] or os.path.dirname(os.path.abspath(root))
-        write_ok = True
         try:
             _atomic_write(opts["summary_out"],
                           json.dumps(summary, ensure_ascii=False,
@@ -1489,7 +1489,11 @@ def main(argv=None):
         except OSError as exc:
             write_ok = False
             sys.stderr.write("docs-audit: summary write failed: %r\n" % (exc,))
-            # 書き込み失敗でも終了コードは下のゲート判定に従う(SessionEnd は 0)。
+            # 書けなかったことを沈黙させない(ADR-121)。統治の唯一の全体像を
+            # 書けなかった実行が 0 を返すと、書けたときと外から区別がつかない
+            # —— 送ったコントロールアクションが守られたと仮定しない(STPA)。
+            # 所見の重さとは分ける: これは前提の欠如であって所見ではないので、
+            # 兄弟の門の規約に合わせて 3（場所が実在しない・前提の欠如）を返す。
         # 走ったこと自体の印(ADR-119)。要約が書けたかと分けて残すので、鮮度の
         # 警告が『走らなかった』と『走ったが書けなかった』を区別できる。印の
         # 書き込みは最善努力で、失敗しても監査の本務を妨げない(ADR-062)。
@@ -1507,6 +1511,8 @@ def main(argv=None):
     # ゲート判定。
     if opts["fail_on"] == "error" and summary["totals"][SEV_ERROR] > 0:
         return 1
+    if opts["summary_out"] and not write_ok:
+        return 3
     return 0
 
 

@@ -183,23 +183,41 @@ def build_cast_analysis_prompt(incident, control_structure_text, principle_index
 def verify_cast_analysis(analysis, known_element_ids, known_principle_keys):
     """統制欠陥の参照先の実在を照合する（分析の反幻覚 oracle）。
 
-    返り値: (accepted_flaws, rejected_flaws)。rejected は理由を添えて返す。
-    実在しない統制要素・カタログに無い規範鍵を指す欠陥は実装へ渡さない。
+    判定の単位は**主張**（統制欠陥一件）である。規範（JERG L219・L479-481・L2491）が
+    「検証とは客観的証拠の提示であり、証拠を伴わない主張は検証とみなさない」と定める
+    以上、解決する出典を一つでも保つ主張は証拠を提示している。実在しない出典が
+    混じっていたことは記録の欠陥であって、証拠の不在ではない。
+
+    そこで網羅の割当（ADR-118）と同じ流儀に揃える —— 解決しない出典は外して残し、
+    主張そのものは保つ。ただし外した事実は `citation_defect` として主張に刻み、
+    その主張だけでは事象を閉じられない（`cast_analysis.settled` が求めるのは
+    刻みの無い欠陥である）。捨てれば見逃しの理由を追えなくなる（CAST L3929）。
+
+    返り値: (accepted_flaws, rejected_flaws)
+    - accepted … 統制要素が実在し、解決する出典を一つ以上保つ主張。
+    - rejected … 統制要素が実在しない、または解決する出典が一つも無い主張。
     """
     accepted, rejected = [], []
     elements = set(known_element_ids)
     keys = set(known_principle_keys)
     for flaw in analysis.get("control_flaws", []):
+        refs = list(flaw.get("normative_refs") or [])
+        resolved = [r for r in refs if r in keys]
+        unknown_refs = [r for r in refs if r not in keys]
         problems = []
         if flaw.get("control_element_id") not in elements:
             problems.append("統制構造に無い要素 %r" % flaw.get("control_element_id"))
-        unknown_refs = [r for r in flaw.get("normative_refs", []) if r not in keys]
-        if unknown_refs:
-            problems.append("カタログに無い規範鍵 %s" % unknown_refs[:3])
+        if not resolved:
+            problems.append("解決する規範鍵が一つも無い %s" % unknown_refs[:3])
         if problems:
             rejected.append({"flaw": flaw, "problems": problems})
-        else:
-            accepted.append(flaw)
+            continue
+        flaw = dict(flaw)
+        flaw["normative_refs"] = resolved
+        if unknown_refs:
+            flaw["unresolved_refs"] = unknown_refs
+            flaw["citation_defect"] = True
+        accepted.append(flaw)
     return accepted, rejected
 
 
