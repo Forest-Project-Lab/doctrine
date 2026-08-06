@@ -1,0 +1,35 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "reproduce-red",
+  "incident_id": "INC-001-sessionend-audit-gap",
+  "recommendation_index": 5,
+  "generated_at": "2026-08-06T12:45:00Z",
+  "git_sha": "b00e085035a6e1db4349bc5c4c332dc4f516d0b0",
+  "phase": "before-fix",
+  "expect": "修正前に FAIL すること（最初から緑は再現と認めない）",
+  "reds": [
+    {
+      "label": "RED A: 想定を名指しする口が体系に無い",
+      "command": "mv assurance/ledger/assumptions.json <一時領域> && git stash push assurance/harness/orchestrator.py && python3 -m unittest assurance.tests.test_orchestrator.AssumptionRegisterTest",
+      "returncode": 1,
+      "observed_failures": [
+        "Ran 14 tests — FAILED (failures=1, errors=13)",
+        "AttributeError: module 'harness.orchestrator' has no attribute 'assumption_backlog'（正本に想定を読む口が無い）",
+        "AttributeError: module 'harness.orchestrator' has no attribute '_validate_assumptions'",
+        "AttributeError: module 'harness.orchestrator' has no attribute 'load_assumptions'",
+        "AssertionError: 'REVIEW_ASSUMPTION' not found in STATES（状態機械に前提を点検する状態が無い）"
+      ]
+    },
+    {
+      "label": "RED B: ADR-124 の不変条件が、今回の新成果物を自ら捕まえる",
+      "command": "git stash push assurance/harness/orchestrator.py（登記簿は置いたまま）&& orchestrator.py validate",
+      "returncode": 2,
+      "observed_failures": [
+        "台帳に在るが種別が未宣言: assumptions.json（LEDGER_KINDS へ、読む経路か読まない理由のどちらかを明記すること）"
+      ],
+      "note": "前々反復で入れた ADR-124 の不変条件が、走らせ手（想定の登記簿）を足して読取側を足し忘れる形をこの差分でも止めた。同型の未接続を捕まえた二度目である（一度目は recommendation-status.json）。"
+    }
+  ],
+  "procedure_deviation": "REPRODUCE_RED を FIX の後に実施した（順序の逸脱）。前反復（INC-016）と同じ逸脱で、二度続いている。証拠としては成立するが順序は守れていない。",
+  "note": "この赤は事象の欠陥ではなく、INC-001 推奨#5（文書化）の未着地に対する赤である。推奨が求めたのは『二つの安全上の想定を明示的に文書へ記録し、失効を示す先行指標を併記する』ことで、修正前の体系にはその置き場も、読む口も、状態機械上の段も無かった。"
+}

@@ -27,6 +27,7 @@ from harness import books, model_policy  # noqa: E402
 LANE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CATALOG_DIR = os.path.join(LANE_DIR, "ledger", "catalogs")
 INCIDENTS_PATH = os.path.join(LANE_DIR, "ledger", "incidents.json")
+ASSUMPTIONS_PATH = os.path.join(LANE_DIR, "ledger", "assumptions.json")
 
 STATES = (
     "INGEST_NORMS",      # 冊子 → 検証原則カタログ（観点の弾込め）
@@ -39,6 +40,7 @@ STATES = (
     "VERIFY",            # 独立検証 + jerg レーンによる証拠の審査
     "ATTACK_EVALUATOR",  # 保証機構自身への故障注入
     "CAST_ANALYSIS",     # 失敗・事象からの統制分析（cast レーン）
+    "REVIEW_ASSUMPTION",  # 保証が寄りかかる想定の観測（ADR-126）
     "APPLY_FINDINGS",    # 事故分析の推奨の処遇決め（ADR-125）
     "RECORD",            # 恒久化（限定列挙）
     "CURATE",            # 重複統合・archive・平時コンテキスト最小化
@@ -101,6 +103,10 @@ TRANSITIONS = (
      "guard": "incident_recorded"},   # 失敗はどの状態からでも CAST へ
     {"event": "CAST_DONE",        "from": "CAST_ANALYSIS", "to": "APPLY_FINDINGS",
      "guard": "leading_indicators_defined"},
+    {"event": "ASSUMPTION_BROKEN", "from": "REVIEW_ASSUMPTION",
+     "to": "CAST_ANALYSIS", "guard": "incident_recorded"},
+    {"event": "ASSUMPTION_HOLDS",  "from": "REVIEW_ASSUMPTION",
+     "to": "APPLY_FINDINGS", "guard": None},
     {"event": "FINDINGS_TRIAGED", "from": "APPLY_FINDINGS", "to": "DISCOVER",
      "guard": "no_pending_recommendation"},
     {"event": "RECORDED",         "from": "RECORD",        "to": "CURATE",
@@ -132,6 +138,7 @@ def validate():
             problems.append("遷移 %s の to が未知: %s" % (tr["event"], tr["to"]))
     problems.extend(_validate_ledger_kinds())
     problems.extend(_validate_recommendation_status())
+    problems.extend(_validate_assumptions())
     return problems
 
 
@@ -157,6 +164,55 @@ def _validate_recommendation_status():
             problems.append("推奨 %s の却下に理由が無い" % where)
         if state == "landed" and not (row.get("evidence_ref") or "").strip():
             problems.append("推奨 %s の『機構化済み』に証拠のポインタが無い" % where)
+    return problems
+
+
+def _validate_assumptions(path=None, incident_ids=None):
+    """想定の登記簿の書き方の検査（ADR-126）。
+
+    想定は「何も検証していない前提」を名指しする物なので、検証者の欄が
+    空であること自体は欠陥ではない。欠陥なのは、欄が**無い**ことである
+    （沈黙は理由ではない）。先行指標の二条件は ADR-117 と同じ形にし、
+    観測を書くなら日付と状態語彙を必ず添えさせる。
+    """
+    problems = []
+    try:
+        rows = load_assumptions(path)
+    except (OSError, ValueError) as exc:
+        return ["想定の登記簿が読めない: %s" % exc]
+    if incident_ids is None:
+        incident_ids = {i.get("id") for i in load_incidents()}
+    seen = set()
+    for row in rows:
+        aid = row.get("id") or "(id 無し)"
+        if aid in seen:
+            problems.append("想定 %s の宣言が重複している" % aid)
+        seen.add(aid)
+        if "verified_by" not in row:
+            problems.append(
+                "想定 %s に verified_by の欄が無い（検証者が居ないなら null と"
+                "明記すること。欄の不在は理由にならない）" % aid)
+        indicators = row.get("leading_indicators") or []
+        if not indicators:
+            problems.append("想定 %s に先行指標が無い" % aid)
+        for n, ind in enumerate(indicators):
+            for key in ("observe_where", "abnormal_when"):
+                if not (ind.get(key) or "").strip():
+                    problems.append("想定 %s の先行指標#%d に %s が無い"
+                                    % (aid, n, key))
+            observed = _indicator_observation(ind)
+            if observed is None:
+                continue
+            if not (ind.get("observed_at") or "").strip():
+                problems.append("想定 %s の先行指標#%d の観測に日付が無い" % (aid, n))
+            if observed not in ASSUMPTION_STATES:
+                problems.append(
+                    "想定 %s の先行指標#%d の状態 %r が語彙に無い（%s）"
+                    % (aid, n, observed, "/".join(ASSUMPTION_STATES)))
+        linked = row.get("incident_id")
+        if linked and linked not in incident_ids:
+            problems.append(
+                "想定 %s が指す事象 %s が事象の列に無い" % (aid, linked))
     return problems
 
 
@@ -222,7 +278,7 @@ def catalog_status():
 # 実際に5反復手つかずだった（事象 INC-012）。増やすときはどちらかへ明記する。
 NAMEABLE_STATES = frozenset({
     "INGEST_NORMS", "MAP_COVERAGE", "CAST_ANALYSIS", "DISCOVER",
-    "ATTACK_EVALUATOR", "FORMALIZE", "APPLY_FINDINGS",
+    "ATTACK_EVALUATOR", "FORMALIZE", "APPLY_FINDINGS", "REVIEW_ASSUMPTION",
 })
 
 # 反復の中の遷移。直前の成果物が在って初めて意味を持つので、帳簿だけからは
@@ -272,6 +328,10 @@ LEDGER_KINDS = (
     {"kind": "recommendation-status.json",
      "match": "recommendation-status.json",
      "read_by": ("load_recommendation_status",),
+     "why_not_read": None},
+    {"kind": "assumptions.json",
+     "match": "assumptions.json",
+     "read_by": ("load_assumptions", "assumption_backlog"),
      "why_not_read": None},
     {"kind": "red/<事象 id>.json",
      "match": "red/*.json",
@@ -560,6 +620,70 @@ def load_incidents():
         return json.load(f).get("incidents", [])
 
 
+# 想定の観測に使える状態語彙。運転手順 §5 の六語をそのまま使う。
+# 根拠なき PASS を書かせないための語彙であって、ここで語を増やさない。
+ASSUMPTION_STATES = (
+    "PASS", "FAIL", "UNKNOWN", "UNASSESSED", "DEGRADED", "NOT-APPLICABLE",
+)
+
+
+def load_assumptions(path=None):
+    """保証が寄りかかる想定の登記簿（ADR-126）。無ければ空。
+
+    読めない台帳は空ではない。ここでは例外を投げ、validate が UNKNOWN と
+    して赤にする（読めないものを『在るが空』と読み替えない）。
+    """
+    path = path or ASSUMPTIONS_PATH
+    if not os.path.isfile(path):
+        return []
+    with open(path, encoding="utf-8") as f:
+        rows = json.load(f).get("assumptions", [])
+    return [r for r in rows if isinstance(r, dict)]
+
+
+def _indicator_observation(indicator):
+    """先行指標に観測が書かれていれば状態を返す。無ければ None。
+
+    観測の有無は state 欄の有無で判ずる。observation の自由文だけが在って
+    state が無い物は「観測していない」ではなく「書き方が不備」なので、
+    validate の側が拾う（ここでは None を返さず生の値を返す）。
+    """
+    if "state" not in indicator:
+        return None
+    return indicator.get("state")
+
+
+def assumption_backlog(path=None):
+    """手当てが要る想定。理由は「未観測」と「破れている」の二つだけ。
+
+    破れた想定に対応する事象 id が在るなら、ここでは鳴らさない。是正は
+    事象の側（CAST_ANALYSIS と推奨の処遇）が持っており、二重に鳴らすと
+    どちらを踏んでも消えない行動になる。
+    """
+    out = []
+    try:
+        rows = load_assumptions(path)
+    except (OSError, ValueError):
+        return out
+    for row in rows:
+        aid = row.get("id") or "(id 無し)"
+        indicators = row.get("leading_indicators") or []
+        observed = [_indicator_observation(i) for i in indicators]
+        observed = [s for s in observed if s is not None]
+        if not observed:
+            out.append({"id": aid, "reason": "未観測",
+                        "detail": "先行指標 %d 件のどれも観測されていない"
+                                  % len(indicators)})
+            continue
+        broken = [s for s in observed if s != "PASS"]
+        if broken and not row.get("incident_id"):
+            out.append({"id": aid, "reason": "破れている",
+                        "detail": "PASS でない観測 %d 件（%s）に対応する事象が"
+                                  "立っていない" % (len(broken),
+                                                    "・".join(sorted(set(broken))))})
+    return out
+
+
 def next_actions():
     """決定論の「次にやること」。judgement を挟まない導出。"""
     actions = []
@@ -573,6 +697,14 @@ def next_actions():
     for inc in load_incidents():
         if inc.get("cast_analysis") in (None, "pending"):
             actions.append("CAST_ANALYSIS: %s" % inc["id"])
+    # 想定は保証の前提であって成果物ではない。前提が破れていれば、その前提に
+    # 寄りかかる下流の PASS はすべて根拠を失う。だから推奨の山より前に置く
+    # （後ろに置くと 100 件超の推奨の陰に隠れ、ATTACK_EVALUATOR が5反復飛ばされた
+    # のと同じ形になる。INC-012）。一段で片づけられる —— 観測するか、事象を
+    # 立てるかのどちらかで消える。
+    for row in assumption_backlog():
+        actions.append("REVIEW_ASSUMPTION: %s が%s（%s）"
+                       % (row["id"], row["reason"], row["detail"]))
     # 事故分析の推奨は、terminal な処遇に至るまで次の行動に挙がり続ける（ADR-125）。
     # 先頭の一件だけを名指しし、残りの件数も必ず添える —— 短い行動列を「済んだ」と
     # 読ませない（INC-006 の統制欠陥）。
@@ -629,6 +761,29 @@ def next_actions():
     return actions
 
 
+def _assumption_summary():
+    """想定ごとの最新の観測と、手当てが要る物の一覧（ADR-126）。"""
+    try:
+        rows = load_assumptions()
+    except (OSError, ValueError) as exc:
+        return {"status": "UNKNOWN", "reason": str(exc)}
+    needs = {r["id"]: r for r in assumption_backlog()}
+    out = []
+    for row in rows:
+        states = [_indicator_observation(i)
+                  for i in row.get("leading_indicators") or []]
+        aid = row.get("id")
+        out.append({
+            "id": aid,
+            "assumption": row.get("assumption"),
+            "states": [s for s in states if s is not None],
+            "incident_id": row.get("incident_id"),
+            "needs_action": needs.get(aid, {}).get("reason"),
+        })
+    return {"status": "READ", "total": len(out),
+            "needs_action": len(needs), "entries": out}
+
+
 def _recommendation_summary():
     """推奨の処遇の集計と、所有者へ渡す一覧。"""
     backlog = recommendation_backlog()
@@ -660,6 +815,11 @@ def main(argv=None):
                 {"id": i["id"], "cast_analysis": i.get("cast_analysis")}
                 for i in load_incidents()],
             "next_actions": next_actions(),
+            # 想定は、次の行動に挙がらないときも必ず数えて出す。挙がらない
+            # のは「事象として立っている」か「観測が PASS」のどちらかであり、
+            # 沈黙と区別が付かなければ登記簿は在っても読まれていないのと同じ
+            # （ADR-124 の粒度が種別までしか見なかった形。INC-016）。
+            "assumptions": _assumption_summary(),
             # 所有者判断は報告のたびに思い出す物ではない。分析が印した物を
             # 正本が数えて出す（INC-016: 分析の中身が正本へ届いていなかった）。
             "recommendations": _recommendation_summary(),

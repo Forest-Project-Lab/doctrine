@@ -1,0 +1,113 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "assumptions",
+  "note": "保証が寄りかかる想定の登記簿（ADR-126）。ここに載るのは、決めた事実（DECIDED）でも引き受けない範囲（NONGOAL）でもなく、体系が真だとみなして寄りかかっているのに何も検証していない前提である。想定が偽になると、それに寄りかかる主張は沈黙して失われる。各項は verified_by を必ず持ち（検証者が居なければ null と明記する）、先行指標を一つ以上持つ。先行指標は observe_where（どこで観測するか）と abnormal_when（何を異常と見るか）の両方を持つ（ADR-117 と同じ二条件）。観測を書くときは observed_at と state を必ず添え、state は状態語彙 PASS / FAIL / UNKNOWN / UNASSESSED / DEGRADED / NOT-APPLICABLE のいずれかとする。指標として成り立たないと判った案は捨てずに rejected_indicators へ理由つきで残す（思いつかなかったのか、試して駄目だったのかを後から分けるため）。PASS 以外の観測を持つ想定は、対応する事象 id（incident_id）を持たないかぎり正本が次の行動に挙げ続ける。事象 id を持つ想定をここで鳴らさないのは二重に鳴らさないためであり、破れた想定の是正は事象の側が持つ。",
+  "assumptions": [
+    {
+      "id": "ASM-001-sessionend-always-fires",
+      "assumption": "SessionEnd は必ず発火する",
+      "rests_on": [
+        "全件監査の要約 .claude/.cache/last-audit.json の鮮度",
+        "セッション開始の契約が告げる『前回監査』の要約（ADR-043）",
+        "鼓動が出す鮮度の警告（R11）が症状を捉えられること"
+      ],
+      "if_false": "監査は走らず、要約は前の内容のまま残る。外から見た形は『走ったが変化が無かった』と区別できず、古い健全信号（error 0）が正の安心として注入され続ける。",
+      "verified_by": null,
+      "sources": [
+        "doctrine_docs/packaging/decisions/ADR-119-audit-execution-stamp.md",
+        "plugin/hooks/hooks.json",
+        "assurance/ledger/incidents.json"
+      ],
+      "incident_id": "INC-001-sessionend-audit-gap",
+      "leading_indicators": [
+        {
+          "observe_where": ".claude/.cache/last-audit.json の generated_at と、.claude/.cache/session-flags/ に在るセッション別の印の日付",
+          "abnormal_when": "セッションの印が要約の日付より新しい状態が、二つ以上のセッションにわたって続くとき（一つなら現行セッションで説明がつく）",
+          "observed_at": "2026-08-06",
+          "observation": "要約は generated_at 2026-08-04（mtime 2026-08-04T17:27:07Z）のまま。session-flags には edits-a43df44d(08-05 05:05)・edits-271789d6(08-06 03:11)・edits-f431ce81(08-06 09:05) が在り、少なくとも 08-05 のセッションは終了しているのに要約は動いていない。",
+          "state": "FAIL"
+        },
+        {
+          "observe_where": ".claude/.cache/hook-stamps の hook_session_end_audit / hook_session_end_write（ADR-119）",
+          "abnormal_when": "印が育たないまま要約が古びるとき。ただし印の不在は不実行の証明ではない（ADR-119 が前方寛容と明記）",
+          "observed_at": "2026-08-06",
+          "observation": "hook-stamps に在るのは hook_docs_linter・hook_policy_guard_pre・hook_inject_contract・compacted の四つで、ADR-119 の二つの印は無い。理由は不実行ではなく、導入複製 (67475de) に印を書くコードがそもそも無いこと（grep hook_session_end_audit が 0 件。リポジトリ側は 1 件）。この指標は現場では観測できず、観測できない理由は ASM-003 が持つ。",
+          "state": "UNKNOWN"
+        }
+      ],
+      "rejected_indicators": [
+        {
+          "candidate": "hooks.json の SessionEnd 配線の有無を見る",
+          "why_rejected": "配線は導入複製にも在る（実測）。INC-001 で v0.7.0 についても同じ確認を済ませており、配線の欠落では説明できないことが 2026-08-05 に反証済み。"
+        },
+        {
+          "candidate": "hook と同一のコマンドを手で走らせて失敗するかを見る",
+          "why_rejected": "導入複製の docs-audit.py を hook と同一の引数で走らせると exit 0 で要約を書く（2026-08-06 に一時領域へ再実測）。コマンドの失敗説は二度反証されており、指標として働かない。"
+        }
+      ]
+    },
+    {
+      "id": "ASM-002-audit-cache-has-a-single-writer",
+      "assumption": "last-audit.json は監査以外が書かない",
+      "rests_on": [
+        "要約の内容を、監査が実際に見た結果として読めること（ADR-053 の読み取り規則）",
+        "鼓動の鮮度判定が、要約の更新を『監査が走った』と読み替えていること"
+      ],
+      "if_false": "監査以外の書き手が鮮度を偽ってリセットでき、一度も監査していない状態に正の健全信号が付く。ADR-053 が世代の照合で塞いだのは『前の世代の要約が残る』形だけで、同じ世代に別の書き手が居る形は塞いでいない。",
+      "verified_by": null,
+      "sources": [
+        "doctrine_docs/context/decisions/ADR-053-audit-cache-single-reader.md",
+        "doctrine_docs/context/decisions/ADR-037-audit-cache-read-order.md",
+        "plugin/scripts/_auditcache.py"
+      ],
+      "incident_id": null,
+      "leading_indicators": [
+        {
+          "observe_where": "要約の checks_run と、現行 docs-audit.py が実際に走らせる検査集合",
+          "abnormal_when": "二つの集合が食い違うとき（監査以外の書き手は、この集合を正しく埋められない）",
+          "observed_at": "2026-08-06",
+          "observation": "要約の checks_run は 40 件、現行監査の checks_run も 40 件で、集合として完全一致（差集合は両方向とも空）。ただしこの指標は弱い —— 監査の出力をそのまま写した書き手は通り抜ける。強い区別には書き手の同一性が要り、体系は信頼根を持たない（NONGOAL-001 第18項）。",
+          "state": "PASS"
+        }
+      ],
+      "rejected_indicators": [
+        {
+          "candidate": "ファイルの mtime が中の generated_at より新しければ、監査以外が触ったと見る",
+          "why_rejected": "測定で反証。generated_at は --today 由来の当日 0 時であって書き込み時刻ではない（実時計を読まない規律の帰結）。当日中に書けば必ず mtime > generated_at になり、実測でも 17 時間の差が出た（2026-08-04T00:00:00Z と 2026-08-04T17:27:07Z）。この差は正常であって異常ではない。"
+        }
+      ]
+    },
+    {
+      "id": "ASM-003-version-string-identifies-the-copy",
+      "assumption": "導入複製の同一性は版番号で判定できる",
+      "rests_on": [
+        "版遅れの検出（ADR-070）が、遅れている複製を名指しできること",
+        "ADR-119 の印が現場で育つと期待できること",
+        "INC-001 の 2026-08-05 の結論『導入複製は 0.10.0 に追いついているので、版とは無関係に空いている』"
+      ],
+      "if_false": "版番号が同じまま中身が進み、版遅れの検出は黙る。新しく入れた検出器（印・指標）は現場に存在しないのに、不在が『異常なし』とも『前方寛容』とも読めてしまい、検出器の有無そのものが観測できなくなる。",
+      "verified_by": null,
+      "sources": [
+        "doctrine_docs/packaging/decisions/ADR-070-version-lag-detection.md",
+        "doctrine_docs/packaging/decisions/ADR-119-audit-execution-stamp.md",
+        "assurance/ledger/cast/INC-005-installed-plugin-version-lag.json"
+      ],
+      "incident_id": "INC-019-version-string-does-not-identify-the-copy",
+      "leading_indicators": [
+        {
+          "observe_where": "~/.claude/plugins/installed_plugins.json の gitCommitSha と version、およびリポジトリの HEAD",
+          "abnormal_when": "gitCommitSha が HEAD より前で、かつ version が両者で等しいとき（版番号が動かないまま中身が進んでいる）",
+          "observed_at": "2026-08-06",
+          "observation": "導入複製は gitCommitSha 67475de・version 0.10.0、リポジトリは HEAD b00e085・version 0.10.0。その間に 15 コミット在り、plugin/.claude-plugin/plugin.json はその範囲で一度も変わっていない。版番号は等しく、中身は 15 世代離れている。",
+          "state": "FAIL"
+        }
+      ],
+      "rejected_indicators": [
+        {
+          "candidate": "hook-stamps の hook_inject_version を見て複製の版を判ずる",
+          "why_rejected": "測定で反証。この値は 0.10.0 を正しく報告するが、0.10.0 という版番号が 15 コミットにわたって同じであるため、複製がどの世代かを一切区別しない。INC-001 の 2026-08-05 の結論はこの値に寄りかかっており、その結論は成り立たない。"
+        }
+      ]
+    }
+  ]
+}

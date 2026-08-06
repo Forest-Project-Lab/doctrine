@@ -396,5 +396,148 @@ class LedgerKindTest(unittest.TestCase):
             self.assertEqual(orchestrator.undeclared_ledger_files(ledger), [])
 
 
+class AssumptionRegisterTest(unittest.TestCase):
+    """保証が寄りかかる想定の登記簿（ADR-126）。
+
+    想定は「何も検証していない前提」を名指しする物なので、検証者が居ないこと
+    自体は欠陥ではない。欠陥なのは、欄が無いこと・指標が無いこと・観測に
+    根拠が無いことである。
+    """
+
+    def _write(self, tmp, assumptions):
+        path = os.path.join(tmp, "assumptions.json")
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump({"assumptions": assumptions}, f, ensure_ascii=False)
+        return path
+
+    def _indicator(self, **over):
+        base = {"observe_where": "どこか", "abnormal_when": "何か"}
+        base.update(over)
+        return base
+
+    def test_real_register_is_well_formed(self):
+        self.assertEqual(orchestrator._validate_assumptions(), [])
+
+    def test_real_register_is_not_empty(self):
+        """空の登記簿は『想定が無い』ではなく『まだ書いていない』である。"""
+        self.assertTrue(orchestrator.load_assumptions())
+
+    def test_missing_verified_by_field_is_red(self):
+        """null は可、欄の不在は不可（沈黙は理由ではない）。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._write(tmp, [{"id": "ASM-X", "verified_by": None,
+                                      "leading_indicators": [self._indicator()]}])
+            self.assertEqual(
+                orchestrator._validate_assumptions(path, incident_ids=set()), [])
+            path = self._write(tmp, [{"id": "ASM-X",
+                                      "leading_indicators": [self._indicator()]}])
+            problems = orchestrator._validate_assumptions(path, incident_ids=set())
+            self.assertTrue(any("verified_by" in p for p in problems), problems)
+
+    def test_indicator_needs_both_conditions(self):
+        """ADR-117 と同じ二条件。どこで観測するかと、何を異常と見るか。"""
+        for missing in ("observe_where", "abnormal_when"):
+            with tempfile.TemporaryDirectory() as tmp:
+                ind = self._indicator(**{missing: ""})
+                path = self._write(tmp, [{"id": "ASM-X", "verified_by": None,
+                                          "leading_indicators": [ind]}])
+                problems = orchestrator._validate_assumptions(
+                    path, incident_ids=set())
+                self.assertTrue(any(missing in p for p in problems), problems)
+
+    def test_assumption_without_indicator_is_red(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._write(tmp, [{"id": "ASM-X", "verified_by": None,
+                                      "leading_indicators": []}])
+            problems = orchestrator._validate_assumptions(path, incident_ids=set())
+            self.assertTrue(any("先行指標が無い" in p for p in problems), problems)
+
+    def test_observation_state_must_be_in_the_vocabulary(self):
+        """根拠なき PASS を書かせないための語彙。ここで語を増やさない。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            ind = self._indicator(state="緑", observed_at="2026-08-06")
+            path = self._write(tmp, [{"id": "ASM-X", "verified_by": None,
+                                      "leading_indicators": [ind]}])
+            problems = orchestrator._validate_assumptions(path, incident_ids=set())
+            self.assertTrue(any("語彙に無い" in p for p in problems), problems)
+
+    def test_observation_without_a_date_is_red(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ind = self._indicator(state="PASS")
+            path = self._write(tmp, [{"id": "ASM-X", "verified_by": None,
+                                      "leading_indicators": [ind]}])
+            problems = orchestrator._validate_assumptions(path, incident_ids=set())
+            self.assertTrue(any("日付が無い" in p for p in problems), problems)
+
+    def test_incident_link_must_resolve(self):
+        """宣言が嘘をつけないようにする（ADR-124 と同じ原理）。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._write(tmp, [{"id": "ASM-X", "verified_by": None,
+                                      "incident_id": "INC-999-nope",
+                                      "leading_indicators": [self._indicator()]}])
+            problems = orchestrator._validate_assumptions(
+                path, incident_ids={"INC-001-sessionend-audit-gap"})
+            self.assertTrue(any("INC-999-nope" in p for p in problems), problems)
+
+    def test_unobserved_assumption_is_named(self):
+        """指標を書いただけで観測していない想定は、次の行動に挙がる。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._write(tmp, [{"id": "ASM-X", "verified_by": None,
+                                      "leading_indicators": [self._indicator()]}])
+            backlog = orchestrator.assumption_backlog(path)
+            self.assertEqual([r["reason"] for r in backlog], ["未観測"])
+
+    def test_broken_assumption_without_an_incident_is_named(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ind = self._indicator(state="FAIL", observed_at="2026-08-06")
+            path = self._write(tmp, [{"id": "ASM-X", "verified_by": None,
+                                      "leading_indicators": [ind]}])
+            backlog = orchestrator.assumption_backlog(path)
+            self.assertEqual([r["reason"] for r in backlog], ["破れている"])
+
+    def test_broken_assumption_with_an_incident_is_not_named_twice(self):
+        """是正は事象の側が持つ。二重に鳴らすと、どちらを踏んでも消えない。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            ind = self._indicator(state="FAIL", observed_at="2026-08-06")
+            path = self._write(tmp, [{"id": "ASM-X", "verified_by": None,
+                                      "incident_id": "INC-001-sessionend-audit-gap",
+                                      "leading_indicators": [ind]}])
+            self.assertEqual(orchestrator.assumption_backlog(path), [])
+
+    def test_passing_assumption_is_silent(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ind = self._indicator(state="PASS", observed_at="2026-08-06")
+            path = self._write(tmp, [{"id": "ASM-X", "verified_by": None,
+                                      "leading_indicators": [ind]}])
+            self.assertEqual(orchestrator.assumption_backlog(path), [])
+
+    def test_review_assumption_precedes_the_recommendation_backlog(self):
+        """前提の点検は推奨の山より前に置く。
+
+        後ろに置くと 100 件超の推奨の陰に隠れ、ATTACK_EVALUATOR が5反復
+        飛ばされたのと同じ形になる（INC-012）。
+        """
+        original = orchestrator.assumption_backlog
+        orchestrator.assumption_backlog = lambda path=None: [
+            {"id": "ASM-X", "reason": "未観測", "detail": "d"}]
+        try:
+            actions = orchestrator.next_actions()
+        finally:
+            orchestrator.assumption_backlog = original
+        review = [i for i, a in enumerate(actions)
+                  if a.startswith("REVIEW_ASSUMPTION:")]
+        apply_findings = [i for i, a in enumerate(actions)
+                          if a.startswith("APPLY_FINDINGS:")]
+        self.assertTrue(review, actions)
+        if apply_findings:
+            self.assertLess(review[0], apply_findings[0], actions)
+
+    def test_state_is_partitioned(self):
+        """REVIEW_ASSUMPTION も二分のどちらかに属する（ADR-120）。"""
+        self.assertIn("REVIEW_ASSUMPTION", orchestrator.STATES)
+        self.assertIn("REVIEW_ASSUMPTION", orchestrator.NAMEABLE_STATES)
+        self.assertNotIn("REVIEW_ASSUMPTION", orchestrator.WITHIN_CYCLE_STATES)
+
+
 if __name__ == "__main__":
     unittest.main()
