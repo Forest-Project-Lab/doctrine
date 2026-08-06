@@ -322,7 +322,7 @@
       "impact": "INC-001 が 2026-08-05 に記録した結論『導入複製は 0.10.0 に追いついている(hook-stamps の hook_inject_version)ので、版とは無関係に空いている』が成り立たない。この結論は hook_inject_version に寄りかかっており、その値は 15 コミットにわたって同じである。INC-001 の切り分け（推奨#6）は、反証されていない仮説を反証済みとして扱っていた",
       "fixed": false,
       "shipped": false,
-      "cast_analysis": "pending",
+      "cast_analysis": "done",
       "evidence_kind": "measurement",
       "evidence_refs": [
         "assurance/ledger/assumptions.json",
@@ -330,7 +330,9 @@
         "doctrine_docs/packaging/decisions/ADR-119-audit-execution-stamp.md"
       ],
       "evidence": "~/.claude/plugins/installed_plugins.json: installPath .../doctrine/0.10.0・version 0.10.0・gitCommitSha 67475de7fddf174b43d6a4dc79cb899dcd24cfc5・lastUpdated 2026-08-05T05:02:48Z。git rev-list --count 67475de..HEAD = 15。git log 67475de..HEAD -- plugin/.claude-plugin/plugin.json は空（版は動いていない）。導入複製の scripts/docs-audit.py に hook_session_end_audit は 0 件、リポジトリ側は 1 件",
-      "residual": "版番号を毎コミット動かす案は配布物の版番号の変更に当たり所有者判断（ADR-116 と同じ区分）。gitCommitSha は installed_plugins.json に在るので、複製の同一性を SHA で見る経路は作りうるが、それが配布境界の観測に当たるかは INC-001 推奨#3（所有者判断）と重なる"
+      "residual": "版番号を毎コミット動かす案は配布物の版番号の変更に当たり所有者判断（ADR-116 と同じ区分）。gitCommitSha は installed_plugins.json に在るので、複製の同一性を SHA で見る経路は作りうるが、それが配布境界の観測に当たるかは INC-001 推奨#3（所有者判断）と重なる",
+      "cast_analysis_ref": "assurance/ledger/cast/INC-019-version-string-does-not-identify-the-copy.json",
+      "cast_analyzed_at": "2026-08-06T14:21:01Z"
     },
     {
       "id": "INC-020-evaluator-blindness-read-as-owner-authority",
@@ -341,7 +343,7 @@
       "fixed": true,
       "shipped": false,
       "fix_note": "owner の既定を廃し、明示の処遇行が六類型のどれかを名指すときだけ owner とした（ADR-127）。申告の件数と成立の件数を status が別々に出す。ただし本体は『評価者へ統治木の既決を渡す』ことで、そちらは未実施",
-      "cast_analysis": "pending",
+      "cast_analysis": "done",
       "evidence_kind": "measurement",
       "evidence_refs": [
         "assurance/harness/prompts.py",
@@ -350,7 +352,28 @@
       ],
       "evidence": "prompts.build_cast_analysis_prompt の入力は incident・control_structure_text・principle_index の三つだけ（統治木は無い）。_CAST_CHARTER に『既に決まっていないか検めよ』の規律は無い。schemas.py:239 の owner_decision_required は定義ゼロの裸の boolean で、六類型との対応が schema にも憲章にも無い。orchestrator.recommendation_backlog は申告をそのまま owner の既定にしていた",
       "residual": "本修正は申告の読み替えを止めるだけで、評価者の視野そのものは狭いまま。既決を評価者へ渡す設計（独立性の規律を壊さない形で —— 既決は構造化された正本であって実装者の弁明ではない）は次の反復。渡した後に『既決に寄りかかりすぎて既決自体の誤りを指摘できなくなる』共通原因故障が新たに立つ",
-      "family": "検証できない申告を信じる形の四度目（ADR-050／NONGOAL-001 第9・14・16項／INC-013 の捏造事象。今回の申告は評価者自身の owner_decision_required）"
+      "family": "検証できない申告を信じる形の四度目（ADR-050／NONGOAL-001 第9・14・16項／INC-013 の捏造事象。今回の申告は評価者自身の owner_decision_required）",
+      "cast_analysis_ref": "assurance/ledger/cast/INC-020-evaluator-blindness-read-as-owner-authority.json",
+      "cast_analyzed_at": "2026-08-06T14:26:57Z"
+    },
+    {
+      "id": "INC-021-lane-fires-on-declared-without-a-runner",
+      "date": "2026-08-06",
+      "summary": "レーンが宣言する評価の発火点 5 つのうち 2 つ（FORMALIZE・VERIFY）に走らせ手が無い。jerg レーンは fires_on=('MAP_COVERAGE','FORMALIZE','VERIFY') と宣言するが、実行器も prompts の組み立て関数も台帳の種別も在るのは MAP_COVERAGE だけである。したがって『修正が正しいことを独立に確かめる段』は一度も走っていない",
+      "detected_by": "所有者の問い『今の流れはどうなっているのか。宇宙工学の観点で独立検証 —— その結果をそのまま正本にしようとしているのか』を受けて、状態機械と実行器の対応を実測したとき（2026-08-06）",
+      "impact": "状態機械は FIX_APPLIED → VERIFY → ATTACK_EVALUATOR の遷移を持ち、運転手順 §2 は VERIFY を『名指しされないが反復の中で順に踏む』側に置く。だが踏む先の実体が無いので、実際には FIX の後に独立検証を経ずに RECORD へ抜けている。ADR-120 の二分（状態）と ADR-124 の二分（台帳の成果物）はどちらもこの面を見ておらず、赤にならない —— 成果物が生まれないので『未宣言のファイル』も出ない。宣言と実装の乖離が沈黙する三つ目の面である",
+      "fixed": false,
+      "shipped": false,
+      "cast_analysis": "pending",
+      "evidence_kind": "measurement",
+      "evidence_refs": [
+        "assurance/harness/orchestrator.py",
+        "assurance/harness/prompts.py",
+        "assurance/harness/schemas.py"
+      ],
+      "evidence": "orchestrator.LANES['jerg']['fires_on'] == ('MAP_COVERAGE','FORMALIZE','VERIFY')。prompts.py の build_* は discover / extract_principles / cast_analysis / map_coverage / challenge の 5 つで、formalize も verify も無い。harness/ の実行器は attack_evaluator・cast_analysis・discover・doctor・extract_principles・map_coverage・smoke の 7 つで、formalize.py も verify.py も無い。schemas.py:109 に VERDICT（CHALLENGE/VERIFY 用）、:290 に FORMALIZE 成果物のスキーマだけが在る。LEDGER_KINDS にも両者の成果物種別は無い",
+      "residual": "独立性の水準そのものも別の問題として残る。NONGOAL-001 第17項が IV&V（独立した組織による検証）を採らないと明示しており、いま在るのはセッションの独立（run_one_shot・setting_sources=[]・空の一時 cwd・構造化 JSON だけ）までである。評価役はすべて opus-5 系で、共通原因故障は残余リスクとして残る（運転手順 §4）。走らせ手を作っても『組織的独立』にはならない",
+      "family": "宣言と実装の乖離が沈黙する形。control_structure が .claude/.cache/last-audit.json を feedback と宣言しながら stat する経路が無い件（INC-001 推奨#2 の処遇 note）と同型で、粒度が状態機械の側に在る"
     }
   ]
 }
