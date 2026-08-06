@@ -530,3 +530,55 @@ class AuditWriteGapTest(unittest.TestCase):
         self.assertIsNone(A.audit_write_gap(
             {"hook_session_end_audit": self._ts("2026-08-04T10:00:00Z")},
             {"today": "きのう"}))
+
+
+class FieldStateReportTest(unittest.TestCase):
+    """現地の状態を、貼り付けられる形で出す(ADR-122)。
+
+    規範(CAST)は「運用側は運用中の性能を製造者へフィードバックする」と求めるが、
+    本体系は通信しない(確定事実7)。そこで送らずに**転記できる形**で示す。
+    載せてよいのは版と生存の印だけで、統治対象の内容は載せない。
+    """
+
+    def setUp(self):
+        self.proj = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.proj, ignore_errors=True)
+        cache = os.path.join(self.proj, ".claude", ".cache")
+        os.makedirs(cache, exist_ok=True)
+        with open(os.path.join(cache, A.STAMPS_NAME), "w", encoding="utf-8") as fh:
+            fh.write("hook_inject_version: 0.9.0\n"
+                     "hook_session_end_audit: 2026-08-05T10:00:00Z\n"
+                     "hook_session_end_write: failed\n"
+                     "hook_docs_linter: 2026-08-05T10:05:00Z\n")
+
+    def test_report_carries_versions_and_stamps(self):
+        text = A.field_state_report(proj=self.proj)
+        self.assertIn("0.9.0", text)                 # 冒頭で刻まれた版
+        self.assertIn("2026-08-05T10:00:00Z", text)  # 監査の走った印
+        self.assertIn("failed", text)                # 書けたかの印
+
+    def test_report_never_carries_governed_content(self):
+        """統治対象の内容(文書の場所・本文)を載せない(ADR-074 と同じ線引き)。"""
+        docs = os.path.join(self.proj, "doctrine_docs", "_system")
+        os.makedirs(docs, exist_ok=True)
+        secret = os.path.join(docs, "decided-facts.md")
+        with open(secret, "w", encoding="utf-8") as fh:
+            fh.write("# 秘密の確定事実\n")
+        text = A.field_state_report(proj=self.proj)
+        self.assertNotIn("秘密", text)
+        self.assertNotIn("decided-facts", text)
+
+    def test_report_is_deterministic(self):
+        self.assertEqual(A.field_state_report(proj=self.proj),
+                         A.field_state_report(proj=self.proj))
+
+    def test_report_survives_a_missing_cache(self):
+        empty = _util.mkdtemp()
+        self.addCleanup(shutil.rmtree, empty, ignore_errors=True)
+        text = A.field_state_report(proj=empty)
+        self.assertIsInstance(text, str)
+        self.assertIn("不明", text)
+
+    def test_report_states_that_nothing_is_sent(self):
+        """送らないことを本文に書く。読んだ人が転記だと判る形にする。"""
+        self.assertIn("送信", A.field_state_report(proj=self.proj))

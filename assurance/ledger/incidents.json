@@ -186,11 +186,13 @@
       "fixed": true,
       "fix_note": "状態を NAMEABLE_STATES と WITHIN_CYCLE_STATES の二分に置き、どちらにも属さない状態を試験が拒む。評価器の成果物が故障注入の証拠より新しければ ATTACK_EVALUATOR を挙げる（ADR-120）",
       "ledger_gap_note": "本件は ADR-120 と決定論試験から参照されていたのに、台帳へ積み忘れていた（2026-08-06 に発見して追記）。名指しした欠陥を記録する経路も人手に頼っている",
-      "cast_analysis": "pending",
+      "cast_analysis": "done",
       "evidence_refs": [
         "assurance/harness/orchestrator.py",
         "ADR-120"
-      ]
+      ],
+      "cast_analysis_ref": "assurance/ledger/cast/INC-012-states-unnameable-by-canon.json",
+      "cast_analyzed_at": "2026-08-06T04:03:52Z"
     },
     {
       "id": "INC-013-cast-analysis-accepts-fabricated-incident",

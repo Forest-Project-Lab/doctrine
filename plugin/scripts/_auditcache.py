@@ -472,6 +472,66 @@ def audit_write_gap(stamps, summary, write_ok=None):
     return None
 
 
+def version_lag_advice(lag_message):
+    """版の食い違いの告げ方に、転記の求め方を添える(ADR-122)。
+
+    規範は運用側から供給側へのフィードバックを求める。送らない体系では、
+    渡すかどうかを利用者が決められる形——転記——にしか橋を架けられない。
+    そこで、食い違いを告げるときだけ求め方を添える（毎回は言わない）。
+    """
+    return ("%s。供給側へ伝えるなら『現地状態を出して』と言えば、貼り付けられる形で"
+            "出す（版と生存の印だけ。統治対象の内容は入らない。**送信はしない**）"
+            % lag_message.rstrip("。"))
+
+
+def field_state_report(proj=None):
+    """現地で何が動いているかを、貼り付けられる平文で返す(ADR-122)。
+
+    規範(CAST)は運用側から供給側へのフィードバックを求めるが、本体系は通信しない
+    (確定事実7)。そこで**送らずに転記できる形**で示す。この関数は文字列を返す
+    だけで、どこへも送らない。
+
+    載せるのは版と生存の印だけとする。統治対象の内容(文書の場所・本文・所見の
+    中身)は載せない —— エラージャーナル(ADR-074)と同じ線引きである。読めない
+    ものは「不明」と書き、推測で埋めない。決して例外を投げない。
+    """
+    if proj is None:
+        proj = os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()
+
+    def _or_unknown(value):
+        return value if isinstance(value, str) and value.strip() else "不明"
+
+    try:
+        values = read_stamp_values(proj) or {}
+    except Exception:
+        values = {}
+    try:
+        running = plugin_version()
+    except Exception:
+        running = None
+    try:
+        lag = version_lag(proj)
+    except Exception:
+        lag = None
+
+    lines = [
+        "doctrine 現地状態(転記用。この出力は送信されない)",
+        "- 実行中の版: %s" % _or_unknown(running),
+        "- セッション冒頭に刻まれた版: %s"
+        % _or_unknown(values.get("hook_inject_version")),
+        "- 正本との食い違い: %s" % ("あり" if lag else "なし・判定不能"),
+        "- 監査の走った印: %s"
+        % _or_unknown(values.get("hook_session_end_audit")),
+        "- 監査の要約を書けたか: %s"
+        % _or_unknown(values.get("hook_session_end_write")),
+        "- リンタの発火の印: %s" % _or_unknown(values.get("hook_docs_linter")),
+        "- ガードの発火の印: %s"
+        % _or_unknown(values.get("hook_policy_guard_pre")),
+        "（統治対象の内容は含めない。渡すかどうかは利用者が決める）",
+    ]
+    return "\n".join(lines)
+
+
 # ---------------------------------------------------------------------------
 # エラージャーナル(ADR-074)。書式の正本は SPEC-021。
 # ---------------------------------------------------------------------------

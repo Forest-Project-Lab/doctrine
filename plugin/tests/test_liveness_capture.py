@@ -375,6 +375,28 @@ class TestAuditWriteGap(LivenessBase):
         self.assertIn("書け", out)
 
 
+class TestFieldStateFlag(LivenessBase):
+    """現地状態の転記(ADR-122)。求められたときだけ出し、送らない。"""
+
+    def test_flag_prints_the_report_and_exits_zero(self):
+        out, code = _util.invoke("gov-heartbeat", argv=["--field-state"])
+        self.assertEqual(code, 0)
+        self.assertIn("現地状態", out)
+        self.assertIn("送信されない", out)
+
+    def test_flag_does_not_emit_hook_output(self):
+        """フックの助言の形(JSON)では出さない。人が読んで貼る平文にする。"""
+        out, _code = _util.invoke("gov-heartbeat", argv=["--field-state"])
+        self.assertNotIn("hookSpecificOutput", out)
+
+    def test_version_lag_message_offers_the_transcription(self):
+        """版の食い違いを告げるときは、転記の求め方も添える（送信はしないと明示）。"""
+        import _auditcache as A
+        msg = A.version_lag_advice("導入済みの複製が正本と食い違う")
+        self.assertIn("現地状態", msg)
+        self.assertIn("送信", msg)
+
+
 class TestCaptureNudge(LivenessBase):
     def _flags(self):
         # 印はプロジェクトスコープに置く(ADR-075)。${CLAUDE_PLUGIN_ROOT} は版ごとに
