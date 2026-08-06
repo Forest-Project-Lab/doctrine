@@ -75,6 +75,42 @@
       "index": 8,
       "state": "rejected",
       "note": "判断ではなく観測で消える。実測: git ls-files assurance/ledger が 38 件を返し、台帳は版管理下にある。追跡外は assurance/ledger/runs/ だけで（.gitignore:20）、それは LEDGER_KINDS が『使い捨ての実行記録・選別を経ていない』と既に宣言済み。よって『追跡外である場合は』の前件が成り立たず、復元手段の要否を決める必要が無い。除去は git から復旧できるので『復旧不能な削除』の類型にも当たらない。"
+    },
+    {
+      "incident_id": "INC-001-sessionend-audit-gap",
+      "index": 4,
+      "state": "rejected",
+      "note": "示された二択のどちらも採らない。所有者判断でもない。(1) 拒否は保証にならない —— policy-guard.py に .claude/.cache への言及は 0 件で、ガードが解くのは統治木の root （_find_docs_root）である。加えて NONGOAL-001 第4項『Hookが起動しない経路で書かれたものは止められず、全件監査が後から補う』の通り、外部プロセス・別ツール・直接のファイル書き込みは塞げない。塞げないものを塞いだことにすると『見ていないものを見ていると書かない』(NONGOAL 第14項の理由) に反する。(2) 助言も観測できない —— NONGOAL-001 第9項『ガードが実際に違反を拒否できることは検出しない』。(3) 木が既に採っている第三の形が在る: 書き手を縛らず**読み手が検める**。ADR-053 の世代の照合、ADR-119 の実行の印、そして ASM-002 の先行指標（checks_run の集合照合）が同じ線である。是正はこの線を強めることであって、書き込みの禁止ではない。"
+    },
+    {
+      "incident_id": "INC-001-sessionend-audit-gap",
+      "index": 7,
+      "state": "pending",
+      "note": "半分だけ着地している。ASM-002 ではなく ASM-001 の先行指標#1 が、まさにこの照合（session-flags のセッション別の印の日付 対 要約の generated_at）を定義し、2026-08-06 に実測して FAIL を記録した。ただし観測は手であり、台帳側の機械照合にはなっていない。なお Stop の退避メモは capture-nudge.py、PreCompact は precompact-dump.py が担い、後者は _auditcache.write_stamp(COMPACTED_KEY) で hook-stamps に compacted を残す（実測: compacted 2026-08-03T15:52:35Z）。突合の材料は揃っている。"
+    },
+    {
+      "incident_id": "INC-001-sessionend-audit-gap",
+      "index": 8,
+      "state": "pending",
+      "note": "器は出来たが基準が無い。ADR-126 の想定の登記簿が『先行指標＋観測＋状態語彙』で追跡の器を与えており、ASM-001 がこの事象を追っている。残るのは『連続 N セッション』のN を決めることと、その判定を機械へ載せること。N の決定はレーン内の裁量であって所有者判断の六類型に当たらない（ADR-127）。"
+    },
+    {
+      "incident_id": "INC-002-termcheck-ascii-substring",
+      "index": 2,
+      "state": "pending",
+      "note": "INC-011#1 と実質同一の推奨（重複）。どちらも『既知類型を失敗様式の軸へ展開して反例集合へ変換する段を手順へ追加し、事象の閉じ条件に含める』を求めている。統合して一件として扱う。閉じ条件（ADR-117）への追加は機構の変更で、レーン内の裁量。未着手。"
+    },
+    {
+      "incident_id": "INC-002-termcheck-ascii-substring",
+      "index": 4,
+      "state": "rejected",
+      "note": "後半が NONGOAL-001 第1項に当たる。『対象文字体系が明示されているか』は語の有無までなら文字列照合で書けるが、『その範囲が実装の適用範囲を覆っているか』は意味の判断であり、機械に白黒を付けさせると擬陽性も取りこぼしも生む（同項の理由）。前半だけを監査の findings にすると、覆えていない WATCH 項が『語が在る』だけで通り、誤った安心を与える。代わりに定例（docs-curate・doc-review）が分類の見直しで守る—— これは ADR-073 が公開ビューの分類について採ったのと同じ形である。"
+    },
+    {
+      "incident_id": "INC-002-termcheck-ascii-substring",
+      "index": 5,
+      "state": "pending",
+      "note": "所有者判断ではない（ADR-127 の六類型に当たらない）が、決定は要る。木の既定はNONGOAL-001 第9項が『拒否の往復の証跡は持たない』側に置いており、再検討の条件は『機能カナリアが入るまで』である。過検出の代理指標はそれとは別の問いで、記録を.claude/.cache に閉じれば DECIDED-001 事実7（通信しない）にも NONGOAL 第15項（承認なしの外部送信をしない）にも触れない。ただし代理指標を真の指標と読ませない書き方が要る。設計を ADR で下すべき案件として未着手に残す。"
     }
   ]
 }
