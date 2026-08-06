@@ -79,12 +79,16 @@ FAIL（不適合）・UNASSESSED（前提欠如で未評価）。
 | challenge | （共通） | CHALLENGE | DISCOVER の構造化 JSON だけ → 判定 |
 
 冊子の取り込みは jerg → stpa → cast の順。事象は `ledger/incidents.json` に積み、
-cast 分析が済むまで閉じない。「済んだ」の定義は ADR-117 が持つ —— 応答が
+cast 分析が済むまで閉じない。「済んだ」の定義は ADR-117 と ADR-121 が持つ —— 応答が
 `CAST_ANALYSIS_SCHEMA` へ適合し、参照照合を通った統制欠陥が一つ以上残り、
 先行指標が「どこで観測するか」と「何を異常とするか」を埋めていること。三つとも
 `harness/cast_analysis.py` の決定論コードが判ずる。分析の入力は事象の構造化記録・
 統制構造（`harness/control_structure.py`）・カタログ全件だけで、会話・弁明は渡さない。
 分析の結果は `ledger/cast/<事象 id>.json` に残る。
+四つ目の条件として、事象の証拠が体系の中で確かめられること（ADR-121）—— 構造化した
+`evidence_refs` の少なくとも一つが解決するか、`evidence_kind` を `external` /
+`conversational` / `measurement` のいずれかで宣言していること。自由文の `evidence` は
+走査しない。証拠の解決先は索引と実ファイル系の二つである（ADR-123）。
 
 ## model 方針（ADR-116）
 

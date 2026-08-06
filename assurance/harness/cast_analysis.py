@@ -28,7 +28,7 @@ sys.dont_write_bytecode = True
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from harness import (control_structure, model_policy, prompts,  # noqa: E402
-                     schemas, sdk_lane)
+                     schemas, sdk_lane, system_index)
 
 LANE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REPO_DIR = os.path.dirname(LANE_DIR)
@@ -98,6 +98,39 @@ def analysis_path(incident_id):
     return os.path.join(CAST_DIR, "%s.json" % incident_id)
 
 
+# 体系の外に在る証拠の種別。解決しない理由を宣言で受ける（EXT アンカー・刻印と
+# 同じ流儀。黙って通さず、何であるかを名指しさせる）。
+EXTERNAL_EVIDENCE_KINDS = ("external", "conversational", "measurement")
+
+
+def incident_evidence_status(incident, resolve):
+    """事象の証拠が、体系の中で確かめられるかを判ずる（事象の実在の足場）。
+
+    照合するのは構造化された `evidence_refs` だけで、自由文の `evidence` は
+    走査しない —— 文中の語がたまたま実在の名前と一致する（`plugin` のような）
+    偶然の一致を証拠と取り違えないためである。
+
+    返り値: {"refs", "resolved", "unresolved", "kind", "verifiable"}
+    verifiable は次のどちらかのとき True:
+    - `evidence_refs` の少なくとも一つが索引で解決する
+    - `evidence_kind` が体系の外の証拠として宣言されている
+
+    どちらでもないとき False。**捏造された事象はここで止まる**（実在しない機構は
+    解決するポインタを持てず、宣言も無い。事象 INC-013）。
+    """
+    refs = [r for r in (incident.get("evidence_refs") or [])
+            if isinstance(r, str)]
+    resolved = [r for r in refs if resolve(r)]
+    kind = incident.get("evidence_kind")
+    return {
+        "refs": refs,
+        "resolved": resolved,
+        "unresolved": [r for r in refs if r not in resolved],
+        "kind": kind if kind in EXTERNAL_EVIDENCE_KINDS else None,
+        "verifiable": bool(resolved) or kind in EXTERNAL_EVIDENCE_KINDS,
+    }
+
+
 def analyze_one(incident, principle_index, *, timeout_s, budget_usd):
     """一件の事象を分析し、(記録, 分析成立か) を返す。
 
@@ -126,6 +159,7 @@ def analyze_one(incident, principle_index, *, timeout_s, budget_usd):
 
     now = datetime.datetime.now(datetime.timezone.utc)
     known_keys = [k for k, _t, _s in principle_index]
+    index_snapshot = system_index.build()
     accepted, rejected, guard_ok = [], [], False
     analysis = record.get("structured_output") if record["status"] == "PASS" else None
     if analysis:
@@ -133,14 +167,22 @@ def analyze_one(incident, principle_index, *, timeout_s, budget_usd):
             analysis, control_structure.ELEMENT_IDS, known_keys)
         guard_ok = prompts.leading_indicators_defined(analysis)
 
-    settled = bool(analysis) and bool(accepted) and guard_ok
+    # 出典に欠陥のある主張は残すが、それだけでは閉じられない（ADR-121）。
+    clean = [f for f in accepted if not f.get("citation_defect")]
+    ev = incident_evidence_status(
+        incident, lambda ptr: system_index.resolve_pointer(index_snapshot, ptr))
+    settled = (bool(analysis) and bool(clean) and guard_ok
+               and ev["verifiable"])
     if analysis and not settled:
         # 走ったが分析の要件を満たさない。緑へ倒さず FAIL のまま残す。
         record["status"] = "FAIL"
         record["oracle"] = "分析要件の不足: %s" % ", ".join(
             filter(None, [
-                None if accepted else "参照照合を通った統制欠陥がゼロ",
-                None if guard_ok else "先行指標が未定義（CAST_DONE の guard）"]))
+                None if clean else "出典に欠陥の無い統制欠陥がゼロ",
+                None if guard_ok else "先行指標が未定義（CAST_DONE の guard）",
+                None if ev["verifiable"] else
+                "事象の証拠が体系の中で確かめられない"
+                "（evidence_refs が解決せず evidence_kind の宣言も無い）"]))
 
     record.update({
         "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
@@ -155,6 +197,9 @@ def analyze_one(incident, principle_index, *, timeout_s, budget_usd):
         "analysis": analysis,
         "accepted_flaws": accepted,
         "rejected_flaws": rejected,
+        "flaws_with_citation_defect": [f for f in accepted
+                                       if f.get("citation_defect")],
+        "incident_evidence": ev,
         "leading_indicators_defined": guard_ok,
         "settled": settled,
     })

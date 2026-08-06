@@ -65,8 +65,10 @@ FIX → VERIFY → ATTACK_EVALUATOR → RECORD → CURATE（正本: `harness/orc
 - `catalogs/<book>-coverage.json` — 五値の網羅台帳。再生成は評価済み割当を保持する。
   割当は現状の索引（`harness/system_index.py`）に対して行い、証拠ポインタは機械照合。
   解決しないポインタしか無い「実装・試験・証拠あり」は UNKNOWN へ落ちる（ADR-118）。
-- `incidents.json` — 事象の列。cast 分析が済むまで閉じない。「済んだ」の三条件は
-  ADR-117（schema 適合・照合を通った統制欠陥が1件以上・先行指標の定義）。
+- `incidents.json` — 事象の列。cast 分析が済むまで閉じない。「済んだ」の四条件は
+  ADR-117 と ADR-121（schema 適合・出典に欠陥の無い統制欠陥が1件以上・先行指標の定義・
+  事象の証拠が確かめられること）。新しい事象には `evidence_refs`（索引か実ファイル系で
+  解決する参照）か `evidence_kind`（external / conversational / measurement）を必ず持たせる。
 - `cast/<事象 id>.json` — 分析の結果（統制欠陥・先行指標・却下された欠陥つき）。
 - `red/<事象 id>.json` — 修正前に FAIL した証拠（最初から緑は再現と認めない）。
 - `smoke-latest.json` / `mutations-*.json` — 煙試験と故障注入の証拠。

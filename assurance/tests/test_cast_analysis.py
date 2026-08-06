@@ -93,12 +93,18 @@ class VerifyCastAnalysisTest(unittest.TestCase):
         self.assertEqual(acc, [])
         self.assertEqual(len(rej), 1)
 
-    def test_rejects_invented_normative_ref(self):
+    def test_rejects_a_flaw_with_no_resolving_ref(self):
+        """出典が一つも解決しない主張は証拠を提示していない（JERG L219）。
+
+        規則は 2026-08-06 に変わった。以前は「一つでも解決しなければ欠陥ごと却下」で、
+        妥当な指摘を落としていた。今は解決する出典が一つでも残れば主張を保ち、
+        欠けた事実を刻む（ADR-121）。却下されるのは、解決する出典がゼロのときだけ。
+        """
         acc, rej = prompts.verify_cast_analysis(
             {"control_flaws": [self._flaw(normative_refs=["存在しない鍵"])]},
             control_structure.ELEMENT_IDS, ["鍵A"])
         self.assertEqual(acc, [])
-        self.assertIn("カタログに無い規範鍵", rej[0]["problems"][0])
+        self.assertIn("解決する規範鍵が一つも無い", rej[0]["problems"][0])
 
 
 class LeadingIndicatorGuardTest(unittest.TestCase):
@@ -117,6 +123,73 @@ class LeadingIndicatorGuardTest(unittest.TestCase):
     def test_complete_indicator_satisfies(self):
         self.assertTrue(prompts.leading_indicators_defined(
             {"leading_indicators": [_indicator()]}))
+
+
+class CitationDefectTest(unittest.TestCase):
+    """出典の欠陥は主張を捨てず、刻んで残す（ADR-121。網羅の割当と規則を揃える）。"""
+
+    def _flaw(self, refs):
+        return {"control_element_id": "SESSION_END_AUDIT",
+                "flaw_type": "手掛かりが無い", "description": "d",
+                "why_it_seemed_adequate": "w", "normative_refs": refs}
+
+    def test_partly_resolving_refs_keep_the_flaw_but_mark_it(self):
+        acc, rej = prompts.verify_cast_analysis(
+            {"control_flaws": [self._flaw(["鍵A", "捏造の鍵"])]},
+            control_structure.ELEMENT_IDS, ["鍵A"])
+        self.assertEqual(len(acc), 1)
+        self.assertEqual(rej, [])
+        self.assertTrue(acc[0]["citation_defect"])
+        self.assertEqual(acc[0]["normative_refs"], ["鍵A"])
+        self.assertEqual(acc[0]["unresolved_refs"], ["捏造の鍵"])
+
+    def test_no_resolving_ref_is_still_rejected(self):
+        acc, rej = prompts.verify_cast_analysis(
+            {"control_flaws": [self._flaw(["捏造の鍵"])]},
+            control_structure.ELEMENT_IDS, ["鍵A"])
+        self.assertEqual(acc, [])
+        self.assertEqual(len(rej), 1)
+
+    def test_clean_flaw_carries_no_mark(self):
+        acc, _rej = prompts.verify_cast_analysis(
+            {"control_flaws": [self._flaw(["鍵A"])]},
+            control_structure.ELEMENT_IDS, ["鍵A"])
+        self.assertNotIn("citation_defect", acc[0])
+
+
+class IncidentEvidenceTest(unittest.TestCase):
+    """事象の実在の足場（ADR-121）。捏造された事象はここで止まる。"""
+
+    def _resolve(self, ptr):
+        return "file" if ptr == "assurance/README.md" else None
+
+    def test_resolving_ref_is_verifiable(self):
+        st = cast_analysis.incident_evidence_status(
+            {"evidence_refs": ["assurance/README.md"]}, self._resolve)
+        self.assertTrue(st["verifiable"])
+
+    def test_declared_external_kind_is_verifiable(self):
+        st = cast_analysis.incident_evidence_status(
+            {"evidence_kind": "external"}, self._resolve)
+        self.assertTrue(st["verifiable"])
+
+    def test_fabricated_incident_is_not_verifiable(self):
+        """実在しない機構は解決するポインタを持てず、宣言も無い（INC-013）。"""
+        st = cast_analysis.incident_evidence_status(
+            {"summary": "隔離キュー Hook が所見を破棄していた",
+             "evidence_refs": [".claude/.cache/quarantine-queue"]}, self._resolve)
+        self.assertFalse(st["verifiable"])
+
+    def test_prose_evidence_alone_is_not_verifiable(self):
+        """自由文は走査しない。文中の語の偶然の一致を証拠と取り違えない。"""
+        st = cast_analysis.incident_evidence_status(
+            {"evidence": "assurance/README.md への助言"}, self._resolve)
+        self.assertFalse(st["verifiable"])
+
+    def test_unknown_kind_is_not_a_declaration(self):
+        st = cast_analysis.incident_evidence_status(
+            {"evidence_kind": "たぶん大丈夫"}, self._resolve)
+        self.assertFalse(st["verifiable"])
 
 
 class IncidentWriteBackTest(unittest.TestCase):
