@@ -16,16 +16,25 @@ PROC-001・`assurance/README.md`・規範3冊（JERG=検証計画と証拠・STP
 ## 0. 前提確認（毎回・省略禁止）
 
 1. セッション冒頭に「セッション開始（要点復唱）」の契約注入があるか。無ければ統治フックが
-   死んでいる（R11）。作業前にユーザーへ報せる。
+   死んでいる（R11）。**報せたうえで止まる。**注入の無いセッションで統治木を編集しない
+   （ガードもリンタも効いていない可能性がある）。レーンの読み取りだけなら続けてよい。
 2. `git fetch origin` と open Issue / open PR / CI の再取得。過去の報告を現状として信用しない。
 3. `python3 assurance/harness/doctor.py --json` — UNASSESSED ならレーン前提が欠けている。
    SDK 実行はせず決定論試験だけで続行し、その旨を台帳と報告へ残す。
-4. `python3 plugin/scripts/docs-audit.py --root doctrine_docs --json` — 監査が古い・赤なら先に扱う。
+4. `python3 plugin/scripts/docs-audit.py --root doctrine_docs --json --today <今日>` —
+   error か warn が 1 件でもあれば、他の何より先に扱う。**`--today` は必ず渡す**
+   （渡さないと壁時計を読み、日付が変わっただけで結果が変わる。WATCH-001 第11項と同じ形）。
 
 ## 1. 次にやることの正本
 
 **手で選ばない。** `assurance/.venv/bin/python assurance/harness/orchestrator.py status` の
-`next_actions` が決定論で導く（ADR-115）。優先の意味論:
+`next_actions` が決定論で導く（ADR-115）。
+
+**着手は先頭の一件から。** 一回の反復で何件消化してもよいが、飛ばしてはならない。
+先頭を飛ばしたくなったら、それは正本の優先順が誤っている疑いなので、飛ばさずに
+正本の側を直す（実際に INC-006・INC-012・INC-015 がその形で見つかった）。
+
+優先の意味論:
 
 - 事象（incidents）の CAST_ANALYSIS が pending なら、それが新規 DISCOVER より先。
   修正済みの欠陥も「なぜ既存の保証が見逃したか」の分析が済むまで閉じない。
@@ -38,6 +47,14 @@ PROC-001・`assurance/README.md`・規範3冊（JERG=検証計画と証拠・STP
 INGEST_NORMS → MAP_COVERAGE → DISCOVER → CHALLENGE → FORMALIZE → REPRODUCE_RED →
 FIX → VERIFY → ATTACK_EVALUATOR → RECORD → CURATE（正本: `harness/orchestrator.py`）
 
+- 状態は二つに分かれる（ADR-120）。**名指しされる**（INGEST_NORMS・MAP_COVERAGE・
+  CAST_ANALYSIS・DISCOVER・FORMALIZE・ATTACK_EVALUATOR）と、**名指しされないと
+  明記されている**（CHALLENGE・REPRODUCE_RED・FIX・VERIFY・RECORD・CURATE）。
+  後者は「やらなくてよい」ではなく「帳簿だけからは指せない」の意味で、反復の中で
+  順に踏む。**どちらにも属さない状態を作らない** —— 黙って名指しされない状態は
+  決して起きない（ATTACK_EVALUATOR が5反復飛ばされた形）。
+- **走らせ手を足すときは、その成果を正本が読む段も同時に足す。**片方だけだと、
+  同じ行動を毎回買い直す「消えない行動」になる（INC-012・INC-015）。
 - FAIL・事象はどの状態からでも CAST_ANALYSIS へ。
 - REPRODUCE_RED: 修正前に FAIL する試験を先に作り証拠を保存。最初から緑は再現と認めない。
   再現不能は UNKNOWN として RECORD へ（実装へ進まない）。
@@ -49,6 +66,7 @@ FIX → VERIFY → ATTACK_EVALUATOR → RECORD → CURATE（正本: `harness/orc
   `harness/model_policy.py` が未満を拒否。fallback は渡さない。opus 不在なら UNASSESSED。
 - `claude-haiku-4-5` は配管確認（煙試験）と劣化プローブ（弱い model で意味が保たれるかの
   測定。役割名 degradation-probe を明示）だけ。
+- effort の**引き上げ**（xhigh・max）は自律判断でよい。**引き下げは所有者判断**（ADR-116）。
 
 ## 4. 独立性の規律（構造で守る）
 
@@ -76,6 +94,9 @@ FIX → VERIFY → ATTACK_EVALUATOR → RECORD → CURATE（正本: `harness/orc
 - `smoke-latest.json` / `mutations-*.json` — 煙試験と故障注入の証拠。
   評価器の成果物が `mutations-*.json` の日付より新しければ、正本が ATTACK_EVALUATOR を
   次の行動に挙げる（ADR-120）。攻撃の設計に「これは捏造だ」と読める手掛かりを残さない。
+- **事象に id を与えた瞬間に台帳へ積む。**報告や ADR で名指ししてから積むのを
+  後回しにしない（INC-012 は ADR と試験から参照されながら台帳に無かった）。
+  採番は `INC-<通し番号>-<短い英字の要約>`。番号は台帳の最大値の次を使う。
 - 状態語彙: PASS / FAIL / UNKNOWN / UNASSESSED / DEGRADED / NOT-APPLICABLE。
   根拠なき PASS を書かない。証拠が消えた PASS は UNKNOWN へ戻す。
   「完璧」「網羅済み」「保証済み」を無根拠に宣言しない（思いつかない≠網羅）。
@@ -104,14 +125,56 @@ python3 plugin/scripts/docs-audit.py --root doctrine_docs --json # 監査
 - 配布 Skill 7個の増減・変更。PAUSED Issue の再開。Lens Phase 2 / overlay / System Map への拡張。
 - 統治木の決定・仕様・用語をハーネスのメモリへ書くこと（正本は統治木。ADR-035）。
 - 模擬（stub）実行を実 Claude の保証として記録すること（execution_kind で区別）。
-- 所有者判断: 互換性を壊す変更・配布境界や保証範囲の変更・復旧不能な削除・外部費用や
-  credential・評価 model 最低線の引き下げ（ADR-116）。push / PR / merge は所有者が
-  許可した範囲だけ（許可は会話で確認された事実に限る。推定しない）。
+- 所有者判断（**下の常設許可の外側**。勝手に進めず、判断を仰いで止まる）: 互換性を壊す
+  変更・配布境界や保証範囲の変更・復旧不能な削除・外部費用や credential・評価 model
+  最低線の引き下げ（ADR-116）・配布物の版番号の変更とリリース。
+
+## 7.1 常設の許可（所有者の指示 2026-08-06。会話の記憶に依存しない）
+
+**branch → commit → push → PR → squash merge までを、反復ごとに自律で行ってよい。**
+毎回口頭で許可を取り直さない。ただし次をすべて満たすときだけ:
+
+1. 変更が本反復の一つの主題に収まっている（`CONTRIBUTING.md`「一つの主題に絞る」）。
+   主題が二つ終わったら **PR を二つ**に分ける。一つの反復で複数 PR を出してよい。
+2. §8 の全門が緑（レーン試験・本体試験・linter 一括・監査・投影・release-check・
+   consistency-check・code-audit）。
+3. PR の CI が pass。**赤いまま merge しない。赤を避けるために門を緩めない。**
+4. 上の所有者判断に触れていない。触れるなら PR は作ってよいが **merge せず**、
+   判断を仰ぐ。
+5. 自分が作った PR だけを merge する。他者の PR には触れない。
+6. merge 後に `main` を引き直し、レーン試験と監査が緑であることを確かめて報告する。
+
+`gh` は未認証なので、token は git の credential helper から取る:
+`TOKEN=$(printf 'protocol=https\nhost=github.com\n\n' | git credential fill | sed -n 's/^password=//p')`
+を `GH_TOKEN` に渡す。ネットワークは時折切れる。**切れたら再試行し、最終状態
+（`git status -sb` と `origin/main` との差分）を確かめてから報告する。**
 
 ## 8. 反復の終端と報告
 
+**一反復の単位**: `next_actions` の先頭に着手し、主題が一つ片づいた時点で門を緑にして
+PR を出し、merge して閉じる。分量の目安は**評価セッション 10 本以内・所要 60 分以内**。
+超えるなら途中で切って PR を出す（台帳は再開を持つので進捗は失われない）。
+
 - CURATE: 重複 scenario・重複原則の統合、superseded の整理、平時コンテキストの最小化。
-  各ループ終端で全門（レーン試験・本体試験・linter 一括・監査・投影・release-check）を緑にする。
-- 「テストが緑」を理由に止まらない。campaign の一時停止条件を満たしたときだけ反復を閉じる。
-- 進捗報告は規定形式: SHA・新規欠陥・規範・修正前再現・変更・環境別証拠・evaluator 攻撃
-  結果・閉じた claim・UNKNOWN/UNASSESSED・整理した重複・次の最危険仮説・人間判断事項。
+  各ループ終端で全門（レーン試験・本体試験・linter 一括・監査・投影・release-check・
+  consistency-check・code-audit）を緑にする。
+- **「テストが緑」を理由に止まらない。**次の反復で扱うことを台帳へ積んでから閉じる。
+
+### 反復を閉じてよい条件（どれか一つ）
+
+- 主題が一つ片づき、門が緑で、PR が merge された。
+- `next_actions` の先頭が**所有者判断**に当たり、判断を仰いで止まっている。
+- レーン前提が欠けて（doctor が UNASSESSED・opus 不在）評価が走らせられない。
+- 上の分量の目安を超えた（途中まででも PR を出して閉じる）。
+
+**思いつかなくなったことを終端の理由にしない。** 正本の `next_actions` は空にならない。
+
+### 報告（規定形式・順序も固定）
+
+SHA・新規欠陥・規範・修正前再現・変更・環境別証拠・evaluator 攻撃結果・閉じた claim・
+UNKNOWN/UNASSESSED・整理した重複・次の最危険仮説・人間判断事項。
+
+- 実施しなかった項目は省略せず「未実施」と書く（空欄は「無かった」と読まれる）。
+- 自分の誤り・falsify された自分の仮説・汚染された測定は、**隠さずその項へ書く**。
+- 費用は換算値であり請求額ではない（サブスクリプション認証。従量課金は発生しない）。
+  制約は金額ではなく所要時間と利用枠である。
