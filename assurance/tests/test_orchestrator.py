@@ -231,16 +231,39 @@ class RecommendationBacklogTest(unittest.TestCase):
                 [0])
 
     def test_owner_decision_is_not_lane_work(self):
-        """所有者判断が要る推奨を、レーンの未着手として並べない。
+        """成立した所有者判断は、レーンの未着手として並べない。
 
         並べると、勝手に進めてよい物と判断を仰ぐ物が同じ列に混ざる（§7 の境界）。
+
+        ADR-127 で境界の引き方が変わった。かつては評価者の申告
+        （owner_decision_required）だけで棚へ落としていたが、その申告は権限の
+        判定ではなく評価者の視野の申告である（分析の入力に統治木が入っていない）。
+        いま棚へ入るのは、処遇の行が明示的に owner と書き、六類型のどれかを
+        名指したときだけ。守るべき不変条件は「**成立した**所有者判断が未着手に
+        混ざらないこと」であって、申告で棚へ落とすことではない。
         """
         with tempfile.TemporaryDirectory() as tmp:
             self._stub(tmp, [{"action": "a", "kind": "所有者判断",
                               "owner_decision_required": True}])
+            # 申告だけ: 棚には入らず、未着手に並ぶ（材料が届いていないだけ）。
             backlog = orchestrator.recommendation_backlog()
+            self.assertEqual(backlog["owner"], [])
+            self.assertEqual(len(backlog["pending"]), 1)
+
+            # 明示の処遇 + 類型: 棚へ入り、未着手から消える。
+            original = orchestrator.load_recommendation_status
+            stub_row = {"incident_id": "INC-x", "index": 0, "state": "owner",
+                        "owner_decision_kind": "配布境界や保証範囲の変更"}
+            orchestrator.load_recommendation_status = \
+                lambda: {("INC-x", 0): stub_row}
+            try:
+                backlog = orchestrator.recommendation_backlog()
+            finally:
+                orchestrator.load_recommendation_status = original
             self.assertEqual(backlog["pending"], [])
             self.assertEqual(len(backlog["owner"]), 1)
+            self.assertEqual(backlog["owner"][0]["owner_decision_kind"],
+                             "配布境界や保証範囲の変更")
 
     def test_apply_findings_is_named_while_pending_remains(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -394,6 +417,70 @@ class LedgerKindTest(unittest.TestCase):
                 with open(path, "w", encoding="utf-8") as f:
                     f.write("{}")
             self.assertEqual(orchestrator.undeclared_ledger_files(ledger), [])
+
+
+class OwnerDecisionKindTest(unittest.TestCase):
+    """所有者判断は、六類型のどれかを名指してはじめて成立する（ADR-127）。
+
+    評価者が付ける `owner_decision_required` は、所有者の権限についての判定では
+    なく**評価者の視野の申告**である。事故分析の入力は事象・統制構造・カタログ
+    だけで、統治木（確定事実・非目標・退行監視・ADR）は一つも渡っていない。
+    何も決まっていない場所から見れば、すべてが未決に見える。申告をそのまま
+    権限の判定として読み替える形は、この体系が三度「やらない」と決めた
+    「検証できない申告を信じる」形の四度目である。
+    """
+
+    def test_the_six_kinds_are_the_canon(self):
+        """類型は所有者が書いた六つ。ここで勝手に増やさない。"""
+        self.assertEqual(len(orchestrator.OWNER_DECISION_KINDS), 6)
+        for kind in ("互換性を壊す変更", "配布境界や保証範囲の変更",
+                     "復旧不能な削除", "外部費用や credential",
+                     "評価 model 最低線の引き下げ",
+                     "配布物の版番号の変更とリリース"):
+            self.assertIn(kind, orchestrator.OWNER_DECISION_KINDS)
+
+    def test_evaluator_flag_alone_does_not_make_it_an_owner_decision(self):
+        """申告だけでは owner にならない。既定は pending（未調査）。"""
+        buckets = orchestrator.recommendation_backlog()
+        for row in buckets["owner"]:
+            self.assertTrue(
+                row.get("owner_decision_kind"),
+                "%s#%s が類型を名指さずに owner へ入っている"
+                % (row["incident_id"], row["index"]))
+
+    def test_owner_disposition_without_a_kind_is_red(self):
+        rows = {("INC-001-sessionend-audit-gap", 3):
+                {"incident_id": "INC-001-sessionend-audit-gap", "index": 3,
+                 "state": "owner"}}
+        problems = orchestrator._validate_recommendation_status(rows)
+        self.assertTrue(any("類型" in p for p in problems), problems)
+
+    def test_owner_disposition_with_an_unknown_kind_is_red(self):
+        rows = {("INC-001-sessionend-audit-gap", 3):
+                {"incident_id": "INC-001-sessionend-audit-gap", "index": 3,
+                 "state": "owner", "owner_decision_kind": "なんとなく重そう"}}
+        problems = orchestrator._validate_recommendation_status(rows)
+        self.assertTrue(any("類型" in p for p in problems), problems)
+
+    def test_owner_disposition_with_a_named_kind_is_accepted(self):
+        rows = {("INC-001-sessionend-audit-gap", 3):
+                {"incident_id": "INC-001-sessionend-audit-gap", "index": 3,
+                 "state": "owner",
+                 "owner_decision_kind": "配布境界や保証範囲の変更",
+                 "note": "根拠"}}
+        self.assertEqual(orchestrator._validate_recommendation_status(rows), [])
+
+    def test_status_separates_the_claim_from_the_finding(self):
+        """申告の件数と、成立した件数を別々に出す。
+
+        一語に二つの意味を持たせない（INC-006・INC-010・INC-018 と同型）。
+        混ぜると、見ていない山を裁いた山と同じ顔で数えることになる。
+        """
+        summary = orchestrator._recommendation_summary()
+        self.assertIn("evaluator_claimed_owner", summary)
+        self.assertIn("owner", summary["counts"])
+        self.assertGreaterEqual(summary["evaluator_claimed_owner"],
+                                summary["counts"]["owner"])
 
 
 class AssumptionRegisterTest(unittest.TestCase):
