@@ -249,7 +249,7 @@ class RecommendationBacklogTest(unittest.TestCase):
             actions = [a for a in orchestrator.next_actions()
                        if a.startswith("APPLY_FINDINGS")]
             self.assertTrue(actions, orchestrator.next_actions())
-            self.assertIn("未着手 1 件", actions[0])
+            self.assertIn("未調査 1 件", actions[0])
 
     def test_apply_findings_clears_when_all_are_terminal(self):
         """処遇が済んだら消える。消えない行動を作らない（INC-006・INC-012）。"""
@@ -300,6 +300,42 @@ class RecommendationBacklogTest(unittest.TestCase):
                        [{"incident_id": "INC-x", "index": 0, "state": "done"}])
             self.assertTrue([p for p in orchestrator.validate()
                              if "語彙に無い" in p], orchestrator.validate())
+
+    def test_examined_pending_is_not_untouched_pending(self):
+        """『調べたうえで未着手』と『まだ調べていない』を一語で混ぜない。
+
+        混ぜると、見ていない山を見た山と同じ顔で数える（INC-006・INC-010 で
+        二度起きた、一語に二つの意味を持たせる取り違え）。処遇を実際に付け始めて
+        初めて見えた穴である。
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            self._stub(tmp,
+                       [{"action": "a", "kind": "機構の変更",
+                         "owner_decision_required": False},
+                        {"action": "b", "kind": "機構の変更",
+                         "owner_decision_required": False}],
+                       [{"incident_id": "INC-x", "index": 0, "state": "pending",
+                         "note": "調べたが未着手"}])
+            examined, untouched = orchestrator._split_pending(
+                orchestrator.recommendation_backlog()["pending"])
+            self.assertEqual([r["index"] for r in examined], [0])
+            self.assertEqual([r["index"] for r in untouched], [1])
+
+    def test_untouched_is_named_before_examined(self):
+        """見ていない山の中身は優先順を付けられないので、先に調べる。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            self._stub(tmp,
+                       [{"action": "調べ済み", "kind": "機構の変更",
+                         "owner_decision_required": False},
+                        {"action": "未調査", "kind": "機構の変更",
+                         "owner_decision_required": False}],
+                       [{"incident_id": "INC-x", "index": 0, "state": "pending",
+                         "note": "調べたが未着手"}])
+            head = [a for a in orchestrator.next_actions()
+                    if a.startswith("APPLY_FINDINGS")][0]
+            self.assertIn("未調査", head)
+            self.assertIn("未調査 1 件", head)
+            self.assertIn("調査済み未着手 1 件", head)
 
     def test_terminal_states_are_a_subset_of_the_vocabulary(self):
         self.assertTrue(orchestrator.TERMINAL_RECOMMENDATION_STATES

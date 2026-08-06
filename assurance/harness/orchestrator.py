@@ -481,8 +481,19 @@ def recommendation_backlog():
         item["state"] = state
         item["note"] = (row or {}).get("note")
         item["evidence_ref"] = (row or {}).get("evidence_ref")
+        # 行が在れば「調べたうえで未着手」、無ければ「まだ調べていない」。
+        # 一語で混ぜると、見ていない山を見た山と同じ顔で数えることになる
+        # （INC-006・INC-010 で二度起きた、一語に二つの意味を持たせる取り違え）。
+        item["examined"] = row is not None
         buckets[state].append(item)
     return buckets
+
+
+def _split_pending(pending):
+    """未着手を「調べた」と「まだ調べていない」に分ける。"""
+    examined = [r for r in pending if r["examined"]]
+    untouched = [r for r in pending if not r["examined"]]
+    return examined, untouched
 
 
 def attack_evidence_latest():
@@ -568,12 +579,15 @@ def next_actions():
     backlog = recommendation_backlog()
     pending = backlog["pending"]
     if pending:
-        head = pending[0]
+        # まだ調べていない物を先に挙げる。見ていない山の中身は優先順を付けられない。
+        examined, untouched = _split_pending(pending)
+        head = (untouched or examined)[0]
         actions.append(
-            "APPLY_FINDINGS: %s の推奨#%d（%s）「%s」／未着手 %d 件・"
-            "所有者判断待ち %d 件・処遇済み %d 件"
+            "APPLY_FINDINGS: %s の推奨#%d（%s）「%s」／未調査 %d 件・"
+            "調査済み未着手 %d 件・所有者判断待ち %d 件・処遇済み %d 件"
             % (head["incident_id"], head["index"], head["kind"],
-               head["action"][:70], len(pending), len(backlog["owner"]),
+               head["action"][:70], len(untouched), len(examined),
+               len(backlog["owner"]),
                len(backlog["landed"]) + len(backlog["rejected"])))
     covs = coverage_status()
     for book_id in ("jerg", "stpa", "cast"):
@@ -618,8 +632,11 @@ def next_actions():
 def _recommendation_summary():
     """推奨の処遇の集計と、所有者へ渡す一覧。"""
     backlog = recommendation_backlog()
+    examined, untouched = _split_pending(backlog["pending"])
     return {
         "counts": {state: len(backlog[state]) for state in RECOMMENDATION_STATES},
+        "pending_examined": len(examined),
+        "pending_untouched": len(untouched),
         "owner_decisions": [
             {"incident_id": r["incident_id"], "index": r["index"],
              "kind": r["kind"], "action": r["action"]}
