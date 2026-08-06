@@ -235,6 +235,7 @@ sources: []
 | ADR-124 | ADR | packaging | 台帳の成果物は、正本が読む経路を持つか、読まない理由を明記するかのどちらかとする |
 | ADR-125 | ADR | packaging | 事故分析の推奨は処遇を持ち、terminal に至るまで次の行動に挙がり続ける |
 | ADR-126 | ADR | packaging | 保証が寄りかかる想定は、決定でも非目標でもなく想定として名指しし、失効の先行指標を併記する |
+| ADR-127 | ADR | packaging | 所有者判断は六類型のどれかを名指してはじめて成立し、評価者の申告は既定にしない |
 | CHANGE-001 | CHANGE | packaging | 導入済みプラグインの版の遅れを生存性として照合する |
 | CHANGE-002 | CHANGE | packaging | リリースの整合を CI の門で検める — 変更履歴の書き忘れを止める |
 | CHANGE-005 | CHANGE | packaging | 不具合の兆候を記録し、承認を経た issue 報告を促す |

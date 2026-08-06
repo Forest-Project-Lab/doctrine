@@ -142,16 +142,19 @@ def validate():
     return problems
 
 
-def _validate_recommendation_status():
-    """推奨の処遇の書き方の検査（ADR-125）。
+def _validate_recommendation_status(rows=None):
+    """推奨の処遇の書き方の検査（ADR-125・ADR-127）。
 
-    却下は理由を、機構化済みは証拠のポインタを必ず持つ。持たない処遇は
-    「片づいた」と読めてしまうので、根拠なき PASS と同じ扱いで赤にする。
+    却下は理由を、機構化済みは証拠のポインタを、所有者判断は**類型**を必ず持つ。
+    持たない処遇は「片づいた」と読めてしまうので、根拠なき PASS と同じ扱いで
+    赤にする。類型を書けない所有者判断は所有者判断ではない。
     """
     problems = []
     keys = {(r["incident_id"], r["index"]) for r in cast_recommendations()}
+    if rows is None:
+        rows = load_recommendation_status()
     for (incident_id, index), row in sorted(
-            load_recommendation_status().items(), key=lambda kv: repr(kv[0])):
+            rows.items(), key=lambda kv: repr(kv[0])):
         state = row.get("state")
         where = "%s#%s" % (incident_id, index)
         if state not in RECOMMENDATION_STATES:
@@ -164,6 +167,13 @@ def _validate_recommendation_status():
             problems.append("推奨 %s の却下に理由が無い" % where)
         if state == "landed" and not (row.get("evidence_ref") or "").strip():
             problems.append("推奨 %s の『機構化済み』に証拠のポインタが無い" % where)
+        if state == "owner":
+            kind = (row.get("owner_decision_kind") or "").strip()
+            if kind not in OWNER_DECISION_KINDS:
+                problems.append(
+                    "推奨 %s の『所有者判断』が類型を名指していない（%s のいずれか"
+                    "を書くこと。当たらないなら所有者判断ではない）"
+                    % (where, " / ".join(OWNER_DECISION_KINDS)))
     return problems
 
 
@@ -469,6 +479,24 @@ def latest_scenarios():
 RECOMMENDATION_STATES = ("pending", "landed", "rejected", "owner")
 TERMINAL_RECOMMENDATION_STATES = frozenset({"landed", "rejected", "owner"})
 
+# 所有者判断の類型（ADR-127）。所有者が運転手順 §7 に書いた六つをそのまま写す。
+# レーンはこの表を増やさない —— 自分の自律の境界を自分で広げないため。
+#
+# 事故分析が付ける owner_decision_required は、所有者の権限についての判定ではなく
+# **評価者の視野の申告**である。分析の入力は事象・統制構造・カタログだけで、統治木
+# （確定事実・非目標・退行監視・ADR）は一つも渡っていない（`prompts.build_cast_
+# analysis_prompt`）。何も決まっていない場所から見れば、すべてが未決に見える。
+# 申告をそのまま権限の判定として読み替えるのは「検証できない申告を信じる」形であり、
+# この体系が ADR-050・NONGOAL-001 第9・14・16項で三度「やらない」と決めている。
+OWNER_DECISION_KINDS = (
+    "互換性を壊す変更",
+    "配布境界や保証範囲の変更",
+    "復旧不能な削除",
+    "外部費用や credential",
+    "評価 model 最低線の引き下げ",
+    "配布物の版番号の変更とリリース",
+)
+
 
 def cast_recommendations():
     """事故分析が出した推奨の全件。事象 id と番号で一意に指す。
@@ -525,10 +553,11 @@ def load_recommendation_status():
 def recommendation_backlog():
     """推奨を処遇ごとに分ける。
 
-    書かれた処遇が無い推奨は、所有者判断が要ると分析が印した物なら owner、
-    それ以外は pending（未着手）として扱う。既存の 146 件に移行の行を書かせない
-    ための既定であって、「状態欄が無い」ことを黙認するのではない —— 既定の側も
-    ここで明示している。
+    書かれた処遇が無い推奨は、分析が何を印していようと pending（未着手）である
+    （ADR-127）。かつては owner_decision_required の申告をそのまま owner の既定に
+    していたが、その申告は所有者の権限についての判定ではなく評価者の視野の申告
+    であり、45 件が誰にも読まれない棚へ既定で落ちていた。owner になるのは、処遇の
+    行が明示的に state と**類型**を書いたときだけとする。
     """
     known = load_recommendation_status()
     buckets = {state: [] for state in RECOMMENDATION_STATES}
@@ -536,11 +565,12 @@ def recommendation_backlog():
         row = known.get((rec["incident_id"], rec["index"]))
         state = (row or {}).get("state")
         if state not in RECOMMENDATION_STATES:
-            state = "owner" if rec["owner_decision_required"] else "pending"
+            state = "pending"
         item = dict(rec)
         item["state"] = state
         item["note"] = (row or {}).get("note")
         item["evidence_ref"] = (row or {}).get("evidence_ref")
+        item["owner_decision_kind"] = (row or {}).get("owner_decision_kind")
         # 行が在れば「調べたうえで未着手」、無ければ「まだ調べていない」。
         # 一語で混ぜると、見ていない山を見た山と同じ顔で数えることになる
         # （INC-006・INC-010 で二度起きた、一語に二つの意味を持たせる取り違え）。
@@ -792,9 +822,15 @@ def _recommendation_summary():
         "counts": {state: len(backlog[state]) for state in RECOMMENDATION_STATES},
         "pending_examined": len(examined),
         "pending_untouched": len(untouched),
+        # 評価者の**申告**と、類型の照合を通って**成立**した所有者判断を分けて
+        # 数える。一語に二つの意味を持たせない（INC-006・INC-010・INC-018 と同型）。
+        # 申告の側を消さないのは、視野の狭さ自体が観測対象だからである。
+        "evaluator_claimed_owner": sum(
+            1 for r in cast_recommendations() if r["owner_decision_required"]),
         "owner_decisions": [
             {"incident_id": r["incident_id"], "index": r["index"],
-             "kind": r["kind"], "action": r["action"]}
+             "kind": r["kind"], "owner_decision_kind": r["owner_decision_kind"],
+             "action": r["action"]}
             for r in backlog["owner"]],
     }
 

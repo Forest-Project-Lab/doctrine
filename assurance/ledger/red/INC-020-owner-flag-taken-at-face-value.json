@@ -1,0 +1,29 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "reproduce-red",
+  "incident_id": "INC-020-evaluator-blindness-read-as-owner-authority",
+  "generated_at": "2026-08-06T13:20:00Z",
+  "git_sha": "2c327979f4e9d6b8a1c0e5f2d3b7a4c8e6f1d0b9",
+  "phase": "before-fix",
+  "command": "python3 -m unittest assurance.tests.test_orchestrator.OwnerDecisionKindTest",
+  "returncode": 1,
+  "expect": "修正前に FAIL すること（最初から緑は再現と認めない）",
+  "procedure_order": "REPRODUCE_RED を FIX の前に実施した。前二反復（INC-016・INC-001推奨#5）は逆順だったので、その逸脱を今回は繰り返していない。",
+  "observed_failures": [
+    "Ran 6 tests — FAILED (failures=2, errors=4)",
+    "AttributeError: module 'harness.orchestrator' has no attribute 'OWNER_DECISION_KINDS'（六類型の正本がレーンに無い）",
+    "AssertionError: INC-001-sessionend-audit-gap#3 が類型を名指さずに owner へ入っている（申告だけで棚へ落ちる）",
+    "TypeError: _validate_recommendation_status() takes 0 positional arguments（処遇行を注入して検査できない）",
+    "AssertionError: 'evaluator_claimed_owner' not found in summary（申告と成立が同じ数で報告されていた）"
+  ],
+  "measured_before": {
+    "recommendation_counts": {"pending": 108, "landed": 1, "rejected": 1, "owner": 45},
+    "note": "owner 45 件のうち kind が『所有者判断』なのは 24 件で、残り 21 件は機構の変更 17・文書化 3・調査の継続 1。台帳の中で申告と類型が食い違っていた。"
+  },
+  "measured_after": {
+    "recommendation_counts": {"pending": 153, "landed": 1, "rejected": 1, "owner": 0},
+    "evaluator_claimed_owner": 45,
+    "note": "申告 45 件は消さずに数え続ける（視野の狭さ自体が観測対象）。owner として成立するのは、明示の処遇行が六類型を名指したときだけ。"
+  },
+  "note": "欠陥は『評価者に統治木が渡っていない』ことにある。prompts.build_cast_analysis_prompt の入力は事象・統制構造・CAST カタログの三つだけで、確定事実12・非目標18・退行監視12・ADR 126 件は一つも入らない。何も決まっていない場所から見ればすべてが未決に見えるので、評価者は正直に『所有者が決めよ』と書く。正本がそれを権限の判定として読み替えたことが本件の統制欠陥である。"
+}

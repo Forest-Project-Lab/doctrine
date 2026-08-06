@@ -331,6 +331,26 @@
       ],
       "evidence": "~/.claude/plugins/installed_plugins.json: installPath .../doctrine/0.10.0・version 0.10.0・gitCommitSha 67475de7fddf174b43d6a4dc79cb899dcd24cfc5・lastUpdated 2026-08-05T05:02:48Z。git rev-list --count 67475de..HEAD = 15。git log 67475de..HEAD -- plugin/.claude-plugin/plugin.json は空（版は動いていない）。導入複製の scripts/docs-audit.py に hook_session_end_audit は 0 件、リポジトリ側は 1 件",
       "residual": "版番号を毎コミット動かす案は配布物の版番号の変更に当たり所有者判断（ADR-116 と同じ区分）。gitCommitSha は installed_plugins.json に在るので、複製の同一性を SHA で見る経路は作りうるが、それが配布境界の観測に当たるかは INC-001 推奨#3（所有者判断）と重なる"
+    },
+    {
+      "id": "INC-020-evaluator-blindness-read-as-owner-authority",
+      "date": "2026-08-06",
+      "summary": "事故分析が付ける owner_decision_required を、正本が所有者の権限の判定として読み替えていた。分析の入力は事象の記録・統制構造・CAST カタログだけで、統治木（確定事実12・非目標18・退行監視12・ADR 126件）は一つも渡っていない。何も決まっていない場所から見ればすべてが未決に見えるので、評価者は『所有者が決めよ』と書く。それは権限の判定ではなく評価者の視野の申告である。結果、45 件が誰も読まない棚へ既定で落ちていた",
+      "detected_by": "所有者からの問い『これは本当に人間が判断しないといけないものなの？構造的に導けないのか』（2026-08-06）。読み直すと、私が前段で『真に所有者』と分類した 12 件も木を当てると消えた",
+      "impact": "45 件のうち、統治木を当てて実際に裁いた 3 件はいずれも既決か観測で消えた（INC-001#3・INC-007#3・INC-008#8）。棚は判断待ちではなく、材料が届いていない未処理の山だった。所有者は意思決定者ではなく、構造の欠損の受け皿にされていた",
+      "fixed": true,
+      "shipped": false,
+      "fix_note": "owner の既定を廃し、明示の処遇行が六類型のどれかを名指すときだけ owner とした（ADR-127）。申告の件数と成立の件数を status が別々に出す。ただし本体は『評価者へ統治木の既決を渡す』ことで、そちらは未実施",
+      "cast_analysis": "pending",
+      "evidence_kind": "measurement",
+      "evidence_refs": [
+        "assurance/harness/prompts.py",
+        "assurance/harness/schemas.py",
+        "assurance/harness/orchestrator.py"
+      ],
+      "evidence": "prompts.build_cast_analysis_prompt の入力は incident・control_structure_text・principle_index の三つだけ（統治木は無い）。_CAST_CHARTER に『既に決まっていないか検めよ』の規律は無い。schemas.py:239 の owner_decision_required は定義ゼロの裸の boolean で、六類型との対応が schema にも憲章にも無い。orchestrator.recommendation_backlog は申告をそのまま owner の既定にしていた",
+      "residual": "本修正は申告の読み替えを止めるだけで、評価者の視野そのものは狭いまま。既決を評価者へ渡す設計（独立性の規律を壊さない形で —— 既決は構造化された正本であって実装者の弁明ではない）は次の反復。渡した後に『既決に寄りかかりすぎて既決自体の誤りを指摘できなくなる』共通原因故障が新たに立つ",
+      "family": "検証できない申告を信じる形の四度目（ADR-050／NONGOAL-001 第9・14・16項／INC-013 の捏造事象。今回の申告は評価者自身の owner_decision_required）"
     }
   ]
 }

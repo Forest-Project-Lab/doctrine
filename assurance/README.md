@@ -122,7 +122,11 @@ PASS（適合の証拠あり）/ FAIL（走ったが不適合）/ UNKNOWN（観�
 - `recommendation-status.json` — 事故分析が出した推奨の処遇（ADR-125）。鍵は
   `(事象 id, 番号)`、語彙は pending / landed / rejected / owner。未着手が残る間は正本が
   `APPLY_FINDINGS` を次の行動に挙げる。却下は理由を、機構化済みは証拠のポインタを持つ。
-  所有者判断を要する推奨はレーンの未着手に混ぜず、`orchestrator.py status` が数えて出す。
+  所有者判断はレーンの未着手に混ぜないが、**成立するのは六類型のどれかを名指したときだけ**
+  である（ADR-127。`OWNER_DECISION_KINDS` が正本）。処遇が無い推奨の既定は、分析が何を
+  印していようと `pending`。事故分析の入力に統治木は入っておらず、`owner_decision_required`
+  は権限の判定ではなく**評価者の視野の申告**だからである。申告の件数（`evaluator_claimed_owner`）
+  と成立した件数（`counts.owner`）は `status` が別々に出す。
 - `assumptions.json` — 保証が寄りかかる想定の登記簿（ADR-126）。決定でも非目標でもなく、
   引き受けているのに検めていない前提を一件ずつ載せる。各項は `verified_by`（検証者が
   居なければ `null` と明記）と、「どこで観測するか」「何を異常と見るか」を埋めた
