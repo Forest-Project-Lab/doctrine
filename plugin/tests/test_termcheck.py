@@ -731,3 +731,83 @@ class RegistryAbsenceTest(unittest.TestCase):
         self.assertEqual(out.returncode, 0,
                          "registry 不在で落ちた:\n%s" % out.stderr)
         self.assertTrue(out.stdout.startswith("OK"), out.stdout)
+
+
+class RegistrySectionMaskTest(unittest.TestCase):
+    """#197 / ADR-135: 登録簿の必須節名は、利用者の辞書が何を禁じても書ける。
+
+    節名の正本は登録簿(_registry.REQUIRED_SECTIONS)であり、書き手は言い換え
+    られない。言い換えられないものを禁止同義語の照合に掛けない。覆いは節の
+    完全な名だけ —— 地の文の単独語は従来どおり検出する(ADR-082 の精度優先)。
+    """
+
+    def _g_with_rows(self, rows):
+        tmpl = _util.read(os.path.join(_util.TEMPLATES, "glossary.md.tmpl"))
+        extended = tmpl.replace(
+            "| 文書 | 管理対象の最小単位",
+            "\n".join(rows) + "\n| 文書 | 管理対象の最小単位")
+        root = _util.make_repo({"docs/_system/glossary.md": extended})
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        return tc.load_glossary(os.path.join(root, "docs"))
+
+    def test_issue197_impact_doc_with_banned_test_word_not_flagged(self):
+        """#197 の実測そのまま: 『テスト→試験』を禁じる辞書でも、IMPACT の
+        必須節『影響するテスト』は書ける。"""
+        g = self._g_with_rows(["| 試験 | 検証の実行 | テスト |"])
+        body = ("## 影響する文書\nx\n## 影響する実装\ny\n"
+                "## 影響するテスト\nz\n## 工数見積\nw\n")
+        fs = tc.check(body, {"type": "IMPACT"}, g)
+        self.assertEqual([f for f in fs if f.code == "BANNED_SYNONYM"], [],
+                         "必須節の名が禁止同義語として咎められた(#197 の袋小路)")
+
+    def test_issue197_standalone_banned_word_still_caught(self):
+        """覆いは節の完全な名だけ。地の文の単独『テスト』は従来どおり咎める。"""
+        g = self._g_with_rows(["| 試験 | 検証の実行 | テスト |"])
+        fs = tc.check("テストを直す。", {"type": "IMPACT"}, g)
+        self.assertTrue(any(f.code == "BANNED_SYNONYM" and "テスト" in f.message
+                            for f in fs))
+
+    def test_spec_error_section_with_banned_error_word_not_flagged(self):
+        """#197 実測の第二例: 『エラー』を禁じる辞書でも SPEC の必須節
+        『エラー時挙動』は書ける。"""
+        g = self._g_with_rows(["| 不具合記録 | 検査で見つかった事実の記録 | エラー |"])
+        fs = tc.check("## エラー時挙動\n仕様のとおり。\n", {"type": "SPEC"}, g)
+        self.assertEqual([f for f in fs if f.code == "BANNED_SYNONYM"], [])
+
+    def test_every_registry_section_name_is_writable(self):
+        """性質の試験: 登録簿の全型・全節名について、その名そのものを禁じる
+        辞書の下でも見出しが書ける(例ではなく全量で守る)。"""
+        reg = _util.load_core("_registry")
+        names = sorted({n for names in reg.REQUIRED_SECTIONS.values()
+                        for n in names})
+        rows = ["| 承認語%d | 意味%d | %s |" % (i, i, n)
+                for i, n in enumerate(names)]
+        g = self._g_with_rows(rows)
+        offenders = []
+        for type_code, secs in sorted(reg.REQUIRED_SECTIONS.items()):
+            body = "".join("## %s\n本文。\n" % n for n in secs)
+            fs = tc.check(body, {"type": type_code}, g)
+            for f in fs:
+                if f.code == "BANNED_SYNONYM":
+                    offenders.append((type_code, f.message))
+        self.assertEqual(offenders, [],
+                         "節名が禁止同義語として咎められた: %r" % offenders)
+
+    def test_section_mask_degrades_without_registry(self):
+        """登録簿が無い環境では覆いは手書きの一覧と辞書由来の源だけへ退く
+        (沈黙して広げない・落ちない)。節名『影響するテスト』は覆われなく
+        なるが、袋小路の対(MISSING_SECTION)も登録簿が無ければ出ない。"""
+        import subprocess
+        code = (
+            "import sys\n"
+            "sys.dont_write_bytecode = True\n"
+            "sys.path.insert(0, %r)\n"
+            "sys.modules['_registry'] = None\n"
+            "import _termcheck as tc\n"
+            "assert tc._registry_section_names() == ()\n"
+            "print('OK')\n"
+        ) % _util.SCRIPTS
+        out = subprocess.run([sys.executable, "-c", code],
+                             capture_output=True, text=True)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertTrue(out.stdout.startswith("OK"), out.stdout)

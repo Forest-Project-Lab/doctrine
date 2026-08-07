@@ -6,7 +6,7 @@ domain: lint
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-26
+updated: 2026-08-07
 sources: [plugin/scripts/term-check.py]
 depends_on: [SPEC-008]
 llm_context: task
