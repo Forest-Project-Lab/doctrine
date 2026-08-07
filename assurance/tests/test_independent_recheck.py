@@ -155,6 +155,50 @@ class LedgerKindTest(unittest.TestCase):
         self.assertEqual(orchestrator.validate(), [])
 
 
+class KeysModeTest(unittest.TestCase):
+    """標的モード --keys（ADR-143）。抜取りを迂回し、名指しの項だけを再検する。
+
+    再判定の契機が満ちた項（recheck_trigger・決定論の再照合が落とした項）を
+    狙って再検するための口。取り下げの規律も記録の形も抜取りと同じであり、
+    変わるのは標本の引き方だけ。存在しない key を黙って読み飛ばすと
+    「名指しの項を再検した」という記録が嘘になるので、誤りとして止める。
+    """
+
+    def test_keys_mode_targets_exactly_the_named_entries(self):
+        pool = [_entry("K%d" % i) for i in range(5)]
+        picked, problems = independent_recheck.pick_keys(pool, "K3,K1")
+        self.assertEqual(problems, [])
+        self.assertEqual([e["key"] for e in picked], ["K3", "K1"])
+
+    def test_a_key_that_does_not_exist_is_an_error(self):
+        pool = [_entry("K1")]
+        picked, problems = independent_recheck.pick_keys(pool, "K1,K9")
+        self.assertEqual([e["key"] for e in picked], ["K1"])
+        self.assertEqual(problems, ["存在しない key: K9"])
+
+    def test_an_unjudged_key_is_an_error(self):
+        """判定の無い項に「再」判定は無い（sample と同じ規則）。"""
+        pool = [_entry("fresh", assigned=False)]
+        picked, problems = independent_recheck.pick_keys(pool, "fresh")
+        self.assertEqual(picked, [])
+        self.assertTrue(problems and "判定の無い key" in problems[0])
+
+    def test_empty_keys_is_an_error(self):
+        _picked, problems = independent_recheck.pick_keys([], " , ")
+        self.assertTrue(problems)
+
+    def test_main_stops_when_a_named_key_does_not_exist(self):
+        """誤った名指しは記録を作る前に止まる（usage エラー）。"""
+        import contextlib
+        import io
+        with contextlib.redirect_stderr(io.StringIO()):
+            with self.assertRaises(SystemExit) as ctx:
+                independent_recheck.main(
+                    ["--book", "jerg", "--today", "2026-08-07", "--dry-run",
+                     "--keys", "JERG:does-not-exist"])
+        self.assertNotEqual(ctx.exception.code, 0)
+
+
 class NoAgreementRateTest(unittest.TestCase):
     def test_summary_has_no_agreement_rate_key(self):
         """一致率を成果として持たない（運転手順 §4・§5）。

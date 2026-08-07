@@ -207,5 +207,95 @@ class DeterministicSweepTest(unittest.TestCase):
                          "実装・試験・証拠あり")
 
 
+class NotApplicableSweepTest(unittest.TestCase):
+    """決定論の再照合は「非該当で理由あり」も掃く（ADR-143）。
+
+    この口が終端の緑だけを見ていたため、80 件の非該当が決定論の再照合の
+    範囲外に置かれていた（実測。ADR-134 の帰結が「埋まっていない」と名指した
+    穴）。非該当の根拠は境界を引いた決定・機構のポインタに在るので、緑と同じ
+    形で索引へ引き直せる —— ただし決定だけを根拠にしてよい（ADR-133 の床は
+    「効いている証拠」を求める緑の規則であり、範囲の主張には当てはめない）。
+    """
+
+    setUp = DeterministicSweepTest.setUp
+    _sweep = DeterministicSweepTest._sweep
+
+    def _na(self, **over):
+        e = {"key": "K1", "disposition": "非該当で理由あり",
+             "reason": "範囲の外である", "evidence": ["ADR-015"],
+             "assigned_at": "2026-08-05T00:00:00Z",
+             # 種別の指紋を持たない古い記録 = 正本の規則で古び（ADR-134）。
+             "assigned_by": {"index_sha256": "o" * 64}}
+        e.update(over)
+        return e
+
+    def test_na_with_resolving_evidence_refreshes_the_stamp(self):
+        """根拠が一つでも解決すれば判定を保ち、指紋だけ現行へ揃える。"""
+        e = self._na(evidence=["ADR-015", "消えた検査"])
+        moved = self._sweep([e], {"ADR-015": "document"})
+        self.assertEqual(moved, [])
+        self.assertEqual(e["disposition"], "非該当で理由あり")
+        self.assertEqual(e["evidence"], ["ADR-015"])
+        self.assertEqual(e["unresolved_evidence"], ["消えた検査"])
+        self.assertEqual(e["assigned_by"]["index_sha256"], self.idx["sha256"])
+        self.assertEqual(e["assigned_by"]["category_sha256"],
+                         self.idx["category_sha256"])
+        self.assertTrue(e["assigned_by"]["rechecked_deterministically"])
+
+    def test_na_kept_by_decisions_alone_is_not_downgraded(self):
+        """ADR-133 の床（決定だけの緑を落とす）を非該当へ**流用しない**。
+
+        非該当は「範囲の外」という主張であり、境界を引いた決定こそが根拠で
+        ある。決定だけでも判定は保つ。
+        """
+        e = self._na(evidence=["ADR-015"])
+        self._sweep([e], {"ADR-015": "document"})
+        self.assertEqual(e["disposition"], "非該当で理由あり")
+
+    def test_na_that_lost_all_evidence_falls_to_unknown(self):
+        """根拠が一つも解決しなくなった非該当は UNKNOWN へ落ちる。"""
+        e = self._na(evidence=["消えた決定", "消えた検査"])
+        moved = self._sweep([e], {})
+        self.assertEqual(e["disposition"], "UNKNOWN")
+        self.assertIn("非該当の根拠が一つも解決しなくなった", e["reason"])
+        self.assertEqual(moved, [{"key": "K1", "to": "UNKNOWN",
+                                  "lost": ["消えた決定", "消えた検査"]}])
+        # 決定論で結論が出ているので評価済みのまま（未評価と混ぜない。INC-006）。
+        self.assertIn("assigned_at", e)
+        self.assertEqual(e["reassessments"][-1]["disposition"],
+                         "非該当で理由あり")
+
+    def test_fresh_na_is_left_alone(self):
+        """正本の規則で古びていない非該当は触らない（掃く理由が無い）。"""
+        e = self._na(assigned_by={
+            "index_sha256": self.idx["sha256"],
+            "category_sha256": dict(self.idx["category_sha256"]),
+            "category_counts": dict(self.idx["category_counts"])})
+        self.assertEqual(self._sweep([e], {}), [])
+        self.assertEqual(e["disposition"], "非該当で理由あり")
+        self.assertNotIn("rechecked_deterministically", e["assigned_by"])
+
+    def test_na_without_pointers_is_left_alone(self):
+        """根拠ポインタの無い非該当は決定論では検めようがない。落とさない。"""
+        e = self._na(evidence=[])
+        self.assertEqual(self._sweep([e], {}), [])
+        self.assertEqual(e["disposition"], "非該当で理由あり")
+
+    def test_sweep_never_creates_green_or_na(self):
+        """片方向。緑にも非該当にも動かさない —— それは評価の仕事である。
+
+        「根拠が消えた」は決定論で言えるが、「新たに実装された」「新たに
+        範囲外になった」は言えない。ここが双方向に動くと、評価を買わずに
+        終端が増える道ができる。
+        """
+        for disp in ("対応計画あり", "UNKNOWN", "UNASSESSED"):
+            e = {"key": "K1", "disposition": disp,
+                 "evidence": ["adr_not_landed"],
+                 "assigned_at": "2026-08-05T00:00:00Z",
+                 "assigned_by": {"index_sha256": "o" * 64}}
+            self._sweep([e], {"adr_not_landed": "audit_check"})
+            self.assertEqual(e["disposition"], disp)
+
+
 if __name__ == "__main__":
     unittest.main()

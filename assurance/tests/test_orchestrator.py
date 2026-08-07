@@ -148,7 +148,7 @@ class OrchestratorTest(unittest.TestCase):
 
     def _stub_ledger(self, tmp, coverage_unknown, evaluated_unknown=0,
                      unassessed_disposition=0, attack_evidence="2099-01-01",
-                     survivors=None):
+                     survivors=None, plans=None):
         """実台帳に依存しない一時の帳簿を立てる（三冊とも抽出済み扱い）。
 
         割当済みの項には現行の索引の指紋を持たせる。持たせないと ADR-130 の
@@ -168,6 +168,14 @@ class OrchestratorTest(unittest.TestCase):
             with open(os.path.join(scn_dir, "2026-08-06.json"),
                       "w", encoding="utf-8") as f:
                 json.dump({"date": "2026-08-06", "survivors": survivors}, f)
+        if plans is not None:
+            fm_dir = os.path.join(ledger, "formalize")
+            os.makedirs(fm_dir, exist_ok=True)
+            with open(os.path.join(fm_dir, "2026-08-07.json"),
+                      "w", encoding="utf-8") as f:
+                json.dump({"date": "2026-08-07", "kind": "formalize-plans",
+                           "generated_at": "2026-08-07T00:00:00Z",
+                           "plans": plans}, f)
         for attr, value in (("CATALOG_DIR", tmp),
                             ("LANE_DIR", tmp),
                             ("INCIDENTS_PATH", os.path.join(tmp, "inc.json"))):
@@ -206,6 +214,48 @@ class OrchestratorTest(unittest.TestCase):
         self.assertEqual(ev["SCENARIOS_READY"]["from"], "DISCOVER")
         self.assertEqual(ev["SCENARIOS_READY"]["to"], "CHALLENGE")
         self.assertEqual(ev["CHALLENGE_DONE"]["to"], "FORMALIZE")
+
+    def test_formalize_clears_once_plans_exist(self):
+        """計画審査の判定が揃ったら FORMALIZE は挙げない（ADR-138）。
+
+        REJECT も消化と数える —— 判定は評価の結論であり、割当済みである
+        （評価済み UNKNOWN を引き直さないのと同じ規則。INC-006）。
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            self._stub_ledger(
+                tmp, coverage_unknown=0, survivors=["SCN-1", "SCN-2"],
+                plans=[{"scenario_id": "SCN-1", "verdict": "APPROVE"},
+                       {"scenario_id": "SCN-2", "verdict": "REJECT"}])
+            actions = orchestrator.next_actions()
+            self.assertEqual(
+                [a for a in actions if a.startswith("FORMALIZE")], [], actions)
+            self.assertTrue([a for a in actions if a.startswith("DISCOVER")],
+                            actions)
+
+    def test_unplanned_survivor_still_raises_formalize(self):
+        """計画が返らなかった生き残り（沈黙）は挙がり続ける。
+
+        沈黙を APPROVE と読まない（ADR-138。verify_verdicts の missing と
+        同じ規則）。
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            self._stub_ledger(
+                tmp, coverage_unknown=0, survivors=["SCN-1", "SCN-2"],
+                plans=[{"scenario_id": "SCN-1", "verdict": "APPROVE"}])
+            self.assertEqual(orchestrator.unformalized_survivors(), ["SCN-2"])
+            raised = [a for a in orchestrator.next_actions()
+                      if a.startswith("FORMALIZE")]
+            self.assertTrue(raised)
+            self.assertIn("1 件", raised[0])
+            self.assertIn("SCN-2", raised[0])
+
+    def test_formalize_ledger_kind_is_declared(self):
+        """走らせ手と読む段と種別の三点は同じ変更で入る（ADR-128 の不変条件）。"""
+        kinds = {e["kind"] for e in orchestrator.LEDGER_KINDS}
+        self.assertIn("formalize/<日付>.json", kinds)
+        entry = orchestrator.ledger_kind_of("formalize/2026-08-07.json")
+        self.assertIsNotNone(entry)
+        self.assertIn("latest_formalize", entry["read_by"])
 
 
 class RecommendationBacklogTest(unittest.TestCase):
@@ -488,12 +538,17 @@ class FiringPointTest(unittest.TestCase):
             self.assertIn("INGEST_NORMS", orchestrator.LANES[name]["fires_on"],
                           "%s レーンが INGEST_NORMS を宣言していない" % name)
 
-    def test_unimplemented_firing_points_are_visible_in_status(self):
-        """沈黙させない。ただし次の行動には挙げない（INC-021 が持つ）。"""
+    def test_no_firing_point_is_left_unimplemented(self):
+        """FORMALIZE と VERIFY は走らせ手を持つ（ADR-138・ADR-139）。
+
+        INC-021 推奨#3 の所有者裁定（2026-08-07）で両方を実装した。ADR-128 の
+        不変条件（走らせ手か未実装の明記のちょうど一方）はそのまま —— 倒れた
+        のはエントリの側であって、二分の側ではない。
+        """
         summary = orchestrator._firing_point_summary()
-        self.assertIn("unimplemented", summary)
-        self.assertIn("VERIFY", summary["unimplemented"])
-        self.assertIn("FORMALIZE", summary["unimplemented"])
+        self.assertEqual(summary["unimplemented"], {})
+        self.assertIn("FORMALIZE", summary["runnable"])
+        self.assertIn("VERIFY", summary["runnable"])
 
     def test_a_new_firing_point_without_a_runner_turns_the_canon_red(self):
         """次に発火点が増えたときにも効く不変条件であることの確認。"""
@@ -505,6 +560,90 @@ class FiringPointTest(unittest.TestCase):
             orchestrator.FIRING_POINTS.clear()
             orchestrator.FIRING_POINTS.update(original)
         self.assertTrue(any("BRAND_NEW" in p for p in problems), problems)
+
+
+class VerifyGateTest(unittest.TestCase):
+    """新規の fixed:true は PASS の verify 記録を要す（ADR-139）。
+
+    修正したという申告は検証ではない。祖父条項は 2026-08-07 時点の全事象
+    （26 件）で凍結し、以後に増える fixed:true だけに門を課す。
+    """
+
+    def test_new_fixed_incident_without_verify_ref_is_red(self):
+        problems = orchestrator._validate_verify_refs(
+            incidents=[{"id": "INC-099-brand-new", "fixed": True}],
+            verify_records={})
+        self.assertTrue(any("verify_ref が無い" in p for p in problems),
+                        problems)
+
+    def test_grandfathered_incidents_stay_green(self):
+        incidents = [{"id": iid, "fixed": True}
+                     for iid in orchestrator.VERIFY_GRANDFATHERED]
+        self.assertEqual(
+            orchestrator._validate_verify_refs(incidents=incidents,
+                                               verify_records={}), [])
+
+    def test_grandfathered_tuple_is_frozen_at_the_26_of_2026_08_07(self):
+        """凍結は 2026-08-07 時点の全事象。列を増やすのは所有者判断。"""
+        self.assertEqual(len(orchestrator.VERIFY_GRANDFATHERED), 26)
+        self.assertIsInstance(orchestrator.VERIFY_GRANDFATHERED, tuple)
+        self.assertIn("INC-001-sessionend-audit-gap",
+                      orchestrator.VERIFY_GRANDFATHERED)
+        self.assertIn("INC-026-accepted-adr-has-no-sanctioned-repair-path",
+                      orchestrator.VERIFY_GRANDFATHERED)
+
+    def test_verify_ref_must_resolve_to_a_pass_record(self):
+        inc = [{"id": "INC-099-brand-new", "fixed": True,
+                "verify_ref": "assurance/ledger/verify/INC-099-brand-new.json"}]
+        # 指す先が無い → 赤。
+        problems = orchestrator._validate_verify_refs(
+            incidents=inc, verify_records={})
+        self.assertTrue(any("記録" in p and "無い" in p for p in problems),
+                        problems)
+        # 記録は在るが PASS でない → 赤（UNASSESSED の記録も門を通らない）。
+        problems = orchestrator._validate_verify_refs(
+            incidents=inc,
+            verify_records={"INC-099-brand-new":
+                            {"record": {"verdict": "FAIL"}}})
+        self.assertTrue(any("PASS でない" in p for p in problems), problems)
+        problems = orchestrator._validate_verify_refs(
+            incidents=inc,
+            verify_records={"INC-099-brand-new":
+                            {"record": None, "sdk_status": "UNASSESSED"}})
+        self.assertTrue(any("PASS でない" in p for p in problems), problems)
+        # PASS の記録 → 緑。
+        self.assertEqual(orchestrator._validate_verify_refs(
+            incidents=inc,
+            verify_records={"INC-099-brand-new":
+                            {"record": {"verdict": "PASS"}}}), [])
+
+    def test_unfixed_incident_needs_no_verify_record(self):
+        self.assertEqual(orchestrator._validate_verify_refs(
+            incidents=[{"id": "INC-099-brand-new", "fixed": False}],
+            verify_records={}), [])
+
+    def test_verify_ledger_kind_is_declared(self):
+        kinds = {e["kind"] for e in orchestrator.LEDGER_KINDS}
+        self.assertIn("verify/<対象 id>.json", kinds)
+        entry = orchestrator.ledger_kind_of("verify/INC-099-brand-new.json")
+        self.assertIsNotNone(entry)
+        self.assertIn("load_verify_records", entry["read_by"])
+
+    def test_load_verify_records_keys_by_target_id(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            v_dir = os.path.join(tmp, "ledger", "verify")
+            os.makedirs(v_dir)
+            with open(os.path.join(v_dir, "INC-099-brand-new.json"),
+                      "w", encoding="utf-8") as f:
+                json.dump({"target_id": "INC-099-brand-new",
+                           "record": {"verdict": "PASS"}}, f)
+            orig = orchestrator.LANE_DIR
+            orchestrator.LANE_DIR = tmp
+            self.addCleanup(setattr, orchestrator, "LANE_DIR", orig)
+            records = orchestrator.load_verify_records()
+            self.assertEqual(list(records), ["INC-099-brand-new"])
+            self.assertEqual(records["INC-099-brand-new"]["record"]["verdict"],
+                             "PASS")
 
 
 class OwnerDecisionKindTest(unittest.TestCase):

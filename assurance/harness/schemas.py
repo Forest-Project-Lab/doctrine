@@ -287,7 +287,8 @@ COVERAGE_ASSIGNMENT_SCHEMA = {
     "additionalProperties": False,
 }
 
-# FORMALIZE の成果物。campaign 定義のフィールドをそのまま持つ。
+# scenario の形（campaign 定義のフィールドをそのまま持つ）。DISCOVER が生み、
+# CHALLENGE が批判し、FORMALIZE がこれを入力に検証計画を審査する。
 SCENARIO_SCHEMA = {
     "type": "object",
     "properties": {
@@ -331,6 +332,101 @@ SCENARIOS_SCHEMA = {
         "note": {"type": "string"},
     },
     "required": ["scenarios"],
+    "additionalProperties": False,
+}
+
+# FORMALIZE の成果物（ADR-138）。批判を生き残った scenario 一件ごとに、jerg レーンが
+# 検証計画を審査して返す。承認してよいのは、実装の**前**に観測可能な oracle と
+# 反証条件（before_fix_fails_when）を持つ計画だけ —— 判定は prompts.oracle_observable
+# （TRANSITIONS の PLAN_APPROVED の guard と同名）が決定論で検める。
+FORMALIZE_PLAN_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "plans": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "type": "object",
+                "properties": {
+                    "scenario_id": {"type": "string"},
+                    "verdict": {"enum": ["APPROVE", "REJECT", "UNKNOWN"]},
+                    "reasons": {"type": "array", "items": {"type": "string"},
+                                "minItems": 1},
+                    "red_reproduction_design": {
+                        "type": "object",
+                        "properties": {
+                            "procedure": {"type": "array",
+                                          "items": {"type": "string"},
+                                          "minItems": 1},
+                            "injection_point": {"type": "string"},
+                            "isolation": {"type": "string"},
+                        },
+                        "required": ["procedure", "injection_point",
+                                     "isolation"],
+                        "additionalProperties": False,
+                    },
+                    "acceptance_criteria": {
+                        "type": "object",
+                        "properties": {
+                            "before_fix_fails_when": {"type": "string"},
+                            "after_fix_passes_when": {"type": "string"},
+                        },
+                        "required": ["before_fix_fails_when",
+                                     "after_fix_passes_when"],
+                        "additionalProperties": False,
+                    },
+                    "evidence_spec": {
+                        "type": "object",
+                        "properties": {
+                            "artifact": {"type": "string"},
+                            "must_record": {"type": "array",
+                                            "items": {"type": "string"},
+                                            "minItems": 1},
+                        },
+                        "required": ["artifact", "must_record"],
+                        "additionalProperties": False,
+                    },
+                    "normative_refs": {"type": "array",
+                                       "items": {"type": "string"},
+                                       "minItems": 1},
+                    "risks": {"type": "array", "items": {"type": "string"}},
+                },
+                "required": ["scenario_id", "verdict", "reasons",
+                             "red_reproduction_design", "acceptance_criteria",
+                             "evidence_spec", "normative_refs"],
+                "additionalProperties": False,
+            },
+        },
+    },
+    "required": ["plans"],
+    "additionalProperties": False,
+}
+
+# VERIFY の成果物（ADR-139）。修正の独立検証の判定。三つの checks は
+# 「修正前は赤だったか・修正後は緑か・変更は一主題か」で、verdict PASS かつ
+# 三つ全て PASS のときだけ before_fail_after_pass（TRANSITIONS の VERIFIED の
+# guard と同名。verify_fix.py が持つ）が真になる。AI の一致は客観的証拠では
+# ないので、この記録は「独立セッションの判定」以上を主張しない。
+VERIFY_RECORD_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "target_id": {"type": "string"},
+        "verdict": {"enum": ["PASS", "FAIL", "UNKNOWN"]},
+        "reasons": {"type": "array", "items": {"type": "string"},
+                    "minItems": 1},
+        "checks": {
+            "type": "object",
+            "properties": {
+                "red_was_red": {"enum": ["PASS", "FAIL", "UNKNOWN"]},
+                "green_is_green": {"enum": ["PASS", "FAIL", "UNKNOWN"]},
+                "single_change": {"enum": ["PASS", "FAIL", "UNKNOWN"]},
+            },
+            "required": ["red_was_red", "green_is_green", "single_change"],
+            "additionalProperties": False,
+        },
+        "residual_risks": {"type": "array", "items": {"type": "string"}},
+    },
+    "required": ["target_id", "verdict", "reasons", "checks"],
     "additionalProperties": False,
 }
 

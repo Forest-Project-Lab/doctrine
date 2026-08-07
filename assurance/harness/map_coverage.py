@@ -25,13 +25,39 @@ import tempfile
 sys.dont_write_bytecode = True
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from harness import (books, model_policy, prompts, schemas,  # noqa: E402
-                     sdk_lane, system_index)
+from harness import (books, model_policy, orchestrator, prompts,  # noqa: E402
+                     schemas, sdk_lane, system_index)
 
 LANE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REPO_DIR = os.path.dirname(LANE_DIR)
 CATALOG_DIR = os.path.join(LANE_DIR, "ledger", "catalogs")
 
+
+def _stale(entry, index_now, resolve):
+    """再判定の対象にする古びか。規則は正本 orchestrator.is_stale へ一本化する。
+
+    ここが独自の規則（索引全体の指紋の比較）を持っていたのが INC-025 の再来
+    だった（ADR-143）。全体指紋の比較は ADR-130 が却下した形であり、選別と
+    計数が乖離すると、正本が挙げない項の再判定を黙って買い直す。判じるのは
+    正本だけにし、ここでは対象の絞り込み（判定済みの非終端）だけを行う ——
+    終端（実装・試験・証拠あり／非該当で理由あり）は評価を買い直さない。
+    証拠ポインタの再照合は決定論でできる（ADR-118・recheck_evidence.py）。
+    """
+    if (not entry.get("assigned_at")
+            or entry.get("disposition") in orchestrator._SETTLED_DISPOSITIONS):
+        return False
+    return orchestrator.is_stale(entry, index_now, resolve)
+
+
+def select_todo(entries, index_now, resolve):
+    """次に評価を買う項の選別。未割当の UNKNOWN と、正本の規則で古びた非終端。
+
+    評価の結果としての UNKNOWN（assigned_at つき）は割当済みであり、引き直すと
+    同じ判定不能を永久に買い直すことになる（INC-006）。
+    """
+    return [e for e in entries
+            if (e.get("disposition") == "UNKNOWN" and not e.get("assigned_at"))
+            or _stale(e, index_now, resolve)]
 
 
 def push_reassessment(entry):
@@ -141,21 +167,12 @@ def main(argv=None):
         return 3
     index_text = system_index.as_prompt_text(idx)
 
-    # 未評価だけを引く。評価の結果としての UNKNOWN（assigned_at つき）は割当済みで
-    # あり、引き直すと同じ判定不能を永久に買い直すことになる。
-    # 未割当に加えて、索引が動いた後の**非終端**の項も引く（ADR-130）。
-    # 終端（実装・試験・証拠あり／非該当で理由あり）は評価を買い直さない ——
-    # 証拠ポインタの再照合は決定論でできる（ADR-118）。
-    _settled = ("実装・試験・証拠あり", "非該当で理由あり")
-
-    def _stale(e):
-        if not e.get("assigned_at") or e.get("disposition") in _settled:
-            return False
-        return (e.get("assigned_by") or {}).get("index_sha256") != idx["sha256"]
-
-    todo_entries = [e for e in cov["entries"]
-                    if (e.get("disposition") == "UNKNOWN"
-                        and not e.get("assigned_at")) or _stale(e)]
+    # 未評価だけを引く。未割当に加えて、**正本の規則**（orchestrator.is_stale。
+    # 引いた範囲だけを見る ADR-134）で古びた非終端の項も引く（ADR-143）。
+    index_now = {"category_sha256": idx["category_sha256"],
+                 "category_counts": idx["category_counts"]}
+    todo_entries = select_todo(cov["entries"], index_now,
+                               lambda p: system_index.resolve_pointer(idx, p))
     stale_n = sum(1 for e in todo_entries if e.get("assigned_at"))
     todo = principle_details(cat, todo_entries)
     batches = [todo[i:i + args.batch_size]
