@@ -133,7 +133,13 @@ class DeterministicSweepTest(unittest.TestCase):
     def setUp(self):
         from harness import recheck_evidence
         self.mod = recheck_evidence
-        self.idx = {"sha256": "n" * 64}
+        # 索引の stub。ADR-134 で種別ごとの指紋と件数を持つようになったので、
+        # sweep が現行へ揃える先としてそれらも用意する。
+        cats = ("documents", "audit_checks", "linter_codes", "scripts",
+                "test_files", "hooks", "skills")
+        self.idx = {"sha256": "n" * 64,
+                    "category_sha256": {c: "n" * 64 for c in cats},
+                    "category_counts": {c: 1 for c in cats}}
 
     def _sweep(self, entries, kinds):
         import harness.system_index as si
@@ -171,6 +177,8 @@ class DeterministicSweepTest(unittest.TestCase):
         self.assertEqual(moved, [])
         self.assertEqual(e["disposition"], "実装・試験・証拠あり")
         self.assertEqual(e["assigned_by"]["index_sha256"], self.idx["sha256"])
+        self.assertEqual(e["assigned_by"]["category_sha256"],
+                         self.idx["category_sha256"])
         self.assertTrue(e["assigned_by"]["rechecked_deterministically"])
 
     def test_sweep_never_turns_anything_green(self):

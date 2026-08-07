@@ -284,10 +284,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "ac4d954fb9cd81e537ca5c82ff8e9a6d3d3cf87c94dffde834468701b75df2b4",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -315,10 +333,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "ac4d954fb9cd81e537ca5c82ff8e9a6d3d3cf87c94dffde834468701b75df2b4",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -416,10 +452,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "ac4d954fb9cd81e537ca5c82ff8e9a6d3d3cf87c94dffde834468701b75df2b4",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -451,10 +505,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "ac4d954fb9cd81e537ca5c82ff8e9a6d3d3cf87c94dffde834468701b75df2b4",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -784,10 +856,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "ac4d954fb9cd81e537ca5c82ff8e9a6d3d3cf87c94dffde834468701b75df2b4",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -946,10 +1036,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "ac4d954fb9cd81e537ca5c82ff8e9a6d3d3cf87c94dffde834468701b75df2b4",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -979,10 +1087,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "ac4d954fb9cd81e537ca5c82ff8e9a6d3d3cf87c94dffde834468701b75df2b4",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -1088,10 +1214,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "ac4d954fb9cd81e537ca5c82ff8e9a6d3d3cf87c94dffde834468701b75df2b4",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -1174,10 +1318,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "ac4d954fb9cd81e537ca5c82ff8e9a6d3d3cf87c94dffde834468701b75df2b4",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -1256,10 +1418,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "ac4d954fb9cd81e537ca5c82ff8e9a6d3d3cf87c94dffde834468701b75df2b4",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -1360,10 +1540,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "69cf330bddd24d01754abc4a217d4199806d2d3744dd772d9b13f568de4911c3",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -1390,10 +1588,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "69cf330bddd24d01754abc4a217d4199806d2d3744dd772d9b13f568de4911c3",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -1419,10 +1635,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "69cf330bddd24d01754abc4a217d4199806d2d3744dd772d9b13f568de4911c3",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -1449,10 +1683,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "69cf330bddd24d01754abc4a217d4199806d2d3744dd772d9b13f568de4911c3",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -1479,10 +1731,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "69cf330bddd24d01754abc4a217d4199806d2d3744dd772d9b13f568de4911c3",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -1510,10 +1780,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "69cf330bddd24d01754abc4a217d4199806d2d3744dd772d9b13f568de4911c3",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -1541,10 +1829,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "69cf330bddd24d01754abc4a217d4199806d2d3744dd772d9b13f568de4911c3",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -1573,10 +1879,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "69cf330bddd24d01754abc4a217d4199806d2d3744dd772d9b13f568de4911c3",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -1605,10 +1929,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "0989630ad975f298db3ad8f377219423258eff48811b7cb7ddcbde5e77f6853b",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "1db2457bd084f9d278441184c742293845cc8535",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       },
       "reassessments": [
         {
@@ -1659,10 +2001,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "69cf330bddd24d01754abc4a217d4199806d2d3744dd772d9b13f568de4911c3",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -1987,10 +2347,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "69cf330bddd24d01754abc4a217d4199806d2d3744dd772d9b13f568de4911c3",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -2016,10 +2394,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "69cf330bddd24d01754abc4a217d4199806d2d3744dd772d9b13f568de4911c3",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -2145,10 +2541,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "69cf330bddd24d01754abc4a217d4199806d2d3744dd772d9b13f568de4911c3",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -2177,10 +2591,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "69cf330bddd24d01754abc4a217d4199806d2d3744dd772d9b13f568de4911c3",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -2208,10 +2640,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "69cf330bddd24d01754abc4a217d4199806d2d3744dd772d9b13f568de4911c3",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -2432,10 +2882,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "2742abb77888531f2d5395c20ed8791dff0db00c5e15221bd1131db8ff6ed1bc",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -2462,10 +2930,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "2742abb77888531f2d5395c20ed8791dff0db00c5e15221bd1131db8ff6ed1bc",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -2492,10 +2978,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "2742abb77888531f2d5395c20ed8791dff0db00c5e15221bd1131db8ff6ed1bc",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -2525,10 +3029,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "2742abb77888531f2d5395c20ed8791dff0db00c5e15221bd1131db8ff6ed1bc",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -2729,10 +3251,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "2742abb77888531f2d5395c20ed8791dff0db00c5e15221bd1131db8ff6ed1bc",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -2834,10 +3374,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "2742abb77888531f2d5395c20ed8791dff0db00c5e15221bd1131db8ff6ed1bc",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -2864,10 +3422,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "2742abb77888531f2d5395c20ed8791dff0db00c5e15221bd1131db8ff6ed1bc",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -2893,10 +3469,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "2742abb77888531f2d5395c20ed8791dff0db00c5e15221bd1131db8ff6ed1bc",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -3102,10 +3696,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "2742abb77888531f2d5395c20ed8791dff0db00c5e15221bd1131db8ff6ed1bc",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -3207,10 +3819,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "2742abb77888531f2d5395c20ed8791dff0db00c5e15221bd1131db8ff6ed1bc",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -3239,10 +3869,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "2742abb77888531f2d5395c20ed8791dff0db00c5e15221bd1131db8ff6ed1bc",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -3346,10 +3994,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "2742abb77888531f2d5395c20ed8791dff0db00c5e15221bd1131db8ff6ed1bc",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -3456,10 +4122,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "2742abb77888531f2d5395c20ed8791dff0db00c5e15221bd1131db8ff6ed1bc",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -3639,10 +4323,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "577eb17720028a572a4072ad44a1e624879d098ffd014e267ef3c3b65fd50b1a",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -3808,10 +4510,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "577eb17720028a572a4072ad44a1e624879d098ffd014e267ef3c3b65fd50b1a",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -3842,10 +4562,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "577eb17720028a572a4072ad44a1e624879d098ffd014e267ef3c3b65fd50b1a",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -3874,10 +4612,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "577eb17720028a572a4072ad44a1e624879d098ffd014e267ef3c3b65fd50b1a",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -3904,10 +4660,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "577eb17720028a572a4072ad44a1e624879d098ffd014e267ef3c3b65fd50b1a",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -4009,10 +4783,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "577eb17720028a572a4072ad44a1e624879d098ffd014e267ef3c3b65fd50b1a",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -4090,10 +4882,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "577eb17720028a572a4072ad44a1e624879d098ffd014e267ef3c3b65fd50b1a",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -4122,10 +4932,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "577eb17720028a572a4072ad44a1e624879d098ffd014e267ef3c3b65fd50b1a",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -4230,10 +5058,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "577eb17720028a572a4072ad44a1e624879d098ffd014e267ef3c3b65fd50b1a",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -4570,10 +5416,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "cd46c1962607982382f41d7b0123cda706598af4657ab3420543ad5678d014cf",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "1db2457bd084f9d278441184c742293845cc8535",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       },
       "reassessments": [
         {
@@ -4707,10 +5571,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "577eb17720028a572a4072ad44a1e624879d098ffd014e267ef3c3b65fd50b1a",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -4890,10 +5772,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "577eb17720028a572a4072ad44a1e624879d098ffd014e267ef3c3b65fd50b1a",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -5001,10 +5901,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "d6fe0996b35f0618e4f698bd391006bdbba059c6e0264507d7a870c5be45772c",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -5031,10 +5949,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "d6fe0996b35f0618e4f698bd391006bdbba059c6e0264507d7a870c5be45772c",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -5799,10 +6735,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "d6fe0996b35f0618e4f698bd391006bdbba059c6e0264507d7a870c5be45772c",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -5855,10 +6809,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "d6fe0996b35f0618e4f698bd391006bdbba059c6e0264507d7a870c5be45772c",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -5889,10 +6861,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "d6fe0996b35f0618e4f698bd391006bdbba059c6e0264507d7a870c5be45772c",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -6008,10 +6998,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "d6fe0996b35f0618e4f698bd391006bdbba059c6e0264507d7a870c5be45772c",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -6195,10 +7203,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "d6fe0996b35f0618e4f698bd391006bdbba059c6e0264507d7a870c5be45772c",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -6234,10 +7260,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "d6fe0996b35f0618e4f698bd391006bdbba059c6e0264507d7a870c5be45772c",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -6263,10 +7307,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "7f8fbead88151a1b01c22838a4fc175b438d89bba237878d7f5a3601645f1c68",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -6296,10 +7358,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "7f8fbead88151a1b01c22838a4fc175b438d89bba237878d7f5a3601645f1c68",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -6331,10 +7411,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "7f8fbead88151a1b01c22838a4fc175b438d89bba237878d7f5a3601645f1c68",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -7678,10 +8776,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "7f8fbead88151a1b01c22838a4fc175b438d89bba237878d7f5a3601645f1c68",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -8010,10 +9126,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "aa422e7707dc8d4d7e1f9f64dd0642a09e77669b30d39dceb16efd8a793f1432",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -8208,10 +9342,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "aa422e7707dc8d4d7e1f9f64dd0642a09e77669b30d39dceb16efd8a793f1432",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -8243,10 +9395,28 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "aa422e7707dc8d4d7e1f9f64dd0642a09e77669b30d39dceb16efd8a793f1432",
-        "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8",
+        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
-        "rechecked_deterministically": true
+        "rechecked_deterministically": true,
+        "category_sha256": {
+          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+          "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+          "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
+          "test_files": "6506521fe148280d83f4d57477fb8701a375ac5806c447b386cea2ce544c4500",
+          "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+          "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
+        },
+        "category_counts": {
+          "documents": 256,
+          "audit_checks": 40,
+          "linter_codes": 23,
+          "scripts": 28,
+          "test_files": 26,
+          "hooks": 7,
+          "skills": 7
+        }
       }
     },
     {
@@ -8333,5 +9503,5 @@
       ]
     }
   ],
-  "index_sha256": "fdf42036cb6c6d86ee957ac34c672c34d2cc40a7d8e5c1ddb137699d812d2db8"
+  "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d"
 }

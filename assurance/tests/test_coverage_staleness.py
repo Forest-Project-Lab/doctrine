@@ -9,6 +9,12 @@
 
 ここで凍結するのは二つ。(A) 再判定は古い判定を消さず積み増す。(B) 索引の指紋が
 現在と違う非終端の項を、正本が数えて次の行動に挙げる。
+
+ADR-134 で古びの見方が変わった（INC-025）。指紋は**種別ごと**に持ち、判定は
+自分が引いた種別が動いたときだけ古びる。次の行動に挙げるのは閾値に達してから
+とし、閾値未満は数えるにとどめる。ここでの標本は、その規則で古びるように
+種別の指紋を持たせて組む —— 守る不変条件（終端と非終端を分けて数えること・
+古びを隠さないこと）は変わっていない。
 """
 import json
 import os
@@ -23,13 +29,31 @@ OLD = "9e8b50a886f33305" + "0" * 48
 NEW = "65ccd77b8063dd54" + "0" * 48
 
 
+_CATEGORIES = ("documents", "audit_checks", "linter_codes", "scripts",
+               "test_files", "hooks", "skills")
+
+
 def _entry(disposition, sha, key="JERG:x"):
+    """標本の一項。種別の指紋は全種別に同じ値を置く（ADR-134）。
+
+    evidence は空にする —— 証拠を持たせると『引いた種別だけを見る』規則が
+    効いて、種別の指紋を動かしても古びない項が混ざる。ここで測りたいのは
+    終端と非終端の数え分けであって、範囲限定の規則そのものではない
+    （それは test_staleness_scope が持つ）。信号を混ぜない。
+    """
     return {
         "key": key, "title": "t", "category": "c", "disposition": disposition,
-        "reason": "r", "evidence": ["ADR-001"], "assigned_at": "2026-08-05",
+        "reason": "r", "evidence": [], "assigned_at": "2026-08-05",
         "assigned_by": {"model": "claude-opus-5", "effort": "high",
-                        "index_sha256": sha},
+                        "index_sha256": sha,
+                        "category_sha256": {c: sha for c in _CATEGORIES},
+                        "category_counts": {c: 0 for c in _CATEGORIES}},
     }
+
+
+def _many(disposition, sha, n):
+    """閾値を越える数の標本（ADR-134 の閾値と信号を分ける）。"""
+    return [_entry(disposition, sha, "JERG:%d" % i) for i in range(n)]
 
 
 class CoverageStalenessTest(unittest.TestCase):
@@ -46,7 +70,8 @@ class CoverageStalenessTest(unittest.TestCase):
 
     def test_stale_open_entries_are_named(self):
         with tempfile.TemporaryDirectory() as tmp:
-            self._stub(tmp, [_entry("対応計画あり", OLD)])
+            self._stub(tmp, _many("対応計画あり", OLD,
+                                  orchestrator.STALE_RAISE_THRESHOLD))
             actions = orchestrator.next_actions(index_sha=NEW)
             hit = [a for a in actions if a.startswith("MAP_COVERAGE")]
             self.assertTrue(hit, actions)
@@ -55,7 +80,8 @@ class CoverageStalenessTest(unittest.TestCase):
     def test_fresh_entries_are_not_named(self):
         """消えない行動を作らない。再判定すれば消える。"""
         with tempfile.TemporaryDirectory() as tmp:
-            self._stub(tmp, [_entry("対応計画あり", NEW)])
+            self._stub(tmp, _many("対応計画あり", NEW,
+                                  orchestrator.STALE_RAISE_THRESHOLD))
             self.assertEqual(
                 [a for a in orchestrator.next_actions(index_sha=NEW)
                  if a.startswith("MAP_COVERAGE")], [])
@@ -76,7 +102,7 @@ class CoverageStalenessTest(unittest.TestCase):
     def test_entry_without_a_fingerprint_is_stale(self):
         """指紋を持たない古い項は、どの索引に対する判定か判らない。前提欠如の側へ倒す。"""
         e = _entry("対応計画あり", OLD)
-        e["assigned_by"].pop("index_sha256")
+        e["assigned_by"].pop("category_sha256")
         with tempfile.TemporaryDirectory() as tmp:
             self._stub(tmp, [e])
             self.assertEqual(

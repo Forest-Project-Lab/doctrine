@@ -901,8 +901,12 @@ class PriorityOrderTest(unittest.TestCase):
                                     "recommendations": [
                                         {"action": "a", "kind": "機構の変更",
                                          "owner_decision_required": False}]}}, f)
-        # MAP_COVERAGE: 索引が動いた後の非終端の項（古い指紋を持たせる）。
+        # MAP_COVERAGE: 索引が動いた後の非終端の項（種別の指紋を持たせない
+        # ＝どの索引に対する判定か判らないので古い側へ倒れる）。
+        # 件数は閾値（ADR-134）を越えさせる —— ここで測りたいのは**並び**で
+        # あって閾値ではない。信号を混ぜない（閾値は test_staleness_scope が持つ）。
         # ATTACK_EVALUATOR: 故障注入の証拠を置かない（成果物の方が新しくなる）。
+        stale_n = orchestrator.STALE_RAISE_THRESHOLD
         for book in ("jerg", "stpa", "cast"):
             with open(os.path.join(catalogs, "%s-principles.json" % book),
                       "w", encoding="utf-8") as f:
@@ -912,6 +916,7 @@ class PriorityOrderTest(unittest.TestCase):
             with open(os.path.join(catalogs, "%s-coverage.json" % book),
                       "w", encoding="utf-8") as f:
                 json.dump({"entries": [
-                    {"key": "stale", "disposition": "対応計画あり",
+                    {"key": "stale%d" % i, "disposition": "対応計画あり",
                      "assigned_at": "2026-08-05T00:00:00Z",
-                     "assigned_by": {"index_sha256": "0" * 64}}]}, f)
+                     "assigned_by": {"index_sha256": "0" * 64}}
+                    for i in range(stale_n)]}, f)

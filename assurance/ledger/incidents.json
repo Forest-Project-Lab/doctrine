@@ -460,6 +460,23 @@
       ],
       "cast_analysis_ref": "assurance/ledger/cast/INC-025-adr-130-implemented-the-option-it-rejected.json",
       "cast_analyzed_at": "2026-08-07T17:05:46Z"
+    },
+    {
+      "id": "INC-026-accepted-adr-has-no-sanctioned-repair-path",
+      "date": "2026-08-07",
+      "summary": "受理済み ADR の不変性に、誤記を直す正規の道が無い。ガードが通すのは status 遷移・superseded_by の付与・壊れたフロントマターの構文修復だけで、本文の誤りは直せない。受理の印を付けた瞬間に、禁止同義語のような機械が赤にする誤りすら修正不能になる",
+      "detected_by": "反復13で ADR-134 を status: accepted のまま書き、docs-linter が禁止同義語『出力』を ERROR として出した。ERROR は linter 一括の門を赤にするので直さねばならないが、Edit はガードに拒まれた（2026-08-07）",
+      "impact": "ADR-132 でも同じ形に当たっており（UNDEFINED_TERM が 2 件残ったまま直せず、WARN なので門は通った）、二度目である。今回は ERROR だったため門が通らず、逃げ道が『ファイル系で未追跡の下書きを消す』しか無くなった —— それはガードを通さない経路であり、NONGOAL-001 が『防げない』と明示している穴そのものである。**正規の道が無いと、人は穴を通る。**統制が侵食される形",
+      "fixed": false,
+      "shipped": false,
+      "fix_note": "未修正。今回は未追跡（一度もリポジトリに入っていない）下書きの破棄として処理し、ADR は proposed で起こして直してから accepted へ遷移させ直した。手順の側は PROC-001 へ『ADR は proposed で起こす』として落としたが、**ガードの側に正規の修復口は無いまま**である。直し方（受理前の下書きを別状態で扱う／構文修復と同じ形で機械が赤にする誤りの修復だけを許す／何もしない）は CAST_ANALYSIS の後で決める",
+      "cast_analysis": "pending",
+      "evidence_kind": "measurement",
+      "evidence_refs": [
+        "plugin/scripts/policy-guard.py",
+        "doctrine_docs/packaging/procedures/PROC-001-development-norms.md",
+        "doctrine_docs/packaging/decisions/ADR-134-staleness-is-scoped-to-what-the-judgement-cited.md"
+      ]
     }
   ]
 }
