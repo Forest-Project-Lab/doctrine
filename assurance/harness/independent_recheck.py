@@ -214,6 +214,8 @@ def main(argv=None):
         "git_sha": _git(["rev-parse", "--short", "HEAD"]),
         "index_sha256": idx["sha256"],
         "rubric_sha256": prompts.rubric_fingerprint(),
+                    "category_sha256": idx["category_sha256"],
+                    "category_counts": idx["category_counts"],
         "model": run_opts["model"],
         "effort": run_opts["effort"],
         "rows": rows,

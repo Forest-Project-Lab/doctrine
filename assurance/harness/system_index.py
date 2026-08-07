@@ -176,8 +176,27 @@ def build():
         "hooks": hooks(),
         "skills": skills(),
     }
+    # 種別ごとの指紋と件数（ADR-134。INC-025 の是正）。
+    #
+    # 全体の指紋だけを持つと、どの種別が動いても同じ一つの値が変わるので、
+    # 関係の無い変更が全件を古びさせる。実測では試験ファイル 1 件の追加が
+    # 非終端 286 件を古びさせ、反復ごとに約 $13.7・約 95 分を要求していた。
+    # 件数も併せて持つ —— 指紋は増減を区別しないが、「何も無い」という主張を
+    # 覆せるのは**増えた**物だけである。
+    idx["category_sha256"] = {
+        name: hashlib.sha256(
+            json.dumps(idx[name], ensure_ascii=False, sort_keys=True)
+            .encode("utf-8")).hexdigest()
+        for name in ("documents", "audit_checks", "linter_codes", "scripts",
+                     "test_files", "hooks", "skills")}
+    idx["category_counts"] = {
+        name: len(idx[name])
+        for name in ("documents", "audit_checks", "linter_codes", "scripts",
+                     "test_files", "hooks", "skills")}
     idx["sha256"] = hashlib.sha256(
-        json.dumps(idx, ensure_ascii=False, sort_keys=True).encode("utf-8")
+        json.dumps({k: v for k, v in idx.items()
+                    if k not in ("category_sha256", "category_counts")},
+                   ensure_ascii=False, sort_keys=True).encode("utf-8")
     ).hexdigest()
     return idx
 

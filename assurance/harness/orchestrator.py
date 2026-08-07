@@ -817,6 +817,74 @@ def current_index_sha():
 _SETTLED_DISPOSITIONS = frozenset({"実装・試験・証拠あり", "非該当で理由あり"})
 
 
+# 証拠ポインタの種別 → 索引の種別名。古びを「引いた範囲」に限るための対応表。
+_POINTER_KIND_TO_CATEGORY = {
+    "document": "documents",
+    "audit_check": "audit_checks",
+    "linter_code": "linter_codes",
+    "hook_event": "hooks",
+    "skill": "skills",
+    "file": "scripts",
+    "test": "test_files",
+}
+
+# 古びを次の行動に挙げる閾値（ADR-134。所有者判断 2026-08-07）。
+#
+# 一束（25 件）に満たない古びで評価を買い直すと、単価に対して割に合わない。
+# 閾値未満でも**数えて出す** —— 挙げないことと隠すことは違う（INC-006）。
+STALE_RAISE_THRESHOLD = 25
+
+
+def should_raise_stale(count):
+    """この件数の古びを next_actions に挙げるか（数えるのは常に行う）。"""
+    return bool(count) and count >= STALE_RAISE_THRESHOLD
+
+
+def is_stale(entry, index_now, resolve):
+    """判定が古びているか。**引いた範囲**だけを見る（ADR-134）。
+
+    index_now: {"category_sha256": {...}, "category_counts": {...}}
+    resolve:   証拠ポインタ → 種別 or None（system_index.resolve_pointer の部分適用）
+
+    規則は二つに分かれる:
+
+    - **証拠を持つ判定**は、その証拠が属する種別が動いたときだけ古びる。
+      文書を根拠にした判定は、試験が 1 件増えても古びない —— 主張の根拠は
+      文書の側に在り、試験の側は主張に関わっていない（INC-025 の実害そのもの）。
+    - **証拠を持たない非終端**（「その原則を果たす機構が索引に無い」という主張）は、
+      種別が**増えた**ときだけ古びる。増えた物だけが「無い」を覆せるからである。
+      並べ替えや削除で古びさせると、また全件が毎回古びる形へ戻る。
+
+    種別の指紋を持たない古い記録は「どの索引に対する判定か判らない」として
+    古い側へ倒す（ADR-130 第1項と同じ向き。判らないものは前提欠如の側へ）。
+    """
+    stamp = (entry.get("assigned_by") or {}).get("category_sha256")
+    if not stamp:
+        return True
+    now = index_now.get("category_sha256") or {}
+    moved = {name for name, sha in now.items() if stamp.get(name) != sha}
+    if not moved:
+        return False
+
+    cited = set()
+    for pointer in (entry.get("evidence") or []):
+        kind = resolve(pointer)
+        category = _POINTER_KIND_TO_CATEGORY.get(kind)
+        if category:
+            cited.add(category)
+    if cited:
+        return bool(cited & moved)
+
+    # 証拠が無い（か、どれも解決しない）判定 —— 「無い」という主張である。
+    before = (entry.get("assigned_by") or {}).get("category_counts") or {}
+    after = index_now.get("category_counts") or {}
+    if not before or not after:
+        # 件数が判らなければ「増えたか」を判じられない。判らないものは
+        # 古い側へ倒す（指紋を持たない記録と同じ向き。安全側）。
+        return True
+    return any(after.get(name, 0) > before.get(name, 0) for name in moved)
+
+
 def _count_unmapped(cov):
     """まだ評価していない項の数。「未割当」の規則をここに一度だけ持つ。
 
@@ -835,6 +903,42 @@ def _count_unmapped(cov):
     """
     return sum(1 for e in cov.get("entries", [])
                if not e.get("assigned_at") and e.get("disposition") == "UNKNOWN")
+
+
+_INDEX_NOW_CACHE = []
+
+
+def _index_now(index_sha=None):
+    """古びの判定に使う「いまの索引」の指紋一式。組めなければ None。
+
+    index_sha を渡されたときは、その値を全種別の指紋として扱う（試験が
+    古びを人為的に起こすための口。ADR-130 からの互換）。
+    """
+    if index_sha is not None:
+        return {"category_sha256": {k: index_sha for k in
+                                    _POINTER_KIND_TO_CATEGORY.values()},
+                "category_counts": {}}
+    if not _INDEX_NOW_CACHE:
+        try:
+            from harness import system_index
+            idx = system_index.build()
+            _INDEX_NOW_CACHE.append(
+                {"category_sha256": idx["category_sha256"],
+                 "category_counts": idx["category_counts"],
+                 "_idx": idx})
+        except Exception:            # 索引が組めない環境では古びを判じない
+            _INDEX_NOW_CACHE.append(None)
+    return _INDEX_NOW_CACHE[0]
+
+
+def _pointer_resolver():
+    """証拠ポインタ → 種別。索引が組めない環境では常に None を返す。"""
+    now = _index_now()
+    idx = (now or {}).get("_idx")
+    if idx is None:
+        return lambda p: None
+    from harness import system_index
+    return lambda p: system_index.resolve_pointer(idx, p)
 
 
 def coverage_status(index_sha=None):
@@ -867,17 +971,18 @@ def coverage_status(index_sha=None):
         # 同じ語で二つを数えると、一語に二つの意味を持たせる取り違え（INC-006・
         # INC-010 で二度起きた形）をこの帳簿自身が持つことになる。
         unmapped = _count_unmapped({"entries": entries})
-        # 索引の指紋が現在と違う項は、いま在る索引に対する主張ではない
-        # （ADR-130）。指紋を持たない項は「どの索引に対する判定か判らない」
-        # ので、前提欠如の側へ倒して古びと数える。
-        want = index_sha if index_sha is not None else current_index_sha()
+        # 古びは**引いた範囲**だけで見る（ADR-134。INC-025 の是正）。
+        # 索引全体の指紋で見ると、関係の無い変更が全件を古びさせる ——
+        # 実測で試験ファイル 1 件の追加が非終端 286 件を古びさせた。
+        # 指紋を持たない項は「どの索引に対する判定か判らない」ので古い側へ倒す。
+        now = _index_now(index_sha)
         stale_open = stale_settled = 0
-        if want:
+        if now:
+            resolve = _pointer_resolver()
             for e in entries:
                 if not e.get("assigned_at"):
                     continue
-                got = (e.get("assigned_by") or {}).get("index_sha256")
-                if got == want:
+                if not is_stale(e, now, resolve):
                     continue
                 if e.get("disposition") in _SETTLED_DISPOSITIONS:
                     stale_settled += 1
@@ -1031,7 +1136,9 @@ def next_actions(index_sha=None):
                            % (book_id, cov.get("reason")))
         # 索引が動いた後の非終端の項は、評価を買い直さないと解けない。
         # 終端の項の古びは数えるだけ（決定論の再照合で足りる。ADR-130）。
-        if cov.get("stale_open"):
+        # 閾値に達するまで挙げない（ADR-134）。**数えるのは常に行う** ——
+        # 挙げないことと隠すことは違う（INC-006）。件数は status に出続ける。
+        if should_raise_stale(cov.get("stale_open") or 0):
             add(
                 "MAP_COVERAGE: %s の索引が動いた後で再判定していない %d 件"
                 "（終端の再照合待ちは別に %d 件）"

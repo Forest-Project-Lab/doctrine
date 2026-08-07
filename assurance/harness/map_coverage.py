@@ -236,6 +236,8 @@ def main(argv=None):
                     "prompt_sha256": record["prompt_sha256"],
                     "index_sha256": idx["sha256"],
                     "rubric_sha256": prompts.rubric_fingerprint(),
+                    "category_sha256": idx["category_sha256"],
+                    "category_counts": idx["category_counts"],
                     "git_sha": git_sha,
                 },
             })

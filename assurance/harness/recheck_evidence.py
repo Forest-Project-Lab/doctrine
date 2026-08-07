@@ -74,6 +74,8 @@ def sweep(cov, idx, rubric):
                 e["unresolved_evidence"] = lost
             by = dict(e.get("assigned_by") or {})
             by["index_sha256"] = idx["sha256"]
+            by["category_sha256"] = idx["category_sha256"]
+            by["category_counts"] = idx["category_counts"]
             by["rubric_sha256"] = rubric
             by["rechecked_deterministically"] = True
             e["assigned_by"] = by
