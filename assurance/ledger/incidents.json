@@ -386,7 +386,7 @@
       "impact": "運転者は『赤いまま merge しない』の条項だけを手掛かりに判断する。走らなかった CI を赤と読めば、実行された不適合と実行そのものが成立しなかった状態が同じ顔になる。逆に『実質は緑だから』と読めば門を緩める。どちらへ倒すかの規律が無く、判断が運転者の裁量に落ちる。実際に手元の全門が緑であったため merge への圧力が生じた（merge はしていない）",
       "fixed": false,
       "shipped": false,
-      "cast_analysis": "pending",
+      "cast_analysis": "done",
       "evidence_kind": "measurement",
       "evidence_refs": [
         "doctrine_docs/_system/non-goals.md",
@@ -395,7 +395,9 @@
       "evidence": "gh run view 31120553791 の ANNOTATIONS が二回とも『The job was not acquired by Runner of type hosted even after multiple attempts』。同一 run について三つの API が矛盾した状態を返した —— gh run list は queued、gh run view は completed、cancel は 409『Cannot cancel a workflow re-run that has not yet queued』、rerun は『This workflow is already running』。githubstatus.com の incident qcvjkzcs7j74 が『Webhook triggers remain throttled ... many push and pull request events are not triggering new workflow runs』と記載",
       "resolution_2026-08-06": "障害の回復後、正規の経路で両 PR を通した。#234 は close/reopen の webhook が28分遅れで届いて success（ただし成功した run の head が PR の head と食い違ったため、検査済み SHA へ head を戻してから merge した）。#233 は新しい main へ rebase して head を進め、synchronize の webhook が17分遅れで届いて success。門は緩めていない",
       "residual": "NONGOAL-001 第14項は『継続的結合（CI）の敷設・稼働は検出しない。感知できるのは CI が残した成果物までであり、それは敷設の証跡ではない』と決めている。したがって体系の側で CI の生存を機械的に判ずる道は非目標に触れる。是正は運転手順の側（走れなかったことを UNASSESSED として扱い、何回まで引き直すか・引き直しても走らないときどうするかを定める）に限られる可能性が高い。加えて本件で新たに判った危険がある —— **成功した run の head が PR の head と一致するとは限らない**。手順は『CI が pass』としか書いておらず、どの SHA に対する pass かを照合する義務を持たない",
-      "family": "前提が欠けたときに UNASSESSED/DEGRADED へ倒す規律が、その経路にだけ効いていない形。INC-018（監査が .gitignore を git に訊けないとき、その事実を判定へ反映せず木の欠陥として warn を出した）と同型で、粒度が運転手順の側に在る"
+      "family": "前提が欠けたときに UNASSESSED/DEGRADED へ倒す規律が、その経路にだけ効いていない形。INC-018（監査が .gitignore を git に訊けないとき、その事実を判定へ反映せず木の欠陥として warn を出した）と同型で、粒度が運転手順の側に在る",
+      "cast_analysis_ref": "assurance/ledger/cast/INC-022-ci-that-cannot-run-is-read-as-red.json",
+      "cast_analyzed_at": "2026-08-06T23:50:11Z"
     }
   ]
 }
