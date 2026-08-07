@@ -1,0 +1,44 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "reproduce-red",
+  "incident_id": "INC-023-attack-freshness-truncated-to-the-day",
+  "generated_at": "2026-08-07T02:40:00Z",
+  "git_sha": "6102444",
+  "phase": "before-fix",
+  "command": "python3 -m unittest assurance.tests.test_orchestrator.AttackFreshnessPrecisionTest",
+  "returncode": 1,
+  "expect": "修正前に FAIL すること（最初から緑は再現と認めない）",
+  "procedure_order": "REPRODUCE_RED を FIX の前に実施した（四反復連続で順序を守れている）。",
+  "observed_failures": [
+    "Ran 6 tests — FAILED (failures=3, errors=2)",
+    "AttributeError: module 'harness.orchestrator' has no attribute '_max_instant'（時刻を保つ比較が無い）",
+    "AssertionError: [] is not true —— 日付だけの証拠が同じ日の成果物を覆い、ATTACK_EVALUATOR が挙がらない",
+    "AssertionError: [] is not true —— 証拠より後の時刻に生まれた成果物でも挙がらない",
+    "AssertionError: 'generated_at' not found —— 証拠の側が時点を書いていない"
+  ],
+  "field_measurement": {
+    "method": "git merge-base --is-ancestor <攻撃の git_sha> <各 cast の git_sha>",
+    "attack_evidence": "mutations-2026-08-06.json (git_sha 53db6a4, date 2026-08-06, generated_at 無し)",
+    "outputs_born_after_the_attack_commit": 11,
+    "list": [
+      "INC-012 2026-08-06T04:03:52Z 3d7b20b7",
+      "INC-013 2026-08-06T02:55:47Z dc60bc01",
+      "INC-014 2026-08-06T03:00:20Z dc60bc01",
+      "INC-015 2026-08-06T06:57:28Z e06964a0",
+      "INC-016 2026-08-06T08:59:58Z 7955ee9e",
+      "INC-017 2026-08-06T08:53:11Z 7955ee9e",
+      "INC-018 2026-08-06T11:56:03Z 66057bcf",
+      "INC-019 2026-08-06T14:21:01Z cf68f179",
+      "INC-020 2026-08-06T14:26:57Z cf68f179",
+      "INC-021 2026-08-06T16:28:13Z 58cbfdad",
+      "INC-022 2026-08-06T23:50:11Z 7d1db0e2"
+    ],
+    "note": "いずれも攻撃を経ていないのに、正本は五反復にわたって ATTACK_EVALUATOR を一度も挙げなかった。"
+  },
+  "measured_after": {
+    "tests": "6 件が緑（レーン全体で 188 件）",
+    "real_ledger": "ATTACK_EVALUATOR: 評価器の成果物(2026-08-06T23:50:11Z)が故障注入の証拠(2026-08-06)より新しい —— 実台帳で挙がるようになった"
+  },
+  "false_lead": "調査の途中で attack_evaluator.py:182 の \"date\": \"2026-08-06\" を『出力の日付が直書きされている』と疑ったが、**外れ**だった。これは捏造事象の fixture（_FABRICATED_INCIDENT）の中の値で、出力の日付は args.today or utcnow から作られる。疑いは読み直して自分で反証した。",
+  "note": "欠陥の場所は _max_date の `v[:10]`。日の粒度で足りるのは人へ見せる表示だけで、鮮度の判定に使うと同じ日の中の前後が消える。表示用の関数は残し、判定には使わないと docstring へ明記した。"
+}

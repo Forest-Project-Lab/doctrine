@@ -707,3 +707,75 @@ class AssumptionRegisterTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class AttackFreshnessPrecisionTest(unittest.TestCase):
+    """攻撃の鮮度は、日ではなく時点で比べる（事象 INC-023）。
+
+    ADR-120 は「評価器の成果物が故障注入の証拠より新しければ、その評価器は
+    まだ攻撃されていない」と決めた。だが比較が日で切り捨てられていたため、
+    同じ日のうちに証拠より**後**で生まれた成果物が「攻撃済み」と読まれた。
+    実測では 11 件の事故分析が、攻撃の証拠が指すコミットの子孫のコミットで
+    生まれていたのに、正本は一度も ATTACK_EVALUATOR を挙げなかった。
+    """
+
+    def test_instant_comparison_keeps_the_time(self):
+        self.assertEqual(
+            orchestrator._max_instant(["2026-08-06", "2026-08-06T14:21:01Z"]),
+            "2026-08-06T14:21:01Z")
+
+    def test_instant_comparison_normalises_the_separator(self):
+        """空白区切りの時刻を T 区切りと同じ順序で比べる。"""
+        self.assertEqual(
+            orchestrator._max_instant(["2026-08-06 23:00:00", "2026-08-06T09:00:00Z"]),
+            "2026-08-06T23:00:00")
+
+    def test_day_only_evidence_cannot_cover_the_same_day(self):
+        """日付だけの証拠は、その日の中で先か後かを示さない。前提欠如の側へ倒す。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            self._stub(tmp, attack="2026-08-06",
+                       cast_at="2026-08-06T14:21:01Z")
+            actions = orchestrator.next_actions()
+            self.assertTrue(
+                [a for a in actions if a.startswith("ATTACK_EVALUATOR")], actions)
+
+    def test_timestamped_evidence_after_the_output_clears_it(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self._stub(tmp, attack="2026-08-06T23:59:00Z",
+                       cast_at="2026-08-06T14:21:01Z")
+            self.assertEqual(
+                [a for a in orchestrator.next_actions()
+                 if a.startswith("ATTACK_EVALUATOR")], [])
+
+    def test_timestamped_evidence_before_the_output_raises_it(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self._stub(tmp, attack="2026-08-06T09:00:00Z",
+                       cast_at="2026-08-06T14:21:01Z")
+            self.assertTrue(
+                [a for a in orchestrator.next_actions()
+                 if a.startswith("ATTACK_EVALUATOR")])
+
+    def test_attack_evaluator_writes_a_timestamp(self):
+        """証拠の側も時点を書く。読む段だけ精密にしても比べられない。"""
+        import inspect
+        from harness import attack_evaluator
+        src = inspect.getsource(attack_evaluator.main)
+        self.assertIn("generated_at", src)
+
+    def _stub(self, tmp, attack, cast_at):
+        ledger = os.path.join(tmp, "ledger")
+        os.makedirs(os.path.join(ledger, "cast"), exist_ok=True)
+        with open(os.path.join(ledger, "mutations-x.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump({"date": attack[:10], "generated_at": attack}
+                      if len(attack) > 10 else {"date": attack}, f)
+        with open(os.path.join(ledger, "cast", "INC-x.json"), "w",
+                  encoding="utf-8") as f:
+            json.dump({"generated_at": cast_at}, f)
+        for attr, value in (("CATALOG_DIR", os.path.join(tmp, "catalogs")),
+                            ("LANE_DIR", tmp),
+                            ("INCIDENTS_PATH", os.path.join(tmp, "inc.json")),
+                            ("ASSUMPTIONS_PATH", os.path.join(tmp, "asm.json"))):
+            orig = getattr(orchestrator, attr)
+            setattr(orchestrator, attr, value)
+            self.addCleanup(setattr, orchestrator, attr, orig)

@@ -305,6 +305,14 @@ def main(argv=None):
         "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
         "kind": "attack-evaluator",
         "date": today,
+        # 日付だけでは、同じ日に生まれた評価器の成果物より先か後かを示せない。
+        # 正本の鮮度の判定は時点で比べるので、証拠の側も時点を残す（INC-023）。
+        # --today が渡されたときはその日の始まりとして刻む（試験が実時計を
+        # 読まないため。WATCH-001 第11項）。
+        "generated_at": (
+            args.today + "T00:00:00Z" if args.today
+            else datetime.datetime.now(datetime.timezone.utc)
+            .strftime("%Y-%m-%dT%H:%M:%SZ")),
         "git_sha": _git(["rev-parse", "HEAD"]),
         "git_dirty": bool(_git(["status", "--porcelain"])),
         "purpose": "本キャンペーンが作った評価器が、入力を壊されたとき非緑へ倒れるかの実証",

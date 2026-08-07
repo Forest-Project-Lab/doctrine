@@ -533,9 +533,27 @@ def undeclared_ledger_files(ledger_dir=None):
 
 
 def _max_date(values):
-    """ISO の日付・時刻文字列の最大。先頭10文字（YYYY-MM-DD）で比べる。"""
+    """ISO の日付・時刻文字列の最大。先頭10文字（YYYY-MM-DD）で比べる。
+
+    日の粒度で足りるのは、人へ見せる表示だけである。**鮮度の判定には使わない**
+    —— 同じ日の中の前後が消えるので、証拠より後に生まれた成果物を「済み」と
+    読んでしまう（事象 INC-023）。判定は _max_instant を使う。
+    """
     days = sorted(v[:10] for v in values if isinstance(v, str) and len(v) >= 10)
     return days[-1] if days else None
+
+
+def _max_instant(values):
+    """ISO の日付・時刻文字列の最大を、時刻を捨てずに返す。
+
+    区切りの空白は T へ寄せてから比べる（"2026-08-06 23:00" と
+    "2026-08-06T09:00" が文字の順序で逆転するため）。日付だけの値は
+    その日の**始まり**として並ぶ —— これは安全側である。日付だけの証拠は
+    その日の中で先か後かを示さないので、同じ日の成果物を覆ったと見なさない。
+    """
+    seen = sorted(v.replace(" ", "T", 1)
+                  for v in values if isinstance(v, str) and len(v) >= 10)
+    return seen[-1] if seen else None
 
 
 def evaluator_outputs_latest():
@@ -560,7 +578,8 @@ def evaluator_outputs_latest():
             try:
                 with open(cov_path, encoding="utf-8") as f:
                     entries = json.load(f).get("entries", [])
-                seen.append(_max_date([e.get("assigned_at") for e in entries]))
+                seen.append(_max_instant([e.get("assigned_at")
+                                          for e in entries]))
             except (OSError, ValueError):
                 pass
     cast_dir = os.path.join(LANE_DIR, "ledger", "cast")
@@ -573,7 +592,7 @@ def evaluator_outputs_latest():
                     seen.append(json.load(f).get("generated_at"))
             except (OSError, ValueError):
                 continue
-    return _max_date([v for v in seen if v])
+    return _max_instant([v for v in seen if v])
 
 
 def latest_scenarios():
@@ -720,10 +739,13 @@ def attack_evidence_latest():
             continue
         try:
             with open(os.path.join(ledger, name), encoding="utf-8") as f:
-                seen.append(json.load(f).get("date"))
+                doc = json.load(f)
+            # 時点が在ればそれを、無ければ日付を使う。日付だけの証拠はその日の
+            # 始まりとして並び、同じ日の成果物を覆わない（安全側。INC-023）。
+            seen.append(doc.get("generated_at") or doc.get("date"))
         except (OSError, ValueError):
             continue
-    return _max_date([v for v in seen if v])
+    return _max_instant([v for v in seen if v])
 
 
 def coverage_status():
