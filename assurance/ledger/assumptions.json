@@ -108,6 +108,45 @@
           "why_rejected": "測定で反証。この値は 0.10.0 を正しく報告するが、0.10.0 という版番号が 15 コミットにわたって同じであるため、複製がどの世代かを一切区別しない。INC-001 の 2026-08-05 の結論はこの値に寄りかかっており、その結論は成り立たない。"
         }
       ]
+    },
+    {
+      "id": "ASM-004-sdk-error-surface-separates-fault-families",
+      "assumption": "SDK の例外表面は故障族を区別できる",
+      "rests_on": [
+        "レーンが評価の失敗を状態語彙へ写せること（sdk_lane.classify_error）",
+        "UNKNOWN が『判定不能』であって『異常なし』でないと読めること",
+        "前提が欠けたときに、何の前提が欠けたかを運転者が選べること（復旧手順の選択）"
+      ],
+      "if_false": "認証の遮断も不正な model 指定も同じ UNKNOWN になり、前提欠如の**種類**が判らないまま反復が進む。運転者は何を直せばよいか選べず、UNKNOWN が『よく判らないが動かない』の総称語として肥大する。分類できない失敗は台帳から集計もできない。",
+      "verified_by": null,
+      "sources": [
+        "assurance/harness/sdk_lane.py",
+        "assurance/ledger/mutations-2026-08-04.json",
+        "assurance/ledger/incidents.json"
+      ],
+      "incident_id": "INC-003-sdk-error-opacity",
+      "leading_indicators": [
+        {
+          "observe_where": "故障注入の証拠（mutations-<日付>.json）で、認証遮断と不正 model を注入したときの例外文言と classify_error の返り値",
+          "abnormal_when": "異なる故障族に対して同じ分類が返るとき（族の数より分類の数が少ないとき）",
+          "observed_at": "2026-08-04",
+          "observation": "故障注入の記録がそのまま異常を示している —— 『認証喪失・不正 model という異なる故障族が、SDK 例外の文言では区別不能（いずれも「error result: success」）』。二つの族が一つの分類へ潰れている。",
+          "state": "FAIL"
+        },
+        {
+          "observe_where": "classify_error の分岐が寄りかかる手掛かりの種類（例外の型か、文言の部分一致か）",
+          "abnormal_when": "文言の部分一致に寄りかかる分岐が残っているとき。文言は供給側の都合で変わるので、族の identity を担えない",
+          "observed_at": "2026-08-07",
+          "observation": "sdk_lane.py:29 の _AUTH_MARKERS が文言の部分一致（authentication / unauthorized / login / api key ほか）で認証を判じ、それ以外はすべて UNKNOWN へ落ちる（:41-42 で二重に UNKNOWN を返す）。型に基づく分岐は認証の族へ届いていない。",
+          "state": "FAIL"
+        }
+      ],
+      "rejected_indicators": [
+        {
+          "candidate": "UNKNOWN 分類の件数がゼロであることを見る",
+          "why_rejected": "指標として成り立たない。UNKNOWN は前提が本当に欠けたときの**正しい結論**でもありうるので、件数ゼロを健全さと読むと、判定不能を隠す圧力になる。見るべきは『族が違うのに同じ分類になる』ことであって『UNKNOWN が出る』ことではない。"
+        }
+      ]
     }
   ]
 }

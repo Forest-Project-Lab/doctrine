@@ -124,6 +124,55 @@
       "index": 7,
       "state": "pending",
       "note": "洗い出しは行い、反例はまだ当てていない（半分）。推奨が名指した二箇所を実測した: (a) docs-audit の findings 判定 —— 部分一致で語を判ずる箇所は無い。近似重複は _check_near_duplicate が語の Jaccard で判じ、部分文字列を見ない。`_CTX_BEGIN not in body` は 印の有無であって語の照合ではない。(b) dep-graph の逆依存解析 —— _dep_in は id の完全一致の 写像で、部分一致を使わない。加えて同じ軸を持つ第三の箇所を見つけた: docs-linter の _DECISION_HEADING_RE（`決定(?![的論])`。ADR-082・WATCH-001 第10項）で、こちらも既に 一般規則になっている。**限界を明記する**: この洗い出しは三ファイルへの grep であって網羅では ない（思いつかない≠網羅）。残る作業は、見つけた二箇所（_find_ascii_word・_DECISION_HEADING_RE）へ失敗様式の軸から生成した反例を当てることで、これは INC-002#2 / INC-011#1（軸への展開を手順へ組み込む）と同じ作業に合流する。"
+    },
+    {
+      "incident_id": "INC-002-termcheck-ascii-substring",
+      "index": 8,
+      "state": "pending",
+      "note": "記録は在るが、届く経路が無い。実測: (a) CHANGELOG.md は**リポジトリ直下**に在り、marketplace が配るのは ./plugin だけ（.claude-plugin/marketplace.json の source）。したがって変更履歴は利用者の複製へ入らない。(b) 記録そのものは強制されている —— release-check.py が『plugin/ を触る差分は CHANGELOG.md も触ること』を CI の門で検め、実際に af9c858（本事象の修正）も CHANGELOG を伴っている。(c) marketplace.json のスキーマに通知欄は無い（name/owner/description/plugins[name,source,description,version]）ので、推奨が指定した形は現状のスキーマでは採れない。**さらに前提が壊れている** —— INC-019 で版番号が複製の同一性を判定しないことが判っており、更新そのものが届いていない（複製は 15 コミット遅れ）。届かない更新に通知欄を足しても届かない。着手は INC-019 の後。届ける道があるとすれば変更履歴を plugin/ 側へ同梱することだが、配布物の中身を変える判断が要る。"
+    },
+    {
+      "incident_id": "INC-003-sdk-error-opacity",
+      "index": 1,
+      "state": "pending",
+      "note": "故障族ラベルは台帳に無い（grep で fault_family / error_class の該当なし）。自由文の summary には『故障族』の語が現れるが（incidents.json:61・mutations-2026-08-04）、機械が集計できる項目にはなっていない。schema への必須項目の追加はレーン内の裁量で、ADR-127 の六類型に当たらない。未着手。"
+    },
+    {
+      "incident_id": "INC-003-sdk-error-opacity",
+      "index": 2,
+      "state": "pending",
+      "note": "注入の実測は既に在るが、決定論試験にはなっていない。mutations-2026-08-04.json が『認証喪失・不正 model という異なる故障族が SDK 例外の文言では区別不能』を記録済み。ただしこれは実 SDK を要する故障注入の記録であって、CI で赤にできる決定論試験ではない。残る作業は、例外表面を fixture に固定して classify_error を凍結する試験を書くこと（通信に依存する試験は作らない。ADR-129 で merge_gate に採ったのと同じ形）。"
+    },
+    {
+      "incident_id": "INC-003-sdk-error-opacity",
+      "index": 3,
+      "state": "pending",
+      "note": "集計の経路は無い。UNKNOWN の件数・比率も、分類不能のまま滞留した日数も、orchestrator.py status は出していない。なお『所有者へ届ける経路』は既に在る —— status の出力と反復の報告の規定形式がそれで、新しい通知機構は要らない。足すべきは集計であって経路ではない。"
+    },
+    {
+      "incident_id": "INC-003-sdk-error-opacity",
+      "index": 4,
+      "state": "landed",
+      "evidence_ref": "assurance/ledger/assumptions.json の ASM-004-sdk-error-surface-separates-fault-families",
+      "note": "想定の登記簿へ ASM-004 として登記した（ADR-126 の器）。先行指標は二つとも実測で埋めてあり、**どちらも FAIL** —— (1) 故障注入の記録が二つの族を一つの分類へ潰している（2026-08-04 の実測）、(2) classify_error は文言の部分一致で認証だけを判じ、それ以外はすべて UNKNOWN へ落ちる（sdk_lane.py:29,38,41-42）。成り立たない指標案（UNKNOWN の件数ゼロを健全さと読む）は理由つきで rejected_indicators に残した。事象 INC-003 に紐づけたので、想定の側では二重に鳴らさない。"
+    },
+    {
+      "incident_id": "INC-003-sdk-error-opacity",
+      "index": 5,
+      "state": "pending",
+      "note": "未着手。ADR-116 は最低線（opus × effort high）を定めるが、『どの観測をもって最低線が守られた実行と判定するか』を書いていない。model_policy が options_for で渡す値は**要求**であって、実行が実際にその model で走ったという**観測**ではない。判定不能時の既定も未定。ADR で下すべき設計判断で、所有者判断の六類型には当たらない。"
+    },
+    {
+      "incident_id": "INC-003-sdk-error-opacity",
+      "index": 6,
+      "state": "rejected",
+      "note": "所有者判断ではなく既決。木は三重に決めている —— ADR-114『レーンが使えないときの状態はPASS でなく UNASSESSED（前提欠如で未評価）』、運転手順 §5『根拠なき PASS を書かない』、そして本キャンペーンで入れた ADR-129『前提が欠けたら UNASSESSED へ倒し、それは待機であって迂回ではない』。分類が UNKNOWN の間、その評価結果を保証の根拠に数えないのが既決であり、『注記付きで有効として扱う』は根拠なき PASS に当たる。所有者へ回さない。"
+    },
+    {
+      "incident_id": "INC-003-sdk-error-opacity",
+      "index": 7,
+      "state": "pending",
+      "note": "半分だけ調べた。(a) 供給側から利用者へ重要変更を通知する経路は**無い** —— CHANGELOG.md は plugin/ の外に在り、marketplace が配るのは ./plugin だけで、marketplace.json に通知欄は無い（INC-002#8 で実測した同じ事実）。(b) SDK の版差で例外表面がどう変わるかは**調べていない**（現在 claude-agent-sdk 0.2.129。版を跨いだ比較には別版の導入が要る）。(c) 代替経路の要否は、ASM-004 の指標2 が示すとおり『文言の部分一致に寄りかかる分岐』を型に基づく分岐へ移すことが先で、指紋照合はその後。"
     }
   ]
 }
