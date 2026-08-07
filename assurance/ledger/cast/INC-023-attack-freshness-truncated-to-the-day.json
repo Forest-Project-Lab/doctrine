@@ -1,0 +1,686 @@
+{
+  "accepted_flaws": [
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "次の行動を導く述語 `latest_attack < latest_output` の両辺が、共通ヘルパ _max_date を通ることで日単位（先頭10文字）に切り捨てられていた。同じ日のうちに後から生まれた評価器の成果物は、証拠と同値になり厳密不等号が偽になる。制御対象の実状態（この成果物は攻撃を経ていない）と、統制のプロセスモデル（攻撃済み）が、比較の粒度だけを理由に恒常的に乖離した。ADR-120 の規則そのものは正しく文書化されていたが、規則の意味論（時点の順序）と実装の粒度（日）の差が、規則を無効化する形で作用した。",
+      "evidence_ref": "assurance/harness/orchestrator.py（_max_date が v[:10] で切り捨て。evaluator_outputs_latest / attack_evidence_latest がともに '2026-08-06' を返した）",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "プロセスモデルと実状態の不整合",
+        "defects-in-information-providing-systems",
+        "software-does-not-fail-requirements-defect"
+      ],
+      "why_it_seemed_adequate": "台帳の証拠も評価器の成果物も、それまで日付表記で扱われており、日単位の比較は表示にも判定にも同じ値でよいと読めた。日をまたいで実行される運用が通常であれば、日単位の比較は時点の比較と同じ結果を返し続ける。境界（同日内）に踏み込むまで、切り捨ては情報の損失ではなく表記の統一に見えた。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "鮮度の判定は証拠側の時点情報を前提にするが、証拠 mutations-2026-08-04.json / mutations-2026-08-06.json は generated_at を持たず、日付以上の精度を構造的に持ち得なかった。読む側だけを精密にしても比較は成立しない。すなわち、統制が必要とする手掛かりを、その手掛かりを生成する側が最初から供給していなかった。",
+      "evidence_ref": "assurance/ledger/mutations-2026-08-06.json（generated_at なし）、fix_note（attack_evaluator.py が generated_at を書くよう追加）",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "defects-in-information-providing-systems",
+        "情報システム保有と有用性の乖離",
+        "利用可能な形式での情報提示"
+      ],
+      "why_it_seemed_adequate": "証拠の主目的は「どの変異を注入したか」の記録であり、ファイル名に日付が入っている以上、時点は十分に特定できていると読めた。鮮度の判定に使われるという下流の用途が、証拠を書く側の要求として明示されていなかったため、精度は用が足りているように見えた。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "ATTACK_EVALUATOR が next_actions に現れない状態は、「攻撃済みだから挙がらない」と「判定が壊れているから挙がらない」の二つを区別しない。行動の不在という負の信号に対して、その不在の根拠（比較の両辺の値、判定が同値で決まったか）を出力する経路が無く、五反復連続の不在は体系側からは正常と区別できなかった。検出は、人が不審に思って評価器を直に呼び出したことによる。",
+      "evidence_ref": "detected_by（反復9の §0 で五反復連続の不在を不審に思い、evaluator_outputs_latest / attack_evidence_latest を直に呼んだ）",
+      "flaw_type": "統制自身の劣化を検出できない",
+      "normative_refs": [
+        "全コントロールループにフィードバック必須",
+        "controller-needs-concrete-feedback-channels",
+        "計画外変化の検出手段"
+      ],
+      "why_it_seemed_adequate": "決定論で次の行動を導く設計では、行動が挙がらないことは「その行動が要らない」という設計上の正しい出力である。正常出力と故障出力が同じ形（不在）をとることは、述語が正しい限り問題にならず、述語を疑う契機が体系の内側に用意されていなかった。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "INC-012（ATTACK_EVALUATOR が5反復飛ばされた）に対する是正は、そのとき名指しできた原因（状態を名指しできないこと）に向けられ、症状（この評価器が挙がらない）を生み出す原因の族——鮮度／実施済み判定が誤って真を返す経路一般——を覆わなかった。結果、同じ症状が別の原因で再現し、再現するまで是正の不足は観測されなかった。是正の有効性を、症状の消失ではなく族の被覆で確かめる工程が無い。",
+      "evidence_ref": "family（INC-012 と同じ症状を別の原因で再現した二度目）",
+      "flaw_type": "制御動作が誤っている",
+      "normative_refs": [
+        "symptom-vs-systemic-cause",
+        "systemic-cause-across-all-events",
+        "是正措置の有効性証拠の収集"
+      ],
+      "why_it_seemed_adequate": "INC-012 の是正後、ATTACK_EVALUATOR は挙がるようになり、症状は実際に消えていた。是正が効いたという観測は得られており、族の広さを問う追加の作業は、当面の証拠に照らして余分に見えた。"
+    },
+    {
+      "control_element_id": "GOVERNANCE_TREE",
+      "description": "ADR-120 は「成果物が証拠より新しければ未攻撃」という規則を統治木の側に確定させたが、その規則を強制する実装（orchestrator の鮮度述語）との対応関係が文書にも依存グラフにも現れず、規則と実装の粒度が食い違っていることを突き合わせる工程が存在しない。docs-audit は文書の整合を見るが、文書が指す実装の意味論までは見ない。",
+      "evidence_ref": "summary（ADR-120 が決めた規則が、実装の粒度で無効化されていた）",
+      "flaw_type": "統制どうしの調整の欠如",
+      "normative_refs": [
+        "何をとなぜのトレース文書化",
+        "monitor-procedure-practice-gap",
+        "designer-vs-operator-mental-model"
+      ],
+      "why_it_seemed_adequate": "ADR は決定を記録するための文書であり、実装がその決定に従うことは実装側の責務として分離されていた。決定と実装を対応表で結ぶ作業は冗長に見え、また実装が決定どおりに書かれている限り対応表は何も検出しない。"
+    },
+    {
+      "control_element_id": "CI_RELEASE_CHECK",
+      "description": "決定論試験と release-check は緑のまま通過し、merge 前に赤で止まらなかった。鮮度述語に対する試験は、日をまたいだ通常の並びを与えるものであり、同日内で証拠より後に成果物が生まれる境界の並びを与える試験が無かったため、切り捨ては試験の可視範囲の外にあった。",
+      "evidence_ref": ".github/workflows（本体試験・監査・release-check）、evidence（`latest_attack < latest_output` が偽）",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "監査の検出力評価",
+        "監査のすり抜け時に監査手順を是正",
+        "verify-all-hazard-preventing-systems"
+      ],
+      "why_it_seemed_adequate": "鮮度の判定は数行の比較であり、代表的な入力（古い証拠・新しい成果物／新しい証拠・古い成果物）で期待どおり動く。境界条件としての「同値」は、日付が違う運用が前提であれば発生しない入力に見え、試験を割く対象として選ばれなかった。"
+    },
+    {
+      "control_element_id": "OWNER",
+      "description": "所有者が現在の保証状態を判断する手掛かりは、進捗報告・PR の diff・台帳である。いずれも「ATTACK_EVALUATOR が次の行動に挙がっていない」という表示までは届くが、その不在が実施の完了を意味するのか判定の誤りを意味するのかを分けて示さない。結果として、11 件の事故分析が未攻撃の評価器のもとで受理される間、是正を要求する契機が上位へ届くのは、人が下位の関数を直に呼んだ 11 反復後になった。既知の穴「報告が実施ではなく意図を書いていても人からは見分けにくい」と同型で、ここでは体系の出力そのものが実施と非実施を見分けられない形をしていた。",
+      "evidence_ref": "impact（正本は一度も ATTACK_EVALUATOR を挙げなかった／INC-012〜INC-022 の 11 件）",
+      "flaw_type": "手掛かりが遅い",
+      "normative_refs": [
+        "controller-needs-concrete-feedback-channels",
+        "audit-findings-must-be-closed",
+        "指摘欠点の是正完了追跡"
+      ],
+      "why_it_seemed_adequate": "保証レーンは決定論で次の行動を導く設計であり、レーンが挙げない行動は不要な行動である、という読みは設計の宣言どおりであった。台帳には事故分析が着実に積まれ、キャンペーンは進行しているように見えたため、挙がらない行動を疑う理由は手掛かりの側に現れなかった。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "「攻撃済み」という統制の単位が評価器全体になっているのに対し、実際の故障注入の対象は A1/A2/A3 の三経路に限られる。時点で比べるよう直した後も、証拠が新しいことは当該証拠が現在の評価器の全経路に対して行われたことを意味しない。統制が主張する被覆と、実際に検証された被覆の範囲が一致していない。",
+      "evidence_ref": "residual（注入の対象は A1/A2/A3 の三つで、評価器の全経路ではない）",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "全体健全性と部分健全性の分離評価",
+        "verify-decomposition-assumptions",
+        "refine-generic-constraints-to-specific-loss"
+      ],
+      "why_it_seemed_adequate": "故障注入は評価器という一つの成果物に対して走らせるものとして扱われており、注入した変異の集合は証拠側に記録されている。判定を成果物単位に置くことは、証拠の粒度に照らして自然で、経路単位に分けても当時は判定に使える情報が増えなかった。"
+    }
+  ],
+  "analysis": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "次の行動を導く述語 `latest_attack < latest_output` の両辺が、共通ヘルパ _max_date を通ることで日単位（先頭10文字）に切り捨てられていた。同じ日のうちに後から生まれた評価器の成果物は、証拠と同値になり厳密不等号が偽になる。制御対象の実状態（この成果物は攻撃を経ていない）と、統制のプロセスモデル（攻撃済み）が、比較の粒度だけを理由に恒常的に乖離した。ADR-120 の規則そのものは正しく文書化されていたが、規則の意味論（時点の順序）と実装の粒度（日）の差が、規則を無効化する形で作用した。",
+        "evidence_ref": "assurance/harness/orchestrator.py（_max_date が v[:10] で切り捨て。evaluator_outputs_latest / attack_evidence_latest がともに '2026-08-06' を返した）",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "プロセスモデルと実状態の不整合",
+          "defects-in-information-providing-systems",
+          "software-does-not-fail-requirements-defect"
+        ],
+        "why_it_seemed_adequate": "台帳の証拠も評価器の成果物も、それまで日付表記で扱われており、日単位の比較は表示にも判定にも同じ値でよいと読めた。日をまたいで実行される運用が通常であれば、日単位の比較は時点の比較と同じ結果を返し続ける。境界（同日内）に踏み込むまで、切り捨ては情報の損失ではなく表記の統一に見えた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "鮮度の判定は証拠側の時点情報を前提にするが、証拠 mutations-2026-08-04.json / mutations-2026-08-06.json は generated_at を持たず、日付以上の精度を構造的に持ち得なかった。読む側だけを精密にしても比較は成立しない。すなわち、統制が必要とする手掛かりを、その手掛かりを生成する側が最初から供給していなかった。",
+        "evidence_ref": "assurance/ledger/mutations-2026-08-06.json（generated_at なし）、fix_note（attack_evaluator.py が generated_at を書くよう追加）",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "defects-in-information-providing-systems",
+          "情報システム保有と有用性の乖離",
+          "利用可能な形式での情報提示"
+        ],
+        "why_it_seemed_adequate": "証拠の主目的は「どの変異を注入したか」の記録であり、ファイル名に日付が入っている以上、時点は十分に特定できていると読めた。鮮度の判定に使われるという下流の用途が、証拠を書く側の要求として明示されていなかったため、精度は用が足りているように見えた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "ATTACK_EVALUATOR が next_actions に現れない状態は、「攻撃済みだから挙がらない」と「判定が壊れているから挙がらない」の二つを区別しない。行動の不在という負の信号に対して、その不在の根拠（比較の両辺の値、判定が同値で決まったか）を出力する経路が無く、五反復連続の不在は体系側からは正常と区別できなかった。検出は、人が不審に思って評価器を直に呼び出したことによる。",
+        "evidence_ref": "detected_by（反復9の §0 で五反復連続の不在を不審に思い、evaluator_outputs_latest / attack_evidence_latest を直に呼んだ）",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "全コントロールループにフィードバック必須",
+          "controller-needs-concrete-feedback-channels",
+          "計画外変化の検出手段"
+        ],
+        "why_it_seemed_adequate": "決定論で次の行動を導く設計では、行動が挙がらないことは「その行動が要らない」という設計上の正しい出力である。正常出力と故障出力が同じ形（不在）をとることは、述語が正しい限り問題にならず、述語を疑う契機が体系の内側に用意されていなかった。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "INC-012（ATTACK_EVALUATOR が5反復飛ばされた）に対する是正は、そのとき名指しできた原因（状態を名指しできないこと）に向けられ、症状（この評価器が挙がらない）を生み出す原因の族——鮮度／実施済み判定が誤って真を返す経路一般——を覆わなかった。結果、同じ症状が別の原因で再現し、再現するまで是正の不足は観測されなかった。是正の有効性を、症状の消失ではなく族の被覆で確かめる工程が無い。",
+        "evidence_ref": "family（INC-012 と同じ症状を別の原因で再現した二度目）",
+        "flaw_type": "制御動作が誤っている",
+        "normative_refs": [
+          "symptom-vs-systemic-cause",
+          "systemic-cause-across-all-events",
+          "是正措置の有効性証拠の収集"
+        ],
+        "why_it_seemed_adequate": "INC-012 の是正後、ATTACK_EVALUATOR は挙がるようになり、症状は実際に消えていた。是正が効いたという観測は得られており、族の広さを問う追加の作業は、当面の証拠に照らして余分に見えた。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "ADR-120 は「成果物が証拠より新しければ未攻撃」という規則を統治木の側に確定させたが、その規則を強制する実装（orchestrator の鮮度述語）との対応関係が文書にも依存グラフにも現れず、規則と実装の粒度が食い違っていることを突き合わせる工程が存在しない。docs-audit は文書の整合を見るが、文書が指す実装の意味論までは見ない。",
+        "evidence_ref": "summary（ADR-120 が決めた規則が、実装の粒度で無効化されていた）",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "何をとなぜのトレース文書化",
+          "monitor-procedure-practice-gap",
+          "designer-vs-operator-mental-model"
+        ],
+        "why_it_seemed_adequate": "ADR は決定を記録するための文書であり、実装がその決定に従うことは実装側の責務として分離されていた。決定と実装を対応表で結ぶ作業は冗長に見え、また実装が決定どおりに書かれている限り対応表は何も検出しない。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "決定論試験と release-check は緑のまま通過し、merge 前に赤で止まらなかった。鮮度述語に対する試験は、日をまたいだ通常の並びを与えるものであり、同日内で証拠より後に成果物が生まれる境界の並びを与える試験が無かったため、切り捨ては試験の可視範囲の外にあった。",
+        "evidence_ref": ".github/workflows（本体試験・監査・release-check）、evidence（`latest_attack < latest_output` が偽）",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "監査の検出力評価",
+          "監査のすり抜け時に監査手順を是正",
+          "verify-all-hazard-preventing-systems"
+        ],
+        "why_it_seemed_adequate": "鮮度の判定は数行の比較であり、代表的な入力（古い証拠・新しい成果物／新しい証拠・古い成果物）で期待どおり動く。境界条件としての「同値」は、日付が違う運用が前提であれば発生しない入力に見え、試験を割く対象として選ばれなかった。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者が現在の保証状態を判断する手掛かりは、進捗報告・PR の diff・台帳である。いずれも「ATTACK_EVALUATOR が次の行動に挙がっていない」という表示までは届くが、その不在が実施の完了を意味するのか判定の誤りを意味するのかを分けて示さない。結果として、11 件の事故分析が未攻撃の評価器のもとで受理される間、是正を要求する契機が上位へ届くのは、人が下位の関数を直に呼んだ 11 反復後になった。既知の穴「報告が実施ではなく意図を書いていても人からは見分けにくい」と同型で、ここでは体系の出力そのものが実施と非実施を見分けられない形をしていた。",
+        "evidence_ref": "impact（正本は一度も ATTACK_EVALUATOR を挙げなかった／INC-012〜INC-022 の 11 件）",
+        "flaw_type": "手掛かりが遅い",
+        "normative_refs": [
+          "controller-needs-concrete-feedback-channels",
+          "audit-findings-must-be-closed",
+          "指摘欠点の是正完了追跡"
+        ],
+        "why_it_seemed_adequate": "保証レーンは決定論で次の行動を導く設計であり、レーンが挙げない行動は不要な行動である、という読みは設計の宣言どおりであった。台帳には事故分析が着実に積まれ、キャンペーンは進行しているように見えたため、挙がらない行動を疑う理由は手掛かりの側に現れなかった。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "「攻撃済み」という統制の単位が評価器全体になっているのに対し、実際の故障注入の対象は A1/A2/A3 の三経路に限られる。時点で比べるよう直した後も、証拠が新しいことは当該証拠が現在の評価器の全経路に対して行われたことを意味しない。統制が主張する被覆と、実際に検証された被覆の範囲が一致していない。",
+        "evidence_ref": "residual（注入の対象は A1/A2/A3 の三つで、評価器の全経路ではない）",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "全体健全性と部分健全性の分離評価",
+          "verify-decomposition-assumptions",
+          "refine-generic-constraints-to-specific-loss"
+        ],
+        "why_it_seemed_adequate": "故障注入は評価器という一つの成果物に対して走らせるものとして扱われており、注入した変異の集合は証拠側に記録されている。判定を成果物単位に置くことは、証拠の粒度に照らして自然で、経路単位に分けても当時は判定に使える情報が増えなかった。"
+      }
+    ],
+    "hazard": "保証レーンが、実施されていない検証を「実施済み」として自らのプロセスモデルに保持したまま、そのモデルに基づいて次の行動を決定論で導く状態。すなわち、統制側の内部状態（未攻撃／攻撃済み）と、制御対象の実状態（評価器が故障注入を経たか）とが不一致のまま、不一致を示す手掛かりが体系のどこにも現れない状態。",
+    "incident_id": "INC-023-attack-freshness-truncated-to-the-day",
+    "leading_indicators": [
+      {
+        "indicator": "鮮度・実施済みを判定する述語が「両辺が同値」で分岐した回数",
+        "observable": "orchestrator の鮮度判定における tie（等値）分岐のカウンタと、そのときの両辺の生の値",
+        "threshold": "1 反復でも tie が発生したら異常として扱い、その反復の next_actions を人手確認に回す。tie は本来まれで、粒度不足の直接の兆候である",
+        "version_independent": true,
+        "where": "assurance/harness/orchestrator.py の判定箇所（各反復の決定ログ／台帳へ出力）",
+        "why_version_independent": "リポジトリ正本のハーネス内で観測され、利用者環境の導入複製の版に依存しない"
+      },
+      {
+        "indicator": "鮮度判定に入る時点値の精度（日付止まりか時点か）",
+        "observable": "assurance/ledger/ 配下の証拠 JSON のうち generated_at を持たないファイルの件数と割合",
+        "threshold": "鮮度判定の入力となる証拠で generated_at 欠落が 1 件でもあれば赤。欠落したまま PASS を出さず、前提欠如へ倒す（ADR-129 と同じ向き）",
+        "version_independent": true,
+        "where": "assurance/ledger/（CI の release-check から走査）",
+        "why_version_independent": "リポジトリ正本の台帳ファイルを直接数えるため、導入複製の版に依存しない"
+      },
+      {
+        "indicator": "特定の行動（評価器）が next_actions に現れない連続反復数",
+        "observable": "反復ごとの next_actions 一覧における各行動 id の不在連続長",
+        "threshold": "同一行動が 3 反復連続で不在なら、その不在の根拠（判定の両辺の値）を明示的に出力させる。連続長が伸びること自体を異常の候補として扱う",
+        "version_independent": true,
+        "where": "保証レーンの反復記録（assurance/ledger/ の反復ログ）",
+        "why_version_independent": "ハーネスの反復記録から算出でき、プラグイン導入複製の版とは独立"
+      },
+      {
+        "indicator": "規則型 ADR と、それを強制する実装箇所との対応の欠落数",
+        "observable": "doctrine_docs 側の規則を述べた ADR のうち、実装参照（ファイル・関数）を持たないものの件数",
+        "threshold": "鮮度・実施済み・被覆に関わる規則型 ADR で対応の欠落が 1 件でもあれば要是正。ADR-120 のような規則が実装粒度で無効化される余地の先行指標",
+        "version_independent": true,
+        "where": "GOVERNANCE_TREE（doctrine_docs/_system/decided-facts.md）と docs-audit の findings / dep-graph の逆依存",
+        "why_version_independent": "CI がリポジトリ正本の統治木と実装を突き合わせる限り、導入複製の版に依存しない"
+      },
+      {
+        "indicator": "証拠の精度不足に対する警告が利用者セッションへ届いているか",
+        "observable": "HEARTBEAT が出す古び・精度不足の警告の発火状況と、SESSION_END_AUDIT が書く .claude/.cache/last-audit.json の内容",
+        "threshold": "精度不足を含む監査結果が last-audit.json に現れてから 1 セッション以内に警告が観測されなければ異常",
+        "version_independent": false,
+        "where": "HEARTBEAT（plugin/scripts/gov-heartbeat.py）／SESSION_END_AUDIT（plugin/scripts/docs-audit.py）",
+        "why_version_independent": "検出器自身が導入複製の側で動くため、複製の版が遅れれば警告も遅れる（INC-005 と同じ共通原因故障）。この指標だけを根拠にしないこと"
+      }
+    ],
+    "loss": "攻撃（故障注入）を経ていない評価器のもとで生産された事故分析 11 件（INC-012〜INC-022）が、「攻撃済みの評価器による成果物」として台帳に積まれ、保証キャンペーンの正本が根拠を欠いた保証水準を報告していた状態。違反した制約は ADR-120 が定めた「評価器の成果物が故障注入の証拠より新しければ、その成果物は未攻撃として扱い ATTACK_EVALUATOR を次の行動に挙げる」であり、この制約が 2026-08-06 の一日ぶん（少なくとも 11 反復ぶん）強制されなかった。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "全比較で両辺が同一精度の時点であり、日付止まりの入力が一つも現れない",
+        "hypothesis": "切り捨てによる精度の取りこぼしは鮮度判定に限らず、版の比較・監査の古び判定など、他の順序比較にも同型で存在する",
+        "oracle": "順序比較を行う全箇所について、両辺の値の精度（文字列長・型）を記録させ、精度が異なる／どちらかが日付止まりの比較を列挙する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "差集合が空、すなわち注入対象が評価器の全経路を覆っている",
+        "hypothesis": "時点で比べても「攻撃済み」の単位が評価器全体のままであるため、A1/A2/A3 以外の経路は未検証のまま攻撃済みと表示され続ける",
+        "oracle": "証拠に注入対象の経路 id を持たせ、評価器の経路一覧との差集合を出力する。差集合が空でなければ未検証経路が存在する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "挙がってから 1〜2 反復以内に攻撃が実行され、連続提示が伸びない",
+        "hypothesis": "generated_at を書くのは今後の攻撃だけなので、既存の mutations-2026-08-04 / -08-06 は精度不明のまま残り、次の攻撃が走るまで ATTACK_EVALUATOR が挙がり続ける。挙がり続ける行動は「常にある行動」として実質的に無視されるようになる",
+        "oracle": "ATTACK_EVALUATOR が next_actions に連続で現れた反復数と、その間に実際に攻撃が走った回数を対比する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "前提欠如による行動が少数にとどまり、いずれも数反復以内に解消される",
+        "hypothesis": "「前提が欠けたら PASS でなく前提欠如へ倒す」方針が広く適用されると、前提欠如の行動が大量に積まれ、真に緊急な行動と区別できなくなる（安全側の選択が可視性を下げる）",
+        "oracle": "前提欠如を理由に挙がった行動の件数と、それが実際に解消されるまでの反復数の分布を観測する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "全述語で偽陰性を作る入力が構成できない",
+        "hypothesis": "INC-012 と INC-023 に共通する族（実施済み判定が誤って真を返す）には、まだ三度目の別原因が存在する",
+        "oracle": "「ある行動を挙げない」と決める全ての述語について、偽陰性を作る入力を列挙する試験を書き、境界入力での挙動を確認する",
+        "severity": "P0"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "順序比較を行う判定を共通関数に集約し、両辺の精度を明示的に受け取る。精度が不足する（日付止まりの）入力に対しては真偽を返さず「前提欠如」を返す。表示用の切り捨て関数は判定経路から呼べないよう分離する（呼び出しを型または module 境界で禁じる）",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "判定の結果だけでなく、判定に入った両辺の値と、同値（tie）で分岐したか否かを反復ログへ出力する。行動が挙がらない場合はその根拠を必ず添える",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "tie 発生回数、証拠の generated_at 欠落件数、特定行動の不在連続長を先行指標として監視に追加し、閾値超過を CI と反復記録の双方に現す",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "鮮度述語に対し、同日内で証拠より後に成果物が生まれる境界の並びを与える退行試験を CI に追加し、切り捨てが再導入されたら merge 前に赤で止める",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "規則型 ADR に、その規則を強制する実装箇所への参照を必須とし、参照の欠落を docs-audit の findings として検出する（ADR-120 と鮮度述語を最初の対応として登録する）",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "既存の mutations-2026-08-04 / -08-06 を、時点精度が不明な証拠として明示的に印付けるか、再生成するかを決める。台帳の過去記録に手を入れる可否は所有者の判断",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "「攻撃済み」の判定単位を評価器全体から経路（A1/A2/A3 等）単位へ深めるかを決める。粒度を上げると未検証経路が可視化される一方、証拠の記録形式と台帳の互換性に影響する",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "INC-012 の是正が原因の族を覆っていなかった件として、「実施済み判定が誤って真を返す」全経路の棚卸しを継続調査に載せ、三度目の別原因の有無を確かめる",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "ATTACK_EVALUATOR / attack_evaluator.py を統制構造の要素として明示的に登録するか、あるいは実在しないことを確認する。本分析はこの点が未解決のまま組み立てられており、登録の可否が決まるまで結論の一部は仮のものとして扱う",
+        "kind": "調査の継続",
+        "owner_decision_required": true
+      },
+      {
+        "action": "修正が shipped=false であることを踏まえ、導入複製へ届くまでの間、鮮度判定に依存する行動の受理を保留するか否かを決める",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      }
+    ],
+    "systemic_factors": [
+      "述語の真偽だけを観測し、真偽が決まった根拠（入力の値と精度）を観測しない設計が、判定・試験・上位報告の三層に共通しており、独立に見える防護を同時に無効化した",
+      "「行動が挙がらない」という負の信号が、実施済みと判定故障の両方を意味しうる形で上位へ渡されており、両者を分ける情報が構造上どこにも付随しない",
+      "規則（ADR）と、その規則を強制する実装との対応が文書化・機械照合されておらず、規則が実装の粒度で静かに無効化されても誰の手掛かりにも現れない",
+      "証拠を書く側に、下流（鮮度判定）が要求する精度が伝わっておらず、供給側と利用側で必要な情報の想定が食い違っていた",
+      "是正の有効性が症状の消失で確認され、症状を生む原因の族が被覆されたかで確認されないため、同型の再発が二度目まで検出されない",
+      "保証キャンペーンが自らの成果物（事故分析）を積む速度で進捗を示す一方、その成果物を支える検証が実施されたかは別の弱い信号にしか現れず、進行しているという見えが検証の欠落を覆い隠しやすい"
+    ],
+    "unknowns": [
+      "【最優先】事象が名指しする ATTACK_EVALUATOR および assurance/harness/attack_evaluator.py は、与えられた統制構造の要素一覧のどこにも現れない。さらに本分析の作業環境にはリポジトリが存在せず（作業ディレクトリは空）、evidence_refs の三点（orchestrator.py・attack_evaluator.py・mutations-2026-08-06.json）の実在も内容も検証できていない。実在する要素として確認できたのは ASSURANCE_LANE の実体 assurance/harness/orchestrator.py と手掛かり assurance/ledger/ のみであり、攻撃評価器という機構そのものが統制構造の記述に欠けているのか、それとも事象の記録が実在しない機構を語っているのかを本分析は判定していない。以下の記述はいずれも事象の記録を入力として受け取った上での分析であり、実在の証明ではない。",
+      "INC-012〜INC-022 の 11 件の事故分析が、故障注入の対象である A1/A2/A3 の経路に実際に依存していたか。依存していなければ影響は 11 件全体には及ばない可能性があり、逆に別経路に依存していれば攻撃を走らせても被覆されない。",
+      "ADR-120・ADR-116・ADR-129 の本文を確認していないため、鮮度規則の正確な文言と、前提欠如へ倒す方針の適用範囲が事象の記録の要約以上には判っていない。",
+      "_max_date（切り捨て版）を鮮度以外の判定に使っている呼び出し元が他に残っているか。表示用として残す判断は docstring に記されたとされるが、他の判定経路の有無は未確認。",
+      "fixed=true / shipped=false であるため、修正が利用者環境の導入複製に届くまでの期間と、その間に同型の判定が走る回数が判っていない。",
+      "反復9より前の 8 反復で、ATTACK_EVALUATOR の不在に気づく契機が現れていたか（現れていて見送られたのか、そもそも現れなかったのか）。前者なら報告経路の設計、後者なら手掛かりの欠如という別の是正になる。",
+      "本分析は与えられた記録からの推測を含み、客観的事実の記述ではない。特に「なぜその時点では妥当に見えたか」の各記述は、当時の判断の記録ではなく、構造から再構成した合理的説明である。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は三つの層で同じ盲点を共有していた。第一に、鮮度の判定は「述語が真を返すか」だけを観測し、真偽が決まった根拠（両辺の値、同値で決まったか）を出力しないため、正しい真と粒度不足による偽陰性が同じ形をしていた。第二に、決定論試験も release-check も、鮮度述語を代表的な入力で確かめており、同日内の順序という境界を入力として持たなかった。第三に、上位（OWNER）が保証状態を読むための手掛かりは「次の行動の一覧」であり、行動の不在は実施済みとも判定故障とも読める両義の信号でありながら、両者を分ける情報が添えられていなかった。これらは独立した防護に見えて、いずれも「述語の出力を信じ、述語の入力精度を問わない」という同一の想定に依存しており、共通の体系的要因が三層を同時に無効化した。加えて、INC-012 の是正が症状（ATTACK_EVALUATOR が挙がらない）に向けられ原因の族に向けられなかったため、同型の再発を検出する仕掛けが是正の副産物としても残らなかった。修正（_max_instant の追加と generated_at の記録）は実装の欠陥を除去したが、fixed かつ shipped=false であり、また「判定の根拠が観測できない」という構造の性質は修正の対象に含まれていない。"
+  },
+  "control_structure_ids": [
+    "OWNER",
+    "CI_RELEASE_CHECK",
+    "SESSION_START_CONTRACT",
+    "HEARTBEAT",
+    "PRE_TOOL_GUARD",
+    "POST_TOOL_LINTER",
+    "SESSION_END_AUDIT",
+    "CAPTURE_NUDGE",
+    "PLUGIN_DISTRIBUTION",
+    "ASSURANCE_LANE",
+    "GOVERNANCE_TREE"
+  ],
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "duration_ms": 245244,
+  "errors": [],
+  "execution_kind": "real-sdk",
+  "flaws_with_citation_defect": [],
+  "generated_at": "2026-08-07T04:20:16Z",
+  "git_dirty": false,
+  "git_sha": "89599ab0d027dc1a8b3916fd46e8db67099db758",
+  "incident_evidence": {
+    "kind": "measurement",
+    "refs": [
+      "assurance/harness/orchestrator.py",
+      "assurance/harness/attack_evaluator.py",
+      "assurance/ledger/mutations-2026-08-06.json"
+    ],
+    "resolved": [
+      "assurance/harness/orchestrator.py",
+      "assurance/harness/attack_evaluator.py",
+      "assurance/ledger/mutations-2026-08-06.json"
+    ],
+    "unresolved": [],
+    "verifiable": true
+  },
+  "incident_id": "INC-023-attack-freshness-truncated-to-the-day",
+  "incident_sha256": "b9405fea993406f345aae9ab33e78a5232fe17e13aad830bb320b2cc24eea474",
+  "init": {
+    "claude_code_version": "2.1.221",
+    "model": "claude-opus-5",
+    "session_id": "9e166d03-1ffe-4f1b-9bba-7db033db2840",
+    "tools_count": 27
+  },
+  "kind": "cast-analysis",
+  "leading_indicators_defined": true,
+  "options": {
+    "allowed_tools": [],
+    "cwd": "/tmp/assurance-cast-enbyr_sx",
+    "effort": "high",
+    "max_budget_usd": 4.0,
+    "max_turns": 8,
+    "model": "claude-opus-5",
+    "setting_sources": [],
+    "timeout_s": 900
+  },
+  "oracle": "structured_output がレーン側再検証にも適合",
+  "principles_offered": 337,
+  "prompt_sha256": "e057a41f6ec072fb54106cbd45f14dcf5865c232101efe5e7abec461e2f9c175",
+  "rejected_flaws": [],
+  "result_meta": {
+    "duration_api_ms": 238569,
+    "is_error": false,
+    "num_turns": 5,
+    "session_id": "9e166d03-1ffe-4f1b-9bba-7db033db2840",
+    "subtype": "success",
+    "total_cost_usd": 1.0561064999999998,
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 57620,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 57620,
+      "cache_read_input_tokens": 170867,
+      "inference_geo": "not_available",
+      "input_tokens": 8,
+      "iterations": "list",
+      "output_tokens": 14281,
+      "server_tool_use": {
+        "web_fetch_requests": 0,
+        "web_search_requests": 0
+      },
+      "service_tier": "standard",
+      "speed": "standard"
+    }
+  },
+  "schema_sha256": "0d1643d5e16353723405302c1f6ffcf753915e2a4f27a3530e8ef9a9ee45cb46",
+  "sdk_version": "0.2.129",
+  "settled": true,
+  "status": "PASS",
+  "structured_output": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "次の行動を導く述語 `latest_attack < latest_output` の両辺が、共通ヘルパ _max_date を通ることで日単位（先頭10文字）に切り捨てられていた。同じ日のうちに後から生まれた評価器の成果物は、証拠と同値になり厳密不等号が偽になる。制御対象の実状態（この成果物は攻撃を経ていない）と、統制のプロセスモデル（攻撃済み）が、比較の粒度だけを理由に恒常的に乖離した。ADR-120 の規則そのものは正しく文書化されていたが、規則の意味論（時点の順序）と実装の粒度（日）の差が、規則を無効化する形で作用した。",
+        "evidence_ref": "assurance/harness/orchestrator.py（_max_date が v[:10] で切り捨て。evaluator_outputs_latest / attack_evidence_latest がともに '2026-08-06' を返した）",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "プロセスモデルと実状態の不整合",
+          "defects-in-information-providing-systems",
+          "software-does-not-fail-requirements-defect"
+        ],
+        "why_it_seemed_adequate": "台帳の証拠も評価器の成果物も、それまで日付表記で扱われており、日単位の比較は表示にも判定にも同じ値でよいと読めた。日をまたいで実行される運用が通常であれば、日単位の比較は時点の比較と同じ結果を返し続ける。境界（同日内）に踏み込むまで、切り捨ては情報の損失ではなく表記の統一に見えた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "鮮度の判定は証拠側の時点情報を前提にするが、証拠 mutations-2026-08-04.json / mutations-2026-08-06.json は generated_at を持たず、日付以上の精度を構造的に持ち得なかった。読む側だけを精密にしても比較は成立しない。すなわち、統制が必要とする手掛かりを、その手掛かりを生成する側が最初から供給していなかった。",
+        "evidence_ref": "assurance/ledger/mutations-2026-08-06.json（generated_at なし）、fix_note（attack_evaluator.py が generated_at を書くよう追加）",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "defects-in-information-providing-systems",
+          "情報システム保有と有用性の乖離",
+          "利用可能な形式での情報提示"
+        ],
+        "why_it_seemed_adequate": "証拠の主目的は「どの変異を注入したか」の記録であり、ファイル名に日付が入っている以上、時点は十分に特定できていると読めた。鮮度の判定に使われるという下流の用途が、証拠を書く側の要求として明示されていなかったため、精度は用が足りているように見えた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "ATTACK_EVALUATOR が next_actions に現れない状態は、「攻撃済みだから挙がらない」と「判定が壊れているから挙がらない」の二つを区別しない。行動の不在という負の信号に対して、その不在の根拠（比較の両辺の値、判定が同値で決まったか）を出力する経路が無く、五反復連続の不在は体系側からは正常と区別できなかった。検出は、人が不審に思って評価器を直に呼び出したことによる。",
+        "evidence_ref": "detected_by（反復9の §0 で五反復連続の不在を不審に思い、evaluator_outputs_latest / attack_evidence_latest を直に呼んだ）",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "全コントロールループにフィードバック必須",
+          "controller-needs-concrete-feedback-channels",
+          "計画外変化の検出手段"
+        ],
+        "why_it_seemed_adequate": "決定論で次の行動を導く設計では、行動が挙がらないことは「その行動が要らない」という設計上の正しい出力である。正常出力と故障出力が同じ形（不在）をとることは、述語が正しい限り問題にならず、述語を疑う契機が体系の内側に用意されていなかった。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "INC-012（ATTACK_EVALUATOR が5反復飛ばされた）に対する是正は、そのとき名指しできた原因（状態を名指しできないこと）に向けられ、症状（この評価器が挙がらない）を生み出す原因の族——鮮度／実施済み判定が誤って真を返す経路一般——を覆わなかった。結果、同じ症状が別の原因で再現し、再現するまで是正の不足は観測されなかった。是正の有効性を、症状の消失ではなく族の被覆で確かめる工程が無い。",
+        "evidence_ref": "family（INC-012 と同じ症状を別の原因で再現した二度目）",
+        "flaw_type": "制御動作が誤っている",
+        "normative_refs": [
+          "symptom-vs-systemic-cause",
+          "systemic-cause-across-all-events",
+          "是正措置の有効性証拠の収集"
+        ],
+        "why_it_seemed_adequate": "INC-012 の是正後、ATTACK_EVALUATOR は挙がるようになり、症状は実際に消えていた。是正が効いたという観測は得られており、族の広さを問う追加の作業は、当面の証拠に照らして余分に見えた。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "ADR-120 は「成果物が証拠より新しければ未攻撃」という規則を統治木の側に確定させたが、その規則を強制する実装（orchestrator の鮮度述語）との対応関係が文書にも依存グラフにも現れず、規則と実装の粒度が食い違っていることを突き合わせる工程が存在しない。docs-audit は文書の整合を見るが、文書が指す実装の意味論までは見ない。",
+        "evidence_ref": "summary（ADR-120 が決めた規則が、実装の粒度で無効化されていた）",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "何をとなぜのトレース文書化",
+          "monitor-procedure-practice-gap",
+          "designer-vs-operator-mental-model"
+        ],
+        "why_it_seemed_adequate": "ADR は決定を記録するための文書であり、実装がその決定に従うことは実装側の責務として分離されていた。決定と実装を対応表で結ぶ作業は冗長に見え、また実装が決定どおりに書かれている限り対応表は何も検出しない。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "決定論試験と release-check は緑のまま通過し、merge 前に赤で止まらなかった。鮮度述語に対する試験は、日をまたいだ通常の並びを与えるものであり、同日内で証拠より後に成果物が生まれる境界の並びを与える試験が無かったため、切り捨ては試験の可視範囲の外にあった。",
+        "evidence_ref": ".github/workflows（本体試験・監査・release-check）、evidence（`latest_attack < latest_output` が偽）",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "監査の検出力評価",
+          "監査のすり抜け時に監査手順を是正",
+          "verify-all-hazard-preventing-systems"
+        ],
+        "why_it_seemed_adequate": "鮮度の判定は数行の比較であり、代表的な入力（古い証拠・新しい成果物／新しい証拠・古い成果物）で期待どおり動く。境界条件としての「同値」は、日付が違う運用が前提であれば発生しない入力に見え、試験を割く対象として選ばれなかった。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者が現在の保証状態を判断する手掛かりは、進捗報告・PR の diff・台帳である。いずれも「ATTACK_EVALUATOR が次の行動に挙がっていない」という表示までは届くが、その不在が実施の完了を意味するのか判定の誤りを意味するのかを分けて示さない。結果として、11 件の事故分析が未攻撃の評価器のもとで受理される間、是正を要求する契機が上位へ届くのは、人が下位の関数を直に呼んだ 11 反復後になった。既知の穴「報告が実施ではなく意図を書いていても人からは見分けにくい」と同型で、ここでは体系の出力そのものが実施と非実施を見分けられない形をしていた。",
+        "evidence_ref": "impact（正本は一度も ATTACK_EVALUATOR を挙げなかった／INC-012〜INC-022 の 11 件）",
+        "flaw_type": "手掛かりが遅い",
+        "normative_refs": [
+          "controller-needs-concrete-feedback-channels",
+          "audit-findings-must-be-closed",
+          "指摘欠点の是正完了追跡"
+        ],
+        "why_it_seemed_adequate": "保証レーンは決定論で次の行動を導く設計であり、レーンが挙げない行動は不要な行動である、という読みは設計の宣言どおりであった。台帳には事故分析が着実に積まれ、キャンペーンは進行しているように見えたため、挙がらない行動を疑う理由は手掛かりの側に現れなかった。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "「攻撃済み」という統制の単位が評価器全体になっているのに対し、実際の故障注入の対象は A1/A2/A3 の三経路に限られる。時点で比べるよう直した後も、証拠が新しいことは当該証拠が現在の評価器の全経路に対して行われたことを意味しない。統制が主張する被覆と、実際に検証された被覆の範囲が一致していない。",
+        "evidence_ref": "residual（注入の対象は A1/A2/A3 の三つで、評価器の全経路ではない）",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "全体健全性と部分健全性の分離評価",
+          "verify-decomposition-assumptions",
+          "refine-generic-constraints-to-specific-loss"
+        ],
+        "why_it_seemed_adequate": "故障注入は評価器という一つの成果物に対して走らせるものとして扱われており、注入した変異の集合は証拠側に記録されている。判定を成果物単位に置くことは、証拠の粒度に照らして自然で、経路単位に分けても当時は判定に使える情報が増えなかった。"
+      }
+    ],
+    "hazard": "保証レーンが、実施されていない検証を「実施済み」として自らのプロセスモデルに保持したまま、そのモデルに基づいて次の行動を決定論で導く状態。すなわち、統制側の内部状態（未攻撃／攻撃済み）と、制御対象の実状態（評価器が故障注入を経たか）とが不一致のまま、不一致を示す手掛かりが体系のどこにも現れない状態。",
+    "incident_id": "INC-023-attack-freshness-truncated-to-the-day",
+    "leading_indicators": [
+      {
+        "indicator": "鮮度・実施済みを判定する述語が「両辺が同値」で分岐した回数",
+        "observable": "orchestrator の鮮度判定における tie（等値）分岐のカウンタと、そのときの両辺の生の値",
+        "threshold": "1 反復でも tie が発生したら異常として扱い、その反復の next_actions を人手確認に回す。tie は本来まれで、粒度不足の直接の兆候である",
+        "version_independent": true,
+        "where": "assurance/harness/orchestrator.py の判定箇所（各反復の決定ログ／台帳へ出力）",
+        "why_version_independent": "リポジトリ正本のハーネス内で観測され、利用者環境の導入複製の版に依存しない"
+      },
+      {
+        "indicator": "鮮度判定に入る時点値の精度（日付止まりか時点か）",
+        "observable": "assurance/ledger/ 配下の証拠 JSON のうち generated_at を持たないファイルの件数と割合",
+        "threshold": "鮮度判定の入力となる証拠で generated_at 欠落が 1 件でもあれば赤。欠落したまま PASS を出さず、前提欠如へ倒す（ADR-129 と同じ向き）",
+        "version_independent": true,
+        "where": "assurance/ledger/（CI の release-check から走査）",
+        "why_version_independent": "リポジトリ正本の台帳ファイルを直接数えるため、導入複製の版に依存しない"
+      },
+      {
+        "indicator": "特定の行動（評価器）が next_actions に現れない連続反復数",
+        "observable": "反復ごとの next_actions 一覧における各行動 id の不在連続長",
+        "threshold": "同一行動が 3 反復連続で不在なら、その不在の根拠（判定の両辺の値）を明示的に出力させる。連続長が伸びること自体を異常の候補として扱う",
+        "version_independent": true,
+        "where": "保証レーンの反復記録（assurance/ledger/ の反復ログ）",
+        "why_version_independent": "ハーネスの反復記録から算出でき、プラグイン導入複製の版とは独立"
+      },
+      {
+        "indicator": "規則型 ADR と、それを強制する実装箇所との対応の欠落数",
+        "observable": "doctrine_docs 側の規則を述べた ADR のうち、実装参照（ファイル・関数）を持たないものの件数",
+        "threshold": "鮮度・実施済み・被覆に関わる規則型 ADR で対応の欠落が 1 件でもあれば要是正。ADR-120 のような規則が実装粒度で無効化される余地の先行指標",
+        "version_independent": true,
+        "where": "GOVERNANCE_TREE（doctrine_docs/_system/decided-facts.md）と docs-audit の findings / dep-graph の逆依存",
+        "why_version_independent": "CI がリポジトリ正本の統治木と実装を突き合わせる限り、導入複製の版に依存しない"
+      },
+      {
+        "indicator": "証拠の精度不足に対する警告が利用者セッションへ届いているか",
+        "observable": "HEARTBEAT が出す古び・精度不足の警告の発火状況と、SESSION_END_AUDIT が書く .claude/.cache/last-audit.json の内容",
+        "threshold": "精度不足を含む監査結果が last-audit.json に現れてから 1 セッション以内に警告が観測されなければ異常",
+        "version_independent": false,
+        "where": "HEARTBEAT（plugin/scripts/gov-heartbeat.py）／SESSION_END_AUDIT（plugin/scripts/docs-audit.py）",
+        "why_version_independent": "検出器自身が導入複製の側で動くため、複製の版が遅れれば警告も遅れる（INC-005 と同じ共通原因故障）。この指標だけを根拠にしないこと"
+      }
+    ],
+    "loss": "攻撃（故障注入）を経ていない評価器のもとで生産された事故分析 11 件（INC-012〜INC-022）が、「攻撃済みの評価器による成果物」として台帳に積まれ、保証キャンペーンの正本が根拠を欠いた保証水準を報告していた状態。違反した制約は ADR-120 が定めた「評価器の成果物が故障注入の証拠より新しければ、その成果物は未攻撃として扱い ATTACK_EVALUATOR を次の行動に挙げる」であり、この制約が 2026-08-06 の一日ぶん（少なくとも 11 反復ぶん）強制されなかった。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "全比較で両辺が同一精度の時点であり、日付止まりの入力が一つも現れない",
+        "hypothesis": "切り捨てによる精度の取りこぼしは鮮度判定に限らず、版の比較・監査の古び判定など、他の順序比較にも同型で存在する",
+        "oracle": "順序比較を行う全箇所について、両辺の値の精度（文字列長・型）を記録させ、精度が異なる／どちらかが日付止まりの比較を列挙する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "差集合が空、すなわち注入対象が評価器の全経路を覆っている",
+        "hypothesis": "時点で比べても「攻撃済み」の単位が評価器全体のままであるため、A1/A2/A3 以外の経路は未検証のまま攻撃済みと表示され続ける",
+        "oracle": "証拠に注入対象の経路 id を持たせ、評価器の経路一覧との差集合を出力する。差集合が空でなければ未検証経路が存在する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "挙がってから 1〜2 反復以内に攻撃が実行され、連続提示が伸びない",
+        "hypothesis": "generated_at を書くのは今後の攻撃だけなので、既存の mutations-2026-08-04 / -08-06 は精度不明のまま残り、次の攻撃が走るまで ATTACK_EVALUATOR が挙がり続ける。挙がり続ける行動は「常にある行動」として実質的に無視されるようになる",
+        "oracle": "ATTACK_EVALUATOR が next_actions に連続で現れた反復数と、その間に実際に攻撃が走った回数を対比する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "前提欠如による行動が少数にとどまり、いずれも数反復以内に解消される",
+        "hypothesis": "「前提が欠けたら PASS でなく前提欠如へ倒す」方針が広く適用されると、前提欠如の行動が大量に積まれ、真に緊急な行動と区別できなくなる（安全側の選択が可視性を下げる）",
+        "oracle": "前提欠如を理由に挙がった行動の件数と、それが実際に解消されるまでの反復数の分布を観測する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "全述語で偽陰性を作る入力が構成できない",
+        "hypothesis": "INC-012 と INC-023 に共通する族（実施済み判定が誤って真を返す）には、まだ三度目の別原因が存在する",
+        "oracle": "「ある行動を挙げない」と決める全ての述語について、偽陰性を作る入力を列挙する試験を書き、境界入力での挙動を確認する",
+        "severity": "P0"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "順序比較を行う判定を共通関数に集約し、両辺の精度を明示的に受け取る。精度が不足する（日付止まりの）入力に対しては真偽を返さず「前提欠如」を返す。表示用の切り捨て関数は判定経路から呼べないよう分離する（呼び出しを型または module 境界で禁じる）",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "判定の結果だけでなく、判定に入った両辺の値と、同値（tie）で分岐したか否かを反復ログへ出力する。行動が挙がらない場合はその根拠を必ず添える",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "tie 発生回数、証拠の generated_at 欠落件数、特定行動の不在連続長を先行指標として監視に追加し、閾値超過を CI と反復記録の双方に現す",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "鮮度述語に対し、同日内で証拠より後に成果物が生まれる境界の並びを与える退行試験を CI に追加し、切り捨てが再導入されたら merge 前に赤で止める",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "規則型 ADR に、その規則を強制する実装箇所への参照を必須とし、参照の欠落を docs-audit の findings として検出する（ADR-120 と鮮度述語を最初の対応として登録する）",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "既存の mutations-2026-08-04 / -08-06 を、時点精度が不明な証拠として明示的に印付けるか、再生成するかを決める。台帳の過去記録に手を入れる可否は所有者の判断",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "「攻撃済み」の判定単位を評価器全体から経路（A1/A2/A3 等）単位へ深めるかを決める。粒度を上げると未検証経路が可視化される一方、証拠の記録形式と台帳の互換性に影響する",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "INC-012 の是正が原因の族を覆っていなかった件として、「実施済み判定が誤って真を返す」全経路の棚卸しを継続調査に載せ、三度目の別原因の有無を確かめる",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "ATTACK_EVALUATOR / attack_evaluator.py を統制構造の要素として明示的に登録するか、あるいは実在しないことを確認する。本分析はこの点が未解決のまま組み立てられており、登録の可否が決まるまで結論の一部は仮のものとして扱う",
+        "kind": "調査の継続",
+        "owner_decision_required": true
+      },
+      {
+        "action": "修正が shipped=false であることを踏まえ、導入複製へ届くまでの間、鮮度判定に依存する行動の受理を保留するか否かを決める",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      }
+    ],
+    "systemic_factors": [
+      "述語の真偽だけを観測し、真偽が決まった根拠（入力の値と精度）を観測しない設計が、判定・試験・上位報告の三層に共通しており、独立に見える防護を同時に無効化した",
+      "「行動が挙がらない」という負の信号が、実施済みと判定故障の両方を意味しうる形で上位へ渡されており、両者を分ける情報が構造上どこにも付随しない",
+      "規則（ADR）と、その規則を強制する実装との対応が文書化・機械照合されておらず、規則が実装の粒度で静かに無効化されても誰の手掛かりにも現れない",
+      "証拠を書く側に、下流（鮮度判定）が要求する精度が伝わっておらず、供給側と利用側で必要な情報の想定が食い違っていた",
+      "是正の有効性が症状の消失で確認され、症状を生む原因の族が被覆されたかで確認されないため、同型の再発が二度目まで検出されない",
+      "保証キャンペーンが自らの成果物（事故分析）を積む速度で進捗を示す一方、その成果物を支える検証が実施されたかは別の弱い信号にしか現れず、進行しているという見えが検証の欠落を覆い隠しやすい"
+    ],
+    "unknowns": [
+      "【最優先】事象が名指しする ATTACK_EVALUATOR および assurance/harness/attack_evaluator.py は、与えられた統制構造の要素一覧のどこにも現れない。さらに本分析の作業環境にはリポジトリが存在せず（作業ディレクトリは空）、evidence_refs の三点（orchestrator.py・attack_evaluator.py・mutations-2026-08-06.json）の実在も内容も検証できていない。実在する要素として確認できたのは ASSURANCE_LANE の実体 assurance/harness/orchestrator.py と手掛かり assurance/ledger/ のみであり、攻撃評価器という機構そのものが統制構造の記述に欠けているのか、それとも事象の記録が実在しない機構を語っているのかを本分析は判定していない。以下の記述はいずれも事象の記録を入力として受け取った上での分析であり、実在の証明ではない。",
+      "INC-012〜INC-022 の 11 件の事故分析が、故障注入の対象である A1/A2/A3 の経路に実際に依存していたか。依存していなければ影響は 11 件全体には及ばない可能性があり、逆に別経路に依存していれば攻撃を走らせても被覆されない。",
+      "ADR-120・ADR-116・ADR-129 の本文を確認していないため、鮮度規則の正確な文言と、前提欠如へ倒す方針の適用範囲が事象の記録の要約以上には判っていない。",
+      "_max_date（切り捨て版）を鮮度以外の判定に使っている呼び出し元が他に残っているか。表示用として残す判断は docstring に記されたとされるが、他の判定経路の有無は未確認。",
+      "fixed=true / shipped=false であるため、修正が利用者環境の導入複製に届くまでの期間と、その間に同型の判定が走る回数が判っていない。",
+      "反復9より前の 8 反復で、ATTACK_EVALUATOR の不在に気づく契機が現れていたか（現れていて見送られたのか、そもそも現れなかったのか）。前者なら報告経路の設計、後者なら手掛かりの欠如という別の是正になる。",
+      "本分析は与えられた記録からの推測を含み、客観的事実の記述ではない。特に「なぜその時点では妥当に見えたか」の各記述は、当時の判断の記録ではなく、構造から再構成した合理的説明である。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は三つの層で同じ盲点を共有していた。第一に、鮮度の判定は「述語が真を返すか」だけを観測し、真偽が決まった根拠（両辺の値、同値で決まったか）を出力しないため、正しい真と粒度不足による偽陰性が同じ形をしていた。第二に、決定論試験も release-check も、鮮度述語を代表的な入力で確かめており、同日内の順序という境界を入力として持たなかった。第三に、上位（OWNER）が保証状態を読むための手掛かりは「次の行動の一覧」であり、行動の不在は実施済みとも判定故障とも読める両義の信号でありながら、両者を分ける情報が添えられていなかった。これらは独立した防護に見えて、いずれも「述語の出力を信じ、述語の入力精度を問わない」という同一の想定に依存しており、共通の体系的要因が三層を同時に無効化した。加えて、INC-012 の是正が症状（ATTACK_EVALUATOR が挙がらない）に向けられ原因の族に向けられなかったため、同型の再発を検出する仕掛けが是正の副産物としても残らなかった。修正（_max_instant の追加と generated_at の記録）は実装の欠陥を除去したが、fixed かつ shipped=false であり、また「判定の根拠が観測できない」という構造の性質は修正の対象に含まれていない。"
+  }
+}

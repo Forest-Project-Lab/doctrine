@@ -408,7 +408,7 @@
       "fixed": true,
       "shipped": false,
       "fix_note": "_max_instant を足し、鮮度の判定を時点で比べるようにした。日付だけの証拠はその日の**始まり**として並ぶので、同じ日の成果物を覆わない（安全側。前提が欠けたら PASS ではなく前提欠如へ倒す ADR-129 と同じ向き）。あわせて attack_evaluator.py が generated_at を書くようにした —— 読む段だけ精密にしても、証拠の側が日付だけなら比べられない。表示用の _max_date は残し、鮮度の判定には使わないと docstring に明記した",
-      "cast_analysis": "pending",
+      "cast_analysis": "done",
       "evidence_kind": "measurement",
       "evidence_refs": [
         "assurance/harness/orchestrator.py",
@@ -417,7 +417,9 @@
       ],
       "evidence": "_max_date は `v[:10]` で切り捨てる（先頭10文字＝YYYY-MM-DD）。evaluator_outputs_latest も attack_evidence_latest もこれを通していたため、両方が '2026-08-06' を返し `latest_attack < latest_output` が偽になっていた。git merge-base --is-ancestor 53db6a4 <各 cast の git_sha> で数えると、攻撃のコミットの子孫で生まれた事故分析は 11 件（INC-012 04:03Z・INC-013 02:55Z・INC-014 03:00Z・INC-015 06:57Z・INC-016 08:59Z・INC-017 08:53Z・INC-018 11:56Z・INC-019 14:21Z・INC-020 14:26Z・INC-021 16:28Z・INC-022 23:50Z）",
       "residual": "時点で比べても、**攻撃が何を覆ったか**は分からない。証拠が新しいことは、その証拠が現在の評価器に対して行われたことを意味しない（注入の対象は A1/A2/A3 の三つで、評価器の全経路ではない）。粒度をもう一段深める（どの評価器のどの経路が攻撃されたか）判断は、本事象の分析を待つ。また mutations-2026-08-04 / -08-06 は generated_at を持たないままなので、次の攻撃が走るまで ATTACK_EVALUATOR は挙がり続ける（消えない行動ではない —— 攻撃を走らせれば消える）",
-      "family": "ADR-120 が決めた規則が実装の粒度で無効化される形。INC-012 と同じ症状（ATTACK_EVALUATOR が挙がらない）を別の原因で再現した二度目であり、症状に対する修正が原因の族を覆っていなかったことを示す"
+      "family": "ADR-120 が決めた規則が実装の粒度で無効化される形。INC-012 と同じ症状（ATTACK_EVALUATOR が挙がらない）を別の原因で再現した二度目であり、症状に対する修正が原因の族を覆っていなかったことを示す",
+      "cast_analysis_ref": "assurance/ledger/cast/INC-023-attack-freshness-truncated-to-the-day.json",
+      "cast_analyzed_at": "2026-08-07T04:20:16Z"
     }
   ]
 }
