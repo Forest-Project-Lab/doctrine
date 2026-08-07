@@ -77,6 +77,33 @@ class SeedFactsTest(unittest.TestCase):
         params = inspect.signature(discover.seed_facts).parameters
         self.assertEqual(list(params), ["limit_per_kind"])
 
+    def test_cost_accepted_incident_is_not_a_seed(self):
+        """受容済み（cost_accepted）の形を新しい仮説の種にしない（ADR-144）。
+
+        所有者が費用として受け入れた形を創出の種へ流すと、裁定済みの選択肢を
+        毎反復問い直す「消えない行動」になる。未修正でも受容済みなら種から外す。
+        """
+        import json
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "incidents.json")
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump({"incidents": [
+                    {"id": "INC-open", "fixed": False,
+                     "summary": "未修正で未受容"},
+                    {"id": "INC-acc", "fixed": False, "cost_accepted": True,
+                     "cost_accepted_by": "所有者裁定 2026-08-07（会話）",
+                     "summary": "未修正だが費用として受容済み"}]}, f,
+                    ensure_ascii=False)
+            original = discover.INCIDENTS_PATH
+            discover.INCIDENTS_PATH = path
+            try:
+                facts = discover.seed_facts()
+            finally:
+                discover.INCIDENTS_PATH = original
+        self.assertTrue(any("INC-open" in fact for fact in facts), facts)
+        self.assertEqual([fact for fact in facts if "INC-acc" in fact], [])
+
 
 class ChallengeIndependenceTest(unittest.TestCase):
     def test_challenge_prompt_takes_only_the_structured_output(self):

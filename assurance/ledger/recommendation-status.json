@@ -18,8 +18,9 @@
     {
       "incident_id": "INC-001-sessionend-audit-gap",
       "index": 2,
-      "state": "pending",
-      "note": "宣言と実装が乖離している。control_structure.py:67,100 は .claude/.cache/last-audit.json を feedback として宣言するが、harness にこれを実際に stat する経路は無い。ADR-124 の不変条件は台帳の中しか見ないので、この乖離は赤にならない。"
+      "state": "landed",
+      "note": "着地した（ADR-144）。正本の側（ASSURANCE_LANE）が last-audit.json を実際に stat する経路を observe_assumptions.py が持つ —— ASM-001 の観測が generated_at と mtime を読み、ASM-002 の観測が checks_run 集合を現行 AUDIT_CHECKS と照合する（監査は走らせず、import できない環境は UNKNOWN へ倒す）。複製側の自己申告に依存しない外形観測がこれである。control_structure.py の feedback 宣言には突合の註記を足し、宣言と実装の乖離（この行の旧 note が名指しした形）を閉じた。観測は observation_history へ追記だけで記帳される。",
+      "evidence_ref": "assurance/harness/observe_assumptions.py（observe_asm_001 / observe_asm_002）／assurance/tests/test_observe_assumptions.py／assurance/harness/control_structure.py の SESSION_END_AUDIT の突合の註記"
     },
     {
       "incident_id": "INC-002-termcheck-ascii-substring",
@@ -91,8 +92,9 @@
     {
       "incident_id": "INC-001-sessionend-audit-gap",
       "index": 8,
-      "state": "pending",
-      "note": "器は出来たが基準が無い。ADR-126 の想定の登記簿が『先行指標＋観測＋状態語彙』で追跡の器を与えており、ASM-001 がこの事象を追っている。残るのは『連続 N セッション』のN を決めることと、その判定を機械へ載せること。N の決定はレーン内の裁量であって所有者判断の六類型に当たらない（ADR-127）。"
+      "state": "landed",
+      "note": "着地した（ADR-144）。旧 note の残件『N を決めることと、判定を機械へ載せること』の両方が済んだ —— N=2 と定め（一つなら現行セッションで説明がつく。ASM-001 の abnormal_when の文面）、observe_asm_001 が要約より新しいセッションの印を機械で数えて閾値と比べ、観測の文に N を書き出す。追跡は observation_history が持つ。是正完了の宣言はまだできない —— 2026-08-07 の乾式実測は印 7 件で FAIL 側であり、完了（実行記録を伴う監査が連続 N セッション成立）は同じ計数が 0 のまま続くことを履歴で示して初めて言える。",
+      "evidence_ref": "assurance/harness/observe_assumptions.py の CONSECUTIVE_SESSIONS_THRESHOLD（N=2）と observe_asm_001／assurance/tests/test_observe_assumptions.py の test_asm001_two_newer_sessions_raise_the_indicator"
     },
     {
       "incident_id": "INC-002-termcheck-ascii-substring",
@@ -140,14 +142,16 @@
     {
       "incident_id": "INC-003-sdk-error-opacity",
       "index": 2,
-      "state": "pending",
-      "note": "注入の実測は既に在るが、決定論試験にはなっていない。mutations-2026-08-04.json が『認証喪失・不正 model という異なる故障族が SDK 例外の文言では区別不能』を記録済み。ただしこれは実 SDK を要する故障注入の記録であって、CI で赤にできる決定論試験ではない。残る作業は、例外表面を fixture に固定して classify_error を凍結する試験を書くこと（通信に依存する試験は作らない。ADR-129 で merge_gate に採ったのと同じ形）。"
+      "state": "landed",
+      "note": "着地した。mutations-2026-08-04 の実測表面（M1 認証遮断・M3 不正 model が同一文言『Claude Code returned an error result: success』）を fixture に固定し、classify_error が両者を同じ UNKNOWN へ落とす現状を決定論試験として凍結した（通信に依存しない。ADR-129 と同じ形）。凍結するのは事実であって是認ではない —— 区別できないのは SDK 例外表面が族を運ばないためで、分類が変わったら表面か実装が動いた合図として凍結を見直す。族の区別そのものの是正は推奨#0 が持つ。",
+      "evidence_ref": "assurance/tests/test_prompts.py の MeasuredSurfaceFixtureTest"
     },
     {
       "incident_id": "INC-003-sdk-error-opacity",
       "index": 3,
-      "state": "pending",
-      "note": "集計の経路は無い。UNKNOWN の件数・比率も、分類不能のまま滞留した日数も、orchestrator.py status は出していない。なお『所有者へ届ける経路』は既に在る —— status の出力と反復の報告の規定形式がそれで、新しい通知機構は要らない。足すべきは集計であって経路ではない。"
+      "state": "landed",
+      "note": "着地した。orchestrator status が unknown_aging（件数と最古の日付。mutations の UNKNOWN 注入と、事象の status_at_detection / next_step の文面含有）を毎回数えて出す。旧 note の判断のとおり経路は既在（status と規定形式の報告）なので、足したのは集計だけ。比率と滞留日数の換算はしない —— 実時計を読まない規律（ADR-094）の下で出せるのは件数と最古の日付までで、閾値の設定は運用の側に残る。UNKNOWN 件数ゼロを健全さと読まない（ASM-004 の rejected_indicators）。",
+      "evidence_ref": "assurance/harness/orchestrator.py の unknown_aging（status の unknown_aging 項）／assurance/tests/test_orchestrator.py の UnknownAgingTest"
     },
     {
       "incident_id": "INC-003-sdk-error-opacity",

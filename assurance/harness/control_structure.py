@@ -97,6 +97,11 @@ ELEMENTS = (
         "kind": "sensor",
         "implemented_by": "plugin/scripts/docs-audit.py",
         "control_actions": ["統治木を全件走査し、要約を .claude/.cache へ書く"],
+        # 宣言と実装の突合（INC-001 推奨#2 の着地）: この feedback の宣言を
+        # 実際に stat する経路は observe_assumptions.py が持つ —— ASM-001 の
+        # 観測が last-audit.json の generated_at と mtime を読み、ASM-002 の
+        # 観測が checks_run 集合を現行 AUDIT_CHECKS と照合する。複製側の
+        # 自己申告に依存しない外形観測がこれである（ADR-144）。
         "feedback": [".claude/.cache/last-audit.json（次セッションの注入と鼓動が読む）"],
         "known_gaps": [
             "SessionEnd が発火しない終了（強制終了・環境の落ち）では走らず、"

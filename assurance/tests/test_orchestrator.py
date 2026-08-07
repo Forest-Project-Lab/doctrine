@@ -451,6 +451,18 @@ class LedgerKindTest(unittest.TestCase):
         """実台帳に、どの宣言にも当たらない成果物が無い（差集合が空）。"""
         self.assertEqual(orchestrator.undeclared_ledger_files(), [])
 
+    def test_rulings_kind_is_declared_unread(self):
+        """所有者裁定の監査証跡は「読まない理由」の側に立つ（ADR-145）。
+
+        行動は ADR-145 と SKILL §7.2 が運ぶ。裁定の JSON を正本の行動導出へ
+        読ませると、期限（キャンペーン終了報告の merge）を過ぎた裁定が機械の
+        中で生き続ける。
+        """
+        entry = orchestrator.ledger_kind_of("rulings/2026-08-07-bulk-campaign.json")
+        self.assertIsNotNone(entry)
+        self.assertEqual(tuple(entry.get("read_by") or ()), ())
+        self.assertIn("ADR-145", entry["why_not_read"])
+
     def test_novel_artifact_kind_turns_the_canon_red(self):
         """未知の種別を台帳へ注入したら赤で止まる。
 
@@ -918,6 +930,46 @@ class AssumptionRegisterTest(unittest.TestCase):
         self.assertIn("REVIEW_ASSUMPTION", orchestrator.NAMEABLE_STATES)
         self.assertNotIn("REVIEW_ASSUMPTION", orchestrator.WITHIN_CYCLE_STATES)
 
+    def test_verified_by_must_be_null_or_a_string(self):
+        """verified_by は null か文字列（ADR-144。検証の主体と方式の文）。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._write(tmp, [{"id": "ASM-X", "verified_by": 123,
+                                      "leading_indicators": [self._indicator()]}])
+            problems = orchestrator._validate_assumptions(path, incident_ids=set())
+            self.assertTrue(any("null か文字列" in p for p in problems), problems)
+
+    def test_observation_history_entries_are_validated(self):
+        """機械の観測（observe_assumptions.py）の追記は、日付・状態語彙・
+        観測者の三点を持つこと（ADR-144。日付なしの観測は観測ではない）。"""
+        cases = (
+            ({"state": "PASS", "observed_by": "x"}, "日付が無い"),
+            ({"date": "2026-08-07", "state": "緑", "observed_by": "x"},
+             "語彙に無い"),
+            ({"date": "2026-08-07", "state": "PASS"}, "観測者が無い"),
+        )
+        for entry, expected in cases:
+            with tempfile.TemporaryDirectory() as tmp:
+                path = self._write(tmp, [{
+                    "id": "ASM-X", "verified_by": None,
+                    "leading_indicators": [self._indicator()],
+                    "observation_history": [entry]}])
+                problems = orchestrator._validate_assumptions(
+                    path, incident_ids=set())
+                self.assertTrue(any(expected in p for p in problems),
+                                (entry, problems))
+
+    def test_well_formed_observation_history_is_green(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._write(tmp, [{
+                "id": "ASM-X", "verified_by": None,
+                "leading_indicators": [self._indicator()],
+                "observation_history": [
+                    {"date": "2026-08-07", "state": "FAIL",
+                     "observed": ["o"],
+                     "observed_by": "observe_assumptions.py (決定論)"}]}])
+            self.assertEqual(
+                orchestrator._validate_assumptions(path, incident_ids=set()), [])
+
 
 if __name__ == "__main__":
     unittest.main()
@@ -1125,3 +1177,133 @@ class PriorityOrderTest(unittest.TestCase):
                      "assigned_at": "2026-08-05T00:00:00Z",
                      "assigned_by": {"index_sha256": "0" * 64}}
                     for i in range(stale_n)]}, f)
+
+
+class ClosureVocabularyTest(unittest.TestCase):
+    """事象のクローズの語彙（ADR-144）。
+
+    受容（cost_accepted）は裁定者を、出荷（shipped）は照合の参照を必ず持つ。
+    fixed:true と cost_accepted:true の両立は赤 —— 直ったなら受容は要らない。
+    """
+
+    def _gate(self, incident):
+        return orchestrator._validate_closure_vocabulary(incidents=[incident])
+
+    def test_cost_accepted_without_a_decider_is_red(self):
+        problems = self._gate(
+            {"id": "INC-099-x", "cost_accepted": True, "fixed": False})
+        self.assertTrue(any("cost_accepted_by" in p for p in problems),
+                        problems)
+
+    def test_cost_accepted_with_a_decider_is_green(self):
+        self.assertEqual(self._gate(
+            {"id": "INC-099-x", "cost_accepted": True, "fixed": False,
+             "cost_accepted_by": "所有者裁定 2026-08-07（会話）"}), [])
+
+    def test_fixed_and_cost_accepted_together_are_red(self):
+        """直ったなら受容は要らない。両立は語彙の矛盾として赤にする。"""
+        problems = self._gate(
+            {"id": "INC-099-x", "fixed": True, "cost_accepted": True,
+             "cost_accepted_by": "誰か"})
+        self.assertTrue(any("両方持つ" in p for p in problems), problems)
+
+    def test_cost_accepted_without_a_fixed_field_is_tolerated(self):
+        """fixed 欄の無い受容は判らないものとして通す（赤にするのは明示の
+        矛盾だけ。判らないものを矛盾と読み替えない）。"""
+        self.assertEqual(self._gate(
+            {"id": "INC-099-x", "cost_accepted": True,
+             "cost_accepted_by": "誰か"}), [])
+
+    def test_shipped_without_a_ref_is_red(self):
+        problems = self._gate({"id": "INC-099-x", "shipped": True})
+        self.assertTrue(any("ship_ref" in p for p in problems), problems)
+
+    def test_shipped_false_needs_no_ref(self):
+        self.assertEqual(self._gate({"id": "INC-099-x", "shipped": False}), [])
+
+    def test_shipped_with_a_ref_is_green(self):
+        self.assertEqual(self._gate(
+            {"id": "INC-099-x", "shipped": True,
+             "ship_ref": "tag v0.11.0（merge-base --is-ancestor で照合済み）"}),
+            [])
+
+    def test_real_ledger_passes(self):
+        """実台帳（INC-017/026 の受容を含む）がこの門を通る。"""
+        self.assertEqual(orchestrator._validate_closure_vocabulary(), [])
+
+
+class UnknownAgingTest(unittest.TestCase):
+    """UNKNOWN（判定不能）分類の滞留の集計（INC-003 推奨#3）。
+
+    数え出すのは件数と最古の日付だけ。経過日数へは換算しない（実時計を
+    読まない。ADR-094 と同じ規律）。件数ゼロを健全さと読まない ——
+    それは指標として成り立たない（ASM-004 の rejected_indicators）。
+    """
+
+    def _stub(self, tmp, mutations=(), incidents=()):
+        ledger = os.path.join(tmp, "ledger")
+        os.makedirs(ledger, exist_ok=True)
+        for name, doc in mutations:
+            with open(os.path.join(ledger, name), "w", encoding="utf-8") as f:
+                json.dump(doc, f, ensure_ascii=False)
+        with open(os.path.join(tmp, "inc.json"), "w", encoding="utf-8") as f:
+            json.dump({"incidents": list(incidents)}, f, ensure_ascii=False)
+        for attr, value in (("LANE_DIR", tmp),
+                            ("INCIDENTS_PATH", os.path.join(tmp, "inc.json"))):
+            orig = getattr(orchestrator, attr)
+            setattr(orchestrator, attr, value)
+            self.addCleanup(setattr, orchestrator, attr, orig)
+
+    def test_old_unknown_mutation_is_counted_with_its_date(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self._stub(tmp, mutations=[
+                ("mutations-2026-01-01.json",
+                 {"date": "2026-01-01", "injections": [
+                     {"id": "M1", "observed_status": "UNKNOWN"},
+                     {"id": "M2", "observed_status": "PASS"}]})])
+            aging = orchestrator.unknown_aging()
+        self.assertEqual(aging["count"], 1)
+        self.assertEqual(aging["mutations"], 1)
+        self.assertEqual(aging["oldest"], "2026-01-01")
+
+    def test_sdk_status_unknown_is_also_counted(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self._stub(tmp, mutations=[
+                ("mutations-2026-02-02.json",
+                 {"date": "2026-02-02", "injections": [
+                     {"id": "A1", "status": "PASS", "sdk_status": "UNKNOWN"}]})])
+            aging = orchestrator.unknown_aging()
+        self.assertEqual(aging["count"], 1)
+
+    def test_incident_text_heuristic_reads_status_and_next_step_only(self):
+        """事象の側は status_at_detection と next_step の文面だけを見る
+        （粗い経験則。summary の UNKNOWN は数えない —— 語りの中の語まで
+        数えると集計が主張になる）。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            self._stub(tmp, incidents=[
+                {"id": "a", "date": "2026-02-02",
+                 "status_at_detection": "cause UNKNOWN"},
+                {"id": "b", "date": "2026-03-03",
+                 "next_step": "UNKNOWN のまま再開条件待ち"},
+                {"id": "c", "date": "2026-01-01",
+                 "summary": "UNKNOWN という語が summary に居るだけ"}])
+            aging = orchestrator.unknown_aging()
+        self.assertEqual(aging["count"], 2)
+        self.assertEqual(aging["incidents"], 2)
+        self.assertEqual(aging["oldest"], "2026-02-02")
+
+    def test_empty_ledger_reports_zero_with_no_oldest(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self._stub(tmp)
+            aging = orchestrator.unknown_aging()
+        self.assertEqual(aging["count"], 0)
+        self.assertIsNone(aging["oldest"])
+
+    def test_real_ledger_counts_the_known_unknowns(self):
+        """実台帳: 2026-08-04 の M1/M3 と、INC-001・INC-007 の文面が数えられる
+        （集計の器が実データで空回りしていないことの確認）。"""
+        aging = orchestrator.unknown_aging()
+        self.assertGreaterEqual(aging["mutations"], 2)
+        self.assertGreaterEqual(aging["incidents"], 2)
+        self.assertIsNotNone(aging["oldest"])
+        self.assertLessEqual(aging["oldest"], "2026-08-04")
