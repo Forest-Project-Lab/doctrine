@@ -1,0 +1,730 @@
+{
+  "accepted_flaws": [
+    {
+      "control_element_id": "PRE_TOOL_GUARD",
+      "description": "受理済み ADR の不変性について、許可される操作が status 遷移・superseded_by の付与・壊れたフロントマターの構文修復の三つに限定されており、本文に対する是正操作が含まれていない。体系内の別の検査（docs-linter の禁止同義語 ERROR）が同じ文書の本文を違反と判定した場合、許可される操作の集合が空になり、統制内では違反状態を解消できない。予防の制約（決定の遡及改変の禁止）に対応する軽減の制約（違反が生じた場合の統制内の復旧路）が定義されていない。",
+      "evidence_ref": "plugin/scripts/policy-guard.py",
+      "flaw_type": "制御動作が誤っている",
+      "normative_refs": [
+        "予防に加え軽減の制約を定義",
+        "ハザードから安全制約を導出",
+        "trace-why-design-flaw-was-introduced",
+        "危険状態の排除を最優先"
+      ],
+      "why_it_seemed_adequate": "受理済み ADR の本文改変は、決定の記録を遡って書き換える行為そのものであり、統治木で最も強く守るべき制約に見えた。許可された三操作は『決定の内容に触れない操作だけを通す』という一貫した基準から演繹されており、構文修復が含まれるのも『機械が読めない状態は決定の保全になっていない』という同じ基準の適用である。本文の誤記の是正がこの基準の内側に収まり得ることは、本文に対して機械が赤を出す検査（禁止同義語）が後から重なって初めて見える関係であり、規則を設計した時点の視野には交差が現れていなかった。"
+    },
+    {
+      "control_element_id": "PRE_TOOL_GUARD",
+      "description": "ガードは status: accepted という印を『審査を経て確定した決定』の標識として扱い、その時点から不変性を適用する。一方、実務では執筆途中の下書きにも accepted が付いた状態で本文が書かれており（反復13の ADR-134、および先行する ADR-132）、不変性の適用範囲が『確定した決定』ではなく『accepted と書かれた文字列』になっていた。統制の対象について設計側が持つモデルと、運用の実態が食い違っている。",
+      "evidence_ref": "doctrine_docs/packaging/procedures/PROC-001-development-norms.md",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "designer-vs-operator-mental-model",
+        "process-model-inconsistency-causes-unsafe-control",
+        "monitor-procedure-practice-gap",
+        "プロセスモデルと実状態の不整合"
+      ],
+      "why_it_seemed_adequate": "status を唯一の機械可読な標識にする設計は、判定を決定論にし、人の解釈を挟まないという統治の基本方針に一致していた。また『accepted は確定を意味する』という了解は自明に見え、下書きを別状態で起こす手順（PROC-001 の『ADR は proposed で起こす』）は本事象の後に明文化されたものであり、規則の設計時点では文書化された前提として存在していなかった。"
+    },
+    {
+      "control_element_id": "POST_TOOL_LINTER",
+      "description": "リンタは禁止同義語を ERROR として助言に載せるが、その文書が編集を許されているかを知らずに助言を出す。受理済み文書に対しては、実行すると必ず拒否される是正を指示する助言になる。助言（additionalContext）と拒否応答（ガードから返る）は別経路で返るため、両者が矛盾していることは呼び出し側のモデルの中でしか同時に観測されず、体系側のどの手掛かりにも矛盾として現れない。",
+      "evidence_ref": "plugin/scripts/docs-linter.py",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "control-both-behavior-and-interaction",
+        "defects-in-information-providing-systems",
+        "include-information-supplier-defect",
+        "全体構造の分析"
+      ],
+      "why_it_seemed_adequate": "リンタは decision を出さない設計（WATCH-001）であり、拒否の判断はガードに一元化するという役割分担は、二重の拒否権を作らないための明確な設計判断である。その分担のもとでは、リンタが編集可否を知らないことは責務の逸脱を避ける正しい姿に見えた。助言が実行不能になり得るのは、可否を知る側と誤りを知る側が分離されていることの帰結であって、どちらか一方の規則の誤りとしては現れない。"
+    },
+    {
+      "control_element_id": "CI_RELEASE_CHECK",
+      "description": "CI は ERROR を含む状態で門を赤にして止める。ガードは同じ ERROR を解消する編集を拒む。二つの統制はそれぞれ単独では意図どおりに動作しながら、合成すると『進めず、かつ直せない』袋小路を作る。ERROR 規則の集合と、ガードが編集を許す条件の集合とを突き合わせて、対応する正規修復経路を持たない ERROR 規則が存在しないことを確かめる検査が、どの層にも置かれていない。",
+      "evidence_ref": "plugin/scripts/policy-guard.py",
+      "flaw_type": "統制どうしの調整の欠如",
+      "normative_refs": [
+        "共通の体系的要因による多重防護の無効化",
+        "verify-decomposition-assumptions",
+        "ハザード間の矛盾を明示",
+        "全体構造の分析"
+      ],
+      "why_it_seemed_adequate": "『違反は赤で止める』と『確定した決定は書き換えさせない』は、それぞれ独立に妥当で、互いに独立な防護として設計されている。統制を分解して個別に評価する見方の下では、両者が同時に作用する状態は評価対象として現れない。合成が生む空集合は、どちらの統制の仕様を読んでも出てこない。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "同型の事象は ADR-132 で先に発生していた（UNDEFINED_TERM 2 件が是正できないまま残存）。そのときは判定が WARN で門が通ったため、作業が止まらず、事象として台帳に積まれず分析要求も起きなかった。是正要求が発生する契機が『門が赤になったかどうか』に事実上連動しており、統制構造の欠陥そのものは同一であるのに、二度目まで分析が始まらなかった。",
+      "evidence_ref": "doctrine_docs/packaging/decisions/ADR-134-staleness-is-scoped-to-what-the-judgement-cited.md",
+      "flaw_type": "制御動作が遅い",
+      "normative_refs": [
+        "軽微インシデントの先行兆候利用",
+        "ニアミスの構造欠陥特定への利用",
+        "omitted-cause-recurrence",
+        "audit-findings-must-be-closed"
+      ],
+      "why_it_seemed_adequate": "門が通る状態は、統治が要求する水準を満たしている状態として設計されている。WARN は『放置してよい差分』として意図的に区別されており、WARN で止まらないことは統制の設計どおりの振る舞いである。ADR-132 の時点では、残った 2 件は文書の質の問題として見え、『修復経路が存在しない』という構造の性質としては見えていなかった。"
+    },
+    {
+      "control_element_id": "SESSION_END_AUDIT",
+      "description": "全件監査は findings を件数と重大度で要約するが、各 finding について『統制内で是正できるか』という属性を持たない。したがって『是正不能な違反が統治木に何件あるか』は last-audit.json のどこにも現れず、次セッションの注入も鼓動もその状態を運べない。ADR-132 の 2 件が是正不能のまま滞留していたことは、監査の出力からは判別できない形で保存されていた。",
+      "evidence_ref": "plugin/scripts/policy-guard.py",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "監査の先行指標を確立する",
+        "リスク先行指標による監査",
+        "指摘欠点の是正完了追跡",
+        "安全想定の記録と失効先行指標の定義"
+      ],
+      "why_it_seemed_adequate": "監査の役割は統治木の状態を走査して要約することであり、是正可能性はガードの管轄と整理されている。境界を明確に保つ設計として一貫している。加えて、監査の設計時点では『検出された違反はいずれ直せる』ことが暗黙の前提であり、その前提が破れるのは不変性規則と検査規則が交差する場合だけで、その交差自体が想定に入っていなかった。"
+    },
+    {
+      "control_element_id": "OWNER",
+      "description": "所有者が持つ手掛かりは進捗報告・PR の diff・台帳である。今回の解決手段（未追跡の下書きの破棄）は、リポジトリに一度も入っていない対象への操作であるため diff に現れず、正規経路で解決した場合と外形上は区別できない。ガードが何回拒否したか、拒否のあと正規の再編集で解決したのか迂回で終わったのかを所有者へ運ぶ経路が存在しない。修復口の方式は所有者判断を要する事項であるのに、判断の材料が構造上届かない。",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "controller-needs-concrete-feedback-channels",
+        "feedback-enables-improvement-of-controls",
+        "control-action-requires-feedback",
+        "全コントロールループにフィードバック必須"
+      ],
+      "why_it_seemed_adequate": "所有者の手掛かりを『正本に入るもの』（diff・台帳・報告）に絞る設計は、監視対象を確定させ、見るべきものを増やしすぎないための合理的な選択である。拒否は呼び出し側のモデルへ返って即座に消費される情報であり、それが所有者の判断材料になり得るという関係は、拒否が例外的な事故ではなく日常的な統制作用として設計されている限り見えにくい。"
+    },
+    {
+      "control_element_id": "GOVERNANCE_TREE",
+      "description": "ガードを通さずに書かれた（あるいは消された）文書は統治の外に出る、という既知の穴が、正規の修復口が無いことによって『やむを得ず通る道』に転じた。迂回によって解決された事案は、統治木の側にも台帳の側にも痕跡を残しにくいため、迂回の頻度が増えていること自体をどの要素も観測できない。統制の侵食が、侵食の指標を同時に消す形で進行する。",
+      "flaw_type": "統制自身の劣化を検出できない",
+      "normative_refs": [
+        "迂回行動からの学習",
+        "change-system-to-change-behavior",
+        "determine-why-rule-was-violated",
+        "例外作業の統制と発生低減",
+        "破られた想定の再検討"
+      ],
+      "why_it_seemed_adequate": "この穴は NONGOAL-001 として明示的に『防げない』と宣言されており、宣言済みの残余リスクとして扱われていた。宣言された穴は、通る動機が無い限り実務上は空いていないのと同じである、という想定が置かれていた。動機を作るのは統制の側（正規経路の欠如）であるという逆向きの関係は、穴を宣言した時点の分析には含まれていない。"
+    },
+    {
+      "control_element_id": "SESSION_START_CONTRACT",
+      "description": "契約注入は確定事項・非目標・退行監視の要点をセッション冒頭に運ぶが、『受理済み ADR の本文は直せない』という制約と、それに対応する作法（下書きは proposed で起こす）を運んでいなかった。禁止の存在は拒否されて初めて判明し、その時点では既に本文が accepted のまま書かれている。禁止だけが実行時に現れ、代替手順が事前に現れない。",
+      "evidence_ref": "doctrine_docs/packaging/procedures/PROC-001-development-norms.md",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "責任委譲には情報と訓練を伴わせる",
+        "上位文書の利用可能性（読み手適合）",
+        "機械的遵守が前提の指示は自動化",
+        "エラー誘発設計要因の排除"
+      ],
+      "why_it_seemed_adequate": "注入できる分量は限られ、要点は横断的な確定事項と非目標に絞るのが自然である。文書種別ごとの起票作法は手順文書（PROC-001）の領分であり、契約注入に入れると粒度が混ざるという判断は一貫している。なお PROC-001 側の該当記述は本事象の後に追加されたものであり、注入の設計時点では運ぶべき対象として存在していなかった。"
+    }
+  ],
+  "analysis": {
+    "confidence": "medium",
+    "control_flaws": [
+      {
+        "control_element_id": "PRE_TOOL_GUARD",
+        "description": "受理済み ADR の不変性について、許可される操作が status 遷移・superseded_by の付与・壊れたフロントマターの構文修復の三つに限定されており、本文に対する是正操作が含まれていない。体系内の別の検査（docs-linter の禁止同義語 ERROR）が同じ文書の本文を違反と判定した場合、許可される操作の集合が空になり、統制内では違反状態を解消できない。予防の制約（決定の遡及改変の禁止）に対応する軽減の制約（違反が生じた場合の統制内の復旧路）が定義されていない。",
+        "evidence_ref": "plugin/scripts/policy-guard.py",
+        "flaw_type": "制御動作が誤っている",
+        "normative_refs": [
+          "予防に加え軽減の制約を定義",
+          "ハザードから安全制約を導出",
+          "trace-why-design-flaw-was-introduced",
+          "危険状態の排除を最優先"
+        ],
+        "why_it_seemed_adequate": "受理済み ADR の本文改変は、決定の記録を遡って書き換える行為そのものであり、統治木で最も強く守るべき制約に見えた。許可された三操作は『決定の内容に触れない操作だけを通す』という一貫した基準から演繹されており、構文修復が含まれるのも『機械が読めない状態は決定の保全になっていない』という同じ基準の適用である。本文の誤記の是正がこの基準の内側に収まり得ることは、本文に対して機械が赤を出す検査（禁止同義語）が後から重なって初めて見える関係であり、規則を設計した時点の視野には交差が現れていなかった。"
+      },
+      {
+        "control_element_id": "PRE_TOOL_GUARD",
+        "description": "ガードは status: accepted という印を『審査を経て確定した決定』の標識として扱い、その時点から不変性を適用する。一方、実務では執筆途中の下書きにも accepted が付いた状態で本文が書かれており（反復13の ADR-134、および先行する ADR-132）、不変性の適用範囲が『確定した決定』ではなく『accepted と書かれた文字列』になっていた。統制の対象について設計側が持つモデルと、運用の実態が食い違っている。",
+        "evidence_ref": "doctrine_docs/packaging/procedures/PROC-001-development-norms.md",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "designer-vs-operator-mental-model",
+          "process-model-inconsistency-causes-unsafe-control",
+          "monitor-procedure-practice-gap",
+          "プロセスモデルと実状態の不整合"
+        ],
+        "why_it_seemed_adequate": "status を唯一の機械可読な標識にする設計は、判定を決定論にし、人の解釈を挟まないという統治の基本方針に一致していた。また『accepted は確定を意味する』という了解は自明に見え、下書きを別状態で起こす手順（PROC-001 の『ADR は proposed で起こす』）は本事象の後に明文化されたものであり、規則の設計時点では文書化された前提として存在していなかった。"
+      },
+      {
+        "control_element_id": "POST_TOOL_LINTER",
+        "description": "リンタは禁止同義語を ERROR として助言に載せるが、その文書が編集を許されているかを知らずに助言を出す。受理済み文書に対しては、実行すると必ず拒否される是正を指示する助言になる。助言（additionalContext）と拒否応答（ガードから返る）は別経路で返るため、両者が矛盾していることは呼び出し側のモデルの中でしか同時に観測されず、体系側のどの手掛かりにも矛盾として現れない。",
+        "evidence_ref": "plugin/scripts/docs-linter.py",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "control-both-behavior-and-interaction",
+          "defects-in-information-providing-systems",
+          "include-information-supplier-defect",
+          "全体構造の分析"
+        ],
+        "why_it_seemed_adequate": "リンタは decision を出さない設計（WATCH-001）であり、拒否の判断はガードに一元化するという役割分担は、二重の拒否権を作らないための明確な設計判断である。その分担のもとでは、リンタが編集可否を知らないことは責務の逸脱を避ける正しい姿に見えた。助言が実行不能になり得るのは、可否を知る側と誤りを知る側が分離されていることの帰結であって、どちらか一方の規則の誤りとしては現れない。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "CI は ERROR を含む状態で門を赤にして止める。ガードは同じ ERROR を解消する編集を拒む。二つの統制はそれぞれ単独では意図どおりに動作しながら、合成すると『進めず、かつ直せない』袋小路を作る。ERROR 規則の集合と、ガードが編集を許す条件の集合とを突き合わせて、対応する正規修復経路を持たない ERROR 規則が存在しないことを確かめる検査が、どの層にも置かれていない。",
+        "evidence_ref": "plugin/scripts/policy-guard.py",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "共通の体系的要因による多重防護の無効化",
+          "verify-decomposition-assumptions",
+          "ハザード間の矛盾を明示",
+          "全体構造の分析"
+        ],
+        "why_it_seemed_adequate": "『違反は赤で止める』と『確定した決定は書き換えさせない』は、それぞれ独立に妥当で、互いに独立な防護として設計されている。統制を分解して個別に評価する見方の下では、両者が同時に作用する状態は評価対象として現れない。合成が生む空集合は、どちらの統制の仕様を読んでも出てこない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "同型の事象は ADR-132 で先に発生していた（UNDEFINED_TERM 2 件が是正できないまま残存）。そのときは判定が WARN で門が通ったため、作業が止まらず、事象として台帳に積まれず分析要求も起きなかった。是正要求が発生する契機が『門が赤になったかどうか』に事実上連動しており、統制構造の欠陥そのものは同一であるのに、二度目まで分析が始まらなかった。",
+        "evidence_ref": "doctrine_docs/packaging/decisions/ADR-134-staleness-is-scoped-to-what-the-judgement-cited.md",
+        "flaw_type": "制御動作が遅い",
+        "normative_refs": [
+          "軽微インシデントの先行兆候利用",
+          "ニアミスの構造欠陥特定への利用",
+          "omitted-cause-recurrence",
+          "audit-findings-must-be-closed"
+        ],
+        "why_it_seemed_adequate": "門が通る状態は、統治が要求する水準を満たしている状態として設計されている。WARN は『放置してよい差分』として意図的に区別されており、WARN で止まらないことは統制の設計どおりの振る舞いである。ADR-132 の時点では、残った 2 件は文書の質の問題として見え、『修復経路が存在しない』という構造の性質としては見えていなかった。"
+      },
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "全件監査は findings を件数と重大度で要約するが、各 finding について『統制内で是正できるか』という属性を持たない。したがって『是正不能な違反が統治木に何件あるか』は last-audit.json のどこにも現れず、次セッションの注入も鼓動もその状態を運べない。ADR-132 の 2 件が是正不能のまま滞留していたことは、監査の出力からは判別できない形で保存されていた。",
+        "evidence_ref": "plugin/scripts/policy-guard.py",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "監査の先行指標を確立する",
+          "リスク先行指標による監査",
+          "指摘欠点の是正完了追跡",
+          "安全想定の記録と失効先行指標の定義"
+        ],
+        "why_it_seemed_adequate": "監査の役割は統治木の状態を走査して要約することであり、是正可能性はガードの管轄と整理されている。境界を明確に保つ設計として一貫している。加えて、監査の設計時点では『検出された違反はいずれ直せる』ことが暗黙の前提であり、その前提が破れるのは不変性規則と検査規則が交差する場合だけで、その交差自体が想定に入っていなかった。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者が持つ手掛かりは進捗報告・PR の diff・台帳である。今回の解決手段（未追跡の下書きの破棄）は、リポジトリに一度も入っていない対象への操作であるため diff に現れず、正規経路で解決した場合と外形上は区別できない。ガードが何回拒否したか、拒否のあと正規の再編集で解決したのか迂回で終わったのかを所有者へ運ぶ経路が存在しない。修復口の方式は所有者判断を要する事項であるのに、判断の材料が構造上届かない。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "controller-needs-concrete-feedback-channels",
+          "feedback-enables-improvement-of-controls",
+          "control-action-requires-feedback",
+          "全コントロールループにフィードバック必須"
+        ],
+        "why_it_seemed_adequate": "所有者の手掛かりを『正本に入るもの』（diff・台帳・報告）に絞る設計は、監視対象を確定させ、見るべきものを増やしすぎないための合理的な選択である。拒否は呼び出し側のモデルへ返って即座に消費される情報であり、それが所有者の判断材料になり得るという関係は、拒否が例外的な事故ではなく日常的な統制作用として設計されている限り見えにくい。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "ガードを通さずに書かれた（あるいは消された）文書は統治の外に出る、という既知の穴が、正規の修復口が無いことによって『やむを得ず通る道』に転じた。迂回によって解決された事案は、統治木の側にも台帳の側にも痕跡を残しにくいため、迂回の頻度が増えていること自体をどの要素も観測できない。統制の侵食が、侵食の指標を同時に消す形で進行する。",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "迂回行動からの学習",
+          "change-system-to-change-behavior",
+          "determine-why-rule-was-violated",
+          "例外作業の統制と発生低減",
+          "破られた想定の再検討"
+        ],
+        "why_it_seemed_adequate": "この穴は NONGOAL-001 として明示的に『防げない』と宣言されており、宣言済みの残余リスクとして扱われていた。宣言された穴は、通る動機が無い限り実務上は空いていないのと同じである、という想定が置かれていた。動機を作るのは統制の側（正規経路の欠如）であるという逆向きの関係は、穴を宣言した時点の分析には含まれていない。"
+      },
+      {
+        "control_element_id": "SESSION_START_CONTRACT",
+        "description": "契約注入は確定事項・非目標・退行監視の要点をセッション冒頭に運ぶが、『受理済み ADR の本文は直せない』という制約と、それに対応する作法（下書きは proposed で起こす）を運んでいなかった。禁止の存在は拒否されて初めて判明し、その時点では既に本文が accepted のまま書かれている。禁止だけが実行時に現れ、代替手順が事前に現れない。",
+        "evidence_ref": "doctrine_docs/packaging/procedures/PROC-001-development-norms.md",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "責任委譲には情報と訓練を伴わせる",
+          "上位文書の利用可能性（読み手適合）",
+          "機械的遵守が前提の指示は自動化",
+          "エラー誘発設計要因の排除"
+        ],
+        "why_it_seemed_adequate": "注入できる分量は限られ、要点は横断的な確定事項と非目標に絞るのが自然である。文書種別ごとの起票作法は手順文書（PROC-001）の領分であり、契約注入に入れると粒度が混ざるという判断は一貫している。なお PROC-001 側の該当記述は本事象の後に追加されたものであり、注入の設計時点では運ぶべき対象として存在していなかった。"
+      }
+    ],
+    "hazard": "統治木の文書に、体系内の検査（docs-linter / docs-audit）が違反と判定する内容が存在し、かつその内容を是正する操作が統制上ひとつも許可されていない状態（禁止集合と是正要求集合の交差により、許可される操作の集合が空になっている状態）。この状態では「規則を守ったまま正しくする」ことが不可能で、迂回か放置のいずれかしか残らない。",
+    "incident_id": "INC-026-accepted-adr-has-no-sanctioned-repair-path",
+    "leading_indicators": [
+      {
+        "indicator": "不変性規則の許可集合と、機械が赤/黄を出す検査規則集合の交差にある『正規修復経路を持たない規則』の数",
+        "observable": "policy-guard.py の編集許可条件と docs-linter.py の ERROR/WARN 規則を静的に突き合わせ、各検査規則について『不変対象の文書でその指摘を解消できる許可操作が存在するか』を判定した表",
+        "threshold": "正規修復経路を持たない ERROR 規則が 1 つでも存在すれば赤。WARN 規則については件数を記録し、増加時に調査",
+        "version_independent": true,
+        "where": "CI_RELEASE_CHECK（リポジトリ正本に対する決定論試験として .github/workflows 内で実行）",
+        "why_version_independent": "リポジトリ正本の 2 ファイルを CI が静的に照合するだけで、利用者環境の導入複製の版に依存しない"
+      },
+      {
+        "indicator": "status: accepted の文書が保持している未解消 finding の件数（重大度別）",
+        "observable": "docs-audit の JSON を status で層別した集計（accepted 文書の ERROR 件数 / WARN 件数）",
+        "threshold": "accepted 文書の ERROR は 0 を正常とし 1 件で赤。WARN は 2 件以上（ADR-132 の実績値）で調査を起票",
+        "version_independent": true,
+        "where": "CI_RELEASE_CHECK の docs-audit JSON（正本側）。参考値として SESSION_END_AUDIT の last-audit.json",
+        "why_version_independent": "CI 側で正本のスクリプトを走らせる限り、指標の算出は導入複製の版を経由しない。ただし last-audit.json を情報源にする運用へ寄せると版依存になる"
+      },
+      {
+        "indicator": "proposed を経ずに初出時点から accepted で作成された統治文書の件数",
+        "observable": "各 ADR ファイルの初回コミット時点の status フロントマター値（git 履歴から算出）",
+        "threshold": "0 を正常とし、1 件で PROC-001 の記述と実務の乖離の兆候として調査",
+        "version_independent": true,
+        "where": "CI_RELEASE_CHECK（新規追加ファイルに対する検査）",
+        "why_version_independent": "git 履歴とファイル内容のみに依存し、プラグイン複製の版を参照しない"
+      },
+      {
+        "indicator": "ガードの拒否のうち、同一セッション内で正規の再編集による解決に至らなかったものの割合",
+        "observable": "拒否イベントの記録と、その後の同一パスに対する編集成功／ファイル系操作／未解決終了の分類",
+        "threshold": "迂回または未解決で終わった拒否が 1 件でも出れば調査。週次で 0 を正常とする",
+        "version_independent": false,
+        "where": "PRE_TOOL_GUARD（拒否時のイベント記録を追加した上で、セッション単位で集計）",
+        "why_version_independent": "記録はガード本体（導入複製側で動く）に出力を追加して初めて得られるため、複製の版が遅れると指標も遅れる。HEARTBEAT と同じ共通原因故障（INC-005）を共有する"
+      },
+      {
+        "indicator": "ガード拒否の直後に発生した、Hook を経ないファイル系操作（未追跡ファイルの削除・書込み）の件数",
+        "observable": "拒否イベント直後の同一セッションのツール呼び出し系列",
+        "threshold": "0 を正常とし、1 件で NONGOAL-001 の穴が実務経路化している兆候として起票",
+        "version_independent": false,
+        "where": "PRE_TOOL_GUARD の拒否記録とセッションのツール呼び出し記録の突合",
+        "why_version_independent": "検出そのものが導入複製側の Hook 記録に依存し、複製が遅れれば検出も遅れる。また Hook が起動しない経路で行われた操作は原理的に計上されないため、この指標は下限しか与えない"
+      }
+    ],
+    "loss": "統治木の正本に、機械的検査が違反と判定した内容を含む文書が残り、統制内でそれを是正する手段が無いため、作業の前進には統制を通らない経路（Hook を経ない書込み・未追跡ファイルの破棄）を選ぶほかなくなる。結果として (a) 統治文書の正確さが回復されないまま残り、(b) NONGOAL-001 が「防げない」と明示している迂回経路が例外ではなく常道になり、統治構造の統制力そのものが侵食される。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "すべての不変対象について、あらゆる検査規則に対応する許可操作が存在する（交差が空でない）ことが示されれば棄却。",
+        "hypothesis": "同型の袋小路（禁止集合と検査規則の交差で許可操作が空になる状態）は受理済み ADR に固有ではなく、他の不変対象（NONGOAL / decided-facts / 確定済み PROC）にも存在する。",
+        "oracle": "各不変規則について、その対象文書に対して docs-linter が出し得る ERROR/WARN 規則を列挙し、各規則を解消できる許可操作が存在するかを表にする決定論試験。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "記録期間中の拒否がすべて正規の再編集で解決していれば、本件は特異事例として扱い直す。",
+        "hypothesis": "正規経路が存在しない場面では迂回が選ばれるという関係は本件に限らず一般であり、ガードの拒否全体にわたって迂回率が観測できる。",
+        "oracle": "拒否イベントの直後の帰結を『正規の再編集で解決／Hook 外の経路で解決／未解決で終了』に分類した集計。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "差し戻し遷移が拒否される、または遷移後も編集が拒否されることが示されれば棄却。",
+        "hypothesis": "status 遷移の許可（accepted → proposed）が恒常的に効くため、不変性は往復遷移によって既に迂回可能であり、ガードが守っているのは編集の手数だけである。",
+        "oracle": "accepted → proposed への遷移が単独で許可されるか、および遷移後の本文編集が許可されるかを、試験用文書で確認する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "許可判定が指摘位置と置換範囲の一致だけで閉じ、意味論判断を要しないと示せれば棄却。",
+        "hypothesis": "本文の修復口を設けると、決定内容の書き換えが『機械が赤にした箇所の修復』を名乗って通過する。",
+        "oracle": "修復許可の判定が、linter が返す指摘位置と置換範囲の一致のみで機械的に決まるか、diff の意味論判断を要するかを実装案ごとに数える。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "WARN の滞留がすべて短期間で解消していれば棄却。",
+        "hypothesis": "是正要求の起動が重大度に連動しているため、WARN のみで現れた構造欠陥は現在も複数滞留している。",
+        "oracle": "過去の docs-audit JSON における WARN の滞留期間分布と、そのうち是正不能な種別の割合。",
+        "severity": "P2"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "不変性規則の許可集合と、docs-linter が ERROR/WARN を出す規則集合の対応表を決定論試験として実装し、正規修復経路を持たない ERROR 規則が存在したら CI を赤にする。統制どうしの交差を検査する場所を新設する。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "修復口の方式（下書きを別状態で扱う／機械が赤にした箇所の修復のみを構文修復と同じ形で許す／何もしない）を所有者が決める。三案それぞれで『決定の遡及改変を許さない』制約がどこまで保たれるかを併記して判断材料とする。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "ガードの拒否応答に、その禁止に対応する正規の代替手順（例：proposed で起こし直す）を含める。拒否応答は呼び出し側のモデルへ返る唯一の手掛かりであり、禁止だけが実行時に現れて代替が現れない状態を解消する。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "拒否イベントを記録し、拒否後の帰結（正規の再編集で解決／迂回／未解決）を分類して集計する。迂回で終わった拒否を先行指標として所有者の手掛かりに載せる。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "docs-audit の finding に『統制内で是正可能か』の属性を持たせ、是正不能な finding の滞留件数を last-audit.json と CI の JSON の双方に出す。重大度に依らず滞留を可視化する。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "PROC-001 の『ADR は proposed で起こす』を、手順文書だけでなくセッション冒頭の契約注入にも載せるかを検討し、載せない場合はその理由を記録する（機械的遵守を前提とする指示は自動化側に寄せる原則との関係を明示する）。",
+        "kind": "文書化",
+        "owner_decision_required": true
+      },
+      {
+        "action": "ADR-132 の未是正 2 件の現状、および他の文書種（PROC / NONGOAL / decided-facts）に同型の袋小路が存在するかを調査する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "status 遷移の許可規則が accepted → proposed の差し戻しを恒常的に許すかどうかを確認し、許す場合は不変性が往復遷移で迂回可能である事実を残余リスクとして明記する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "禁止を定める統制（不変性）と是正を要求する統制（検査規則）が別々に設計され、両者の交差を検査する場所がどの層にも置かれていない。個々の統制が正しいまま、合成が『許可される操作が空』という状態を作る。",
+      "統制の例外集合が原理からの演繹で最小に作られており、後から追加される検査規則が例外集合を実質的に空にし得るという時間方向の関係が、規則の設計時の想定に入っていない。",
+      "是正要求の起動が実質的に重大度（門が赤になったか）に連動しており、同じ構造欠陥でも WARN で現れた回は学習の対象にならない。",
+      "迂回で解決された事案は正本にも台帳にも痕跡を残しにくく、統制の侵食が、侵食を測る手掛かりを同時に消しながら進行する。",
+      "宣言済みの残余リスク（NONGOAL-001）が『通る動機が無い限り空いていないのと同じ』という想定で扱われており、統制自身が動機を作る逆向きの経路が想定されていない。",
+      "是正も検出器も PLUGIN_DISTRIBUTION 経由でしか利用者環境へ届かず、版遅れという単一の要因が複数の防護を同時に無効化する（INC-005・HEARTBEAT の既知の穴と同じ共通原因）。",
+      "評価者が同系 model である（ASSURANCE_LANE の既知の穴）ため、規則どうしの合成が生む死角を、同じ死角を持つ評価者が点検している。"
+    ],
+    "unknowns": [
+      "事象が名指しする機構のうち、PRE_TOOL_GUARD・POST_TOOL_LINTER・GOVERNANCE_TREE は統制構造に実在要素として列挙されているが、本分析の実行環境（作業ディレクトリは空で、リポジトリを参照できない）では policy-guard.py 本体を読めていない。したがって『受理済み ADR の不変性』および『許可される 3 操作（status 遷移・superseded_by 付与・フロントマター構文修復）』という規則の実在と正確な範囲は未確認であり、事象の記録が唯一の根拠である。以降の統制欠陥は、この規則が記録どおり実在するという条件付きで成立する。",
+      "ガードが ADR-134 の編集を拒否した根拠が、記録どおり『受理済み文書の不変性規則』であったのか、別条件（パス規則など）の副作用であったのかは未確認。",
+      "ADR-132 に残る UNDEFINED_TERM 2 件が現在も未是正のままかどうか、また同型の滞留が他の文書種（PROC / NONGOAL / decided-facts）にも存在するかどうか。",
+      "今回の解決に用いた『未追跡の下書きの破棄』が実際にガードを経由しなかったのか、経由した上で許可されたのかは未確認。前者ならば NONGOAL-001 の穴、後者ならば削除規則の適用範囲の問題であり、是正先が異なる。",
+      "fix_note が記す accepted → proposed への差し戻しが、status 遷移の許可規則によって恒常的に可能なのかどうか。可能であれば不変性は往復遷移で実質的に迂回でき、本事象の袋小路と不変性の実効性の双方の前提が変わる。",
+      "本文の是正を許す修復口を設けた場合に、『機械が赤にした箇所の修復』と『決定内容の書き換え』を機械が判別できるか（判別が diff の意味論に依存するなら、決定論での実装可否は未知）。",
+      "本事象が OWNER へ報告されているか、および修復口の方式について所有者の判断材料が現時点で揃っているか。",
+      "二度の同型事象以外に、ガード拒否が迂回で解決された事例が過去にどれだけあるか（記録が存在しないため母数不明）。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は、各統制が単体で意図どおり作用するかを確かめる形で組まれており、統制どうしの合成が生む状態（ガードの禁止集合と linter の ERROR 集合が交差し、許可される操作が空になる状態）を見る場所がどこにも無い。矛盾する二つの手掛かり（『この語は ERROR だから直せ』という助言と『この文書は編集できない』という拒否）は別経路で返り、呼び出し側のモデルの中でのみ同時に観測されるため、体系側のどの記録にも矛盾として現れない。さらに、是正要求が起きる契機が実質的に『門が赤になったか』に連動しているため、同型が最初に現れた ADR-132 は WARN で門が通り、是正不能な違反が滞留している状態が『困っていない状態』として保存された。監査の出力も finding の是正可能性という属性を持たないため、滞留は次セッションへ運ばれなかった。今回 ERROR で門が赤になったのは、構造の欠陥が変わったからではなく、たまたま同じ欠陥がより高い重大度の規則に当たったからである。修正が未着手であること自体は、この見逃しの理由とは独立している。"
+  },
+  "control_structure_ids": [
+    "OWNER",
+    "CI_RELEASE_CHECK",
+    "SESSION_START_CONTRACT",
+    "HEARTBEAT",
+    "PRE_TOOL_GUARD",
+    "POST_TOOL_LINTER",
+    "SESSION_END_AUDIT",
+    "CAPTURE_NUDGE",
+    "PLUGIN_DISTRIBUTION",
+    "ASSURANCE_LANE",
+    "GOVERNANCE_TREE"
+  ],
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "duration_ms": 312651,
+  "errors": [],
+  "execution_kind": "real-sdk",
+  "flaws_with_citation_defect": [],
+  "generated_at": "2026-08-07T18:04:56Z",
+  "git_dirty": false,
+  "git_sha": "015f653beacdfd9e172f726c570f9f6f7248c634",
+  "incident_evidence": {
+    "kind": "measurement",
+    "refs": [
+      "plugin/scripts/policy-guard.py",
+      "doctrine_docs/packaging/procedures/PROC-001-development-norms.md",
+      "doctrine_docs/packaging/decisions/ADR-134-staleness-is-scoped-to-what-the-judgement-cited.md"
+    ],
+    "resolved": [
+      "plugin/scripts/policy-guard.py",
+      "doctrine_docs/packaging/procedures/PROC-001-development-norms.md",
+      "doctrine_docs/packaging/decisions/ADR-134-staleness-is-scoped-to-what-the-judgement-cited.md"
+    ],
+    "unresolved": [],
+    "verifiable": true
+  },
+  "incident_id": "INC-026-accepted-adr-has-no-sanctioned-repair-path",
+  "incident_sha256": "5843f74a0246b5d3b5dc4585db0d5e498e9c4587be97346d1224d28c82497440",
+  "init": {
+    "claude_code_version": "2.1.221",
+    "model": "claude-opus-5",
+    "session_id": "61ec0d0f-5d30-4b5c-9a52-26c0da2b7208",
+    "tools_count": 27
+  },
+  "kind": "cast-analysis",
+  "leading_indicators_defined": true,
+  "options": {
+    "allowed_tools": [],
+    "cwd": "/tmp/assurance-cast-fy259h5f",
+    "effort": "high",
+    "max_budget_usd": 4.0,
+    "max_turns": 8,
+    "model": "claude-opus-5",
+    "setting_sources": [],
+    "timeout_s": 900
+  },
+  "oracle": "structured_output がレーン側再検証にも適合",
+  "principles_offered": 337,
+  "prompt_sha256": "1c98622127bd9a463c26a6b3f2b1e4dd39928984f9e7ad637d204e120fc04dc6",
+  "rejected_flaws": [],
+  "result_meta": {
+    "duration_api_ms": 306207,
+    "is_error": false,
+    "num_turns": 5,
+    "session_id": "61ec0d0f-5d30-4b5c-9a52-26c0da2b7208",
+    "subtype": "success",
+    "total_cost_usd": 0.956717,
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 40416,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 40416,
+      "cache_read_input_tokens": 127706,
+      "inference_geo": "not_available",
+      "input_tokens": 6,
+      "iterations": "list",
+      "output_tokens": 18077,
+      "server_tool_use": {
+        "web_fetch_requests": 0,
+        "web_search_requests": 0
+      },
+      "service_tier": "standard",
+      "speed": "standard"
+    }
+  },
+  "schema_sha256": "0d1643d5e16353723405302c1f6ffcf753915e2a4f27a3530e8ef9a9ee45cb46",
+  "sdk_version": "0.2.129",
+  "settled": true,
+  "status": "PASS",
+  "structured_output": {
+    "confidence": "medium",
+    "control_flaws": [
+      {
+        "control_element_id": "PRE_TOOL_GUARD",
+        "description": "受理済み ADR の不変性について、許可される操作が status 遷移・superseded_by の付与・壊れたフロントマターの構文修復の三つに限定されており、本文に対する是正操作が含まれていない。体系内の別の検査（docs-linter の禁止同義語 ERROR）が同じ文書の本文を違反と判定した場合、許可される操作の集合が空になり、統制内では違反状態を解消できない。予防の制約（決定の遡及改変の禁止）に対応する軽減の制約（違反が生じた場合の統制内の復旧路）が定義されていない。",
+        "evidence_ref": "plugin/scripts/policy-guard.py",
+        "flaw_type": "制御動作が誤っている",
+        "normative_refs": [
+          "予防に加え軽減の制約を定義",
+          "ハザードから安全制約を導出",
+          "trace-why-design-flaw-was-introduced",
+          "危険状態の排除を最優先"
+        ],
+        "why_it_seemed_adequate": "受理済み ADR の本文改変は、決定の記録を遡って書き換える行為そのものであり、統治木で最も強く守るべき制約に見えた。許可された三操作は『決定の内容に触れない操作だけを通す』という一貫した基準から演繹されており、構文修復が含まれるのも『機械が読めない状態は決定の保全になっていない』という同じ基準の適用である。本文の誤記の是正がこの基準の内側に収まり得ることは、本文に対して機械が赤を出す検査（禁止同義語）が後から重なって初めて見える関係であり、規則を設計した時点の視野には交差が現れていなかった。"
+      },
+      {
+        "control_element_id": "PRE_TOOL_GUARD",
+        "description": "ガードは status: accepted という印を『審査を経て確定した決定』の標識として扱い、その時点から不変性を適用する。一方、実務では執筆途中の下書きにも accepted が付いた状態で本文が書かれており（反復13の ADR-134、および先行する ADR-132）、不変性の適用範囲が『確定した決定』ではなく『accepted と書かれた文字列』になっていた。統制の対象について設計側が持つモデルと、運用の実態が食い違っている。",
+        "evidence_ref": "doctrine_docs/packaging/procedures/PROC-001-development-norms.md",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "designer-vs-operator-mental-model",
+          "process-model-inconsistency-causes-unsafe-control",
+          "monitor-procedure-practice-gap",
+          "プロセスモデルと実状態の不整合"
+        ],
+        "why_it_seemed_adequate": "status を唯一の機械可読な標識にする設計は、判定を決定論にし、人の解釈を挟まないという統治の基本方針に一致していた。また『accepted は確定を意味する』という了解は自明に見え、下書きを別状態で起こす手順（PROC-001 の『ADR は proposed で起こす』）は本事象の後に明文化されたものであり、規則の設計時点では文書化された前提として存在していなかった。"
+      },
+      {
+        "control_element_id": "POST_TOOL_LINTER",
+        "description": "リンタは禁止同義語を ERROR として助言に載せるが、その文書が編集を許されているかを知らずに助言を出す。受理済み文書に対しては、実行すると必ず拒否される是正を指示する助言になる。助言（additionalContext）と拒否応答（ガードから返る）は別経路で返るため、両者が矛盾していることは呼び出し側のモデルの中でしか同時に観測されず、体系側のどの手掛かりにも矛盾として現れない。",
+        "evidence_ref": "plugin/scripts/docs-linter.py",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "control-both-behavior-and-interaction",
+          "defects-in-information-providing-systems",
+          "include-information-supplier-defect",
+          "全体構造の分析"
+        ],
+        "why_it_seemed_adequate": "リンタは decision を出さない設計（WATCH-001）であり、拒否の判断はガードに一元化するという役割分担は、二重の拒否権を作らないための明確な設計判断である。その分担のもとでは、リンタが編集可否を知らないことは責務の逸脱を避ける正しい姿に見えた。助言が実行不能になり得るのは、可否を知る側と誤りを知る側が分離されていることの帰結であって、どちらか一方の規則の誤りとしては現れない。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "CI は ERROR を含む状態で門を赤にして止める。ガードは同じ ERROR を解消する編集を拒む。二つの統制はそれぞれ単独では意図どおりに動作しながら、合成すると『進めず、かつ直せない』袋小路を作る。ERROR 規則の集合と、ガードが編集を許す条件の集合とを突き合わせて、対応する正規修復経路を持たない ERROR 規則が存在しないことを確かめる検査が、どの層にも置かれていない。",
+        "evidence_ref": "plugin/scripts/policy-guard.py",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "共通の体系的要因による多重防護の無効化",
+          "verify-decomposition-assumptions",
+          "ハザード間の矛盾を明示",
+          "全体構造の分析"
+        ],
+        "why_it_seemed_adequate": "『違反は赤で止める』と『確定した決定は書き換えさせない』は、それぞれ独立に妥当で、互いに独立な防護として設計されている。統制を分解して個別に評価する見方の下では、両者が同時に作用する状態は評価対象として現れない。合成が生む空集合は、どちらの統制の仕様を読んでも出てこない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "同型の事象は ADR-132 で先に発生していた（UNDEFINED_TERM 2 件が是正できないまま残存）。そのときは判定が WARN で門が通ったため、作業が止まらず、事象として台帳に積まれず分析要求も起きなかった。是正要求が発生する契機が『門が赤になったかどうか』に事実上連動しており、統制構造の欠陥そのものは同一であるのに、二度目まで分析が始まらなかった。",
+        "evidence_ref": "doctrine_docs/packaging/decisions/ADR-134-staleness-is-scoped-to-what-the-judgement-cited.md",
+        "flaw_type": "制御動作が遅い",
+        "normative_refs": [
+          "軽微インシデントの先行兆候利用",
+          "ニアミスの構造欠陥特定への利用",
+          "omitted-cause-recurrence",
+          "audit-findings-must-be-closed"
+        ],
+        "why_it_seemed_adequate": "門が通る状態は、統治が要求する水準を満たしている状態として設計されている。WARN は『放置してよい差分』として意図的に区別されており、WARN で止まらないことは統制の設計どおりの振る舞いである。ADR-132 の時点では、残った 2 件は文書の質の問題として見え、『修復経路が存在しない』という構造の性質としては見えていなかった。"
+      },
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "全件監査は findings を件数と重大度で要約するが、各 finding について『統制内で是正できるか』という属性を持たない。したがって『是正不能な違反が統治木に何件あるか』は last-audit.json のどこにも現れず、次セッションの注入も鼓動もその状態を運べない。ADR-132 の 2 件が是正不能のまま滞留していたことは、監査の出力からは判別できない形で保存されていた。",
+        "evidence_ref": "plugin/scripts/policy-guard.py",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "監査の先行指標を確立する",
+          "リスク先行指標による監査",
+          "指摘欠点の是正完了追跡",
+          "安全想定の記録と失効先行指標の定義"
+        ],
+        "why_it_seemed_adequate": "監査の役割は統治木の状態を走査して要約することであり、是正可能性はガードの管轄と整理されている。境界を明確に保つ設計として一貫している。加えて、監査の設計時点では『検出された違反はいずれ直せる』ことが暗黙の前提であり、その前提が破れるのは不変性規則と検査規則が交差する場合だけで、その交差自体が想定に入っていなかった。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者が持つ手掛かりは進捗報告・PR の diff・台帳である。今回の解決手段（未追跡の下書きの破棄）は、リポジトリに一度も入っていない対象への操作であるため diff に現れず、正規経路で解決した場合と外形上は区別できない。ガードが何回拒否したか、拒否のあと正規の再編集で解決したのか迂回で終わったのかを所有者へ運ぶ経路が存在しない。修復口の方式は所有者判断を要する事項であるのに、判断の材料が構造上届かない。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "controller-needs-concrete-feedback-channels",
+          "feedback-enables-improvement-of-controls",
+          "control-action-requires-feedback",
+          "全コントロールループにフィードバック必須"
+        ],
+        "why_it_seemed_adequate": "所有者の手掛かりを『正本に入るもの』（diff・台帳・報告）に絞る設計は、監視対象を確定させ、見るべきものを増やしすぎないための合理的な選択である。拒否は呼び出し側のモデルへ返って即座に消費される情報であり、それが所有者の判断材料になり得るという関係は、拒否が例外的な事故ではなく日常的な統制作用として設計されている限り見えにくい。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "ガードを通さずに書かれた（あるいは消された）文書は統治の外に出る、という既知の穴が、正規の修復口が無いことによって『やむを得ず通る道』に転じた。迂回によって解決された事案は、統治木の側にも台帳の側にも痕跡を残しにくいため、迂回の頻度が増えていること自体をどの要素も観測できない。統制の侵食が、侵食の指標を同時に消す形で進行する。",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "迂回行動からの学習",
+          "change-system-to-change-behavior",
+          "determine-why-rule-was-violated",
+          "例外作業の統制と発生低減",
+          "破られた想定の再検討"
+        ],
+        "why_it_seemed_adequate": "この穴は NONGOAL-001 として明示的に『防げない』と宣言されており、宣言済みの残余リスクとして扱われていた。宣言された穴は、通る動機が無い限り実務上は空いていないのと同じである、という想定が置かれていた。動機を作るのは統制の側（正規経路の欠如）であるという逆向きの関係は、穴を宣言した時点の分析には含まれていない。"
+      },
+      {
+        "control_element_id": "SESSION_START_CONTRACT",
+        "description": "契約注入は確定事項・非目標・退行監視の要点をセッション冒頭に運ぶが、『受理済み ADR の本文は直せない』という制約と、それに対応する作法（下書きは proposed で起こす）を運んでいなかった。禁止の存在は拒否されて初めて判明し、その時点では既に本文が accepted のまま書かれている。禁止だけが実行時に現れ、代替手順が事前に現れない。",
+        "evidence_ref": "doctrine_docs/packaging/procedures/PROC-001-development-norms.md",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "責任委譲には情報と訓練を伴わせる",
+          "上位文書の利用可能性（読み手適合）",
+          "機械的遵守が前提の指示は自動化",
+          "エラー誘発設計要因の排除"
+        ],
+        "why_it_seemed_adequate": "注入できる分量は限られ、要点は横断的な確定事項と非目標に絞るのが自然である。文書種別ごとの起票作法は手順文書（PROC-001）の領分であり、契約注入に入れると粒度が混ざるという判断は一貫している。なお PROC-001 側の該当記述は本事象の後に追加されたものであり、注入の設計時点では運ぶべき対象として存在していなかった。"
+      }
+    ],
+    "hazard": "統治木の文書に、体系内の検査（docs-linter / docs-audit）が違反と判定する内容が存在し、かつその内容を是正する操作が統制上ひとつも許可されていない状態（禁止集合と是正要求集合の交差により、許可される操作の集合が空になっている状態）。この状態では「規則を守ったまま正しくする」ことが不可能で、迂回か放置のいずれかしか残らない。",
+    "incident_id": "INC-026-accepted-adr-has-no-sanctioned-repair-path",
+    "leading_indicators": [
+      {
+        "indicator": "不変性規則の許可集合と、機械が赤/黄を出す検査規則集合の交差にある『正規修復経路を持たない規則』の数",
+        "observable": "policy-guard.py の編集許可条件と docs-linter.py の ERROR/WARN 規則を静的に突き合わせ、各検査規則について『不変対象の文書でその指摘を解消できる許可操作が存在するか』を判定した表",
+        "threshold": "正規修復経路を持たない ERROR 規則が 1 つでも存在すれば赤。WARN 規則については件数を記録し、増加時に調査",
+        "version_independent": true,
+        "where": "CI_RELEASE_CHECK（リポジトリ正本に対する決定論試験として .github/workflows 内で実行）",
+        "why_version_independent": "リポジトリ正本の 2 ファイルを CI が静的に照合するだけで、利用者環境の導入複製の版に依存しない"
+      },
+      {
+        "indicator": "status: accepted の文書が保持している未解消 finding の件数（重大度別）",
+        "observable": "docs-audit の JSON を status で層別した集計（accepted 文書の ERROR 件数 / WARN 件数）",
+        "threshold": "accepted 文書の ERROR は 0 を正常とし 1 件で赤。WARN は 2 件以上（ADR-132 の実績値）で調査を起票",
+        "version_independent": true,
+        "where": "CI_RELEASE_CHECK の docs-audit JSON（正本側）。参考値として SESSION_END_AUDIT の last-audit.json",
+        "why_version_independent": "CI 側で正本のスクリプトを走らせる限り、指標の算出は導入複製の版を経由しない。ただし last-audit.json を情報源にする運用へ寄せると版依存になる"
+      },
+      {
+        "indicator": "proposed を経ずに初出時点から accepted で作成された統治文書の件数",
+        "observable": "各 ADR ファイルの初回コミット時点の status フロントマター値（git 履歴から算出）",
+        "threshold": "0 を正常とし、1 件で PROC-001 の記述と実務の乖離の兆候として調査",
+        "version_independent": true,
+        "where": "CI_RELEASE_CHECK（新規追加ファイルに対する検査）",
+        "why_version_independent": "git 履歴とファイル内容のみに依存し、プラグイン複製の版を参照しない"
+      },
+      {
+        "indicator": "ガードの拒否のうち、同一セッション内で正規の再編集による解決に至らなかったものの割合",
+        "observable": "拒否イベントの記録と、その後の同一パスに対する編集成功／ファイル系操作／未解決終了の分類",
+        "threshold": "迂回または未解決で終わった拒否が 1 件でも出れば調査。週次で 0 を正常とする",
+        "version_independent": false,
+        "where": "PRE_TOOL_GUARD（拒否時のイベント記録を追加した上で、セッション単位で集計）",
+        "why_version_independent": "記録はガード本体（導入複製側で動く）に出力を追加して初めて得られるため、複製の版が遅れると指標も遅れる。HEARTBEAT と同じ共通原因故障（INC-005）を共有する"
+      },
+      {
+        "indicator": "ガード拒否の直後に発生した、Hook を経ないファイル系操作（未追跡ファイルの削除・書込み）の件数",
+        "observable": "拒否イベント直後の同一セッションのツール呼び出し系列",
+        "threshold": "0 を正常とし、1 件で NONGOAL-001 の穴が実務経路化している兆候として起票",
+        "version_independent": false,
+        "where": "PRE_TOOL_GUARD の拒否記録とセッションのツール呼び出し記録の突合",
+        "why_version_independent": "検出そのものが導入複製側の Hook 記録に依存し、複製が遅れれば検出も遅れる。また Hook が起動しない経路で行われた操作は原理的に計上されないため、この指標は下限しか与えない"
+      }
+    ],
+    "loss": "統治木の正本に、機械的検査が違反と判定した内容を含む文書が残り、統制内でそれを是正する手段が無いため、作業の前進には統制を通らない経路（Hook を経ない書込み・未追跡ファイルの破棄）を選ぶほかなくなる。結果として (a) 統治文書の正確さが回復されないまま残り、(b) NONGOAL-001 が「防げない」と明示している迂回経路が例外ではなく常道になり、統治構造の統制力そのものが侵食される。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "すべての不変対象について、あらゆる検査規則に対応する許可操作が存在する（交差が空でない）ことが示されれば棄却。",
+        "hypothesis": "同型の袋小路（禁止集合と検査規則の交差で許可操作が空になる状態）は受理済み ADR に固有ではなく、他の不変対象（NONGOAL / decided-facts / 確定済み PROC）にも存在する。",
+        "oracle": "各不変規則について、その対象文書に対して docs-linter が出し得る ERROR/WARN 規則を列挙し、各規則を解消できる許可操作が存在するかを表にする決定論試験。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "記録期間中の拒否がすべて正規の再編集で解決していれば、本件は特異事例として扱い直す。",
+        "hypothesis": "正規経路が存在しない場面では迂回が選ばれるという関係は本件に限らず一般であり、ガードの拒否全体にわたって迂回率が観測できる。",
+        "oracle": "拒否イベントの直後の帰結を『正規の再編集で解決／Hook 外の経路で解決／未解決で終了』に分類した集計。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "差し戻し遷移が拒否される、または遷移後も編集が拒否されることが示されれば棄却。",
+        "hypothesis": "status 遷移の許可（accepted → proposed）が恒常的に効くため、不変性は往復遷移によって既に迂回可能であり、ガードが守っているのは編集の手数だけである。",
+        "oracle": "accepted → proposed への遷移が単独で許可されるか、および遷移後の本文編集が許可されるかを、試験用文書で確認する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "許可判定が指摘位置と置換範囲の一致だけで閉じ、意味論判断を要しないと示せれば棄却。",
+        "hypothesis": "本文の修復口を設けると、決定内容の書き換えが『機械が赤にした箇所の修復』を名乗って通過する。",
+        "oracle": "修復許可の判定が、linter が返す指摘位置と置換範囲の一致のみで機械的に決まるか、diff の意味論判断を要するかを実装案ごとに数える。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "WARN の滞留がすべて短期間で解消していれば棄却。",
+        "hypothesis": "是正要求の起動が重大度に連動しているため、WARN のみで現れた構造欠陥は現在も複数滞留している。",
+        "oracle": "過去の docs-audit JSON における WARN の滞留期間分布と、そのうち是正不能な種別の割合。",
+        "severity": "P2"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "不変性規則の許可集合と、docs-linter が ERROR/WARN を出す規則集合の対応表を決定論試験として実装し、正規修復経路を持たない ERROR 規則が存在したら CI を赤にする。統制どうしの交差を検査する場所を新設する。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "修復口の方式（下書きを別状態で扱う／機械が赤にした箇所の修復のみを構文修復と同じ形で許す／何もしない）を所有者が決める。三案それぞれで『決定の遡及改変を許さない』制約がどこまで保たれるかを併記して判断材料とする。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "ガードの拒否応答に、その禁止に対応する正規の代替手順（例：proposed で起こし直す）を含める。拒否応答は呼び出し側のモデルへ返る唯一の手掛かりであり、禁止だけが実行時に現れて代替が現れない状態を解消する。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "拒否イベントを記録し、拒否後の帰結（正規の再編集で解決／迂回／未解決）を分類して集計する。迂回で終わった拒否を先行指標として所有者の手掛かりに載せる。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "docs-audit の finding に『統制内で是正可能か』の属性を持たせ、是正不能な finding の滞留件数を last-audit.json と CI の JSON の双方に出す。重大度に依らず滞留を可視化する。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "PROC-001 の『ADR は proposed で起こす』を、手順文書だけでなくセッション冒頭の契約注入にも載せるかを検討し、載せない場合はその理由を記録する（機械的遵守を前提とする指示は自動化側に寄せる原則との関係を明示する）。",
+        "kind": "文書化",
+        "owner_decision_required": true
+      },
+      {
+        "action": "ADR-132 の未是正 2 件の現状、および他の文書種（PROC / NONGOAL / decided-facts）に同型の袋小路が存在するかを調査する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "status 遷移の許可規則が accepted → proposed の差し戻しを恒常的に許すかどうかを確認し、許す場合は不変性が往復遷移で迂回可能である事実を残余リスクとして明記する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "禁止を定める統制（不変性）と是正を要求する統制（検査規則）が別々に設計され、両者の交差を検査する場所がどの層にも置かれていない。個々の統制が正しいまま、合成が『許可される操作が空』という状態を作る。",
+      "統制の例外集合が原理からの演繹で最小に作られており、後から追加される検査規則が例外集合を実質的に空にし得るという時間方向の関係が、規則の設計時の想定に入っていない。",
+      "是正要求の起動が実質的に重大度（門が赤になったか）に連動しており、同じ構造欠陥でも WARN で現れた回は学習の対象にならない。",
+      "迂回で解決された事案は正本にも台帳にも痕跡を残しにくく、統制の侵食が、侵食を測る手掛かりを同時に消しながら進行する。",
+      "宣言済みの残余リスク（NONGOAL-001）が『通る動機が無い限り空いていないのと同じ』という想定で扱われており、統制自身が動機を作る逆向きの経路が想定されていない。",
+      "是正も検出器も PLUGIN_DISTRIBUTION 経由でしか利用者環境へ届かず、版遅れという単一の要因が複数の防護を同時に無効化する（INC-005・HEARTBEAT の既知の穴と同じ共通原因）。",
+      "評価者が同系 model である（ASSURANCE_LANE の既知の穴）ため、規則どうしの合成が生む死角を、同じ死角を持つ評価者が点検している。"
+    ],
+    "unknowns": [
+      "事象が名指しする機構のうち、PRE_TOOL_GUARD・POST_TOOL_LINTER・GOVERNANCE_TREE は統制構造に実在要素として列挙されているが、本分析の実行環境（作業ディレクトリは空で、リポジトリを参照できない）では policy-guard.py 本体を読めていない。したがって『受理済み ADR の不変性』および『許可される 3 操作（status 遷移・superseded_by 付与・フロントマター構文修復）』という規則の実在と正確な範囲は未確認であり、事象の記録が唯一の根拠である。以降の統制欠陥は、この規則が記録どおり実在するという条件付きで成立する。",
+      "ガードが ADR-134 の編集を拒否した根拠が、記録どおり『受理済み文書の不変性規則』であったのか、別条件（パス規則など）の副作用であったのかは未確認。",
+      "ADR-132 に残る UNDEFINED_TERM 2 件が現在も未是正のままかどうか、また同型の滞留が他の文書種（PROC / NONGOAL / decided-facts）にも存在するかどうか。",
+      "今回の解決に用いた『未追跡の下書きの破棄』が実際にガードを経由しなかったのか、経由した上で許可されたのかは未確認。前者ならば NONGOAL-001 の穴、後者ならば削除規則の適用範囲の問題であり、是正先が異なる。",
+      "fix_note が記す accepted → proposed への差し戻しが、status 遷移の許可規則によって恒常的に可能なのかどうか。可能であれば不変性は往復遷移で実質的に迂回でき、本事象の袋小路と不変性の実効性の双方の前提が変わる。",
+      "本文の是正を許す修復口を設けた場合に、『機械が赤にした箇所の修復』と『決定内容の書き換え』を機械が判別できるか（判別が diff の意味論に依存するなら、決定論での実装可否は未知）。",
+      "本事象が OWNER へ報告されているか、および修復口の方式について所有者の判断材料が現時点で揃っているか。",
+      "二度の同型事象以外に、ガード拒否が迂回で解決された事例が過去にどれだけあるか（記録が存在しないため母数不明）。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は、各統制が単体で意図どおり作用するかを確かめる形で組まれており、統制どうしの合成が生む状態（ガードの禁止集合と linter の ERROR 集合が交差し、許可される操作が空になる状態）を見る場所がどこにも無い。矛盾する二つの手掛かり（『この語は ERROR だから直せ』という助言と『この文書は編集できない』という拒否）は別経路で返り、呼び出し側のモデルの中でのみ同時に観測されるため、体系側のどの記録にも矛盾として現れない。さらに、是正要求が起きる契機が実質的に『門が赤になったか』に連動しているため、同型が最初に現れた ADR-132 は WARN で門が通り、是正不能な違反が滞留している状態が『困っていない状態』として保存された。監査の出力も finding の是正可能性という属性を持たないため、滞留は次セッションへ運ばれなかった。今回 ERROR で門が赤になったのは、構造の欠陥が変わったからではなく、たまたま同じ欠陥がより高い重大度の規則に当たったからである。修正が未着手であること自体は、この見逃しの理由とは独立している。"
+  }
+}
