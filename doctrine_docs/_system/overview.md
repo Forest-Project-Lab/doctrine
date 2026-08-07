@@ -46,14 +46,17 @@ sources: []
 | REQ-012 | REQ | authoring | 判断の層（技能と候補語抽出）が決定論を補い保証限界を明示する |
 | REQ-015 | REQ | authoring | 会話知識の捕捉（セッションの決定は消える前にディスクへ） |
 | SPEC-015 | SPEC | authoring | scaffold（_system 非破壊シード） |
-| SPEC-016 | SPEC | authoring | skills（7技能を一仕様で） |
+| SPEC-016 | SPEC | authoring | skills（8技能を一仕様で） |
 | SPEC-017 | SPEC | authoring | templates（20型＋icd-index） |
 | SPEC-018 | SPEC | authoring | term-extract（c-TF-IDF 候補語抽出） |
 | SPEC-022 | SPEC | authoring | 会話知識の捕捉（終端の確認・圧縮前の退避・次セッションの選別） |
-| ADR-010 | ADR | authoring | 作成・初期化の設計判断（7技能固定・遅延生成・テンプレが語彙符号化） |
+| SPEC-029 | SPEC | authoring | map-draft-check（意味モデル下書きの出所検証） |
 | ADR-029 | ADR | authoring | CLAUDE.md と AGENTS.md は投影ではなく案内と定める |
 | ADR-051 | ADR | authoring | 変更フローの段数は、規模ではなく決定を含むか否かで分ける |
 | ADR-077 | ADR | authoring | 圧縮前の促しは届かない。退避の合図を圧縮後の注入へ移す |
+| ADR-136 | ADR | authoring | 配布技能に system-map-draft を加える（ADR-010 を置換。一覧の正本は SPEC-016） |
+| CHANGE-008 | CHANGE | authoring | 配布技能に system-map-draft を加える（issue |
+| IMPACT-008 | IMPACT | authoring | 配布技能 system-map-draft の追加 — 影響の列挙 |
 | IMPL-015 | IMPL | authoring | scaffold/term-extract の実装注記 |
 | IMPL-016 | IMPL | authoring | skills/templates の実装注記 |
 | IMPL-020 | IMPL | authoring | capture-nudge.py / precompact-dump.py（捕捉）の実装メモ |
@@ -62,6 +65,7 @@ sources: []
 | TEST-017 | TEST | authoring | templates の検証 |
 | TEST-018 | TEST | authoring | term-extract の検証 |
 | TEST-022 | TEST | authoring | 会話知識の捕捉の受入 |
+| TEST-029 | TEST | authoring | map-draft-check の検証 |
 | ICD-006 | ICD | context | context のインターフェース（注入・パック・投影描画の契約） |
 | REQ-009 | REQ | context | 見つけやすさ（投影を正本から決定論で描画） |
 | REQ-010 | REQ | context | LLM適合（常時投入を最小に・never群を渡さない） |

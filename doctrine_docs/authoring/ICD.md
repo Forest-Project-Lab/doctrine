@@ -6,7 +6,7 @@ domain: authoring
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-26
+updated: 2026-08-07
 sources: [spec/doctrine.ja.md §4.1]
 llm_context: task
 canonical_for: [scaffolding, term-extraction, skills, templates]
@@ -22,7 +22,7 @@ authoring ドメインは、型付き文書を正しい置き場所と様式で�
 
 - 足場（初期化が `_system` に置く最小限のファイル）。
 - 候補語抽出（ドメインごとの特徴語の候補を c-TF-IDF で出す処理。ファイルは読むだけで書き込まない。c-TF-IDF は、各ドメインを一つのまとまりとみなして特徴語を測る指標で、SPEC-018 で定義する）。
-- 技能（人の判断を支援する Skill。本ドメインは7つの技能を所有する）。
+- 技能（人の判断を支援する Skill。本ドメインは8つの技能を所有する）。
 - テンプレート（型ごとに様式をかたどった雛形。全21個）。
 
 ## 正本である事実
@@ -31,7 +31,7 @@ authoring ドメインは、型付き文書を正しい置き場所と様式で�
 
 - scaffolding: 初期化は既存を壊さず、置くものを最小限にとどめる。glossary・decided-facts・non-goals・overview の投影からなる `_system` の最小集合、ルートの案内、`.docs-level` だけを置く。ドメインのフォルダ・各層・hooks・skills は先に作らない。
 - term-extraction: ドメインごとの特徴語の候補を c-TF-IDF で出す。ファイルには書き込まず、どれを採るかは人が決める。
-- skills: 技能は7つに固定する。機械で割り切れる処理は scripts と登録簿に任せ、各技能は何をどこまで保証するかを明記する。
+- skills: 技能の一覧は SPEC-016 を正本とし、増減は根拠ADRの置換によってのみ行う（ADR-136）。機械で割り切れる処理は scripts と登録簿に任せ、各技能は何をどこまで保証するかを明記する。
 - templates: テンプレートは、20種の型と1種の投影（icd-index）で計21個。§1 の語彙を体系の中でテンプレートが一度だけ書き写し、ほかには持たせない。
 
 ## データ契約

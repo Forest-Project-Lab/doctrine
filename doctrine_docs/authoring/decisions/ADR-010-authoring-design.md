@@ -3,10 +3,11 @@ id: ADR-010
 title: 作成・初期化の設計判断（7技能固定・遅延生成・テンプレが語彙符号化）
 type: ADR
 domain: authoring
-status: accepted
+status: superseded
+superseded_by: ADR-136
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-06-30
+updated: 2026-08-07
 sources: [spec/doctrine.ja.md §4.1]
 review_by: 2026-09-30
 depends_on: [SPEC-016]

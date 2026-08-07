@@ -65,7 +65,7 @@ doctrine/
 ├── CONTRIBUTING.md               # 寄稿の方針と文章規範
 ├── spec/
 │   └── doctrine.ja.md            # 単一仕様 DOCTRINE-001（正本。付録に文書型テンプレート）
-├── plugin/                       # 参照実装プラグイン（Skill 7・Hook 7イベント・スクリプト・テンプレート）
+├── plugin/                       # 参照実装プラグイン（Skill 8・Hook 7イベント・スクリプト・テンプレート）
 ├── .claude-plugin/
 │   └── marketplace.json          # /plugin install で導入するための marketplace 登録
 ├── doctrine_docs/                         # プラグイン自身の設計を統治した設計コーパス（dogfood）
@@ -105,4 +105,4 @@ MIT License。[LICENSE](LICENSE) を参照。商用利用・改変・再配布�
 
 仕様の基盤となる出典は、[spec/doctrine.ja.md](spec/doctrine.ja.md) の付録C に示す（ASD-STE100・S1000D・DO-178C・MBSE/SysML・c-TF-IDF・JTCA ほか）。常時投入を最小に保つ根拠は、入力が長いほどモデルの成功率が下がるという知見（ETH Zürich & LogicStar.ai, arXiv:2602.11988, 2026）に基づく。あわせて本 README は、記録管理（ISO 15489）、要求工学（ISO/IEC/IEEE 29148）、ADR（Michael Nygard）、Diátaxis、C4 モデルも参照する。
 
-<!-- doctrine:view src=doctrine as-of=0.10.0 date=2026-08-03 refs=SPEC-011,SPEC-019,SPEC-020 -->
+<!-- doctrine:view src=doctrine as-of=0.10.0 date=2026-08-07 refs=SPEC-011,SPEC-019,SPEC-020 -->

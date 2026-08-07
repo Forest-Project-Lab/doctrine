@@ -266,6 +266,6 @@ def as_prompt_text(idx):
     for t in idx["test_files"]:
         lines.append("- %s（%d 件） — %s" % (t["path"], t["tests"], t["note"] or ""))
     lines.append("")
-    lines.append("### 配布 Skill（7個固定）")
+    lines.append("### 配布 Skill（一覧の正本は SPEC-016）")
     lines.append(", ".join(idx["skills"]))
     return "\n".join(lines)
