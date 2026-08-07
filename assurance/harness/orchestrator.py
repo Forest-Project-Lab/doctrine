@@ -15,6 +15,7 @@
 今後の discover/challenge 実行器）が行う。
 """
 import fnmatch
+import glob
 import json
 import os
 import sys
@@ -145,6 +146,40 @@ def validate():
     problems.extend(_validate_verify_refs())
     problems.extend(_validate_incident_evidence())
     problems.extend(_validate_closure_vocabulary())
+    problems.extend(_validate_coverage_merges())
+    return problems
+
+
+def _validate_coverage_merges(ledger_dir=None):
+    """重複統合（merged_into。CURATE）の書き方の検査。
+
+    統合欄は (1) 同じ冊子に実在する key を指し、(2) 指す先が自身も統合済み
+    ではなく（連鎖の禁止 —— 出自が二段で辿れなくなる）、(3) merge_note
+    （日付と理由）を持つ。判定は消さない（生き残りの項が正本）。
+    """
+    problems = []
+    root = ledger_dir or _ledger_dir()
+    for path in sorted(glob.glob(os.path.join(root, "catalogs",
+                                              "*-coverage.json"))):
+        try:
+            with open(path, encoding="utf-8") as f:
+                entries = json.load(f).get("entries", [])
+        except (OSError, ValueError):
+            continue  # 読めない台帳は台帳種別の検査が指す
+        by_key = {e.get("key"): e for e in entries}
+        book = os.path.basename(path)
+        for e in entries:
+            target = e.get("merged_into")
+            if not target:
+                continue
+            where = "%s の %s" % (book, e.get("key"))
+            if target not in by_key:
+                problems.append("統合 %s が実在しない key %s を指す" % (where, target))
+            elif by_key[target].get("merged_into"):
+                problems.append("統合 %s の指す先 %s も統合済み（連鎖の禁止）"
+                                % (where, target))
+            if not (e.get("merge_note") or "").strip():
+                problems.append("統合 %s に merge_note（日付と理由）が無い" % where)
     return problems
 
 
@@ -1177,7 +1212,8 @@ def _count_unmapped(cov):
     読む段」である（走らせ手だけを足さない。INC-012・INC-015）。
     """
     return sum(1 for e in cov.get("entries", [])
-               if not e.get("assigned_at") and e.get("disposition") == "UNKNOWN")
+               if not e.get("merged_into")
+               and not e.get("assigned_at") and e.get("disposition") == "UNKNOWN")
 
 
 _INDEX_NOW_CACHE = []
@@ -1236,7 +1272,12 @@ def coverage_status(index_sha=None):
             out[book_id] = {"status": "UNKNOWN", "reason": str(exc),
                             "unknown": None, "total": 0}
             continue
-        unknown = sum(1 for e in entries if e.get("disposition") == "UNKNOWN")
+        # 統合済み（merged_into。CURATE の重複統合）は作業として数えない。
+        # 判定は消さず残る —— 生き残りの項が正本で、統合欄は出自の記録である。
+        merged = sum(1 for e in entries if e.get("merged_into"))
+        unknown = sum(1 for e in entries
+                      if not e.get("merged_into")
+                      and e.get("disposition") == "UNKNOWN")
         # 評価の結果としての UNKNOWN（割当済み）と、まだ評価していない項を分ける。
         # 混ぜると、判定不能と結論した項目を永久に引き直す「消えない行動」になる
         # （INC-006 と同型を、その修正の直後に持ち込みかけた）。
@@ -1255,6 +1296,8 @@ def coverage_status(index_sha=None):
         if now:
             resolve = _pointer_resolver()
             for e in entries:
+                if e.get("merged_into"):
+                    continue
                 if not e.get("assigned_at"):
                     continue
                 if not is_stale(e, now, resolve):
@@ -1269,6 +1312,7 @@ def coverage_status(index_sha=None):
             "unknown": unknown,
             "stale_open": stale_open,
             "stale_settled": stale_settled,
+            "merged": merged,
             "total": len(entries),
         }
     return out

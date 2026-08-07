@@ -55,7 +55,8 @@ def sample(entries, n, seed):
     （WATCH-001 第11項）。並びは key で正規化してから引き、台帳の並び順の
     揺れが標本を変えないようにする。
     """
-    judged = sorted([e for e in entries if e.get("assigned_at")],
+    judged = sorted([e for e in entries
+                     if e.get("assigned_at") and not e.get("merged_into")],
                     key=lambda e: e.get("key") or "")
     if n >= len(judged):
         return judged
@@ -77,6 +78,9 @@ def pick_keys(entries, keys_csv):
         entry = by_key.get(k)
         if entry is None:
             problems.append("存在しない key: %s" % k)
+        elif entry.get("merged_into"):
+            problems.append("統合済みの key（生き残り %s を名指すこと）: %s"
+                            % (entry.get("merged_into"), k))
         elif not entry.get("assigned_at"):
             problems.append("判定の無い key（再判定できない）: %s" % k)
         else:
