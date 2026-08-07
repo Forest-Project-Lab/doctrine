@@ -214,6 +214,13 @@
       "state": "landed",
       "evidence_ref": "assurance/harness/prompts.py",
       "note": "判定に規準の指紋（本文から導く rubric_sha256）を刻むようにした。手で書いた版番号は本文とずれる（INC-019 の形）ので、版は宣言せず内容から取る。"
+    },
+    {
+      "incident_id": "INC-004-hyphen-token-undefined-term",
+      "index": 0,
+      "state": "landed",
+      "evidence_ref": "plugin/tests/test_termcheck_corpus.py",
+      "note": "偽陽性コーパス試験を本体試験(CI_RELEASE_CHECK の実装は .github/workflows)へ追加した。守るのは例ではなく性質 ——『点検器が指摘した語は原文に単独の語として実在すること』。故障注入(_is_identifier_fragment を無効化＝INC-004 の修正を巻き戻す)で赤になり、復元で緑に戻ることを確かめた(baseline 0 / injected 2 / restored 0)。証拠は assurance/ledger/red/INC-004-rec0-false-positive-corpus.json"
     }
   ]
 }
