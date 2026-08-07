@@ -1,0 +1,680 @@
+{
+  "accepted_flaws": [
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "「次の行動を決定論で導く」制御において、判定の古びを coverage_status が assigned_by.index_sha256 と索引全体の sha256 の一致で決めるため、判定の証拠が指す範囲の外側（統治木の一文書、配布物、plugin/tests のファイル1件）が動いただけで非終端の判定が全件古びに変わり、next_actions の先頭が毎反復 MAP_COVERAGE に戻る。導出は決定論であるが、その入力が判定の妥当性と因果的に対応していない。",
+      "flaw_type": "制御動作が誤っている",
+      "normative_refs": [
+        "software-does-not-fail-requirements-defect",
+        "causality-as-inadequate-control-not-failure",
+        "先行指標の妥当性・代理指標の禁止",
+        "プロセスモデルと実状態の不整合"
+      ],
+      "why_it_seemed_adequate": "索引全体の指紋との比較は、実装として最も単純で、外部状態に依存せず、再現可能で、かつ保守側（偽陰性を出さない側）に倒れている。判定が依拠した世界が少しでも動いたら再検査する、という方針は保証レーンの目的に照らして正しく見え、範囲を絞る実装は「どこまでが証拠の範囲か」を定義する追加の設計判断を要するため、その時点では過剰に見えた。"
+    },
+    {
+      "control_element_id": "GOVERNANCE_TREE",
+      "description": "ADR-130 は採る選択肢（肯定形）と却下した選択肢（否定形）の双方を記録するが、却下項は散文として残るだけで、実装側と機械照合できる制約の形に変換されていない。統治木が提供する手掛かり（docs-audit の findings、dep-graph の逆依存）はいずれも文書間の関係を見るものであり、「却下と明記された設計が実装に現れていないか」を示す手掛かりを持たない。",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "ハザードから要求制約への変換",
+        "安全想定の記録と失効先行指標の定義",
+        "想定の記録と変更時再検査",
+        "何をとなぜのトレース文書化"
+      ],
+      "why_it_seemed_adequate": "ADR に却下理由（606 件が毎コミットで古び、$12 と数時間、消えない行動になる）まで数値で書き残すことは、決定の追跡可能性として十分に手厚い実務に見えた。文書に書いてある以上、実装時に参照されるという前提が置かれ、その前提を検査する必要が意識されにくかった。"
+    },
+    {
+      "control_element_id": "CI_RELEASE_CHECK",
+      "description": "merge 前に赤で止める統制は、ジョブの成否と docs-audit の JSON を手掛かりに持つが、その検査対象は文書の書式と本体試験であり、決定文書の内容と実装の対応（ADR-130 が却下した設計が orchestrator.py / system_index.py に入っていないか）は検査項目に含まれない。当該実装は全ジョブ緑で通過しうる。",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "監査の検出力評価",
+        "監査のすり抜け時に監査手順を是正",
+        "検出失敗の原因調査",
+        "最低準拠は不十分"
+      ],
+      "why_it_seemed_adequate": "CI の役割は互換性・書式・試験の回帰を止めることであり、設計判断の整合は人のレビューと ADR の存在で担保されるという分業が自然に見えた。決定と実装の突合を CI に載せるには決定を機械可読にする必要があり、その投資は当時の検査対象の範囲外だった。"
+    },
+    {
+      "control_element_id": "POST_TOOL_LINTER",
+      "description": "リンタは編集された一つの文書だけを点検して助言を返す設計であり、ADR-130（doctrine_docs）と実装（assurance/harness）にまたがる不一致は原理的に視野に入らない。単体では整合している文書と単体では整合しているコードの組合せが、統制としては却下済み設計の採用になっている。",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "単一コンポーネント集中の回避",
+        "verify-decomposition-assumptions",
+        "全体構造の分析"
+      ],
+      "why_it_seemed_adequate": "編集単位で助言を返す設計は応答が速く、誤検知が少なく、編集者の意図に近い位置で働くという明確な利点がある。全体整合は SessionEnd の全件監査が担うという役割分担が置かれていた。"
+    },
+    {
+      "control_element_id": "SESSION_END_AUDIT",
+      "description": "全件走査は統治木（doctrine_docs）を対象とし、要約を .claude/.cache へ書く。走査の対象集合が文書側に閉じているため、統治木の文書が述べた却下項が assurance/harness の実装に現れている状態は、全件走査をもってしても findings に現れない。全件監査という名称が与える網羅の印象と、実際の対象範囲が食い違う。",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "scope-beyond-operating-process",
+        "全レベルのコントロール検査",
+        "separate-listing-from-effectiveness-analysis"
+      ],
+      "why_it_seemed_adequate": "統治木の全件を毎セッション末に走査することは、当時考えられる最も網羅的な検査であり、実装コードは本体試験と CI が別途見るという二層構成が合理的に見えた。"
+    },
+    {
+      "control_element_id": "OWNER",
+      "description": "所有者へ届く手掛かり（規定形式の進捗報告、PR の diff、台帳）では、次の行動の先頭が MAP_COVERAGE であることは通常の作業計画として現れ、その背後で非終端 286 件が無関係な変更により全件古びたこと、およびそれが反復あたり約 $13.7・約 95 分の恒常的な要求になることは、区別できる形では現れない。判定の意味（何を測ったと言えるか）に関わる設計が、所有者判断の対象として提示されないまま運用に入っている。",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "リスク情報の不透明な集約禁止",
+        "controller-needs-concrete-feedback-channels",
+        "全変更のハザード分析と承認",
+        "安全評価と事業評価の分離"
+      ],
+      "why_it_seemed_adequate": "所有者の制御範囲は互換性・配布境界・復旧不能な削除・評価 model の最低線・push/PR/merge の許可であり、古び判定の粒度はその内側にある実装細部として扱うのが妥当に見えた。stale が多いこと自体は保守側に倒れた安全な状態にも読める。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "事象を台帳へ積み分析が済むまで閉じない統制は個別事象を追跡するが、統制自身の出力の性質（毎反復で stale_open が 0 から全件へ戻る、next_actions の先頭が同一種別で滞留する、要求再判定コストが反復予算を超える）を異常として扱う指標を持たない。全件古びは設計どおりの出力であるため、どの sensor から見ても正常動作として通過する。検出は反復13の §1 における人の不審に依存した。",
+      "flaw_type": "統制自身の劣化を検出できない",
+      "normative_refs": [
+        "監査の先行指標を確立する",
+        "計画外変化の検出手段",
+        "リスク先行指標による監査",
+        "設計時想定の運用中再検査"
+      ],
+      "why_it_seemed_adequate": "決定論試験の成否と台帳という二つの手掛かりは、非決定性と取りこぼしという想定された故障には有効に働いていた。出力が仕様どおりであることと、その仕様が目的に沿っていることは別だが、両者を分ける観測点は設計時に必要と見えなかった。"
+    },
+    {
+      "control_element_id": "PRE_TOOL_GUARD",
+      "description": "拒否の門は違反する編集・削除を終了コード2で拒むが、その拒否条件は統治木の側の規約に由来し、決定文書の却下項（ADR-130 が却下した設計）を拒否対象として持たない。統治木（決定の記録）と保証レーン（決定の実装）の間に、実装から決定への逆照合を行う経路が存在せず、決定は下流へ流れるだけで、実装が決定のどの選択肢に該当するかは誰も戻して確認しない。",
+      "flaw_type": "統制どうしの調整の欠如",
+      "normative_refs": [
+        "全コントロールループにフィードバック必須",
+        "設計上と実際の伝達経路の照合",
+        "feedback-enables-improvement-of-controls",
+        "運用フィードバックで設計改善"
+      ],
+      "why_it_seemed_adequate": "ガードの設計目標は復旧不能な操作と規約違反の編集を止めることであり、設計判断の内容審査までを終了コード2の一手で担わせるのは越権に見えた。決定の遵守はレビューと文書の役割という分担が明示されていた。"
+    }
+  ],
+  "analysis": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "「次の行動を決定論で導く」制御において、判定の古びを coverage_status が assigned_by.index_sha256 と索引全体の sha256 の一致で決めるため、判定の証拠が指す範囲の外側（統治木の一文書、配布物、plugin/tests のファイル1件）が動いただけで非終端の判定が全件古びに変わり、next_actions の先頭が毎反復 MAP_COVERAGE に戻る。導出は決定論であるが、その入力が判定の妥当性と因果的に対応していない。",
+        "flaw_type": "制御動作が誤っている",
+        "normative_refs": [
+          "software-does-not-fail-requirements-defect",
+          "causality-as-inadequate-control-not-failure",
+          "先行指標の妥当性・代理指標の禁止",
+          "プロセスモデルと実状態の不整合"
+        ],
+        "why_it_seemed_adequate": "索引全体の指紋との比較は、実装として最も単純で、外部状態に依存せず、再現可能で、かつ保守側（偽陰性を出さない側）に倒れている。判定が依拠した世界が少しでも動いたら再検査する、という方針は保証レーンの目的に照らして正しく見え、範囲を絞る実装は「どこまでが証拠の範囲か」を定義する追加の設計判断を要するため、その時点では過剰に見えた。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "ADR-130 は採る選択肢（肯定形）と却下した選択肢（否定形）の双方を記録するが、却下項は散文として残るだけで、実装側と機械照合できる制約の形に変換されていない。統治木が提供する手掛かり（docs-audit の findings、dep-graph の逆依存）はいずれも文書間の関係を見るものであり、「却下と明記された設計が実装に現れていないか」を示す手掛かりを持たない。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "ハザードから要求制約への変換",
+          "安全想定の記録と失効先行指標の定義",
+          "想定の記録と変更時再検査",
+          "何をとなぜのトレース文書化"
+        ],
+        "why_it_seemed_adequate": "ADR に却下理由（606 件が毎コミットで古び、$12 と数時間、消えない行動になる）まで数値で書き残すことは、決定の追跡可能性として十分に手厚い実務に見えた。文書に書いてある以上、実装時に参照されるという前提が置かれ、その前提を検査する必要が意識されにくかった。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "merge 前に赤で止める統制は、ジョブの成否と docs-audit の JSON を手掛かりに持つが、その検査対象は文書の書式と本体試験であり、決定文書の内容と実装の対応（ADR-130 が却下した設計が orchestrator.py / system_index.py に入っていないか）は検査項目に含まれない。当該実装は全ジョブ緑で通過しうる。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "監査の検出力評価",
+          "監査のすり抜け時に監査手順を是正",
+          "検出失敗の原因調査",
+          "最低準拠は不十分"
+        ],
+        "why_it_seemed_adequate": "CI の役割は互換性・書式・試験の回帰を止めることであり、設計判断の整合は人のレビューと ADR の存在で担保されるという分業が自然に見えた。決定と実装の突合を CI に載せるには決定を機械可読にする必要があり、その投資は当時の検査対象の範囲外だった。"
+      },
+      {
+        "control_element_id": "POST_TOOL_LINTER",
+        "description": "リンタは編集された一つの文書だけを点検して助言を返す設計であり、ADR-130（doctrine_docs）と実装（assurance/harness）にまたがる不一致は原理的に視野に入らない。単体では整合している文書と単体では整合しているコードの組合せが、統制としては却下済み設計の採用になっている。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "単一コンポーネント集中の回避",
+          "verify-decomposition-assumptions",
+          "全体構造の分析"
+        ],
+        "why_it_seemed_adequate": "編集単位で助言を返す設計は応答が速く、誤検知が少なく、編集者の意図に近い位置で働くという明確な利点がある。全体整合は SessionEnd の全件監査が担うという役割分担が置かれていた。"
+      },
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "全件走査は統治木（doctrine_docs）を対象とし、要約を .claude/.cache へ書く。走査の対象集合が文書側に閉じているため、統治木の文書が述べた却下項が assurance/harness の実装に現れている状態は、全件走査をもってしても findings に現れない。全件監査という名称が与える網羅の印象と、実際の対象範囲が食い違う。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "scope-beyond-operating-process",
+          "全レベルのコントロール検査",
+          "separate-listing-from-effectiveness-analysis"
+        ],
+        "why_it_seemed_adequate": "統治木の全件を毎セッション末に走査することは、当時考えられる最も網羅的な検査であり、実装コードは本体試験と CI が別途見るという二層構成が合理的に見えた。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者へ届く手掛かり（規定形式の進捗報告、PR の diff、台帳）では、次の行動の先頭が MAP_COVERAGE であることは通常の作業計画として現れ、その背後で非終端 286 件が無関係な変更により全件古びたこと、およびそれが反復あたり約 $13.7・約 95 分の恒常的な要求になることは、区別できる形では現れない。判定の意味（何を測ったと言えるか）に関わる設計が、所有者判断の対象として提示されないまま運用に入っている。",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "リスク情報の不透明な集約禁止",
+          "controller-needs-concrete-feedback-channels",
+          "全変更のハザード分析と承認",
+          "安全評価と事業評価の分離"
+        ],
+        "why_it_seemed_adequate": "所有者の制御範囲は互換性・配布境界・復旧不能な削除・評価 model の最低線・push/PR/merge の許可であり、古び判定の粒度はその内側にある実装細部として扱うのが妥当に見えた。stale が多いこと自体は保守側に倒れた安全な状態にも読める。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "事象を台帳へ積み分析が済むまで閉じない統制は個別事象を追跡するが、統制自身の出力の性質（毎反復で stale_open が 0 から全件へ戻る、next_actions の先頭が同一種別で滞留する、要求再判定コストが反復予算を超える）を異常として扱う指標を持たない。全件古びは設計どおりの出力であるため、どの sensor から見ても正常動作として通過する。検出は反復13の §1 における人の不審に依存した。",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "監査の先行指標を確立する",
+          "計画外変化の検出手段",
+          "リスク先行指標による監査",
+          "設計時想定の運用中再検査"
+        ],
+        "why_it_seemed_adequate": "決定論試験の成否と台帳という二つの手掛かりは、非決定性と取りこぼしという想定された故障には有効に働いていた。出力が仕様どおりであることと、その仕様が目的に沿っていることは別だが、両者を分ける観測点は設計時に必要と見えなかった。"
+      },
+      {
+        "control_element_id": "PRE_TOOL_GUARD",
+        "description": "拒否の門は違反する編集・削除を終了コード2で拒むが、その拒否条件は統治木の側の規約に由来し、決定文書の却下項（ADR-130 が却下した設計）を拒否対象として持たない。統治木（決定の記録）と保証レーン（決定の実装）の間に、実装から決定への逆照合を行う経路が存在せず、決定は下流へ流れるだけで、実装が決定のどの選択肢に該当するかは誰も戻して確認しない。",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "全コントロールループにフィードバック必須",
+          "設計上と実際の伝達経路の照合",
+          "feedback-enables-improvement-of-controls",
+          "運用フィードバックで設計改善"
+        ],
+        "why_it_seemed_adequate": "ガードの設計目標は復旧不能な操作と規約違反の編集を止めることであり、設計判断の内容審査までを終了コード2の一手で担わせるのは越権に見えた。決定の遵守はレビューと文書の役割という分担が明示されていた。"
+      }
+    ],
+    "hazard": "判定の鮮度（古びているか否か）を決める入力の範囲が、その判定が依拠した証拠の範囲より広く、証拠と因果的に無関係な変更で全件が古びと分類される状態。この状態では、統制構造が持つ「どの判定が再検査を要するか」というプロセスモデルが実状態と一致せず、次の行動の優先順位づけが証拠の変化ではなく無関係な変更に駆動される。",
+    "incident_id": "INC-025-adr-130-implemented-the-option-it-rejected",
+    "leading_indicators": [
+      {
+        "indicator": "変更ファイル1件あたりの新規 stale 件数",
+        "observable": "反復ごとの stale_open の増分 ÷ その反復で索引に対して変更されたファイル数",
+        "threshold": "変更ファイル1件あたり新規 stale が 10 件を超えたら異常として扱い、反復を進める前に古び判定の入力範囲を確認する",
+        "version_independent": true,
+        "where": "assurance/ledger/ の反復記録と coverage_status の出力（リポジトリ正本側で計算）",
+        "why_version_independent": "比は保証レーンの正本側の台帳と索引だけから計算でき、利用者環境へ導入された複製の版に依存しない"
+      },
+      {
+        "indicator": "古び判定の入力範囲と証拠参照範囲の包含関係",
+        "observable": "coverage_status が比較に用いる指紋の対象ファイル集合と、当該判定の evidence_refs が指すファイル集合の差集合の大きさ",
+        "threshold": "指紋の対象集合が証拠参照集合の真の上位集合になっている判定が 1 件でも存在したら赤",
+        "version_independent": true,
+        "where": "assurance/harness/system_index.py と orchestrator.py に対する決定論試験（CI_RELEASE_CHECK のジョブ）",
+        "why_version_independent": "リポジトリ正本の静的検査であり、配布された複製を参照しない"
+      },
+      {
+        "indicator": "next_actions 先頭の滞留",
+        "observable": "next_actions の先頭に同一種別（例：MAP_COVERAGE）が連続して現れた反復数と、その間の該当種別の未処理件数の減少量",
+        "threshold": "3 反復連続で先頭が同一種別、かつ未処理件数が正味で減っていない場合に警告",
+        "version_independent": true,
+        "where": "assurance/ledger/ の反復ログ",
+        "why_version_independent": "台帳は正本側にあり、導入複製の版とは独立に記録される"
+      },
+      {
+        "indicator": "反復あたりの要求再判定コスト",
+        "observable": "next_actions 生成時に、要求される再判定件数 × 実測単価（現状 $0.048/件）で見積もる金額と所要時間",
+        "threshold": "1 反復の要求再判定コストが $5 または 30 分を超えたら、実行前に警告を出して所有者の手掛かりに載せる",
+        "version_independent": true,
+        "where": "orchestrator.py の next_actions 生成箇所（生成と同時に見積を台帳へ書く）",
+        "why_version_independent": "見積は正本側の件数と単価だけで決まる"
+      },
+      {
+        "indicator": "決定文書の却下項に対する実装照合レコードの被覆率",
+        "observable": "doctrine_docs/*/decisions/ の各 ADR の「却下した選択肢」の各項について、実装側で該当設計が採られていないことを示す照合レコード（試験 ID など）が対応づいている割合",
+        "threshold": "照合レコードが対応づいていない却下項が 1 件でも残ればその ADR を finding として挙げる",
+        "version_independent": true,
+        "where": "docs-audit の findings と CI のジョブ",
+        "why_version_independent": "統治木と CI はいずれもリポジトリ正本を対象とする"
+      },
+      {
+        "indicator": "鼓動が出す古び警告の件数と実際の再判定実施件数の乖離",
+        "observable": "HEARTBEAT がターンごとに出す古び警告の対象件数と、その後に実際に再判定された件数の比",
+        "threshold": "警告件数に対する再判定実施率が 3 反復連続で 10% を下回ったら、警告が行動に接続していない（狼少年化）状態として扱う",
+        "version_independent": false,
+        "where": "plugin/scripts/gov-heartbeat.py の警告出力と assurance/ledger/",
+        "why_version_independent": "HEARTBEAT は導入複製の側で動くため、複製の版が遅れると警告の基準も遅れ、この指標自体が古い基準で計算される（INC-005 と同じ共通原因故障を継承する）"
+      }
+    ],
+    "loss": "保証レーンが持つ有限の再判定予算と反復時間が、証拠の中身が変わっていない判定の再取得に繰り返し充てられ、未探索領域への到達（新規のハザード・カバレッジ拡張）に回らなくなる。事象の記録に従えば、統治木か配布物に触れるあらゆる反復（＝本務のほとんど）ごとに非終端 286 件・約 $13.7・約 95 分の再判定が要求される。併せて「古び（stale）」という信号が常時全件点灯になることで、真に古びた判定と無関係に古びた判定を区別する能力が失われる。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "証拠の内容変更を索引指紋とは別経路で検出して古びを立てる機構が存在し、当該判定が古びに転じる。",
+        "hypothesis": "同じ全体指紋比較は逆方向の見落としも生む。assurance/ 配下だけを触る反復では索引指紋が動かないため、判定が依拠した証拠そのものが実際に書き換わっても古びが立たない。docstring が緩和として述べる性質は、そのまま偽陰性の経路でもある。",
+        "oracle": "assurance/ 配下のみを変更する反復を作り、その中である判定の evidence_refs が指す内容を実際に書き換えたうえで coverage_status を評価する。stale_open が 0 のままなら偽陰性が成立する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "再判定実施率が反復によらず一定、または警告件数の増加に比例して実施件数も増えている。",
+        "hypothesis": "全件古びが常態化した結果、古び警告を無視して過去の判定を再利用する運用が非公式に成立し、古びという信号が意思決定から切り離される。",
+        "oracle": "台帳と反復ログで、古び警告の対象件数に対する実際の再判定実施率の推移を追う。実施率が反復とともに単調に低下していれば成立の兆候。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "MAP_COVERAGE 以外の種別の実行率が実装前後で有意に変わっていない。",
+        "hypothesis": "MAP_COVERAGE が毎反復で先頭を占めることにより、他種別の next_action（新規のハザード探索、未検査領域への到達）が構造的に実行されなくなり、保証の被覆が特定方向へ偏る。",
+        "oracle": "直近 N 反復の next_actions 実行履歴を種別ごとに集計し、MAP_COVERAGE 以外の種別の実行率を出す。ADR-130 の実装前後で比較する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "抽出した却下項のいずれも実装に現れておらず、ADR-130 が単独事例である。",
+        "hypothesis": "却下した選択肢が実装に現れるという同型の不一致は、ADR-130 に限らず他の決定文書にも存在する。決定の否定形が機械照合されないという構造は全 ADR に一様に働くため。",
+        "oracle": "doctrine_docs 配下の全 ADR の「却下した選択肢」節を抽出し、各項について実装側の該当有無を人手または照合スクリプトで確認する。",
+        "severity": "P1"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "古び判定の入力を、その判定の evidence_refs が指す範囲の指紋に限定する（範囲限定指紋）。判定が「何を測ったと言えるか」の意味が変わるため、採用可否は所有者が決める。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "索引の指紋を単一の全体 sha256 から種別ごと・区画ごと（統治木／配布物／試験／保証）に分割し、判定の種別に対応する指紋だけを比較する。範囲限定指紋と併用可能だが、粒度の選択は判定の意味に影響するため所有者判断を要する。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "非終端（対応計画あり・判定不能）を next_actions に挙げるか、件数として数えるにとどめるかを決める。挙げない場合、非終端の古びを誰がいつ見るかの再設計を伴う。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "ADR の「却下した選択肢」の各項を機械照合可能な制約として記録する書式を定め、docs-audit と CI の検査項目に「却下項に対応する照合レコードが存在するか」を追加する。ADR-130 の却下第一項を最初の対象とする。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "変更ファイル1件あたりの新規 stale 件数、next_actions 先頭の滞留反復数、反復あたり要求再判定コストの三つを決定論試験と台帳に組み込み、閾値超過で反復を進める前に警告する。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "同じ全体指紋比較が coverage_status 以外の判定種別・フィールドに使われていないかを棚卸しし、使用箇所の一覧を台帳へ残す。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "doctrine_docs 配下の全 ADR の却下項を抽出し、実装に現れているものが他に無いかを確認する（本件が単独事例か構造的事象かの判別）。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "current_index_sha の docstring が述べる緩和（assurance/ は索引に含まれない）の実際の適用条件——assurance/ だけを触る反復に限られること、および統治木・配布物に触れる反復では全件が古びること——を記述に明記し、緩和が読み手に過大に伝わる状態を解消する。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "本分析で判明した「想定どおりに動いた結果が目的に反する」という故障型を、統制構造の各要素の『既知の穴』の語彙へ追加し、後続の CAST 分析で再利用できる形で残す。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "決定文書は肯定形（採る選択肢）だけが実装への入力として流れ、否定形（却下した選択肢とその理由）は散文として記録されるにとどまり、機械照合できる制約に変換される経路が構造上存在しない。却下理由に数値（606 件・$12・数時間）が書かれていても、その数値を観測して比較する側が居ない。",
+      "保証の検査層が「記述が実在するか」「出力が仕様どおりか」に閉じており、「仕様が目的に沿っているか」を見る層が全レベルで欠けている。この空白は POST_TOOL_LINTER・SESSION_END_AUDIT・CI_RELEASE_CHECK に同時に働く共通原因であり、独立に見える三つの防護を同時に無効化する。",
+      "保守側（偽陰性を出さない側）に倒した設計のコストが、設計時には却下理由として見積られていたのに、実装後は誰も観測していない。安全側へ倒す判断に伴う運用コストのフィードバック経路が統制構造に無い。",
+      "検出が人の不審に依存し、体系側の検出器が一つも鳴らない構成。これは INC-005（検出器が対象と同じ層に住むため共に劣化する）と同型であり、本件では検出器が仕様適合の層に住むため仕様の妥当性を見られない。",
+      "評価者・実装者・分析者が同系 model であるため、却下選択肢の再導入という種類の見落としに共通の盲点が生じうる（ASSURANCE_LANE の既知の穴が本件で具体化した形）。",
+      "統制構造の各要素が明示的に持つ「既知の穴」が、いずれも本件の経路を含んでいない。穴の一覧そのものが、想定された故障（注入されない・届かない・発火しない・版が遅れる）に偏っており、想定どおりに動いた結果が目的に反するという故障型を語彙として持たない。"
+    ],
+    "unknowns": [
+      "【実在の未確認】本事象が名指す機構——coverage_status、assigned_by.index_sha256、current_index_sha()、assurance/harness/system_index.py、ADR-130——は、与えられた統制構造の要素としては個別に現れない。ASSURANCE_LANE の実体である assurance/harness/orchestrator.py と、GOVERNANCE_TREE が覆う doctrine_docs 配下という上位要素の内側にあると解釈して分析したが、この解釈は事象の記録の記述にのみ依拠している。作業環境の作業ディレクトリは空であり、これらのファイルおよび索引指紋比較の実装の実在を独立に確認できていない。以下の統制欠陥はすべてこの未確認の前提の上に立つ。",
+      "索引に何が含まれるか（統治木・配布物・plugin/tests は含み assurance/ は含まない）の定義がどの文書のどの決定に由来するか。それが ADR-130 と同一の決定か、別の決定が後から範囲を広げたのかによって、欠陥の混入時点が変わる。",
+      "実測単価 $0.048/件 の測定条件（評価 model、再判定の深さ、キャッシュの有無）。この単価が 286 件の全件に一様に適用できるかは確認していない。",
+      "非終端 286 件のうち「対応計画あり 260」が、指紋の変化によって本当に再判定を要するのか、それとも件数として挙がるだけで実際の再判定は不要なのか。事象の記録は「挙げる／数える」の区別を修正案の中でのみ触れており、現行実装がどちらであるかを断定できない。",
+      "ADR-130 が却下理由として書いた 606 件と、現在の非終端 286 件の対応関係。母数が変わった理由（判定が進んだのか、定義が変わったのか）は不明。",
+      "PR #249 の作業時点で ADR-130 の却下節が参照可能な位置にあったか。すなわち、決定文書が実装時に読まれる経路が構造として存在するのか、存在するが働かなかったのかを区別できていない。",
+      "PR #248 直後に三冊とも stale_open が 0 だったのが、直前に全件再判定を実施した結果なのか、その時点で指紋が一致していただけなのか。前者なら $13.7 相当の支出が既に一度発生している。",
+      "jerg 76・stpa 32・cast 178 の三冊で古び判定の挙動に差があるか。同一の全体指紋比較が三冊すべてに適用されているという記述は事象の記録から読めるが、種別ごとの分岐の有無は確認していない。",
+      "同型の全体指紋比較が、coverage_status 以外の判定種別やフィールドにも用いられているか。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は三つの層で構成されている——文書の書式と内部整合（POST_TOOL_LINTER・SESSION_END_AUDIT）、試験と監査の緑（CI_RELEASE_CHECK）、事象の台帳追跡（ASSURANCE_LANE）。この三層はいずれも「記述が実在するか」「出力が仕様どおりか」を見る層であり、「決定文書が却下と明記した設計が実装に現れていないか」を見る層はどこにも存在しない。加えて本件の出力（286 件が古び）は実装仕様に照らせば完全に正常であるため、異常を示す信号がそもそも生成されない。検出は、直前の反復がテストファイルを1件足しただけなのに次の行動の先頭が再び MAP_COVERAGE になったことへの人の不審と、ADR-130 の却下節と current_index_sha の突合という手作業に依存した。これは INC-005（検出器が対象と同じ層に住むため共に劣化する）と同型の共通原因であり、ここでは検出器が「仕様どおりか」の層に住むため「仕様が目的に沿うか」を見られない。本件は未修正・未出荷であり、修正の設計（範囲限定の指紋／種別ごとの指紋／非終端は数えるのみ）はいずれも判定の意味を変えるため、修正を先に置いても上記の検出層の空白は埋まらない。"
+  },
+  "control_structure_ids": [
+    "OWNER",
+    "CI_RELEASE_CHECK",
+    "SESSION_START_CONTRACT",
+    "HEARTBEAT",
+    "PRE_TOOL_GUARD",
+    "POST_TOOL_LINTER",
+    "SESSION_END_AUDIT",
+    "CAPTURE_NUDGE",
+    "PLUGIN_DISTRIBUTION",
+    "ASSURANCE_LANE",
+    "GOVERNANCE_TREE"
+  ],
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "duration_ms": 272395,
+  "errors": [],
+  "execution_kind": "real-sdk",
+  "flaws_with_citation_defect": [],
+  "generated_at": "2026-08-07T17:05:46Z",
+  "git_dirty": true,
+  "git_sha": "e5b2be043fe2fc4b8c1243ed7493c9a8d23bbf42",
+  "incident_evidence": {
+    "kind": "measurement",
+    "refs": [
+      "doctrine_docs/packaging/decisions/ADR-130-coverage-judgement-carries-its-index-fingerprint.md",
+      "assurance/harness/orchestrator.py",
+      "assurance/harness/system_index.py",
+      "plugin/tests/test_termcheck_corpus.py"
+    ],
+    "resolved": [
+      "doctrine_docs/packaging/decisions/ADR-130-coverage-judgement-carries-its-index-fingerprint.md",
+      "assurance/harness/orchestrator.py",
+      "assurance/harness/system_index.py",
+      "plugin/tests/test_termcheck_corpus.py"
+    ],
+    "unresolved": [],
+    "verifiable": true
+  },
+  "incident_id": "INC-025-adr-130-implemented-the-option-it-rejected",
+  "incident_sha256": "466ae3ff36445fb13db4252725a9e3d51ed6e21464bcda04a6b364ac8e62fabe",
+  "init": {
+    "claude_code_version": "2.1.221",
+    "model": "claude-opus-5",
+    "session_id": "b371211b-8c1d-468e-91f5-7e9b4479f137",
+    "tools_count": 27
+  },
+  "kind": "cast-analysis",
+  "leading_indicators_defined": true,
+  "options": {
+    "allowed_tools": [],
+    "cwd": "/tmp/assurance-cast-c8hyge6h",
+    "effort": "high",
+    "max_budget_usd": 4.0,
+    "max_turns": 8,
+    "model": "claude-opus-5",
+    "setting_sources": [],
+    "timeout_s": 900
+  },
+  "oracle": "structured_output がレーン側再検証にも適合",
+  "principles_offered": 337,
+  "prompt_sha256": "e6468e8979f4e3b7a2f2394766fbfb4a8c1754ea7ab24d282ab0202223c4a067",
+  "rejected_flaws": [],
+  "result_meta": {
+    "duration_api_ms": 265828,
+    "is_error": false,
+    "num_turns": 5,
+    "session_id": "b371211b-8c1d-468e-91f5-7e9b4479f137",
+    "subtype": "success",
+    "total_cost_usd": 1.089751,
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 61854,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 61854,
+      "cache_read_input_tokens": 117084,
+      "inference_geo": "not_available",
+      "input_tokens": 6,
+      "iterations": "list",
+      "output_tokens": 15029,
+      "server_tool_use": {
+        "web_fetch_requests": 0,
+        "web_search_requests": 0
+      },
+      "service_tier": "standard",
+      "speed": "standard"
+    }
+  },
+  "schema_sha256": "0d1643d5e16353723405302c1f6ffcf753915e2a4f27a3530e8ef9a9ee45cb46",
+  "sdk_version": "0.2.129",
+  "settled": true,
+  "status": "PASS",
+  "structured_output": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "「次の行動を決定論で導く」制御において、判定の古びを coverage_status が assigned_by.index_sha256 と索引全体の sha256 の一致で決めるため、判定の証拠が指す範囲の外側（統治木の一文書、配布物、plugin/tests のファイル1件）が動いただけで非終端の判定が全件古びに変わり、next_actions の先頭が毎反復 MAP_COVERAGE に戻る。導出は決定論であるが、その入力が判定の妥当性と因果的に対応していない。",
+        "flaw_type": "制御動作が誤っている",
+        "normative_refs": [
+          "software-does-not-fail-requirements-defect",
+          "causality-as-inadequate-control-not-failure",
+          "先行指標の妥当性・代理指標の禁止",
+          "プロセスモデルと実状態の不整合"
+        ],
+        "why_it_seemed_adequate": "索引全体の指紋との比較は、実装として最も単純で、外部状態に依存せず、再現可能で、かつ保守側（偽陰性を出さない側）に倒れている。判定が依拠した世界が少しでも動いたら再検査する、という方針は保証レーンの目的に照らして正しく見え、範囲を絞る実装は「どこまでが証拠の範囲か」を定義する追加の設計判断を要するため、その時点では過剰に見えた。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "ADR-130 は採る選択肢（肯定形）と却下した選択肢（否定形）の双方を記録するが、却下項は散文として残るだけで、実装側と機械照合できる制約の形に変換されていない。統治木が提供する手掛かり（docs-audit の findings、dep-graph の逆依存）はいずれも文書間の関係を見るものであり、「却下と明記された設計が実装に現れていないか」を示す手掛かりを持たない。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "ハザードから要求制約への変換",
+          "安全想定の記録と失効先行指標の定義",
+          "想定の記録と変更時再検査",
+          "何をとなぜのトレース文書化"
+        ],
+        "why_it_seemed_adequate": "ADR に却下理由（606 件が毎コミットで古び、$12 と数時間、消えない行動になる）まで数値で書き残すことは、決定の追跡可能性として十分に手厚い実務に見えた。文書に書いてある以上、実装時に参照されるという前提が置かれ、その前提を検査する必要が意識されにくかった。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "merge 前に赤で止める統制は、ジョブの成否と docs-audit の JSON を手掛かりに持つが、その検査対象は文書の書式と本体試験であり、決定文書の内容と実装の対応（ADR-130 が却下した設計が orchestrator.py / system_index.py に入っていないか）は検査項目に含まれない。当該実装は全ジョブ緑で通過しうる。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "監査の検出力評価",
+          "監査のすり抜け時に監査手順を是正",
+          "検出失敗の原因調査",
+          "最低準拠は不十分"
+        ],
+        "why_it_seemed_adequate": "CI の役割は互換性・書式・試験の回帰を止めることであり、設計判断の整合は人のレビューと ADR の存在で担保されるという分業が自然に見えた。決定と実装の突合を CI に載せるには決定を機械可読にする必要があり、その投資は当時の検査対象の範囲外だった。"
+      },
+      {
+        "control_element_id": "POST_TOOL_LINTER",
+        "description": "リンタは編集された一つの文書だけを点検して助言を返す設計であり、ADR-130（doctrine_docs）と実装（assurance/harness）にまたがる不一致は原理的に視野に入らない。単体では整合している文書と単体では整合しているコードの組合せが、統制としては却下済み設計の採用になっている。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "単一コンポーネント集中の回避",
+          "verify-decomposition-assumptions",
+          "全体構造の分析"
+        ],
+        "why_it_seemed_adequate": "編集単位で助言を返す設計は応答が速く、誤検知が少なく、編集者の意図に近い位置で働くという明確な利点がある。全体整合は SessionEnd の全件監査が担うという役割分担が置かれていた。"
+      },
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "全件走査は統治木（doctrine_docs）を対象とし、要約を .claude/.cache へ書く。走査の対象集合が文書側に閉じているため、統治木の文書が述べた却下項が assurance/harness の実装に現れている状態は、全件走査をもってしても findings に現れない。全件監査という名称が与える網羅の印象と、実際の対象範囲が食い違う。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "scope-beyond-operating-process",
+          "全レベルのコントロール検査",
+          "separate-listing-from-effectiveness-analysis"
+        ],
+        "why_it_seemed_adequate": "統治木の全件を毎セッション末に走査することは、当時考えられる最も網羅的な検査であり、実装コードは本体試験と CI が別途見るという二層構成が合理的に見えた。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者へ届く手掛かり（規定形式の進捗報告、PR の diff、台帳）では、次の行動の先頭が MAP_COVERAGE であることは通常の作業計画として現れ、その背後で非終端 286 件が無関係な変更により全件古びたこと、およびそれが反復あたり約 $13.7・約 95 分の恒常的な要求になることは、区別できる形では現れない。判定の意味（何を測ったと言えるか）に関わる設計が、所有者判断の対象として提示されないまま運用に入っている。",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "リスク情報の不透明な集約禁止",
+          "controller-needs-concrete-feedback-channels",
+          "全変更のハザード分析と承認",
+          "安全評価と事業評価の分離"
+        ],
+        "why_it_seemed_adequate": "所有者の制御範囲は互換性・配布境界・復旧不能な削除・評価 model の最低線・push/PR/merge の許可であり、古び判定の粒度はその内側にある実装細部として扱うのが妥当に見えた。stale が多いこと自体は保守側に倒れた安全な状態にも読める。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "事象を台帳へ積み分析が済むまで閉じない統制は個別事象を追跡するが、統制自身の出力の性質（毎反復で stale_open が 0 から全件へ戻る、next_actions の先頭が同一種別で滞留する、要求再判定コストが反復予算を超える）を異常として扱う指標を持たない。全件古びは設計どおりの出力であるため、どの sensor から見ても正常動作として通過する。検出は反復13の §1 における人の不審に依存した。",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "監査の先行指標を確立する",
+          "計画外変化の検出手段",
+          "リスク先行指標による監査",
+          "設計時想定の運用中再検査"
+        ],
+        "why_it_seemed_adequate": "決定論試験の成否と台帳という二つの手掛かりは、非決定性と取りこぼしという想定された故障には有効に働いていた。出力が仕様どおりであることと、その仕様が目的に沿っていることは別だが、両者を分ける観測点は設計時に必要と見えなかった。"
+      },
+      {
+        "control_element_id": "PRE_TOOL_GUARD",
+        "description": "拒否の門は違反する編集・削除を終了コード2で拒むが、その拒否条件は統治木の側の規約に由来し、決定文書の却下項（ADR-130 が却下した設計）を拒否対象として持たない。統治木（決定の記録）と保証レーン（決定の実装）の間に、実装から決定への逆照合を行う経路が存在せず、決定は下流へ流れるだけで、実装が決定のどの選択肢に該当するかは誰も戻して確認しない。",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "全コントロールループにフィードバック必須",
+          "設計上と実際の伝達経路の照合",
+          "feedback-enables-improvement-of-controls",
+          "運用フィードバックで設計改善"
+        ],
+        "why_it_seemed_adequate": "ガードの設計目標は復旧不能な操作と規約違反の編集を止めることであり、設計判断の内容審査までを終了コード2の一手で担わせるのは越権に見えた。決定の遵守はレビューと文書の役割という分担が明示されていた。"
+      }
+    ],
+    "hazard": "判定の鮮度（古びているか否か）を決める入力の範囲が、その判定が依拠した証拠の範囲より広く、証拠と因果的に無関係な変更で全件が古びと分類される状態。この状態では、統制構造が持つ「どの判定が再検査を要するか」というプロセスモデルが実状態と一致せず、次の行動の優先順位づけが証拠の変化ではなく無関係な変更に駆動される。",
+    "incident_id": "INC-025-adr-130-implemented-the-option-it-rejected",
+    "leading_indicators": [
+      {
+        "indicator": "変更ファイル1件あたりの新規 stale 件数",
+        "observable": "反復ごとの stale_open の増分 ÷ その反復で索引に対して変更されたファイル数",
+        "threshold": "変更ファイル1件あたり新規 stale が 10 件を超えたら異常として扱い、反復を進める前に古び判定の入力範囲を確認する",
+        "version_independent": true,
+        "where": "assurance/ledger/ の反復記録と coverage_status の出力（リポジトリ正本側で計算）",
+        "why_version_independent": "比は保証レーンの正本側の台帳と索引だけから計算でき、利用者環境へ導入された複製の版に依存しない"
+      },
+      {
+        "indicator": "古び判定の入力範囲と証拠参照範囲の包含関係",
+        "observable": "coverage_status が比較に用いる指紋の対象ファイル集合と、当該判定の evidence_refs が指すファイル集合の差集合の大きさ",
+        "threshold": "指紋の対象集合が証拠参照集合の真の上位集合になっている判定が 1 件でも存在したら赤",
+        "version_independent": true,
+        "where": "assurance/harness/system_index.py と orchestrator.py に対する決定論試験（CI_RELEASE_CHECK のジョブ）",
+        "why_version_independent": "リポジトリ正本の静的検査であり、配布された複製を参照しない"
+      },
+      {
+        "indicator": "next_actions 先頭の滞留",
+        "observable": "next_actions の先頭に同一種別（例：MAP_COVERAGE）が連続して現れた反復数と、その間の該当種別の未処理件数の減少量",
+        "threshold": "3 反復連続で先頭が同一種別、かつ未処理件数が正味で減っていない場合に警告",
+        "version_independent": true,
+        "where": "assurance/ledger/ の反復ログ",
+        "why_version_independent": "台帳は正本側にあり、導入複製の版とは独立に記録される"
+      },
+      {
+        "indicator": "反復あたりの要求再判定コスト",
+        "observable": "next_actions 生成時に、要求される再判定件数 × 実測単価（現状 $0.048/件）で見積もる金額と所要時間",
+        "threshold": "1 反復の要求再判定コストが $5 または 30 分を超えたら、実行前に警告を出して所有者の手掛かりに載せる",
+        "version_independent": true,
+        "where": "orchestrator.py の next_actions 生成箇所（生成と同時に見積を台帳へ書く）",
+        "why_version_independent": "見積は正本側の件数と単価だけで決まる"
+      },
+      {
+        "indicator": "決定文書の却下項に対する実装照合レコードの被覆率",
+        "observable": "doctrine_docs/*/decisions/ の各 ADR の「却下した選択肢」の各項について、実装側で該当設計が採られていないことを示す照合レコード（試験 ID など）が対応づいている割合",
+        "threshold": "照合レコードが対応づいていない却下項が 1 件でも残ればその ADR を finding として挙げる",
+        "version_independent": true,
+        "where": "docs-audit の findings と CI のジョブ",
+        "why_version_independent": "統治木と CI はいずれもリポジトリ正本を対象とする"
+      },
+      {
+        "indicator": "鼓動が出す古び警告の件数と実際の再判定実施件数の乖離",
+        "observable": "HEARTBEAT がターンごとに出す古び警告の対象件数と、その後に実際に再判定された件数の比",
+        "threshold": "警告件数に対する再判定実施率が 3 反復連続で 10% を下回ったら、警告が行動に接続していない（狼少年化）状態として扱う",
+        "version_independent": false,
+        "where": "plugin/scripts/gov-heartbeat.py の警告出力と assurance/ledger/",
+        "why_version_independent": "HEARTBEAT は導入複製の側で動くため、複製の版が遅れると警告の基準も遅れ、この指標自体が古い基準で計算される（INC-005 と同じ共通原因故障を継承する）"
+      }
+    ],
+    "loss": "保証レーンが持つ有限の再判定予算と反復時間が、証拠の中身が変わっていない判定の再取得に繰り返し充てられ、未探索領域への到達（新規のハザード・カバレッジ拡張）に回らなくなる。事象の記録に従えば、統治木か配布物に触れるあらゆる反復（＝本務のほとんど）ごとに非終端 286 件・約 $13.7・約 95 分の再判定が要求される。併せて「古び（stale）」という信号が常時全件点灯になることで、真に古びた判定と無関係に古びた判定を区別する能力が失われる。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "証拠の内容変更を索引指紋とは別経路で検出して古びを立てる機構が存在し、当該判定が古びに転じる。",
+        "hypothesis": "同じ全体指紋比較は逆方向の見落としも生む。assurance/ 配下だけを触る反復では索引指紋が動かないため、判定が依拠した証拠そのものが実際に書き換わっても古びが立たない。docstring が緩和として述べる性質は、そのまま偽陰性の経路でもある。",
+        "oracle": "assurance/ 配下のみを変更する反復を作り、その中である判定の evidence_refs が指す内容を実際に書き換えたうえで coverage_status を評価する。stale_open が 0 のままなら偽陰性が成立する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "再判定実施率が反復によらず一定、または警告件数の増加に比例して実施件数も増えている。",
+        "hypothesis": "全件古びが常態化した結果、古び警告を無視して過去の判定を再利用する運用が非公式に成立し、古びという信号が意思決定から切り離される。",
+        "oracle": "台帳と反復ログで、古び警告の対象件数に対する実際の再判定実施率の推移を追う。実施率が反復とともに単調に低下していれば成立の兆候。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "MAP_COVERAGE 以外の種別の実行率が実装前後で有意に変わっていない。",
+        "hypothesis": "MAP_COVERAGE が毎反復で先頭を占めることにより、他種別の next_action（新規のハザード探索、未検査領域への到達）が構造的に実行されなくなり、保証の被覆が特定方向へ偏る。",
+        "oracle": "直近 N 反復の next_actions 実行履歴を種別ごとに集計し、MAP_COVERAGE 以外の種別の実行率を出す。ADR-130 の実装前後で比較する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "抽出した却下項のいずれも実装に現れておらず、ADR-130 が単独事例である。",
+        "hypothesis": "却下した選択肢が実装に現れるという同型の不一致は、ADR-130 に限らず他の決定文書にも存在する。決定の否定形が機械照合されないという構造は全 ADR に一様に働くため。",
+        "oracle": "doctrine_docs 配下の全 ADR の「却下した選択肢」節を抽出し、各項について実装側の該当有無を人手または照合スクリプトで確認する。",
+        "severity": "P1"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "古び判定の入力を、その判定の evidence_refs が指す範囲の指紋に限定する（範囲限定指紋）。判定が「何を測ったと言えるか」の意味が変わるため、採用可否は所有者が決める。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "索引の指紋を単一の全体 sha256 から種別ごと・区画ごと（統治木／配布物／試験／保証）に分割し、判定の種別に対応する指紋だけを比較する。範囲限定指紋と併用可能だが、粒度の選択は判定の意味に影響するため所有者判断を要する。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "非終端（対応計画あり・判定不能）を next_actions に挙げるか、件数として数えるにとどめるかを決める。挙げない場合、非終端の古びを誰がいつ見るかの再設計を伴う。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "ADR の「却下した選択肢」の各項を機械照合可能な制約として記録する書式を定め、docs-audit と CI の検査項目に「却下項に対応する照合レコードが存在するか」を追加する。ADR-130 の却下第一項を最初の対象とする。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "変更ファイル1件あたりの新規 stale 件数、next_actions 先頭の滞留反復数、反復あたり要求再判定コストの三つを決定論試験と台帳に組み込み、閾値超過で反復を進める前に警告する。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "同じ全体指紋比較が coverage_status 以外の判定種別・フィールドに使われていないかを棚卸しし、使用箇所の一覧を台帳へ残す。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "doctrine_docs 配下の全 ADR の却下項を抽出し、実装に現れているものが他に無いかを確認する（本件が単独事例か構造的事象かの判別）。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "current_index_sha の docstring が述べる緩和（assurance/ は索引に含まれない）の実際の適用条件——assurance/ だけを触る反復に限られること、および統治木・配布物に触れる反復では全件が古びること——を記述に明記し、緩和が読み手に過大に伝わる状態を解消する。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "本分析で判明した「想定どおりに動いた結果が目的に反する」という故障型を、統制構造の各要素の『既知の穴』の語彙へ追加し、後続の CAST 分析で再利用できる形で残す。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "決定文書は肯定形（採る選択肢）だけが実装への入力として流れ、否定形（却下した選択肢とその理由）は散文として記録されるにとどまり、機械照合できる制約に変換される経路が構造上存在しない。却下理由に数値（606 件・$12・数時間）が書かれていても、その数値を観測して比較する側が居ない。",
+      "保証の検査層が「記述が実在するか」「出力が仕様どおりか」に閉じており、「仕様が目的に沿っているか」を見る層が全レベルで欠けている。この空白は POST_TOOL_LINTER・SESSION_END_AUDIT・CI_RELEASE_CHECK に同時に働く共通原因であり、独立に見える三つの防護を同時に無効化する。",
+      "保守側（偽陰性を出さない側）に倒した設計のコストが、設計時には却下理由として見積られていたのに、実装後は誰も観測していない。安全側へ倒す判断に伴う運用コストのフィードバック経路が統制構造に無い。",
+      "検出が人の不審に依存し、体系側の検出器が一つも鳴らない構成。これは INC-005（検出器が対象と同じ層に住むため共に劣化する）と同型であり、本件では検出器が仕様適合の層に住むため仕様の妥当性を見られない。",
+      "評価者・実装者・分析者が同系 model であるため、却下選択肢の再導入という種類の見落としに共通の盲点が生じうる（ASSURANCE_LANE の既知の穴が本件で具体化した形）。",
+      "統制構造の各要素が明示的に持つ「既知の穴」が、いずれも本件の経路を含んでいない。穴の一覧そのものが、想定された故障（注入されない・届かない・発火しない・版が遅れる）に偏っており、想定どおりに動いた結果が目的に反するという故障型を語彙として持たない。"
+    ],
+    "unknowns": [
+      "【実在の未確認】本事象が名指す機構——coverage_status、assigned_by.index_sha256、current_index_sha()、assurance/harness/system_index.py、ADR-130——は、与えられた統制構造の要素としては個別に現れない。ASSURANCE_LANE の実体である assurance/harness/orchestrator.py と、GOVERNANCE_TREE が覆う doctrine_docs 配下という上位要素の内側にあると解釈して分析したが、この解釈は事象の記録の記述にのみ依拠している。作業環境の作業ディレクトリは空であり、これらのファイルおよび索引指紋比較の実装の実在を独立に確認できていない。以下の統制欠陥はすべてこの未確認の前提の上に立つ。",
+      "索引に何が含まれるか（統治木・配布物・plugin/tests は含み assurance/ は含まない）の定義がどの文書のどの決定に由来するか。それが ADR-130 と同一の決定か、別の決定が後から範囲を広げたのかによって、欠陥の混入時点が変わる。",
+      "実測単価 $0.048/件 の測定条件（評価 model、再判定の深さ、キャッシュの有無）。この単価が 286 件の全件に一様に適用できるかは確認していない。",
+      "非終端 286 件のうち「対応計画あり 260」が、指紋の変化によって本当に再判定を要するのか、それとも件数として挙がるだけで実際の再判定は不要なのか。事象の記録は「挙げる／数える」の区別を修正案の中でのみ触れており、現行実装がどちらであるかを断定できない。",
+      "ADR-130 が却下理由として書いた 606 件と、現在の非終端 286 件の対応関係。母数が変わった理由（判定が進んだのか、定義が変わったのか）は不明。",
+      "PR #249 の作業時点で ADR-130 の却下節が参照可能な位置にあったか。すなわち、決定文書が実装時に読まれる経路が構造として存在するのか、存在するが働かなかったのかを区別できていない。",
+      "PR #248 直後に三冊とも stale_open が 0 だったのが、直前に全件再判定を実施した結果なのか、その時点で指紋が一致していただけなのか。前者なら $13.7 相当の支出が既に一度発生している。",
+      "jerg 76・stpa 32・cast 178 の三冊で古び判定の挙動に差があるか。同一の全体指紋比較が三冊すべてに適用されているという記述は事象の記録から読めるが、種別ごとの分岐の有無は確認していない。",
+      "同型の全体指紋比較が、coverage_status 以外の判定種別やフィールドにも用いられているか。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は三つの層で構成されている——文書の書式と内部整合（POST_TOOL_LINTER・SESSION_END_AUDIT）、試験と監査の緑（CI_RELEASE_CHECK）、事象の台帳追跡（ASSURANCE_LANE）。この三層はいずれも「記述が実在するか」「出力が仕様どおりか」を見る層であり、「決定文書が却下と明記した設計が実装に現れていないか」を見る層はどこにも存在しない。加えて本件の出力（286 件が古び）は実装仕様に照らせば完全に正常であるため、異常を示す信号がそもそも生成されない。検出は、直前の反復がテストファイルを1件足しただけなのに次の行動の先頭が再び MAP_COVERAGE になったことへの人の不審と、ADR-130 の却下節と current_index_sha の突合という手作業に依存した。これは INC-005（検出器が対象と同じ層に住むため共に劣化する）と同型の共通原因であり、ここでは検出器が「仕様どおりか」の層に住むため「仕様が目的に沿うか」を見られない。本件は未修正・未出荷であり、修正の設計（範囲限定の指紋／種別ごとの指紋／非終端は数えるのみ）はいずれも判定の意味を変えるため、修正を先に置いても上記の検出層の空白は埋まらない。"
+  }
+}
