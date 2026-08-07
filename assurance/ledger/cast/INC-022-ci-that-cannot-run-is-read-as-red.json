@@ -1,0 +1,722 @@
+{
+  "accepted_flaws": [
+    {
+      "control_element_id": "OWNER",
+      "description": "OWNER が持つ制御「push / PR / merge を許す範囲を決める」の産物である常設許可は、条件3 を『PR の CI が pass』という二値（pass / not pass）で記述しており、検査が実行されなかった場合にどちらへ倒すかの条項を持たない。前提欠如という第三の状態に対する制御アクションが割り当てられておらず、責任の空白がそのまま運転者の裁量へ流れ込む。引き直し（rerun）の上限、上限到達時の経路（待機・所有者への差し戻し）も未定義である。",
+      "evidence_ref": "事象記録 summary：『常設許可の条件3 は「PR の CI が pass」としか書いておらず、CI が走れない状態の扱いを持たない』",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "責任の空白は構造再設計",
+        "予防に加え軽減の制約を定義",
+        "最悪環境を前提に設計運用",
+        "ハザードから安全制約を導出"
+      ],
+      "why_it_seemed_adequate": "常設許可が書かれた時点まで、GitHub Actions のジョブは投入すれば走るものとして一貫して観測されており、CI の出力は成功か失敗の二値としてしか現れていなかった。観測実態が二値であるとき、条項を二値で書くことは記述の過不足のない選択に見える。三値化は、当時は起きたことのない状態に対する仮定的な複雑化として映る。"
+    },
+    {
+      "control_element_id": "OWNER",
+      "description": "常設許可が運転者へ与える手掛かりは『CI が pass』という真偽値のみで、どの SHA に対する pass かを含まない。したがって pass の成立と、merge される木の同一性が接続されていない。本件 #234 では、遅延して届いた webhook により success した run の head と PR の head が食い違い、検査済みでない SHA が merge 対象になりうる状態が実際に発生した（手作業で head を戻して回避）。",
+      "evidence_ref": "resolution_2026-08-06：『成功した run の head が PR の head と食い違ったため、検査済み SHA へ head を戻してから merge した』／residual：『どの SHA に対する pass かを照合する義務を持たない』",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "control-action-requires-feedback",
+        "プロセスモデルと実状態の不整合",
+        "defects-in-information-providing-systems",
+        "破られた想定の再検討"
+      ],
+      "why_it_seemed_adequate": "push と run の対応は GitHub 側で一意に保たれるという想定が暗黙に置かれていた。平時は push から数秒で run が作られるため、pass した run の head と PR の head が食い違う窓は事実上存在せず、SHA の照合は冗長な手続きに見える。"
+    },
+    {
+      "control_element_id": "CI_RELEASE_CHECK",
+      "description": "制御「merge 前に赤で止める」は、実行された検査が不適合を示した場合を対象範囲としており、実行が成立しなかった場合は範囲外にある。範囲外の状態は制御アクションを生まないため、止める側にも通す側にも倒れず、判断が下流（運転者）へ無言で委譲される。既知の穴として挙げられている『正本しか見ない』の隣に、『走らなかったことを状態として表明しない』というもう一つの範囲外がある。",
+      "evidence_ref": "detected_by：ANNOTATIONS 二回とも『The job was not acquired by Runner of type hosted even after multiple attempts』、ジョブは一度も実行されていない",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "accidents-from-inadequate-constraint-enforcement",
+        "安全立証でなく非安全状態の探索",
+        "each-component-enforces-its-constraints"
+      ],
+      "why_it_seemed_adequate": "CI の責務は検査を実行して結果を出すことであり、実行基盤（hosted runner）の可用性は CI の外側の与件として扱われてきた。基盤が与件であるうちは、範囲を「結果が出たときの判定」に限ることは責務の適切な切り分けに見える。"
+    },
+    {
+      "control_element_id": "CI_RELEASE_CHECK",
+      "description": "手掛かり『ジョブの成否』が、同一 run について相互に矛盾する値を返した——gh run list は queued、gh run view は completed、cancel は 409『Cannot cancel a workflow re-run that has not yet queued』、rerun は『This workflow is already running』。運転者はどの値を実状態と見なすべきかを決める根拠を持たず、プロセスモデルが実状態と一致しえない。矛盾それ自体を『前提が欠けている』と読む規約も無い。",
+      "evidence_ref": "evidence：『同一 run について三つの API が矛盾した状態を返した』",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "プロセスモデルと実状態の不整合",
+        "モデル一致のためのフィードバック提供",
+        "include-information-supplier-defect",
+        "defects-in-information-providing-systems"
+      ],
+      "why_it_seemed_adequate": "複数の照会経路が同じ状態を返すことは、供給側 API の一貫性として明文化せずに前提できる性質だと見えていた。平時に三者が食い違う経験が無ければ、矛盾を検出する手続きを設ける理由が生じない。"
+    },
+    {
+      "control_element_id": "CI_RELEASE_CHECK",
+      "description": "webhook のスロットリングにより、push / synchronize / reopen から run 生成までに 17〜28 分の遅延が生じた。遅延している状態と、恒久的に走らない状態は、運転者からは同じ顔（結果が無い）に見える。手掛かりの到着時刻に対する期待値が定義されていないため、どれだけ待てば『走らない』と判ずるかの基準が無く、待機と断念の境界が裁量に落ちる。",
+      "evidence_ref": "resolution_2026-08-06：『close/reopen の webhook が28分遅れで届いて success』『synchronize の webhook が17分遅れで届いて success』",
+      "flaw_type": "手掛かりが遅い",
+      "normative_refs": [
+        "control-action-requires-feedback",
+        "全コントロールループにフィードバック必須",
+        "設計時想定の運用中再検査"
+      ],
+      "why_it_seemed_adequate": "平時の run 生成遅延は秒〜十数秒の範囲にあり、遅延を状態として扱う必要が生じたことがなかった。遅延に閾値を設ける設計は、観測されたことのない分布に対する先回りに見える。"
+    },
+    {
+      "control_element_id": "GOVERNANCE_TREE",
+      "description": "体系の側は状態語彙に UNASSESSED を持ち『前提が欠けたら PASS ではなく UNASSESSED へ倒す』と決めているのに、その決定が運転手順の各経路へ継承される機構が無い。語彙の決定は統治木に置かれれば全経路に効くものとして扱われているが、実際には各条項の起草時に書き手が語彙を適用するかどうかに委ねられている。INC-018（監査が .gitignore を git に訊けないとき、その事実を判定へ反映せず木の欠陥として warn を出した）と同型で、粒度だけが運転手順の側に移っている。",
+      "evidence_ref": "summary：『体系は状態語彙に UNASSESSED を持ち…と決めているのに、運転手順のこの経路だけがその区別を持たない』／family：『INC-018 と同型で、粒度が運転手順の側に在る』",
+      "flaw_type": "統制どうしの調整の欠如",
+      "normative_refs": [
+        "each-component-enforces-its-constraints",
+        "systemic-cause-across-all-events",
+        "上位文書の利用可能性（読み手適合）",
+        "全体構造の分析"
+      ],
+      "why_it_seemed_adequate": "統治木は決定の唯一の置き場所として設計されており、そこに書けば下流の記述は従うという前提が構造そのものに埋め込まれている。決定を書いた時点で伝播も済んだと見えることは、この設計の意図どおりの読み方である。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "制御『次の行動を決定論で導く』が、検査が実行されなかった局面に対する次手を持たない。何回引き直すか、引き直しても走らないときどこへ倒すか、外部障害の申告が出ているときに待機するかが決定論の表に無いため、非定常局面でのみレーンが非決定論へ落ちる。決定論であるべき経路に、最も判断が難しい局面だけ穴が開いている。",
+      "evidence_ref": "impact：『どちらへ倒すかの規律が無く、判断が運転者の裁量に落ちる』",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "機械的遵守が前提の指示は自動化",
+        "非定常フェーズへの自動支援の適用",
+        "責任委譲には情報と訓練を伴わせる",
+        "予防に加え軽減の制約を定義"
+      ],
+      "why_it_seemed_adequate": "レーンの決定論は、検査が結果を返すことを入力の前提として組まれている。入力が返らない場合を分岐に含めることは、平時には到達不能な枝を書き足す作業に見え、決定表の簡潔さと引き換えになる。"
+    },
+    {
+      "control_element_id": "HEARTBEAT",
+      "description": "ターンごとに運転者へ届く唯一の感知器である鼓動は、監査の古びと導入複製の版遅れを警告するが、検査基盤の側が現在障害申告中であるという事実を手掛かりとして持たない。運転者は結果の不在が自分の変更に由来するのか外部障害に由来するのかを、自ら githubstatus を引くまで区別できず、その照会を義務づける条項も無い。",
+      "evidence_ref": "detected_by：『2026-08-06 の GitHub Actions 障害（incident qcvjkzcs7j74・impact critical）』は運転者が外部サイトを引いて初めて判明した",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "controller-needs-concrete-feedback-channels",
+        "全コントロールループにフィードバック必須",
+        "プロセスモデルと実状態の不整合"
+      ],
+      "why_it_seemed_adequate": "鼓動の設計上の責務は統治の生存（監査の鮮度・版の追随）であり、外部供給者の可用性はその守備範囲の外に置かれている。感知器の責務を絞ることは、警告の信号対雑音比を保つうえで妥当な設計判断である。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "門の判定が裁量へ落ちたこと自体は、台帳へ事象として積まれる経路はあるが、裁量へ落ちた頻度・倒した向きの分布を先行指標として観測する手段が無い。本件は運転者が緩めなかったため損失に至らなかったが、緩めた場合も緩めなかった場合も台帳上の見え方は事後の記述に依存し、規律の劣化（圧力の高い局面で通す側へ倒れる傾向）を損失前に検出できない。",
+      "evidence_ref": "impact：『実際に手元の全門が緑であったため merge への圧力が生じた（merge はしていない）』",
+      "flaw_type": "統制自身の劣化を検出できない",
+      "normative_refs": [
+        "監査の先行指標を確立する",
+        "計画外変化の検出手段",
+        "ニアミスの構造欠陥特定への利用",
+        "自己満足への構造的対策"
+      ],
+      "why_it_seemed_adequate": "レーンは事象を積み分析が済むまで閉じないという強い規律を持ち、記録の網羅性が担保されているように見える。記録が残る以上、傾向は後から読み取れるという想定は自然であり、記録と先行指標が別物であることは損失が起きるまで表面化しない。"
+    }
+  ],
+  "analysis": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "OWNER",
+        "description": "OWNER が持つ制御「push / PR / merge を許す範囲を決める」の産物である常設許可は、条件3 を『PR の CI が pass』という二値（pass / not pass）で記述しており、検査が実行されなかった場合にどちらへ倒すかの条項を持たない。前提欠如という第三の状態に対する制御アクションが割り当てられておらず、責任の空白がそのまま運転者の裁量へ流れ込む。引き直し（rerun）の上限、上限到達時の経路（待機・所有者への差し戻し）も未定義である。",
+        "evidence_ref": "事象記録 summary：『常設許可の条件3 は「PR の CI が pass」としか書いておらず、CI が走れない状態の扱いを持たない』",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "責任の空白は構造再設計",
+          "予防に加え軽減の制約を定義",
+          "最悪環境を前提に設計運用",
+          "ハザードから安全制約を導出"
+        ],
+        "why_it_seemed_adequate": "常設許可が書かれた時点まで、GitHub Actions のジョブは投入すれば走るものとして一貫して観測されており、CI の出力は成功か失敗の二値としてしか現れていなかった。観測実態が二値であるとき、条項を二値で書くことは記述の過不足のない選択に見える。三値化は、当時は起きたことのない状態に対する仮定的な複雑化として映る。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "常設許可が運転者へ与える手掛かりは『CI が pass』という真偽値のみで、どの SHA に対する pass かを含まない。したがって pass の成立と、merge される木の同一性が接続されていない。本件 #234 では、遅延して届いた webhook により success した run の head と PR の head が食い違い、検査済みでない SHA が merge 対象になりうる状態が実際に発生した（手作業で head を戻して回避）。",
+        "evidence_ref": "resolution_2026-08-06：『成功した run の head が PR の head と食い違ったため、検査済み SHA へ head を戻してから merge した』／residual：『どの SHA に対する pass かを照合する義務を持たない』",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "control-action-requires-feedback",
+          "プロセスモデルと実状態の不整合",
+          "defects-in-information-providing-systems",
+          "破られた想定の再検討"
+        ],
+        "why_it_seemed_adequate": "push と run の対応は GitHub 側で一意に保たれるという想定が暗黙に置かれていた。平時は push から数秒で run が作られるため、pass した run の head と PR の head が食い違う窓は事実上存在せず、SHA の照合は冗長な手続きに見える。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "制御「merge 前に赤で止める」は、実行された検査が不適合を示した場合を対象範囲としており、実行が成立しなかった場合は範囲外にある。範囲外の状態は制御アクションを生まないため、止める側にも通す側にも倒れず、判断が下流（運転者）へ無言で委譲される。既知の穴として挙げられている『正本しか見ない』の隣に、『走らなかったことを状態として表明しない』というもう一つの範囲外がある。",
+        "evidence_ref": "detected_by：ANNOTATIONS 二回とも『The job was not acquired by Runner of type hosted even after multiple attempts』、ジョブは一度も実行されていない",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "accidents-from-inadequate-constraint-enforcement",
+          "安全立証でなく非安全状態の探索",
+          "each-component-enforces-its-constraints"
+        ],
+        "why_it_seemed_adequate": "CI の責務は検査を実行して結果を出すことであり、実行基盤（hosted runner）の可用性は CI の外側の与件として扱われてきた。基盤が与件であるうちは、範囲を「結果が出たときの判定」に限ることは責務の適切な切り分けに見える。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "手掛かり『ジョブの成否』が、同一 run について相互に矛盾する値を返した——gh run list は queued、gh run view は completed、cancel は 409『Cannot cancel a workflow re-run that has not yet queued』、rerun は『This workflow is already running』。運転者はどの値を実状態と見なすべきかを決める根拠を持たず、プロセスモデルが実状態と一致しえない。矛盾それ自体を『前提が欠けている』と読む規約も無い。",
+        "evidence_ref": "evidence：『同一 run について三つの API が矛盾した状態を返した』",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "プロセスモデルと実状態の不整合",
+          "モデル一致のためのフィードバック提供",
+          "include-information-supplier-defect",
+          "defects-in-information-providing-systems"
+        ],
+        "why_it_seemed_adequate": "複数の照会経路が同じ状態を返すことは、供給側 API の一貫性として明文化せずに前提できる性質だと見えていた。平時に三者が食い違う経験が無ければ、矛盾を検出する手続きを設ける理由が生じない。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "webhook のスロットリングにより、push / synchronize / reopen から run 生成までに 17〜28 分の遅延が生じた。遅延している状態と、恒久的に走らない状態は、運転者からは同じ顔（結果が無い）に見える。手掛かりの到着時刻に対する期待値が定義されていないため、どれだけ待てば『走らない』と判ずるかの基準が無く、待機と断念の境界が裁量に落ちる。",
+        "evidence_ref": "resolution_2026-08-06：『close/reopen の webhook が28分遅れで届いて success』『synchronize の webhook が17分遅れで届いて success』",
+        "flaw_type": "手掛かりが遅い",
+        "normative_refs": [
+          "control-action-requires-feedback",
+          "全コントロールループにフィードバック必須",
+          "設計時想定の運用中再検査"
+        ],
+        "why_it_seemed_adequate": "平時の run 生成遅延は秒〜十数秒の範囲にあり、遅延を状態として扱う必要が生じたことがなかった。遅延に閾値を設ける設計は、観測されたことのない分布に対する先回りに見える。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "体系の側は状態語彙に UNASSESSED を持ち『前提が欠けたら PASS ではなく UNASSESSED へ倒す』と決めているのに、その決定が運転手順の各経路へ継承される機構が無い。語彙の決定は統治木に置かれれば全経路に効くものとして扱われているが、実際には各条項の起草時に書き手が語彙を適用するかどうかに委ねられている。INC-018（監査が .gitignore を git に訊けないとき、その事実を判定へ反映せず木の欠陥として warn を出した）と同型で、粒度だけが運転手順の側に移っている。",
+        "evidence_ref": "summary：『体系は状態語彙に UNASSESSED を持ち…と決めているのに、運転手順のこの経路だけがその区別を持たない』／family：『INC-018 と同型で、粒度が運転手順の側に在る』",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "each-component-enforces-its-constraints",
+          "systemic-cause-across-all-events",
+          "上位文書の利用可能性（読み手適合）",
+          "全体構造の分析"
+        ],
+        "why_it_seemed_adequate": "統治木は決定の唯一の置き場所として設計されており、そこに書けば下流の記述は従うという前提が構造そのものに埋め込まれている。決定を書いた時点で伝播も済んだと見えることは、この設計の意図どおりの読み方である。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "制御『次の行動を決定論で導く』が、検査が実行されなかった局面に対する次手を持たない。何回引き直すか、引き直しても走らないときどこへ倒すか、外部障害の申告が出ているときに待機するかが決定論の表に無いため、非定常局面でのみレーンが非決定論へ落ちる。決定論であるべき経路に、最も判断が難しい局面だけ穴が開いている。",
+        "evidence_ref": "impact：『どちらへ倒すかの規律が無く、判断が運転者の裁量に落ちる』",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "機械的遵守が前提の指示は自動化",
+          "非定常フェーズへの自動支援の適用",
+          "責任委譲には情報と訓練を伴わせる",
+          "予防に加え軽減の制約を定義"
+        ],
+        "why_it_seemed_adequate": "レーンの決定論は、検査が結果を返すことを入力の前提として組まれている。入力が返らない場合を分岐に含めることは、平時には到達不能な枝を書き足す作業に見え、決定表の簡潔さと引き換えになる。"
+      },
+      {
+        "control_element_id": "HEARTBEAT",
+        "description": "ターンごとに運転者へ届く唯一の感知器である鼓動は、監査の古びと導入複製の版遅れを警告するが、検査基盤の側が現在障害申告中であるという事実を手掛かりとして持たない。運転者は結果の不在が自分の変更に由来するのか外部障害に由来するのかを、自ら githubstatus を引くまで区別できず、その照会を義務づける条項も無い。",
+        "evidence_ref": "detected_by：『2026-08-06 の GitHub Actions 障害（incident qcvjkzcs7j74・impact critical）』は運転者が外部サイトを引いて初めて判明した",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "controller-needs-concrete-feedback-channels",
+          "全コントロールループにフィードバック必須",
+          "プロセスモデルと実状態の不整合"
+        ],
+        "why_it_seemed_adequate": "鼓動の設計上の責務は統治の生存（監査の鮮度・版の追随）であり、外部供給者の可用性はその守備範囲の外に置かれている。感知器の責務を絞ることは、警告の信号対雑音比を保つうえで妥当な設計判断である。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "門の判定が裁量へ落ちたこと自体は、台帳へ事象として積まれる経路はあるが、裁量へ落ちた頻度・倒した向きの分布を先行指標として観測する手段が無い。本件は運転者が緩めなかったため損失に至らなかったが、緩めた場合も緩めなかった場合も台帳上の見え方は事後の記述に依存し、規律の劣化（圧力の高い局面で通す側へ倒れる傾向）を損失前に検出できない。",
+        "evidence_ref": "impact：『実際に手元の全門が緑であったため merge への圧力が生じた（merge はしていない）』",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "監査の先行指標を確立する",
+          "計画外変化の検出手段",
+          "ニアミスの構造欠陥特定への利用",
+          "自己満足への構造的対策"
+        ],
+        "why_it_seemed_adequate": "レーンは事象を積み分析が済むまで閉じないという強い規律を持ち、記録の網羅性が担保されているように見える。記録が残る以上、傾向は後から読み取れるという想定は自然であり、記録と先行指標が別物であることは損失が起きるまで表面化しない。"
+      }
+    ],
+    "hazard": "merge 可否の門が、「実行されたうえでの不適合（FAIL）」と「実行そのものが成立しなかった前提欠如（UNASSESSED）」を同一の顔として扱い、どちらへ倒すかが手順ではなく運転者のその場の裁量で決まる状態。さらに、pass と判定された検査の対象 SHA と、適用（merge）の対象 SHA が同一であることを誰も照合していない状態。",
+    "incident_id": "INC-022-ci-that-cannot-run-is-read-as-red",
+    "leading_indicators": [
+      {
+        "indicator": "ジョブ取得不成立の注記を含む run の出現",
+        "observable": "run の ANNOTATIONS に『not acquired by Runner』等、ジョブが一度も実行されなかったことを示す文字列が現れる件数",
+        "threshold": "1件でも現れたら、その run の結果を PASS/FAIL のいずれにも数えず UNASSESSED として扱う（0件でなければ異常）",
+        "version_independent": true,
+        "where": "運転端末から gh run view --log / ANNOTATIONS を、門の判定を行う直前に対象 run へ引く",
+        "why_version_independent": "リポジトリ正本に対する GitHub API の応答を運転端末から直接引くため、導入複製（plugin）の版に依存しない"
+      },
+      {
+        "indicator": "同一 run に対する状態語の三重不一致",
+        "observable": "同一 run id について gh run list / gh run view / rerun（または cancel）が返す状態語が相互に矛盾するか",
+        "threshold": "三者のうち一つでも食い違えば UNASSESSED（一致していることを PASS 採用の必要条件とする）",
+        "version_independent": true,
+        "where": "門の判定直前に、同一 run id へ三経路の照会を行い状態語を突き合わせる",
+        "why_version_independent": "照会は GitHub API に対して行われ、判定も運転手順の側で行うため、導入複製の版に依存しない"
+      },
+      {
+        "indicator": "検査対象 SHA と適用対象 SHA の乖離",
+        "observable": "pass した run の headSha と、merge しようとしている PR の headRefOid の一致／不一致",
+        "threshold": "不一致が1件でもあれば merge を停止し UNASSESSED へ倒す（一致率100%を維持水準とする）",
+        "version_independent": true,
+        "where": "gh run view --json headSha と gh pr view --json headRefOid を merge の直前に突き合わせる",
+        "why_version_independent": "照合は正本の API 応答どうしの比較であり、plugin の複製版とは独立に成立する"
+      },
+      {
+        "indicator": "イベントから run 生成までの遅延",
+        "observable": "push / synchronize / reopen の発生時刻と、対応する workflow run の created_at の差（中央値と最大値）",
+        "threshold": "最大が5分を超える、または期待される run が生成されない状態が5分続いたら、以降の門の判定を UNASSESSED として扱い待機経路へ入る",
+        "version_independent": true,
+        "where": "直近の PR 群について gh api でイベント時刻と run 生成時刻を取得し、運転記録へ残す",
+        "why_version_independent": "時刻はいずれも GitHub 側の記録から取得され、導入複製の版に依存しない"
+      },
+      {
+        "indicator": "門の条件が二値語彙のみで書かれている条項の残存数",
+        "observable": "運転手順・常設許可の各条項のうち、通過条件を pass/fail の二値だけで記述し UNASSESSED（前提欠如）への分岐を持たない条項の数",
+        "threshold": "1件以上残っていれば是正未了として扱う（目標は0件）",
+        "version_independent": false,
+        "where": "リポジトリ正本の doctrine_docs 配下および常設許可の条文を走査（現状は docs-audit / gov-heartbeat 経由で報告される）",
+        "why_version_independent": "走査と警告を担う docs-audit・gov-heartbeat は導入複製の側で動くため、複製の版が遅れると新しい走査規則も遅れて届く。INC-005 と同じ共通原因（古びの検出器が古びる）に晒されており、この指標だけは版が追随している間しか有効でない"
+      }
+    ],
+    "loss": "保証の前提が成立していない変更が正本へ取り込まれうる状態が生じ、かつ門の通過可否が再現性のない裁量判断へ落ちた。本件では merge に至っていないため物としての損失は生じていないが、「同じ状況で別の運転者・別のセッションが別の結論を出しうる」という保証の再現性の喪失は既に発生している（ステークホルダーである所有者は、門の判定が裁量に依存する状態を許容できない前提で常設許可を与えている）。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "遅延到着した全ての success run で headSha が PR head と一致すれば、この危険は #234 固有の事情に帰す",
+        "hypothesis": "webhook が遅延して届く局面では、success した run の headSha が PR の headRefOid と食い違う事象が一般に再現する（本件 #234 は偶発ではない）",
+        "oracle": "遅延到着した run について headSha と PR の headRefOid を突き合わせ、不一致の有無を記録する",
+        "severity": "P0"
+      },
+      {
+        "falsification_signal": "全条項が三値の分岐を持っていれば、本件は条件3 に限定された欠落である",
+        "hypothesis": "門の条件を二値で書いた条項は本件以外にも残存し、同じ倒れ方（前提欠如が沈黙で PASS または FAIL へ倒れる）をする",
+        "oracle": "運転手順・常設許可の全条項を、UNASSESSED ないし前提欠如への分岐を持つか否かで分類する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "障害中でも三者が常に一致すれば、本件の矛盾は別の機序に由来する",
+        "hypothesis": "同一 run に対する状態照会の三重不一致は、基盤障害中には一般に生じる（本件固有の異常ではない）",
+        "oracle": "障害申告が出ている期間に任意の run へ三経路の照会を行い、状態語の一致率を測る",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "2回以内の引き直しで実行が成立する事例が多数を占めれば、引き直しは有効な回復手段である",
+        "hypothesis": "ジョブ取得不成立は再試行では解けない種類の状態であり、引き直し回数を増やしても通過確率は上がらない",
+        "oracle": "『not acquired by Runner』注記が出た run について、引き直し回数と最終的な実行成立の関係を記録する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "UNASSESSED 以外の語彙が全経路に現れていれば、継承漏れはこの語彙に固有である",
+        "hypothesis": "統治木に置かれた語彙・規律が運転手順の各経路へ継承されない現象は、UNASSESSED 以外の語彙でも起きている",
+        "oracle": "統治木の状態語彙・規律を列挙し、各運転経路の条文に現れるかを対応表にする",
+        "severity": "P1"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "門の通過条件を三値（PASS / FAIL / UNASSESSED）で書き直し、『実行が成立しなかった』『状態照会が相互に矛盾する』『期待される run が生成されない』を UNASSESSED へ倒す条項を常設許可の条件3 に追加する。UNASSESSED は FAIL でも PASS でもなく、待機と差し戻しの経路へ接続する。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "門の通過条件に『pass した run の headSha が merge 対象の head と一致すること』を必要条件として追加し、判定の値だけでなく判定対象の識別子を下流へ渡す。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "引き直しの上限回数と、上限到達時の経路（待機時間・外部障害申告の確認・所有者への差し戻し）を ASSURANCE_LANE の決定論の表へ組み込み、非定常局面でも次手が一意に決まるようにする。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "leading_indicators のうち版非依存の四つ（不成立注記の検出・状態語の三重照合・SHA 照合・run 生成遅延）を、門の判定直前に運転側で実行する手順として実装する。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "非目標の各項に『体系が検出しないと決めた事項を、どの統制のどの条項が引き受けるか』の併記を義務づける規約を設ける。非目標が空白を作った時点で受け皿を明示させる。",
+        "kind": "文書化",
+        "owner_decision_required": true
+      },
+      {
+        "action": "INC-018 と本件を『前提が欠けたときに UNASSESSED/DEGRADED へ倒す規律が特定経路にだけ効いていない形』として一つの型に束ね、他の門・他の手順文書に同型の二値条項が残っていないかを走査して一覧を再利用資産として台帳へ残す。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "外部障害の申告が出ている間、門を通すことを一律に禁ずるか、UNASSESSED として待機のみを許すかを決める。禁止は復旧待ちの遅延を生み、待機のみは判断の再現性を保つが工程を止める——このトレードオフは所有者の裁定事項である。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "本分析が依拠した文書（常設許可の条文・UNASSESSED 語彙の所在・NONGOAL-001 第14項）の実在と本文を正本上で確認し、確認結果を本事象の記録へ追記する。実在が否定された場合は OWNER に帰した統制欠陥を撤回する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "非目標は『体系はこれを検出しない』を決めるが、『では代わりにどの統制がその責務を負うか』を併せて決めない。結果として非目標の縁に、誰にも割り当てられていない空白が生じる（NONGOAL-001 第14項と CI の生存判定）。",
+      "統治木に置かれた語彙・規律が、運転手順の各経路へ継承されているかを検査する機構が無い。決定は書けば効くという前提で運用されており、継承漏れは事象が起きるまで表面化しない（INC-018 と同型）。",
+      "門の条件が二値の判定語で書かれると、前提が欠けた第三の状態は沈黙のうちにどちらかへ倒れる。倒れる向きは条文の意図ではなく、読み手の置かれた状況（merge への圧力の有無）で決まる。",
+      "検査（判定）と適用（merge）の間に、対象の同一性を照合する段が構造上存在しない。判定の値だけが下流へ渡り、判定対象の識別子は渡らない。",
+      "外部供給者の状態 API が自己一貫であるという想定が明文化されておらず、想定が破れたときに再評価を起動する手続きも無い。",
+      "障害中は手元で走る全ての門が緑になるため、通過の圧力が最大になる。圧力が最大になる時点と、語彙が不足して裁量が発生する時点が構造的に一致している。",
+      "評価者・運転者・保証レーンが同系 model であり、二値語彙の不足という同じ読み落としを共有しうる（ASSURANCE_LANE の既知の残余リスク）。"
+    ],
+    "unknowns": [
+      "【実在未確認・最重要】事象が名指しする『常設許可の条件3』『状態語彙 UNASSESSED』『NONGOAL-001 第14項』の実在を確認できていない。作業ディレクトリ（/tmp/assurance-cast-0j3lz2t_）は空で、doctrine_docs も assurance も存在せず、UNASSESSED の grep は0件だった。また統制構造の要素一覧に『常設許可』に対応する id は無く、本分析では OWNER の制御『push / PR / merge を許す範囲を決める』の産物として解釈した。この解釈が誤っている場合、OWNER に帰した二つの統制欠陥は対象を失う。この理由により confidence を low とする。",
+      "状態語彙 UNASSESSED がどの文書のどの条項に置かれているかを確認していない（decided-facts.md か assurance/README.md か、あるいは別の場所か）。したがって『体系は持つが運転手順だけが持たない』という差の所在そのものが未検証である。",
+      "二度の CI 不成立が同一 workflow の再実行だったのか別 run だったのか、evidence からは一意に決まらない（run 31120553791 のみが引用されている）。",
+      "success した run の head が PR の head と食い違った機序が未確認。遅延して届いた close/reopen イベントに対し GitHub 側がどの SHA を head として run を生成するかの規則を確かめていない。",
+      "引き直し（rerun）を何回まで行えば『引けない』と判じてよいかの根拠が無い。観測されている事例は2回のみで、閾値を経験から定める材料が不足している。",
+      "他の門（本体試験・監査・release-check）や他の手順文書に、同じ二値語彙の条項が残っているかを走査していない（正本を読める環境が無いため）。",
+      "本件で merge への圧力が生じながら緩めなかった判断が、規律によるものか、その時点の運転者の余裕によるものかを区別できない。区別できない以上、同じ状況が再現したときの帰結を予測できない。",
+      "GitHub 側の障害申告（qcvjkzcs7j74）と、観測された三 API の矛盾が因果で結ばれるかは未確認。矛盾が障害固有か平常時にも起こりうるかが判っていない。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は「検査の出力の値」を対象に設計されており、「出力が存在するか」を対象にしていない。CI_RELEASE_CHECK は赤で止めることを制御アクションとして持つが、結果が無い状態を表明する制御アクションを持たず、常設許可の条件3 も pass という値の有無だけを問う。さらに NONGOAL-001 第14項が『CI の敷設・稼働は検出しない。感知できるのは CI が残した成果物までであり、それは敷設の証跡ではない』と決めているため、体系の側から CI の生存を機械的に判ずる道は意図的に閉じられている。非目標は「体系はこれをやらない」を決めるが、「代わりにどの統制がその空白を引き受けるか」を割り当てないため、空白は誰の責務でもないまま運転手順の裁量へ落ちる。加えて、平時は投入したジョブが必ず走ったため、二値語彙の不足は観測される機会がなく、体系が持つ UNASSESSED 語彙が運転手順へ継承されているかを検査する経路も無い（統治木の決定は、書けば下流に効くという前提で運用されている）。最後に、判定と適用の間に対象 SHA の同一性を照合する段が構造上どこにも無いため、pass の成立と merge される木の同一性は誰も検査していない。本件が発覚したのは、外部障害が「走らない」と「遅れて走る」を同時に発生させ、両方の穴を同じ日に露出させたためであって、保証の設計が検出したためではない。"
+  },
+  "control_structure_ids": [
+    "OWNER",
+    "CI_RELEASE_CHECK",
+    "SESSION_START_CONTRACT",
+    "HEARTBEAT",
+    "PRE_TOOL_GUARD",
+    "POST_TOOL_LINTER",
+    "SESSION_END_AUDIT",
+    "CAPTURE_NUDGE",
+    "PLUGIN_DISTRIBUTION",
+    "ASSURANCE_LANE",
+    "GOVERNANCE_TREE"
+  ],
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "duration_ms": 334633,
+  "errors": [],
+  "execution_kind": "real-sdk",
+  "flaws_with_citation_defect": [],
+  "generated_at": "2026-08-06T23:50:11Z",
+  "git_dirty": false,
+  "git_sha": "7d1db0e22e6c35db721ad523bb00589dd6509393",
+  "incident_evidence": {
+    "kind": "measurement",
+    "refs": [
+      "doctrine_docs/_system/non-goals.md",
+      "assurance/README.md"
+    ],
+    "resolved": [
+      "doctrine_docs/_system/non-goals.md",
+      "assurance/README.md"
+    ],
+    "unresolved": [],
+    "verifiable": true
+  },
+  "incident_id": "INC-022-ci-that-cannot-run-is-read-as-red",
+  "incident_sha256": "354b14f8de1fa6f399831561a77d3212ef240584ff5e5db9c794550d106f7992",
+  "init": {
+    "claude_code_version": "2.1.221",
+    "model": "claude-opus-5",
+    "session_id": "57f65ff9-3e1d-4cea-9186-7a310fc4968e",
+    "tools_count": 27
+  },
+  "kind": "cast-analysis",
+  "leading_indicators_defined": true,
+  "options": {
+    "allowed_tools": [],
+    "cwd": "/tmp/assurance-cast-0j3lz2t_",
+    "effort": "high",
+    "max_budget_usd": 4.0,
+    "max_turns": 8,
+    "model": "claude-opus-5",
+    "setting_sources": [],
+    "timeout_s": 900
+  },
+  "oracle": "structured_output がレーン側再検証にも適合",
+  "principles_offered": 337,
+  "prompt_sha256": "c6c8af1957152e507f6c106aba0a8106057842ce4e65ab80707b63d9404e26b6",
+  "rejected_flaws": [],
+  "result_meta": {
+    "duration_api_ms": 324928,
+    "is_error": false,
+    "num_turns": 5,
+    "session_id": "57f65ff9-3e1d-4cea-9186-7a310fc4968e",
+    "subtype": "success",
+    "total_cost_usd": 1.1778960000000003,
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 59122,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 59122,
+      "cache_read_input_tokens": 114862,
+      "inference_geo": "not_available",
+      "input_tokens": 6,
+      "iterations": "list",
+      "output_tokens": 19681,
+      "server_tool_use": {
+        "web_fetch_requests": 0,
+        "web_search_requests": 0
+      },
+      "service_tier": "standard",
+      "speed": "standard"
+    }
+  },
+  "schema_sha256": "0d1643d5e16353723405302c1f6ffcf753915e2a4f27a3530e8ef9a9ee45cb46",
+  "sdk_version": "0.2.129",
+  "settled": true,
+  "status": "PASS",
+  "structured_output": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "OWNER",
+        "description": "OWNER が持つ制御「push / PR / merge を許す範囲を決める」の産物である常設許可は、条件3 を『PR の CI が pass』という二値（pass / not pass）で記述しており、検査が実行されなかった場合にどちらへ倒すかの条項を持たない。前提欠如という第三の状態に対する制御アクションが割り当てられておらず、責任の空白がそのまま運転者の裁量へ流れ込む。引き直し（rerun）の上限、上限到達時の経路（待機・所有者への差し戻し）も未定義である。",
+        "evidence_ref": "事象記録 summary：『常設許可の条件3 は「PR の CI が pass」としか書いておらず、CI が走れない状態の扱いを持たない』",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "責任の空白は構造再設計",
+          "予防に加え軽減の制約を定義",
+          "最悪環境を前提に設計運用",
+          "ハザードから安全制約を導出"
+        ],
+        "why_it_seemed_adequate": "常設許可が書かれた時点まで、GitHub Actions のジョブは投入すれば走るものとして一貫して観測されており、CI の出力は成功か失敗の二値としてしか現れていなかった。観測実態が二値であるとき、条項を二値で書くことは記述の過不足のない選択に見える。三値化は、当時は起きたことのない状態に対する仮定的な複雑化として映る。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "常設許可が運転者へ与える手掛かりは『CI が pass』という真偽値のみで、どの SHA に対する pass かを含まない。したがって pass の成立と、merge される木の同一性が接続されていない。本件 #234 では、遅延して届いた webhook により success した run の head と PR の head が食い違い、検査済みでない SHA が merge 対象になりうる状態が実際に発生した（手作業で head を戻して回避）。",
+        "evidence_ref": "resolution_2026-08-06：『成功した run の head が PR の head と食い違ったため、検査済み SHA へ head を戻してから merge した』／residual：『どの SHA に対する pass かを照合する義務を持たない』",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "control-action-requires-feedback",
+          "プロセスモデルと実状態の不整合",
+          "defects-in-information-providing-systems",
+          "破られた想定の再検討"
+        ],
+        "why_it_seemed_adequate": "push と run の対応は GitHub 側で一意に保たれるという想定が暗黙に置かれていた。平時は push から数秒で run が作られるため、pass した run の head と PR の head が食い違う窓は事実上存在せず、SHA の照合は冗長な手続きに見える。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "制御「merge 前に赤で止める」は、実行された検査が不適合を示した場合を対象範囲としており、実行が成立しなかった場合は範囲外にある。範囲外の状態は制御アクションを生まないため、止める側にも通す側にも倒れず、判断が下流（運転者）へ無言で委譲される。既知の穴として挙げられている『正本しか見ない』の隣に、『走らなかったことを状態として表明しない』というもう一つの範囲外がある。",
+        "evidence_ref": "detected_by：ANNOTATIONS 二回とも『The job was not acquired by Runner of type hosted even after multiple attempts』、ジョブは一度も実行されていない",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "accidents-from-inadequate-constraint-enforcement",
+          "安全立証でなく非安全状態の探索",
+          "each-component-enforces-its-constraints"
+        ],
+        "why_it_seemed_adequate": "CI の責務は検査を実行して結果を出すことであり、実行基盤（hosted runner）の可用性は CI の外側の与件として扱われてきた。基盤が与件であるうちは、範囲を「結果が出たときの判定」に限ることは責務の適切な切り分けに見える。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "手掛かり『ジョブの成否』が、同一 run について相互に矛盾する値を返した——gh run list は queued、gh run view は completed、cancel は 409『Cannot cancel a workflow re-run that has not yet queued』、rerun は『This workflow is already running』。運転者はどの値を実状態と見なすべきかを決める根拠を持たず、プロセスモデルが実状態と一致しえない。矛盾それ自体を『前提が欠けている』と読む規約も無い。",
+        "evidence_ref": "evidence：『同一 run について三つの API が矛盾した状態を返した』",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "プロセスモデルと実状態の不整合",
+          "モデル一致のためのフィードバック提供",
+          "include-information-supplier-defect",
+          "defects-in-information-providing-systems"
+        ],
+        "why_it_seemed_adequate": "複数の照会経路が同じ状態を返すことは、供給側 API の一貫性として明文化せずに前提できる性質だと見えていた。平時に三者が食い違う経験が無ければ、矛盾を検出する手続きを設ける理由が生じない。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "webhook のスロットリングにより、push / synchronize / reopen から run 生成までに 17〜28 分の遅延が生じた。遅延している状態と、恒久的に走らない状態は、運転者からは同じ顔（結果が無い）に見える。手掛かりの到着時刻に対する期待値が定義されていないため、どれだけ待てば『走らない』と判ずるかの基準が無く、待機と断念の境界が裁量に落ちる。",
+        "evidence_ref": "resolution_2026-08-06：『close/reopen の webhook が28分遅れで届いて success』『synchronize の webhook が17分遅れで届いて success』",
+        "flaw_type": "手掛かりが遅い",
+        "normative_refs": [
+          "control-action-requires-feedback",
+          "全コントロールループにフィードバック必須",
+          "設計時想定の運用中再検査"
+        ],
+        "why_it_seemed_adequate": "平時の run 生成遅延は秒〜十数秒の範囲にあり、遅延を状態として扱う必要が生じたことがなかった。遅延に閾値を設ける設計は、観測されたことのない分布に対する先回りに見える。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "体系の側は状態語彙に UNASSESSED を持ち『前提が欠けたら PASS ではなく UNASSESSED へ倒す』と決めているのに、その決定が運転手順の各経路へ継承される機構が無い。語彙の決定は統治木に置かれれば全経路に効くものとして扱われているが、実際には各条項の起草時に書き手が語彙を適用するかどうかに委ねられている。INC-018（監査が .gitignore を git に訊けないとき、その事実を判定へ反映せず木の欠陥として warn を出した）と同型で、粒度だけが運転手順の側に移っている。",
+        "evidence_ref": "summary：『体系は状態語彙に UNASSESSED を持ち…と決めているのに、運転手順のこの経路だけがその区別を持たない』／family：『INC-018 と同型で、粒度が運転手順の側に在る』",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "each-component-enforces-its-constraints",
+          "systemic-cause-across-all-events",
+          "上位文書の利用可能性（読み手適合）",
+          "全体構造の分析"
+        ],
+        "why_it_seemed_adequate": "統治木は決定の唯一の置き場所として設計されており、そこに書けば下流の記述は従うという前提が構造そのものに埋め込まれている。決定を書いた時点で伝播も済んだと見えることは、この設計の意図どおりの読み方である。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "制御『次の行動を決定論で導く』が、検査が実行されなかった局面に対する次手を持たない。何回引き直すか、引き直しても走らないときどこへ倒すか、外部障害の申告が出ているときに待機するかが決定論の表に無いため、非定常局面でのみレーンが非決定論へ落ちる。決定論であるべき経路に、最も判断が難しい局面だけ穴が開いている。",
+        "evidence_ref": "impact：『どちらへ倒すかの規律が無く、判断が運転者の裁量に落ちる』",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "機械的遵守が前提の指示は自動化",
+          "非定常フェーズへの自動支援の適用",
+          "責任委譲には情報と訓練を伴わせる",
+          "予防に加え軽減の制約を定義"
+        ],
+        "why_it_seemed_adequate": "レーンの決定論は、検査が結果を返すことを入力の前提として組まれている。入力が返らない場合を分岐に含めることは、平時には到達不能な枝を書き足す作業に見え、決定表の簡潔さと引き換えになる。"
+      },
+      {
+        "control_element_id": "HEARTBEAT",
+        "description": "ターンごとに運転者へ届く唯一の感知器である鼓動は、監査の古びと導入複製の版遅れを警告するが、検査基盤の側が現在障害申告中であるという事実を手掛かりとして持たない。運転者は結果の不在が自分の変更に由来するのか外部障害に由来するのかを、自ら githubstatus を引くまで区別できず、その照会を義務づける条項も無い。",
+        "evidence_ref": "detected_by：『2026-08-06 の GitHub Actions 障害（incident qcvjkzcs7j74・impact critical）』は運転者が外部サイトを引いて初めて判明した",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "controller-needs-concrete-feedback-channels",
+          "全コントロールループにフィードバック必須",
+          "プロセスモデルと実状態の不整合"
+        ],
+        "why_it_seemed_adequate": "鼓動の設計上の責務は統治の生存（監査の鮮度・版の追随）であり、外部供給者の可用性はその守備範囲の外に置かれている。感知器の責務を絞ることは、警告の信号対雑音比を保つうえで妥当な設計判断である。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "門の判定が裁量へ落ちたこと自体は、台帳へ事象として積まれる経路はあるが、裁量へ落ちた頻度・倒した向きの分布を先行指標として観測する手段が無い。本件は運転者が緩めなかったため損失に至らなかったが、緩めた場合も緩めなかった場合も台帳上の見え方は事後の記述に依存し、規律の劣化（圧力の高い局面で通す側へ倒れる傾向）を損失前に検出できない。",
+        "evidence_ref": "impact：『実際に手元の全門が緑であったため merge への圧力が生じた（merge はしていない）』",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "監査の先行指標を確立する",
+          "計画外変化の検出手段",
+          "ニアミスの構造欠陥特定への利用",
+          "自己満足への構造的対策"
+        ],
+        "why_it_seemed_adequate": "レーンは事象を積み分析が済むまで閉じないという強い規律を持ち、記録の網羅性が担保されているように見える。記録が残る以上、傾向は後から読み取れるという想定は自然であり、記録と先行指標が別物であることは損失が起きるまで表面化しない。"
+      }
+    ],
+    "hazard": "merge 可否の門が、「実行されたうえでの不適合（FAIL）」と「実行そのものが成立しなかった前提欠如（UNASSESSED）」を同一の顔として扱い、どちらへ倒すかが手順ではなく運転者のその場の裁量で決まる状態。さらに、pass と判定された検査の対象 SHA と、適用（merge）の対象 SHA が同一であることを誰も照合していない状態。",
+    "incident_id": "INC-022-ci-that-cannot-run-is-read-as-red",
+    "leading_indicators": [
+      {
+        "indicator": "ジョブ取得不成立の注記を含む run の出現",
+        "observable": "run の ANNOTATIONS に『not acquired by Runner』等、ジョブが一度も実行されなかったことを示す文字列が現れる件数",
+        "threshold": "1件でも現れたら、その run の結果を PASS/FAIL のいずれにも数えず UNASSESSED として扱う（0件でなければ異常）",
+        "version_independent": true,
+        "where": "運転端末から gh run view --log / ANNOTATIONS を、門の判定を行う直前に対象 run へ引く",
+        "why_version_independent": "リポジトリ正本に対する GitHub API の応答を運転端末から直接引くため、導入複製（plugin）の版に依存しない"
+      },
+      {
+        "indicator": "同一 run に対する状態語の三重不一致",
+        "observable": "同一 run id について gh run list / gh run view / rerun（または cancel）が返す状態語が相互に矛盾するか",
+        "threshold": "三者のうち一つでも食い違えば UNASSESSED（一致していることを PASS 採用の必要条件とする）",
+        "version_independent": true,
+        "where": "門の判定直前に、同一 run id へ三経路の照会を行い状態語を突き合わせる",
+        "why_version_independent": "照会は GitHub API に対して行われ、判定も運転手順の側で行うため、導入複製の版に依存しない"
+      },
+      {
+        "indicator": "検査対象 SHA と適用対象 SHA の乖離",
+        "observable": "pass した run の headSha と、merge しようとしている PR の headRefOid の一致／不一致",
+        "threshold": "不一致が1件でもあれば merge を停止し UNASSESSED へ倒す（一致率100%を維持水準とする）",
+        "version_independent": true,
+        "where": "gh run view --json headSha と gh pr view --json headRefOid を merge の直前に突き合わせる",
+        "why_version_independent": "照合は正本の API 応答どうしの比較であり、plugin の複製版とは独立に成立する"
+      },
+      {
+        "indicator": "イベントから run 生成までの遅延",
+        "observable": "push / synchronize / reopen の発生時刻と、対応する workflow run の created_at の差（中央値と最大値）",
+        "threshold": "最大が5分を超える、または期待される run が生成されない状態が5分続いたら、以降の門の判定を UNASSESSED として扱い待機経路へ入る",
+        "version_independent": true,
+        "where": "直近の PR 群について gh api でイベント時刻と run 生成時刻を取得し、運転記録へ残す",
+        "why_version_independent": "時刻はいずれも GitHub 側の記録から取得され、導入複製の版に依存しない"
+      },
+      {
+        "indicator": "門の条件が二値語彙のみで書かれている条項の残存数",
+        "observable": "運転手順・常設許可の各条項のうち、通過条件を pass/fail の二値だけで記述し UNASSESSED（前提欠如）への分岐を持たない条項の数",
+        "threshold": "1件以上残っていれば是正未了として扱う（目標は0件）",
+        "version_independent": false,
+        "where": "リポジトリ正本の doctrine_docs 配下および常設許可の条文を走査（現状は docs-audit / gov-heartbeat 経由で報告される）",
+        "why_version_independent": "走査と警告を担う docs-audit・gov-heartbeat は導入複製の側で動くため、複製の版が遅れると新しい走査規則も遅れて届く。INC-005 と同じ共通原因（古びの検出器が古びる）に晒されており、この指標だけは版が追随している間しか有効でない"
+      }
+    ],
+    "loss": "保証の前提が成立していない変更が正本へ取り込まれうる状態が生じ、かつ門の通過可否が再現性のない裁量判断へ落ちた。本件では merge に至っていないため物としての損失は生じていないが、「同じ状況で別の運転者・別のセッションが別の結論を出しうる」という保証の再現性の喪失は既に発生している（ステークホルダーである所有者は、門の判定が裁量に依存する状態を許容できない前提で常設許可を与えている）。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "遅延到着した全ての success run で headSha が PR head と一致すれば、この危険は #234 固有の事情に帰す",
+        "hypothesis": "webhook が遅延して届く局面では、success した run の headSha が PR の headRefOid と食い違う事象が一般に再現する（本件 #234 は偶発ではない）",
+        "oracle": "遅延到着した run について headSha と PR の headRefOid を突き合わせ、不一致の有無を記録する",
+        "severity": "P0"
+      },
+      {
+        "falsification_signal": "全条項が三値の分岐を持っていれば、本件は条件3 に限定された欠落である",
+        "hypothesis": "門の条件を二値で書いた条項は本件以外にも残存し、同じ倒れ方（前提欠如が沈黙で PASS または FAIL へ倒れる）をする",
+        "oracle": "運転手順・常設許可の全条項を、UNASSESSED ないし前提欠如への分岐を持つか否かで分類する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "障害中でも三者が常に一致すれば、本件の矛盾は別の機序に由来する",
+        "hypothesis": "同一 run に対する状態照会の三重不一致は、基盤障害中には一般に生じる（本件固有の異常ではない）",
+        "oracle": "障害申告が出ている期間に任意の run へ三経路の照会を行い、状態語の一致率を測る",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "2回以内の引き直しで実行が成立する事例が多数を占めれば、引き直しは有効な回復手段である",
+        "hypothesis": "ジョブ取得不成立は再試行では解けない種類の状態であり、引き直し回数を増やしても通過確率は上がらない",
+        "oracle": "『not acquired by Runner』注記が出た run について、引き直し回数と最終的な実行成立の関係を記録する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "UNASSESSED 以外の語彙が全経路に現れていれば、継承漏れはこの語彙に固有である",
+        "hypothesis": "統治木に置かれた語彙・規律が運転手順の各経路へ継承されない現象は、UNASSESSED 以外の語彙でも起きている",
+        "oracle": "統治木の状態語彙・規律を列挙し、各運転経路の条文に現れるかを対応表にする",
+        "severity": "P1"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "門の通過条件を三値（PASS / FAIL / UNASSESSED）で書き直し、『実行が成立しなかった』『状態照会が相互に矛盾する』『期待される run が生成されない』を UNASSESSED へ倒す条項を常設許可の条件3 に追加する。UNASSESSED は FAIL でも PASS でもなく、待機と差し戻しの経路へ接続する。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "門の通過条件に『pass した run の headSha が merge 対象の head と一致すること』を必要条件として追加し、判定の値だけでなく判定対象の識別子を下流へ渡す。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "引き直しの上限回数と、上限到達時の経路（待機時間・外部障害申告の確認・所有者への差し戻し）を ASSURANCE_LANE の決定論の表へ組み込み、非定常局面でも次手が一意に決まるようにする。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "leading_indicators のうち版非依存の四つ（不成立注記の検出・状態語の三重照合・SHA 照合・run 生成遅延）を、門の判定直前に運転側で実行する手順として実装する。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "非目標の各項に『体系が検出しないと決めた事項を、どの統制のどの条項が引き受けるか』の併記を義務づける規約を設ける。非目標が空白を作った時点で受け皿を明示させる。",
+        "kind": "文書化",
+        "owner_decision_required": true
+      },
+      {
+        "action": "INC-018 と本件を『前提が欠けたときに UNASSESSED/DEGRADED へ倒す規律が特定経路にだけ効いていない形』として一つの型に束ね、他の門・他の手順文書に同型の二値条項が残っていないかを走査して一覧を再利用資産として台帳へ残す。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "外部障害の申告が出ている間、門を通すことを一律に禁ずるか、UNASSESSED として待機のみを許すかを決める。禁止は復旧待ちの遅延を生み、待機のみは判断の再現性を保つが工程を止める——このトレードオフは所有者の裁定事項である。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "本分析が依拠した文書（常設許可の条文・UNASSESSED 語彙の所在・NONGOAL-001 第14項）の実在と本文を正本上で確認し、確認結果を本事象の記録へ追記する。実在が否定された場合は OWNER に帰した統制欠陥を撤回する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "非目標は『体系はこれを検出しない』を決めるが、『では代わりにどの統制がその責務を負うか』を併せて決めない。結果として非目標の縁に、誰にも割り当てられていない空白が生じる（NONGOAL-001 第14項と CI の生存判定）。",
+      "統治木に置かれた語彙・規律が、運転手順の各経路へ継承されているかを検査する機構が無い。決定は書けば効くという前提で運用されており、継承漏れは事象が起きるまで表面化しない（INC-018 と同型）。",
+      "門の条件が二値の判定語で書かれると、前提が欠けた第三の状態は沈黙のうちにどちらかへ倒れる。倒れる向きは条文の意図ではなく、読み手の置かれた状況（merge への圧力の有無）で決まる。",
+      "検査（判定）と適用（merge）の間に、対象の同一性を照合する段が構造上存在しない。判定の値だけが下流へ渡り、判定対象の識別子は渡らない。",
+      "外部供給者の状態 API が自己一貫であるという想定が明文化されておらず、想定が破れたときに再評価を起動する手続きも無い。",
+      "障害中は手元で走る全ての門が緑になるため、通過の圧力が最大になる。圧力が最大になる時点と、語彙が不足して裁量が発生する時点が構造的に一致している。",
+      "評価者・運転者・保証レーンが同系 model であり、二値語彙の不足という同じ読み落としを共有しうる（ASSURANCE_LANE の既知の残余リスク）。"
+    ],
+    "unknowns": [
+      "【実在未確認・最重要】事象が名指しする『常設許可の条件3』『状態語彙 UNASSESSED』『NONGOAL-001 第14項』の実在を確認できていない。作業ディレクトリ（/tmp/assurance-cast-0j3lz2t_）は空で、doctrine_docs も assurance も存在せず、UNASSESSED の grep は0件だった。また統制構造の要素一覧に『常設許可』に対応する id は無く、本分析では OWNER の制御『push / PR / merge を許す範囲を決める』の産物として解釈した。この解釈が誤っている場合、OWNER に帰した二つの統制欠陥は対象を失う。この理由により confidence を low とする。",
+      "状態語彙 UNASSESSED がどの文書のどの条項に置かれているかを確認していない（decided-facts.md か assurance/README.md か、あるいは別の場所か）。したがって『体系は持つが運転手順だけが持たない』という差の所在そのものが未検証である。",
+      "二度の CI 不成立が同一 workflow の再実行だったのか別 run だったのか、evidence からは一意に決まらない（run 31120553791 のみが引用されている）。",
+      "success した run の head が PR の head と食い違った機序が未確認。遅延して届いた close/reopen イベントに対し GitHub 側がどの SHA を head として run を生成するかの規則を確かめていない。",
+      "引き直し（rerun）を何回まで行えば『引けない』と判じてよいかの根拠が無い。観測されている事例は2回のみで、閾値を経験から定める材料が不足している。",
+      "他の門（本体試験・監査・release-check）や他の手順文書に、同じ二値語彙の条項が残っているかを走査していない（正本を読める環境が無いため）。",
+      "本件で merge への圧力が生じながら緩めなかった判断が、規律によるものか、その時点の運転者の余裕によるものかを区別できない。区別できない以上、同じ状況が再現したときの帰結を予測できない。",
+      "GitHub 側の障害申告（qcvjkzcs7j74）と、観測された三 API の矛盾が因果で結ばれるかは未確認。矛盾が障害固有か平常時にも起こりうるかが判っていない。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は「検査の出力の値」を対象に設計されており、「出力が存在するか」を対象にしていない。CI_RELEASE_CHECK は赤で止めることを制御アクションとして持つが、結果が無い状態を表明する制御アクションを持たず、常設許可の条件3 も pass という値の有無だけを問う。さらに NONGOAL-001 第14項が『CI の敷設・稼働は検出しない。感知できるのは CI が残した成果物までであり、それは敷設の証跡ではない』と決めているため、体系の側から CI の生存を機械的に判ずる道は意図的に閉じられている。非目標は「体系はこれをやらない」を決めるが、「代わりにどの統制がその空白を引き受けるか」を割り当てないため、空白は誰の責務でもないまま運転手順の裁量へ落ちる。加えて、平時は投入したジョブが必ず走ったため、二値語彙の不足は観測される機会がなく、体系が持つ UNASSESSED 語彙が運転手順へ継承されているかを検査する経路も無い（統治木の決定は、書けば下流に効くという前提で運用されている）。最後に、判定と適用の間に対象 SHA の同一性を照合する段が構造上どこにも無いため、pass の成立と merge される木の同一性は誰も検査していない。本件が発覚したのは、外部障害が「走らない」と「遅れて走る」を同時に発生させ、両方の穴を同じ日に露出させたためであって、保証の設計が検出したためではない。"
+  }
+}

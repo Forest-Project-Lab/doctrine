@@ -1,0 +1,33 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "reproduce-red",
+  "incident_id": "INC-022-ci-that-cannot-run-is-read-as-red",
+  "generated_at": "2026-08-07T00:05:00Z",
+  "git_sha": "7d1db0e",
+  "phase": "before-fix",
+  "command": "python3 -m unittest assurance.tests.test_merge_gate",
+  "returncode": 1,
+  "expect": "修正前に FAIL すること（最初から緑は再現と認めない）",
+  "procedure_order": "REPRODUCE_RED を FIX の前に実施した（三反復連続で順序を守れている）。",
+  "observed_failures": [
+    "ImportError: cannot import name 'merge_gate' from 'harness' —— 門の判定を三値で出す口が体系に無い",
+    "したがって 12 件の試験（判定の三値・取得不成立・状態語の不一致・SHA の乖離・未完了・未知の結論・理由の全列挙・終了コード）はいずれも走れない"
+  ],
+  "field_evidence_2026-08-06": {
+    "incident": "GitHub Actions incident qcvjkzcs7j74 (impact critical, 15:22:49Z 開始)",
+    "annotation": "The job was not acquired by Runner of type hosted even after multiple attempts",
+    "duration": "15m2s（打ち切り）×2",
+    "api_disagreement": {
+      "gh run list": "queued",
+      "gh run view": "completed",
+      "POST /cancel": "409 Cannot cancel a workflow re-run that has not yet queued",
+      "gh run rerun": "This workflow is already running"
+    },
+    "sha_mismatch": "PR #234 で、遅れて届いた成功 run の head_sha は 76da544 で、PR の head は 09dfb97 だった。木の同一性を手で確かめたうえで head を検査済み SHA へ戻してから merge した。手順にこの照合の義務は無い"
+  },
+  "measured_after": {
+    "tests": "12 件が緑",
+    "field_check": "merge 済みの PR #235 に対して実走し verdict=PASS・reasons=[]・head=b1ddc56715a2 を確認（判定が実地で成立することの確かめ）"
+  },
+  "note": "欠陥は語彙の不足である。体系は状態語彙に UNASSESSED を持ち『前提が欠けたら PASS ではなく UNASSESSED へ倒す』と決めているのに、その決定が門の経路へ継承される機構が無かった（事故分析の統制欠陥#6）。ここで機械化したのは五つの先行指標のうち三つ —— 取得不成立の注記・状態語の不一致・検査対象 SHA と適用対象 SHA の乖離。残る二つ（run 生成までの遅延・二値語彙で書かれた条項の残存数）は見ない。"
+}

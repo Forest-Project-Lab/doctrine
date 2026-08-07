@@ -237,6 +237,7 @@ sources: []
 | ADR-126 | ADR | packaging | 保証が寄りかかる想定は、決定でも非目標でもなく想定として名指しし、失効の先行指標を併記する |
 | ADR-127 | ADR | packaging | 所有者判断は六類型のどれかを名指してはじめて成立し、評価者の申告は既定にしない |
 | ADR-128 | ADR | packaging | 宣言された評価の発火点は、走らせ手を持つか、未実装と明記されるかのどちらかとする |
+| ADR-129 | ADR | packaging | 門の判定は三値とし、検査が成立していないときは適合にも不適合にも数えない |
 | CHANGE-001 | CHANGE | packaging | 導入済みプラグインの版の遅れを生存性として照合する |
 | CHANGE-002 | CHANGE | packaging | リリースの整合を CI の門で検める — 変更履歴の書き忘れを止める |
 | CHANGE-005 | CHANGE | packaging | 不具合の兆候を記録し、承認を経た issue 報告を促す |
