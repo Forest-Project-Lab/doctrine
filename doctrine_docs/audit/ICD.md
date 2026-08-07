@@ -6,7 +6,7 @@ domain: audit
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-29
+updated: 2026-08-07
 sources: [spec/doctrine.ja.md#4.2]
 canonical_for: [corpus-audit, audit-summary-schema, intake-ledger-format, view-stamp-format]
 llm_context: task
@@ -86,6 +86,7 @@ ICD・正本・投影・現行・依存・参照は用語辞書（`_system/gloss
 - 返す値: 要約スキーマ `docs-audit/1`。形は `{schema, generated_at, today, root, totals:{error,warn,advisory}, counts_by_check, checks_run, top_findings, findings}`。`top_findings` は error を先頭に並べ、上限 20 件とする。
 - 終了コード: SessionEnd 経路（`--fail-on never`）は常に 0 を返し、セッションの後始末を妨げない。CI 経路（`--fail-on error`）は error 所見が一つでもあれば 1 を返す。
 - context ドメインへの注入との受け渡し: 監査は要約を `${CLAUDE_PROJECT_DIR}/.claude/.cache/last-audit.json`（プロジェクトスコープ。ADR-037）へ書く。書き込みは一時ファイルを経て一括で差し替え、途中状態を残さない。次のセッションで context の SessionStart 注入がこの要約を読む（読み手はプロジェクトスコープを先に、旧 `${CLAUDE_PLUGIN_ROOT}/.cache` を後方互換の最後に見る）。
+- 外部利用者（リポジトリの外の表示製品を含む）の読み口: `docs-audit.py --root <統治木> --json` を実行して返る値（`docs-audit/1`）**だけ**に依存してよい（ADR-137）。`--today` を渡せば決定論になる。`.claude/.cache/last-audit.json` は体系内部の受け渡しであり、直読みは契約の外である。
 
 ## 依存してよい入口
 

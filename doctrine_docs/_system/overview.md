@@ -36,8 +36,11 @@ sources: []
 | ADR-097 | ADR | audit | 宣言した出所が実在することを検める。認識の等級は検めない |
 | ADR-100 | ADR | audit | 壊れた日付をその名で咎める。鮮度の検査に古びと言わせない |
 | ADR-113 | ADR | audit | 投影の列挙は各行の最初の id だけから採る |
+| ADR-137 | ADR | audit | 監査要約の読み口を宣言する — 外部利用者は CLI の返す値だけに依存する |
 | CHANGE-004 | CHANGE | audit | 体系外の解釈文書をビューと定め、刻印で古びを見えるようにする |
+| CHANGE-009 | CHANGE | audit | 監査要約の読み口を ICD へ宣言する（issue |
 | IMPACT-004 | IMPACT | audit | ビューと刻印 — 影響の列挙 |
+| IMPACT-009 | IMPACT | audit | 監査要約の読み口の宣言 — 影響の列挙 |
 | IMPL-011 | IMPL | audit | docs-audit.py の実装メモ |
 | IMPL-018 | IMPL | audit | _intake.py（分類の記録の共有コア）の実装メモ |
 | TEST-011 | TEST | audit | 監査の検査群テスト計画 |

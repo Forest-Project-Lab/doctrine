@@ -6,7 +6,7 @@ domain: packaging
 status: current
 owner: doctrine-maintainers
 created: 2026-07-28
-updated: 2026-07-29
+updated: 2026-08-07
 sources: [plugin/scripts/dep-graph.py]
 depends_on: [CHANGE-001, SPEC-021]
 llm_context: task
