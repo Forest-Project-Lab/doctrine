@@ -251,6 +251,10 @@ sources: []
 | ADR-132 | ADR | packaging | 束で回した判定は抜取りで独立に検め、読むのは一致率ではなく不一致の中身とする |
 | ADR-133 | ADR | packaging | 網羅の採点規準は最も使われる境界を明文で決め、機械で決まる床だけをコードで守る |
 | ADR-134 | ADR | packaging | 判定の古びは引いた範囲だけで見て、次の行動に挙げるのは閾値に達してからとする |
+| ADR-138 | ADR | packaging | FORMALIZE（定式化）は jerg レーンの検証計画審査として走らせ手を持ち、判定はどれも消化と数える |
+| ADR-139 | ADR | packaging | VERIFY（修正の独立検証）は走らせ手を持ち、新規の fixed:true は PASS（適合）の verify 記録を要す |
+| ADR-142 | ADR | packaging | 故障注入の記録は generated_at・findings・residual_risks・故障族を常に持つ |
+| ADR-143 | ADR | packaging | 網羅台帳の決定論の運びは正本の規則へ一本化する |
 | CHANGE-001 | CHANGE | packaging | 導入済みプラグインの版の遅れを生存性として照合する |
 | CHANGE-002 | CHANGE | packaging | リリースの整合を CI の門で検める — 変更履歴の書き忘れを止める |
 | CHANGE-005 | CHANGE | packaging | 不具合の兆候を記録し、承認を経た issue 報告を促す |

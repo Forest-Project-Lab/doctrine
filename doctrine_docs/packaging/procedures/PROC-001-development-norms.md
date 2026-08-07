@@ -6,7 +6,7 @@ domain: packaging
 status: current
 owner: doctrine-maintainers
 created: 2026-07-28
-updated: 2026-08-06
+updated: 2026-08-07
 sources: [doctrine_docs/packaging/decisions/ADR-047-development-methodology.md, doctrine_docs/packaging/decisions/ADR-068-code-audit-residues.md, doctrine_docs/packaging/decisions/ADR-071-release-integrity-gate.md, doctrine_docs/packaging/decisions/ADR-114-assurance-sdk-lane.md, doctrine_docs/packaging/decisions/ADR-115-viewpoint-lane-orchestration.md, doctrine_docs/packaging/decisions/ADR-116-evaluation-model-floor.md]
 depends_on: [ICD-008]
 llm_context: task
@@ -84,6 +84,23 @@ per-turn の性能は受入の門で凍結する: 合成 1,500 文書で 1 編�
   行動に挙げるのは閾値（一束）に達してからとし、**閾値未満でも必ず数えて出す**
   （挙げないことと隠すことは違う）。索引全体の指紋で見ると、関係の無い変更が全件を
   古びさせる —— 試験を 1 件足しただけで非終端 286 件が古びた実害がある（INC-025）。
+- 批判を生き残った候補の検証計画は、jerg レーンの走らせ手が審査する（ADR-138）。
+  出典の照合は主張単位（ADR-121）に従い、APPROVE（承認）も REJECT（却下）も
+  判定不能も消化と数える —— 正本が挙げ続けるのは計画が返らなかった沈黙だけである。
+  修正前再現へ進んでよいのは、決定論の guard（`oracle_observable`）を通った
+  承認済みの計画だけとする。
+- 修正の独立検証は走らせ手を持ち、新規の `fixed: true` は PASS（適合）の verify
+  記録を要す（ADR-139）。赤の証拠なしに検証は始まらず、上限を超える diff は
+  切り詰めずに前提欠如へ倒す。2026-08-07 時点の全 26 事象は凍結列で祖父条項とし、
+  列を増やすのは所有者判断とする。得られるのはセッションの独立までである
+  （NONGOAL-001 第17項）。
+- 故障注入の記録は `generated_at`・findings（全 PASS でも空配列）・残余リスク・
+  故障族の欄を常に持つ（ADR-142）。すでに書かれた記録には遡って手を入れない
+  （所有者判断のまま）。空欄は「無かった」と読まれるので、空配列が正直な記録である。
+- 台帳の決定論機構は正本の判定に一本化する（ADR-143）。古びの選別は正本の
+  `is_stale` だけが持ち、決定論の再照合は「非該当で理由あり」も掃き、抜取り再判定は
+  標的モード（`--keys`）で契機の満ちた項を狙える。選別と計数が乖離すると、正本が
+  挙げない再判定を買い直す。
 - ADR は `proposed` で起こし、直してから `accepted` へ遷移させる。受理済みの ADR は
   不変であり、本文を直す道は無い（`status` 遷移と `superseded_by`、壊れたフロントマターの
   修復だけが通る）。**受理の印を先に付けると、誤記を直す正規の道が無くなる。**

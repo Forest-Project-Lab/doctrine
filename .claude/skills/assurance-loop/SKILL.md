@@ -59,6 +59,7 @@ FIX → VERIFY → ATTACK_EVALUATOR → RECORD → CURATE（正本: `harness/orc
 - REPRODUCE_RED: 修正前に FAIL する試験を先に作り証拠を保存。最初から緑は再現と認めない。
   再現不能は UNKNOWN として RECORD へ（実装へ進まない）。
 - FIX は一度に一つ。破壊的注入は一時ディレクトリ・使い捨て fixture・worktree だけ。
+- FIX の後、`verify_fix.py` の記録が PASS になるまで fixed: true と書かない（正本の validate が赤にする。ADR-139）。
 
 ## 3. model 方針（ADR-116。コードが強制）
 

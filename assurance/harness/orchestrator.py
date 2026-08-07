@@ -142,6 +142,7 @@ def validate():
     problems.extend(_validate_ledger_kinds())
     problems.extend(_validate_recommendation_status())
     problems.extend(_validate_assumptions())
+    problems.extend(_validate_verify_refs())
     return problems
 
 
@@ -366,6 +367,14 @@ LEDGER_KINDS = (
      "match": "scenarios/*.json",
      "read_by": ("latest_scenarios",),
      "why_not_read": None},
+    {"kind": "formalize/<日付>.json",
+     "match": "formalize/*.json",
+     "read_by": ("latest_formalize", "unformalized_survivors"),
+     "why_not_read": None},
+    {"kind": "verify/<対象 id>.json",
+     "match": "verify/*.json",
+     "read_by": ("load_verify_records",),
+     "why_not_read": None},
     {"kind": "mutations-<日付>.json",
      "match": "mutations-*.json",
      "read_by": ("attack_evidence_latest",),
@@ -456,17 +465,21 @@ FIRING_POINTS = {
                             "build_cast_analysis_prompt"),
         "ledger_kind": "mutations-<日付>.json"},
     "FORMALIZE": {
-        "unimplemented":
-            "検証計画の審査（jerg）を走らせる実体が無い。schemas.py に成果物の"
-            "スキーマだけが在り、prompt 組立関数も実行器も台帳の種別も無い。"
-            "事象 INC-021 が持つ。実装するか、fires_on から外すかで消える。"},
+        # 検証計画の審査（jerg）。INC-021 推奨#3 の所有者裁定（2026-08-07）で
+        # 実装した（ADR-138）。ADR-128 の不変条件そのものは維持したまま、
+        # 「未実装の明記」から走らせ手の三点へ倒した。
+        "runner": "formalize.py",
+        "prompt_builders": ("build_formalize_prompt",),
+        "ledger_kind": "formalize/<日付>.json"},
     "VERIFY": {
-        "unimplemented":
-            "修正の正しさを別セッションが確かめる段の実体が無い。状態機械は"
-            "FIX_APPLIED → VERIFY → ATTACK_EVALUATOR を持つが、踏む先が無いので"
-            "実際には独立検証を経ずに抜けている。事象 INC-021 が持つ。"
-            "なお実装しても得られるのはセッションの独立までで、独立した組織に"
-            "よる検証（IV&V）にはならない（NONGOAL-001 第17項）。"},
+        # 修正の独立検証（jerg）。同じ所有者裁定で実装した（ADR-139）。
+        # 得られるのはセッションの独立までで、独立した組織による検証（IV&V）
+        # にはならない（NONGOAL-001 第17項。同系 model の共通原因故障は残余
+        # リスク）。新規の fixed:true は PASS の verify 記録を要す
+        # （_validate_verify_refs が検める）。
+        "runner": "verify_fix.py",
+        "prompt_builders": ("build_verify_prompt",),
+        "ledger_kind": "verify/<対象 id>.json"},
 }
 
 
@@ -603,8 +616,8 @@ def _max_instant(values):
 def evaluator_outputs_latest():
     """評価器が最後に何かを出した日。無ければ None。
 
-    対象は評価の成果物だけ（カタログ・事故分析・網羅の割当）。決定論試験や
-    煙試験は評価ではないので数えない。
+    対象は評価の成果物だけ（カタログ・事故分析・網羅の割当・計画審査・
+    独立検証）。決定論試験や煙試験は評価ではないので数えない。
     """
     seen = []
     for book_id in sorted(books.BOOKS):
@@ -636,6 +649,13 @@ def evaluator_outputs_latest():
                     seen.append(json.load(f).get("generated_at"))
             except (OSError, ValueError):
                 continue
+    # 計画審査（ADR-138）と独立検証（ADR-139）も評価の成果物である。数えないと
+    # これらの評価器だけが攻撃の鮮度の外に立つ（INC-012 と同じ穴の作り直し）。
+    fm = latest_formalize()
+    if fm:
+        seen.append(fm.get("generated_at") or fm.get("date"))
+    for doc in load_verify_records().values():
+        seen.append(doc.get("generated_at"))
     return _max_instant([v for v in seen if v])
 
 
@@ -657,6 +677,73 @@ def latest_scenarios():
             return json.load(f)
     except (OSError, ValueError):
         return None
+
+
+def latest_formalize():
+    """直近の検証計画審査の記録。無ければ None（ADR-138）。"""
+    fm_dir = os.path.join(LANE_DIR, "ledger", "formalize")
+    if not os.path.isdir(fm_dir):
+        return None
+    names = sorted(n for n in os.listdir(fm_dir) if n.endswith(".json"))
+    if not names:
+        return None
+    try:
+        with open(os.path.join(fm_dir, names[-1]), encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return None
+
+
+def unformalized_survivors():
+    """批判を生き残ったのに、まだ計画審査の判定を持たない scenario の id。
+
+    APPROVE も REJECT も UNKNOWN も消化と数える —— 判定は評価の結論であり、
+    割当済みである（評価済み UNKNOWN を引き直さないのと同じ規則。INC-006）。
+    挙がり続けるのは、計画が返らなかった沈黙だけ（沈黙を APPROVE と読まない。
+    ADR-138）。
+    """
+    scn = latest_scenarios()
+    survivors = (scn or {}).get("survivors") or []
+    if not survivors:
+        return []
+    planned = set()
+    fm_dir = os.path.join(LANE_DIR, "ledger", "formalize")
+    if os.path.isdir(fm_dir):
+        for name in sorted(os.listdir(fm_dir)):
+            if not name.endswith(".json"):
+                continue
+            try:
+                with open(os.path.join(fm_dir, name), encoding="utf-8") as f:
+                    doc = json.load(f)
+            except (OSError, ValueError):
+                continue
+            for plan in doc.get("plans") or []:
+                if isinstance(plan, dict) and plan.get("scenario_id"):
+                    planned.add(plan["scenario_id"])
+    return [sid for sid in survivors if sid not in planned]
+
+
+def load_verify_records():
+    """修正の独立検証の記録。鍵は対象 id。無ければ空（ADR-139）。
+
+    新規の fixed:true の事象は、ここに PASS の記録を持たなければならない
+    （_validate_verify_refs が検める。祖父条項は VERIFY_GRANDFATHERED）。
+    """
+    out = {}
+    v_dir = os.path.join(LANE_DIR, "ledger", "verify")
+    if not os.path.isdir(v_dir):
+        return out
+    for name in sorted(os.listdir(v_dir)):
+        if not name.endswith(".json"):
+            continue
+        try:
+            with open(os.path.join(v_dir, name), encoding="utf-8") as f:
+                doc = json.load(f)
+        except (OSError, ValueError):
+            continue
+        if isinstance(doc, dict):
+            out[doc.get("target_id") or name[:-len(".json")]] = doc
+    return out
 
 
 # 推奨の処遇。terminal は landed / rejected / owner の三つ。
@@ -1006,6 +1093,84 @@ def load_incidents():
         return json.load(f).get("incidents", [])
 
 
+# 修正の独立検証を要さない事象（祖父条項。ADR-139）。
+#
+# 凍結は 2026-08-07 時点の全事象。以後の fixed:true は PASS の verify 記録を要す。
+# この列は増やさない —— 増やすことは検証の門を後ろへ動かすことであり、
+# 保証範囲の変更として所有者判断に当たる（運転手順 §7）。
+VERIFY_GRANDFATHERED = (
+    "INC-001-sessionend-audit-gap",
+    "INC-005-installed-plugin-version-lag",
+    "INC-002-termcheck-ascii-substring",
+    "INC-003-sdk-error-opacity",
+    "INC-004-hyphen-token-undefined-term",
+    "INC-006-next-actions-silently-empty",
+    "INC-007-linter-nameerror-field-report",
+    "INC-008-ledger-write-back-clobber",
+    "INC-009-sessionend-audit-unobservable",
+    "INC-010-evaluated-unknown-relisted",
+    "INC-011-dot-joined-token-undefined-term",
+    "INC-012-states-unnameable-by-canon",
+    "INC-013-cast-analysis-accepts-fabricated-incident",
+    "INC-014-evaluation-max-turns-marginal",
+    "INC-015-discover-output-invisible-to-canon",
+    "INC-016-cast-analysis-content-unread-by-canon",
+    "INC-017-accepted-adr-born-red-is-unfixable",
+    "INC-018-audit-degrades-into-a-tree-finding",
+    "INC-019-version-string-does-not-identify-the-copy",
+    "INC-020-evaluator-blindness-read-as-owner-authority",
+    "INC-021-lane-fires-on-declared-without-a-runner",
+    "INC-022-ci-that-cannot-run-is-read-as-red",
+    "INC-023-attack-freshness-truncated-to-the-day",
+    "INC-024-coverage-rubric-undecided-at-its-busiest-boundary",
+    "INC-025-adr-130-implemented-the-option-it-rejected",
+    "INC-026-accepted-adr-has-no-sanctioned-repair-path",
+)
+
+
+def _validate_verify_refs(incidents=None, verify_records=None):
+    """fixed:true と独立検証の突合（ADR-139）。
+
+    祖父条項（VERIFY_GRANDFATHERED。凍結済み）の外で fixed:true と書かれた
+    事象は、verify_ref を持ち、それが PASS の verify 記録
+    （ledger/verify/<事象 id>.json の record.verdict == "PASS"）へ解決しなければ
+    ならない。修正したという申告は検証ではない —— 申告をそのまま信じる形は、
+    この体系が三度「やらない」と決めている（ADR-127 と同じ向き）。
+    """
+    problems = []
+    if incidents is None:
+        try:
+            incidents = load_incidents()
+        except (OSError, ValueError) as exc:
+            return ["事象の台帳が読めない: %s" % exc]
+    if verify_records is None:
+        verify_records = load_verify_records()
+    for inc in incidents:
+        if not isinstance(inc, dict) or inc.get("fixed") is not True:
+            continue
+        iid = inc.get("id")
+        if iid in VERIFY_GRANDFATHERED:
+            continue
+        if not (inc.get("verify_ref") or "").strip():
+            problems.append(
+                "事象 %s は fixed:true だが verify_ref が無い（新規の修正は "
+                "PASS の verify 記録を要す。ADR-139）" % iid)
+            continue
+        doc = verify_records.get(iid)
+        if doc is None:
+            problems.append(
+                "事象 %s の verify_ref が指す記録 ledger/verify/%s.json が無い"
+                % (iid, iid))
+            continue
+        verdict = (doc.get("record") or {}).get("verdict")
+        if verdict != "PASS":
+            problems.append(
+                "事象 %s の verify 記録の verdict が PASS でない（%r）。"
+                "検証を通らない fixed:true は申告であって修正ではない"
+                % (iid, verdict))
+    return problems
+
+
 # 想定の観測に使える状態語彙。運転手順 §5 の六語をそのまま使う。
 # 根拠なき PASS を書かせないための語彙であって、ここで語を増やさない。
 ASSUMPTION_STATES = (
@@ -1153,19 +1318,23 @@ def next_actions(index_sha=None):
             "ATTACK_EVALUATOR: 評価器の成果物(%s)が故障注入の証拠(%s)より新しい"
             % (latest_output, latest_attack or "無し"))
 
+    # 批判を生き残ったのに計画審査の判定を持たない scenario（ADR-138）。
+    # 挙げるのは判定の無い生き残りだけ —— 判定済み（APPROVE も REJECT も
+    # UNKNOWN も）を挙げ続けると、消化した審査を毎回買い直す「消えない行動」に
+    # なる（INC-006・INC-015 と同型）。挙がり続けるのは沈黙だけ。
+    unplanned = unformalized_survivors()
+    if unplanned:
+        scn = latest_scenarios()
+        add(
+            "FORMALIZE: 計画審査の判定が無い生き残り %d 件（%s の創出。%s）"
+            % (len(unplanned), (scn or {}).get("date"),
+               ", ".join(unplanned[:3])
+               + (" ほか" if len(unplanned) > 3 else "")))
+
     if not actions:
         # 空は「やることが無い」と読める。反復の既定の入口を必ず示す
         # （CAST_DONE・CURATED の遷移先。INC-006）。
-        scn = latest_scenarios()
-        survivors = (scn or {}).get("survivors") or []
-        if survivors:
-            add(
-                "FORMALIZE: 批判を生き残った候補 %d 件の定式化（%s の創出。%s）"
-                % (len(survivors), (scn or {}).get("date"),
-                   ", ".join(survivors[:3])
-                   + (" ほか" if len(survivors) > 3 else "")))
-        else:
-            add("DISCOVER: 新しい失敗仮説の創出（前提はすべて充足）")
+        add("DISCOVER: 新しい失敗仮説の創出（前提はすべて充足）")
     # (優先順, 発生順) の対で安定に並べ替える。同じ状態の中の順序
     # （三冊の jerg→stpa→cast など）は発生順のまま保たれる。
     return [text for _, _, text in sorted(actions)]

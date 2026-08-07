@@ -469,3 +469,183 @@ def build_challenge_prompt(discover_output_json):
             "そのまま写し、verdict と reasons を必ず持つ。判定を返さなかった候補は"
             "沈黙として扱われ、ACCEPT とは読まれない。" % (
                 _CHALLENGE_CHARTER, payload))
+
+
+_FORMALIZE_CHARTER = """\
+あなたは保証キャンペーンの FORMALIZE 担当（jerg レーン＝検証計画と客観的証拠の
+観点）である。批判を生き残った失敗仮説（下の JSON）だけを受け取り、一件ごとに
+検証計画を審査する。DISCOVER・CHALLENGE との会話履歴は存在しないし、要求もしない。
+
+規律:
+- 検証は客観的証拠の提示に基づく。AI の同意・もっともらしさは証拠ではない。
+- oracle は**実装の前に**観測可能であること。未来の実装が生む観測に依存する計画は
+  承認しない（先に赤を再現できない計画は、修正の効果を測れない）。
+- 反証条件の無い計画を承認しない。before_fix_fails_when（修正前に何が FAIL するか）
+  と after_fix_passes_when（修正後に何が PASS するか）は、どちらも具体の観測で書く。
+- oracle が観測不能な scenario は REJECT し、reasons に何が観測できないかを書く。
+- red_reproduction_design の procedure は、別セッションが手順だけで再現できる粒度で
+  書く。injection_point は実在する場所を指し、isolation には破壊的操作をどこへ
+  隔離するか（一時ディレクトリ・使い捨て fixture・worktree）を必ず書く。
+- evidence_spec には、赤の証拠をどの成果物（artifact）に残し、何を必ず記録するか
+  （must_record）を書く。記録の無い再現は証拠にならない。
+- normative_refs には、下に示す規範の鍵を**そのまま**書く。一覧に無い鍵は機械照合で
+  外される（憶測の出典を書かない）。
+- 迷ったら APPROVE ではなく UNKNOWN。**承認へ倒さない。**
+"""
+
+
+def build_formalize_prompt(scenarios_json, principle_index):
+    """FORMALIZE の一回限りセッション用プロンプト。
+
+    scenarios_json: 批判を生き残った scenario の構造化 JSON（列または文字列）だけ。
+    principle_index: [(dedupe_key, title, statement), ...]（jerg カタログ）。
+
+    実装者の会話・弁明・期待する結論を渡す口は意図して作らない
+    （CHALLENGE と同じ独立性の規律。ADR-115）。
+    """
+    if isinstance(scenarios_json, (dict, list)):
+        if not scenarios_json:
+            raise ValueError("空の scenario 列は審査に渡さない")
+        payload = json.dumps(scenarios_json, ensure_ascii=False, indent=2)
+    elif isinstance(scenarios_json, str) and scenarios_json.strip():
+        json.loads(scenarios_json)  # 構造化されていない文字列は拒否する
+        payload = scenarios_json
+    else:
+        raise ValueError("生き残った scenario の構造化 JSON だけを受け取る")
+    if not principle_index:
+        raise ValueError("jerg カタログが空のまま審査へ渡さない（UNASSESSED へ倒す）")
+    refs = "\n".join("- %s ｜ %s ｜ %s" % (key, title, statement)
+                     for key, title, statement in principle_index)
+    return (
+        "%s\n--- 審査対象（批判を生き残った scenario。これが唯一の入力）---\n%s\n"
+        "--- 引ける規範の鍵（dedupe_key ｜ 題 ｜ 一文）---\n%s\n"
+        "--- 一覧ここまで ---\n\n"
+        "FORMALIZE_PLAN_SCHEMA に適合する JSON だけを返す（`plans` の配列）。"
+        "**scenario の一つひとつに一つの計画を返す。** 各計画は scenario_id を"
+        "そのまま写し、verdict・reasons・red_reproduction_design・"
+        "acceptance_criteria・evidence_spec・normative_refs を必ず持つ。"
+        "計画を返さなかった scenario は沈黙として扱われ、APPROVE とは読まれない。"
+        % (_FORMALIZE_CHARTER, payload, refs))
+
+
+def verify_formalize_plans(plans, known_principle_keys, requested_ids):
+    """FORMALIZE の計画を、依頼した scenario と規範の鍵に突き合わせる。
+
+    出典は ADR-121 の主張単位の規則 —— 解決する鍵を一つでも保つ計画は残し、
+    解決しない鍵は外して `citation_defect` を刻む。解決する鍵がゼロの計画は
+    受け取らない（その scenario は沈黙側に残る）。
+
+    返り値: (matched, unrequested, missing)
+    - matched      … 依頼した scenario への、出典照合を通った計画。
+    - unrequested  … 依頼していない id への計画（受け取らない）。
+    - missing      … 計画が返ってこなかった scenario の id（沈黙を APPROVE と
+                     読まない。出典ゼロで却下された計画の id もここに残る）。
+    """
+    keys = set(known_principle_keys)
+    wanted = list(requested_ids)
+    seen = set()
+    matched, unrequested = [], []
+    for plan in plans:
+        sid = plan.get("scenario_id")
+        if sid not in wanted:
+            unrequested.append(plan)
+            continue
+        refs = list(plan.get("normative_refs") or [])
+        resolved = [r for r in refs if r in keys]
+        unknown = [r for r in refs if r not in keys]
+        if not resolved:
+            # 解決する出典がゼロの計画は台帳へ入れない。scenario は沈黙のまま
+            # 残り、unformalized_survivors が挙げ続ける（ADR-121・ADR-138）。
+            continue
+        plan = dict(plan)
+        plan["normative_refs"] = resolved
+        if unknown:
+            plan["unresolved_refs"] = unknown
+            plan["citation_defect"] = True
+        seen.add(sid)
+        matched.append(plan)
+    missing = [sid for sid in wanted if sid not in seen]
+    return matched, unrequested, missing
+
+
+def oracle_observable(plan):
+    """PLAN_APPROVED の guard（orchestrator の TRANSITIONS と同名）。
+
+    verdict が APPROVE で、再現手順（procedure の全段）・injection_point・
+    isolation・両方の受入条件・evidence_spec のすべてが空白でないこと。
+    空文字での形式的な充足は通さない（leading_indicators_defined と同じ流儀）。
+    REJECT・UNKNOWN の計画は、欄が埋まっていても承認とは読まない。
+    """
+    if plan.get("verdict") != "APPROVE":
+        return False
+    design = plan.get("red_reproduction_design") or {}
+    procedure = design.get("procedure") or []
+    if not procedure:
+        return False
+    for step in procedure:
+        if not str(step or "").strip():
+            return False
+    for key in ("injection_point", "isolation"):
+        if not str(design.get(key) or "").strip():
+            return False
+    criteria = plan.get("acceptance_criteria") or {}
+    for key in ("before_fix_fails_when", "after_fix_passes_when"):
+        if not str(criteria.get(key) or "").strip():
+            return False
+    spec = plan.get("evidence_spec") or {}
+    if not str(spec.get("artifact") or "").strip():
+        return False
+    must = spec.get("must_record") or []
+    if not must:
+        return False
+    for item in must:
+        if not str(item or "").strip():
+            return False
+    return True
+
+
+_VERIFY_CHARTER = """\
+あなたは保証キャンペーンの VERIFY 担当（jerg レーン＝検証計画と客観的証拠の
+観点）である。修正の主張（下の JSON）だけを受け取り、独立に検証する。
+実装者との会話履歴は存在しないし、要求もしない。
+
+規律:
+- AI の一致は客観的証拠ではない。あなたの判定も含めて、証拠は与えられた観測
+  （赤の記録・diff・修正後の観測）だけである。観測に無いことを補完しない。
+- **緑のスイートは、修正が赤の原因へ効いた証明ではない。**修正前に FAIL した
+  当の観測（red_evidence）が、この diff によって PASS へ変わったかを見る。
+  別の理由で緑になった可能性（試験の削除・条件の緩和・偶然）を疑う。
+- **oracle を変える修正を疑う。**diff が判定基準・試験・閾値の側を書き換えて
+  いるなら、それは修正ではなく基準の緩和でありうる。checks の green_is_green を
+  FAIL か UNKNOWN にし、reasons に書く。
+- **一主題でない diff を疑う。**複数の無関係な変更が混ざった diff は、どの変更が
+  効いたかを判別できない。single_change を FAIL にする。
+- 判定は PASS / FAIL / UNKNOWN。迷ったら PASS ではなく UNKNOWN。
+"""
+
+
+def build_verify_prompt(verify_input_json):
+    """VERIFY の一回限りセッション用プロンプト。
+
+    引数は構造化された一つの対象 {target_id, claim, red_evidence, diff,
+    post_fix_observation} だけ（dict または JSON 文字列）。
+    会話履歴・弁明を足す口は意図して作らない（CHALLENGE と同じ独立性）。
+    """
+    if isinstance(verify_input_json, dict):
+        if not verify_input_json.get("target_id"):
+            raise ValueError("target_id を持つ構造化された対象だけを受け取る")
+        payload = json.dumps(verify_input_json, ensure_ascii=False, indent=2)
+    elif isinstance(verify_input_json, str) and verify_input_json.strip():
+        parsed = json.loads(verify_input_json)  # 構造化されていない文字列は拒否
+        if not isinstance(parsed, dict) or not parsed.get("target_id"):
+            raise ValueError("target_id を持つ構造化された対象だけを受け取る")
+        payload = verify_input_json
+    else:
+        raise ValueError("検証対象の構造化 JSON だけを受け取る")
+    return (
+        "%s\n--- 検証対象（これが唯一の入力。会話履歴は存在しない）---\n%s\n"
+        "--- 対象ここまで ---\n\n"
+        "VERIFY_RECORD_SCHEMA に適合する JSON だけを返す。target_id をそのまま"
+        "写し、verdict・reasons・checks（red_was_red / green_is_green / "
+        "single_change の三値）を必ず持つ。判定できない check は UNKNOWN と書く"
+        "（沈黙や省略は PASS とは読まれない）。" % (_VERIFY_CHARTER, payload))

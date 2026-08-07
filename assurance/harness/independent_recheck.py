@@ -17,7 +17,14 @@
   `assigned_at` を落として初めて MAP_COVERAGE が拾い直す。
 - 一致した項には触れない。実装者は評価者の判定を書き換えない（ADR-115）。
 
-usage: independent_recheck.py --book stpa [--sample 25] [--seed 1] [--dry-run]
+標的モード（ADR-143）: --keys K1,K2,... は抜取りを迂回し、名指しの項だけを
+再検する。再判定の契機（recheck_trigger）が満ちた項や、決定論の再照合が
+UNKNOWN へ落とした項を狙って再検するための口である。記録の形も、割れたら
+取り下げる規律も抜取りと同じ。存在しない key・判定の無い key は誤りとして
+止める（黙って読み飛ばすと「再検した」が嘘になる）。
+
+usage: independent_recheck.py --book stpa [--sample 25] [--seed 1]
+                              [--keys K1,K2] [--dry-run]
 
 終了コード: 0=不一致なし / 1=不一致あり(台帳へ戻した) / 3=UNASSESSED(前提欠如)。
 """
@@ -53,6 +60,30 @@ def sample(entries, n, seed):
     if n >= len(judged):
         return judged
     return random.Random(seed).sample(judged, n)
+
+
+def pick_keys(entries, keys_csv):
+    """名指しの key で標本を引く（標的モード。ADR-143）。
+
+    返り値は (標本, 誤りの列)。存在しない key と、判定の無い key は誤りに
+    数える —— 判定の無い項に「再」判定は無く（sample と同じ規則）、黙って
+    読み飛ばすと「名指しの項を再検した」という記録が嘘になる。並びは
+    名指しの順を保つ（呼び手が狙った順で記録に載る）。
+    """
+    wanted = [k.strip() for k in (keys_csv or "").split(",") if k.strip()]
+    by_key = {e.get("key"): e for e in entries}
+    picked, problems = [], []
+    for k in wanted:
+        entry = by_key.get(k)
+        if entry is None:
+            problems.append("存在しない key: %s" % k)
+        elif not entry.get("assigned_at"):
+            problems.append("判定の無い key（再判定できない）: %s" % k)
+        else:
+            picked.append(entry)
+    if not wanted:
+        problems.append("--keys に key が一つも無い")
+    return picked, problems
 
 
 def withdraw(entry, reason):
@@ -115,6 +146,9 @@ def main(argv=None):
     parser.add_argument("--book", required=True, choices=sorted(books.BOOKS))
     parser.add_argument("--sample", type=int, default=25)
     parser.add_argument("--seed", type=int, default=1)
+    parser.add_argument("--keys", default=None,
+                        help="抜取りを迂回し、名指しの key だけを再検する"
+                             "（標的モード。カンマ区切り。ADR-143）")
     parser.add_argument("--batch-size", type=int, default=25)
     parser.add_argument("--budget-per-call", type=float, default=4.0)
     parser.add_argument("--timeout", type=int, default=900)
@@ -129,6 +163,13 @@ def main(argv=None):
                           "reason": "カタログか台帳が無い"}, ensure_ascii=False))
         return 3
 
+    if args.keys is not None:
+        picked, problems = pick_keys(cov["entries"], args.keys)
+        if problems:
+            parser.error("・".join(problems))
+    else:
+        picked = None
+
     idx = system_index.build()
     if not idx["documents"] or not idx["scripts"]:
         print(json.dumps({"status": "UNASSESSED",
@@ -136,7 +177,8 @@ def main(argv=None):
         return 3
     index_text = system_index.as_prompt_text(idx)
 
-    picked = sample(cov["entries"], args.sample, args.seed)
+    if picked is None:
+        picked = sample(cov["entries"], args.sample, args.seed)
     details = map_coverage.principle_details(cat, picked)
     if not details:
         print(json.dumps({"status": "UNASSESSED",
@@ -146,8 +188,13 @@ def main(argv=None):
     before = {d["key"]: by_key[d["key"]].get("disposition") for d in details
               if d["key"] in by_key}
 
-    print("book=%s 標本=%d 種=%d 索引 sha=%s"
-          % (args.book, len(details), args.seed, idx["sha256"][:12]), flush=True)
+    if args.keys is not None:
+        print("book=%s 標的=%d(名指し) 索引 sha=%s"
+              % (args.book, len(details), idx["sha256"][:12]), flush=True)
+    else:
+        print("book=%s 標本=%d 種=%d 索引 sha=%s"
+              % (args.book, len(details), args.seed, idx["sha256"][:12]),
+              flush=True)
 
     if args.dry_run:
         prompt = prompts.build_map_coverage_prompt(details, index_text)
@@ -209,7 +256,11 @@ def main(argv=None):
         "book": args.book,
         "date": args.today,
         "generated_at": "%sT00:00:00Z" % args.today,
-        "seed": args.seed,
+        # 標的モードでは標本の出所は種でなく名指しの列。どちらで引いたかを
+        # 記録が自分で言う（形は同じで、鍵が一つ増えるだけ）。
+        "seed": None if args.keys is not None else args.seed,
+        "keys": ([d["key"] for d in details]
+                 if args.keys is not None else None),
         "cost_usd": round(cost_total, 4),
         "git_sha": _git(["rev-parse", "--short", "HEAD"]),
         "index_sha256": idx["sha256"],

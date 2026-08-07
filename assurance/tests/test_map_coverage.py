@@ -14,7 +14,7 @@ import sys
 import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from harness import prompts, schemas, system_index  # noqa: E402
+from harness import map_coverage, prompts, schemas, system_index  # noqa: E402
 
 
 def _assign(**over):
@@ -133,6 +133,66 @@ class MapCoveragePromptTest(unittest.TestCase):
         self.assertIn("JERG:a", p)
         self.assertIn("索引の本文", p)
         self.assertIn("1 件", p)
+
+
+class CanonStalenessSelectionTest(unittest.TestCase):
+    """再判定の選別は正本 is_stale の規則に従う（ADR-143。INC-025 の再来の是正）。
+
+    map_coverage は索引**全体**の指紋の比較を自前で持っていた —— ADR-130 が
+    却下し、ADR-134 が正本側から取り除いた、まさにその形である。全体指紋は
+    新しい文書や試験が入るだけで動くので、正本が挙げない項の再判定を黙って
+    買い直す。選別と計数の規則は一つ（orchestrator.is_stale）でなければならない。
+    """
+
+    _CATEGORIES = ("documents", "audit_checks", "linter_codes", "scripts",
+                   "test_files", "hooks", "skills")
+
+    def _stamp(self, sha="a"):
+        return {c: sha * 64 for c in self._CATEGORIES}
+
+    def _now(self, **moved):
+        cats = self._stamp()
+        cats.update({k: v * 64 for k, v in moved.items()})
+        return {"category_sha256": cats,
+                "category_counts": {c: 10 for c in self._CATEGORIES}}
+
+    def _entry(self, key, evidence, disposition="対応計画あり"):
+        return {"key": key, "disposition": disposition, "evidence": evidence,
+                "assigned_at": "2026-08-07T00:00:00Z",
+                # 全体指紋は現行と食い違わせておく。旧規則ならこれだけで
+                # 全項が選ばれた —— 選ばれないことが本試験の主張である。
+                "assigned_by": {"index_sha256": "0" * 64,
+                                "category_sha256": self._stamp(),
+                                "category_counts": {c: 10 for c in
+                                                    self._CATEGORIES}}}
+
+    def test_map_coverage_selects_only_canon_stale_entries(self):
+        resolve = {"ADR-051": "document", "adr_not_landed": "audit_check"}.get
+        unchanged = self._entry("K:doc-cited", ["ADR-051"])
+        moved = self._entry("K:check-cited", ["adr_not_landed"])
+        fresh_unknown = {"key": "K:unmapped", "disposition": "UNKNOWN"}
+        # 試験と監査の検査だけが動いた索引。文書は動いていないので、文書を
+        # 引いた判定は古びない（試験 1 件の追加が全件を古びさせた INC-025）。
+        now = self._now(test_files="z", audit_checks="z")
+        got = map_coverage.select_todo(
+            [unchanged, moved, fresh_unknown], now, resolve)
+        self.assertEqual([e["key"] for e in got],
+                         ["K:check-cited", "K:unmapped"])
+
+    def test_settled_entries_are_never_selected(self):
+        """終端は評価を買い直さない。再照合は決定論の口（recheck_evidence）が持つ。"""
+        for disp in ("実装・試験・証拠あり", "非該当で理由あり"):
+            e = self._entry("K:settled", ["adr_not_landed"], disposition=disp)
+            got = map_coverage.select_todo(
+                [e], self._now(audit_checks="z"),
+                {"adr_not_landed": "audit_check"}.get)
+            self.assertEqual(got, [], disp)
+
+    def test_judged_unknown_is_not_reselected_when_nothing_moved(self):
+        """割当済みの UNKNOWN は、索引が動かない限り引き直さない（INC-006）。"""
+        e = self._entry("K:judged-unknown", [], disposition="UNKNOWN")
+        self.assertEqual(
+            map_coverage.select_todo([e], self._now(), lambda p: None), [])
 
 
 class CoverageSchemaTest(unittest.TestCase):
