@@ -471,6 +471,90 @@ def build_challenge_prompt(discover_output_json):
                 _CHALLENGE_CHARTER, payload))
 
 
+_CANDIDATE_FORMULATION_CHARTER = """\
+あなたは保証キャンペーンの DISCOVER 担当である。事故分析が残した新規仮説の候補
+（下の JSON）だけを受け取り、独立批判に掛けられる scenario へ定式化する。
+分析セッションとの会話履歴は存在しないし、要求もしない。
+
+制約:
+- 定式化するのは渡された候補だけ。**渡されていない仮説を発明しない。**
+  各 scenario の source_candidate に、元の候補の鍵（`INC-…#番号`）をそのまま
+  書く。鍵の無い scenario・一覧に無い鍵を書いた scenario は機械照合で外される。
+- 候補は仮説であり、判定済みの scenario ではない。定式化は受理ではない ——
+  この後の独立批判（CHALLENGE）が別セッションで判定する。
+- 各 scenario は反証可能であること: 観測可能な oracle と、偽だった場合に何が
+  見えるか（falsification_signal）を必ず書く。
+- 下の既存 scenario id の一覧と実質同一の候補は、scenario の duplicate_of に
+  その id を書く。言い換えの増殖は独立批判を薄める。duplicate_of を書いた
+  scenario は批判へは渡されず、出自だけが記帳される。
+- normative_refs には、下に示した規範の鍵をそのまま書く。一覧に無い鍵は
+  機械照合で外される（憶測の出典を書かない）。
+- 観測可能な oracle に書き直せない候補は、無理に scenario にしない。出さな
+  かった候補は台帳の側が dropped として理由つきで記帳する。思いつかないこと・
+  書けないことを隠さない。
+"""
+
+
+def build_candidate_formulation_prompt(candidates, principle_index, boundary,
+                                       existing_scenarios):
+    """候補定式化の一回限りセッション用プロンプト（ADR-140）。
+
+    candidates: orchestrator.cast_scenario_candidates の形の列
+        （incident_id・index・hypothesis・oracle・falsification_signal・
+        severity）。これが定式化の唯一の対象。
+    principle_index: (鍵, 題, 一文) の列。出典として引ける鍵。
+    boundary: 対象システム境界の一文。
+    existing_scenarios: 既存の scenario id の列（重複の照合先）。
+
+    引数は四つの構造化された入力だけ。会話履歴・弁明・期待する結論を渡す口は
+    意図して作らない（CHALLENGE と同じ独立性の規律。ADR-115）。
+    """
+    if not isinstance(candidates, (list, tuple)) or not candidates:
+        raise ValueError("candidates は空でない列でなければならない")
+    payload = []
+    for cand in candidates:
+        if (not isinstance(cand, dict) or not cand.get("incident_id")
+                or cand.get("index") is None):
+            raise ValueError(
+                "候補は incident_id と index を持つ構造化された記録で"
+                "なければならない")
+        payload.append({
+            "source_candidate": "%s#%s" % (cand["incident_id"], cand["index"]),
+            "hypothesis": cand.get("hypothesis") or "",
+            "oracle": cand.get("oracle") or "",
+            "falsification_signal": cand.get("falsification_signal") or "",
+            "severity": cand.get("severity") or "",
+        })
+    if not str(boundary or "").strip():
+        raise ValueError("システム境界が空のまま定式化へ渡さない")
+    if not principle_index:
+        raise ValueError("規範の鍵が空のまま定式化へ渡さない（UNASSESSED へ倒す）")
+    if not isinstance(existing_scenarios, (list, tuple)):
+        raise ValueError("existing_scenarios は scenario id の列でなければならない")
+    lines = [_CANDIDATE_FORMULATION_CHARTER,
+             "対象システム境界: %s" % boundary,
+             "",
+             "--- 定式化の対象（事故分析の新規仮説候補。これが唯一の入力）---",
+             json.dumps(payload, ensure_ascii=False, indent=2),
+             "--- 対象ここまで ---",
+             "",
+             "既存の scenario id（実質同一なら duplicate_of に書く）:"]
+    lines += ["- %s" % sid for sid in existing_scenarios] or ["- (無し)"]
+    lines += ["", "引ける規範の鍵（鍵 ｜ 題 ｜ 一文）:"]
+    lines += ["- %s ｜ %s ｜ %s" % (k, t, st)
+              for k, t, st in principle_index]
+    lines += [
+        "",
+        "応答は SCENARIOS_SCHEMA に適合する JSON だけを返す（`scenarios` の配列）。"
+        "各要素は scenario_id, normative_refs, system_boundary, loss, hazard,"
+        " unsafe_control_action, event_sequence, fault, injection_point,"
+        " expected_safe_behavior, oracle, falsification_signal, severity,"
+        " confidence を必ず持ち、source_candidate に元の候補の鍵をそのまま書く。"
+        "scenario_id は `SCN-` で始まる一意の識別子にする。",
+    ]
+    return "\n".join(lines)
+
+
 _FORMALIZE_CHARTER = """\
 あなたは保証キャンペーンの FORMALIZE 担当（jerg レーン＝検証計画と客観的証拠の
 観点）である。批判を生き残った失敗仮説（下の JSON）だけを受け取り、一件ごとに
