@@ -45,9 +45,11 @@ WARN = "WARN"
 # 用語ではない。両者の定義の在処は登録簿と §2 であり、用語チェッカーはそこを正本と認める。
 try:
     import _registry as _registry_mod
-    _STRUCTURAL_TYPE_CODES = frozenset(_registry_mod.TYPES)
 except Exception:                       # _registry が無くても落ちない(助言層)
-    _STRUCTURAL_TYPE_CODES = frozenset()
+    _registry_mod = None                # 失敗時も名を必ず束縛する(INC-007)
+_STRUCTURAL_TYPE_CODES = (
+    frozenset(getattr(_registry_mod, "TYPES", ()) or ())
+    if _registry_mod is not None else frozenset())
 _REQ_TAG_RE = re.compile(r"^R\d+$")
 
 # ---------------------------------------------------------------------------
