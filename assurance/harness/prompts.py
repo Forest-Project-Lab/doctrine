@@ -13,6 +13,9 @@
 """
 import json
 
+# 指紋の取り方は一箇所に持つ（schemas は標準ライブラリだけに依存するので循環しない）。
+from harness.schemas import sha256_of  # noqa: F401  (rubric_fingerprint が使う)
+
 # 判定語彙は schemas.VERDICT_SCHEMA / SCENARIO_SCHEMA と対で保つ。
 
 _DISCOVER_CHARTER = """\
@@ -271,6 +274,20 @@ _MAP_COVERAGE_CHARTER = """\
 - 原則の言い回しが体系の語と違うだけの場合と、実際に機構が無い場合を区別する。
 - 迷ったら「実装・試験・証拠あり」ではなく UNKNOWN。**緑へ倒さない。**
 - recheck_trigger には「この割当を見直すべき出来事」を一文で書く。
+
+境界の判定規則（ここで迷いが集中する。ADR-133）:
+- **決定や仕様だけを証拠にして「実装・試験・証拠あり」を採らない。**決定は
+  「そう決めた」ことの記録であって、決めたことが現に効いている証拠ではない。
+  ADR や SPEC の id しか挙げられないなら「対応計画あり」とし、gap に
+  「決めたが、それを働かせる機構が索引に無い」と書く。
+- **事後に検出する機構を、事前に阻止することを求める原則の証拠にしない。**
+  検出は阻止ではない。原則が「〜させない」「〜の前に〜を済ませる」を求めていて、
+  挙げられる機構が「後から欠落を挙げる」ものしか無いなら「対応計画あり」とし、
+  gap にその差（検出は在るが阻止は無い）を書く。
+- 挙げた機構が原則の求めることの**一部**しか果たさないなら「対応計画あり」と
+  し、gap に残りを書く。全部を果たすときだけ「実装・試験・証拠あり」を採る。
+- 話題が同じだけの機構を証拠にしない。原則が求める働きと、機構が実際に果たす
+  働きが同じかを見る。
 """
 
 
@@ -335,9 +352,52 @@ def verify_coverage_assignments(assignments, resolve, requested_keys):
             a["reason"] = ("[証拠ポインタが索引で解決しないため UNKNOWN へ落とした] "
                            + str(a.get("reason") or ""))
             downgraded.append(a)
+        elif (a.get("disposition") == "実装・試験・証拠あり"
+                and not _has_enforcing_pointer(resolved, resolve)):
+            a["original_disposition"] = a["disposition"]
+            a["disposition"] = "対応計画あり"
+            a["reason"] = ("[証拠が決定・仕様だけなので 対応計画あり へ落とした] "
+                           + str(a.get("reason") or ""))
+            downgraded.append(a)
         else:
             accepted.append(a)
     return accepted, downgraded, rejected
+
+
+# 「機構を指さない」ポインタの種別。決定と仕様は『そう決めた』ことの記録で
+# あって、決めたことが現に効いている証拠ではない（ADR-133）。
+_NON_ENFORCING_POINTER_KINDS = frozenset({"document"})
+
+
+def _has_enforcing_pointer(pointers, resolve):
+    """解決した証拠のうち、機構を指すものが一つでも在るか（ADR-133 の床）。
+
+    **これは規準の全部ではなく、機械で決まるところだけの床である。**挙げられた
+    機構が原則の求めることを実際に果たしているかは意味の判断であり、機械では
+    閉じない（NONGOAL-001 第1項）。ここで落とせるのは「決定しか挙げられて
+    いない」という、読まなくても判る形だけである。残りの幅は規準の文（憲章）と
+    抜取りの独立再判定（ADR-132）が受け持つ。
+
+    .md のファイル場所も文書の側に数える —— 置き場所で呼ばれただけの文書を
+    機構と読ませない。
+    """
+    for p in pointers:
+        kind = resolve(p)
+        if kind in _NON_ENFORCING_POINTER_KINDS:
+            continue
+        if kind == "file" and str(p).strip().endswith(".md"):
+            continue
+        return True
+    return False
+
+
+def rubric_fingerprint():
+    """採点規準の指紋。本文から導くので、本文を変えれば必ず動く。
+
+    手で書いた版番号は本文とずれる（導入複製が版番号を据え置いたまま中身だけ
+    古びた INC-019 と同じ形）。だから版は宣言せず、内容から取る。
+    """
+    return sha256_of(_MAP_COVERAGE_CHARTER)
 
 
 def verify_scenarios(scenarios, known_principle_keys):

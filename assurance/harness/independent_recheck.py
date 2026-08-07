@@ -213,6 +213,7 @@ def main(argv=None):
         "cost_usd": round(cost_total, 4),
         "git_sha": _git(["rev-parse", "--short", "HEAD"]),
         "index_sha256": idx["sha256"],
+        "rubric_sha256": prompts.rubric_fingerprint(),
         "model": run_opts["model"],
         "effort": run_opts["effort"],
         "rows": rows,

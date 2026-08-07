@@ -179,6 +179,41 @@
       "index": 8,
       "state": "rejected",
       "note": "前提が違う。**共通経路は既に在る** —— ADR-074 の `_auditcache.record_error` が `.claude/.cache` のジャーナルへ追記し、`_hookio._record` がフックの例外経路から呼ぶ。記録するのは部品名・例外の型・plugin 内の発生位置・版・時刻だけで、例外の自由文は写さない（統治対象のリポジトリには機密がありうるため。NONGOAL-001 第15項の理由）。上限を保ち、決して例外を投げず、書けなければ黙って諦める。したがって『要否を検討する』段は済んでおり、問いは『何をそこへ載せるか』へ変わる。\n載せる範囲も既決である: (a) ガードの拒否 —— NONGOAL-001 第9項が『ガードが実際に違反を拒否できることは検出しない』と決め、**再検討の条件（機能カナリアが入るまで）まで自分で書いている**。カナリアは入っていないので今は載せない。(b) リンタの助言 —— INC-004#2 が同じ戻り経路を求めており重複。そちらへ寄せる。(c) SDK 例外 —— レーン側の話で、配布物のジャーナルとは別。レーンは runs/ に実行記録を持つが『選別を経ていない』として正本は読まない（LEDGER_KINDS）。\nそして**所有者判断ではない**。非目標の見直しは ADR-127 の六類型に当たらず、決定は ADR で下す。第9項は再検討の条件を自分で持っているので、条件が満たされたときに問い直せばよい。"
+    },
+    {
+      "incident_id": "INC-024-coverage-rubric-undecided-at-its-busiest-boundary",
+      "index": 2,
+      "state": "landed",
+      "evidence_ref": "assurance/harness/prompts.py",
+      "note": "規準に境界の判定規則を明文で足した（決定だけを証拠にしない・検出は阻止でない・一部なら計画・話題が同じだけの機構を証拠にしない）。ADR-133。"
+    },
+    {
+      "incident_id": "INC-024-coverage-rubric-undecided-at-its-busiest-boundary",
+      "index": 3,
+      "state": "landed",
+      "evidence_ref": "doctrine_docs/packaging/decisions/ADR-133-coverage-rubric-pins-its-busiest-boundary.md",
+      "note": "所有者が三案から『規準に境界の判定規則を足す』を選んだ（2026-08-07）。保証範囲の変更に当たるため所有者判断を仰ぎ、成立した。"
+    },
+    {
+      "incident_id": "INC-024-coverage-rubric-undecided-at-its-busiest-boundary",
+      "index": 4,
+      "state": "landed",
+      "evidence_ref": "assurance/harness/prompts.py",
+      "note": "規準の実在位置は assurance/harness/prompts.py の _MAP_COVERAGE_CHARTER（統治木の下ではない）。判定経路は一回限りの SDK セッションでありサブエージェントではないので、契約注入の到達範囲は寄与要因ではない（setting_sources=[] は設計どおり）。調査は完了。"
+    },
+    {
+      "incident_id": "INC-024-coverage-rubric-undecided-at-its-busiest-boundary",
+      "index": 5,
+      "state": "landed",
+      "evidence_ref": "assurance/harness/recheck_evidence.py",
+      "note": "標本の外の母集団にも規則を及ぼした。決定論の照合を全 606 件の終端に走らせ、決定・仕様だけを証拠にしていた緑 13 件を『対応計画あり』へ落とした。取り下げた 7 件だけで是正を閉じていない。"
+    },
+    {
+      "incident_id": "INC-024-coverage-rubric-undecided-at-its-busiest-boundary",
+      "index": 6,
+      "state": "landed",
+      "evidence_ref": "assurance/harness/prompts.py",
+      "note": "判定に規準の指紋（本文から導く rubric_sha256）を刻むようにした。手で書いた版番号は本文とずれる（INC-019 の形）ので、版は宣言せず内容から取る。"
     }
   ]
 }

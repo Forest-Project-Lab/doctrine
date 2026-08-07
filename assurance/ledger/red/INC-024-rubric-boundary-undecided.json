@@ -1,0 +1,36 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "reproduce-red",
+  "incident_id": "INC-024-coverage-rubric-undecided-at-its-busiest-boundary",
+  "generated_at": "2026-08-07T08:05:00Z",
+  "git_sha": "40b3561",
+  "phase": "before-fix",
+  "command": "python3 -m unittest assurance.tests.test_rubric_boundary",
+  "returncode": 1,
+  "expect": "修正前に FAIL すること（最初から緑は再現と認めない）",
+  "procedure_order": "REPRODUCE_RED を FIX の前に実施した（七反復連続で順序を守れている）。",
+  "observed_failures": [
+    "Ran 9 tests — FAILED (failures=3, errors=2)",
+    "AssertionError: 決定・仕様だけを証拠にした緑が accepted に通っていた（床が無い）",
+    "AttributeError: module 'harness.prompts' has no attribute 'rubric_fingerprint'（規準の指紋が無い）",
+    "AssertionError: '決定や仕様' not found in _MAP_COVERAGE_CHARTER（境界の判定規則が明文に無い）",
+    "AssertionError: '阻止' not found in _MAP_COVERAGE_CHARTER（検出と阻止の区別が明文に無い）"
+  ],
+  "owner_decision": {
+    "asked": "INC-024 の直し方（規準に境界の判定規則を足す / 五値に幅を持たせる / まず cast 177 を今の規準で回す）",
+    "answered": "規準に境界の判定規則を足す。かつ規準を直してから本丸を進める",
+    "date": "2026-08-07",
+    "kind": "配布境界や保証範囲の変更",
+    "why_owner": "『実装・試験・証拠あり』の意味が変わるので、何を保証したと言えるかの範囲が変わる（ADR-127 の六類型）"
+  },
+  "my_own_correction": {
+    "what": "当初は『機械の床で INC-024 を閉じられる』と設計しかけた。",
+    "why_wrong": "観測された不一致 7 件を実際に確かめたところ、いずれも実在する監査検査を証拠に挙げており、床では一件も捕まらない。境界の実体は『機構が原則の求めることを実際に果たしているか』という意味の判断であって、ポインタの種別ではない。",
+    "fixed": "床は床と呼び、規準の全部ではないと ADR とコードの docstring に明記した。INC-024 は閉じないと書いた。"
+  },
+  "measured_after": {
+    "tests": "test_rubric_boundary 15 件が緑（レーン全体で 231 件。追加前は 216 件）",
+    "deterministic_sweep": "既存の緑 251 件のうち 13 件（cast 7・jerg 4・stpa 2）が決定・仕様だけを証拠にしており、評価を買わずに『対応計画あり』へ落とした。緑は 238 件",
+    "floor_did_not_catch_the_observed_disagreements": "観測された 7 件のうち床が捕まえる形のものは 0 件（いずれも実在する検査を挙げていた）。縮めたと書いて、消したと書かない"
+  }
+}

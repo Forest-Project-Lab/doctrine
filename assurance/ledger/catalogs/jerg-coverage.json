@@ -217,8 +217,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "ac4d954fb9cd81e537ca5c82ff8e9a6d3d3cf87c94dffde834468701b75df2b4",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -246,8 +248,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "ac4d954fb9cd81e537ca5c82ff8e9a6d3d3cf87c94dffde834468701b75df2b4",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -323,8 +327,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "ac4d954fb9cd81e537ca5c82ff8e9a6d3d3cf87c94dffde834468701b75df2b4",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -356,8 +362,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "ac4d954fb9cd81e537ca5c82ff8e9a6d3d3cf87c94dffde834468701b75df2b4",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -595,8 +603,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "ac4d954fb9cd81e537ca5c82ff8e9a6d3d3cf87c94dffde834468701b75df2b4",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -732,8 +742,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "ac4d954fb9cd81e537ca5c82ff8e9a6d3d3cf87c94dffde834468701b75df2b4",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -763,8 +775,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "ac4d954fb9cd81e537ca5c82ff8e9a6d3d3cf87c94dffde834468701b75df2b4",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -847,8 +861,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "ac4d954fb9cd81e537ca5c82ff8e9a6d3d3cf87c94dffde834468701b75df2b4",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -931,8 +947,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "ac4d954fb9cd81e537ca5c82ff8e9a6d3d3cf87c94dffde834468701b75df2b4",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -1011,8 +1029,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "ac4d954fb9cd81e537ca5c82ff8e9a6d3d3cf87c94dffde834468701b75df2b4",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -1090,8 +1110,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "69cf330bddd24d01754abc4a217d4199806d2d3744dd772d9b13f568de4911c3",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -1118,8 +1140,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "69cf330bddd24d01754abc4a217d4199806d2d3744dd772d9b13f568de4911c3",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -1145,8 +1169,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "69cf330bddd24d01754abc4a217d4199806d2d3744dd772d9b13f568de4911c3",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -1173,8 +1199,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "69cf330bddd24d01754abc4a217d4199806d2d3744dd772d9b13f568de4911c3",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -1201,8 +1229,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "69cf330bddd24d01754abc4a217d4199806d2d3744dd772d9b13f568de4911c3",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -1230,8 +1260,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "69cf330bddd24d01754abc4a217d4199806d2d3744dd772d9b13f568de4911c3",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -1259,8 +1291,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "69cf330bddd24d01754abc4a217d4199806d2d3744dd772d9b13f568de4911c3",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -1289,8 +1323,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "69cf330bddd24d01754abc4a217d4199806d2d3744dd772d9b13f568de4911c3",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -1319,8 +1355,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "0989630ad975f298db3ad8f377219423258eff48811b7cb7ddcbde5e77f6853b",
-        "index_sha256": "f83e1a3e667e51e41dbb28fdb59b69da6545cb30b1425d24391c99efaf9ab8e2",
-        "git_sha": "1db2457bd084f9d278441184c742293845cc8535"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "1db2457bd084f9d278441184c742293845cc8535",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       },
       "reassessments": [
         {
@@ -1371,8 +1409,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "69cf330bddd24d01754abc4a217d4199806d2d3744dd772d9b13f568de4911c3",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -1605,8 +1645,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "69cf330bddd24d01754abc4a217d4199806d2d3744dd772d9b13f568de4911c3",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -1632,8 +1674,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "69cf330bddd24d01754abc4a217d4199806d2d3744dd772d9b13f568de4911c3",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -1737,8 +1781,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "69cf330bddd24d01754abc4a217d4199806d2d3744dd772d9b13f568de4911c3",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -1767,8 +1813,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "69cf330bddd24d01754abc4a217d4199806d2d3744dd772d9b13f568de4911c3",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -1796,8 +1844,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "69cf330bddd24d01754abc4a217d4199806d2d3744dd772d9b13f568de4911c3",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -1974,8 +2024,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "2742abb77888531f2d5395c20ed8791dff0db00c5e15221bd1131db8ff6ed1bc",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -2002,8 +2054,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "2742abb77888531f2d5395c20ed8791dff0db00c5e15221bd1131db8ff6ed1bc",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -2030,8 +2084,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "2742abb77888531f2d5395c20ed8791dff0db00c5e15221bd1131db8ff6ed1bc",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -2061,8 +2117,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "2742abb77888531f2d5395c20ed8791dff0db00c5e15221bd1131db8ff6ed1bc",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -2218,8 +2276,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "2742abb77888531f2d5395c20ed8791dff0db00c5e15221bd1131db8ff6ed1bc",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -2299,8 +2359,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "2742abb77888531f2d5395c20ed8791dff0db00c5e15221bd1131db8ff6ed1bc",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -2327,8 +2389,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "2742abb77888531f2d5395c20ed8791dff0db00c5e15221bd1131db8ff6ed1bc",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -2354,8 +2418,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "2742abb77888531f2d5395c20ed8791dff0db00c5e15221bd1131db8ff6ed1bc",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -2363,8 +2429,8 @@
       "title": "合格基準の事前設定",
       "category": "試験設計",
       "source_lines": "L1324-L1324",
-      "disposition": "実装・試験・証拠あり",
-      "reason": "検査群と要約スキーマと決定性は仕様で先に定義され（SPEC-011・ADR-042）、ガードの判定規則も別仕様で明文化されている（SPEC-003）。閾値も正本側に置かれる（ADR-025 の点検周期、ADR-009 の二つの上限、ADR-105 のトークン見積り）。リリースの門も合否を定義する（SPEC-027）。",
+      "disposition": "対応計画あり",
+      "reason": "[決定論の再照合: 解決する証拠が決定・仕様だけになった] 検査群と要約スキーマと決定性は仕様で先に定義され（SPEC-011・ADR-042）、ガードの判定規則も別仕様で明文化されている（SPEC-003）。閾値も正本側に置かれる（ADR-025 の点検周期、ADR-009 の二つの上限、ADR-105 のトークン見積り）。リリースの門も合否を定義する（SPEC-027）。",
       "evidence": [
         "SPEC-011",
         "SPEC-003",
@@ -2385,7 +2451,33 @@
         "prompt_sha256": "2742abb77888531f2d5395c20ed8791dff0db00c5e15221bd1131db8ff6ed1bc",
         "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
-      }
+      },
+      "reassessments": [
+        {
+          "disposition": "実装・試験・証拠あり",
+          "reason": "検査群と要約スキーマと決定性は仕様で先に定義され（SPEC-011・ADR-042）、ガードの判定規則も別仕様で明文化されている（SPEC-003）。閾値も正本側に置かれる（ADR-025 の点検周期、ADR-009 の二つの上限、ADR-105 のトークン見積り）。リリースの門も合否を定義する（SPEC-027）。",
+          "evidence": [
+            "SPEC-011",
+            "SPEC-003",
+            "ADR-042",
+            "ADR-025",
+            "ADR-009",
+            "ADR-105",
+            "SPEC-027",
+            "TEST-003"
+          ],
+          "gap": null,
+          "confidence": "medium",
+          "assigned_at": "2026-08-05T08:12:11Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "2742abb77888531f2d5395c20ed8791dff0db00c5e15221bd1131db8ff6ed1bc",
+            "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
+            "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+          }
+        }
+      ]
     },
     {
       "key": "JERG:試験条件の記録と再現性",
@@ -2491,8 +2583,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "2742abb77888531f2d5395c20ed8791dff0db00c5e15221bd1131db8ff6ed1bc",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -2571,8 +2665,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "2742abb77888531f2d5395c20ed8791dff0db00c5e15221bd1131db8ff6ed1bc",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -2601,8 +2697,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "2742abb77888531f2d5395c20ed8791dff0db00c5e15221bd1131db8ff6ed1bc",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -2684,8 +2782,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "2742abb77888531f2d5395c20ed8791dff0db00c5e15221bd1131db8ff6ed1bc",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -2769,8 +2869,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "2742abb77888531f2d5395c20ed8791dff0db00c5e15221bd1131db8ff6ed1bc",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -2778,8 +2880,8 @@
       "title": "問題報告・変更要求の対処手順の確立",
       "category": "運用と保守",
       "source_lines": "L1734-L1734",
-      "disposition": "実装・試験・証拠あり",
-      "reason": "不具合の報告は「検出は機械・送信は人」の二層と決められ、承認を経た issue 報告を促す変更として着地している（ADR-074・CHANGE-005・IMPACT-005）。変更要求の側は、変更フローの段数を決定の有無で分ける規則（ADR-051）、不変の ADR の正規の直し方（ADR-044）、開発規範の正本（PROC-001）、および change-impact／docs-curate 技能で経路が定まっている。",
+      "disposition": "対応計画あり",
+      "reason": "[決定論の再照合: 解決する証拠が決定・仕様だけになった] 不具合の報告は「検出は機械・送信は人」の二層と決められ、承認を経た issue 報告を促す変更として着地している（ADR-074・CHANGE-005・IMPACT-005）。変更要求の側は、変更フローの段数を決定の有無で分ける規則（ADR-051）、不変の ADR の正規の直し方（ADR-044）、開発規範の正本（PROC-001）、および change-impact／docs-curate 技能で経路が定まっている。",
       "evidence": [
         "ADR-074",
         "CHANGE-005",
@@ -2800,7 +2902,33 @@
         "prompt_sha256": "2742abb77888531f2d5395c20ed8791dff0db00c5e15221bd1131db8ff6ed1bc",
         "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
-      }
+      },
+      "reassessments": [
+        {
+          "disposition": "実装・試験・証拠あり",
+          "reason": "不具合の報告は「検出は機械・送信は人」の二層と決められ、承認を経た issue 報告を促す変更として着地している（ADR-074・CHANGE-005・IMPACT-005）。変更要求の側は、変更フローの段数を決定の有無で分ける規則（ADR-051）、不変の ADR の正規の直し方（ADR-044）、開発規範の正本（PROC-001）、および change-impact／docs-curate 技能で経路が定まっている。",
+          "evidence": [
+            "ADR-074",
+            "CHANGE-005",
+            "IMPACT-005",
+            "ADR-051",
+            "ADR-044",
+            "PROC-001",
+            "SPEC-016",
+            "TEST-016"
+          ],
+          "gap": null,
+          "confidence": "medium",
+          "assigned_at": "2026-08-05T08:12:11Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "2742abb77888531f2d5395c20ed8791dff0db00c5e15221bd1131db8ff6ed1bc",
+            "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
+            "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+          }
+        }
+      ]
     },
     {
       "key": "JERG:解決までの継続監視と報告",
@@ -2881,8 +3009,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "577eb17720028a572a4072ad44a1e624879d098ffd014e267ef3c3b65fd50b1a",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -3007,8 +3137,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "577eb17720028a572a4072ad44a1e624879d098ffd014e267ef3c3b65fd50b1a",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -3039,8 +3171,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "577eb17720028a572a4072ad44a1e624879d098ffd014e267ef3c3b65fd50b1a",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -3069,8 +3203,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "577eb17720028a572a4072ad44a1e624879d098ffd014e267ef3c3b65fd50b1a",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -3097,8 +3233,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "577eb17720028a572a4072ad44a1e624879d098ffd014e267ef3c3b65fd50b1a",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -3179,8 +3317,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "577eb17720028a572a4072ad44a1e624879d098ffd014e267ef3c3b65fd50b1a",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -3258,8 +3398,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "577eb17720028a572a4072ad44a1e624879d098ffd014e267ef3c3b65fd50b1a",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -3288,8 +3430,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "577eb17720028a572a4072ad44a1e624879d098ffd014e267ef3c3b65fd50b1a",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -3375,8 +3519,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "577eb17720028a572a4072ad44a1e624879d098ffd014e267ef3c3b65fd50b1a",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -3624,8 +3770,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "cd46c1962607982382f41d7b0123cda706598af4657ab3420543ad5678d014cf",
-        "index_sha256": "f83e1a3e667e51e41dbb28fdb59b69da6545cb30b1425d24391c99efaf9ab8e2",
-        "git_sha": "1db2457bd084f9d278441184c742293845cc8535"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "1db2457bd084f9d278441184c742293845cc8535",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       },
       "reassessments": [
         {
@@ -3737,8 +3885,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "577eb17720028a572a4072ad44a1e624879d098ffd014e267ef3c3b65fd50b1a",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -3746,8 +3896,8 @@
       "title": "変更に伴い必要となる検証・妥当性確認を事前に分析する",
       "category": "構成管理と変更管理",
       "source_lines": "L2201-L2201",
-      "disposition": "実装・試験・証拠あり",
-      "reason": "「この変更で何を再走させるか」を PR に宣言する欄は無いが、既定 Level 2 では全件検査を CI に委ねる（ADR-046 / EXT-004）ため、規則変更後に依存文書の再検査が一度も走らない状態は起きにくい。加えて被覆の各行は実効を示す試験を名指し、示せないなら未証と明示する（SPEC-025 / ADR-084 / TEST-025）ので、変更に伴い必要な検証の特定は被覆マトリクス側で果たされる。回帰は SPEC-023（linter と audit の食い違いの回帰ガード）と regression-guard 技能、退行監視は WATCH-001。言い回しは違うが機構は在る。",
+      "disposition": "対応計画あり",
+      "reason": "[決定論の再照合: 解決する証拠が決定・仕様だけになった] 「この変更で何を再走させるか」を PR に宣言する欄は無いが、既定 Level 2 では全件検査を CI に委ねる（ADR-046 / EXT-004）ため、規則変更後に依存文書の再検査が一度も走らない状態は起きにくい。加えて被覆の各行は実効を示す試験を名指し、示せないなら未証と明示する（SPEC-025 / ADR-084 / TEST-025）ので、変更に伴い必要な検証の特定は被覆マトリクス側で果たされる。回帰は SPEC-023（linter と audit の食い違いの回帰ガード）と regression-guard 技能、退行監視は WATCH-001。言い回しは違うが機構は在る。",
       "evidence": [
         "ADR-046",
         "EXT-004",
@@ -3768,7 +3918,33 @@
         "prompt_sha256": "577eb17720028a572a4072ad44a1e624879d098ffd014e267ef3c3b65fd50b1a",
         "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
-      }
+      },
+      "reassessments": [
+        {
+          "disposition": "実装・試験・証拠あり",
+          "reason": "「この変更で何を再走させるか」を PR に宣言する欄は無いが、既定 Level 2 では全件検査を CI に委ねる（ADR-046 / EXT-004）ため、規則変更後に依存文書の再検査が一度も走らない状態は起きにくい。加えて被覆の各行は実効を示す試験を名指し、示せないなら未証と明示する（SPEC-025 / ADR-084 / TEST-025）ので、変更に伴い必要な検証の特定は被覆マトリクス側で果たされる。回帰は SPEC-023（linter と audit の食い違いの回帰ガード）と regression-guard 技能、退行監視は WATCH-001。言い回しは違うが機構は在る。",
+          "evidence": [
+            "ADR-046",
+            "EXT-004",
+            "SPEC-025",
+            "ADR-084",
+            "TEST-025",
+            "SPEC-023",
+            "WATCH-001",
+            "SPEC-011"
+          ],
+          "gap": "変更前に必要な検証を宣言する欄は無く、全件再走で代替している（差分検査に切り替えると穴になる）。",
+          "confidence": "medium",
+          "assigned_at": "2026-08-05T08:12:11Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "577eb17720028a572a4072ad44a1e624879d098ffd014e267ef3c3b65fd50b1a",
+            "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
+            "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+          }
+        }
+      ]
     },
     {
       "key": "JERG:change-approval-decision-recorded",
@@ -3848,8 +4024,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "577eb17720028a572a4072ad44a1e624879d098ffd014e267ef3c3b65fd50b1a",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -3934,8 +4112,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "d6fe0996b35f0618e4f698bd391006bdbba059c6e0264507d7a870c5be45772c",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -3962,8 +4142,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "d6fe0996b35f0618e4f698bd391006bdbba059c6e0264507d7a870c5be45772c",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -4547,8 +4729,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "d6fe0996b35f0618e4f698bd391006bdbba059c6e0264507d7a870c5be45772c",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -4601,8 +4785,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "d6fe0996b35f0618e4f698bd391006bdbba059c6e0264507d7a870c5be45772c",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -4633,8 +4819,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "d6fe0996b35f0618e4f698bd391006bdbba059c6e0264507d7a870c5be45772c",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -4642,8 +4830,8 @@
       "title": "検証の制約・限界を識別する",
       "category": "検証計画",
       "source_lines": "L2514-L2514",
-      "disposition": "実装・試験・証拠あり",
-      "reason": "各成果物に予防・検出・委ねるを書かせることが要求として立ち、横断のやらないことと三つの保証限界が明文化されている。ガードが拒否できる状態かは検出しないと明記し、テスト不能記述の判定は監査でなく doc-review が担うと機械と人の分界も引く。被覆は実効を示せない行を未証と明示するため、機械が扱えない規則が緑として通ることを構造的に塞いでいる。",
+      "disposition": "対応計画あり",
+      "reason": "[決定論の再照合: 解決する証拠が決定・仕様だけになった] 各成果物に予防・検出・委ねるを書かせることが要求として立ち、横断のやらないことと三つの保証限界が明文化されている。ガードが拒否できる状態かは検出しないと明記し、テスト不能記述の判定は監査でなく doc-review が担うと機械と人の分界も引く。被覆は実効を示せない行を未証と明示するため、機械が扱えない規則が緑として通ることを構造的に塞いでいる。",
       "evidence": [
         "REQ-013",
         "NONGOAL-001",
@@ -4665,7 +4853,34 @@
         "prompt_sha256": "d6fe0996b35f0618e4f698bd391006bdbba059c6e0264507d7a870c5be45772c",
         "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
         "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
-      }
+      },
+      "reassessments": [
+        {
+          "disposition": "実装・試験・証拠あり",
+          "reason": "各成果物に予防・検出・委ねるを書かせることが要求として立ち、横断のやらないことと三つの保証限界が明文化されている。ガードが拒否できる状態かは検出しないと明記し、テスト不能記述の判定は監査でなく doc-review が担うと機械と人の分界も引く。被覆は実効を示せない行を未証と明示するため、機械が扱えない規則が緑として通ることを構造的に塞いでいる。",
+          "evidence": [
+            "REQ-013",
+            "NONGOAL-001",
+            "ADR-064",
+            "ADR-050",
+            "ADR-020",
+            "ADR-084",
+            "SPEC-025",
+            "TEST-025",
+            "WATCH-001"
+          ],
+          "gap": null,
+          "confidence": "high",
+          "assigned_at": "2026-08-05T08:12:11Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "d6fe0996b35f0618e4f698bd391006bdbba059c6e0264507d7a870c5be45772c",
+            "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
+            "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+          }
+        }
+      ]
     },
     {
       "key": "JERG:verification-depth-by-criticality",
@@ -4696,8 +4911,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "d6fe0996b35f0618e4f698bd391006bdbba059c6e0264507d7a870c5be45772c",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -4833,8 +5050,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "d6fe0996b35f0618e4f698bd391006bdbba059c6e0264507d7a870c5be45772c",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -4870,8 +5089,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "d6fe0996b35f0618e4f698bd391006bdbba059c6e0264507d7a870c5be45772c",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -4897,8 +5118,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "7f8fbead88151a1b01c22838a4fc175b438d89bba237878d7f5a3601645f1c68",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -4928,8 +5151,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "7f8fbead88151a1b01c22838a4fc175b438d89bba237878d7f5a3601645f1c68",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -4961,8 +5186,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "7f8fbead88151a1b01c22838a4fc175b438d89bba237878d7f5a3601645f1c68",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -5905,8 +6132,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "7f8fbead88151a1b01c22838a4fc175b438d89bba237878d7f5a3601645f1c68",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -6143,8 +6372,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "aa422e7707dc8d4d7e1f9f64dd0642a09e77669b30d39dceb16efd8a793f1432",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -6298,8 +6529,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "aa422e7707dc8d4d7e1f9f64dd0642a09e77669b30d39dceb16efd8a793f1432",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -6331,8 +6564,10 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "aa422e7707dc8d4d7e1f9f64dd0642a09e77669b30d39dceb16efd8a793f1432",
-        "index_sha256": "bd60e4e186b74a19ee8a1472bd1fa42c9c889b13b2505767e645541899ab6b6a",
-        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4"
+        "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49",
+        "git_sha": "325561e90df2eda9594301bfafed5a03a9fee2f4",
+        "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+        "rechecked_deterministically": true
       }
     },
     {
@@ -6393,5 +6628,5 @@
       ]
     }
   ],
-  "index_sha256": "f83e1a3e667e51e41dbb28fdb59b69da6545cb30b1425d24391c99efaf9ab8e2"
+  "index_sha256": "20c90082cb4653dae30c5c53c8d09ed1febfd396752815f0eec79e985cd63b49"
 }
