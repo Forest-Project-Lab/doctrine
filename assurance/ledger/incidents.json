@@ -440,6 +440,26 @@
       ],
       "cast_analysis_ref": "assurance/ledger/cast/INC-024-coverage-rubric-undecided-at-its-busiest-boundary.json",
       "cast_analyzed_at": "2026-08-07T07:38:10Z"
+    },
+    {
+      "id": "INC-025-adr-130-implemented-the-option-it-rejected",
+      "date": "2026-08-07",
+      "summary": "ADR-130 が『却下した選択肢』の第一項として明記した「索引全体の指紋が変わったら全件を古びさせる」を、実装がそのまま採っていた。coverage_status は assigned_by.index_sha256 を current_index_sha()（索引**全体**の sha256）と比べるので、統治木か配布物のどこか一箇所が動くだけで非終端の判定が全件古びる",
+      "detected_by": "反復13の §1 で、直前の反復(PR #249)が plugin/tests のファイルを 1 件足しただけなのに next_actions の先頭が再び MAP_COVERAGE（jerg 76・stpa 32・cast 178＝計 286 件）になったことを不審に思い、ADR-130 の却下した選択肢と current_index_sha の実装を突き合わせたとき（2026-08-07）",
+      "impact": "PR #248 直後は三冊とも stale_open が 0 だった。PR #249 が索引に足したのは test_files 1 件（25→26）だけであり、それだけで非終端の 286 件（対応計画あり 260・判定不能 26）が全件古びた。ADR-130 が却下の理由として書いた『606 件が毎コミットで古び、再判定に $12 と数時間かかる。消えない行動になる』が、そのまま現実になっている。実測の単価 $0.048 で 286 件＝約 $13.7・約 95 分が、統治木か配布物を触るあらゆる反復のたびに要求される",
+      "fixed": false,
+      "shipped": false,
+      "fix_note": "未修正。docstring は『assurance/ は索引に含まれないので基盤だけを触る反復では鳴らない』と緩和を述べるが、それが効くのは assurance/ **だけ**を触る反復に限られる。統治木か配布物に触れる反復（＝本務のほとんど）では毎回全件が古びる。直し方（証拠の指す範囲だけで古びを見る／種別ごとの指紋で見る／非終端も数えるだけにして挙げない）は CAST_ANALYSIS の後で決める。判定の意味（何を測ったと言えるか）が変わるので所有者判断を要する可能性が高い",
+      "cast_analysis": "done",
+      "evidence_kind": "measurement",
+      "evidence_refs": [
+        "doctrine_docs/packaging/decisions/ADR-130-coverage-judgement-carries-its-index-fingerprint.md",
+        "assurance/harness/orchestrator.py",
+        "assurance/harness/system_index.py",
+        "plugin/tests/test_termcheck_corpus.py"
+      ],
+      "cast_analysis_ref": "assurance/ledger/cast/INC-025-adr-130-implemented-the-option-it-rejected.json",
+      "cast_analyzed_at": "2026-08-07T17:05:46Z"
     }
   ]
 }
