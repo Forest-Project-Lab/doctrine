@@ -49,6 +49,13 @@ python3 -m unittest discover -s assurance/tests -v
 assurance/.venv/bin/python assurance/harness/orchestrator.py status
 assurance/.venv/bin/python assurance/harness/orchestrator.py validate
 
+# 抜取りの独立再判定（ADR-132）。束で回した判定を、前の判定を渡さない
+# 一回限りセッションで検め直す。割れた項は判定を取り下げ、未割当の UNKNOWN へ
+# 戻す（assigned_at を落とす）ので MAP_COVERAGE が拾い直す。
+# **一致率は持たない。**読むのは不一致の中身である（運転手順 §4・§5）。
+assurance/.venv/bin/python assurance/harness/independent_recheck.py \
+    --book stpa --sample 13 --seed 1 --today 2026-08-07
+
 # 規範カタログの抽出（評価役: opus high。再開可能・費用二段上限）
 assurance/.venv/bin/python assurance/harness/extract_principles.py --book jerg
 

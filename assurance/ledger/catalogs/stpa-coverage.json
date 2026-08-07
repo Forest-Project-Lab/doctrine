@@ -545,25 +545,9 @@
       "title": "縦方向の階層と矢印の向きを規約通りにする",
       "category": "文書化",
       "source_lines": "L129-L129",
-      "disposition": "非該当で理由あり",
-      "reason": "体系の有向性は depends_on の依存方向であって権限の上下ではない（SPEC-006、ADR-006 は越境違反を depends_on 端のみに付ける）。権限階層図という成果物が無いため、上下配置と矢印向きの規約は当たらない。両端から書かれた同じ事実には印を付ける決定（ADR-088）が在るが、これは畳み方の明示であって権限の判定ではない。",
-      "evidence": [
-        "SPEC-006",
-        "ADR-006",
-        "ADR-088",
-        "ADR-081"
-      ],
+      "disposition": "UNKNOWN",
+      "reason": "[独立の再判定と割れたため判定を取り下げた] 辺の向きの意味論は実装されている（depends_on は有向で、ADR-006 は cross_domain_violation を depends_on 端のみに付け、ADR-038／dep_cycle が自己依存と多頂点循環を検出し、ADR-088 は両端から書かれた同じ事実に印を付ける）。他方、原則が言う「上位を上・下位を下に置き、下向きを指示・上向きを帰還として描く」という描画の配置規約そのものは、投影を統べる ADR-016／SPEC-014 にも CTXMAP-001 にも索引上定義が見えない。決定と仕様は在るが規約は未定。",
       "recheck_trigger": "権限の上下を表す辺の種別が依存グラフの契約に追加されたとき。",
-      "gap": null,
-      "confidence": "medium",
-      "assigned_at": "2026-08-07T05:55:10Z",
-      "assigned_by": {
-        "model": "claude-opus-5",
-        "effort": "high",
-        "prompt_sha256": "ea4c5cdb4ee7731cc74802499f3bbcdffb8518b8aa4745e5ba64f8fe33df6969",
-        "index_sha256": "f83e1a3e667e51e41dbb28fdb59b69da6545cb30b1425d24391c99efaf9ab8e2",
-        "git_sha": "1db2457bd084f9d278441184c742293845cc8535"
-      },
       "reassessments": [
         {
           "disposition": "対応計画あり",
@@ -586,6 +570,26 @@
             "prompt_sha256": "1d06a5cb86ba206d5c050f468e418f30a7c02729e6227cbe981dd51bf65e53af",
             "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
             "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+          }
+        },
+        {
+          "disposition": "非該当で理由あり",
+          "reason": "体系の有向性は depends_on の依存方向であって権限の上下ではない（SPEC-006、ADR-006 は越境違反を depends_on 端のみに付ける）。権限階層図という成果物が無いため、上下配置と矢印向きの規約は当たらない。両端から書かれた同じ事実には印を付ける決定（ADR-088）が在るが、これは畳み方の明示であって権限の判定ではない。",
+          "evidence": [
+            "SPEC-006",
+            "ADR-006",
+            "ADR-088",
+            "ADR-081"
+          ],
+          "gap": null,
+          "confidence": "medium",
+          "assigned_at": "2026-08-07T05:55:10Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "ea4c5cdb4ee7731cc74802499f3bbcdffb8518b8aa4745e5ba64f8fe33df6969",
+            "index_sha256": "f83e1a3e667e51e41dbb28fdb59b69da6545cb30b1425d24391c99efaf9ab8e2",
+            "git_sha": "1db2457bd084f9d278441184c742293845cc8535"
           }
         }
       ]
@@ -892,26 +896,9 @@
       "title": "分析開始に必要な最小構成を満たす",
       "category": "検証計画",
       "source_lines": "L227-L227",
-      "disposition": "対応計画あり",
-      "reason": "前提が欠けたまま次へ進ませない規律は現に在る。必須キーはちょうど 8 個（ADR-033）で欠落は MISSING_KEY が挙げ、型と位置づけを読めないときガードは沈黙して開かない（ADR-102、SPEC-003）。門の判定は三値とし、検査が成立していないときは適合にも不適合にも数えない（ADR-129）。ただしこれは文書の最小要素であって、コントローラ・アクション・被制御プロセスの三要素という単位は体系に無い。",
-      "evidence": [
-        "ADR-033",
-        "MISSING_KEY",
-        "ADR-102",
-        "SPEC-003",
-        "ADR-129"
-      ],
+      "disposition": "UNKNOWN",
+      "reason": "[独立の再判定と割れたため判定を取り下げた] 「最小要素が揃うまで次工程へ進ませない」に相当する前提条件検査は実装されている。必須キーはちょうど 8 個と正本で固定され（ADR-033・DATA-001）、欠落・空・雛形残りは docs-linter.py が MISSING_KEY／EMPTY_KEY／MISSING_SECTION として挙げる。上流の錨を欠いたまま置かれた成果物は監査の orphan（ADR-008 の三条件の連言）が拾う。仕様と試験計画も対応する。",
       "recheck_trigger": "工程の前提条件（三要素相当）を検める門が仕様として定義されたとき。",
-      "gap": "「着手可否の最小要素が揃うまで次工程の成果物を作らせない」という工程の前提条件チェックは無く、検査は文書単位の必須キーに留まる。",
-      "confidence": "medium",
-      "assigned_at": "2026-08-07T05:55:10Z",
-      "assigned_by": {
-        "model": "claude-opus-5",
-        "effort": "high",
-        "prompt_sha256": "ea4c5cdb4ee7731cc74802499f3bbcdffb8518b8aa4745e5ba64f8fe33df6969",
-        "index_sha256": "f83e1a3e667e51e41dbb28fdb59b69da6545cb30b1425d24391c99efaf9ab8e2",
-        "git_sha": "1db2457bd084f9d278441184c742293845cc8535"
-      },
       "reassessments": [
         {
           "disposition": "対応計画あり",
@@ -935,6 +922,27 @@
             "prompt_sha256": "77cb2210b3e57444927fdc979dab4e61ff76c9e30cf74667ce2261a1712a6930",
             "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
             "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+          }
+        },
+        {
+          "disposition": "対応計画あり",
+          "reason": "前提が欠けたまま次へ進ませない規律は現に在る。必須キーはちょうど 8 個（ADR-033）で欠落は MISSING_KEY が挙げ、型と位置づけを読めないときガードは沈黙して開かない（ADR-102、SPEC-003）。門の判定は三値とし、検査が成立していないときは適合にも不適合にも数えない（ADR-129）。ただしこれは文書の最小要素であって、コントローラ・アクション・被制御プロセスの三要素という単位は体系に無い。",
+          "evidence": [
+            "ADR-033",
+            "MISSING_KEY",
+            "ADR-102",
+            "SPEC-003",
+            "ADR-129"
+          ],
+          "gap": "「着手可否の最小要素が揃うまで次工程の成果物を作らせない」という工程の前提条件チェックは無く、検査は文書単位の必須キーに留まる。",
+          "confidence": "medium",
+          "assigned_at": "2026-08-07T05:55:10Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "ea4c5cdb4ee7731cc74802499f3bbcdffb8518b8aa4745e5ba64f8fe33df6969",
+            "index_sha256": "f83e1a3e667e51e41dbb28fdb59b69da6545cb30b1425d24391c99efaf9ab8e2",
+            "git_sha": "1db2457bd084f9d278441184c742293845cc8535"
           }
         }
       ]
@@ -1792,28 +1800,34 @@
       "title": "各 UCA をコントローラ制約へ変換する",
       "category": "不適合と是正",
       "source_lines": "L427-L427",
-      "disposition": "実装・試験・証拠あり",
-      "reason": "『発見の型ごとに強制手段を対応づけ、双方向のリンクを保つ』運用が被覆マトリクスとして実装されている：統治要求×発火経路×証跡の行を持ち（SPEC-025）、各行は実効を示す試験を名指し、示せないなら未証と明示する（ADR-084）。検査側の食い違い（linter と audit のずれ）は整合点検が回帰ガードとして見張る（SPEC-023・TEST-023）。受入は TEST-025、メタ条件は plugin/tests/test_meta.py。",
-      "evidence": [
-        "SPEC-025",
-        "ADR-084",
-        "TEST-025",
-        "SPEC-023",
-        "TEST-023",
-        "plugin/tests/test_meta.py",
-        "plugin/tests/test_linter.py"
-      ],
+      "disposition": "UNKNOWN",
+      "reason": "[独立の再判定と割れたため判定を取り下げた] 双方向に結び直す思想と仕様は在る。ADR-048 がコードと仕様の双方向トレースを段階拡張として採り、ADR-061 が宣言と実態の矛盾を検査対象にし（trace_undeclared_impl・trace_unexpected_impl・MISSING_TRACE）、SPEC-023 が linter と audit の食い違いの回帰ガードを、SPEC-025 が統治要求×発火経路×証跡の被覆マトリクスを定め、ADR-084 が各行に実効を示す試験を名指すか未証と明記させる。しかし「監査の各違反（40 検査）に対応する強制規則を 1 対 1 で置き、規則側から元の違反 id を逆参照する」対応表の実体は索引から特定できない。",
       "recheck_trigger": "ADR-084 の「未証と明示する」運用が緩む、または被覆マトリクスの行と検査の対応が SPEC-025 の改訂で変わったとき。",
-      "gap": null,
-      "confidence": "medium",
-      "assigned_at": "2026-08-05T10:16:56Z",
-      "assigned_by": {
-        "model": "claude-opus-5",
-        "effort": "high",
-        "prompt_sha256": "77cb2210b3e57444927fdc979dab4e61ff76c9e30cf74667ce2261a1712a6930",
-        "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
-        "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
-      }
+      "reassessments": [
+        {
+          "disposition": "実装・試験・証拠あり",
+          "reason": "『発見の型ごとに強制手段を対応づけ、双方向のリンクを保つ』運用が被覆マトリクスとして実装されている：統治要求×発火経路×証跡の行を持ち（SPEC-025）、各行は実効を示す試験を名指し、示せないなら未証と明示する（ADR-084）。検査側の食い違い（linter と audit のずれ）は整合点検が回帰ガードとして見張る（SPEC-023・TEST-023）。受入は TEST-025、メタ条件は plugin/tests/test_meta.py。",
+          "evidence": [
+            "SPEC-025",
+            "ADR-084",
+            "TEST-025",
+            "SPEC-023",
+            "TEST-023",
+            "plugin/tests/test_meta.py",
+            "plugin/tests/test_linter.py"
+          ],
+          "gap": null,
+          "confidence": "medium",
+          "assigned_at": "2026-08-05T10:16:56Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "77cb2210b3e57444927fdc979dab4e61ff76c9e30cf74667ce2261a1712a6930",
+            "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
+            "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+          }
+        }
+      ]
     },
     {
       "key": "STPA:iterative-update-of-prior-results",
@@ -2801,30 +2815,9 @@
       "title": "上流活動を省いたプロセスで重要システムを作らない",
       "category": "組織と力量",
       "source_lines": "L722-L722",
-      "disposition": "実装・試験・証拠あり",
-      "reason": "上流の欠落は機械が全件で挙げる。ADR-051 が変更フローの段数を『決定を含むか否か』で分け、監査は adr_not_landed（決定が着地していない）、reverse_orphan_req_no_spec / reverse_orphan_spec_no_test（上流から下流への欠落）、および ADR-008 の三条件の連言による orphan（上流を持たない文書）を SessionEnd と CI で検出する。検査は docs-audit.py に在り、計画は TEST-011、試験ファイルは test_audit.py に在る。ただし『対象損失』の層は ADR-081 が採らないと決めているため、上流に置かれるのは要求と決定であって損失ではない。",
-      "evidence": [
-        "ADR-051",
-        "adr_not_landed",
-        "reverse_orphan_req_no_spec",
-        "orphan",
-        "ADR-008",
-        "plugin/scripts/docs-audit.py",
-        "TEST-011",
-        "plugin/tests/test_audit.py",
-        "SessionEnd"
-      ],
+      "disposition": "UNKNOWN",
+      "reason": "[独立の再判定と割れたため判定を取り下げた] 上流を飛ばさないための決定と規範は在る。ADR-051 が変更フローの段数を「決定を含むか否か」で分け、PROC-001 が機械の検算と人の査読の分担を正本化し、監査は adr_not_landed（決定が着地していない）・orphan・reverse_orphan_req_no_spec を挙げる。ただしこれらは事後の欠落検出であり、目的・対象損失の定義工程を経ずに実装へ入る運用そのものを止める門は索引に無い。工程順序と力量の担保は人の層に残る。",
       "recheck_trigger": "ADR-081 が置換され損失・ハザード層を採る決定に変わったとき、または reverse_orphan 系の検査が縮小されたとき。",
-      "gap": "上流に『対象損失』は置かれない（ADR-081 がハザード層を採らないため）",
-      "confidence": "medium",
-      "assigned_at": "2026-08-07T05:55:10Z",
-      "assigned_by": {
-        "model": "claude-opus-5",
-        "effort": "high",
-        "prompt_sha256": "ffc7cc4ac391a8df461da5b9830f349137bf0fe717f9b3e28631645550adc644",
-        "index_sha256": "f83e1a3e667e51e41dbb28fdb59b69da6545cb30b1425d24391c99efaf9ab8e2",
-        "git_sha": "1db2457bd084f9d278441184c742293845cc8535"
-      },
       "reassessments": [
         {
           "disposition": "対応計画あり",
@@ -2844,6 +2837,31 @@
             "prompt_sha256": "278a741cbdbea926b618e46c04c620dfbd79e0243a23b23b679d9d841b1b64cb",
             "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
             "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+          }
+        },
+        {
+          "disposition": "実装・試験・証拠あり",
+          "reason": "上流の欠落は機械が全件で挙げる。ADR-051 が変更フローの段数を『決定を含むか否か』で分け、監査は adr_not_landed（決定が着地していない）、reverse_orphan_req_no_spec / reverse_orphan_spec_no_test（上流から下流への欠落）、および ADR-008 の三条件の連言による orphan（上流を持たない文書）を SessionEnd と CI で検出する。検査は docs-audit.py に在り、計画は TEST-011、試験ファイルは test_audit.py に在る。ただし『対象損失』の層は ADR-081 が採らないと決めているため、上流に置かれるのは要求と決定であって損失ではない。",
+          "evidence": [
+            "ADR-051",
+            "adr_not_landed",
+            "reverse_orphan_req_no_spec",
+            "orphan",
+            "ADR-008",
+            "plugin/scripts/docs-audit.py",
+            "TEST-011",
+            "plugin/tests/test_audit.py",
+            "SessionEnd"
+          ],
+          "gap": "上流に『対象損失』は置かれない（ADR-081 がハザード層を採らないため）",
+          "confidence": "medium",
+          "assigned_at": "2026-08-07T05:55:10Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "ffc7cc4ac391a8df461da5b9830f349137bf0fe717f9b3e28631645550adc644",
+            "index_sha256": "f83e1a3e667e51e41dbb28fdb59b69da6545cb30b1425d24391c99efaf9ab8e2",
+            "git_sha": "1db2457bd084f9d278441184c742293845cc8535"
           }
         }
       ]
@@ -3177,30 +3195,9 @@
       "title": "解析は特定の設計解を前提とせず機能動作から始める",
       "category": "独立性",
       "source_lines": "L931-L931",
-      "disposition": "実装・試験・証拠あり",
-      "reason": "外部の道具への依存は正本の中で名指され、実在が機械で検められる。ADR-078 は Hook 事象の集合を数で凍らせず能力で検めると定め、特定実装の形に規範を縛らない。EXT-001（Claude Code の Hook 仕様とツール名）と EXT-004（CI 定義）は EXT 型のアンカーとして登録され（ADR-026）、ext_anchor_broken・source_drift・source_missing が出所の実在と乖離を挙げる（ADR-097）。ADR-054 は統治対象を言語ごとの手段に分けない。要求層（REQ）と実装層（IMPL）は型と置き場所で分離され、TYPE_LOCATION_MISMATCH が混在を咎める。なお『何が危険か』を起点とするハザード層自体は ADR-081 が採らないと決めている。",
-      "evidence": [
-        "ADR-078",
-        "EXT-001",
-        "EXT-004",
-        "ADR-026",
-        "ext_anchor_broken",
-        "source_drift",
-        "ADR-054",
-        "TYPE_LOCATION_MISMATCH",
-        "ADR-081"
-      ],
+      "disposition": "UNKNOWN",
+      "reason": "[独立の再判定と割れたため判定を取り下げた] 設計解に縛られないための決定は現に在る。ADR-078 は Hook 事象の集合を数で凍らせず能力で検めると定め、ADR-026／EXT-001 は外部ツール仕様とツール名への依存を EXT 型のアンカーとして体系の外に括り出し、ext_anchor_broken が錨の断裂を挙げる。ADR-015 は統治の対象を知識と決定の層に限る。しかし「規範文が実装語（特定ツールの選択肢名）に直結していないこと」を機械が判ずる検査は索引に無く、依存の隔離は人の著述規律に委ねられている。",
       "recheck_trigger": "ADR-078 が置換され Hook 事象の集合を数で固定する運用に戻ったとき、または EXT アンカーの検査が外れたとき。",
-      "gap": "",
-      "confidence": "medium",
-      "assigned_at": "2026-08-07T05:55:10Z",
-      "assigned_by": {
-        "model": "claude-opus-5",
-        "effort": "high",
-        "prompt_sha256": "ffc7cc4ac391a8df461da5b9830f349137bf0fe717f9b3e28631645550adc644",
-        "index_sha256": "f83e1a3e667e51e41dbb28fdb59b69da6545cb30b1425d24391c99efaf9ab8e2",
-        "git_sha": "1db2457bd084f9d278441184c742293845cc8535"
-      },
       "reassessments": [
         {
           "disposition": "対応計画あり",
@@ -3221,6 +3218,31 @@
             "prompt_sha256": "278a741cbdbea926b618e46c04c620dfbd79e0243a23b23b679d9d841b1b64cb",
             "index_sha256": "9e8b50a886f33305f5e3533760d0921de644fe4141c2a1cced863b6642c2e4e2",
             "git_sha": "f9a82bfb7244c3b3c7c6e6c9f4dbe328a4d476af"
+          }
+        },
+        {
+          "disposition": "実装・試験・証拠あり",
+          "reason": "外部の道具への依存は正本の中で名指され、実在が機械で検められる。ADR-078 は Hook 事象の集合を数で凍らせず能力で検めると定め、特定実装の形に規範を縛らない。EXT-001（Claude Code の Hook 仕様とツール名）と EXT-004（CI 定義）は EXT 型のアンカーとして登録され（ADR-026）、ext_anchor_broken・source_drift・source_missing が出所の実在と乖離を挙げる（ADR-097）。ADR-054 は統治対象を言語ごとの手段に分けない。要求層（REQ）と実装層（IMPL）は型と置き場所で分離され、TYPE_LOCATION_MISMATCH が混在を咎める。なお『何が危険か』を起点とするハザード層自体は ADR-081 が採らないと決めている。",
+          "evidence": [
+            "ADR-078",
+            "EXT-001",
+            "EXT-004",
+            "ADR-026",
+            "ext_anchor_broken",
+            "source_drift",
+            "ADR-054",
+            "TYPE_LOCATION_MISMATCH",
+            "ADR-081"
+          ],
+          "gap": "",
+          "confidence": "medium",
+          "assigned_at": "2026-08-07T05:55:10Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "ffc7cc4ac391a8df461da5b9830f349137bf0fe717f9b3e28631645550adc644",
+            "index_sha256": "f83e1a3e667e51e41dbb28fdb59b69da6545cb30b1425d24391c99efaf9ab8e2",
+            "git_sha": "1db2457bd084f9d278441184c742293845cc8535"
           }
         }
       ]

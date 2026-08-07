@@ -1,0 +1,38 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "reproduce-red",
+  "incident_id": null,
+  "subject": "抜取りの独立再判定の欠落（運転手順 §5 に走らせ手が無かった）",
+  "note": "事象ではなく、所有者の指示した検査に走らせ手が無かった形。事象 id を持たないので null と明記する（欄を空けない）。",
+  "generated_at": "2026-08-07T07:05:00Z",
+  "git_sha": "6e3e18f",
+  "phase": "before-fix",
+  "command": "python3 -m unittest assurance.tests.test_independent_recheck",
+  "returncode": 1,
+  "expect": "修正前に FAIL すること（最初から緑は再現と認めない）",
+  "procedure_order": "REPRODUCE_RED を FIX の前に実施した（六反復連続で順序を守れている）。",
+  "observed_failures": [
+    "ImportError: cannot import name 'independent_recheck' from 'harness' —— 運転手順 §5 が要求する抜取りの独立再判定に、走らせ手が存在しない"
+  ],
+  "why_this_is_a_gap": [
+    "運転手順 §5 は『束を回し終えたら無作為に 20〜30 件を独立に判定し直す』を課すが、これを走らせる口はレーンに無かった。",
+    "前反復（PR #244）で 122 件を再判定したが、その質は独立の照合を経ていない。速さで質が落ちていないかは測れていない。",
+    "宣言された検査に走らせ手が無い形は INC-021 と同型である。"
+  ],
+  "invariants_frozen": [
+    "抜取りは種を与えれば決定論（実時計を読まない。WATCH-001 第11項）",
+    "独立の判定に前の判定を渡さない（対象の一件ごとの記述に判定が混じらない）",
+    "不一致は判定を取り下げ、**未割当の** UNKNOWN へ戻す（assigned_at を落とす。落とさないと正本が拾わない。INC-006）",
+    "一致した項の判定を書き換えない（ADR-115）",
+    "一致率を帳簿の鍵に置かない（AI の一致は客観的証拠でない。運転手順 §4）"
+  ],
+  "my_own_error": {
+    "what": "最初に書いた独立性の試験が、プロンプト全体に五値の語が出ないことを求めていた。",
+    "why_wrong": "五値の語は採点規準の憲章に必ず出る。見るべきは対象の一件ごとの記述であって、憲章ではない。",
+    "fixed": "対象ブロックだけを切り出して照合する形に直した。組み立て関数の引数が原則と索引の二つだけであることも併せて凍結した。"
+  },
+  "measured_after": {
+    "tests": "test_independent_recheck 14 件が緑（レーン全体で 216 件。追加前は 202 件）",
+    "validate": "problems: []（新しい台帳の種別 recheck-*.json を宣言済み）"
+  }
+}
