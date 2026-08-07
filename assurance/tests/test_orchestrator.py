@@ -788,3 +788,130 @@ class AttackFreshnessPrecisionTest(unittest.TestCase):
             orig = getattr(orchestrator, attr)
             setattr(orchestrator, attr, value)
             self.addCleanup(setattr, orchestrator, attr, orig)
+
+
+class PriorityOrderTest(unittest.TestCase):
+    """次の行動の**並び**を凍結する（ADR-131）。
+
+    正本は「手で選ばない・先頭から着手する・飛ばさない」を定める（ADR-115、
+    運転手順 §1）。だから並びそのものが規範である —— 並びが誤っていると、
+    規律を守るほど本丸へ着かない。実際に APPLY_FINDINGS（推奨 177 件）が
+    MAP_COVERAGE（本丸の欠落 299 件）の前に立ち、推奨を消化しきるまで本丸へ
+    着かない形になっていた。
+
+    順の意味は「前提 → 前提の破れ → 測る対象 → 測る道具」である:
+      INGEST_NORMS      … 台帳が立たないと網羅は測れない（前提）
+      CAST_ANALYSIS     … なぜ見逃したかを残す装置（動かさない）
+      REVIEW_ASSUMPTION … 想定が破れれば下流の PASS が根拠を失う
+      MAP_COVERAGE      … 本丸（Doctrine 本体）の欠落
+      APPLY_FINDINGS    … 検証基盤の改善の推奨
+      ATTACK_EVALUATOR  … 評価器自身への攻撃
+    """
+
+    ORDER = ("INGEST_NORMS", "CAST_ANALYSIS", "REVIEW_ASSUMPTION",
+             "MAP_COVERAGE", "APPLY_FINDINGS", "ATTACK_EVALUATOR")
+
+    def test_order_is_frozen(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self._stub_all_firing(tmp)
+            actions = orchestrator.next_actions()
+            ranks = [self._rank(a) for a in actions]
+            self.assertEqual(ranks, sorted(ranks),
+                             "次の行動の並びが正本の優先順と違う:\n%s"
+                             % "\n".join(actions))
+
+    def test_coverage_outranks_findings(self):
+        """本丸の欠落は、検証基盤の推奨より先に来る。
+
+        検証基盤は本丸を測るための道具であって、道具の完成度が目的ではない
+        （ADR-131。所有者判断）。
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            self._stub_all_firing(tmp)
+            actions = orchestrator.next_actions()
+            cov = self._first(actions, "MAP_COVERAGE")
+            fnd = self._first(actions, "APPLY_FINDINGS")
+            self.assertLess(cov, fnd, actions)
+
+    def test_incident_analysis_stays_at_the_head(self):
+        """事象の分析は動かさない —— 先に立つのは CAST_ANALYSIS だけ。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            self._stub_all_firing(tmp)
+            actions = orchestrator.next_actions()
+            self.assertLess(self._first(actions, "CAST_ANALYSIS"),
+                            self._first(actions, "REVIEW_ASSUMPTION"), actions)
+            self.assertLess(self._first(actions, "CAST_ANALYSIS"),
+                            self._first(actions, "MAP_COVERAGE"), actions)
+
+    def test_every_nameable_state_has_a_rank(self):
+        """順位表に載らない状態を作らない。
+
+        載らない状態は「並びの中で自分の位置を主張できない」状態であり、
+        黙って末尾へ落ちる。ATTACK_EVALUATOR が5反復飛ばされたのと同じ形
+        （INC-012）。
+        """
+        for state in orchestrator.NAMEABLE_STATES:
+            self.assertIn(state, orchestrator.ACTION_PRIORITY, state)
+
+    def test_priority_matches_the_documented_order(self):
+        """コードの順位表が、この試験の凍結する並びと一致する。"""
+        ordered = sorted(orchestrator.ACTION_PRIORITY,
+                         key=lambda s: orchestrator.ACTION_PRIORITY[s])
+        self.assertEqual([s for s in ordered if s in self.ORDER],
+                         list(self.ORDER))
+
+    def _rank(self, action):
+        return orchestrator.ACTION_PRIORITY[action.split(":", 1)[0]]
+
+    def _first(self, actions, prefix):
+        for i, a in enumerate(actions):
+            if a.startswith(prefix):
+                return i
+        self.fail("%s が挙がっていない: %s" % (prefix, actions))
+
+    def _stub_all_firing(self, tmp):
+        """五種すべてが同時に鳴る帳簿を立てる。
+
+        並びは「どれか一つだけが鳴る」状況では測れない。同時に鳴らして初めて、
+        どちらが先かという問いが立つ。
+        """
+        ledger = os.path.join(tmp, "ledger")
+        os.makedirs(os.path.join(ledger, "cast"), exist_ok=True)
+        catalogs = os.path.join(tmp, "catalogs")
+        os.makedirs(catalogs, exist_ok=True)
+        for attr, value in (("CATALOG_DIR", catalogs),
+                            ("LANE_DIR", tmp),
+                            ("INCIDENTS_PATH", os.path.join(tmp, "inc.json")),
+                            ("ASSUMPTIONS_PATH", os.path.join(tmp, "asm.json"))):
+            orig = getattr(orchestrator, attr)
+            setattr(orchestrator, attr, value)
+            self.addCleanup(setattr, orchestrator, attr, orig)
+
+        # CAST_ANALYSIS: 分析待ちの事象。
+        with open(os.path.join(tmp, "inc.json"), "w", encoding="utf-8") as f:
+            json.dump({"incidents": [{"id": "INC-x", "cast_analysis": "pending"}]}, f)
+        # REVIEW_ASSUMPTION: 先行指標が一つも観測されていない想定。
+        with open(os.path.join(tmp, "asm.json"), "w", encoding="utf-8") as f:
+            json.dump({"assumptions": [{"id": "ASM-x",
+                                        "leading_indicators": [{"id": "LI-x"}]}]}, f)
+        # APPLY_FINDINGS: 処遇の付いていない推奨。
+        with open(os.path.join(ledger, "cast", "INC-x.json"),
+                  "w", encoding="utf-8") as f:
+            json.dump({"analysis": {"incident_id": "INC-x",
+                                    "recommendations": [
+                                        {"action": "a", "kind": "機構の変更",
+                                         "owner_decision_required": False}]}}, f)
+        # MAP_COVERAGE: 索引が動いた後の非終端の項（古い指紋を持たせる）。
+        # ATTACK_EVALUATOR: 故障注入の証拠を置かない（成果物の方が新しくなる）。
+        for book in ("jerg", "stpa", "cast"):
+            with open(os.path.join(catalogs, "%s-principles.json" % book),
+                      "w", encoding="utf-8") as f:
+                json.dump({"chunks": [], "principles": [],
+                           "totals": {"cost_usd": 0.0, "principles": 0,
+                                      "rejected": 0}}, f)
+            with open(os.path.join(catalogs, "%s-coverage.json" % book),
+                      "w", encoding="utf-8") as f:
+                json.dump({"entries": [
+                    {"key": "stale", "disposition": "対応計画あり",
+                     "assigned_at": "2026-08-05T00:00:00Z",
+                     "assigned_by": {"index_sha256": "0" * 64}}]}, f)

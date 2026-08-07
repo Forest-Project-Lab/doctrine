@@ -40,6 +40,12 @@ python3 -m unittest discover -s assurance/tests -v
 # オーケストレーションの現在地と次の行動（決定論。ADR-115）
 # next_actions は空にならない。台帳の骨組みが在ることは割当が済んだことではなく、
 # UNKNOWN が残る限り MAP_COVERAGE を挙げる（事象 INC-006）。
+#
+# 並びは append の順ではなく ACTION_PRIORITY の表が決める（ADR-131）。
+#   INGEST_NORMS → CAST_ANALYSIS → REVIEW_ASSUMPTION → MAP_COVERAGE
+#     → APPLY_FINDINGS → ATTACK_EVALUATOR → FORMALIZE / DISCOVER
+# 測る対象（本丸の欠落）を、測る道具（検証基盤の推奨）より前に置く。増え続ける
+# 推奨が、減るだけの欠落を押しのける形を禁ずる。表の書き換えは所有者判断。
 assurance/.venv/bin/python assurance/harness/orchestrator.py status
 assurance/.venv/bin/python assurance/harness/orchestrator.py validate
 
