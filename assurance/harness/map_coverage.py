@@ -56,8 +56,9 @@ def select_todo(entries, index_now, resolve):
     同じ判定不能を永久に買い直すことになる（INC-006）。
     """
     return [e for e in entries
-            if (e.get("disposition") == "UNKNOWN" and not e.get("assigned_at"))
-            or _stale(e, index_now, resolve)]
+            if not e.get("merged_into")  # 統合済みは作業として買わない(CURATE)
+            and ((e.get("disposition") == "UNKNOWN" and not e.get("assigned_at"))
+                 or _stale(e, index_now, resolve))]
 
 
 def push_reassessment(entry):

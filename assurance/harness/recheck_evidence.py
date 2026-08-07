@@ -70,6 +70,8 @@ def sweep(cov, idx, rubric):
                  "category_counts": idx.get("category_counts") or {}}
     moved = []
     for e in cov.get("entries", []):
+        if e.get("merged_into"):
+            continue  # 統合済みは掃かない(生き残りの項が正本。CURATE)
         if not e.get("assigned_at"):
             continue
         if e.get("disposition") == SETTLED_GREEN:
