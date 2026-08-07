@@ -172,12 +172,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "9412353bba9f02003a2834e32928082a9ab035643c2c88d1f4af02b639518154",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -186,7 +186,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -219,12 +219,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "9412353bba9f02003a2834e32928082a9ab035643c2c88d1f4af02b639518154",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -233,7 +233,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -269,12 +269,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "9412353bba9f02003a2834e32928082a9ab035643c2c88d1f4af02b639518154",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -283,7 +283,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -344,12 +344,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "9412353bba9f02003a2834e32928082a9ab035643c2c88d1f4af02b639518154",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -358,7 +358,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -394,12 +394,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "9412353bba9f02003a2834e32928082a9ab035643c2c88d1f4af02b639518154",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -408,7 +408,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -532,12 +532,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "9412353bba9f02003a2834e32928082a9ab035643c2c88d1f4af02b639518154",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -546,7 +546,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -832,12 +832,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "9412353bba9f02003a2834e32928082a9ab035643c2c88d1f4af02b639518154",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -846,7 +846,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -955,12 +955,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "9412353bba9f02003a2834e32928082a9ab035643c2c88d1f4af02b639518154",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -969,7 +969,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -1882,12 +1882,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "c2ca481c6a69351fd99121185fae5c86b99ebe5b59e05bb57846057ede8bd97e",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -1896,7 +1896,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -2234,12 +2234,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "c2ca481c6a69351fd99121185fae5c86b99ebe5b59e05bb57846057ede8bd97e",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -2248,7 +2248,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -2285,12 +2285,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "c2ca481c6a69351fd99121185fae5c86b99ebe5b59e05bb57846057ede8bd97e",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -2299,7 +2299,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -2338,12 +2338,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "c2ca481c6a69351fd99121185fae5c86b99ebe5b59e05bb57846057ede8bd97e",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -2352,7 +2352,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -2434,12 +2434,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "008ec3930df8cf3419638b720480ac85df24f861d8fe12324f4e8a777b2d7bc6",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -2448,7 +2448,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -2483,12 +2483,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "008ec3930df8cf3419638b720480ac85df24f861d8fe12324f4e8a777b2d7bc6",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -2497,7 +2497,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -2582,12 +2582,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "008ec3930df8cf3419638b720480ac85df24f861d8fe12324f4e8a777b2d7bc6",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -2596,7 +2596,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -2631,12 +2631,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "008ec3930df8cf3419638b720480ac85df24f861d8fe12324f4e8a777b2d7bc6",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -2645,7 +2645,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -2800,12 +2800,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "008ec3930df8cf3419638b720480ac85df24f861d8fe12324f4e8a777b2d7bc6",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -2814,7 +2814,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -2849,12 +2849,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "008ec3930df8cf3419638b720480ac85df24f861d8fe12324f4e8a777b2d7bc6",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -2863,7 +2863,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -2896,12 +2896,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "008ec3930df8cf3419638b720480ac85df24f861d8fe12324f4e8a777b2d7bc6",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -2910,7 +2910,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -3046,12 +3046,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "008ec3930df8cf3419638b720480ac85df24f861d8fe12324f4e8a777b2d7bc6",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -3060,7 +3060,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -3095,12 +3095,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "008ec3930df8cf3419638b720480ac85df24f861d8fe12324f4e8a777b2d7bc6",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -3109,7 +3109,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -3236,12 +3236,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "008ec3930df8cf3419638b720480ac85df24f861d8fe12324f4e8a777b2d7bc6",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -3250,7 +3250,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -3498,12 +3498,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "008ec3930df8cf3419638b720480ac85df24f861d8fe12324f4e8a777b2d7bc6",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -3512,7 +3512,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -3548,12 +3548,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "008ec3930df8cf3419638b720480ac85df24f861d8fe12324f4e8a777b2d7bc6",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -3562,7 +3562,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -3829,12 +3829,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "90d57c39de1ec4f37cd9376895e9f753d7aba24556d2df327f3e0425adcc95ef",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -3843,7 +3843,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -3956,12 +3956,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "90d57c39de1ec4f37cd9376895e9f753d7aba24556d2df327f3e0425adcc95ef",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -3970,7 +3970,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -4008,12 +4008,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "90d57c39de1ec4f37cd9376895e9f753d7aba24556d2df327f3e0425adcc95ef",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -4022,7 +4022,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -4228,12 +4228,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "90d57c39de1ec4f37cd9376895e9f753d7aba24556d2df327f3e0425adcc95ef",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -4242,7 +4242,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -4278,12 +4278,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "90d57c39de1ec4f37cd9376895e9f753d7aba24556d2df327f3e0425adcc95ef",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -4292,7 +4292,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -4418,12 +4418,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "90d57c39de1ec4f37cd9376895e9f753d7aba24556d2df327f3e0425adcc95ef",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -4432,7 +4432,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -4688,12 +4688,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "90d57c39de1ec4f37cd9376895e9f753d7aba24556d2df327f3e0425adcc95ef",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -4702,7 +4702,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -4786,12 +4786,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "06c40153299a761d6544a3e015b9466f706630684d403330b8b2517ec8127422",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -4800,7 +4800,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -4835,12 +4835,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "06c40153299a761d6544a3e015b9466f706630684d403330b8b2517ec8127422",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -4849,7 +4849,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -5510,12 +5510,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "06c40153299a761d6544a3e015b9466f706630684d403330b8b2517ec8127422",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -5524,7 +5524,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -5562,12 +5562,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "06c40153299a761d6544a3e015b9466f706630684d403330b8b2517ec8127422",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -5576,7 +5576,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -5691,12 +5691,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "06c40153299a761d6544a3e015b9466f706630684d403330b8b2517ec8127422",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -5705,7 +5705,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -5741,12 +5741,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "06c40153299a761d6544a3e015b9466f706630684d403330b8b2517ec8127422",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -5755,7 +5755,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -5792,12 +5792,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "06c40153299a761d6544a3e015b9466f706630684d403330b8b2517ec8127422",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -5806,7 +5806,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -5898,12 +5898,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "06c40153299a761d6544a3e015b9466f706630684d403330b8b2517ec8127422",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -5912,7 +5912,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -5951,12 +5951,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "06c40153299a761d6544a3e015b9466f706630684d403330b8b2517ec8127422",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -5965,7 +5965,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -6096,12 +6096,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "55ff6c58d4f2f8c0199c55af4d1c699e8ff8277d1b0e74eebf7387c76122b405",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -6110,7 +6110,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -6549,12 +6549,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "55ff6c58d4f2f8c0199c55af4d1c699e8ff8277d1b0e74eebf7387c76122b405",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -6563,7 +6563,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -6596,12 +6596,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "55ff6c58d4f2f8c0199c55af4d1c699e8ff8277d1b0e74eebf7387c76122b405",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -6610,7 +6610,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -6645,12 +6645,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "55ff6c58d4f2f8c0199c55af4d1c699e8ff8277d1b0e74eebf7387c76122b405",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -6659,7 +6659,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -6745,12 +6745,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "55ff6c58d4f2f8c0199c55af4d1c699e8ff8277d1b0e74eebf7387c76122b405",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -6759,7 +6759,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -6794,12 +6794,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "55ff6c58d4f2f8c0199c55af4d1c699e8ff8277d1b0e74eebf7387c76122b405",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -6808,7 +6808,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -6891,12 +6891,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "55ff6c58d4f2f8c0199c55af4d1c699e8ff8277d1b0e74eebf7387c76122b405",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -6905,7 +6905,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -6992,12 +6992,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "55ff6c58d4f2f8c0199c55af4d1c699e8ff8277d1b0e74eebf7387c76122b405",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -7006,7 +7006,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -7237,12 +7237,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "ea9f2071a67fb436724cf7d699109b15f7666e24621674ded023ff6f45b1f01f",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -7251,7 +7251,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -7328,12 +7328,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "ea9f2071a67fb436724cf7d699109b15f7666e24621674ded023ff6f45b1f01f",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -7342,7 +7342,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -7513,12 +7513,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "ea9f2071a67fb436724cf7d699109b15f7666e24621674ded023ff6f45b1f01f",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -7527,7 +7527,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -7606,12 +7606,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "ea9f2071a67fb436724cf7d699109b15f7666e24621674ded023ff6f45b1f01f",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -7620,7 +7620,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -7804,12 +7804,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "ea9f2071a67fb436724cf7d699109b15f7666e24621674ded023ff6f45b1f01f",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -7818,7 +7818,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -7931,12 +7931,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "ea9f2071a67fb436724cf7d699109b15f7666e24621674ded023ff6f45b1f01f",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -7945,7 +7945,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -8079,12 +8079,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "ea9f2071a67fb436724cf7d699109b15f7666e24621674ded023ff6f45b1f01f",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -8093,7 +8093,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -8128,12 +8128,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "ea9f2071a67fb436724cf7d699109b15f7666e24621674ded023ff6f45b1f01f",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -8142,7 +8142,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -8302,12 +8302,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "84f8f21016ca82a6a12ce47531ac266fa88b1b235973d1076466499a59713792",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "git_sha": "66faedf3e0f03105fee29aea7dc699c9b5be7ba8",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -8316,7 +8316,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -8372,12 +8372,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "330dffc56598605a97c50b1acf1a053a9e90fc0e40f766dfef62e8689b546c56",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -8386,7 +8386,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -8469,12 +8469,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "84f8f21016ca82a6a12ce47531ac266fa88b1b235973d1076466499a59713792",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "git_sha": "66faedf3e0f03105fee29aea7dc699c9b5be7ba8",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -8483,7 +8483,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -8539,12 +8539,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "330dffc56598605a97c50b1acf1a053a9e90fc0e40f766dfef62e8689b546c56",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -8553,7 +8553,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -8636,12 +8636,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "330dffc56598605a97c50b1acf1a053a9e90fc0e40f766dfef62e8689b546c56",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -8650,7 +8650,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -8684,12 +8684,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "330dffc56598605a97c50b1acf1a053a9e90fc0e40f766dfef62e8689b546c56",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -8698,7 +8698,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -8732,12 +8732,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "330dffc56598605a97c50b1acf1a053a9e90fc0e40f766dfef62e8689b546c56",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -8746,7 +8746,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -8875,12 +8875,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "330dffc56598605a97c50b1acf1a053a9e90fc0e40f766dfef62e8689b546c56",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -8889,7 +8889,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -8923,12 +8923,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "330dffc56598605a97c50b1acf1a053a9e90fc0e40f766dfef62e8689b546c56",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -8937,7 +8937,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -9021,12 +9021,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "330dffc56598605a97c50b1acf1a053a9e90fc0e40f766dfef62e8689b546c56",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -9035,7 +9035,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -9115,12 +9115,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "330dffc56598605a97c50b1acf1a053a9e90fc0e40f766dfef62e8689b546c56",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -9129,7 +9129,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -9189,12 +9189,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "330dffc56598605a97c50b1acf1a053a9e90fc0e40f766dfef62e8689b546c56",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -9203,7 +9203,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -9333,12 +9333,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "330dffc56598605a97c50b1acf1a053a9e90fc0e40f766dfef62e8689b546c56",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -9347,7 +9347,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -9460,12 +9460,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "330dffc56598605a97c50b1acf1a053a9e90fc0e40f766dfef62e8689b546c56",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -9474,7 +9474,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -9509,12 +9509,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "330dffc56598605a97c50b1acf1a053a9e90fc0e40f766dfef62e8689b546c56",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -9523,7 +9523,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -9613,12 +9613,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "fd40c0d2269d368e7ee2482ac100f9c3578ff8306efe0925c9f7e7402343074c",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -9627,7 +9627,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -9736,12 +9736,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "fd40c0d2269d368e7ee2482ac100f9c3578ff8306efe0925c9f7e7402343074c",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -9750,7 +9750,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -9785,12 +9785,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "fd40c0d2269d368e7ee2482ac100f9c3578ff8306efe0925c9f7e7402343074c",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -9799,7 +9799,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -9837,12 +9837,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "fd40c0d2269d368e7ee2482ac100f9c3578ff8306efe0925c9f7e7402343074c",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -9851,7 +9851,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -9889,12 +9889,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "fd40c0d2269d368e7ee2482ac100f9c3578ff8306efe0925c9f7e7402343074c",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -9903,7 +9903,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -9940,12 +9940,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "fd40c0d2269d368e7ee2482ac100f9c3578ff8306efe0925c9f7e7402343074c",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -9954,7 +9954,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -10196,12 +10196,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "fd40c0d2269d368e7ee2482ac100f9c3578ff8306efe0925c9f7e7402343074c",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -10210,7 +10210,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -10402,12 +10402,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "fd40c0d2269d368e7ee2482ac100f9c3578ff8306efe0925c9f7e7402343074c",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -10416,7 +10416,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -10455,12 +10455,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "fd40c0d2269d368e7ee2482ac100f9c3578ff8306efe0925c9f7e7402343074c",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -10469,7 +10469,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -10559,12 +10559,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "fd40c0d2269d368e7ee2482ac100f9c3578ff8306efe0925c9f7e7402343074c",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -10573,7 +10573,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -10611,12 +10611,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "fd40c0d2269d368e7ee2482ac100f9c3578ff8306efe0925c9f7e7402343074c",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -10625,7 +10625,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -10661,12 +10661,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "fd40c0d2269d368e7ee2482ac100f9c3578ff8306efe0925c9f7e7402343074c",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -10675,7 +10675,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -10766,12 +10766,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "fd40c0d2269d368e7ee2482ac100f9c3578ff8306efe0925c9f7e7402343074c",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -10780,7 +10780,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -10815,12 +10815,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "fd40c0d2269d368e7ee2482ac100f9c3578ff8306efe0925c9f7e7402343074c",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -10829,7 +10829,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -10914,12 +10914,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "a31d597e42d695f8b1767d3d09f6817461306ce417ef7c0b52f253dff6479379",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -10928,7 +10928,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -10963,12 +10963,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "a31d597e42d695f8b1767d3d09f6817461306ce417ef7c0b52f253dff6479379",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -10977,7 +10977,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -11309,12 +11309,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "a31d597e42d695f8b1767d3d09f6817461306ce417ef7c0b52f253dff6479379",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -11323,7 +11323,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -11592,12 +11592,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "a31d597e42d695f8b1767d3d09f6817461306ce417ef7c0b52f253dff6479379",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -11606,7 +11606,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -11641,12 +11641,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "a31d597e42d695f8b1767d3d09f6817461306ce417ef7c0b52f253dff6479379",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -11655,7 +11655,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -11691,12 +11691,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "a31d597e42d695f8b1767d3d09f6817461306ce417ef7c0b52f253dff6479379",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -11705,7 +11705,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -11739,12 +11739,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "a31d597e42d695f8b1767d3d09f6817461306ce417ef7c0b52f253dff6479379",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -11753,7 +11753,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -12031,12 +12031,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "352ee1fdd6f77ab83d1c133eca3612108ea4fe7b23367dc8b8e2abe97bc31e74",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -12045,7 +12045,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -12081,12 +12081,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "352ee1fdd6f77ab83d1c133eca3612108ea4fe7b23367dc8b8e2abe97bc31e74",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -12095,7 +12095,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -12179,12 +12179,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "352ee1fdd6f77ab83d1c133eca3612108ea4fe7b23367dc8b8e2abe97bc31e74",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -12193,7 +12193,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -12282,12 +12282,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "352ee1fdd6f77ab83d1c133eca3612108ea4fe7b23367dc8b8e2abe97bc31e74",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -12296,7 +12296,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -12490,12 +12490,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "352ee1fdd6f77ab83d1c133eca3612108ea4fe7b23367dc8b8e2abe97bc31e74",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -12504,7 +12504,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -12539,12 +12539,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "352ee1fdd6f77ab83d1c133eca3612108ea4fe7b23367dc8b8e2abe97bc31e74",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -12553,7 +12553,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -12591,12 +12591,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "352ee1fdd6f77ab83d1c133eca3612108ea4fe7b23367dc8b8e2abe97bc31e74",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -12605,7 +12605,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -12789,12 +12789,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "352ee1fdd6f77ab83d1c133eca3612108ea4fe7b23367dc8b8e2abe97bc31e74",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -12803,7 +12803,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -13054,12 +13054,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "352ee1fdd6f77ab83d1c133eca3612108ea4fe7b23367dc8b8e2abe97bc31e74",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -13068,7 +13068,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -13105,12 +13105,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "352ee1fdd6f77ab83d1c133eca3612108ea4fe7b23367dc8b8e2abe97bc31e74",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -13119,7 +13119,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -13254,12 +13254,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "1a40644f6b3eeb5b262847e4b2c2b22c90c14cc95da2eafd95c0613efc9738fa",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -13268,7 +13268,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -13328,12 +13328,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "1a40644f6b3eeb5b262847e4b2c2b22c90c14cc95da2eafd95c0613efc9738fa",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -13342,7 +13342,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -13375,12 +13375,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "1a40644f6b3eeb5b262847e4b2c2b22c90c14cc95da2eafd95c0613efc9738fa",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -13389,7 +13389,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -13476,12 +13476,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "1a40644f6b3eeb5b262847e4b2c2b22c90c14cc95da2eafd95c0613efc9738fa",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -13490,7 +13490,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -13652,12 +13652,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "1a40644f6b3eeb5b262847e4b2c2b22c90c14cc95da2eafd95c0613efc9738fa",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -13666,7 +13666,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -13702,12 +13702,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "1a40644f6b3eeb5b262847e4b2c2b22c90c14cc95da2eafd95c0613efc9738fa",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -13716,7 +13716,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -13752,12 +13752,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "1a40644f6b3eeb5b262847e4b2c2b22c90c14cc95da2eafd95c0613efc9738fa",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -13766,7 +13766,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -13961,12 +13961,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "1a40644f6b3eeb5b262847e4b2c2b22c90c14cc95da2eafd95c0613efc9738fa",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -13975,7 +13975,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -14113,12 +14113,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "1a40644f6b3eeb5b262847e4b2c2b22c90c14cc95da2eafd95c0613efc9738fa",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -14127,7 +14127,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -14162,12 +14162,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "1a40644f6b3eeb5b262847e4b2c2b22c90c14cc95da2eafd95c0613efc9738fa",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -14176,7 +14176,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -14465,12 +14465,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "7cfe6a7c5b4530bf2954954d02d646016960bbcf8e64c3c1ebb868f19ea3bf03",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -14479,7 +14479,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -14622,12 +14622,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "7cfe6a7c5b4530bf2954954d02d646016960bbcf8e64c3c1ebb868f19ea3bf03",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -14636,7 +14636,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -14892,12 +14892,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "7cfe6a7c5b4530bf2954954d02d646016960bbcf8e64c3c1ebb868f19ea3bf03",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -14906,7 +14906,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -15277,12 +15277,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "7cfe6a7c5b4530bf2954954d02d646016960bbcf8e64c3c1ebb868f19ea3bf03",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -15291,7 +15291,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -15330,12 +15330,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "7cfe6a7c5b4530bf2954954d02d646016960bbcf8e64c3c1ebb868f19ea3bf03",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -15344,7 +15344,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -15483,12 +15483,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "7cfe6a7c5b4530bf2954954d02d646016960bbcf8e64c3c1ebb868f19ea3bf03",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -15497,7 +15497,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -15533,12 +15533,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "7cfe6a7c5b4530bf2954954d02d646016960bbcf8e64c3c1ebb868f19ea3bf03",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -15547,7 +15547,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -15684,12 +15684,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "7648e63aff0bb78551651d501d06204f0e8206d8198366e852bd650d32998e32",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -15698,7 +15698,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -16019,12 +16019,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "7648e63aff0bb78551651d501d06204f0e8206d8198366e852bd650d32998e32",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -16033,7 +16033,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -16070,12 +16070,12 @@
         "model": "claude-opus-5",
         "effort": "high",
         "prompt_sha256": "7648e63aff0bb78551651d501d06204f0e8206d8198366e852bd650d32998e32",
-        "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d",
+        "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0",
         "git_sha": "1557d07f0211bbcdd26fab42ed5d183034bddcb3",
         "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
         "rechecked_deterministically": true,
         "category_sha256": {
-          "documents": "0b445e393356b56c3d7bcdd7b5dfb0c4cafd771164c74cc6c307c2a8756a8127",
+          "documents": "64f99d0bc1db8d1a9b3d43a83a82cca412b8dd0555dba5c9fe20807a8b708da0",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
           "scripts": "5aef45b12f68e80a3c27550f7f324b4a3ce3b6fe0211724207cc501584c1710a",
@@ -16084,7 +16084,7 @@
           "skills": "dcef5ac9366aabf19ffa1310bf1eb9962c62a07ab09e25ef0cd726342f6c2cce"
         },
         "category_counts": {
-          "documents": 256,
+          "documents": 257,
           "audit_checks": 40,
           "linter_codes": 23,
           "scripts": 28,
@@ -16198,5 +16198,5 @@
       ]
     }
   ],
-  "index_sha256": "01a379afa7f85b8ec4ee6640a044912ddba42b64c542fc76fe0c99a79fac937d"
+  "index_sha256": "c5b5584a46c2fc8f29a416d80172ca998ae4aae7fa99ebfeae1fc9b7ca8c7cc0"
 }
