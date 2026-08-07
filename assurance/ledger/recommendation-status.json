@@ -235,6 +235,26 @@
       "state": "landed",
       "evidence_ref": "plugin/scripts/policy-guard.py",
       "note": "調査完了。accepted → proposed の差し戻しは carve-out の**外**であり許されない（policy-guard.py の注記に『受理済みを下書きへ落として書き換える道は開かない』と明記、実装も status が proposed のときだけ本文編集を通す）。したがって不変性が往復遷移で迂回可能という残余リスクは**無い**。迂回口はファイル系の直接操作だけであり、それは NONGOAL-001 が既知の穴として明示している経路である。"
+    },
+    {
+      "incident_id": "INC-017-accepted-adr-born-red-is-unfixable",
+      "index": 1,
+      "state": "rejected",
+      "note": "所有者裁定 2026-08-07: 修復路は後継 ADR のみ。accepted→proposed の条件付き carve-out は作らない。可逆の差し戻しは不変性を往復遷移で迂回可能にする（INC-026 推奨#7 と同根）。WATCH-001 第13項。"
+    },
+    {
+      "incident_id": "INC-017-accepted-adr-born-red-is-unfixable",
+      "index": 7,
+      "state": "landed",
+      "evidence_ref": "doctrine_docs/_system/watchlist.md",
+      "note": "所有者裁定 2026-08-07 で対価を費用として受理。WATCH-001 第13項に恒久記録（緩和・carve-out 拡張・差し戻しのいずれも作らない）。"
+    },
+    {
+      "incident_id": "INC-026-accepted-adr-has-no-sanctioned-repair-path",
+      "index": 1,
+      "state": "landed",
+      "evidence_ref": "doctrine_docs/_system/watchlist.md",
+      "note": "三案のうち「何もしない（後継 ADR の道を維持）」を所有者が選択（2026-08-07）。WATCH-001 第13項に恒久記録。"
     }
   ]
 }

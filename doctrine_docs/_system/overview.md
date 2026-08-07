@@ -19,7 +19,7 @@ sources: []
 | GLOSSARY-001 | GLOSSARY | _system | 用語辞書の正本 |
 | DECIDED-001 | DECIDED | _system | 横断の確定方針（12事実） |
 | NONGOAL-001 | NONGOAL | _system | 横断のやらないこと（18項） |
-| WATCH-001 | WATCH | _system | 横断の退行監視（12項） |
+| WATCH-001 | WATCH | _system | 横断の退行監視（13項） |
 | REQ-000 | REQ | _system | この体系が解くこと（製品の粒度） |
 | ICD-005 | ICD | audit | audit のインターフェース（全件監査の境界） |
 | REQ-008 | REQ | audit | 最小性の監査（過剰と不足の両側を全件検出） |
