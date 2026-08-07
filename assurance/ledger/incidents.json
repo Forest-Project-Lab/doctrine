@@ -293,7 +293,12 @@
       ],
       "evidence": "policy-guard.py の _adr_change_is_carveout_only 周辺（『既存ADR %s は改変できません(status遷移とsuperseded_by付与のみ可)。』）と、その直前に出た docs-linter の BANNED_SYNONYM ERROR",
       "cast_analysis_ref": "assurance/ledger/cast/INC-017-accepted-adr-born-red-is-unfixable.json",
-      "cast_analyzed_at": "2026-08-06T08:53:11Z"
+      "cast_analyzed_at": "2026-08-06T08:53:11Z",
+      "cost_accepted": true,
+      "cost_accepted_by": "所有者裁定 2026-08-07（会話。WATCH-001 第13項に恒久記録）",
+      "owner_decision_2026-08-07": "所有者裁定 2026-08-07（会話）: 修復路は後継 ADR のみ（ADR-044 維持）。ガードの緩和・carve-out の拡張・accepted→proposed の差し戻しは作らない。誤字一つに後継 ADR を要する対価は費用として受理",
+      "next_step": "CLOSE（費用受理）。再開条件: 統制外経路（未追跡下書きの破棄）の使用が観測で増えること（推奨#8 の調査が持つ）",
+      "repair_path": "後継 ADR のみ（予防は PROC-001「proposed で起こす」と ADR-135 が持つ）"
     },
     {
       "id": "INC-018-audit-degrades-into-a-tree-finding",
@@ -480,7 +485,11 @@
         "doctrine_docs/packaging/decisions/ADR-134-staleness-is-scoped-to-what-the-judgement-cited.md"
       ],
       "cast_analysis_ref": "assurance/ledger/cast/INC-026-accepted-adr-has-no-sanctioned-repair-path.json",
-      "cast_analyzed_at": "2026-08-07T18:04:56Z"
+      "cast_analyzed_at": "2026-08-07T18:04:56Z",
+      "cost_accepted": true,
+      "cost_accepted_by": "所有者裁定 2026-08-07（会話。WATCH-001 第13項に恒久記録）",
+      "owner_decision_2026-08-07": "推奨#1 の三案（下書きを別状態／機械が赤にした箇所だけ許す／何もしない）のうち「何もしない（後継 ADR の道を維持）」を所有者が選択。所有者裁定 2026-08-07（会話）: 修復路は後継 ADR のみ（ADR-044 維持）。ガードの緩和・carve-out の拡張・accepted→proposed の差し戻しは作らない。誤字一つに後継 ADR を要する対価は費用として受理",
+      "next_step": "CLOSE（費用受理）。予防は PROC-001「ADR は proposed で起こす」とADR-135（節名袋小路の解消で born-red の主因を除去）が持つ"
     }
   ]
 }
