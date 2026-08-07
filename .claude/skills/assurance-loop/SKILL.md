@@ -151,6 +151,12 @@ python3 plugin/scripts/docs-audit.py --root doctrine_docs --json # 監査
 を `GH_TOKEN` に渡す。ネットワークは時折切れる。**切れたら再試行し、最終状態
 （`git status -sb` と `origin/main` との差分）を確かめてから報告する。**
 
+## 7.2 時限の許可（所有者 2026-08-07。ADR-145）
+
+ADR-145 の範囲で、反復分量の目安（評価セッション 10 本以内・60 分以内）の
+超過と、PAUSED の範囲（Lens Phase 2 / overlay / System Map）への変更を認める。
+期限はキャンペーン終了報告の merge まで。期限後この節は削除する。
+
 ## 8. 反復の終端と報告
 
 **一反復の単位**: `next_actions` の先頭に着手し、主題が一つ片づいた時点で門を緑にして

@@ -80,6 +80,11 @@ def seed_facts(limit_per_kind=8):
             for inc in json.load(f).get("incidents", [])[:limit_per_kind * 2]:
                 if inc.get("fixed") is True:
                     continue
+                # 受容済み（cost_accepted）の事象は種にしない（ADR-144）。
+                # 所有者が費用として受け入れた形を新しい仮説の種へ流すと、
+                # 裁定済みの選択肢を毎反復問い直す「消えない行動」になる。
+                if inc.get("cost_accepted"):
+                    continue
                 facts.append("未修正の事象 %s: %s"
                              % (inc.get("id"), (inc.get("summary") or "")[:180]))
     except (OSError, ValueError):

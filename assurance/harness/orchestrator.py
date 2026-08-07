@@ -144,6 +144,7 @@ def validate():
     problems.extend(_validate_assumptions())
     problems.extend(_validate_verify_refs())
     problems.extend(_validate_incident_evidence())
+    problems.extend(_validate_closure_vocabulary())
     return problems
 
 
@@ -189,6 +190,11 @@ def _validate_assumptions(path=None, incident_ids=None):
     空であること自体は欠陥ではない。欠陥なのは、欄が**無い**ことである
     （沈黙は理由ではない）。先行指標の二条件は ADR-117 と同じ形にし、
     観測を書くなら日付と状態語彙を必ず添えさせる。
+
+    機械の観測（observe_assumptions.py。ADR-144）は `observation_history` へ
+    追記だけを行う。履歴の各項は日付・状態語彙・観測者を持つこと。
+    `verified_by` は null か文字列のどちらか —— 埋めるのは独立の評価セッション
+    の実施であって、機械の観測ではない。
     """
     problems = []
     try:
@@ -207,6 +213,27 @@ def _validate_assumptions(path=None, incident_ids=None):
             problems.append(
                 "想定 %s に verified_by の欄が無い（検証者が居ないなら null と"
                 "明記すること。欄の不在は理由にならない）" % aid)
+        elif not (row["verified_by"] is None
+                  or isinstance(row["verified_by"], str)):
+            problems.append(
+                "想定 %s の verified_by は null か文字列であること"
+                "（検証の主体と方式を文で名指しする欄。ADR-144）" % aid)
+        for n, entry in enumerate(row.get("observation_history") or []):
+            if not isinstance(entry, dict):
+                problems.append(
+                    "想定 %s の観測履歴#%d が構造を持たない" % (aid, n))
+                continue
+            if not (entry.get("date") or "").strip():
+                problems.append(
+                    "想定 %s の観測履歴#%d に日付が無い" % (aid, n))
+            state = entry.get("state")
+            if state not in ASSUMPTION_STATES:
+                problems.append(
+                    "想定 %s の観測履歴#%d の状態 %r が語彙に無い（%s）"
+                    % (aid, n, state, "/".join(ASSUMPTION_STATES)))
+            if not (entry.get("observed_by") or "").strip():
+                problems.append(
+                    "想定 %s の観測履歴#%d に観測者が無い" % (aid, n))
         indicators = row.get("leading_indicators") or []
         if not indicators:
             problems.append("想定 %s に先行指標が無い" % aid)
@@ -379,7 +406,7 @@ LEDGER_KINDS = (
      "why_not_read": None},
     {"kind": "mutations-<日付>.json",
      "match": "mutations-*.json",
-     "read_by": ("attack_evidence_latest",),
+     "read_by": ("attack_evidence_latest", "unknown_aging"),
      "why_not_read": None},
     {"kind": "recommendation-status.json",
      "match": "recommendation-status.json",
@@ -415,6 +442,12 @@ LEDGER_KINDS = (
          ".gitignore 対象の実行時生成物であり、選別を経ていない。正本が読むのは"
          "選別済みの証拠（台帳直下）だけとする。ここを読むと、コミットされない"
          "手元の残骸で次の行動が変わる。"},
+    {"kind": "rulings/<日付>-<件名>.json",
+     "match": "rulings/*.json",
+     "read_by": (),
+     "why_not_read":
+         "所有者裁定の監査証跡。行動は ADR-145 と SKILL §7.2 が運ぶ。"
+         "正本の行動導出には使わない"},
     {"kind": "smoke-latest.json",
      "match": "smoke-latest.json",
      "read_by": (),
@@ -975,6 +1008,65 @@ def attack_evidence_latest():
     return _max_instant([v for v in seen if v])
 
 
+def unknown_aging():
+    """UNKNOWN（判定不能）に分類された失敗の滞留の集計（INC-003 推奨#3）。
+
+    数える範囲（経験則であって意味の判定ではない。過大に主張しない）:
+
+    - mutations-*.json の注入行のうち、observed_status か sdk_status が
+      UNKNOWN のもの。日付は記録の date を使う。
+    - incidents.json の行のうち、status_at_detection か next_step の文面に
+      UNKNOWN を含むもの。日付は行の date を使う。文面の含有で数えるのは、
+      事象の側に分類の構造化された欄が無いためである（欄が入ったらこの
+      経験則は置き換える）。
+
+    数え出すのは件数と最古の日付だけで、経過日数へは換算しない —— 実時計を
+    読まない（ADR-094 と同じ規律）ので、滞留の長さの解釈は読み手が今日の
+    日付と突き合わせて行う。UNKNOWN の件数ゼロを健全さと読まないこと
+    （ASM-004 の rejected_indicators に理由がある）。
+    """
+    dates = []
+    mut_count = 0
+    ledger = _ledger_dir()
+    if os.path.isdir(ledger):
+        for name in sorted(os.listdir(ledger)):
+            if not (name.startswith("mutations-") and name.endswith(".json")):
+                continue
+            try:
+                with open(os.path.join(ledger, name), encoding="utf-8") as f:
+                    doc = json.load(f)
+            except (OSError, ValueError):
+                continue
+            for run in doc.get("injections") or []:
+                if not isinstance(run, dict):
+                    continue
+                if "UNKNOWN" in (run.get("observed_status"),
+                                 run.get("sdk_status")):
+                    mut_count += 1
+                    if doc.get("date"):
+                        dates.append(doc["date"])
+    inc_count = 0
+    try:
+        incidents = load_incidents()
+    except (OSError, ValueError):
+        incidents = []
+    for inc in incidents:
+        if not isinstance(inc, dict):
+            continue
+        text = " ".join(str(inc.get(k) or "")
+                        for k in ("status_at_detection", "next_step"))
+        if "UNKNOWN" in text:
+            inc_count += 1
+            if inc.get("date"):
+                dates.append(inc["date"])
+    days = sorted(v[:10] for v in dates
+                  if isinstance(v, str) and len(v) >= 10)
+    return {"count": mut_count + inc_count,
+            "mutations": mut_count,
+            "incidents": inc_count,
+            "oldest": days[0] if days else None}
+
+
 _INDEX_SHA_CACHE = []
 
 
@@ -1339,6 +1431,47 @@ def _validate_incident_evidence(incidents=None, resolve=None):
     return problems
 
 
+def _validate_closure_vocabulary(incidents=None):
+    """事象のクローズの語彙の検査（ADR-144）。
+
+    受容（cost_accepted:true）は `cost_accepted_by` を必ず持つ —— 費用の
+    受け入れは裁定であり、裁定者の無い受容は根拠なき PASS と同じ形である。
+    fixed:true との両立は赤 —— 直ったなら受容は要らない（cost_accepted が
+    在って fixed の欄が無い形は、判らないものとして通す。赤にするのは明示の
+    矛盾だけ）。出荷（shipped:true）は `ship_ref` を必ず持つ —— 版番号は
+    複製の同一性を判定しない（INC-019）ので、shipped はリリース tag の存在・
+    `git merge-base --is-ancestor <修正 commit> <tag>`・ship_ref の三条件で
+    立てる（判定の手順は ADR-144 が持ち、ここで検めるのは記録の形だけ）。
+    """
+    problems = []
+    if incidents is None:
+        try:
+            incidents = load_incidents()
+        except (OSError, ValueError) as exc:
+            return ["事象の台帳が読めない: %s" % exc]
+    for inc in incidents:
+        if not isinstance(inc, dict):
+            continue
+        iid = inc.get("id") or "(id 無し)"
+        if inc.get("cost_accepted") is True:
+            if not (inc.get("cost_accepted_by") or "").strip():
+                problems.append(
+                    "事象 %s は cost_accepted:true だが cost_accepted_by が"
+                    "無い（誰の裁定で費用を受け入れたかを名指しすること。"
+                    "ADR-144）" % iid)
+            if inc.get("fixed") is True:
+                problems.append(
+                    "事象 %s が fixed:true と cost_accepted:true を両方持つ"
+                    "（直ったなら受容は要らない。どちらかへ倒すこと。ADR-144）"
+                    % iid)
+        if inc.get("shipped") is True and not (inc.get("ship_ref") or "").strip():
+            problems.append(
+                "事象 %s は shipped:true だが ship_ref が無い（shipped は"
+                "リリース tag の存在・ancestor 照合・ship_ref の三条件で"
+                "立てる。ADR-144）" % iid)
+    return problems
+
+
 # 想定の観測に使える状態語彙。運転手順 §5 の六語をそのまま使う。
 # 根拠なき PASS を書かせないための語彙であって、ここで語を増やさない。
 ASSUMPTION_STATES = (
@@ -1595,6 +1728,10 @@ def main(argv=None):
             # 新規仮説候補も、次の行動に挙がらないときは必ず数えて出す
             # （ADR-140。閾値未満の沈黙を「候補が無い」と読ませない）。
             "scenario_candidates": _candidate_summary(),
+            # UNKNOWN 分類の滞留も必ず数えて出す（INC-003 推奨#3）。件数と
+            # 最古の日付だけで、健全さの判定はしない —— 件数ゼロを健全さと
+            # 読む形は指標として成り立たない（ASM-004 の rejected_indicators）。
+            "unknown_aging": unknown_aging(),
         }, ensure_ascii=False, indent=2))
         return 0
     print("usage: orchestrator.py [status|validate]")

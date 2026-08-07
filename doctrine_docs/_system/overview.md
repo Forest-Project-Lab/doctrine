@@ -257,6 +257,8 @@ sources: []
 | ADR-141 | ADR | packaging | 事象は台帳へ積む時点で証拠の宣言を要し、正本の検査が機械で検める |
 | ADR-142 | ADR | packaging | 故障注入の記録は generated_at・findings・residual_risks・故障族を常に持つ |
 | ADR-143 | ADR | packaging | 網羅台帳の決定論の運びは正本の規則へ一本化する |
+| ADR-144 | ADR | packaging | 事象のクローズの語彙 — 受容は裁定者を持ち、出荷は三条件で立て、想定の観測は機械が追記する |
+| ADR-145 | ADR | packaging | 2026-08-07 の一括是正キャンペーンの権限記録 — 誰が・何を・いつまで認めたか |
 | CHANGE-001 | CHANGE | packaging | 導入済みプラグインの版の遅れを生存性として照合する |
 | CHANGE-002 | CHANGE | packaging | リリースの整合を CI の門で検める — 変更履歴の書き忘れを止める |
 | CHANGE-005 | CHANGE | packaging | 不具合の兆候を記録し、承認を経た issue 報告を促す |

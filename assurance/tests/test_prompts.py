@@ -66,5 +66,54 @@ class ErrorClassificationTest(unittest.TestCase):
             ("UNKNOWN", "UNASSESSED"))
 
 
+class MeasuredSurfaceFixtureTest(unittest.TestCase):
+    """実測の例外表面を fixture に固定し、classify_error の分類を凍結する
+    （INC-003 推奨#2）。
+
+    2026-08-04 の故障注入（assurance/ledger/mutations-2026-08-04.json の
+    M1/M3）の実測: 認証遮断（M1）と不正 model（M3）という異なる故障族が、
+    SDK 例外の表面では**同一文言**『Claude Code returned an error result:
+    success』になる。したがって二つの表面は今日、同じ分類（UNKNOWN）へ
+    落ちる。この試験はその事実を凍結する —— 同一分類は我々の分岐の欠陥では
+    なく、SDK の例外表面が族を運ばないためであり、区別の実装は SDK 表面の
+    側に阻まれている（ASM-004 が FAIL のまま監視する）。どちらかの分類が
+    変われば、表面か実装のどちらかが動いた合図であり、この凍結を見直す。
+    通信は要らない —— fixture は実測の写しである（ADR-129 で merge_gate に
+    採ったのと同じ形）。
+    """
+
+    # M1（認証遮断）と M3（不正 model）が返した、同一の不透明な文言。
+    MEASURED_OPAQUE = "Claude Code returned an error result: success"
+
+    def test_auth_refusal_surface_classifies_unknown(self):
+        """M1 の表面。認証を示す語が無いので UNASSESSED へ精密化できない。"""
+        self.assertEqual(
+            sdk_lane.classify_error("ProcessError", self.MEASURED_OPAQUE),
+            "UNKNOWN")
+
+    def test_the_two_families_collapse_to_one_classification(self):
+        """M1 と M3 の表面は同一文言 → 同一分類（実測の凍結）。"""
+        auth_surface = self.MEASURED_OPAQUE     # M1 認証遮断の実測
+        model_surface = self.MEASURED_OPAQUE    # M3 不正 model の実測（同一）
+        self.assertEqual(auth_surface, model_surface)
+        self.assertEqual(
+            sdk_lane.classify_error("ProcessError", auth_surface),
+            sdk_lane.classify_error("ProcessError", model_surface))
+
+    def test_result_error_path_classifies_the_same_wording_unknown(self):
+        """run_one_shot の is_error 経路（exc_name='ResultError'）でも同じ。"""
+        self.assertEqual(
+            sdk_lane.classify_error("ResultError", self.MEASURED_OPAQUE),
+            "UNKNOWN")
+
+    def test_distinguishable_auth_wording_still_precisifies(self):
+        """認証の語が載る表面だけは UNASSESSED へ精密化できる（縮退の分岐。
+        文言は供給側の都合で変わるので族の identity は担えない）。"""
+        self.assertEqual(
+            sdk_lane.classify_error("ProcessError",
+                                    "Invalid API key · Please run /login"),
+            "UNASSESSED")
+
+
 if __name__ == "__main__":
     unittest.main()
