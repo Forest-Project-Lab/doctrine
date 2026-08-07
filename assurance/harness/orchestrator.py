@@ -294,6 +294,38 @@ NAMEABLE_STATES = frozenset({
     "ATTACK_EVALUATOR", "FORMALIZE", "APPLY_FINDINGS", "REVIEW_ASSUMPTION",
 })
 
+# 名指しできる状態の優先順（ADR-131。所有者判断）。
+#
+# 正本は「手で選ばない・先頭から着手する・飛ばさない」を定める（ADR-115、
+# 運転手順 §1）。**だから並びそのものが規範である** —— 並びが誤っていると、
+# 規律を守る者ほど本丸へ着かない。かつては next_actions の append の順序が
+# 事実上の優先順だった。それは表に書かれておらず、試験も無く、段を足すたびに
+# 黙って変わる。実際 APPLY_FINDINGS（検証基盤の推奨 177 件）が MAP_COVERAGE
+# （本丸の欠落 299 件）の前に立ち、推奨を消化しきるまで本丸へ着かない形に
+# なっていた。
+#
+# 順の意味は「前提 → 前提の破れ → 測る対象 → 測る道具」である:
+#   INGEST_NORMS      カタログが無ければ網羅台帳が立たない（他のすべての前提）
+#   CAST_ANALYSIS     「なぜ見逃したか」を残す装置。動かさない
+#   REVIEW_ASSUMPTION 想定が破れれば、そこに寄りかかる下流の PASS が根拠を失う
+#   MAP_COVERAGE      本丸（Doctrine 本体）の欠落。**測る対象**
+#   APPLY_FINDINGS    検証基盤の改善の推奨。**測る道具**の完成度
+#   ATTACK_EVALUATOR  評価器自身への攻撃
+#   FORMALIZE/DISCOVER 上のどれも鳴らないときの既定の入口（INC-006）
+#
+# 検証基盤は本丸を測るための道具であって、道具の完成度が目的ではない。
+# 数の多い道具の推奨が、数の少ない本丸の欠落を永久に押しのける形を禁ずる。
+ACTION_PRIORITY = {
+    "INGEST_NORMS": 10,
+    "CAST_ANALYSIS": 20,
+    "REVIEW_ASSUMPTION": 30,
+    "MAP_COVERAGE": 40,
+    "APPLY_FINDINGS": 50,
+    "ATTACK_EVALUATOR": 60,
+    "FORMALIZE": 70,
+    "DISCOVER": 80,
+}
+
 # 反復の中の遷移。直前の成果物が在って初めて意味を持つので、帳簿だけからは
 # 名指しできない（DISCOVER が scenario を出して初めて CHALLENGE が立つ）。
 # ここに置くことは「名指ししない」ことの明示であって、やらなくてよいという
@@ -903,25 +935,38 @@ def assumption_backlog(path=None):
 
 
 def next_actions(index_sha=None):
-    """決定論の「次にやること」。judgement を挟まない導出。"""
+    """決定論の「次にやること」。judgement を挟まない導出。
+
+    並びは append の順ではなく ACTION_PRIORITY が決める（ADR-131）。append の
+    順を事実上の優先順にすると、段を足すたびに黙って変わり、どこにも書かれず、
+    試験も効かない。ここでは (優先順, 発生順) の対で安定に並べ替える —— 同じ
+    状態の中の順序（三冊の jerg→stpa→cast など）は発生順のまま保たれる。
+    """
     actions = []
+
+    def add(text):
+        # 状態名は必ず ACTION_PRIORITY に載っていること。載らない状態は
+        # 並びの中で自分の位置を主張できず、黙って末尾へ落ちる（INC-012 の形）。
+        state = text.split(":", 1)[0]
+        actions.append((ACTION_PRIORITY[state], len(actions), text))
+
     cats = catalog_status()
     for book_id in ("jerg", "stpa", "cast"):   # 抽出の順序の正本(ADR-115)
         st = cats[book_id]["status"]
         if st == "UNASSESSED":
-            actions.append("INGEST_NORMS: %s のカタログ抽出" % book_id)
+            add("INGEST_NORMS: %s のカタログ抽出" % book_id)
         elif st == "PARTIAL":
-            actions.append("INGEST_NORMS: %s の抽出再開" % book_id)
+            add("INGEST_NORMS: %s の抽出再開" % book_id)
     for inc in load_incidents():
         if inc.get("cast_analysis") in (None, "pending"):
-            actions.append("CAST_ANALYSIS: %s" % inc["id"])
+            add("CAST_ANALYSIS: %s" % inc["id"])
     # 想定は保証の前提であって成果物ではない。前提が破れていれば、その前提に
     # 寄りかかる下流の PASS はすべて根拠を失う。だから推奨の山より前に置く
     # （後ろに置くと 100 件超の推奨の陰に隠れ、ATTACK_EVALUATOR が5反復飛ばされた
     # のと同じ形になる。INC-012）。一段で片づけられる —— 観測するか、事象を
     # 立てるかのどちらかで消える。
     for row in assumption_backlog():
-        actions.append("REVIEW_ASSUMPTION: %s が%s（%s）"
+        add("REVIEW_ASSUMPTION: %s が%s（%s）"
                        % (row["id"], row["reason"], row["detail"]))
     # 事故分析の推奨は、terminal な処遇に至るまで次の行動に挙がり続ける（ADR-125）。
     # 先頭の一件だけを名指しし、残りの件数も必ず添える —— 短い行動列を「済んだ」と
@@ -932,7 +977,7 @@ def next_actions(index_sha=None):
         # まだ調べていない物を先に挙げる。見ていない山の中身は優先順を付けられない。
         examined, untouched = _split_pending(pending)
         head = (untouched or examined)[0]
-        actions.append(
+        add(
             "APPLY_FINDINGS: %s の推奨#%d（%s）「%s」／未調査 %d 件・"
             "調査済み未着手 %d 件・所有者判断待ち %d 件・処遇済み %d 件"
             % (head["incident_id"], head["index"], head["kind"],
@@ -945,18 +990,18 @@ def next_actions(index_sha=None):
             continue          # 抽出が済むまで台帳は立たない（上の行動が先）
         cov = covs[book_id]
         if cov["status"] == "UNASSESSED":
-            actions.append("MAP_COVERAGE: %s の台帳骨組みの生成" % book_id)
+            add("MAP_COVERAGE: %s の台帳骨組みの生成" % book_id)
         elif cov["status"] == "PARTIAL":
-            actions.append("MAP_COVERAGE: %s の未評価 %d/%d 件（判定不能 %d 件は割当済み）"
+            add("MAP_COVERAGE: %s の未評価 %d/%d 件（判定不能 %d 件は割当済み）"
                            % (book_id, cov["unmapped"], cov["total"],
                               cov["unknown"] - cov["unmapped"]))
         elif cov["status"] == "UNKNOWN":
-            actions.append("MAP_COVERAGE: %s の台帳が読めない（%s）"
+            add("MAP_COVERAGE: %s の台帳が読めない（%s）"
                            % (book_id, cov.get("reason")))
         # 索引が動いた後の非終端の項は、評価を買い直さないと解けない。
         # 終端の項の古びは数えるだけ（決定論の再照合で足りる。ADR-130）。
         if cov.get("stale_open"):
-            actions.append(
+            add(
                 "MAP_COVERAGE: %s の索引が動いた後で再判定していない %d 件"
                 "（終端の再照合待ちは別に %d 件）"
                 % (book_id, cov["stale_open"], cov.get("stale_settled") or 0))
@@ -966,7 +1011,7 @@ def next_actions(index_sha=None):
     latest_output = evaluator_outputs_latest()
     latest_attack = attack_evidence_latest()
     if latest_output and (latest_attack is None or latest_attack < latest_output):
-        actions.append(
+        add(
             "ATTACK_EVALUATOR: 評価器の成果物(%s)が故障注入の証拠(%s)より新しい"
             % (latest_output, latest_attack or "無し"))
 
@@ -976,14 +1021,16 @@ def next_actions(index_sha=None):
         scn = latest_scenarios()
         survivors = (scn or {}).get("survivors") or []
         if survivors:
-            actions.append(
+            add(
                 "FORMALIZE: 批判を生き残った候補 %d 件の定式化（%s の創出。%s）"
                 % (len(survivors), (scn or {}).get("date"),
                    ", ".join(survivors[:3])
                    + (" ほか" if len(survivors) > 3 else "")))
         else:
-            actions.append("DISCOVER: 新しい失敗仮説の創出（前提はすべて充足）")
-    return actions
+            add("DISCOVER: 新しい失敗仮説の創出（前提はすべて充足）")
+    # (優先順, 発生順) の対で安定に並べ替える。同じ状態の中の順序
+    # （三冊の jerg→stpa→cast など）は発生順のまま保たれる。
+    return [text for _, _, text in sorted(actions)]
 
 
 def _assumption_summary():

@@ -1,0 +1,50 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "reproduce-red",
+  "incident_id": null,
+  "subject": "ADR-131 次の行動の優先順",
+  "note": "事象ではなく所有者判断による優先順の変更。事象 id を持たないので null と明記する（欄を空けない）。",
+  "generated_at": "2026-08-07T05:55:00Z",
+  "git_sha": "924ddb4",
+  "phase": "before-fix",
+  "command": "python3 -m unittest assurance.tests.test_orchestrator.PriorityOrderTest",
+  "returncode": 1,
+  "expect": "修正前に FAIL すること（最初から緑は再現と認めない）",
+  "procedure_order": "REPRODUCE_RED を FIX の前に実施した（五反復連続で順序を守れている）。",
+  "observed_failures": [
+    "Ran 5 tests — FAILED (failures=1, errors=3)",
+    "AttributeError: module 'harness.orchestrator' has no attribute 'ACTION_PRIORITY'（優先順の表が存在しない。並びは append の順が事実上決めていた）",
+    "AssertionError: 3 not less than 2 —— MAP_COVERAGE が APPLY_FINDINGS の後ろに立つ"
+  ],
+  "red_evidence_detail": {
+    "actions_before_fix": [
+      "CAST_ANALYSIS: INC-x",
+      "REVIEW_ASSUMPTION: ASM-x が未観測（先行指標 1 件のどれも観測されていない）",
+      "APPLY_FINDINGS: INC-x の推奨#0（機構の変更）「a」／未調査 1 件",
+      "MAP_COVERAGE: jerg の索引が動いた後で再判定していない 1 件",
+      "MAP_COVERAGE: stpa の索引が動いた後で再判定していない 1 件",
+      "MAP_COVERAGE: cast の索引が動いた後で再判定していない 1 件",
+      "ATTACK_EVALUATOR: 評価器の成果物が故障注入の証拠より新しい"
+    ],
+    "defect": "APPLY_FINDINGS が index 2、MAP_COVERAGE が index 3。先頭から着手し飛ばさない規律（ADR-115）の下では、推奨を消化しきるまで本丸へ着かない。"
+  },
+  "field_measurement": {
+    "method": "実台帳に対する orchestrator.py status の next_actions",
+    "before": [
+      "0 APPLY_FINDINGS: INC-004-hyphen-token-undefined-term の推奨#0 ／未調査 169 件・調査済み未着手 18 件",
+      "1 MAP_COVERAGE: jerg 80 件",
+      "2 MAP_COVERAGE: stpa 42 件",
+      "3 MAP_COVERAGE: cast 177 件"
+    ],
+    "note": "本丸の欠落 299 件は、推奨 187 件の後ろに置かれていた。推奨は一件ずつしか処遇できず、かつ反復のたびに増える。"
+  },
+  "measured_after": {
+    "tests": "PriorityOrderTest 5 件が緑（レーン全体で 202 件。追加前は 197 件）",
+    "real_ledger": [
+      "0 MAP_COVERAGE: jerg の索引が動いた後で再判定していない 80 件",
+      "1 MAP_COVERAGE: stpa の索引が動いた後で再判定していない 42 件",
+      "2 MAP_COVERAGE: cast の索引が動いた後で再判定していない 177 件",
+      "3 APPLY_FINDINGS: INC-004-hyphen-token-undefined-term の推奨#0"
+    ]
+  }
+}
