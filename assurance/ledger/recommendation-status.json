@@ -221,6 +221,20 @@
       "state": "landed",
       "evidence_ref": "plugin/tests/test_termcheck_corpus.py",
       "note": "偽陽性コーパス試験を本体試験(CI_RELEASE_CHECK の実装は .github/workflows)へ追加した。守るのは例ではなく性質 ——『点検器が指摘した語は原文に単独の語として実在すること』。故障注入(_is_identifier_fragment を無効化＝INC-004 の修正を巻き戻す)で赤になり、復元で緑に戻ることを確かめた(baseline 0 / injected 2 / restored 0)。証拠は assurance/ledger/red/INC-004-rec0-false-positive-corpus.json"
+    },
+    {
+      "incident_id": "INC-026-accepted-adr-has-no-sanctioned-repair-path",
+      "index": 6,
+      "state": "landed",
+      "evidence_ref": "doctrine_docs/packaging/decisions/ADR-132-independent-recheck-reads-disagreements-not-agreement.md",
+      "note": "調査完了。ADR-132 の UNDEFINED_TERM 2 件（『AI』『UNKNOWN』）は現在も残り、受理済みのため是正不能である（linter を直に当てて確認）。滞留は実在する。他の文書種（PROC/NONGOAL/decided-facts）は ADR と違い不変性の対象ではないので同型の袋小路は生じない —— ガードが不変を課すのは ADR と status:archived の文書だけである。"
+    },
+    {
+      "incident_id": "INC-026-accepted-adr-has-no-sanctioned-repair-path",
+      "index": 7,
+      "state": "landed",
+      "evidence_ref": "plugin/scripts/policy-guard.py",
+      "note": "調査完了。accepted → proposed の差し戻しは carve-out の**外**であり許されない（policy-guard.py の注記に『受理済みを下書きへ落として書き換える道は開かない』と明記、実装も status が proposed のときだけ本文編集を通す）。したがって不変性が往復遷移で迂回可能という残余リスクは**無い**。迂回口はファイル系の直接操作だけであり、それは NONGOAL-001 が既知の穴として明示している経路である。"
     }
   ]
 }
