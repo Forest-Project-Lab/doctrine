@@ -1082,3 +1082,62 @@ class TestHookPayloadIsBounded(unittest.TestCase):
             sorted(offenders), [],
             "封筒を自前で読む Hook が在る(上限が落ちる。ADR-108): %r"
             % sorted(offenders))
+
+
+class TestGuardedImportsBindTheirName(unittest.TestCase):
+    """INC-007: モジュール階の `try: import X / except Exception` は、失敗側でも
+    X の名を必ず束縛する。
+
+    束縛しない形は「不活性に見える行の NameError」を後から生む唯一の潜在形
+    (現地報告 #208 の署名と同型)。助言層の退避 import はこの形しか許さない。
+    """
+
+    def _module_level_guarded_imports(self, tree):
+        """Yield (try_node, imported_names) for module-level Try nodes whose
+        body performs an import and whose handlers swallow the failure."""
+        for node in tree.body:
+            if not isinstance(node, ast.Try):
+                continue
+            imported = set()
+            for stmt in node.body:
+                if isinstance(stmt, ast.Import):
+                    for alias in stmt.names:
+                        imported.add(alias.asname or alias.name.split(".")[0])
+                elif isinstance(stmt, ast.ImportFrom):
+                    for alias in stmt.names:
+                        imported.add(alias.asname or alias.name)
+            if imported:
+                yield node, imported
+
+    def _handler_bound_names(self, handler):
+        bound = set()
+        for stmt in ast.walk(handler):
+            if isinstance(stmt, ast.Assign):
+                for tgt in stmt.targets:
+                    if isinstance(tgt, ast.Name):
+                        bound.add(tgt.id)
+            elif isinstance(stmt, (ast.Raise, ast.Return)):
+                # 再送出・早期 return は「後で使われない」ので束縛不要の逃げ道。
+                bound.add("__escapes__")
+        return bound
+
+    def test_module_level_guarded_imports_bind_in_except(self):
+        offenders = []
+        for path in _scripts_present():
+            src = open(path, encoding="utf-8").read()
+            tree = ast.parse(src)
+            for node, imported in self._module_level_guarded_imports(tree):
+                for handler in node.handlers:
+                    bound = self._handler_bound_names(handler)
+                    if "__escapes__" in bound:
+                        continue
+                    missing = imported - bound
+                    if missing:
+                        offenders.append(
+                            "%s:%d は %r を except 側で束縛しない"
+                            % (os.path.basename(path), node.lineno,
+                               sorted(missing)))
+        self.assertEqual(
+            offenders, [],
+            "守られた import が名を束縛しない(潜在 NameError。INC-007): %r"
+            % offenders)

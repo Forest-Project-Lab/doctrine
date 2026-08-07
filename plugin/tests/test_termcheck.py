@@ -700,3 +700,34 @@ class FileLineNumberTest(unittest.TestCase):
         pe = [f for f in fs if f.code == "GLOSSARY_PARSE_ERROR"]
         self.assertTrue(pe)
         self.assertIsNone(pe[0].line)
+
+
+class RegistryAbsenceTest(unittest.TestCase):
+    """INC-007: _registry の import が失敗しても _termcheck は落ちない。
+
+    失敗時は _registry_mod が None に束縛され、check() は NameError を出さずに
+    助言を返す(覆いは手書きの一覧と辞書由来の源だけへ退く)。subprocess で
+    import 失敗を実際に注入して検める(sys.modules に None を置くと
+    `import _registry` は ImportError になる)。
+    """
+
+    def test_inc007_registry_import_failure_binds_none_and_never_raises(self):
+        import subprocess
+        code = (
+            "import sys\n"
+            "sys.dont_write_bytecode = True\n"  # 配布物に生成物を残さない(ADR-075)
+            "sys.path.insert(0, %r)\n"
+            "sys.modules['_registry'] = None\n"
+            "import _termcheck as tc\n"
+            "assert tc._registry_mod is None, '_registry_mod が束縛されていない'\n"
+            "g = tc.load_glossary(None)\n"
+            "fs = tc.check('# x\\n\\n## \\u5165\\u51fa\\u529b\\n\\n\\u672c\\u6587\\u3002\\n',"
+            " {'type': 'SPEC'}, g)\n"
+            "assert isinstance(fs, list)\n"
+            "print('OK', len(fs))\n"
+        ) % _util.SCRIPTS
+        out = subprocess.run([sys.executable, "-c", code],
+                             capture_output=True, text=True)
+        self.assertEqual(out.returncode, 0,
+                         "registry 不在で落ちた:\n%s" % out.stderr)
+        self.assertTrue(out.stdout.startswith("OK"), out.stdout)

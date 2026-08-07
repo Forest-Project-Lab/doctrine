@@ -109,12 +109,14 @@
       "status_at_detection": "未再現。現行 0.10.0 の同ファイルは大きく変わっており、行 470 は対応しない",
       "fixed": false,
       "cast_analysis": "done",
-      "next_step": "REPRODUCE_RED。再現できなければ UNKNOWN として RECORD へ落とし、実装へ進まない(ADR-115)",
+      "next_step": "RECORD 済み(ADR-115。再現不能は UNKNOWN、実装へ進まない)。再開条件: 同種報告の追加・現行版での再発・再現手順の判明のいずれか",
       "why_ledger_missed_hypothesis": "事象台帳の入口が本キャンペーンの発見だけで、外部から届いた失敗(issue)を取り込む経路が無い。門の外で起きた失敗は保証の視野に入らない",
       "evidence": "https://github.com/Forest-Project-Lab/doctrine/issues/208",
       "cast_analysis_ref": "assurance/ledger/cast/INC-007-linter-nameerror-field-report.json",
       "cast_analyzed_at": "2026-08-05T08:05:42Z",
-      "evidence_kind": "external"
+      "evidence_kind": "external",
+      "reproduce_attempt_2026-08-07": "REPRODUCE_RED を実施。0.8.0 期の全改訂(ceabf15〜f0e5b22)で行 470 は不活性(break/for/return)であり、その行で NameError を再現できない。導入複製が公開改訂と一致しない可能性(INC-019 と同根)は排除できない。現行複製で『不活性に見える行の NameError』を生み得る唯一の潜在形(守られた import が失敗時に名を束縛しない)を全スクリプトで監査し、束縛する形へ固めた(test_meta.py TestGuardedImportsBindTheirName で凍結)。現地の根本原因は UNKNOWN のまま",
+      "hardening_ref": "plugin/tests/test_meta.py TestGuardedImportsBindTheirName / plugin/tests/test_termcheck.py RegistryAbsenceTest"
     },
     {
       "id": "INC-008-ledger-write-back-clobber",

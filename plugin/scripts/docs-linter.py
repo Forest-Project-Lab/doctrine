@@ -8,7 +8,7 @@
   型↔置き場所・llm_context・SPEC 4節・用語・前向き追跡性・ICD依存(事後検出)を出す。
 - 委ねる: 全件走査(参照整合・孤児・逆孤児・正本衝突・投影ドリフト・review_by超過)は
   監査に委ねる。拒否(不変・削除安全・ICD依存の事前拒否)はガードに委ねる。
-  ドメイン解決(IDだけでは決まらない, §3.4)は dep-graph(_depgraph)に委ねる。
+  ドメイン解決(IDだけでは決まらない, §3.4)は dep-graph に委ねる。
 
 入力は PostToolUse の Hook JSON(stdin)。出力は §3.3 の助言 JSON か空。終了コードは常に 0。
 標準ライブラリのみ。pip も通信も使わない。一つのファイルだけを読む(全件走査しない)。
@@ -30,11 +30,6 @@ import _frontmatter
 import _intake
 import _registry
 import _termcheck
-
-try:  # _depgraph is a Level-3 core; degrade gracefully if unavailable.
-    import _depgraph
-except Exception:  # pragma: no cover - defensive; never break the hook chain.
-    _depgraph = None
 
 
 # ---------------------------------------------------------------------------
