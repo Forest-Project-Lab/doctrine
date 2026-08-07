@@ -6,7 +6,7 @@ domain: _system
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-08-05
+updated: 2026-08-07
 sources: [spec/doctrine.ja.md]
 review_by: 2026-09-28
 llm_context: always
@@ -19,7 +19,7 @@ llm_context: always
 ## 戻してはならない事項
 
 1. PostToolUse（編集後に起動するHook）で削除してよいかを、編集後の状態だけを見て決めてはならない。`_invert_edits` で編集前の全文を復元し、編集前から編集後への遷移で判じる。これは `plugin/scripts/policy-guard.py` の `_handle_post_edit` と `_post_delete_safety`（`_reconstruct_pre_edit_state`・`_invert_edits`）が担う。根拠: ADR-004。
-2. 用語チェッカーは、長い語に含まれる部分文字列を禁止同義語と取り違えてはならない。承認複合語『入出力』の一部を投影（モデルから描画した派生表示）の禁止同義語と読む取り違えに加え、**本プラグインの雛形が定める節見出しの語『選択肢』も同じく覆う**（ADR の構成「背景・却下した選択肢・決定・帰結」が使う語。前半を禁止同義語に持つ体系では雛形どおりの ADR が全て咎められていた。ADR-082）。`plugin/scripts/_termcheck.py` の `_mask_approved_compounds` が、長さを保ったまま覆って取り違えを防ぐ。覆いへ加えてよいのは本プラグインの雛形・仕様が定める語だけである。加えて、ASCII（英数字だけの文字集合）純字の同義語には ASCII の語境界を要求する（`VERIFY` の内部に `IF` を読む取り違えの実測 2026-08-04。同ファイルの `_find_ascii_word`）。英単語を覆いへ足す形で対処してはならない —— 覆いの原則が崩れる。**同じ取り違えは未定義語の判定でも起きる**: 約物で綴じた識別子（`INC-005`・`NOT-APPLICABLE`・`SHA-256`・`v0.7.0`）の前半・後半を、単独の未定義略語と読んではならない（実測 2026-08-05。ハイフンが事象 INC-004、ドットが INC-011。**同じ類型が一日のうちに二度出た**）。綴じた識別子は全体としてしか判じない（同ファイルの `_is_identifier_fragment`）。**接着する約物は事例ではなく軸として持つ** —— 正本は同ファイルの `_GLUE` の一行で、足すときは先に `test_identifier_glue_axis_is_covered` の行を足す。一つずつ事例を潰す形へ戻してはならない（それが三例目を生んだ）。ここに無い約物は従来どおり語の境目であり、緩和をこれ以上広げてはならない。
+2. 用語チェッカーは、長い語に含まれる部分文字列を禁止同義語と取り違えてはならない。承認複合語『入出力』の一部を投影（モデルから描画した派生表示）の禁止同義語と読む取り違えに加え、**本プラグインの雛形が定める節見出しの語『選択肢』も同じく覆う**（ADR の構成「背景・却下した選択肢・決定・帰結」が使う語。前半を禁止同義語に持つ体系では雛形どおりの ADR が全て咎められていた。ADR-082）。`plugin/scripts/_termcheck.py` の `_mask_approved_compounds` が、長さを保ったまま覆って取り違えを防ぐ。覆いへ加えてよいのは本プラグインの雛形・仕様が定める語だけである。必須節の完全な名の覆いは登録簿 `REQUIRED_SECTIONS` から機械的に導く（ADR-135。#197 で手写しの一覧が『影響するテスト』『エラー時挙動』を取りこぼした）。**節名を手で一つずつ足す形へ戻してはならない。**加えて、ASCII（英数字だけの文字集合）純字の同義語には ASCII の語境界を要求する（`VERIFY` の内部に `IF` を読む取り違えの実測 2026-08-04。同ファイルの `_find_ascii_word`）。英単語を覆いへ足す形で対処してはならない —— 覆いの原則が崩れる。**同じ取り違えは未定義語の判定でも起きる**: 約物で綴じた識別子（`INC-005`・`NOT-APPLICABLE`・`SHA-256`・`v0.7.0`）の前半・後半を、単独の未定義略語と読んではならない（実測 2026-08-05。ハイフンが事象 INC-004、ドットが INC-011。**同じ類型が一日のうちに二度出た**）。綴じた識別子は全体としてしか判じない（同ファイルの `_is_identifier_fragment`）。**接着する約物は事例ではなく軸として持つ** —— 正本は同ファイルの `_GLUE` の一行で、足すときは先に `test_identifier_glue_axis_is_covered` の行を足す。一つずつ事例を潰す形へ戻してはならない（それが三例目を生んだ）。ここに無い約物は従来どおり語の境目であり、緩和をこれ以上広げてはならない。
 3. 用語チェッカーの承認辞書を、モジュールの中で二重定義してはならない。`plugin/scripts/_termcheck.py` の `load_glossary`／`parse_glossary` が、GLOSSARY 正本（または同梱テンプレート）から読み込む。
 4. リンタ（`plugin/scripts/docs-linter.py`）は、decision／permissionDecision を出してはならない。助言（additionalContext）だけを返し、拒否はガードに委ねる。
 5. リンタ（`plugin/scripts/docs-linter.py`）は、監査が『非文書／投影／ビュー』と認めたファイル、および統治木の根に到達できない体系外のファイルに、schema/frontmatter の ERROR（`MISSING_FRONTMATTER` ほか）を出してはならない（ビューの刻印の欠落も警告の助言まで。ADR-073）。判定の前に統治木を探し、intake の読み取りは監査と共有する `plugin/scripts/_intake.py` を使う。監査（全体を見る）とリンタ（一件を見る）の判定が食い違わないことは、リポジトリ直下の `scripts/consistency-check.py`（SPEC-023。配布物の `plugin/scripts/` とは別の場所）が守る。根拠: ADR-024。

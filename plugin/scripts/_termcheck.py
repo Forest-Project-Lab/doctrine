@@ -542,7 +542,28 @@ def _to_file_lines(findings, body_start_line):
 # 持つ)では、雛形どおりに書いた ADR が全て咎められていた。『入出力』と同じ扱いにする
 # (ADR-082)。覆いへ加えてよいのは本プラグインの雛形・仕様が使うよう定めている語だけで、
 # 利用者の文章に出てくる普通の語をこちらの都合で覆わない。
+# 節見出しの完全な名は ADR-135 で登録簿(_registry.REQUIRED_SECTIONS)から機械的に
+# 導く。この一覧に残るのは登録簿が知らない雛形語彙だけである(『現在形』は API の
+# 文体指示、『レビュー』『記述漏れ』は禁止部分文字列と衝突する普通語、『選択肢』は
+# 節名の断片で単独の出現も雛形の列挙が使う。『入出力』は節名でもあり重複だが無害)。
 _APPROVED_COMPOUNDS = ("入出力", "現在形", "レビュー", "記述漏れ", "選択肢")
+
+
+def _registry_section_names():
+    """登録簿の必須節の完全な名(全型)。登録簿が無ければ空へ退く(助言層)。
+
+    節名の正本は登録簿であり、書き手は言い換えられない(#197)。言い換えられない
+    ものを禁止同義語の照合に掛けない —— 登録簿が節名を増減しても覆いが自動で
+    追随する(ADR-135。手写しの一覧は取りこぼす。『影響するテスト』『エラー時挙動』
+    が実測で素通しだった)。
+    """
+    if _registry_mod is None:
+        return ()
+    try:
+        secs = getattr(_registry_mod, "REQUIRED_SECTIONS", {}) or {}
+        return tuple(n for names in secs.values() for n in names)
+    except Exception:
+        return ()
 
 
 def _mask_approved_compounds(masked, glossary=None):
@@ -551,8 +572,11 @@ def _mask_approved_compounds(masked, glossary=None):
     legitimate longer token is not flagged, while a standalone synonym in
     prose still matches. (#03/#09)
 
-    Three sources, longest-first so overlapping tokens mask cleanly:
+    Four sources, longest-first so overlapping tokens mask cleanly:
     - _APPROVED_COMPOUNDS: spec-mandated compounds (§3.2/付録B).
+    - _registry_section_names(): the registry's required-section names for
+      every type (ADR-135) — writers cannot rephrase them, so no user
+      glossary may make them unwritable (#197 deadlock).
     - glossary.proper_nouns: 固有名 rows (§1 / ADR-017・ADR-018) — official
       external names registered to be EXCLUDED from banned-synonym matching.
     - glossary.approved_terms that strictly contain a banned synonym: the
@@ -561,6 +585,7 @@ def _mask_approved_compounds(masked, glossary=None):
       exempt it without touching this code.
     """
     tokens = set(_APPROVED_COMPOUNDS)
+    tokens.update(_registry_section_names())
     if glossary is not None:
         tokens.update(t for t in glossary.proper_nouns if t)
         banned = [syn for syn, _a in glossary.banned_synonyms]

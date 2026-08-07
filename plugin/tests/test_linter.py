@@ -1282,6 +1282,33 @@ class GeneralSectionCheckTest(_Base):
         codes, _ = self._codes(p)
         self.assertNotIn("MISSING_SECTION", codes)
 
+    def test_issue197_no_deadlock_between_sections_and_glossary(self):
+        """#197 / ADR-135: 節名を禁じる辞書の下でも袋小路にならない。
+
+        『テスト→試験』を禁じる辞書で、雛形どおりの IMPACT は
+        BANNED_SYNONYM も MISSING_SECTION も出ない。節を消せば
+        MISSING_SECTION だけが出る(どちらを書いても ERROR の対が消える)。
+        """
+        tmpl = _util.read(os.path.join(_util.TEMPLATES, "glossary.md.tmpl"))
+        extended = tmpl.replace(
+            "| 文書 | 管理対象の最小単位",
+            "| 試験 | 検証の実行 | テスト |\n| 文書 | 管理対象の最小単位")
+        gpath = os.path.join(self.root, "docs", "_system", "glossary.md")
+        os.makedirs(os.path.dirname(gpath), exist_ok=True)
+        with open(gpath, "w", encoding="utf-8") as f:
+            f.write(extended)
+        full = ("## 影響する文書\nx\n## 影響する実装\ny\n"
+                "## 影響するテスト\nz\n## 工数見積\nw\n")
+        p = self._write_typed("IMPACT", full, "decisions", "IMPACT-9-x.md")
+        codes, ctx = self._codes(p)
+        self.assertNotIn("BANNED_SYNONYM", codes, ctx)
+        self.assertNotIn("MISSING_SECTION", codes, ctx)
+        without = ("## 影響する文書\nx\n## 影響する実装\ny\n## 工数見積\nw\n")
+        p2 = self._write_typed("IMPACT", without, "decisions", "IMPACT-8-y.md")
+        codes2, _ = self._codes(p2)
+        self.assertIn("MISSING_SECTION", codes2)
+        self.assertNotIn("BANNED_SYNONYM", codes2)
+
     def test_message_names_the_type(self):
         """SPEC 専用だった時代の文言を残さない。型を名指す。"""
         p = self._write_typed("ADR", "## 背景\nx\n## 決定\ny\n## 帰結\nz\n",
