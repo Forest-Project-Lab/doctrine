@@ -1,11 +1,11 @@
 # doctrine:exempt 受入の対応は TEST 文書の sources が持つ。コード側と二重に結ばない(ADR-067)
-"""Validate all 7 skills against the §4.1 / 仕様 §7 contract.
+"""Validate every distribution skill against the §4.1 / 仕様 §7 contract.
 
 Reads every plugin/skills/<name>/SKILL.md from disk at suite time and checks the
 frozen properties that hold for ALL skills (not just the three this component
 authors — the suite is the single gate for the skill set):
 
-  - the 7 required skill directories exist, each with a SKILL.md;
+  - the required skill directories (SKILL_NAMES) exist, each with a SKILL.md;
   - each SKILL.md has a non-empty, third-person `description` in frontmatter;
   - the description matches the 仕様 §7 verbatim trigger string — asserted by
     requiring the distinctive trigger phrases of that skill to be present;
@@ -32,7 +32,8 @@ tc = _util.load_core("_termcheck")
 
 SKILLS_DIR = os.path.join(_util.PLUGIN_ROOT, "skills")
 
-# The 7 skills are fixed (§4.1: "Skillは7つに限る").
+# The skill list is canonical in SPEC-016 / §4.1; it changes only by
+# replacing the grounding ADR (ADR-136 added system-map-draft).
 SKILL_NAMES = (
     "docs-system-init",
     "doc-author",
@@ -41,6 +42,7 @@ SKILL_NAMES = (
     "regression-guard",
     "llm-context-pack",
     "docs-curate",
+    "system-map-draft",
 )
 
 # Distinctive verbatim fragments from the 仕様 §7 frozen description strings.
@@ -112,6 +114,10 @@ TRIGGER_FRAGMENTS = {
         '"shrink the always-set"',
         "定例整理",
     ],
+    "system-map-draft": [
+        '"draft a system map"',
+        "意味モデルの下書き",
+    ],
 }
 
 
@@ -128,12 +134,12 @@ def _load(name):
 
 
 class SkillExistenceTest(unittest.TestCase):
-    """7 skill dirs exist, each with a SKILL.md (§4.1, 仕様 §9 inventory)."""
+    """All SKILL_NAMES dirs exist, each with a SKILL.md (§4.1, 仕様 §9 inventory)."""
 
     def test_skills_dir_exists(self):
         self.assertTrue(os.path.isdir(SKILLS_DIR), "plugin/skills/ must exist")
 
-    def test_exactly_the_seven_skills_present(self):
+    def test_exactly_the_listed_skills_present(self):
         for name in SKILL_NAMES:
             with self.subTest(skill=name):
                 d = os.path.join(SKILLS_DIR, name)
@@ -142,7 +148,7 @@ class SkillExistenceTest(unittest.TestCase):
                                 "missing SKILL.md for: %s" % name)
 
     def test_no_unexpected_skill_dirs(self):
-        """The set is fixed at 7 — no extra (e.g. a separate ICD) skill."""
+        """The set is exactly SKILL_NAMES — no extra (e.g. a separate ICD) skill."""
         if not os.path.isdir(SKILLS_DIR):
             self.skipTest("skills/ not present yet")
         present = {
@@ -150,7 +156,7 @@ class SkillExistenceTest(unittest.TestCase):
             if os.path.isdir(os.path.join(SKILLS_DIR, n)) and not n.startswith(".")
         }
         self.assertEqual(present, set(SKILL_NAMES),
-                         "skill set must be exactly the 7 (§4.1)")
+                         "skill set must be exactly SKILL_NAMES (§4.1 / SPEC-016)")
 
 
 class SkillFrontmatterTest(unittest.TestCase):
@@ -166,10 +172,13 @@ class SkillFrontmatterTest(unittest.TestCase):
                 self.assertTrue(desc.strip(), "%s: description must be non-empty" % name)
 
     def test_description_is_third_person(self):
-        """§4.1: descriptionは三人称で書く. The §7 strings open with a third-person
-        present-tense verb (Sets/Creates/Reviews/Runs/Guards/Builds/Curates)."""
+        """§4.1: descriptionは三人称で書く. The English §7 strings open with a
+        third-person present-tense verb (Sets/Creates/Reviews/Runs/Guards/
+        Builds/Curates); the Japanese description (system-map-draft, ADR-136)
+        opens with its object phrase 対象リポジトリから and carries the
+        plain-form verb 起草する."""
         openers = ("Sets ", "Creates ", "Reviews ", "Runs ", "Guards ",
-                   "Builds ", "Curates ")
+                   "Builds ", "Curates ", "対象リポジトリから")
         for name in SKILL_NAMES:
             with self.subTest(skill=name):
                 _text, meta, _body = _load(name)
@@ -270,7 +279,7 @@ class SkillTermCheckTest(unittest.TestCase):
 
 
 class AllSkillReferencesTermCheckTest(unittest.TestCase):
-    """Dogfooding (§1/R6), full coverage: the references/*.md of ALL 7 skills
+    """Dogfooding (§1/R6), full coverage: the references/*.md of ALL skills
     pass term-check with NO ERROR-severity finding.
 
     test_skills_authoring.py only dogfoods the 4 'owned' skills' reference
@@ -293,7 +302,7 @@ class AllSkillReferencesTermCheckTest(unittest.TestCase):
             refs_dir = os.path.join(SKILLS_DIR, name, "references")
             if os.path.isdir(refs_dir):
                 seen += sum(1 for fn in os.listdir(refs_dir) if fn.endswith(".md"))
-        self.assertGreater(seen, 0, "no references/*.md found across the 7 skills")
+        self.assertGreater(seen, 0, "no references/*.md found across the skills")
 
     def test_no_error_in_any_skill_reference_file(self):
         for name in SKILL_NAMES:

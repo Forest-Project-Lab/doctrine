@@ -18,3 +18,4 @@ Reference_material/
 # 保証レーン(開発専用・配布外)の実行時生成物。選別済み証拠(ledger/ 直下)はコミットする
 assurance/.venv/
 assurance/ledger/runs/
+.claude/system-map/

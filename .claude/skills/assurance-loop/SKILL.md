@@ -5,7 +5,7 @@ description: >-
   規範カタログや網羅台帳を進める・カオス試験や故障注入を計画する・事象を分析する・
   「保証キャンペーンを進めて」「保証ループを回して」「観点を創出して」「独立検証して」と
   言われたときに使う。セッションを跨いだ再開は台帳と状態機械が持ち、会話の記憶に依存しない。
-  開発専用（assurance/ レーン）。配布物・配布 7 Skill には触れない。
+  開発専用（assurance/ レーン）。配布物・配布 Skill には触れない。
 ---
 
 # assurance-loop — 保証キャンペーンの運転手順
@@ -122,7 +122,7 @@ python3 plugin/scripts/docs-audit.py --root doctrine_docs --json # 監査
 
 ## 7. してはならないこと
 
-- 配布 Skill 7個の増減・変更。PAUSED Issue の再開。Lens Phase 2 / overlay / System Map への拡張。
+- 配布 Skill の増減・変更（数は SPEC-016 の一覧が正本）。PAUSED Issue の再開。Lens Phase 2 / overlay / System Map への拡張。
 - 統治木の決定・仕様・用語をハーネスのメモリへ書くこと（正本は統治木。ADR-035）。
 - 模擬（stub）実行を実 Claude の保証として記録すること（execution_kind で区別）。
 - 所有者判断（**下の常設許可の外側**。勝手に進めず、判断を仰いで止まる）: 互換性を壊す

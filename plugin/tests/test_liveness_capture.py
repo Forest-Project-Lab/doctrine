@@ -1125,7 +1125,7 @@ class TestSkillDescriptionsQuoted(unittest.TestCase):
                             "%s: description は引用符で囲む(平文スカラの『: 』は"
                             "厳格YAMLで壊れる)" % name)
                         break
-        self.assertEqual(found, 7)
+        self.assertEqual(found, 8)
 
 
 if __name__ == "__main__":

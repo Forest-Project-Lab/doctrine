@@ -34,9 +34,10 @@ class SystemIndexTest(unittest.TestCase):
         self.assertTrue(self.idx["scripts"])
         self.assertTrue(self.idx["audit_checks"])
 
-    def test_seven_skills_are_fixed(self):
-        """技能は7個に固定する（DECIDED-001 事実8）。索引が増減を映す。"""
-        self.assertEqual(len(self.idx["skills"]), 7, self.idx["skills"])
+    def test_skill_list_matches_decided_inventory(self):
+        """技能の一覧は SPEC-016 が正本（DECIDED-001 事実8・ADR-136）。索引が増減を映す。"""
+        self.assertEqual(len(self.idx["skills"]), 8, self.idx["skills"])
+        self.assertIn("system-map-draft", self.idx["skills"])
 
     def test_resolves_each_pointer_kind(self):
         kinds = {

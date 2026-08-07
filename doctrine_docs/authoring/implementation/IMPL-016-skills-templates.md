@@ -6,7 +6,7 @@ domain: authoring
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-08-03
+updated: 2026-08-07
 sources: [spec/doctrine.ja.md §4.1]
 depends_on: [SPEC-016, SPEC-017]
 llm_context: task
@@ -14,7 +14,7 @@ llm_context: task
 
 # skills/templates の実装注記
 
-7つの技能と20個のテンプレートを実装するうえでの制約を記す。`[R8]`
+8つの技能と20個のテンプレートを実装するうえでの制約を記す。`[R8]`
 
 ## 実装制約
 
@@ -28,6 +28,6 @@ llm_context: task
 
 ## 対象部品
 
-`plugin/skills/`（7つの技能）・`plugin/templates/`（20個のテンプレート）。
+`plugin/skills/`（8つの技能）・`plugin/templates/`（20個のテンプレート）。
 
 <!-- 入れない: 仕様の正本 -->

@@ -200,7 +200,7 @@ class TestReadme(unittest.TestCase):
         for token in (
             "/plugin install",          # install path
             ".claude/",                 # fallback
-            "docs-system-init",         # one of the 7 skills
+            "docs-system-init",         # one of the skills
             "docs-curate",              # another skill
             "SessionStart", "PreToolUse", "PostToolUse", "SessionEnd",  # hooks
             "policy-guard.py", "docs-linter.py", "inject-contract.py",  # scripts
@@ -209,10 +209,11 @@ class TestReadme(unittest.TestCase):
             with self.subTest(token=token):
                 self.assertIn(token, self.text, "README should mention %r" % token)
 
-    def test_lists_all_seven_skills(self):
+    def test_lists_all_distribution_skills(self):
         skills = (
             "docs-system-init", "doc-author", "doc-review", "change-impact",
             "regression-guard", "llm-context-pack", "docs-curate",
+            "system-map-draft",
         )
         for skill in skills:
             with self.subTest(skill=skill):

@@ -6,7 +6,7 @@ domain: _system
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-08-03
+updated: 2026-08-07
 sources: [spec/doctrine.ja.md]
 review_by: 2026-09-28
 canonical_for: [cross-cutting-frozen-decisions]
@@ -26,7 +26,7 @@ llm_context: always
 5. 文書を削除・降格してよいのは、現行の逆依存がゼロのときだけとする。逆依存は dep-graph の `reverse_current_dependents(id)` で引く。
 6. 常時投入の上限は、既定で 12000 トークン（LLMが一度に読み込む語の単位）とする。注入の上限とタスクパックの上限は、別々の二つのキーで持つ。
 7. すべてのスクリプトは、標準ライブラリだけで動く。pipにも通信にも依存しない。
-8. 技能は7個に固定する。Hook（特定の出来事で起動する処理）の設定は、**層で挙動が違う** —— settings 由来（user・project・local・managed）はセッション中に live reload され、変更ごとに `ConfigChange` が発火する。インストール済み plugin 由来はセッション中は保持され、`/reload-plugins` で再読込される。「設定を変えたら新しいセッションで確かめる」は plugin 層の運用である。
+8. 配布する技能の一覧は SPEC-016 を正本とし、増減は根拠ADRの置換によってのみ行う（2026-08-07 の裁定で 8 個目 `system-map-draft` の追加を決めた。ADR-136）。Hook（特定の出来事で起動する処理）の設定は、**層で挙動が違う** —— settings 由来（user・project・local・managed）はセッション中に live reload され、変更ごとに `ConfigChange` が発火する。インストール済み plugin 由来はセッション中は保持され、`/reload-plugins` で再読込される。「設定を変えたら新しいセッションで確かめる」は plugin 層の運用である。
 9. ハーネスのメモリに書いてよいのは、環境と個人の事実だけとする。体系の決定・仕様・用語は統治木の正本（DECIDED・ADR・GLOSSARY）へ書き、メモリと正本が食い違ったら正本が勝つ。
 10. 追跡の終点には、文書に加えて、注釈の対が囲むコードの範囲を含める。範囲は内容の指紋で古びを見るだけとし、コードに `status` や `review_by` は持たせず、言語ごとに手段を分けない。
 11. 体系外の解釈文書はビューと分類し、刻印（どの正本の・いつの状態を見て書いたか）を必ず持つ。刻印は内容の正しさを保証せず、参照時点からの正本の古びだけを機械が見る。
@@ -45,7 +45,7 @@ llm_context: always
 - 事実5: ADR-004（手段: 編集前の状態を全文で復元）。不変条件そのものの正本は SPEC-003・REQ-004
 - 事実6: ADR-009（注入とパックで二つの別上限）
 - 事実7: ADR-031（標準ライブラリのみ）
-- 事実8: ADR-010・ADR-080（7技能固定・Hook 設定の二層。ADR-080 が ADR-032 を置換）
+- 事実8: ADR-136・ADR-080（技能の一覧は SPEC-016 が正本・Hook 設定の二層。ADR-136 が ADR-010 を、ADR-080 が ADR-032 を置換）
 - 事実9: ADR-035（メモリは環境と個人の事実に限る）
 - 事実10: ADR-054（注釈が囲む範囲を追跡の終点に加え、言語で手段を分けない）。方向と条件は ADR-048
 - 事実11: ADR-073（ビューと刻印。検出の三層は SPEC-007・SPEC-011・SPEC-027）

@@ -5,7 +5,7 @@ type: DOCTRINE
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-29
+updated: 2026-08-07
 sources: [ASD-STE100, S1000D, DO-178C, MBSE/SysML, c-TF-IDF, JTCA, context-rot, claude-code-hooks]
 ---
 
@@ -304,8 +304,9 @@ Skillの本文は500行未満。詳細は `references/` に分ける。決定論
 | `regression-guard` | 廃止の復活・撤回方針の再採用を防ぐ。DECIDED・WATCHと突き合わせる | R5 |
 | `llm-context-pack` | タスク別の最小コンテキストを集約。never群を除外。被覆を満たす最少集合に絞り、出所を表示する | R5 |
 | `docs-curate` | 点検→統合／降格／削除を一片ずつ。逆参照を確認。投影を描画し直す。常時集合が上限を超えたら縮める | R8 |
+| `system-map-draft` | 対象リポジトリから proposed 限定の意味モデルの下書きを起草する。全ての値に出所を付け、出所は機械検証（`map-draft-check.py`）に通す。確定（confirmed への昇格）は人が行う | ADR-136 |
 
-Skillは7つに限る。`doc-author` がICDも書く（ICD専用Skillは作らない）。集約と削除は一活動なので `docs-curate` 一つにまとめる。`[R8]`
+Skill の一覧は §4.1 の表を正本とし、増減は ADR の置換による（ADR-136）。`doc-author` がICDも書く（ICD専用Skillは作らない）。集約と削除は一活動なので `docs-curate` 一つにまとめる。`[R8]`
 
 ### 4.2 Hooks
 
@@ -393,7 +394,7 @@ doctrine/
 ├── .claude-plugin/plugin.json
 ├── hooks/hooks.json                 # §4.2 のHook（7イベント: SessionStart・UserPromptSubmit・PreToolUse・PostToolUse・Stop・PreCompact・SessionEnd）
 ├── hooks/hooks.level2.json          # §4.4 の縮小構成（Level 2）
-├── skills/<7つのSkill>/SKILL.md     # + references/
+├── skills/<配布Skill>/SKILL.md      # + references/
 ├── scripts/<§4.3 のスクリプト>
 ├── templates/                       # 型テンプレート（ICDを含む）
 └── README.md
