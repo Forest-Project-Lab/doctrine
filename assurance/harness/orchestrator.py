@@ -385,6 +385,18 @@ LEDGER_KINDS = (
          "修正前 FAIL の証拠。これを読む段（REPRODUCE_RED・FIX・VERIFY）は"
          "WITHIN_CYCLE_STATES であり、帳簿だけからは指せないと ADR-120 で"
          "明記済み。証拠は反復の中で作られ、その反復の中で読まれる。"},
+    {"kind": "recheck-<日付>.json",
+     "match": "recheck-*.json",
+     "read_by": (),
+     "why_not_read":
+         "抜取りの独立再判定の記録。**行動に効く中身は既に台帳へ実体化して"
+         "いる** —— 不一致の項は判定を取り下げて未割当の UNKNOWN へ戻すので、"
+         "coverage_status が unmapped として数え、MAP_COVERAGE が拾い直す"
+         "（_count_unmapped がその読む段である）。この記録自体は標本と判定の"
+         "対の監査証跡であり、red/*.json と同じ位置にある。"
+         "なお正本はまだ『前回の抜取りより後に評価器が動いたか』を見ていない"
+         "—— ATTACK_EVALUATOR と同型の鮮度規則を置くかどうかは、優先順の表の"
+         "書き換えに当たるので所有者判断とする（ADR-131）。"},
     {"kind": "runs/<実行 id>.json",
      "match": "runs/*.json",
      "read_by": (),
@@ -805,6 +817,26 @@ def current_index_sha():
 _SETTLED_DISPOSITIONS = frozenset({"実装・試験・証拠あり", "非該当で理由あり"})
 
 
+def _count_unmapped(cov):
+    """まだ評価していない項の数。「未割当」の規則をここに一度だけ持つ。
+
+    評価の結果としての UNKNOWN（割当済み）と、まだ評価していない項を分ける。
+    混ぜると、判定不能と結論した項目を永久に引き直す「消えない行動」になる
+    （INC-006 と同型）。
+
+    鍵の名は unmapped であって unassessed ではない。五値の UNASSESSED は
+    「前提が欠けて評価できない」という**評価の結論**であり、割当済みである。
+    同じ語で二つを数えると、一語に二つの意味を持たせる取り違え（INC-006・
+    INC-010 で二度起きた形）をこの帳簿自身が持つことになる。
+
+    独立再判定が判定を取り下げた項（`independent_recheck.withdraw`）も、
+    assigned_at を落とすのでここに数えられる —— それが「取り下げを正本が
+    読む段」である（走らせ手だけを足さない。INC-012・INC-015）。
+    """
+    return sum(1 for e in cov.get("entries", [])
+               if not e.get("assigned_at") and e.get("disposition") == "UNKNOWN")
+
+
 def coverage_status(index_sha=None):
     """冊子ごとの網羅台帳の状態。骨組みの存在と割当の完了を区別する。
 
@@ -834,8 +866,7 @@ def coverage_status(index_sha=None):
         # 「前提が欠けて評価できない」という**評価の結論**であり、割当済みである。
         # 同じ語で二つを数えると、一語に二つの意味を持たせる取り違え（INC-006・
         # INC-010 で二度起きた形）をこの帳簿自身が持つことになる。
-        unmapped = sum(1 for e in entries if not e.get("assigned_at")
-                       and e.get("disposition") == "UNKNOWN")
+        unmapped = _count_unmapped({"entries": entries})
         # 索引の指紋が現在と違う項は、いま在る索引に対する主張ではない
         # （ADR-130）。指紋を持たない項は「どの索引に対する判定か判らない」
         # ので、前提欠如の側へ倒して古びと数える。

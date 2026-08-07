@@ -1,0 +1,116 @@
+{
+  "sampled": 12,
+  "disagreements": 2,
+  "disagreement_detail": [
+    {
+      "key": "JERG:再発防止と水平展開",
+      "before": "対応計画あり",
+      "after": "実装・試験・証拠あり",
+      "reason": "水平展開は運用の心掛けでなく走査の形で実装されている。監査は単一文書でなくコーパス全体を毎回走査するため（SPEC-011 / docs-audit.py、既定 Level 2 では全件検査を CI に委ねる ADR-046）、一箇所で見つけた型の違反は次の走行で全ディレクトリが同じ検査に掛かり、想定 oracle の「別ディレクトリで後日再検出」は構造的に起きにくい。雛形と実態の齟齬は全件が守っていない節を雛形側へ合わせるという形で水平に解く（ADR-090）。是正が規則へ昇格した後の後戻りは、linter と audit の食い違いの回帰ガード（SPEC-023）と横断の退行監視（WATCH-001）が見張り、監査が実際に走ったことは印で区別できる（ADR-119）。一方、重大問題ごとに「再発防止と水平展開を実施した」ことを結びつける個別の記録様式は索引に見えず、そこは全件走査の常時性で代替されている。"
+    },
+    {
+      "key": "JERG:変更承認時のリスク・影響評価",
+      "before": "対応計画あり",
+      "after": "実装・試験・証拠あり",
+      "reason": "変更は CHANGE と対になる IMPACT で影響を列挙する形が現に運用されており（CHANGE-001〜007 に IMPACT-001〜007 が対応）、被参照の集合は依存グラフの reverse／classify の問い合わせで機械的に出る（SPEC-006 / _depgraph.py / dep-graph.py、REQ-003 変更耐性）。ベースラインに当たる accepted の ADR は不変ガードが書き込み前に判じて止め（SPEC-003、Edit・MultiEdit も対象とする ADR-076、proposed は下書きとして直せる ADR-095、誤りの正規の直し方は ADR-044）、承認の段数は規模でなく決定を含むか否かで分けると定められている（ADR-051）。ただし段数の分岐は決定の有無であり、被参照数の多寡でリスク等級を自動で引き上げる仕掛けは索引に名指せない。"
+    }
+  ],
+  "note": "一致率は持たない。AI の一致は客観的証拠でない（運転手順 §4）。読むのは不一致の中身であり、割れた項は判定を取り下げて未割当へ戻した。",
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "independent-recheck",
+  "book": "jerg",
+  "date": "2026-08-07",
+  "generated_at": "2026-08-07T00:00:00Z",
+  "seed": 1,
+  "cost_usd": 0.8549,
+  "git_sha": "6e3e18f",
+  "index_sha256": "f83e1a3e667e51e41dbb28fdb59b69da6545cb30b1425d24391c99efaf9ab8e2",
+  "model": "claude-opus-5",
+  "effort": "high",
+  "rows": [
+    {
+      "key": "JERG:integration-correct-versions-complete",
+      "before": "実装・試験・証拠あり",
+      "after": "実装・試験・証拠あり",
+      "agreed": true,
+      "reason": "この体系で「統合された集約物」に当たるのは投影（Overview・ICD一覧・Context Map骨組み）で、これは正本から決定論で描き直すものと定められ（ADR-016 / SPEC-014）、render-projection.py が実装する。正本と投影の食い違いは監査の projection_drift が挙げ、行の照合規則は各行の最初の id だけを採ると凍結されている（ADR-113）。木の世代をまたいだ古い要約は捨てる（ADR-053）、体系外のビューは参照時点の刻印を義務づけ、古びを view_stale と VIEW_MISSING_STAMP が挙げる。導入済み複製が正本の版に遅れていないかは UserPromptSubmit の鼓動が照合する（ADR-070 / SPEC-021）。ただし索引が示す試験件数は全ファイル 0 件で、試験が実効を持つかまでは索引から確かめられないため confidence は medium に留める。"
+    },
+    {
+      "key": "JERG:自動生成物と手動成果物の結合整合確認",
+      "before": "実装・試験・証拠あり",
+      "after": "実装・試験・証拠あり",
+      "agreed": true,
+      "reason": "生成された面と人手の面の境界は二箇所で機械が検めている。第一に投影＝生成、統治文書＝人手であり、両者の食い違いは projection_drift が挙げ、生成行に人手の注記が付く場合の畳み方は ADR-113 が「各行の最初の id だけを採る」と決めて曖昧さを消している。第二に雛形（SPEC-017）が展開した骨組みへ人手が書き足す場合、雛形が定める節の有無を MISSING_SECTION / EMPTY_SECTION が、雛形の指示文や仮置きの値が残ったままの箇所を PLACEHOLDER_VALUE / template_placeholder / ADR-098 が咎める。雛形と実態が全件で食い違うときは雛形側を実態へ合わせると定められている（ADR-090）。境界に現れる参照キーの形式は ID_FILENAME_MISMATCH と dead_link が受け持つ。なお見出しの階層そのもの（レベルの深さ）を検める検査は索引に名指せず、節の有無に還元されている点は割り引いている。"
+    },
+    {
+      "key": "JERG:configuration-audit-against-plan",
+      "before": "対応計画あり",
+      "after": "対応計画あり",
+      "agreed": true,
+      "reason": "構成の整合を機械が検める経路は在る。版と変更履歴の整合はリリース整合の門が CI で検め（SPEC-027 / ADR-071、受入は plugin/tests/test_release_check.py）、監査が走ったこと自体の印を残して不実行と書き込み失敗を区別する規定もある（ADR-119）。方法論の採用範囲と機械の検算・人の査読の分担は PROC-001 が正本として持ち、コード層の検算は code-audit.py が担う。しかし原則が求めるのは「構成管理計画に照らして、独立した確認活動で」検めることであり、その二点が欠けている。"
+    },
+    {
+      "key": "JERG:reuse-evaluation-criteria",
+      "before": "対応計画あり",
+      "after": "対応計画あり",
+      "agreed": true,
+      "reason": "外部に寄りかかる点を統治する決定は現に在る。統治木の外への依存は EXT 型のアンカーとして持つと決め（ADR-026、EXT-001〜EXT-006）、実在は ext_anchor_broken と source_missing、内容の移ろいは source_drift と EXT の hash 検査（ADR-039）が検め、宣言した出所が実在することは検めるが認識の等級は検めないと境界も引かれている（ADR-097）。実行コードの再利用は標準ライブラリだけで動くという決定が事実上の制限になっている（ADR-031）。外部依存の評価そのものの例として RESEARCH-002（保守性・セキュリティ・被覆・移行）も在る。だが原則の管理項目である「適合性・自要求へのトレーサビリティ・製品実績のリスク」を再利用物ごとに評価させる様式や検査は無い。"
+    },
+    {
+      "key": "JERG:identifier-per-item",
+      "before": "実装・試験・証拠あり",
+      "after": "実装・試験・証拠あり",
+      "agreed": true,
+      "reason": "体系の中心がまさにこれで、全文書は型＋連番の短い id を持ち、様式は DATA-001 と SPEC-001 が正本として定め、_registry.py が体系内で唯一の写しを持つ。id とファイル名の一致は ID_FILENAME_MISMATCH と BAD_FILENAME が点検し、重複 id の採用規則は登録簿へ一本化して先勝ちに統一され（ADR-049）、衝突は canonical_conflict が挙げる。監査の所見・投影の列挙（ADR-113）・依存の辺・コード注釈の印はいずれも本文引用や行番号でなく id で対象を指し、解決しない参照は dead_link と trace_broken_ref が挙げる。限界として id の改名を追えないことは非目標として明文化されている（ADR-064）ので、原則の要求と体系の限界の境目も示せる。"
+    },
+    {
+      "key": "JERG:文書管理計画の策定",
+      "before": "実装・試験・証拠あり",
+      "after": "実装・試験・証拠あり",
+      "agreed": true,
+      "reason": "文書の種類（20型と icd-index の雛形、SPEC-017）・様式と必須キー（DATA-001、ちょうど 8 個と定めた ADR-033）・置き場所（TYPE_LOCATION_MISMATCH / DOMAIN_PATH_MISMATCH / ARCHIVED_LOCATION_MISMATCH）・位置づけの正本（ADR-093、BAD_STATUS）・改訂の時期にあたる型ごとの既定点検周期と実効期限（ADR-025、超過は review_by_overrun）・手続きの段数（ADR-051）が、いずれも正本として事前に定義されている。想定 oracle の「正式文書か下書きか判別できない」は、登録簿と status、および体系外 .md の分類の記録（_intake.py、未分類は unregistered_document / stray_document）で塞がれている。ただし原則が挙げる「関係部門」の割り当ては、統治をリポジトリ一つの内側に閉じる立場（ADR-057）から取らず、責任の分担は機械の検算と人の査読という形で PROC-001 が持つに留まる点は割り引く。"
+    },
+    {
+      "key": "JERG:再発防止と水平展開",
+      "before": "対応計画あり",
+      "after": "実装・試験・証拠あり",
+      "agreed": false,
+      "reason": "水平展開は運用の心掛けでなく走査の形で実装されている。監査は単一文書でなくコーパス全体を毎回走査するため（SPEC-011 / docs-audit.py、既定 Level 2 では全件検査を CI に委ねる ADR-046）、一箇所で見つけた型の違反は次の走行で全ディレクトリが同じ検査に掛かり、想定 oracle の「別ディレクトリで後日再検出」は構造的に起きにくい。雛形と実態の齟齬は全件が守っていない節を雛形側へ合わせるという形で水平に解く（ADR-090）。是正が規則へ昇格した後の後戻りは、linter と audit の食い違いの回帰ガード（SPEC-023）と横断の退行監視（WATCH-001）が見張り、監査が実際に走ったことは印で区別できる（ADR-119）。一方、重大問題ごとに「再発防止と水平展開を実施した」ことを結びつける個別の記録様式は索引に見えず、そこは全件走査の常時性で代替されている。"
+    },
+    {
+      "key": "JERG:変更承認時のリスク・影響評価",
+      "before": "対応計画あり",
+      "after": "実装・試験・証拠あり",
+      "agreed": false,
+      "reason": "変更は CHANGE と対になる IMPACT で影響を列挙する形が現に運用されており（CHANGE-001〜007 に IMPACT-001〜007 が対応）、被参照の集合は依存グラフの reverse／classify の問い合わせで機械的に出る（SPEC-006 / _depgraph.py / dep-graph.py、REQ-003 変更耐性）。ベースラインに当たる accepted の ADR は不変ガードが書き込み前に判じて止め（SPEC-003、Edit・MultiEdit も対象とする ADR-076、proposed は下書きとして直せる ADR-095、誤りの正規の直し方は ADR-044）、承認の段数は規模でなく決定を含むか否かで分けると定められている（ADR-051）。ただし段数の分岐は決定の有無であり、被参照数の多寡でリスク等級を自動で引き上げる仕掛けは索引に名指せない。"
+    },
+    {
+      "key": "JERG:verification-methods-not-only-test",
+      "before": "実装・試験・証拠あり",
+      "after": "実装・試験・証拠あり",
+      "agreed": true,
+      "reason": "機械判定できない記述をどこが受け持つかが明文で分けられている。テスト不能記述の判定は監査でなく doc-review が担うと決められ（ADR-020）、手編集には doc-review を促す発火が PostToolUse に載っている（SPEC-024 / review-nudge.py、受入は TEST-024）。読み合わせは期限つきで、超過は review_by_overrun が挙げる（型ごとの点検周期は ADR-025）。検証は証拠の提示であるという立場（ADR-081）と、被覆マトリクスの各行が実効を示す試験を名指すか、示せないなら未証と明示する規則（ADR-084 / SPEC-025 / TEST-025）が、想定 oracle の「未検証のまま放置」を可視の未証として残す仕掛けになっている。機械の検算と人の査読の分担そのものは PROC-001 が正本として持つ。"
+    },
+    {
+      "key": "JERG:problem-reproduction-confirmed",
+      "before": "対応計画あり",
+      "after": "対応計画あり",
+      "agreed": true,
+      "reason": "不具合の扱い方の決定は在る。報告は「検出は機械・送信は人」の二層に分けると定められ（ADR-074 / CHANGE-005 / IMPACT-005）、開発方法論の採用範囲（TDD を含む）は ADR-047 と PROC-001 が持ち、機械化残差のコード層の検算は code-audit.py が担う（ADR-068）。しかし原則の核である「報告された事象が再現することを確認してから直す」「検証手法を制約に応じて選ぶ」という手順は、正本として名指せない。"
+    },
+    {
+      "key": "JERG:document-hierarchy-and-process-io-mapping",
+      "before": "実装・試験・証拠あり",
+      "after": "実装・試験・証拠あり",
+      "agreed": true,
+      "reason": "文書の階層は型で表され（REQ→SPEC→TEST／ICD・IMPL・DATA、様式は DATA-001）、工程間の入出力に当たる対応関係は depends_on の辺として各文書のフロントマターに持たれ、その問い合わせ契約は SPEC-006 が定め _depgraph.py が実装する。辺の欠落は両側から挙がる：孤児は三条件の連言で定義され（ADR-008 / orphan）、下流の欠落は reverse_orphan_req_no_spec と reverse_orphan_spec_no_test が挙げる。追跡の正路は本文タグでなく depends_on の REQ であると明示され（ADR-045）、製品粒度の要求は _system の棚に置いて辺で指されないという例外も明文（ADR-091）。全体像は CTXMAP-001 と OVERVIEW-001／OVERVIEW-002 が投影として持つ。ただし「工程」そのものの列挙は PROC 型が一件（PROC-001）在るのみで、工程と文書の対応表という形の正本は索引に無く、対応は型の層で代替されている。"
+    },
+    {
+      "key": "JERG:措置後の二次問題モニタ継続",
+      "before": "実装・試験・証拠あり",
+      "after": "実装・試験・証拠あり",
+      "agreed": true,
+      "reason": "是正後の見張りは常時走る面に載っている。横断の退行監視（WATCH-001、12項）は SessionStart の最小契約が要点行として毎回運び（ADR-043 / SPEC-012 / inject-contract.py）、全件監査は SessionEnd と CI で毎回コーパス全体を走るため（SPEC-011 / docs-audit.py / ADR-046）、是正が誘発した別の違反はその走行で挙がる。linter と audit の食い違いの回帰ガード（SPEC-023）と、期限が唯一の見張りなら期限を短くするという規則（ADR-086）も、見張りが途切れない側へ倒している。閉じてよい条件は、照合を通った統制欠陥と先行指標を持つ事故分析が揃ったときだけと定められ（ADR-117）、推奨は処遇を持ち terminal に至るまで次の行動に挙がり続ける（ADR-125）。ただし後者二つは決定であり、それを強制する実装や試験を索引で名指せないため、緑の根拠は主として常時走る監査と注入に置いている。"
+    }
+  ]
+}

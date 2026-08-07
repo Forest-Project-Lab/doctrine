@@ -420,6 +420,24 @@
       "family": "ADR-120 が決めた規則が実装の粒度で無効化される形。INC-012 と同じ症状（ATTACK_EVALUATOR が挙がらない）を別の原因で再現した二度目であり、症状に対する修正が原因の族を覆っていなかったことを示す",
       "cast_analysis_ref": "assurance/ledger/cast/INC-023-attack-freshness-truncated-to-the-day.json",
       "cast_analyzed_at": "2026-08-07T04:20:16Z"
+    },
+    {
+      "id": "INC-024-coverage-rubric-undecided-at-its-busiest-boundary",
+      "date": "2026-08-07",
+      "summary": "網羅の五値の採点規準が、最も使われる境界で判定を決めていない —— 「その原則を求める決定や仕様が現に在る」ことを『実装・試験・証拠あり』と読むか『対応計画あり』と読むかが、規準の文面から一意に決まらない。抜取りの独立再判定 25 件のうち 7 件が割れ、その 7 件すべてがこの一つの境界に集まっていた（緑→計画 3 件・計画→緑 3 件・非該当→計画 1 件）",
+      "detected_by": "反復11で運転手順 §5 の抜取りの独立再判定を初めて走らせたとき（independent_recheck.py。stpa 13 件中 5 件・jerg 12 件中 2 件が不一致。2026-08-07）",
+      "impact": "網羅台帳の見出しの数（実装・試験・証拠あり 243 件ほか）は、この境界の読み方に依存している。標本では不一致が 25 件中 7 件で、向きは対称（緑へ寄せ過ぎ 3・保守へ寄せ過ぎ 3）だった。**速さのせいで質が落ちたのではない** —— 同じ規準を同じ model に二度与えても割れる。したがって台帳の五値は、これまで宣言されていなかった幅を持つ。前反復(PR #244)が報告した「解けた 11 件」も、この幅の中にある",
+      "fixed": false,
+      "shipped": false,
+      "fix_note": "未修正。割れた 7 件は判定を取り下げて未割当の UNKNOWN へ戻したので MAP_COVERAGE が拾い直すが、規準そのものの曖昧さは残っている。直し方（規準に境界の判定規則を足すか、五値を割るか、幅を明示して持つか）は CAST_ANALYSIS の後で決める",
+      "cast_analysis": "pending",
+      "evidence_kind": "measurement",
+      "evidence_refs": [
+        "assurance/ledger/recheck-stpa-2026-08-07.json",
+        "assurance/ledger/recheck-jerg-2026-08-07.json",
+        "assurance/harness/independent_recheck.py",
+        "assurance/harness/prompts.py"
+      ]
     }
   ]
 }
