@@ -1,0 +1,40 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "reproduce-red",
+  "incident_id": "INC-004-hyphen-token-undefined-term",
+  "subject": "推奨#0 —— 用語判定の偽陽性コーパス試験を CI_RELEASE_CHECK に追加する",
+  "generated_at": "2026-08-07T11:20:00Z",
+  "git_sha": "2a8b04d",
+  "phase": "before-fix",
+  "expect": "修正前に FAIL すること（最初から緑は再現と認めない）",
+  "procedure_order": "REPRODUCE_RED を FIX の前に実施した（八反復連続で順序を守れている）。",
+  "why_a_plain_red_was_not_available": "INC-004 の欠陥は既に修正済みである。だから新しいコーパス試験は書いた瞬間から緑になり、それ自体は『守っている』ことの証拠にならない —— 何も守らない試験も同じく緑になる。そこで故障注入で赤を作った: INC-004 の修正(_is_identifier_fragment)を無効化し、コーパス試験が赤くなることを確かめた。",
+  "mutation": {
+    "injection": "_termcheck._is_identifier_fragment を常に False にする（識別子の断片を除く判定を外す＝INC-004 の修正を巻き戻す）",
+    "scope": "読み込んだ module の関数の差し替えのみ。リポジトリのファイルは触っていない",
+    "baseline": {"run": 4, "failures": 0},
+    "injected": {"run": 4, "failures": 2},
+    "restored": {"run": 4, "failures": 0},
+    "verdict": "守っている（注入で赤・復元で緑）",
+    "observed_failures": [
+      "test_every_flagged_term_exists_as_a_standalone_word — 綴りの断片を語として指摘している: [('UNDEFINED_TERM','NOT'), ('UNDEFINED_TERM','APPLICABLE'), ('UNDEFINED_TERM','INC'), ('UNDEFINED_TERM','SHA')]",
+      "test_known_identifier_fragments_are_not_flagged — 識別子の断片 'NOT' を語として指摘した"
+    ]
+  },
+  "my_own_errors": [
+    {
+      "what": "最初の故障注入の仕掛けが、試験 module が実際に使う module とは別の object を差し替えていた。",
+      "observed": "注入しても 4 件すべて緑のまま(failures 0)で、『守っていない』と読める結果が出た。",
+      "why_it_mattered": "ここで結果を鵜呑みにしていれば『この試験は無力だ』と誤って報告していた。逆に注入を省いていれば『緑だから守っている』と誤って報告していた。どちらの誤りも、注入を実際に走らせて初めて分けられた。",
+      "fixed": "試験 module 自身が保持する module (m.tc) を直に差し替える形へ直し、baseline/injected/restored の三点を取った。"
+    },
+    {
+      "what": "コーパスに DECIALIAS-PLACEHOLDER という実在しない綴りを混ぜていた。",
+      "why_wrong": "コーパスの規則として『その綴りが実際に体系のどこかに在ることを確かめてから足す』と自分で書いておきながら、それを破っていた。実在しない綴りは、守るべき現実を測らない。",
+      "fixed": "実在する PROC-001 へ差し替えた。"
+    }
+  ],
+  "what_the_guard_adds_over_the_existing_test": "既存の試験(test_termcheck.py:286)は挙げた例(INC/NOT/SHA)しか守らない。今回の試験が守るのは性質である —— 『点検器が指摘した語は、原文に単独の語として実在しなければならない』。綴りの断片を語として指摘する形は、例に挙げていない綴りでも赤になる。",
+  "non_vacuity": "未注入のコーパスでも点検器は 5 語(PASS/FAIL/UNKNOWN/UNASSESSED/DEGRADED)を名指ししており、いずれも単独の語として実在する。空振りの緑ではないことを試験自身が確かめる(test_the_corpus_actually_exercises_the_checker)。",
+  "placement": "plugin/tests/test_termcheck_corpus.py。CI_RELEASE_CHECK は control_structure.py で「CI（本体試験・監査・release-check）」と定義され .github/workflows が実装なので、本体試験に置くことが推奨の求める配置に当たる。"
+}
