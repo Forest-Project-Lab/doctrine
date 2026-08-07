@@ -1,0 +1,30 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "reproduce-red",
+  "incident_id": null,
+  "adr": "ADR-130",
+  "generated_at": "2026-08-07T05:20:00Z",
+  "git_sha": "97d2bed",
+  "phase": "before-fix",
+  "command": "python3 -m unittest assurance.tests.test_coverage_staleness",
+  "returncode": 1,
+  "expect": "修正前に FAIL すること（最初から緑は再現と認めない）",
+  "procedure_order": "REPRODUCE_RED を FIX の前に実施した（五反復連続で順序を守れている）。",
+  "observed_failures": [
+    "Ran 9 tests — FAILED (errors=9)",
+    "AttributeError: module 'harness.map_coverage' has no attribute 'push_reassessment'（再判定を積む口が無い）",
+    "TypeError: coverage_status() got an unexpected keyword argument 'index_sha'（正本が指紋を読まない）",
+    "coverage_status の返り値に stale_open / stale_settled が無い"
+  ],
+  "field_measurement": {
+    "recorded_fingerprints": {"jerg": "bd60e4e186b74a19", "stpa": "9e8b50a886f33305", "cast": "9e8b50a886f33305"},
+    "current_index_sha256": "65ccd77b8063dd54",
+    "note": "三冊とも現行の索引と違う。しかも jerg だけ別の指紋で、606 件の判定は互いに整合してすらいない。指紋は assigned_by.index_sha256 として最初から記録されており、読む口が無かっただけである。",
+    "stale_after_fix": {"cast": {"open": 177, "settled": 161}, "jerg": {"open": 80, "settled": 78}, "stpa": {"open": 42, "settled": 68}},
+    "total_open": 299,
+    "total_settled": 307
+  },
+  "why_no_incident_id": "事象としては積まない。これは保証レーンの欠陥ではなく、本丸（体系そのもの）の欠落を指す帳簿が読まれていなかったという構造の穴で、ADR-130 で決定として扱った。ただし族としては INC-015・INC-012・INC-016・INC-021・INC-023 と同じ（成果物は在り、正本が読んで行動に挙げる段が無い）六度目である。",
+  "existing_tests_updated": "test_evaluated_unknown_is_not_re_listed と test_unassessed_disposition_is_not_unmapped_work が赤になった。指紋を持たない stub の項が古びと数えられたためで、元の不変条件（評価済み UNKNOWN を未評価と混ぜない）は生きている。試験を弱めず、stub の項へ現行の指紋を持たせて信号を分離した。",
+  "note": "実測で、非終端の古びは 299 件・終端の古びは 307 件。本丸の欠落が初めて next_actions に名指しされる。"
+}

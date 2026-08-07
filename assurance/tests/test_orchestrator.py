@@ -149,7 +149,13 @@ class OrchestratorTest(unittest.TestCase):
     def _stub_ledger(self, tmp, coverage_unknown, evaluated_unknown=0,
                      unassessed_disposition=0, attack_evidence="2099-01-01",
                      survivors=None):
-        """実台帳に依存しない一時の帳簿を立てる（三冊とも抽出済み扱い）。"""
+        """実台帳に依存しない一時の帳簿を立てる（三冊とも抽出済み扱い）。
+
+        割当済みの項には現行の索引の指紋を持たせる。持たせないと ADR-130 の
+        古びの判定が別の理由で MAP_COVERAGE を挙げ、ここで守りたい不変条件
+        （評価済み UNKNOWN を未評価と混ぜない）と信号が混ざるためである。
+        """
+        fresh = {"index_sha256": orchestrator.current_index_sha()}
         ledger = os.path.join(tmp, "ledger")
         os.makedirs(ledger, exist_ok=True)
         if attack_evidence:
@@ -180,14 +186,17 @@ class OrchestratorTest(unittest.TestCase):
                        for i in range(coverage_unknown)]
             entries += [{"key": "e%d" % i, "disposition": "UNKNOWN",
                          "assigned_at": "2026-08-05T00:00:00Z",
+                         "assigned_by": dict(fresh),
                          "reason": "索引から判定できない"}
                         for i in range(evaluated_unknown)]
             entries += [{"key": "u%d" % i, "disposition": "UNASSESSED",
                          "assigned_at": "2026-08-05T00:00:00Z",
+                         "assigned_by": dict(fresh),
                          "reason": "前提が欠けて評価できない"}
                         for i in range(unassessed_disposition)]
             entries.append({"key": "done", "disposition": "非該当で理由あり",
-                            "assigned_at": "2026-08-05T00:00:00Z"})
+                            "assigned_at": "2026-08-05T00:00:00Z",
+                            "assigned_by": dict(fresh)})
             with open(os.path.join(tmp, "%s-coverage.json" % book),
                       "w", encoding="utf-8") as f:
                 json.dump({"entries": entries}, f)

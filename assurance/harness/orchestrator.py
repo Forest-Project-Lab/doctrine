@@ -748,7 +748,32 @@ def attack_evidence_latest():
     return _max_instant([v for v in seen if v])
 
 
-def coverage_status():
+_INDEX_SHA_CACHE = []
+
+
+def current_index_sha():
+    """現在の索引の指紋。走査は一度だけ行い、以後は使い回す。
+
+    索引が覆うのは doctrine_docs と plugin/{scripts,tests,skills,hooks} で、
+    assurance/ は含まれない。基盤だけを触る反復では指紋が動かないので、
+    古びの判定が毎反復鳴る形にはならない（消えない行動を作らない）。
+    """
+    if not _INDEX_SHA_CACHE:
+        try:
+            from harness import system_index
+            _INDEX_SHA_CACHE.append(system_index.build().get("sha256"))
+        except Exception:            # 索引が組めない環境では古びを判じない
+            _INDEX_SHA_CACHE.append(None)
+    return _INDEX_SHA_CACHE[0]
+
+
+# 判定が「済んだ」側の五値。ここに在る項は、索引が動いても評価を買い直さない
+# —— 証拠ポインタの再照合は決定論でできるからである（ADR-118）。ただし数えて
+# 出す。見ていないことにはしない。
+_SETTLED_DISPOSITIONS = frozenset({"実装・試験・証拠あり", "非該当で理由あり"})
+
+
+def coverage_status(index_sha=None):
     """冊子ごとの網羅台帳の状態。骨組みの存在と割当の完了を区別する。
 
     骨組みだけが在る台帳は「MAP_COVERAGE 未実施」であって済みではない
@@ -779,10 +804,28 @@ def coverage_status():
         # INC-010 で二度起きた形）をこの帳簿自身が持つことになる。
         unmapped = sum(1 for e in entries if not e.get("assigned_at")
                        and e.get("disposition") == "UNKNOWN")
+        # 索引の指紋が現在と違う項は、いま在る索引に対する主張ではない
+        # （ADR-130）。指紋を持たない項は「どの索引に対する判定か判らない」
+        # ので、前提欠如の側へ倒して古びと数える。
+        want = index_sha if index_sha is not None else current_index_sha()
+        stale_open = stale_settled = 0
+        if want:
+            for e in entries:
+                if not e.get("assigned_at"):
+                    continue
+                got = (e.get("assigned_by") or {}).get("index_sha256")
+                if got == want:
+                    continue
+                if e.get("disposition") in _SETTLED_DISPOSITIONS:
+                    stale_settled += 1
+                else:
+                    stale_open += 1
         out[book_id] = {
             "status": "PARTIAL" if unmapped else "MAPPED",
             "unmapped": unmapped,
             "unknown": unknown,
+            "stale_open": stale_open,
+            "stale_settled": stale_settled,
             "total": len(entries),
         }
     return out
@@ -859,7 +902,7 @@ def assumption_backlog(path=None):
     return out
 
 
-def next_actions():
+def next_actions(index_sha=None):
     """決定論の「次にやること」。judgement を挟まない導出。"""
     actions = []
     cats = catalog_status()
@@ -896,7 +939,7 @@ def next_actions():
                head["action"][:70], len(untouched), len(examined),
                len(backlog["owner"]),
                len(backlog["landed"]) + len(backlog["rejected"])))
-    covs = coverage_status()
+    covs = coverage_status(index_sha=index_sha)
     for book_id in ("jerg", "stpa", "cast"):
         if cats[book_id]["status"] != "PRESENT":
             continue          # 抽出が済むまで台帳は立たない（上の行動が先）
@@ -910,6 +953,13 @@ def next_actions():
         elif cov["status"] == "UNKNOWN":
             actions.append("MAP_COVERAGE: %s の台帳が読めない（%s）"
                            % (book_id, cov.get("reason")))
+        # 索引が動いた後の非終端の項は、評価を買い直さないと解けない。
+        # 終端の項の古びは数えるだけ（決定論の再照合で足りる。ADR-130）。
+        if cov.get("stale_open"):
+            actions.append(
+                "MAP_COVERAGE: %s の索引が動いた後で再判定していない %d 件"
+                "（終端の再照合待ちは別に %d 件）"
+                % (book_id, cov["stale_open"], cov.get("stale_settled") or 0))
     # 評価機構自身への故障注入。評価器の成果物が証拠より新しければ、その評価器は
     # まだ攻撃されていない。AI の判定が「実際に欠陥を捕まえる」ことは、攻撃の証拠
     # でしか言えない（INC-012）。

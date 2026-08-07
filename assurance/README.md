@@ -139,6 +139,11 @@ PASS（適合の証拠あり）/ FAIL（走ったが不適合）/ UNKNOWN（観�
   印していようと `pending`。事故分析の入力に統治木は入っておらず、`owner_decision_required`
   は権限の判定ではなく**評価者の視野の申告**だからである。申告の件数（`evaluator_claimed_owner`）
   と成立した件数（`counts.owner`）は `status` が別々に出す。
+- 網羅台帳の各項は、判定に使った索引の指紋（`assigned_by.index_sha256`）を持つ（ADR-130）。
+  指紋が現行と違う項は古い。`map_coverage.py` は未割当に加えて**古い非終端の項**も引き、
+  前の判定を `reassessments` へ積んでから新しい判定を書く（消さない）。`status` の
+  `coverage.<book>.stale_open` が再判定の要る件数、`stale_settled` が終端の再照合待ち。
+  索引は統治木と配布物だけを覆い、保証レーン自身は含まない。
 - `assumptions.json` — 保証が寄りかかる想定の登記簿（ADR-126）。決定でも非目標でもなく、
   引き受けているのに検めていない前提を一件ずつ載せる。各項は `verified_by`（検証者が
   居なければ `null` と明記）と、「どこで観測するか」「何を異常と見るか」を埋めた

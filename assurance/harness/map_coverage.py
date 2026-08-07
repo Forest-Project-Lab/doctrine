@@ -33,6 +33,31 @@ REPO_DIR = os.path.dirname(LANE_DIR)
 CATALOG_DIR = os.path.join(LANE_DIR, "ledger", "catalogs")
 
 
+
+def push_reassessment(entry):
+    """既存の判定を履歴へ積む（ADR-130 の (A)）。消さずに並べる。
+
+    実装者は評価者の最終判定を書き換えない（ADR-115）。再判定は前の判定を
+    上書きするのではなく、前の判定を `reassessments` へ移してから新しい判定を
+    書く。こうすると「索引が育ったことで何件が解けたか」がそのまま測れる。
+
+    まだ判定の無い項（assigned_at が無い）は積むものが無いので何もしない
+    —— 空の履歴を作らない。
+    """
+    if not entry.get("assigned_at"):
+        return
+    entry.setdefault("reassessments", []).append({
+        "disposition": entry.get("disposition"),
+        "reason": entry.get("reason"),
+        "evidence": entry.get("evidence"),
+        "gap": entry.get("gap"),
+        "confidence": entry.get("confidence"),
+        "assigned_at": entry.get("assigned_at"),
+        "assigned_by": entry.get("assigned_by"),
+    })
+
+
+
 def _git(args):
     try:
         proc = subprocess.run(["git", "-C", REPO_DIR] + args,
@@ -118,16 +143,28 @@ def main(argv=None):
 
     # 未評価だけを引く。評価の結果としての UNKNOWN（assigned_at つき）は割当済みで
     # あり、引き直すと同じ判定不能を永久に買い直すことになる。
+    # 未割当に加えて、索引が動いた後の**非終端**の項も引く（ADR-130）。
+    # 終端（実装・試験・証拠あり／非該当で理由あり）は評価を買い直さない ——
+    # 証拠ポインタの再照合は決定論でできる（ADR-118）。
+    _settled = ("実装・試験・証拠あり", "非該当で理由あり")
+
+    def _stale(e):
+        if not e.get("assigned_at") or e.get("disposition") in _settled:
+            return False
+        return (e.get("assigned_by") or {}).get("index_sha256") != idx["sha256"]
+
     todo_entries = [e for e in cov["entries"]
-                    if e.get("disposition") == "UNKNOWN" and not e.get("assigned_at")]
+                    if (e.get("disposition") == "UNKNOWN"
+                        and not e.get("assigned_at")) or _stale(e)]
+    stale_n = sum(1 for e in todo_entries if e.get("assigned_at"))
     todo = principle_details(cat, todo_entries)
     batches = [todo[i:i + args.batch_size]
                for i in range(0, len(todo), args.batch_size)]
     if args.max_batches is not None:
         batches = batches[: args.max_batches]
 
-    print("book=%s 未割当=%d 束=%d 索引=%d 文字 sha=%s"
-          % (args.book, len(todo), len(batches), len(index_text),
+    print("book=%s 対象=%d(うち再判定=%d) 束=%d 索引=%d 文字 sha=%s"
+          % (args.book, len(todo), stale_n, len(batches), len(index_text),
              idx["sha256"][:12]), flush=True)
 
     if args.dry_run:
@@ -183,6 +220,8 @@ def main(argv=None):
             entry = by_key.get(a["key"])
             if entry is None:
                 continue
+            # 前の判定を消さずに履歴へ積んでから上書きする（ADR-130 の (A)）。
+            push_reassessment(entry)
             entry.update({
                 "disposition": a["disposition"],
                 "reason": a.get("reason"),
