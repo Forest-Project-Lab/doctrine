@@ -646,6 +646,72 @@ class VerifyGateTest(unittest.TestCase):
                              "PASS")
 
 
+class IncidentEvidenceGateTest(unittest.TestCase):
+    """事象は台帳へ積む時点で証拠の宣言を要す（ADR-141。INC-013 の構造の穴）。
+
+    運転手順 §5 の規則（evidence_refs か evidence_kind を必ず持たせる）は
+    在ったが、機械はどこも検めていなかった —— 捏造事象は分析が走るまで台帳に
+    座る。ここで凍結するのは門の形であって実証ではない: 解決は実証ではなく、
+    実在ファイルを引く捏造は通り得る（意味の判断。NONGOAL-001 第1項）。
+    """
+
+    def _gate(self, incident, resolve=lambda ptr: None):
+        return orchestrator._validate_incident_evidence(
+            incidents=[incident], resolve=resolve)
+
+    def test_without_refs_or_kind_is_red(self):
+        problems = self._gate({"id": "INC-099-x"})
+        self.assertTrue(any("証拠の宣言が無い" in p for p in problems), problems)
+
+    def test_resolving_ref_is_green(self):
+        self.assertEqual(self._gate(
+            {"id": "INC-099-x", "evidence_refs": ["good", "bad"]},
+            resolve=lambda ptr: "file" if ptr == "good" else None), [])
+
+    def test_declared_external_kind_is_green(self):
+        for kind in orchestrator.EXTERNAL_EVIDENCE_KINDS:
+            self.assertEqual(
+                self._gate({"id": "INC-099-x", "evidence_kind": kind}), [],
+                kind)
+
+    def test_unknown_kind_word_is_red(self):
+        """語彙の外の宣言は、refs が解決しても赤（宣言の語彙は増やさない）。"""
+        problems = self._gate({"id": "INC-099-x", "evidence_kind": "vibes",
+                               "evidence_refs": ["good"]},
+                              resolve=lambda ptr: "file")
+        self.assertTrue(any("語彙に無い" in p for p in problems), problems)
+
+    def test_all_unresolving_refs_are_red(self):
+        problems = self._gate(
+            {"id": "INC-099-x", "evidence_refs": ["nope", "also-nope"]})
+        self.assertTrue(any("どれも解決しない" in p for p in problems), problems)
+
+    def test_missing_index_degrades_to_unknown_not_closed(self):
+        """索引が組めない環境では、宣言を持つ行は緑のまま、refs しか持たない
+        行だけを UNKNOWN として報せる（前提の欠如で門を閉じない）。"""
+        original = orchestrator._index_now
+        orchestrator._index_now = lambda index_sha=None: None
+        try:
+            self.assertEqual(orchestrator._validate_incident_evidence(
+                incidents=[{"id": "a", "evidence_kind": "external"}]), [])
+            problems = orchestrator._validate_incident_evidence(
+                incidents=[{"id": "b", "evidence_refs": ["assurance/README.md"]}])
+            self.assertTrue(any("確かめられない" in p for p in problems),
+                            problems)
+        finally:
+            orchestrator._index_now = original
+
+    def test_vocabulary_has_one_home(self):
+        """語彙の定義は正本に一箇所だけ。分析の側は import する（ADR-141）。"""
+        from harness import cast_analysis
+        self.assertIs(cast_analysis.EXTERNAL_EVIDENCE_KINDS,
+                      orchestrator.EXTERNAL_EVIDENCE_KINDS)
+
+    def test_current_real_ledger_passes(self):
+        """実台帳の全事象が門を通る（祖父条項ではなく、実証で確かめた現状）。"""
+        self.assertEqual(orchestrator._validate_incident_evidence(), [])
+
+
 class OwnerDecisionKindTest(unittest.TestCase):
     """所有者判断は、六類型のどれかを名指してはじめて成立する（ADR-127）。
 

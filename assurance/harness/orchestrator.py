@@ -143,6 +143,7 @@ def validate():
     problems.extend(_validate_recommendation_status())
     problems.extend(_validate_assumptions())
     problems.extend(_validate_verify_refs())
+    problems.extend(_validate_incident_evidence())
     return problems
 
 
@@ -361,11 +362,12 @@ LEDGER_KINDS = (
      "why_not_read": None},
     {"kind": "cast/<事象 id>.json",
      "match": "cast/*.json",
-     "read_by": ("evaluator_outputs_latest",),
+     "read_by": ("evaluator_outputs_latest", "cast_recommendations",
+                 "cast_scenario_candidates"),
      "why_not_read": None},
     {"kind": "scenarios/<日付>.json",
      "match": "scenarios/*.json",
-     "read_by": ("latest_scenarios",),
+     "read_by": ("latest_scenarios", "triaged_candidate_keys"),
      "why_not_read": None},
     {"kind": "formalize/<日付>.json",
      "match": "formalize/*.json",
@@ -446,8 +448,11 @@ FIRING_POINTS = {
         "prompt_builders": ("build_map_coverage_prompt",),
         "ledger_kind": "catalogs/<book>-coverage.json"},
     "DISCOVER": {
+        # 第二の入口は候補の取り込み（triage_candidates.py。ADR-140）。同じ状態・
+        # 同じ成果物種別を共有し、独立批判も同じ口（CHALLENGE）を通る。
         "runner": "discover.py",
-        "prompt_builders": ("build_discover_prompt",),
+        "prompt_builders": ("build_discover_prompt",
+                            "build_candidate_formulation_prompt"),
         "ledger_kind": "scenarios/<日付>.json"},
     "CHALLENGE": {
         "runner": "discover.py",
@@ -803,6 +808,97 @@ def cast_recommendations():
                 "owner_decision_required": bool(rec.get("owner_decision_required")),
             })
     return out
+
+
+def cast_scenario_candidates():
+    """事故分析が出した新規仮説候補の全件。事象 id と番号で一意に指す（ADR-140）。
+
+    cast_recommendations と同じ読み方 —— 分析の記録のうち推奨は ADR-125 で
+    正本へ届いたが、new_scenario_candidates の欄は一度も読まれていなかった
+    （INC-016 の残余）。候補は仮説であり、判定済みの scenario ではない。
+    取り込みは既存の DISCOVER→CHALLENGE の独立構造を通す。
+    """
+    out = []
+    cast_dir = os.path.join(LANE_DIR, "ledger", "cast")
+    if not os.path.isdir(cast_dir):
+        return out
+    for name in sorted(os.listdir(cast_dir)):
+        if not name.endswith(".json"):
+            continue
+        try:
+            with open(os.path.join(cast_dir, name), encoding="utf-8") as f:
+                doc = json.load(f)
+        except (OSError, ValueError):
+            continue
+        analysis = doc.get("analysis") or {}
+        incident_id = analysis.get("incident_id") or doc.get("incident_id") or name
+        for index, cand in enumerate(
+                analysis.get("new_scenario_candidates") or []):
+            if not isinstance(cand, dict):
+                continue
+            out.append({
+                "incident_id": incident_id,
+                "index": index,
+                "hypothesis": cand.get("hypothesis") or "",
+                "oracle": cand.get("oracle") or "",
+                "falsification_signal": cand.get("falsification_signal") or "",
+                "severity": cand.get("severity") or "",
+            })
+    return out
+
+
+def triaged_candidate_keys():
+    """既に批判の口を通った候補の鍵 (事象 id, 番号) の集合（ADR-140）。
+
+    消化の記帳は scenarios 台帳の出自欄 `candidates_considered` が持つ。
+    第二の処遇の台帳は作らない —— 定式化されたか・重複か・定式化不能かに
+    かかわらず、口を通った候補はここに載り、二度と数え直されない
+    （評価済み UNKNOWN を引き直さないのと同じ規則。INC-006）。
+    """
+    out = set()
+    scn_dir = os.path.join(LANE_DIR, "ledger", "scenarios")
+    if not os.path.isdir(scn_dir):
+        return out
+    for name in sorted(os.listdir(scn_dir)):
+        if not name.endswith(".json"):
+            continue
+        try:
+            with open(os.path.join(scn_dir, name), encoding="utf-8") as f:
+                doc = json.load(f)
+        except (OSError, ValueError):
+            continue
+        for entry in doc.get("candidates_considered") or []:
+            if isinstance(entry, (list, tuple)) and len(entry) == 2:
+                out.add((entry[0], entry[1]))
+    return out
+
+
+def _candidate_summary():
+    """新規仮説候補の集計（ADR-140）。
+
+    次の行動に挙がらないときも必ず数えて出す —— 挙げないことと隠すことは
+    違う（INC-006）。閾値は ADR-134 の一束をそのまま使う。
+    """
+    cands = cast_scenario_candidates()
+    triaged = triaged_candidate_keys()
+    untriaged = [c for c in cands
+                 if (c["incident_id"], c["index"]) not in triaged]
+
+    def _by_severity(rows):
+        counts = {}
+        for c in rows:
+            sev = c["severity"] or "(無し)"
+            counts[sev] = counts.get(sev, 0) + 1
+        return {k: counts[k] for k in sorted(counts)}
+
+    return {
+        "total": len(cands),
+        "triaged": len(cands) - len(untriaged),
+        "untriaged": len(untriaged),
+        "by_severity": _by_severity(cands),
+        "untriaged_by_severity": _by_severity(untriaged),
+        "raise_threshold": STALE_RAISE_THRESHOLD,
+    }
 
 
 def load_recommendation_status():
@@ -1171,6 +1267,78 @@ def _validate_verify_refs(incidents=None, verify_records=None):
     return problems
 
 
+# 体系の外に在る証拠の種別（ADR-141）。解決しない理由を宣言で受ける ——
+# 黙って通さず、何であるかを名指しさせる。定義はここ一箇所だけに持ち、
+# cast_analysis はこれを import する（語彙の二重定義は、片方だけが変わった
+# ときに門と分析で判定が割れる）。
+EXTERNAL_EVIDENCE_KINDS = ("external", "conversational", "measurement")
+
+
+def _validate_incident_evidence(incidents=None, resolve=None):
+    """事象の証拠の宣言を、台帳へ積まれた時点で検める（ADR-141）。
+
+    運転手順 §5 は「新しい事象には evidence_refs か evidence_kind を必ず
+    持たせる」と定めるが、機械はどこも検めていなかった —— 捏造事象は分析が
+    走るまで台帳に座る（INC-013 の構造の穴）。各行は次のどちらかを要す:
+
+    - evidence_refs の少なくとも一つが、網羅の証拠と同じ解決経路
+      （ADR-118/123。索引と実ファイル系）で解決する
+    - evidence_kind が体系の外の証拠として宣言されている
+      （EXTERNAL_EVIDENCE_KINDS の語彙そのまま。語彙の外の語は赤）
+
+    索引が組めない環境では refs の解決を判じられない。そのときは
+    evidence_kind を持たない行だけを「確かめられない（UNKNOWN）」として
+    報せる —— 前提の欠如で全件を赤に倒さない（緑へも倒さない）。
+
+    保証限界: 解決は実証ではない。実在するファイルを引く捏造事象はこの門を
+    通り得る（意味の判断であり機械では閉じない。NONGOAL-001 第1項）。
+    その残余は評価器攻撃（A2）が監視する。
+    """
+    problems = []
+    if incidents is None:
+        try:
+            incidents = load_incidents()
+        except (OSError, ValueError) as exc:
+            return ["事象の台帳が読めない: %s" % exc]
+    index_ok = True
+    if resolve is None:
+        now = _index_now()
+        if now is None or now.get("_idx") is None:
+            index_ok = False
+            resolve = lambda ptr: None  # noqa: E731
+        else:
+            resolve = _pointer_resolver()
+    for inc in incidents:
+        if not isinstance(inc, dict):
+            continue
+        iid = inc.get("id") or "(id 無し)"
+        kind = inc.get("evidence_kind")
+        refs = [r for r in (inc.get("evidence_refs") or [])
+                if isinstance(r, str) and r.strip()]
+        if kind is not None and kind not in EXTERNAL_EVIDENCE_KINDS:
+            problems.append(
+                "事象 %s の evidence_kind %r が語彙に無い（%s のいずれか）"
+                % (iid, kind, " / ".join(EXTERNAL_EVIDENCE_KINDS)))
+            continue
+        if kind in EXTERNAL_EVIDENCE_KINDS:
+            continue
+        if not refs:
+            problems.append(
+                "事象 %s に証拠の宣言が無い（evidence_refs も evidence_kind も"
+                "無い。事象は台帳へ積む時点で証拠の宣言を要す。ADR-141）" % iid)
+            continue
+        if not index_ok:
+            problems.append(
+                "事象 %s の evidence_refs を確かめられない（索引が組めない環境。"
+                "UNKNOWN。evidence_kind の宣言も無い）" % iid)
+            continue
+        if not any(resolve(r) for r in refs):
+            problems.append(
+                "事象 %s の evidence_refs がどれも解決しない（%s）。実在しない"
+                "機構を指す事象は台帳に積めない（ADR-141）" % (iid, refs[:3]))
+    return problems
+
+
 # 想定の観測に使える状態語彙。運転手順 §5 の六語をそのまま使う。
 # 根拠なき PASS を書かせないための語彙であって、ここで語を増やさない。
 ASSUMPTION_STATES = (
@@ -1331,6 +1499,18 @@ def next_actions(index_sha=None):
                ", ".join(unplanned[:3])
                + (" ほか" if len(unplanned) > 3 else "")))
 
+    # 事故分析の新規仮説候補は DISCOVER の口から取り込む（ADR-140）。挙げるのは
+    # 未批判の P0・P1 が一束（ADR-134 の閾値の再利用）に達したときだけ。
+    # **数えるのは常に行う** —— 挙げないことと隠すことは違う（INC-006）。
+    # 件数は status の scenario_candidates に出続ける。
+    cand = _candidate_summary()
+    cand_p0 = cand["untriaged_by_severity"].get("P0", 0)
+    cand_p1 = cand["untriaged_by_severity"].get("P1", 0)
+    if should_raise_stale(cand_p0 + cand_p1):
+        add(
+            "DISCOVER: 事故分析の新規仮説 %d 件（P0 %d・P1 %d）が未批判"
+            "（triage_candidates.py）" % (cand_p0 + cand_p1, cand_p0, cand_p1))
+
     if not actions:
         # 空は「やることが無い」と読める。反復の既定の入口を必ず示す
         # （CAST_DONE・CURATED の遷移先。INC-006）。
@@ -1412,6 +1592,9 @@ def main(argv=None):
             # 所有者判断は報告のたびに思い出す物ではない。分析が印した物を
             # 正本が数えて出す（INC-016: 分析の中身が正本へ届いていなかった）。
             "recommendations": _recommendation_summary(),
+            # 新規仮説候補も、次の行動に挙がらないときは必ず数えて出す
+            # （ADR-140。閾値未満の沈黙を「候補が無い」と読ませない）。
+            "scenario_candidates": _candidate_summary(),
         }, ensure_ascii=False, indent=2))
         return 0
     print("usage: orchestrator.py [status|validate]")

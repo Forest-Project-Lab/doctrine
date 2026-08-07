@@ -253,6 +253,8 @@ sources: []
 | ADR-134 | ADR | packaging | 判定の古びは引いた範囲だけで見て、次の行動に挙げるのは閾値に達してからとする |
 | ADR-138 | ADR | packaging | FORMALIZE（定式化）は jerg レーンの検証計画審査として走らせ手を持ち、判定はどれも消化と数える |
 | ADR-139 | ADR | packaging | VERIFY（修正の独立検証）は走らせ手を持ち、新規の fixed:true は PASS（適合）の verify 記録を要す |
+| ADR-140 | ADR | packaging | 事故分析の新規仮説は DISCOVER（失敗仮説の創出）の口から独立批判を経て取り込み、消化は scenarios 台帳の出自欄で記帳する |
+| ADR-141 | ADR | packaging | 事象は台帳へ積む時点で証拠の宣言を要し、正本の検査が機械で検める |
 | ADR-142 | ADR | packaging | 故障注入の記録は generated_at・findings・residual_risks・故障族を常に持つ |
 | ADR-143 | ADR | packaging | 網羅台帳の決定論の運びは正本の規則へ一本化する |
 | CHANGE-001 | CHANGE | packaging | 導入済みプラグインの版の遅れを生存性として照合する |

@@ -29,6 +29,10 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from harness import (control_structure, model_policy, prompts,  # noqa: E402
                      schemas, sdk_lane, system_index)
+# 体系の外に在る証拠の種別の正本は orchestrator に一箇所だけ（ADR-141）。
+# 事象の積載門（_validate_incident_evidence）と分析の「済んだ」条件がここで
+# 同じ語彙を見る。二重定義は片方だけが変わったときに判定が割れる。
+from harness.orchestrator import EXTERNAL_EVIDENCE_KINDS  # noqa: E402
 
 LANE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REPO_DIR = os.path.dirname(LANE_DIR)
@@ -96,11 +100,6 @@ def update_incident(incident_id, fields):
 
 def analysis_path(incident_id):
     return os.path.join(CAST_DIR, "%s.json" % incident_id)
-
-
-# 体系の外に在る証拠の種別。解決しない理由を宣言で受ける（EXT アンカー・刻印と
-# 同じ流儀。黙って通さず、何であるかを名指しさせる）。
-EXTERNAL_EVIDENCE_KINDS = ("external", "conversational", "measurement")
 
 
 def incident_evidence_status(incident, resolve):

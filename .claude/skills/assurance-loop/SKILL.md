@@ -88,6 +88,7 @@ FIX → VERIFY → ATTACK_EVALUATOR → RECORD → CURATE（正本: `harness/orc
   ADR-117 と ADR-121（schema 適合・出典に欠陥の無い統制欠陥が1件以上・先行指標の定義・
   事象の証拠が確かめられること）。新しい事象には `evidence_refs`（索引か実ファイル系で
   解決する参照）か `evidence_kind`（external / conversational / measurement）を必ず持たせる。
+  この規則は正本の validate が機械で検める（解決しない捏造事象は台帳に積めない。ADR-141）。
 - `cast/<事象 id>.json` — 分析の結果（統制欠陥・先行指標・却下された欠陥つき）。
 - `red/<事象 id>.json` — 修正前に FAIL した証拠（最初から緑は再現と認めない）。
 - `scenarios/<日付>.json` — 創出した候補と独立批判の判定。生き残りが在れば正本が
