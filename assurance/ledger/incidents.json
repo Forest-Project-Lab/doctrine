@@ -430,14 +430,16 @@
       "fixed": false,
       "shipped": false,
       "fix_note": "未修正。割れた 7 件は判定を取り下げて未割当の UNKNOWN へ戻したので MAP_COVERAGE が拾い直すが、規準そのものの曖昧さは残っている。直し方（規準に境界の判定規則を足すか、五値を割るか、幅を明示して持つか）は CAST_ANALYSIS の後で決める",
-      "cast_analysis": "pending",
+      "cast_analysis": "done",
       "evidence_kind": "measurement",
       "evidence_refs": [
         "assurance/ledger/recheck-stpa-2026-08-07.json",
         "assurance/ledger/recheck-jerg-2026-08-07.json",
         "assurance/harness/independent_recheck.py",
         "assurance/harness/prompts.py"
-      ]
+      ],
+      "cast_analysis_ref": "assurance/ledger/cast/INC-024-coverage-rubric-undecided-at-its-busiest-boundary.json",
+      "cast_analyzed_at": "2026-08-07T07:38:10Z"
     }
   ]
 }
