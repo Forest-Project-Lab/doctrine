@@ -1,0 +1,698 @@
+{
+  "accepted_flaws": [
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "保証レーンが評価者へ与える指示（規準）が、plugin/tests/test_x.py::test_名 という参照形を案内していた。同じレーンが供給する索引は個々の試験の名を渡していないため、この形は原理的に満たせない。再判定後の 253 件の緑のうちこの形を使うものが 0 件であることが、使用実績ではなく使用不能の徴候として観測された。指示は与えられたが、その指示に従うために必要な入力は同じコントローラから供給されていない。",
+      "evidence_ref": "assurance/harness/prompts.py, assurance/harness/system_index.py",
+      "flaw_type": "制御動作が誤っている",
+      "normative_refs": [
+        "上位文書の利用可能性（読み手適合）",
+        "defects-in-information-providing-systems",
+        "include-information-supplier-defect"
+      ],
+      "why_it_seemed_adequate": "::test_名 は証拠として最も精密な指定であり、機械照合の厳格さと整合する自然な要求に見える。索引が試験名を渡さない理由（1317 件を載せると入力が三倍近くになる）は索引側の実装上の都合であって、規準の文面を読む限りは見えない。規準を書く時点では『より精密な指定を求める』ことが保証の強化に見えた。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "案内（規準）と供給（索引）は同一レーンの中の別々の場所で別々に育ち、両者の語彙の整合を凍結する結合が存在しなかった。索引の出力キーの語彙と、規準が要求する参照形の語彙は、独立に変更できる。片方が精密化し、もう片方が入力量の制約で粗いまま留まっても、その差は誰の手掛かりにもならない。",
+      "evidence_ref": "assurance/harness/prompts.py, assurance/harness/system_index.py",
+      "flaw_type": "統制どうしの調整の欠如",
+      "normative_refs": [
+        "verify-decomposition-assumptions",
+        "モデル一致のためのフィードバック提供",
+        "全コントロールループにフィードバック必須"
+      ],
+      "why_it_seemed_adequate": "どちらも同じレーンの中にあり、同じ担当が書くため、整合は暗黙に保たれるという前提が成り立つように見えた。規準は文、索引はデータであり、両者を突き合わせる試験は『文と文の一致』を凍結するように見えて費用対効果が低く見えた。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "判定で実際に用いられた参照形の分布が、常時の手掛かりとして台帳や決定論試験から出ていない。ある参照形が一度も使われていないという事実は『不在』であり、緑の集計の中では成功と区別がつかない。この不在は 2026-08-09 の独立再監査という一回性の実測ではじめて数えられた。",
+      "evidence_ref": "assurance/ledger/（再判定後 253 件の緑、試験名参照 0 件）",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "control-action-requires-feedback",
+        "controller-needs-concrete-feedback-channels",
+        "監査の先行指標を確立する"
+      ],
+      "why_it_seemed_adequate": "台帳と決定論試験は『判定が正しいか』『床の挙動が退行していないか』を見る設計であり、緑が積み上がっている限り案内の実行可能性を疑う契機が無い。使われていない選択肢の件数を数えるという発想は、成功の観測からは生まれにくい。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "五値の一つ『実装・試験・証拠あり』という名が、床が実際に受理する範囲（機械の強制。unittest に限らず、監査の検査 102・スクリプト 87・リンタの検査コード 34・Hook 14・技能 8 を含む）より狭い語で書かれていた。名の指す範囲と機構の受理範囲がずれており、名を読む者は床が実際より狭いと理解する。",
+      "evidence_ref": "assurance/harness/prompts.py, assurance/tests/test_rubric_matches_the_floor.py",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "用語定義のスコープ限定",
+        "designer-vs-operator-mental-model",
+        "プロセスモデルと実状態の不整合"
+      ],
+      "why_it_seemed_adequate": "『試験』は機械が守っていることの最も代表的な形であり、代表例で名を付けるのは簡潔で読みやすい。床の挙動は当初から広かったが、名は挙動の要約として書かれ、要約が狭いことは挙動を変えないため、機能上の不具合としては現れない。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "同じ狭い名が、判定を行う評価者と、判定を検証する独立再監査の双方にとって唯一の意味の出所であった。結果として、独立しているはずの二つの読みが同時に同じ方向へずれ、独立再監査自身が『125 件が試験証拠を挙げていない』と過大に読んで報告と台帳へ書いた。既知の穴（評価者は同系 model）に加え、共有された名という共通原因が、重ねられた防護を同時に無効化した。",
+      "evidence_ref": "事象記録 impact(2)、INC-029 の impact 訂正",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "共通の体系的要因による多重防護の無効化",
+        "process-model-inconsistency-causes-unsafe-control",
+        "情報システム保有と有用性の乖離"
+      ],
+      "why_it_seemed_adequate": "独立再監査は判定と別に走るため、独立性は確保されているように見えた。両者が同じ規準文を読むことは、判定基準の一貫性という利点として設計されており、それが同時に共通原因になることは分離して意識されていない。"
+    },
+    {
+      "control_element_id": "CI_RELEASE_CHECK",
+      "description": "merge 前に赤で止める門は、床の挙動の退行を検出する設計であり、案内文が実行可能か（規準が要求する参照形を索引が供給できるか）、および格付けの名が床の受理範囲を覆っているかは検査対象に入っていない。今回の不整合は、門が緑のまま長期間存続した。",
+      "evidence_ref": "assurance/tests/test_rubric_matches_the_floor.py, .github/workflows",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "監査のすり抜け時に監査手順を是正",
+        "検出失敗の原因調査",
+        "verify-all-hazard-preventing-systems"
+      ],
+      "why_it_seemed_adequate": "門が守るのは『動くこと』であり、指示文の言い回しは動作ではないため試験の対象外とするのは妥当な線引きに見える。規準と床の一致を凍結する試験（test_rubric_matches_the_floor.py）が存在することで、この面は既に覆われているという印象も生じうる。"
+    },
+    {
+      "control_element_id": "OWNER",
+      "description": "所有者が読む手掛かり（台帳・進捗報告）に、狭い名に由来する数値解釈（125 件が試験証拠を挙げていない）が載った。数だけが残り、その数がどの語の定義に依存して算出されたかは手掛かりに含まれない。所有者の側から、名の狭さに起因する過大読みを見分ける手段は無かった。",
+      "evidence_ref": "assurance/ledger/, 進捗報告（規定形式）",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "リスク情報の不透明な集約禁止",
+        "要約統計偏重による傾向情報の喪失",
+        "defects-in-information-providing-systems"
+      ],
+      "why_it_seemed_adequate": "独立再監査が実測した数値は、意図ではなく実施を示す証拠として最も信頼できる形式であり、規定形式の報告に載せるべきものに見えた。数値の背後にある語の定義を併記する慣行は無く、簡潔さは報告の要件でもある。"
+    },
+    {
+      "control_element_id": "OWNER",
+      "description": "所有者の制御対象は互換性を壊す変更・配布境界の変更・復旧不能な削除に定義されており、規準の文（=評価者へ配られる指示）の変更はそのいずれにも該当しないと読める。今回 rubric_sha256 が動き、既存判定は古い刻印を持ったまま残るが、再判定の要否は『言い直しだから不要』という個別判断として記録されるのみで、判定基準も裁定者も定まっていない。",
+      "evidence_ref": "事象記録 residual、INC-037 の修正（刻印の保持）",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "変更管理の存在と強制力",
+        "変更時の想定再評価をMOCで強制",
+        "全変更のハザード分析と承認"
+      ],
+      "why_it_seemed_adequate": "床の挙動を変えない言い直しは互換性を壊す変更ではなく、一律に再判定を要求する規則はむしろ費用を増やす。判断を記録として残す運用は、規則化より柔軟で誠実な扱いに見える。"
+    }
+  ],
+  "analysis": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "保証レーンが評価者へ与える指示（規準）が、plugin/tests/test_x.py::test_名 という参照形を案内していた。同じレーンが供給する索引は個々の試験の名を渡していないため、この形は原理的に満たせない。再判定後の 253 件の緑のうちこの形を使うものが 0 件であることが、使用実績ではなく使用不能の徴候として観測された。指示は与えられたが、その指示に従うために必要な入力は同じコントローラから供給されていない。",
+        "evidence_ref": "assurance/harness/prompts.py, assurance/harness/system_index.py",
+        "flaw_type": "制御動作が誤っている",
+        "normative_refs": [
+          "上位文書の利用可能性（読み手適合）",
+          "defects-in-information-providing-systems",
+          "include-information-supplier-defect"
+        ],
+        "why_it_seemed_adequate": "::test_名 は証拠として最も精密な指定であり、機械照合の厳格さと整合する自然な要求に見える。索引が試験名を渡さない理由（1317 件を載せると入力が三倍近くになる）は索引側の実装上の都合であって、規準の文面を読む限りは見えない。規準を書く時点では『より精密な指定を求める』ことが保証の強化に見えた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "案内（規準）と供給（索引）は同一レーンの中の別々の場所で別々に育ち、両者の語彙の整合を凍結する結合が存在しなかった。索引の出力キーの語彙と、規準が要求する参照形の語彙は、独立に変更できる。片方が精密化し、もう片方が入力量の制約で粗いまま留まっても、その差は誰の手掛かりにもならない。",
+        "evidence_ref": "assurance/harness/prompts.py, assurance/harness/system_index.py",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "verify-decomposition-assumptions",
+          "モデル一致のためのフィードバック提供",
+          "全コントロールループにフィードバック必須"
+        ],
+        "why_it_seemed_adequate": "どちらも同じレーンの中にあり、同じ担当が書くため、整合は暗黙に保たれるという前提が成り立つように見えた。規準は文、索引はデータであり、両者を突き合わせる試験は『文と文の一致』を凍結するように見えて費用対効果が低く見えた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "判定で実際に用いられた参照形の分布が、常時の手掛かりとして台帳や決定論試験から出ていない。ある参照形が一度も使われていないという事実は『不在』であり、緑の集計の中では成功と区別がつかない。この不在は 2026-08-09 の独立再監査という一回性の実測ではじめて数えられた。",
+        "evidence_ref": "assurance/ledger/（再判定後 253 件の緑、試験名参照 0 件）",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "control-action-requires-feedback",
+          "controller-needs-concrete-feedback-channels",
+          "監査の先行指標を確立する"
+        ],
+        "why_it_seemed_adequate": "台帳と決定論試験は『判定が正しいか』『床の挙動が退行していないか』を見る設計であり、緑が積み上がっている限り案内の実行可能性を疑う契機が無い。使われていない選択肢の件数を数えるという発想は、成功の観測からは生まれにくい。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "五値の一つ『実装・試験・証拠あり』という名が、床が実際に受理する範囲（機械の強制。unittest に限らず、監査の検査 102・スクリプト 87・リンタの検査コード 34・Hook 14・技能 8 を含む）より狭い語で書かれていた。名の指す範囲と機構の受理範囲がずれており、名を読む者は床が実際より狭いと理解する。",
+        "evidence_ref": "assurance/harness/prompts.py, assurance/tests/test_rubric_matches_the_floor.py",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "用語定義のスコープ限定",
+          "designer-vs-operator-mental-model",
+          "プロセスモデルと実状態の不整合"
+        ],
+        "why_it_seemed_adequate": "『試験』は機械が守っていることの最も代表的な形であり、代表例で名を付けるのは簡潔で読みやすい。床の挙動は当初から広かったが、名は挙動の要約として書かれ、要約が狭いことは挙動を変えないため、機能上の不具合としては現れない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "同じ狭い名が、判定を行う評価者と、判定を検証する独立再監査の双方にとって唯一の意味の出所であった。結果として、独立しているはずの二つの読みが同時に同じ方向へずれ、独立再監査自身が『125 件が試験証拠を挙げていない』と過大に読んで報告と台帳へ書いた。既知の穴（評価者は同系 model）に加え、共有された名という共通原因が、重ねられた防護を同時に無効化した。",
+        "evidence_ref": "事象記録 impact(2)、INC-029 の impact 訂正",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "共通の体系的要因による多重防護の無効化",
+          "process-model-inconsistency-causes-unsafe-control",
+          "情報システム保有と有用性の乖離"
+        ],
+        "why_it_seemed_adequate": "独立再監査は判定と別に走るため、独立性は確保されているように見えた。両者が同じ規準文を読むことは、判定基準の一貫性という利点として設計されており、それが同時に共通原因になることは分離して意識されていない。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "merge 前に赤で止める門は、床の挙動の退行を検出する設計であり、案内文が実行可能か（規準が要求する参照形を索引が供給できるか）、および格付けの名が床の受理範囲を覆っているかは検査対象に入っていない。今回の不整合は、門が緑のまま長期間存続した。",
+        "evidence_ref": "assurance/tests/test_rubric_matches_the_floor.py, .github/workflows",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "監査のすり抜け時に監査手順を是正",
+          "検出失敗の原因調査",
+          "verify-all-hazard-preventing-systems"
+        ],
+        "why_it_seemed_adequate": "門が守るのは『動くこと』であり、指示文の言い回しは動作ではないため試験の対象外とするのは妥当な線引きに見える。規準と床の一致を凍結する試験（test_rubric_matches_the_floor.py）が存在することで、この面は既に覆われているという印象も生じうる。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者が読む手掛かり（台帳・進捗報告）に、狭い名に由来する数値解釈（125 件が試験証拠を挙げていない）が載った。数だけが残り、その数がどの語の定義に依存して算出されたかは手掛かりに含まれない。所有者の側から、名の狭さに起因する過大読みを見分ける手段は無かった。",
+        "evidence_ref": "assurance/ledger/, 進捗報告（規定形式）",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "リスク情報の不透明な集約禁止",
+          "要約統計偏重による傾向情報の喪失",
+          "defects-in-information-providing-systems"
+        ],
+        "why_it_seemed_adequate": "独立再監査が実測した数値は、意図ではなく実施を示す証拠として最も信頼できる形式であり、規定形式の報告に載せるべきものに見えた。数値の背後にある語の定義を併記する慣行は無く、簡潔さは報告の要件でもある。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者の制御対象は互換性を壊す変更・配布境界の変更・復旧不能な削除に定義されており、規準の文（=評価者へ配られる指示）の変更はそのいずれにも該当しないと読める。今回 rubric_sha256 が動き、既存判定は古い刻印を持ったまま残るが、再判定の要否は『言い直しだから不要』という個別判断として記録されるのみで、判定基準も裁定者も定まっていない。",
+        "evidence_ref": "事象記録 residual、INC-037 の修正（刻印の保持）",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "変更管理の存在と強制力",
+          "変更時の想定再評価をMOCで強制",
+          "全変更のハザード分析と承認"
+        ],
+        "why_it_seemed_adequate": "床の挙動を変えない言い直しは互換性を壊す変更ではなく、一律に再判定を要求する規則はむしろ費用を増やす。判断を記録として残す運用は、規則化より柔軟で誠実な扱いに見える。"
+      }
+    ],
+    "hazard": "統制下にあるシステム状態として：評価者へ渡される指示（規準）が要求する参照形式を、同じ系が渡す入力（索引）が供給できておらず、かつ判定結果に付く格付けの名が、床が実際に受理する証拠種別より狭い語で書かれている状態。この状態では、評価者に届く情報と床の実際の判定規則が乖離し、判定の出力を読む上位（台帳・報告・所有者）が実態と異なる統治像を持つ。",
+    "incident_id": "INC-038-rubric-offers-a-pointer-form-the-index-cannot-supply",
+    "leading_indicators": [
+      {
+        "indicator": "規準が案内する参照形のうち、直近の全件再判定で使用回数が 0 の形の件数",
+        "observable": "台帳の各判定レコードの証拠参照文字列を、規準が案内する参照形ごとに分類して集計した数",
+        "threshold": "使用回数 0 の参照形が 1 つでもあれば異常（案内された形が供給されていない疑い）。2 回連続の再判定で 0 が続けば赤",
+        "version_independent": true,
+        "where": "assurance/ledger/ を入力とする決定論試験（再判定のたびに実行）",
+        "why_version_independent": "リポジトリ正本の台帳と規準だけで算出でき、利用者環境へ導入された複製の版に依存しない"
+      },
+      {
+        "indicator": "規準が要求する参照粒度と索引が供給するキーの語彙差",
+        "observable": "規準文から抽出した参照形の語彙集合と、system_index が出力するキーの語彙集合の差集合の大きさ",
+        "threshold": "規準側にあって索引側に対応の無い参照形が 1 件でもあれば赤",
+        "version_independent": true,
+        "where": "assurance/tests の決定論試験（prompts.py と system_index.py を同時に読む）",
+        "why_version_independent": "両ファイルの正本のみを入力とし、導入複製を参照しない"
+      },
+      {
+        "indicator": "五値の定義文が言及しない受理種別の数",
+        "observable": "床が実際に受理する証拠種別（監査の検査・スクリプト・リンタの検査コード・Hook・技能等）の列挙と、五値の定義文に現れる種別語の差集合",
+        "threshold": "定義文が言及しない受理種別が 1 つでもあれば異常（名が床より狭い）",
+        "version_independent": true,
+        "where": "assurance/tests/test_rubric_matches_the_floor.py の検査項目として",
+        "why_version_independent": "規準文と床の実装の突き合わせであり、配布された複製に依存しない"
+      },
+      {
+        "indicator": "参照が機械照合で解決しなかったことによる UNKNOWN 降格の割合",
+        "observable": "再判定出力に降格理由コードを付し、『参照が解決しない』理由の件数／全参照数",
+        "threshold": "全参照の 1% を超える、または連続 2 回の再判定で増加",
+        "version_independent": true,
+        "where": "保証レーンの再判定出力（orchestrator.py が書く判定レコード）",
+        "why_version_independent": "判定の生成と台帳の記録だけで算出できる"
+      },
+      {
+        "indicator": "現行 rubric_sha256 と異なる刻印を持つ有効判定の割合、および『言い直しにつき再判定不要』と判断された規準変更の連続回数",
+        "observable": "台帳の判定レコードに刻まれた rubric_sha256 の分布と、規準変更ごとの再判定要否判断の記録",
+        "threshold": "旧刻印の有効判定が全体の 20% を超える、または再判定不要判断が 2 回以上連続した時点で所有者へ上げる",
+        "version_independent": true,
+        "where": "assurance/ledger/",
+        "why_version_independent": "台帳の刻印分布のみで観測でき、導入複製の版に依らない"
+      },
+      {
+        "indicator": "導入複製が保持する規準の刻印とリポジトリ正本の刻印の一致",
+        "observable": "利用者環境の複製側で読み出した規準の rubric_sha256 と正本の値の比較",
+        "threshold": "不一致が 1 世代でも生じたら警告、2 世代以上なら異常",
+        "version_independent": false,
+        "where": "導入複製側で動く HEARTBEAT（gov-heartbeat.py）が読む版情報",
+        "why_version_independent": "検出器自身が導入複製の側で動くため、複製の版が遅れれば検出器も遅れる（INC-005 の共通原因故障）。この指標は遅れた版の存在を、遅れていない版でしか確実に示せない"
+      }
+    ],
+    "loss": "保証判定の結果が、統治の実態を読む者（評価者・独立再監査・所有者）に対して実態と食い違う像を与えた。具体的には (a) 評価者は、系が供給していない参照形（試験名）を書くよう案内され、当て推量の参照は機械照合で解決せず UNKNOWN 降格を生みうる状態に置かれ、(b) 五値の名が床の受理範囲より狭いために、独立再監査自身が「125 件が試験証拠を挙げていない」と過大に読み、その誤読が報告と台帳（および INC-029 の impact）へ書き込まれ、訂正されるまで残った。損なわれたのは保証の可用性そのものではなく、保証結果を根拠に判断する者のプロセスモデルの正確さである。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "すべての指示文の要求語彙が、対応する供給側の語彙に含まれる（差集合が空）",
+        "hypothesis": "規準以外の指示文（SessionStart で注入される契約、POST_TOOL_LINTER の助言など）にも、系が供給していない情報を前提とする案内が含まれている",
+        "oracle": "各指示文が要求する参照・入力の語彙を機械的に列挙し、それを供給する側の出力キーの語彙と突合する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "すべての合成判定が UNKNOWN へ落ちる",
+        "hypothesis": "存在しない参照（当て推量のファイル名・試験名）が機械照合を通過し、UNKNOWN ではなく緑として受理される経路がある",
+        "oracle": "存在しない参照を含む合成判定を照合器に流し、UNKNOWN へ落ちるか受理されるかを観測する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "残る四つの値で差集合が空",
+        "hypothesis": "名と機構の乖離は五値の他の値にも存在し、今回直した一つは同型の一例にすぎない",
+        "oracle": "五値すべてについて、定義文が言及する証拠種別と床が実際に受理する種別の差集合を算出する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "分布が単一の刻印に収束している",
+        "hypothesis": "『言い直しゆえ再判定不要』という判断が積み重なり、現行の rubric_sha256 と異なる刻印を持つ判定が多数派になる",
+        "oracle": "台帳の rubric_sha256 分布を時系列で追い、旧刻印の有効判定の割合を測る",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "二つの再監査の結論が一致する",
+        "hypothesis": "独立再監査の独立性は『別の実行者』の水準に留まり、同一文書を意味の出所とする限り同型の誤読を繰り返す",
+        "oracle": "同じ対象を、規準文を与えずに床の実装のみから判定させる再監査を一度走らせ、結果の差を測る",
+        "severity": "P2"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "規準が案内できる参照形の語彙を、索引が実際に出力するキーの語彙から機械的に生成する（案内と供給の出所を一つにする）。人手で書いた参照形が索引に対応を持たない場合は生成時に赤で止める",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "五値の各値の定義文を、床が受理する述語の列挙から生成するか、少なくとも定義文の言及種別と床の受理種別の差集合が空であることを決定論試験で凍結する",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "leading_indicators の 1・2・3・4（不使用の参照形、語彙差、定義文の言及漏れ、参照が解決しない降格の割合）を決定論試験および再判定の常時出力に組み込む",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "索引が個々の試験名を渡さない理由（入力量の制約）と、それが規準の要求できる参照粒度に課す上限を、規準と索引の双方へ相互参照付きで記す。制約の所在を片側だけに置かない",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "規準の刻印（rubric_sha256）が動いたときの再判定要否について、『言い直し』と『挙動変更』を誰がどの証拠で区別するかの裁定基準を定める。今回の不要判断を前例とするか否かも含めて決める",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "報告と台帳に数値を載せる際、その数値がどの語の定義に依存して算出されたかを併記する規定形式へ改める（今回の 125 件は定義依存であることが読み手に見えなかった）",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "ADR-139 の独立検証が未実施であるため、本事象は fixed:false のまま追跡し、閉じる条件（何をもって検証済みとするか）を先に定める",
+        "kind": "調査の継続",
+        "owner_decision_required": true
+      },
+      {
+        "action": "五値の残り四つの値、および規準以外の指示文（注入される契約・助言）についても、名と機構・案内と供給の突合を一度実施する",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "独立再監査に、規準文を意味の出所としない経路（床の実装のみを読む判定）を一度混ぜ、同一文書による共通原因の大きさを測る",
+        "kind": "調査の継続",
+        "owner_decision_required": true
+      }
+    ],
+    "systemic_factors": [
+      "案内（評価者へ渡す指示）と供給（評価者へ渡す入力）が同一系の中で別々に定義され、両者の語彙の整合を凍結する結合が無い。契約が二重に書かれ、片方だけが動きうる",
+      "名（格付けラベル・要約語）が機構の実態より狭くなる方向へ劣化しても、名を読む全員が同じ名しか手にしないため、共通原因で全員のプロセスモデルが同時にずれ、突き合わせでは検出できない",
+      "不在（一度も使われない案内、言及されない受理種別）は成功と区別がつかない。緑の集計を主な手掛かりとする保証は、原理的に不在を観測しない",
+      "独立再監査が同系 model かつ同一の規準文を入力とするため、独立性が『別の実行者』の水準に留まり、『別の意味の出所』の水準には達していない",
+      "変更が『言い直し』と分類されると、変更管理・再判定・所有者の可否判断のいずれの対象からも外れる。分類そのものが統制の境界を決めており、その分類に裁定手順が無い",
+      "入力量の制約（1317 件を載せると入力が三倍）という運用上のトレードオフが索引の側だけで解決され、その帰結（規準が要求できる粒度の上限）が案内の側へ伝わっていない"
+    ],
+    "unknowns": [
+      "【実在未確認】事象が名指しする機構——規準（assurance/harness/prompts.py）、索引（assurance/harness/system_index.py）、五値の格付け、test_rubric_matches_the_floor.py、253 件の緑を含む台帳——は、与えられた統制構造のどの要素の実体にも現れない（ASSURANCE_LANE の実体として挙がっているのは orchestrator.py のみ）。作業ディレクトリにも assurance/ は存在せず、実在を確認できなかった。以下の分析はすべて、事象記録の記述が実在の機構を指しているという仮定の上に組み立てられている。この仮定が崩れれば control_flaws は成立しない（confidence を low としたのはこのため）",
+      "当て推量の試験名が実際に書かれ UNKNOWN へ落ちた判定が過去に存在したか。impact(1) は『当て推量を生みうる』という可能性の記述であり、発生の実測ではない",
+      "索引に 1317 件の試験名を載せると入力が三倍近くになるという見積りの出所と算出方法。および部分供給（判定対象ファイル配下の名だけ渡す等）が検討されたか、検討され却下されたならその理由",
+      "test_rubric_matches_the_floor.py が『一致』として何を凍結しているのか（規準と床のどの面か）。今回の二つの不整合がなぜその試験を赤にしなかったのかは、試験の対象範囲を読まない限り断定できない",
+      "assurance/ 配下の決定論試験が CI_RELEASE_CHECK（.github/workflows）で実行されているか、保証レーン内でのみ走るか。CI_RELEASE_CHECK への欠陥割り当ての妥当性はこれに依存する",
+      "253 件の緑・125 件・内訳（102/87/34/14/8）の算出が決定論であるか（誰がいつ走らせても同じ数になるか）。再現手順が無ければ、これらは先行指標の基準線として使えない",
+      "INC-029 の impact 訂正が、その記述を引用した他の文書・報告へ伝播したか。誤った数値が別の場所に残っていないかは確認されていない",
+      "ADR-139 の独立検証の実施予定・担当・実施条件。fixed:false のまま何をもって閉じるかが決まっているか",
+      "五値の他の四つの値についても、名と床の受理範囲の乖離が存在するか。今回検査されたのは一つの値のみである",
+      "規準の刻印が動いたときの再判定要否を、誰がどの証拠で裁定するか。今回の『言い直しゆえ不要』という判断が、以後の前例として扱われるのかは決まっていない"
+    ],
+    "why_existing_assurance_missed": "既存の保証は『床の挙動が退行していないこと』を決定論試験で凍結する設計であり、案内文（規準）が実行可能であるか、格付けの名が床の受理範囲を覆っているかは、挙動ではないため検査対象の外にあった。加えて今回の徴候は不在の形（案内された参照形が一度も使われない、名が言及しない受理種別が存在する）で現れる。緑の集計は使われた証拠の妥当性を見るため、使われなかった選択肢は成功と区別がつかず、集計に現れない。さらに評価者と独立再監査が同じ規準文を唯一の意味の出所として読むため、名の狭さは両者の間の食い違いとしてではなく合意として現れ、突き合わせでは検出できない。修正（案内の一本化と定義文の書き換え）は名と案内を実態に寄せたが、案内と供給の語彙を機械的に結合する機構は入っておらず、独立検証（ADR-139）も未実施のため、同型の乖離が再び生じる余地は残っている。"
+  },
+  "control_structure_ids": [
+    "OWNER",
+    "CI_RELEASE_CHECK",
+    "SESSION_START_CONTRACT",
+    "HEARTBEAT",
+    "PRE_TOOL_GUARD",
+    "POST_TOOL_LINTER",
+    "SESSION_END_AUDIT",
+    "CAPTURE_NUDGE",
+    "PLUGIN_DISTRIBUTION",
+    "ASSURANCE_LANE",
+    "GOVERNANCE_TREE"
+  ],
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "duration_ms": 266321,
+  "errors": [],
+  "execution_kind": "real-sdk",
+  "flaws_with_citation_defect": [],
+  "generated_at": "2026-08-09T22:41:38Z",
+  "git_dirty": true,
+  "git_sha": "c18bc7524e5b2ca9f1eafe3a4210f4295841a16a",
+  "incident_evidence": {
+    "kind": "measurement",
+    "refs": [
+      "assurance/harness/prompts.py",
+      "assurance/tests/test_rubric_matches_the_floor.py",
+      "assurance/harness/system_index.py"
+    ],
+    "resolved": [
+      "assurance/harness/prompts.py",
+      "assurance/tests/test_rubric_matches_the_floor.py",
+      "assurance/harness/system_index.py"
+    ],
+    "unresolved": [],
+    "verifiable": true
+  },
+  "incident_id": "INC-038-rubric-offers-a-pointer-form-the-index-cannot-supply",
+  "incident_sha256": "e01e25647a4286f00dc5b435e2e52fb857d94d5065ff45be84482e9bc2f53e3e",
+  "init": {
+    "claude_code_version": "2.1.221",
+    "model": "claude-opus-5",
+    "session_id": "6a9c0205-ef4e-455d-a6f2-0cbd9d7f1706",
+    "tools_count": 27
+  },
+  "kind": "cast-analysis",
+  "leading_indicators_defined": true,
+  "options": {
+    "allowed_tools": [],
+    "cwd": "/tmp/assurance-cast-w2qei2cn",
+    "effort": "high",
+    "max_budget_usd": 4.0,
+    "max_turns": 8,
+    "model": "claude-opus-5",
+    "setting_sources": [],
+    "timeout_s": 900
+  },
+  "oracle": "structured_output がレーン側再検証にも適合",
+  "principles_offered": 337,
+  "prompt_sha256": "166c3ddc6b152c283c01e96e54305af7736b52fae0c4c70ed4115434af5de485",
+  "rejected_flaws": [],
+  "result_meta": {
+    "duration_api_ms": 265328,
+    "is_error": false,
+    "num_turns": 4,
+    "session_id": "6a9c0205-ef4e-455d-a6f2-0cbd9d7f1706",
+    "subtype": "success",
+    "total_cost_usd": 0.896033,
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 40769,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 40769,
+      "cache_read_input_tokens": 71718,
+      "inference_geo": "not_available",
+      "input_tokens": 4,
+      "iterations": "list",
+      "output_tokens": 16621,
+      "server_tool_use": {
+        "web_fetch_requests": 0,
+        "web_search_requests": 0
+      },
+      "service_tier": "standard",
+      "speed": "standard"
+    }
+  },
+  "schema_sha256": "0d1643d5e16353723405302c1f6ffcf753915e2a4f27a3530e8ef9a9ee45cb46",
+  "sdk_version": "0.2.129",
+  "settled": true,
+  "status": "PASS",
+  "structured_output": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "保証レーンが評価者へ与える指示（規準）が、plugin/tests/test_x.py::test_名 という参照形を案内していた。同じレーンが供給する索引は個々の試験の名を渡していないため、この形は原理的に満たせない。再判定後の 253 件の緑のうちこの形を使うものが 0 件であることが、使用実績ではなく使用不能の徴候として観測された。指示は与えられたが、その指示に従うために必要な入力は同じコントローラから供給されていない。",
+        "evidence_ref": "assurance/harness/prompts.py, assurance/harness/system_index.py",
+        "flaw_type": "制御動作が誤っている",
+        "normative_refs": [
+          "上位文書の利用可能性（読み手適合）",
+          "defects-in-information-providing-systems",
+          "include-information-supplier-defect"
+        ],
+        "why_it_seemed_adequate": "::test_名 は証拠として最も精密な指定であり、機械照合の厳格さと整合する自然な要求に見える。索引が試験名を渡さない理由（1317 件を載せると入力が三倍近くになる）は索引側の実装上の都合であって、規準の文面を読む限りは見えない。規準を書く時点では『より精密な指定を求める』ことが保証の強化に見えた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "案内（規準）と供給（索引）は同一レーンの中の別々の場所で別々に育ち、両者の語彙の整合を凍結する結合が存在しなかった。索引の出力キーの語彙と、規準が要求する参照形の語彙は、独立に変更できる。片方が精密化し、もう片方が入力量の制約で粗いまま留まっても、その差は誰の手掛かりにもならない。",
+        "evidence_ref": "assurance/harness/prompts.py, assurance/harness/system_index.py",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "verify-decomposition-assumptions",
+          "モデル一致のためのフィードバック提供",
+          "全コントロールループにフィードバック必須"
+        ],
+        "why_it_seemed_adequate": "どちらも同じレーンの中にあり、同じ担当が書くため、整合は暗黙に保たれるという前提が成り立つように見えた。規準は文、索引はデータであり、両者を突き合わせる試験は『文と文の一致』を凍結するように見えて費用対効果が低く見えた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "判定で実際に用いられた参照形の分布が、常時の手掛かりとして台帳や決定論試験から出ていない。ある参照形が一度も使われていないという事実は『不在』であり、緑の集計の中では成功と区別がつかない。この不在は 2026-08-09 の独立再監査という一回性の実測ではじめて数えられた。",
+        "evidence_ref": "assurance/ledger/（再判定後 253 件の緑、試験名参照 0 件）",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "control-action-requires-feedback",
+          "controller-needs-concrete-feedback-channels",
+          "監査の先行指標を確立する"
+        ],
+        "why_it_seemed_adequate": "台帳と決定論試験は『判定が正しいか』『床の挙動が退行していないか』を見る設計であり、緑が積み上がっている限り案内の実行可能性を疑う契機が無い。使われていない選択肢の件数を数えるという発想は、成功の観測からは生まれにくい。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "五値の一つ『実装・試験・証拠あり』という名が、床が実際に受理する範囲（機械の強制。unittest に限らず、監査の検査 102・スクリプト 87・リンタの検査コード 34・Hook 14・技能 8 を含む）より狭い語で書かれていた。名の指す範囲と機構の受理範囲がずれており、名を読む者は床が実際より狭いと理解する。",
+        "evidence_ref": "assurance/harness/prompts.py, assurance/tests/test_rubric_matches_the_floor.py",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "用語定義のスコープ限定",
+          "designer-vs-operator-mental-model",
+          "プロセスモデルと実状態の不整合"
+        ],
+        "why_it_seemed_adequate": "『試験』は機械が守っていることの最も代表的な形であり、代表例で名を付けるのは簡潔で読みやすい。床の挙動は当初から広かったが、名は挙動の要約として書かれ、要約が狭いことは挙動を変えないため、機能上の不具合としては現れない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "同じ狭い名が、判定を行う評価者と、判定を検証する独立再監査の双方にとって唯一の意味の出所であった。結果として、独立しているはずの二つの読みが同時に同じ方向へずれ、独立再監査自身が『125 件が試験証拠を挙げていない』と過大に読んで報告と台帳へ書いた。既知の穴（評価者は同系 model）に加え、共有された名という共通原因が、重ねられた防護を同時に無効化した。",
+        "evidence_ref": "事象記録 impact(2)、INC-029 の impact 訂正",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "共通の体系的要因による多重防護の無効化",
+          "process-model-inconsistency-causes-unsafe-control",
+          "情報システム保有と有用性の乖離"
+        ],
+        "why_it_seemed_adequate": "独立再監査は判定と別に走るため、独立性は確保されているように見えた。両者が同じ規準文を読むことは、判定基準の一貫性という利点として設計されており、それが同時に共通原因になることは分離して意識されていない。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "merge 前に赤で止める門は、床の挙動の退行を検出する設計であり、案内文が実行可能か（規準が要求する参照形を索引が供給できるか）、および格付けの名が床の受理範囲を覆っているかは検査対象に入っていない。今回の不整合は、門が緑のまま長期間存続した。",
+        "evidence_ref": "assurance/tests/test_rubric_matches_the_floor.py, .github/workflows",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "監査のすり抜け時に監査手順を是正",
+          "検出失敗の原因調査",
+          "verify-all-hazard-preventing-systems"
+        ],
+        "why_it_seemed_adequate": "門が守るのは『動くこと』であり、指示文の言い回しは動作ではないため試験の対象外とするのは妥当な線引きに見える。規準と床の一致を凍結する試験（test_rubric_matches_the_floor.py）が存在することで、この面は既に覆われているという印象も生じうる。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者が読む手掛かり（台帳・進捗報告）に、狭い名に由来する数値解釈（125 件が試験証拠を挙げていない）が載った。数だけが残り、その数がどの語の定義に依存して算出されたかは手掛かりに含まれない。所有者の側から、名の狭さに起因する過大読みを見分ける手段は無かった。",
+        "evidence_ref": "assurance/ledger/, 進捗報告（規定形式）",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "リスク情報の不透明な集約禁止",
+          "要約統計偏重による傾向情報の喪失",
+          "defects-in-information-providing-systems"
+        ],
+        "why_it_seemed_adequate": "独立再監査が実測した数値は、意図ではなく実施を示す証拠として最も信頼できる形式であり、規定形式の報告に載せるべきものに見えた。数値の背後にある語の定義を併記する慣行は無く、簡潔さは報告の要件でもある。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者の制御対象は互換性を壊す変更・配布境界の変更・復旧不能な削除に定義されており、規準の文（=評価者へ配られる指示）の変更はそのいずれにも該当しないと読める。今回 rubric_sha256 が動き、既存判定は古い刻印を持ったまま残るが、再判定の要否は『言い直しだから不要』という個別判断として記録されるのみで、判定基準も裁定者も定まっていない。",
+        "evidence_ref": "事象記録 residual、INC-037 の修正（刻印の保持）",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "変更管理の存在と強制力",
+          "変更時の想定再評価をMOCで強制",
+          "全変更のハザード分析と承認"
+        ],
+        "why_it_seemed_adequate": "床の挙動を変えない言い直しは互換性を壊す変更ではなく、一律に再判定を要求する規則はむしろ費用を増やす。判断を記録として残す運用は、規則化より柔軟で誠実な扱いに見える。"
+      }
+    ],
+    "hazard": "統制下にあるシステム状態として：評価者へ渡される指示（規準）が要求する参照形式を、同じ系が渡す入力（索引）が供給できておらず、かつ判定結果に付く格付けの名が、床が実際に受理する証拠種別より狭い語で書かれている状態。この状態では、評価者に届く情報と床の実際の判定規則が乖離し、判定の出力を読む上位（台帳・報告・所有者）が実態と異なる統治像を持つ。",
+    "incident_id": "INC-038-rubric-offers-a-pointer-form-the-index-cannot-supply",
+    "leading_indicators": [
+      {
+        "indicator": "規準が案内する参照形のうち、直近の全件再判定で使用回数が 0 の形の件数",
+        "observable": "台帳の各判定レコードの証拠参照文字列を、規準が案内する参照形ごとに分類して集計した数",
+        "threshold": "使用回数 0 の参照形が 1 つでもあれば異常（案内された形が供給されていない疑い）。2 回連続の再判定で 0 が続けば赤",
+        "version_independent": true,
+        "where": "assurance/ledger/ を入力とする決定論試験（再判定のたびに実行）",
+        "why_version_independent": "リポジトリ正本の台帳と規準だけで算出でき、利用者環境へ導入された複製の版に依存しない"
+      },
+      {
+        "indicator": "規準が要求する参照粒度と索引が供給するキーの語彙差",
+        "observable": "規準文から抽出した参照形の語彙集合と、system_index が出力するキーの語彙集合の差集合の大きさ",
+        "threshold": "規準側にあって索引側に対応の無い参照形が 1 件でもあれば赤",
+        "version_independent": true,
+        "where": "assurance/tests の決定論試験（prompts.py と system_index.py を同時に読む）",
+        "why_version_independent": "両ファイルの正本のみを入力とし、導入複製を参照しない"
+      },
+      {
+        "indicator": "五値の定義文が言及しない受理種別の数",
+        "observable": "床が実際に受理する証拠種別（監査の検査・スクリプト・リンタの検査コード・Hook・技能等）の列挙と、五値の定義文に現れる種別語の差集合",
+        "threshold": "定義文が言及しない受理種別が 1 つでもあれば異常（名が床より狭い）",
+        "version_independent": true,
+        "where": "assurance/tests/test_rubric_matches_the_floor.py の検査項目として",
+        "why_version_independent": "規準文と床の実装の突き合わせであり、配布された複製に依存しない"
+      },
+      {
+        "indicator": "参照が機械照合で解決しなかったことによる UNKNOWN 降格の割合",
+        "observable": "再判定出力に降格理由コードを付し、『参照が解決しない』理由の件数／全参照数",
+        "threshold": "全参照の 1% を超える、または連続 2 回の再判定で増加",
+        "version_independent": true,
+        "where": "保証レーンの再判定出力（orchestrator.py が書く判定レコード）",
+        "why_version_independent": "判定の生成と台帳の記録だけで算出できる"
+      },
+      {
+        "indicator": "現行 rubric_sha256 と異なる刻印を持つ有効判定の割合、および『言い直しにつき再判定不要』と判断された規準変更の連続回数",
+        "observable": "台帳の判定レコードに刻まれた rubric_sha256 の分布と、規準変更ごとの再判定要否判断の記録",
+        "threshold": "旧刻印の有効判定が全体の 20% を超える、または再判定不要判断が 2 回以上連続した時点で所有者へ上げる",
+        "version_independent": true,
+        "where": "assurance/ledger/",
+        "why_version_independent": "台帳の刻印分布のみで観測でき、導入複製の版に依らない"
+      },
+      {
+        "indicator": "導入複製が保持する規準の刻印とリポジトリ正本の刻印の一致",
+        "observable": "利用者環境の複製側で読み出した規準の rubric_sha256 と正本の値の比較",
+        "threshold": "不一致が 1 世代でも生じたら警告、2 世代以上なら異常",
+        "version_independent": false,
+        "where": "導入複製側で動く HEARTBEAT（gov-heartbeat.py）が読む版情報",
+        "why_version_independent": "検出器自身が導入複製の側で動くため、複製の版が遅れれば検出器も遅れる（INC-005 の共通原因故障）。この指標は遅れた版の存在を、遅れていない版でしか確実に示せない"
+      }
+    ],
+    "loss": "保証判定の結果が、統治の実態を読む者（評価者・独立再監査・所有者）に対して実態と食い違う像を与えた。具体的には (a) 評価者は、系が供給していない参照形（試験名）を書くよう案内され、当て推量の参照は機械照合で解決せず UNKNOWN 降格を生みうる状態に置かれ、(b) 五値の名が床の受理範囲より狭いために、独立再監査自身が「125 件が試験証拠を挙げていない」と過大に読み、その誤読が報告と台帳（および INC-029 の impact）へ書き込まれ、訂正されるまで残った。損なわれたのは保証の可用性そのものではなく、保証結果を根拠に判断する者のプロセスモデルの正確さである。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "すべての指示文の要求語彙が、対応する供給側の語彙に含まれる（差集合が空）",
+        "hypothesis": "規準以外の指示文（SessionStart で注入される契約、POST_TOOL_LINTER の助言など）にも、系が供給していない情報を前提とする案内が含まれている",
+        "oracle": "各指示文が要求する参照・入力の語彙を機械的に列挙し、それを供給する側の出力キーの語彙と突合する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "すべての合成判定が UNKNOWN へ落ちる",
+        "hypothesis": "存在しない参照（当て推量のファイル名・試験名）が機械照合を通過し、UNKNOWN ではなく緑として受理される経路がある",
+        "oracle": "存在しない参照を含む合成判定を照合器に流し、UNKNOWN へ落ちるか受理されるかを観測する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "残る四つの値で差集合が空",
+        "hypothesis": "名と機構の乖離は五値の他の値にも存在し、今回直した一つは同型の一例にすぎない",
+        "oracle": "五値すべてについて、定義文が言及する証拠種別と床が実際に受理する種別の差集合を算出する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "分布が単一の刻印に収束している",
+        "hypothesis": "『言い直しゆえ再判定不要』という判断が積み重なり、現行の rubric_sha256 と異なる刻印を持つ判定が多数派になる",
+        "oracle": "台帳の rubric_sha256 分布を時系列で追い、旧刻印の有効判定の割合を測る",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "二つの再監査の結論が一致する",
+        "hypothesis": "独立再監査の独立性は『別の実行者』の水準に留まり、同一文書を意味の出所とする限り同型の誤読を繰り返す",
+        "oracle": "同じ対象を、規準文を与えずに床の実装のみから判定させる再監査を一度走らせ、結果の差を測る",
+        "severity": "P2"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "規準が案内できる参照形の語彙を、索引が実際に出力するキーの語彙から機械的に生成する（案内と供給の出所を一つにする）。人手で書いた参照形が索引に対応を持たない場合は生成時に赤で止める",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "五値の各値の定義文を、床が受理する述語の列挙から生成するか、少なくとも定義文の言及種別と床の受理種別の差集合が空であることを決定論試験で凍結する",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "leading_indicators の 1・2・3・4（不使用の参照形、語彙差、定義文の言及漏れ、参照が解決しない降格の割合）を決定論試験および再判定の常時出力に組み込む",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "索引が個々の試験名を渡さない理由（入力量の制約）と、それが規準の要求できる参照粒度に課す上限を、規準と索引の双方へ相互参照付きで記す。制約の所在を片側だけに置かない",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "規準の刻印（rubric_sha256）が動いたときの再判定要否について、『言い直し』と『挙動変更』を誰がどの証拠で区別するかの裁定基準を定める。今回の不要判断を前例とするか否かも含めて決める",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "報告と台帳に数値を載せる際、その数値がどの語の定義に依存して算出されたかを併記する規定形式へ改める（今回の 125 件は定義依存であることが読み手に見えなかった）",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "ADR-139 の独立検証が未実施であるため、本事象は fixed:false のまま追跡し、閉じる条件（何をもって検証済みとするか）を先に定める",
+        "kind": "調査の継続",
+        "owner_decision_required": true
+      },
+      {
+        "action": "五値の残り四つの値、および規準以外の指示文（注入される契約・助言）についても、名と機構・案内と供給の突合を一度実施する",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "独立再監査に、規準文を意味の出所としない経路（床の実装のみを読む判定）を一度混ぜ、同一文書による共通原因の大きさを測る",
+        "kind": "調査の継続",
+        "owner_decision_required": true
+      }
+    ],
+    "systemic_factors": [
+      "案内（評価者へ渡す指示）と供給（評価者へ渡す入力）が同一系の中で別々に定義され、両者の語彙の整合を凍結する結合が無い。契約が二重に書かれ、片方だけが動きうる",
+      "名（格付けラベル・要約語）が機構の実態より狭くなる方向へ劣化しても、名を読む全員が同じ名しか手にしないため、共通原因で全員のプロセスモデルが同時にずれ、突き合わせでは検出できない",
+      "不在（一度も使われない案内、言及されない受理種別）は成功と区別がつかない。緑の集計を主な手掛かりとする保証は、原理的に不在を観測しない",
+      "独立再監査が同系 model かつ同一の規準文を入力とするため、独立性が『別の実行者』の水準に留まり、『別の意味の出所』の水準には達していない",
+      "変更が『言い直し』と分類されると、変更管理・再判定・所有者の可否判断のいずれの対象からも外れる。分類そのものが統制の境界を決めており、その分類に裁定手順が無い",
+      "入力量の制約（1317 件を載せると入力が三倍）という運用上のトレードオフが索引の側だけで解決され、その帰結（規準が要求できる粒度の上限）が案内の側へ伝わっていない"
+    ],
+    "unknowns": [
+      "【実在未確認】事象が名指しする機構——規準（assurance/harness/prompts.py）、索引（assurance/harness/system_index.py）、五値の格付け、test_rubric_matches_the_floor.py、253 件の緑を含む台帳——は、与えられた統制構造のどの要素の実体にも現れない（ASSURANCE_LANE の実体として挙がっているのは orchestrator.py のみ）。作業ディレクトリにも assurance/ は存在せず、実在を確認できなかった。以下の分析はすべて、事象記録の記述が実在の機構を指しているという仮定の上に組み立てられている。この仮定が崩れれば control_flaws は成立しない（confidence を low としたのはこのため）",
+      "当て推量の試験名が実際に書かれ UNKNOWN へ落ちた判定が過去に存在したか。impact(1) は『当て推量を生みうる』という可能性の記述であり、発生の実測ではない",
+      "索引に 1317 件の試験名を載せると入力が三倍近くになるという見積りの出所と算出方法。および部分供給（判定対象ファイル配下の名だけ渡す等）が検討されたか、検討され却下されたならその理由",
+      "test_rubric_matches_the_floor.py が『一致』として何を凍結しているのか（規準と床のどの面か）。今回の二つの不整合がなぜその試験を赤にしなかったのかは、試験の対象範囲を読まない限り断定できない",
+      "assurance/ 配下の決定論試験が CI_RELEASE_CHECK（.github/workflows）で実行されているか、保証レーン内でのみ走るか。CI_RELEASE_CHECK への欠陥割り当ての妥当性はこれに依存する",
+      "253 件の緑・125 件・内訳（102/87/34/14/8）の算出が決定論であるか（誰がいつ走らせても同じ数になるか）。再現手順が無ければ、これらは先行指標の基準線として使えない",
+      "INC-029 の impact 訂正が、その記述を引用した他の文書・報告へ伝播したか。誤った数値が別の場所に残っていないかは確認されていない",
+      "ADR-139 の独立検証の実施予定・担当・実施条件。fixed:false のまま何をもって閉じるかが決まっているか",
+      "五値の他の四つの値についても、名と床の受理範囲の乖離が存在するか。今回検査されたのは一つの値のみである",
+      "規準の刻印が動いたときの再判定要否を、誰がどの証拠で裁定するか。今回の『言い直しゆえ不要』という判断が、以後の前例として扱われるのかは決まっていない"
+    ],
+    "why_existing_assurance_missed": "既存の保証は『床の挙動が退行していないこと』を決定論試験で凍結する設計であり、案内文（規準）が実行可能であるか、格付けの名が床の受理範囲を覆っているかは、挙動ではないため検査対象の外にあった。加えて今回の徴候は不在の形（案内された参照形が一度も使われない、名が言及しない受理種別が存在する）で現れる。緑の集計は使われた証拠の妥当性を見るため、使われなかった選択肢は成功と区別がつかず、集計に現れない。さらに評価者と独立再監査が同じ規準文を唯一の意味の出所として読むため、名の狭さは両者の間の食い違いとしてではなく合意として現れ、突き合わせでは検出できない。修正（案内の一本化と定義文の書き換え）は名と案内を実態に寄せたが、案内と供給の語彙を機械的に結合する機構は入っておらず、独立検証（ADR-139）も未実施のため、同型の乖離が再び生じる余地は残っている。"
+  }
+}
