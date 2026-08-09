@@ -523,14 +523,16 @@
       "fixed": false,
       "fix_note": "修正は着地しているが、独立検証の判定が UNKNOWN のため fixed:true と書かない（ADR-139・運転手順 §2。実装者は評価者の判定を書き換えない）。着地した内容: assurance/harness/ledger_io.py を新設し（write_json は pid 付き一時ファイル + fsync + os.replace、read_json は破損を LedgerCorrupt として名指し、LedgerCorrupt は ValueError を継がない）、14 箇所すべてを移送した。正本には _validate_ledger_readability を足した。二回の独立検証で red_was_red は PASS、green_is_green と single_change が UNKNOWN。残る理由は主に検証の構造にある —— 緑を出す oracle が修正と同じ変更で生まれた新規ファイルであること、および verify 記録が自分の検証対象の diff の中に同梱されるため記録と diff が原理的に一致しないこと（後者は VERIFY の設計側の問題として INC-028 へ）。",
       "residual": "(1) 正本の読み手（latest_formalize 等）の ValueError 握り潰しは変えていない。破損と欠落の区別は orchestrator.validate 一本に依存する。(2) 同時に走る二つの走らせ手の read-modify-write（INC-008 の故障様相）は原子化では直らない。(3) 赤で害を測った当の観測（json.dump 途中の SIGKILL）は、赤の時点で既に緑だった（write_json は生まれたときから原子的）。赤→緑に転じたのは静的な軸試験だけである。製品の呼び口（triage_candidates.write_doc）を途中で殺す観測は後から足した。",
-      "cast_analysis": "pending",
+      "cast_analysis": "done",
       "evidence_kind": "measurement",
       "evidence_refs": [
         "assurance/ledger/red/INC-027-ledger-write-not-atomic.json",
         "assurance/harness/ledger_io.py",
         "assurance/tests/test_ledger_io.py"
       ],
-      "verify_ref": "assurance/ledger/verify/INC-027-ledger-write-not-atomic.json"
+      "verify_ref": "assurance/ledger/verify/INC-027-ledger-write-not-atomic.json",
+      "cast_analysis_ref": "assurance/ledger/cast/INC-027-ledger-write-not-atomic.json",
+      "cast_analyzed_at": "2026-08-09T17:47:01Z"
     },
     {
       "id": "INC-028-verify-record-cannot-agree-with-its-own-diff",
@@ -540,13 +542,15 @@
       "impact": "before_fail_after_pass が構造的に真になりにくく、ADR-139 の門（新規の fixed:true は PASS の verify 記録を要す）が、修正の質とは別の理由で閉じない。実際 INC-027 は二回の検証で red_was_red PASS を得ながら fixed:true を書けていない。門が緩いのではなく、記録の置き場が循環している",
       "fixed": false,
       "fix_note": "未修正。直し方の候補: (a) verify 記録を検証対象の枝へ commit せず、merge 後に別 commit で積む。(b) verify_fix.py が記録の中に diff_sha256 だけを残し、記録そのものは台帳の外（runs/）へ置く。(c) 検証プロンプトへ『記録自身は対象外』と明示する。どれを採るかは CAST_ANALYSIS の後に決める",
-      "cast_analysis": "pending",
+      "cast_analysis": "done",
       "evidence_kind": "measurement",
       "evidence_refs": [
         "assurance/ledger/verify/INC-027-ledger-write-not-atomic.json",
         "assurance/harness/verify_fix.py",
         "doctrine_docs/packaging/decisions/ADR-139-verify-runner-and-fixed-gate.md"
-      ]
+      ],
+      "cast_analysis_ref": "assurance/ledger/cast/INC-028-verify-record-cannot-agree-with-its-own-diff.json",
+      "cast_analyzed_at": "2026-08-09T17:51:18Z"
     },
     {
       "id": "INC-029-index-counts-no-tests",
@@ -558,13 +562,15 @@
       "fix_note": "検出器を ^[ \\t]*def (test_[A-Za-z0-9_]+) へ直し、索引は 1267 件を報告するようになった（unittest の loader が収集する数と一致することを第三の対照で確認）。独立検証（ADR-139）は未実施のため fixed:true とは書かない",
       "next_step": "所有者裁定 2026-08-09: 索引を直したうえで 240 件の『実装・試験・証拠あり』を再判定する。文書変更の一括と合わせて一度の再判定に含める",
       "residual": "評価プロンプトは件数を出すだけで試験名を出さない。rubric が案内する plugin/tests/x.py::test_名 の形は、評価者が名を知る手段が無いままである。件数の虚偽は消えたが、ポインタ形式の実用性は別に残る",
-      "cast_analysis": "pending",
+      "cast_analysis": "done",
       "evidence_kind": "measurement",
       "evidence_refs": [
         "assurance/ledger/red/INC-029-index-counts-no-tests.json",
         "assurance/harness/system_index.py",
         "assurance/tests/test_system_index_counts.py"
-      ]
+      ],
+      "cast_analysis_ref": "assurance/ledger/cast/INC-029-index-counts-no-tests.json",
+      "cast_analyzed_at": "2026-08-09T17:56:57Z"
     },
     {
       "id": "INC-030-assurance-lane-not-gated-by-ci",
@@ -575,12 +581,31 @@
       "fixed": false,
       "fix_note": "checks.yml へ二段を追加した（レーン試験 約37秒・consistency-check 約11秒）。いずれも標準ライブラリだけで動き venv を要さない（SDK は呼び口の中で遅延 import されるので、通信も API も触らない）。clean env での実行を実測して確かめた。独立検証（ADR-139）は未実施のため fixed:true とは書かない",
       "residual": "map-draft-check.py は依然として CI に無い。これは対象となる下書き（.claude/system-map/ 配下・gitignore 済み）が CI のチェックアウトに存在しないためで、接続するなら fixture を置く設計が要る。別主題として残す",
-      "cast_analysis": "pending",
+      "cast_analysis": "done",
       "evidence_kind": "measurement",
       "evidence_refs": [
         ".github/workflows/checks.yml",
         "assurance/tests",
         "scripts/consistency-check.py"
+      ],
+      "cast_analysis_ref": "assurance/ledger/cast/INC-030-assurance-lane-not-gated-by-ci.json",
+      "cast_analyzed_at": "2026-08-09T18:01:38Z"
+    },
+    {
+      "id": "INC-031-skill-documents-a-command-that-does-not-run",
+      "date": "2026-08-09",
+      "summary": "配布技能 system-map-draft の手順2 が `dep-graph.py --json` を踏ませるが、これは使用法の誤りで終了コード 2 になる。--json は修飾子でありモードではない。技能どおりに進めた起草者はそこで止まる",
+      "detected_by": "独立再監査 2026-08-09 の Phase C。技能に従って doctrine のモデルを実際に起草させたとき、手順2 で止まった。references/provenance-rules.md の locator の例『dep-graph/1 の edges』も、グラフ全体を返す口が無いので到達できない",
+      "impact": "v0.11.0 で利用者へ配られている。ツールは ADR-110 のとおり正しく振る舞っており（使い方の誤りを場所として飲まない）、誤っているのは技能の文書の側である。配布物の文書が実行できない手順を案内していた",
+      "fixed": false,
+      "fix_note": "手順2 を --classify-edges --json へ、行14 に『モードを一つ必ず指定する』を添え、locator の例を実在する返り形へ直した（PR #271）。例ではなく軸で凍結した —— 技能の文書に一つの完結した呼び出しとして書かれたスクリプト起動を機械で拾い、書かれたまま走らせて使用法の誤りにならないことを確かめる（plugin/tests/test_skill_commands_run.py）。元の欠陥を一時的に戻して赤くなること・戻すと緑になることも実測した。独立検証（ADR-139）は未実施のため fixed:true とは書かない",
+      "residual": "覆いは『一つの完結した呼び出しとして書かれ、占位を実在の値へ置き換えられる』形に限る。地の文の裸の言及・置き換えの効かない占位・実物を要するスクリプト（map-draft-check ほか）は数えない。数えなかったことは試験自身が示す",
+      "cast_analysis": "pending",
+      "evidence_kind": "measurement",
+      "evidence_refs": [
+        "plugin/skills/system-map-draft/SKILL.md",
+        "plugin/tests/test_skill_commands_run.py",
+        "plugin/scripts/dep-graph.py"
       ]
     }
   ]
