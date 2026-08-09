@@ -53,7 +53,12 @@ def _refresh_stamp(e, idx, rubric, resolved, lost):
     by["index_sha256"] = idx["sha256"]
     by["category_sha256"] = idx["category_sha256"]
     by["category_counts"] = idx["category_counts"]
-    by["rubric_sha256"] = rubric
+    # **rubric_sha256 は触らない**(INC-037)。この掃引が引き直したのは証拠の
+    # ポインタであって、規準そのものを当て直したわけではない。現行の規準で
+    # 上書きすると、台帳が「どの規準に対する判定か」を言えなくなる ——
+    # ADR-133 決定3 が持たせた性質が、決定論の掃引で静かに失われる。
+    # 規準が動いたときの引き直しは意味の再判定(MAP_COVERAGE)の仕事である。
+    by.setdefault("rubric_sha256", rubric)
     by["rechecked_deterministically"] = True
     e["assigned_by"] = by
 

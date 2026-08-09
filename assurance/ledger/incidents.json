@@ -697,6 +697,22 @@
         "assurance/tests/test_ledger_integrity_gaps.py",
         "assurance/ledger/recommendation-status.json"
       ]
+    },
+    {
+      "id": "INC-037-deterministic-sweep-overwrites-the-rubric-stamp",
+      "date": "2026-08-09",
+      "summary": "決定論の再照合 recheck_evidence が rubric_sha256 を現行の値で上書きしていた。掃引が引き直すのは証拠のポインタであって規準そのものではないので、規準が動いた後に回すと、台帳が『どの規準に対する判定か』を言えなくなる",
+      "detected_by": "独立再監査 2026-08-09 の Phase D（landed 抜取りの INC-024#6）。_refresh_stamp が by['rubric_sha256'] = rubric と無条件に書いていることをコードで確認した",
+      "impact": "ADR-133 決定3 が持たせた『どの規準に対する判定かを後から言える』性質が、決定論の掃引で静かに失われる。本再監査で実際にこの掃引を回した(PR #277)が、規準は当時から動いていないので**実害は生じていない** —— git の履歴で確かめた（f0d4e8e^ / f0d4e8e / origin/main のいずれでも 606 件すべてが同じ規準の指紋 fb7c0460）。害は次に規準が動いたときに出る",
+      "fixed": false,
+      "fix_note": "rubric_sha256 を上書きしないようにした（setdefault。刻印を持たない古い記録には付ける）。索引の刻印は掃引の務めなので従来どおり更新する。規準が動いたときの引き直しは意味の再判定 MAP_COVERAGE の仕事である。独立検証(ADR-139)は未実施のため fixed:true とは書かない",
+      "residual": "規準が動いたことを機械が検めて再判定を促す口は無い。今は『規準が動いたら人が MAP_COVERAGE を回す』に依る。正本が rubric の食い違いを next_actions へ挙げる案は、次の反復の候補として残す",
+      "cast_analysis": "pending",
+      "evidence_kind": "measurement",
+      "evidence_refs": [
+        "assurance/harness/recheck_evidence.py",
+        "assurance/tests/test_rubric_stamp_preserved.py"
+      ]
     }
   ]
 }
