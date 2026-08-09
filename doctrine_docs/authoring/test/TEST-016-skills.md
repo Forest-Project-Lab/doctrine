@@ -7,7 +7,7 @@ status: current
 owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-08-07
-sources: [plugin/tests/test_skills.py, plugin/tests/test_skills_authoring.py]
+sources: [plugin/tests/test_skills.py, plugin/tests/test_skills_authoring.py, plugin/tests/test_skill_commands_run.py]
 depends_on: [SPEC-016]
 llm_context: task
 ---
