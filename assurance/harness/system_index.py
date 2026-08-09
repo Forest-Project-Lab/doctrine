@@ -29,7 +29,11 @@ HOOKS_PATH = os.path.join(REPO_DIR, "plugin", "hooks", "hooks.json")
 
 _FM_RE = re.compile(r"\A---\n(.*?)\n---\n", re.S)
 _CODE_RE = re.compile(r'"([A-Z][A-Z0-9_]{4,})"')
-_DEF_TEST_RE = re.compile(r"^def (test_[a-z0-9_]+)", re.M)
+# `unittest` のメソッドはクラスの中で字下げされる。桁 0 に錨を打つと一件も
+# 数えられず、索引は全ファイル 0 件を報告し、評価プロンプトへ「試験ファイル
+# （合計 0 件）」という**偽の事実**が載る（INC-029）。字下げを許す。
+# 大文字を含む綴り（test_M14_...）も実在するので [A-Za-z0-9_] で採る。
+_DEF_TEST_RE = re.compile(r"^[ \t]*def (test_[A-Za-z0-9_]+)", re.M)
 
 
 def _front_matter(text):
