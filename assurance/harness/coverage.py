@@ -16,7 +16,7 @@ import sys
 sys.dont_write_bytecode = True
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from harness import books, schemas  # noqa: E402
+from harness import books, ledger_io, schemas  # noqa: E402
 
 LANE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CATALOG_DIR = os.path.join(LANE_DIR, "ledger", "catalogs")
@@ -78,9 +78,7 @@ def init(book_id):
         "entries": entries,
     }
     os.makedirs(CATALOG_DIR, exist_ok=True)
-    with open(cov_path, "w", encoding="utf-8") as f:
-        json.dump(cov, f, ensure_ascii=False, indent=2)
-        f.write("\n")
+    ledger_io.write_json(cov_path, cov)
     print(json.dumps({"book": book_id, "entries": len(entries),
                       "kept_existing": sum(1 for e in entries
                                            if e["disposition"] != "UNKNOWN")},

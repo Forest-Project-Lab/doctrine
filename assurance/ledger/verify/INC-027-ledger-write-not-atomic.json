@@ -1,0 +1,47 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "verify-record",
+  "target_id": "INC-027-ledger-write-not-atomic",
+  "generated_at": "2026-08-09T15:06:18Z",
+  "git_sha": "770cced60454f5c1d3f970f65254168367ad7f31",
+  "diff_range": "e715616..770cced",
+  "diff_sha256": "80a66f8cb2ae68076b210f8ac06972967105bac01f6e11d0e968c37cb2330d3c",
+  "red_sha256": "aa5dacfdee7102d6d848b480d04db1013bb98f6547758488f63cfafeff7ede05",
+  "prompt_sha256": "0dcf7164db5f14363efce2ee10e90664506bac43fe00681f9bf7bab9176b426c",
+  "model": "claude-opus-5",
+  "effort": "high",
+  "cost_usd": 0.7754,
+  "record": {
+    "target_id": "INC-027-ledger-write-not-atomic",
+    "verdict": "UNKNOWN",
+    "reasons": [
+      "赤の名指した 14 箇所は diff と一件ずつ照合できる。各 hunk の @@ 開始行と文脈行から削除行を算出すると attack_evaluator 441・cast_analysis 95/279・coverage 81・discover 229・extract_principles 60・formalize 229・independent_recheck 279・map_coverage 116・observe_assumptions 402・smoke 107・triage_candidates 194・verify_assumptions 94・verify_fix 107 となり、measured_naive_write_sites の 13 ファイル 14 箇所と完全に一致する。全件が素の open(w)+json.dump から ledger_io.write_json へ置換されており、sort_keys の指定（cast_analysis・smoke）も保存されている。『修正前に素の書き込みが在った』ことは diff だけで機械的に追認できる。",
+      "ただし赤の実行の割り付けは今も整っていない。top-level は git_sha e71561 6 ＋ returncode 1 ＋ observed_failures「軸試験の FAIL が 14 箇所を名指した」を一組で書いているが、runs によればその sha の状態（ledger_io 未作成）で観測できるのは ImportError（unittest は _FailedTest 一件）だけである。軸試験が 14 箇所を名指した run 2 は『ledger_io.py を作成済み・移送は未実施』という、修正の一部を既に当てた中間状態で採られている。correction_note は『別々の実行である』ことは訂正したが、top-level の observed_failures は run 2 の観測を sha e715616 の観測として掲げたままで、どちらの run がこの diff の直前状態かが記録から一意に読めない。赤が赤（rc=1）であること自体は両実行で成立する。",
+      "緑を出す oracle は修正と同じ diff で生まれた新規ファイルであり（主張自身が申告）、さらに赤と緑では oracle 自体が別物である。赤 run 2 は『Ran 14 tests』、post_fix_observation は『22 tests OK』——赤の観測と緑の観測の間に試験が 8 件増えている（途中 SIGKILL・検出器の 5 形状陽性/清潔 module 陰性・LedgerCorrupt 非継承・実台帳複製の覆い・配線試験など、主張が自ら『追加した』と述べるもの）。既存 oracle の緩和（削除・skip・閾値下げ）は diff に見当たらず、検出器の変更は 1 形状→4 形状と厳しくなる側だが、赤を出した試験群と緑を出した試験群が同一でない以上、『赤で FAIL した当の観測がこの diff で PASS に変わった』を入力から確かめきれない。",
+      "赤→緑に転じた当の試験は AST の静的検出器 test_no_harness_module_writes_a_ledger_directly ただ一つである。これが証すのは『四形状に合致する書き口が harness から消えた』ことであって、『害が消えた』ことではない。害の形の観測（SIGKILL）は赤 run 2 の時点で既に緑であった（write_json 自体は生まれたときから原子的）。移送された 14 箇所の実経路（例: verify_fix._write や cast_analysis.update_incident を書き込み途中で殺す）を突く試験は無く、『呼び口が write_json に変わった ⇒ 前の全文が残る』は diff の読みからの推論であって観測ではない。追加された途中 SIGKILL 試験も、突いているのは ledger_io.write_json 単体であって製品の呼び口ではない。",
+      "害の対照 NaiveWriteLosesThePreviousLedgerTest は、試験の中で自前に naive 書き込みを行い json.load が落ちることを示すだけで、製品コードを一行も参照しない。製品コードが何であれ常に緑であり、判別力を持たない。緑の 22 件にはこの種の常時緑が含まれるので、件数は覆いの強さの指標にならない。",
+      "赤の measured_harm の後半（truncation_reads_as_empty）は読み手側では直っていない。latest_formalize・latest_scenarios・load_verify_records・load_recommendation_status は diff で一行も変わらず ValueError を握り潰したままである。LedgerCorrupt が ValueError を継がないことは試験で凍結され（前回の指摘への対応として妥当）、既存の except (OSError, ValueError) に飲まれる構造的経路は塞がった。しかし読み手が read_json を使っていない以上、破損と欠落の区別は orchestrator.validate 一本に依存する。主張はこれを申告しており自己整合だが、赤が測った害の半分は残っている。",
+      "この diff は、別の変更集合に対する検証記録を同梱している。assurance/ledger/verify/INC-027-ledger-write-not-atomic.json は diff_range 'e715616..6358f7c'・diff_sha256 4da5f60… の記録であり、その内容は本 diff のコードと矛盾する——『LedgerCorrupt が ValueError を継承しているため』（本 diff では継承していない）、『無関係な mutations-2026-08-09.json の再生成を同梱』（本 diff に当該ファイルは無い）、『SIGKILL 試験は改名直前のみ』（本 diff には json.dump 途中の試験が在る）。つまり本 diff が対象とする変更集合は、同梱された記録が検証した変更集合と同じではない。本 diff 自身の diff_range は与えられていないため、示された diff が変更の全部であるか（前回指摘された無関係ファイルが revert されたのか、単に表示されていないのか）を入力から決められない。よって single_change は UNKNOWN とする。",
+      "同じ diff の中で台帳が互いに矛盾する。incidents.json は \"fixed\": true と fix_note を書き込む一方、同梱の verify 記録は verdict UNKNOWN・green_is_green UNKNOWN・single_change FAIL を記録している。どちらが本件の正本かが台帳から読めない。さらにこの verify 記録は incidents.json の evidence_refs に挙がっておらず、閉じの根拠として参照されていない。",
+      "軸の検出器は過検出の側にも振れている。_naive_write_sites は『台帳へ書くか』を一切見ず、harness/*.py 内の os.replace・write_text・変数モードの open 代入をすべて咎める。したがって ledger_io.py 以外の harness module は、台帳以外（一時ファイル・報告書）へ原子的に書くことすら書けない。現在の緑には効かないが、軸として凍結した内容は『台帳の書き口の一本化』より広い。",
+      "post_fix_observation（rc 0・22 tests OK・本体 1267 OK・各門緑）は自己申告であり、入力の中に実行記録・出力の写しは無い。緑の帰属の根拠としては数えていない。"
+    ],
+    "checks": {
+      "red_was_red": "PASS",
+      "green_is_green": "UNKNOWN",
+      "single_change": "UNKNOWN"
+    },
+    "residual_risks": [
+      "SIGKILL は捕まえられないので write_json の except BaseException による掃除は真の SIGKILL では働かない。pid 付きの .tmp が堆積しうる（追加された途中 SIGKILL 試験自身が毎回 残骸を作る）。試験は『残骸があるなら pid 付きだけ』と認めるだけで、掃除の仕組みは無い。",
+      "一時名の一意性は pid のみ。同一 pid の複数スレッドが同じ path へ書くと互いの .tmp を上書きし、原子的に『壊れた全文』を置きうる。",
+      "_fsync_dir は OSError を黙って諦める。改名の永続化が保証されない環境では電源断で新旧どちらも失う余地が残る。",
+      "同時に走る二つの走らせ手の read-modify-write（INC-008 の様相）は未修正——実装者の申告どおりで diff とも整合する。observe_assumptions は読みを素の open+json.load のまま残しており、書きだけを移送した当のファイルに新しい読み（read_json）が掛かっていない。",
+      "read_json(path, required=True) は欠落を LedgerCorrupt として投げる。モジュールが立てた『欠落と破損は別の事実』という三分に対する例外であり、test_a_missing_ledger_is_an_error_when_required がその混同を凍結している。_validate_ledger_readability の正しさは ledger_files() が実在ファイルだけを返すという前提に依存する（その前提は diff からは確認できない。ledger_files/_ledger_dir の定義は diff に含まれない）。",
+      "検出器の限界（別名 import・動的な属性引き・他の直列化器）は docstring で明示されているが、『15 箇所目が黙って生えない』の保証は四形状に限る。",
+      "validate の実台帳複製試験は環境依存（本物の台帳が無ければ skip、runs と dotfile を除外）。CI 以外では覆いが黙って縮む。",
+      "incidents.json の cast_analysis が pending のまま fixed: true で閉じられており、この事象の因果分析は未了である。"
+    ]
+  },
+  "sdk_status": "PASS",
+  "reason": null
+}

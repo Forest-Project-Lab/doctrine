@@ -34,7 +34,7 @@ import sys
 sys.dont_write_bytecode = True
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from harness import sdk_lane  # noqa: E402
+from harness import ledger_io, sdk_lane  # noqa: E402
 
 LANE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REPO_DIR = os.path.dirname(LANE_DIR)
@@ -399,9 +399,7 @@ def main(argv=None):
     with open(args.ledger, encoding="utf-8") as f:
         doc = json.load(f)
     applied, unmatched = apply_observations(doc, observations)
-    with open(args.ledger, "w", encoding="utf-8") as f:
-        json.dump(doc, f, ensure_ascii=False, indent=2)
-        f.write("\n")
+    ledger_io.write_json(args.ledger, doc)
     print(json.dumps({
         "written": os.path.relpath(args.ledger, REPO_DIR),
         "applied": applied,

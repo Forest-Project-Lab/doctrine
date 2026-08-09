@@ -23,7 +23,7 @@ import sys
 sys.dont_write_bytecode = True
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from harness import books, model_policy, prompts  # noqa: E402
+from harness import books, ledger_io, model_policy, prompts  # noqa: E402
 
 LANE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CATALOG_DIR = os.path.join(LANE_DIR, "ledger", "catalogs")
@@ -147,6 +147,34 @@ def validate():
     problems.extend(_validate_incident_evidence())
     problems.extend(_validate_closure_vocabulary())
     problems.extend(_validate_coverage_merges())
+    problems.extend(_validate_ledger_readability())
+    return problems
+
+
+def _validate_ledger_readability(ledger_dir=None):
+    """台帳が全件 JSON として読めること（切り詰めを「空」と読み替えない）。
+
+    次の行動を導く読み手（`latest_formalize`・`latest_scenarios`・
+    `load_verify_records`・`load_recommendation_status`）は `ValueError` を
+    握り潰す —— 帳簿が読めない日でもレーンは走れた方がよいからである。
+    その寛容さの代償として、**切り詰められた台帳と、そもそも無い台帳が
+    区別できない**（事象 INC-027）。区別する場所をここに一つだけ置く。
+    行動の導出は黙って劣化させ、`validate` が声を上げる —— 想定の台帳が
+    既に採っている三分（読み手は投げ、行動は飲み、validate が名指す）と同じ形。
+
+    `ledger_files()` が数える成果物を一つずつ読むので、新しい種類の台帳も
+    宣言を足した時点で自動的に覆われる。
+    """
+    problems = []
+    root = ledger_dir or _ledger_dir()
+    for rel in ledger_files(root):
+        if not rel.endswith(".json"):
+            continue
+        path = os.path.join(root, rel)
+        try:
+            ledger_io.read_json(path, required=True)
+        except ledger_io.LedgerCorrupt as exc:
+            problems.append("台帳が読めない（空ではない。破損の疑い）: %s" % exc)
     return problems
 
 

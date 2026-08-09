@@ -1,0 +1,51 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "reproduce-red",
+  "incident_id": "INC-027-ledger-write-not-atomic",
+  "generated_at": "2026-08-09T09:40:00Z",
+  "git_sha": "e71561690d46bc8ce95a94fdeddaa1101776c9ec",
+  "phase": "before-fix",
+  "command": "python3 -m unittest discover -s assurance/tests -p test_ledger_io.py",
+  "returncode": 1,
+  "expect": "修正前に FAIL すること（最初から緑は再現と認めない）",
+  "observed_failures": [
+    "FAIL: test_no_harness_module_writes_a_ledger_directly — 素の open(w)+json.dump が 13 ファイル 14 箇所"
+  ],
+  "runs": [
+    {
+      "order": 1,
+      "state": "ledger_io.py が未作成",
+      "returncode": 1,
+      "observed": "ImportError: cannot import name 'ledger_io' from 'harness' — 試験モジュールごと import に失敗し、unittest は _FailedTest を一件挙げる（個別試験は走らない）"
+    },
+    {
+      "order": 2,
+      "state": "ledger_io.py を作成、14 箇所は未移送",
+      "returncode": 1,
+      "observed": "Ran 14 tests / FAILED (failures=1)。FAIL: test_no_harness_module_writes_a_ledger_directly が 13 ファイル 14 箇所を名指した。SIGKILL 試験はこの時点で既に緑（新しい書き口そのものは原子的）"
+    }
+  ],
+  "correction_note": "独立検証（2026-08-09）の指摘により訂正した。当初この二つを一回の実行の observed_failures として並べていたが、ledger_io 不在なら試験モジュールが import に失敗して個別試験は走らないため、両者が同時に観測されることはない。実際には上の runs のとおり別々の実行である。赤が赤であったことは両実行の returncode 1 で成立する。",
+  "measured_naive_write_sites": {
+    "attack_evaluator.py": [441],
+    "cast_analysis.py": [95, 279],
+    "coverage.py": [81],
+    "discover.py": [229],
+    "extract_principles.py": [60],
+    "formalize.py": [229],
+    "independent_recheck.py": [279],
+    "map_coverage.py": [116],
+    "observe_assumptions.py": [402],
+    "smoke.py": [107],
+    "triage_candidates.py": [194],
+    "verify_assumptions.py": [94],
+    "verify_fix.py": [107]
+  },
+  "measured_harm": {
+    "sigkill_mid_write": "子プロセスを書き込みの途中で SIGKILL（returncode -9）したところ、既存の台帳(60 バイト)が 4653 バイトの断片で置き換わり、json.load が JSONDecodeError を投げた。前の全文は復元できない",
+    "truncation_reads_as_empty": "正本の読み手（latest_formalize・latest_scenarios・load_verify_records・load_recommendation_status）は ValueError を握り潰すため、切り詰められた台帳と存在しない台帳がどちらも None として読まれる。区別する場所がどこにも無かった",
+    "largest_committed_ledger": "scenarios/2026-08-08.json 351KB・formalize/2026-08-09.json 243KB・recommendation-status.json 137KB。一ページを大きく超えるので切り詰めは理論上の話ではない"
+  },
+  "note": "独立再監査（2026-08-09）の Phase G で見つけた。配布側 plugin/scripts/ は tmp+os.replace で原子化しているのに、レーン側 assurance/harness/ だけが素の書き込みのまま残っていた非対称。INC-008（書き戻しの取りこぼし）とは別の故障様相であり、あちらは『二人とも書き切って片方が論理的に古い』（整形式のまま消える）、こちらは『一人が書き切れない』（JSON でなくなる）。同時実行の read-modify-write は原子化では直らず、残余リスクとして残す。",
+  "tail": ""
+}

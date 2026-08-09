@@ -27,7 +27,8 @@ import tempfile
 sys.dont_write_bytecode = True
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from harness import (control_structure, model_policy, prompts,  # noqa: E402
+from harness import (control_structure, ledger_io, model_policy,  # noqa: E402
+                     prompts,
                      schemas, sdk_lane, system_index)
 # 体系の外に在る証拠の種別の正本は orchestrator に一箇所だけ（ADR-141）。
 # 事象の積載門（_validate_incident_evidence）と分析の「済んだ」条件がここで
@@ -92,9 +93,7 @@ def update_incident(incident_id, fields):
             break
     else:
         return False
-    with open(INCIDENTS_PATH, "w", encoding="utf-8") as f:
-        json.dump(doc, f, ensure_ascii=False, indent=2)
-        f.write("\n")
+    ledger_io.write_json(INCIDENTS_PATH, doc)
     return True
 
 
@@ -276,9 +275,7 @@ def main(argv=None):
         record, settled = analyze_one(
             inc, principle_index,
             timeout_s=args.timeout, budget_usd=args.budget_per_call)
-        with open(analysis_path(inc["id"]), "w", encoding="utf-8") as f:
-            json.dump(record, f, ensure_ascii=False, indent=2, sort_keys=True)
-            f.write("\n")
+        ledger_io.write_json(analysis_path(inc["id"]), record, sort_keys=True)
 
         if settled:
             fields = {

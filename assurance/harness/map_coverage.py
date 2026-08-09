@@ -25,7 +25,8 @@ import tempfile
 sys.dont_write_bytecode = True
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from harness import (books, model_policy, orchestrator, prompts,  # noqa: E402
+from harness import (books, ledger_io, model_policy, orchestrator,  # noqa: E402
+                     prompts,
                      schemas, sdk_lane, system_index)
 
 LANE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -113,9 +114,7 @@ def load_pair(book_id):
 
 def save_coverage(book_id, cov):
     _cat_path, cov_path = _paths(book_id)
-    with open(cov_path, "w", encoding="utf-8") as f:
-        json.dump(cov, f, ensure_ascii=False, indent=2)
-        f.write("\n")
+    ledger_io.write_json(cov_path, cov)
 
 
 def principle_details(cat, cov_entries):

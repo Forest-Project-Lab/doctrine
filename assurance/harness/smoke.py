@@ -25,7 +25,7 @@ import tempfile
 sys.dont_write_bytecode = True
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from harness import schemas, sdk_lane  # noqa: E402
+from harness import ledger_io, schemas, sdk_lane  # noqa: E402
 
 LANE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REPO_DIR = os.path.dirname(LANE_DIR)
@@ -104,10 +104,7 @@ def main(argv=None):
         stamp = now.strftime("%Y%m%dT%H%M%SZ")
         for path in (latest,
                      os.path.join(LEDGER_DIR, "runs", "smoke-%s.json" % stamp)):
-            with open(path, "w", encoding="utf-8") as f:
-                json.dump(record, f, ensure_ascii=False, indent=2,
-                          sort_keys=True)
-                f.write("\n")
+            ledger_io.write_json(path, record, sort_keys=True)
 
     print(json.dumps(
         {k: record.get(k) for k in
