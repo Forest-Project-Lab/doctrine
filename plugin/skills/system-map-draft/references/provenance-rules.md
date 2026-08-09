@@ -16,7 +16,7 @@
 
 ## CLI 由来の事実
 
-宣言済み CLI から取った事実は、`source` にスクリプトのパスと rev（例 `doctrine: plugin/scripts/trace-index.py@<rev>`）を、`locator` に標準の返り形の中の場所（例 「trace-index/1 の ranges」「dep-graph/1 の edges」）を書く。実行そのものが確認であり、`checked_at` は実行した日である。
+宣言済み CLI から取った事実は、`source` にスクリプトのパスと rev（例 `doctrine: plugin/scripts/trace-index.py@<rev>`）を、`locator` に標準の返り形の中の場所（例 「trace-index/1 の ranges」「dep-graph --classify-edges の edges」）を書く。実行そのものが確認であり、`checked_at` は実行した日である。
 
 ## 負の出所（M-11）
 

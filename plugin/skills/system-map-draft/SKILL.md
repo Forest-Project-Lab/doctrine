@@ -11,7 +11,7 @@ description: '対象リポジトリから System Map の意味モデルの下書
 
 ## 委ねる先
 
-- 宣言済み CLI — 構造の事実の取り口(ICD-002・ICD-005)。`${CLAUDE_PLUGIN_ROOT}/scripts/` の `trace-index.py`・`dep-graph.py`・`docs-audit.py --json`。
+- 宣言済み CLI — 構造の事実の取り口(ICD-002・ICD-005)。`${CLAUDE_PLUGIN_ROOT}/scripts/` の `trace-index.py`・`dep-graph.py`・`docs-audit.py --json`。`dep-graph.py` はモードを一つ必ず指定する(`--classify-edges` など。`--json` は修飾子であってモードではない。ADR-110)。
 - `${CLAUDE_PLUGIN_ROOT}/scripts/map-draft-check.py` — 出所の機械検証(検収の第一門。捏造出所を落とす)。
 - lens 側の `gold-model/validate.mjs` — M-01〜M-16 の不変条件(検収の第二門)。EXT-006 の tag `system-map/phase-1-continue` で固定した複製で回す(`references/acceptance-gates.md`)。
 
@@ -23,7 +23,7 @@ description: '対象リポジトリから System Map の意味モデルの下書
 ## 手順
 
 1. 対象を確かめる。root・docs root・対象名・書き出す先を利用者と確かめ、示されなければ既定を使う。
-2. 構造の事実を宣言済み CLI から取る。`trace-index.py --format json`(注釈対の範囲と指紋)・`dep-graph.py --json`(依存の事実 — ただし Flow の材料にしない。M-08)・`docs-audit.py --json --today <日付>`(所見)。`.claude/.cache` は読まない(M-13。導出された事実は宣言済み CLI からだけ取る。ADR-136)。
+2. 構造の事実を宣言済み CLI から取る。`trace-index.py --format json`(注釈対の範囲と指紋)・`dep-graph.py --classify-edges --json`(依存の事実 — ただし Flow の材料にしない。M-08)・`docs-audit.py --json --today <日付>`(所見)。`.claude/.cache` は読まない(M-13。導出された事実は宣言済み CLI からだけ取る。ADR-136)。
 3. 意味を読む。`README`・統治文書・コード・git log を直接読み、読んだ場所を全ての値の `provenance` に書く(`references/provenance-rules.md`)。
 4. `elements` → `flows` → `contracts` → `scenarios` → `anchors` の順に起草する。各欄の判断は `references/model-shape.md` に従う。
 5. 検収の二門を回す。まず `map-draft-check.py` で出所を機械検証し、落ちた所見に沿って下書きを直す。次に lens 側 `validate.mjs` を無修正で回し、M 層の指摘を直す(`references/acceptance-gates.md`)。
