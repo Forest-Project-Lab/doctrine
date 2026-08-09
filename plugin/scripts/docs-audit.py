@@ -491,12 +491,17 @@ def _check_orphan(g, today, stale_days):
         # 逆参照ゼロ(現行の依存ゼロ)。
         if g.reverse_dependents(doc_id, current_only=True):
             continue
-        # 陳腐化: updated が古い、または review_by 超過。
-        stale = _is_stale(node["updated"], today, stale_days)
-        rbd = _frontmatter.parse_date(node["review_by"])
-        if rbd is not None and rbd < today:
-            stale = True
-        if not stale:
+        # 陳腐化: updated が古い（放置されている）。
+        #
+        # review_by の超過はここでは見ない（ADR-149）。超過には専用の検査
+        # review_by_overrun（warn）が既に在り、孤児が error で数えると同じ事実を
+        # 二重に数えることになる。二つは意味が違う —— review_by は「予定した
+        # 見直しの日が来た」という暦の出来事であり、孤児は「誰にも引かれないまま
+        # 放置されている」という状態である。暦の出来事を変更の門から error で
+        # 出すと、誰も何も変えていない日に main が赤くなる（2026-11-10 に
+        # 起きる形を実測。INC-034）。門は変更の可否を判ずる装置であって、
+        # 暦の管理装置ではない。
+        if not _is_stale(node["updated"], today, stale_days):
             continue
         # 再現可能。
         if not _is_reproducible(node, eff):

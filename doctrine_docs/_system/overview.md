@@ -37,6 +37,7 @@ sources: []
 | ADR-100 | ADR | audit | 壊れた日付をその名で咎める。鮮度の検査に古びと言わせない |
 | ADR-113 | ADR | audit | 投影の列挙は各行の最初の id だけから採る |
 | ADR-137 | ADR | audit | 監査要約の読み口を宣言する — 外部利用者は CLI の返す値だけに依存する |
+| ADR-149 | ADR | audit | 孤児は「放置」を測る。予定した見直しの日は二重に数えない |
 | CHANGE-004 | CHANGE | audit | 体系外の解釈文書をビューと定め、刻印で古びを見えるようにする |
 | CHANGE-009 | CHANGE | audit | 監査要約の読み口を ICD へ宣言する（issue |
 | IMPACT-004 | IMPACT | audit | ビューと刻印 — 影響の列挙 |

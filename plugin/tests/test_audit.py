@@ -607,22 +607,40 @@ class OrphanTest(AuditBase):
         data, _ = self.audit_json(root)
         self.assertEqual(self.checks_for(data, "orphan"), [])
 
-    def test_orphan_review_by_boundary(self):
-        """review_by 超過は陳腐化(orphan 成立)、当日はまだ非陳腐化(< の境界)。
+    def test_review_by_overrun_alone_is_not_an_orphan(self):
+        """review_by 超過だけでは孤児にしない（ADR-149。二重計上の解消）。
 
-        updated は最近(180 日閾値未満)にして updated 経由の陳腐化を切り、
-        review_by 経由の陳腐化分岐だけを検証する。
+        超過には専用の検査 review_by_overrun（warn）が在る。孤児が error で
+        数えると同じ事実を二重に数え、誰も何も変えていない日に門が赤くなる
+        （2026-11-10 に起きる形を実測。INC-034）。孤児が測るのは「放置」で
+        あって「予定した見直しの日が来たこと」ではない。
         """
-        # 過去の review_by + 最近の updated -> review_by 経由で orphan。
         root = self.build([
             (_fm("RESEARCH-1", "RESEARCH", "billing", status="draft",
                  updated="2026-06-20", review_by="2026-06-28",
                  llm_context="never"), "x"),
         ])
         data, _ = self.audit_json(root)
+        self.assertEqual(self.checks_for(data, "orphan"), [],
+                         "review_by 超過だけで孤児にしてはならない")
+        # 信号そのものは消えない —— 専用の検査が warn で届ける。
+        overrun = self.checks_for(data, "review_by_overrun")
+        self.assertTrue(any(f["doc_id"] == "RESEARCH-1" for f in overrun),
+                        "review_by の信号は review_by_overrun が届ける")
+        self.assertTrue(all(f["severity"] == "warn" for f in overrun))
+
+    def test_neglect_still_makes_an_orphan(self):
+        """射程を狭めすぎない —— updated 起因の放置は従来どおり孤児。"""
+        root = self.build([
+            (_fm("RESEARCH-1", "RESEARCH", "billing", status="draft",
+                 updated="2025-01-01", review_by="2027-01-01",
+                 llm_context="never"), "x"),
+        ])
+        data, _ = self.audit_json(root)
         orph = self.checks_for(data, "orphan")
         self.assertEqual(len(orph), 1)
         self.assertEqual(orph[0]["doc_id"], "RESEARCH-1")
+        self.assertEqual(orph[0]["severity"], "error")
         # review_by == today -> まだ陳腐化ではない -> not orphan。
         root2 = self.build([
             (_fm("RESEARCH-1", "RESEARCH", "billing", status="draft",
