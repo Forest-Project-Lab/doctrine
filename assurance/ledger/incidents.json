@@ -601,13 +601,15 @@
       "fixed": false,
       "fix_note": "手順2 を --classify-edges --json へ、行14 に『モードを一つ必ず指定する』を添え、locator の例を実在する返り形へ直した（PR #271）。例ではなく軸で凍結した —— 技能の文書に一つの完結した呼び出しとして書かれたスクリプト起動を機械で拾い、書かれたまま走らせて使用法の誤りにならないことを確かめる（plugin/tests/test_skill_commands_run.py）。元の欠陥を一時的に戻して赤くなること・戻すと緑になることも実測した。独立検証（ADR-139）は未実施のため fixed:true とは書かない",
       "residual": "覆いは『一つの完結した呼び出しとして書かれ、占位を実在の値へ置き換えられる』形に限る。地の文の裸の言及・置き換えの効かない占位・実物を要するスクリプト（map-draft-check ほか）は数えない。数えなかったことは試験自身が示す",
-      "cast_analysis": "pending",
+      "cast_analysis": "done",
       "evidence_kind": "measurement",
       "evidence_refs": [
         "plugin/skills/system-map-draft/SKILL.md",
         "plugin/tests/test_skill_commands_run.py",
         "plugin/scripts/dep-graph.py"
-      ]
+      ],
+      "cast_analysis_ref": "assurance/ledger/cast/INC-031-skill-documents-a-command-that-does-not-run.json",
+      "cast_analyzed_at": "2026-08-09T21:40:17Z"
     },
     {
       "id": "INC-032-hook-boundary-opens-silently",
@@ -618,14 +620,16 @@
       "fixed": false,
       "fix_note": "(1) 空の --root-from を使用法の誤り(2)へ倒す。(2) 配線から生の変数のパスを消し、--summary-in-project が解決済みのプロジェクト根から導く。(3) 共有の解決器 _auditcache.project_dir() を置き、信じるのは絶対パスで実在するディレクトリだけとする。信じられない値は『与えられていない』と同じ既定へ倒す。置き場を自前で解いている箇所が他に生えないことを軸で凍結した。修正後にカオス行列 385 プローブを再走し、sub/ が生成されないことを実測した。独立検証(ADR-139)は未実施のため fixed:true とは書かない",
       "residual": "絶対パスで実在するディレクトリなら、それがプロジェクトかどうかは検めない。悪意ある値までは防がない(NONGOAL-001 の敵対的入力の項)。",
-      "cast_analysis": "pending",
+      "cast_analysis": "done",
       "evidence_kind": "measurement",
       "evidence_refs": [
         "plugin/scripts/_auditcache.py",
         "plugin/scripts/docs-audit.py",
         "plugin/hooks/hooks.json",
         "plugin/tests/test_hook_boundary.py"
-      ]
+      ],
+      "cast_analysis_ref": "assurance/ledger/cast/INC-032-hook-boundary-opens-silently.json",
+      "cast_analyzed_at": "2026-08-09T21:46:04Z"
     },
     {
       "id": "INC-033-approved-plans-have-no-canonical-pressure",
@@ -637,13 +641,15 @@
       "fix_note": "ADR-148 が ADR-120 を置換し、REPRODUCE_RED を名指しできる状態へ移した。読み口 load_red_records / unreproduced_plans を足し、LEDGER_KINDS の red/ を read_by つきへ改め、next_actions と status の要約へ配線した。消化と認めるのは『赤が赤だった』と『再現不能を理由つきで記録した』の二つだけで、最初から緑は再現と認めない。名指しの二分と優先順の表が食い違わないことを validate が検めるようにした（従来は試験の側だけが持っていた）。独立検証（ADR-139）は未実施のため fixed:true とは書かない",
       "next_step": "優先順の表への配置（ATTACK_EVALUATOR の後・FORMALIZE の前）は ADR-131 決定2 により所有者判断。裁定を得るまで merge しない",
       "residual": "未消化の 30 件そのものはまだ消化していない。正本が名指しするようになっただけである",
-      "cast_analysis": "pending",
+      "cast_analysis": "done",
       "evidence_kind": "measurement",
       "evidence_refs": [
         "assurance/ledger/formalize/2026-08-09.json",
         "assurance/harness/orchestrator.py",
         "assurance/tests/test_approved_plan_pressure.py"
-      ]
+      ],
+      "cast_analysis_ref": "assurance/ledger/cast/INC-033-approved-plans-have-no-canonical-pressure.json",
+      "cast_analyzed_at": "2026-08-09T21:50:38Z"
     },
     {
       "id": "INC-034-ci-turns-red-on-a-date-with-no-change",
@@ -654,7 +660,7 @@
       "fixed": false,
       "fix_note": "ADR-149: 孤児の陳腐化から review_by を外した。review_by の超過には専用の検査 review_by_overrun(warn) が既に在り、孤児が error で数えると同じ事実を二重に数えることになる。二つは測るものが違う —— review_by は暦の出来事、孤児は放置という状態である。実測(同じ日付掃引を修正後に回した): 2026-11-10 は error 0・warn 16、2027-02-05 は error 2(180 日の放置)。覆いは失われていない。所有者は当初『証拠庫を三条件から外す』を選んだが、実装して測ったところこの木では孤児の覆いが 0 件になる(never は 4 件すべて RESEARCH、reproducible: true は 0 件)と示して選び直した。独立検証(ADR-139)は未実施のため fixed:true とは書かない",
       "residual": "根の問いは『時で起きる curation の促しを、変更の門で届けてよいか』である。門は変更の可否を判ずる装置であって、暦の管理装置ではない。この問いは INC-018#6（warn の意味論）とも重なる",
-      "cast_analysis": "pending",
+      "cast_analysis": "done",
       "evidence_kind": "measurement",
       "evidence_refs": [
         ".github/workflows/checks.yml",
@@ -662,7 +668,9 @@
         "doctrine_docs/graph/research/RESEARCH-003-prior-art-failure-survey.md",
         "plugin/scripts/docs-audit.py"
       ],
-      "next_step": "独立検証を通したうえで fixed へ。CAST 分析も未実施"
+      "next_step": "独立検証を通したうえで fixed へ。CAST 分析も未実施",
+      "cast_analysis_ref": "assurance/ledger/cast/INC-034-ci-turns-red-on-a-date-with-no-change.json",
+      "cast_analyzed_at": "2026-08-09T21:55:21Z"
     },
     {
       "id": "INC-035-provenance-gate-passes-fabricated-sources",

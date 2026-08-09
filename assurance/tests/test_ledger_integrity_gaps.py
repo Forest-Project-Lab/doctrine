@@ -86,10 +86,29 @@ class UnassessedIsCountedTest(unittest.TestCase):
                           "%s の要約に unassessed が無い（五値のうち一値が"
                           "どの数にも現れない）" % book)
 
-    def test_the_real_ledger_has_the_two_unassessed_visible(self):
-        summary = orchestrator.coverage_status()
-        total = sum(v.get("unassessed") or 0 for v in summary.values())
-        self.assertGreater(total, 0, "実台帳の UNASSESSED が見えていない")
+    def test_the_count_is_derived_not_hardcoded(self):
+        """実台帳の件数は凍らせない（自壊する門にしない）。
+
+        当初この試験は「実台帳の UNASSESSED が 0 より多い」と書いていた。
+        再判定でその 2 件が解けた瞬間に赤くなる —— 台帳が良くなったら赤に
+        なる門であり、WATCH-001 第11項の「日付が進んだだけで赤くなる」と
+        同じ型である。凍結するのは**数え方**であって数ではない。
+        """
+        import json
+        import os
+        base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        for book, v in orchestrator.coverage_status().items():
+            path = os.path.join(base, "ledger", "catalogs",
+                                "%s-coverage.json" % book)
+            if not os.path.isfile(path):
+                continue
+            with open(path, encoding="utf-8") as fh:
+                entries = json.load(fh).get("entries", [])
+            expected = sum(1 for e in entries
+                           if not e.get("merged_into")
+                           and e.get("disposition") == "UNASSESSED")
+            self.assertEqual(v.get("unassessed"), expected,
+                             "%s の unassessed が実体と合わない" % book)
 
 
 class ShippedConditionsAreCheckedTest(unittest.TestCase):
