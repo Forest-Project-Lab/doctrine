@@ -152,7 +152,21 @@ def validate():
     problems.extend(_validate_nameable_states())
     problems.extend(_validate_shipped_conditions())
     problems.extend(_validate_owner_overrides())
+    problems.extend(_validate_no_swallowed_corruption())
     return problems
+
+
+def _validate_no_swallowed_corruption():
+    """読み手が黙って飲み込んだ破損を名指す（INC-027 推奨#0）。
+
+    読み手は黙って劣化してよい —— 帳簿が読めない日でもレーンは走れた方が
+    よい。しかし「読めなかった」という事実まで消すと、切り詰めと不在が
+    区別できない（INC-006 の沈黙）。読み手は None を返しつつ場所を積み、
+    ここが声を上げる。`_validate_ledger_readability` は台帳を**総なめ**に
+    するが、こちらは**この実行で実際に読もうとして失敗した**ものを指す。
+    """
+    return ["読み手が破損を飲み込んだ（空として読み替えていない）: %s" % e
+            for e in corrupt_seen()]
 
 
 def _validate_nameable_states():
@@ -956,11 +970,12 @@ def latest_scenarios():
     names = sorted(n for n in os.listdir(scn_dir) if n.endswith(".json"))
     if not names:
         return None
+    path = os.path.join(scn_dir, names[-1])
     try:
-        with open(os.path.join(scn_dir, names[-1]), encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             return json.load(f)
-    except (OSError, ValueError):
-        return None
+    except (OSError, ValueError) as exc:
+        return note_corrupt(path, exc)
 
 
 def latest_formalize():
@@ -971,11 +986,12 @@ def latest_formalize():
     names = sorted(n for n in os.listdir(fm_dir) if n.endswith(".json"))
     if not names:
         return None
+    path = os.path.join(fm_dir, names[-1])
     try:
-        with open(os.path.join(fm_dir, names[-1]), encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             return json.load(f)
-    except (OSError, ValueError):
-        return None
+    except (OSError, ValueError) as exc:
+        return note_corrupt(path, exc)
 
 
 def unformalized_survivors():
@@ -1007,6 +1023,27 @@ def unformalized_survivors():
     return [sid for sid in survivors if sid not in planned]
 
 
+# 読み手が握り潰した破損を、名指しできる形で残す（INC-027 推奨#0）。
+#
+# 読み手は黙って劣化してよい —— 帳簿が読めない日でもレーンは走れた方がよい。
+# しかし「読めなかった」という事実まで消すと、切り詰めと不在が区別できない。
+# 読み手は None を返しつつ、ここへ場所を積む。validate がそれを名指す。
+_CORRUPT_SEEN = []
+
+
+def note_corrupt(path, exc):
+    """破損を記録して、呼び手には黙って None を返させる。"""
+    entry = "%s (%s)" % (path, exc)
+    if entry not in _CORRUPT_SEEN:
+        _CORRUPT_SEEN.append(entry)
+    return None
+
+
+def corrupt_seen():
+    """このプロセスで読み手が飲み込んだ破損の一覧。"""
+    return list(_CORRUPT_SEEN)
+
+
 def load_red_records(ledger_dir=None):
     """修正前 FAIL の証拠。鍵は対象 id（scenario か incident）。無ければ空。
 
@@ -1021,7 +1058,14 @@ def load_red_records(ledger_dir=None):
     for name in sorted(os.listdir(d)):
         if not name.endswith(".json"):
             continue
-        doc = ledger_io.read_json(os.path.join(d, name), default=None)
+        path = os.path.join(d, name)
+        try:
+            doc = ledger_io.read_json(path, default=None)
+        except ledger_io.LedgerCorrupt as exc:
+            # 読み手は黙って劣化する。破損は note_corrupt が覚え、
+            # validate が名指す（INC-027 推奨#11。三分を保つ）。
+            note_corrupt(path, exc)
+            continue
         if isinstance(doc, dict):
             out[name[:-5]] = doc
     return out
@@ -1065,7 +1109,12 @@ def unreproduced_plans(ledger_dir=None):
     for name in sorted(os.listdir(fm_dir)):
         if not name.endswith(".json"):
             continue
-        doc = ledger_io.read_json(os.path.join(fm_dir, name), default=None)
+        fpath = os.path.join(fm_dir, name)
+        try:
+            doc = ledger_io.read_json(fpath, default=None)
+        except ledger_io.LedgerCorrupt as exc:
+            note_corrupt(fpath, exc)
+            continue
         if not isinstance(doc, dict):
             continue
         for plan in doc.get("plans") or []:
@@ -1091,7 +1140,12 @@ def reproduce_red_summary(ledger_dir=None):
         for name in sorted(os.listdir(fm_dir)):
             if not name.endswith(".json"):
                 continue
-            doc = ledger_io.read_json(os.path.join(fm_dir, name), default=None)
+            fpath = os.path.join(fm_dir, name)
+            try:
+                doc = ledger_io.read_json(fpath, default=None)
+            except ledger_io.LedgerCorrupt as exc:
+                note_corrupt(fpath, exc)
+                continue
             for plan in (doc or {}).get("plans") or []:
                 if isinstance(plan, dict) and plan.get("verdict") == "APPROVE" \
                         and plan.get("scenario_id"):
@@ -1115,10 +1169,12 @@ def load_verify_records():
     for name in sorted(os.listdir(v_dir)):
         if not name.endswith(".json"):
             continue
+        vpath = os.path.join(v_dir, name)
         try:
-            with open(os.path.join(v_dir, name), encoding="utf-8") as f:
+            with open(vpath, encoding="utf-8") as f:
                 doc = json.load(f)
-        except (OSError, ValueError):
+        except (OSError, ValueError) as exc:
+            note_corrupt(vpath, exc)
             continue
         if isinstance(doc, dict):
             out[doc.get("target_id") or name[:-len(".json")]] = doc
@@ -1283,7 +1339,8 @@ def load_recommendation_status():
     try:
         with open(path, encoding="utf-8") as f:
             rows = json.load(f).get("dispositions", [])
-    except (OSError, ValueError):
+    except (OSError, ValueError) as exc:
+        note_corrupt(path, exc)
         return {}
     out = {}
     for row in rows:
