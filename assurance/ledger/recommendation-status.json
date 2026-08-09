@@ -1804,6 +1804,89 @@
       "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
       "evaluator_owner_required": true,
       "owner_override_reason": "前提が失効している。修正は main へ merge 済み (commit 89599ab、HEAD の祖先) で、レーンはリポジトリから直接走るため未修正の複製で鮮度判定する間隙が無い。実台帳で ATTACK_EVALUATOR が挙がることも実測済み (ledger/red/INC-023 の measured_after)。incidents.json は shipped:false のまま (ADR-144 三条件: 修正を含む release tag が無い。tag は v0.5.0 まで)。"
+    },
+    {
+      "incident_id": "INC-027-ledger-write-not-atomic",
+      "index": 0,
+      "state": "landed",
+      "investigated": true,
+      "evidence_ref": "assurance/harness/orchestrator.py の note_corrupt / corrupt_seen / _validate_no_swallowed_corruption、assurance/tests/test_readers_do_not_hide_corruption.py",
+      "note": "着地した。読み手は黙って劣化する（None を返す）が、読めなかった事実は note_corrupt へ積み、validate が名指す。三分は保つ —— 行動の導出は黙って劣化・読み手は None・validate が声を上げる。健全な台帳と欠落では何も積まないことも凍結した"
+    },
+    {
+      "incident_id": "INC-027-ledger-write-not-atomic",
+      "index": 2,
+      "state": "landed",
+      "investigated": true,
+      "evidence_ref": "assurance/tests/test_ledger_io.py の EveryLedgerWriteGoesThroughTheHelperTest（AST の軸。CI のレーン試験で走る）",
+      "note": "着地した。harness からファイルへ直に書く経路が生えないことを AST で凍結し、検出器自身の陽性 5 形状と清潔な module での陰性も試験した。CI はレーン試験を走らせるので静的軸は門に入っている"
+    },
+    {
+      "incident_id": "INC-027-ledger-write-not-atomic",
+      "index": 1,
+      "state": "pending",
+      "investigated": true,
+      "note": "半着地。台帳の全件パース検査は validate の _validate_ledger_readability として在り、CI もレーン試験経由でその試験を走らせる。ただし『起動時』の検査は運転手順 §0 が人に求める形のままで、機械の強制ではない。orchestrator validate を CI の段に足すかは別主題（INC-030 の残余と同じ面）"
+    },
+    {
+      "incident_id": "INC-027-ledger-write-not-atomic",
+      "index": 3,
+      "state": "landed",
+      "investigated": true,
+      "evidence_ref": "assurance/tests/test_ledger_io.py の test_a_product_call_path_killed_mid_write_keeps_the_old_ledger（triage_candidates.write_doc を書き込み途中で SIGKILL）",
+      "note": "着地した。新設モジュール単体ではなく製品の呼び口を突く観測を常設化した。指摘のとおり、緑の oracle が是正と同じ変更で生まれる問題そのものは残る（試験ファイル自体が新規）—— そこは検出器の陽性・陰性試験で一段は防いでいる"
+    },
+    {
+      "incident_id": "INC-027-ledger-write-not-atomic",
+      "index": 5,
+      "state": "landed",
+      "investigated": true,
+      "evaluator_owner_required": true,
+      "owner_override_reason": "配布・リポジトリ境界に触れない第三の解を採ったので、所有者判断に当たらないと判断した。記録の置き場所は変えず（証拠は台帳に在るべきで、外へ出すと選別済み証拠の原則が崩れる）、検証を別の変更に切り出しもしていない。diff の取得から assurance/ledger/verify/ を外しただけである。配布物にも境界にも触れていない",
+      "evidence_ref": "assurance/harness/verify_fix.py の :(exclude)assurance/ledger/verify/、assurance/tests/test_verify_excludes_its_own_record.py（PR #283）",
+      "note": "着地した。INC-028 の循環を、記録を検証対象から外すことで切った"
+    },
+    {
+      "incident_id": "INC-027-ledger-write-not-atomic",
+      "index": 9,
+      "state": "landed",
+      "investigated": true,
+      "evidence_ref": "AST の棚卸し（本反復で実施）: assurance/harness の直書き 0 件。plugin/scripts は 7 ファイル 8 箇所",
+      "note": "着地した。レーン側の非対称は解消（全経路が ledger_io を通る）。配布側 plugin/scripts には 8 箇所の書き込みが残るが、そちらは docs-audit・render-projection・scaffold・_auditcache が各々 os.replace で原子化しており、印の書き込み（nudge 三種）は最善努力の設計である。**ただし配布側には原子書き込みの実装が三つ散っている** —— 統合は配布物側の別主題として残す"
+    },
+    {
+      "incident_id": "INC-027-ledger-write-not-atomic",
+      "index": 10,
+      "state": "landed",
+      "investigated": true,
+      "evidence_ref": "assurance/ledger/incidents.json の INC-027 residual、および INC-008 の記録",
+      "note": "着地した。同時実行の read-modify-write は原子化では直らないことを INC-027 の residual に明記し、INC-008 が別事象として在ることも書いた"
+    },
+    {
+      "incident_id": "INC-027-ledger-write-not-atomic",
+      "index": 11,
+      "state": "landed",
+      "investigated": true,
+      "evidence_ref": "assurance/tests/test_readers_do_not_hide_corruption.py の NoReaderCrashesOnACorruptLedgerTest",
+      "note": "**この推奨が実際に欠陥を捕まえた。**台帳 81 件を全件壊して全読み口を走査したところ、load_red_records・unreproduced_plans・reproduce_red_summary の三つが LedgerCorrupt で未捕捉のまま落ちていた —— 壊れた台帳 1 件で orchestrator status 自体が落ちる状態だった。三つを三分の形（読み手は黙って劣化・note_corrupt が覚える・validate が名指す）へ直し、全件破損でどの読み口も落ちないことを軸で凍結した"
+    },
+    {
+      "incident_id": "INC-027-ledger-write-not-atomic",
+      "index": 4,
+      "state": "owner",
+      "investigated": true,
+      "owner_decision_kind": "配布境界や保証範囲の変更",
+      "evaluator_owner_required": true,
+      "note": "SessionEnd の走査対象にレーンの台帳の可読性を含めるかは、sensor の対象範囲を『文書』から『統制が依存する正本』へ広げる境界変更に当たる。所有者判断へ回す"
+    },
+    {
+      "incident_id": "INC-027-ledger-write-not-atomic",
+      "index": 6,
+      "state": "owner",
+      "investigated": true,
+      "owner_decision_kind": "配布境界や保証範囲の変更",
+      "evaluator_owner_required": true,
+      "note": "green_is_green が UNKNOWN のまま是正が着地している状態で、いつ・どの証拠で fixed:true と書けるのかは、保証の主張の範囲を定める判断である。本再監査で 12 件の是正がこの状態のまま積まれた。所有者判断へ回す"
     }
   ]
 }
