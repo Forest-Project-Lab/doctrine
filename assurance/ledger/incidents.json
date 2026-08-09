@@ -662,6 +662,23 @@
         "plugin/scripts/docs-audit.py"
       ],
       "next_step": "独立検証を通したうえで fixed へ。CAST 分析も未実施"
+    },
+    {
+      "id": "INC-035-provenance-gate-passes-fabricated-sources",
+      "date": "2026-08-09",
+      "summary": "出所の機械検証が約 35 の形を素通りさせていた。全要素を捏造した模型が『所見 0 件 / 機械検証不能 0 件』で終了コード 0 になる。宣言された 4 検出そのものは全発火するが、覆いが狭い",
+      "detected_by": "独立再監査 2026-08-09 の Phase B2。宣言された 4 検出(実在しないパス・行超過・依存辺の Flow 化・自己確定)が全発火することを確かめたうえで、通ってしまう形を全数当たった。headline は C9 —— 全要素を捏造した模型が 0 所見・0 機械検証不能で通る",
+      "impact": "v0.11.0 で配布済み。外部 issue #212 で『捏造出所ゼロ』と述べており、その label が主張を過大にしていた(第2信で限定済み)。実際に言えるのは『引用時点でそのパスが実在した』までである。素通りの中でも危険なのは、実在ファイルから一語を拾って『読んだ』と称せる形(B5・B5b)と、provenance を丸ごと省く形(B1)である",
+      "fixed": false,
+      "fix_note": "黙って緑にしないことを務めとし、検証の道が無いものは『機械検証不能』として数える形へ改めた。塞いだ形: provenance の欠落・非配列・空・非 dict／絶対パスと `..` と作業木の外を指すリンク／錨の無い locator／行番号と引用の食い違い／silent と言いながら在る引用／review_status の欠落と入れ子の confirmed／非 dict 要素・id 重複・行き先の無い Flow／依存辺の和文の言い換え／検証対象でない接頭／深い入れ子の終了コードの取り違え。修正前に組んだ fixture 13 種を修正後のコードへ当て 13/13 捕捉を実測。正直な下書き(Phase C の起草物)は所見 0 のまま通る。独立検証(ADR-139)は未実施のため fixed:true とは書かない",
+      "residual": "意味の検証はしない —— 出所が主張を支持しているかは、この門では測れない。行番号と引用の近傍判定は前後 3 行の窓であり、窓の外に在る正しい引用は所見になる(偽陽性の側)。接頭の推定は模型の多数派に依るので、並んだときは全件を検査する。URL は取得しない(通信しない。確定事実7)",
+      "cast_analysis": "pending",
+      "evidence_kind": "measurement",
+      "evidence_refs": [
+        "plugin/scripts/map-draft-check.py",
+        "plugin/tests/test_mapdraft_hardening.py",
+        "doctrine_docs/authoring/spec/SPEC-029-map-draft-check.md"
+      ]
     }
   ]
 }

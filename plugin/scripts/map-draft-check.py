@@ -78,9 +78,16 @@ ENTITY_LISTS = ("elements", "flows", "contracts", "scenarios", "anchors")
 
 SOURCE_RE = re.compile(r"^([\w.-]+):\s*(.+?)(?:@([0-9a-f]{7,40}))?$")
 PATHISH_RE = re.compile(r"^[\w./\-]+$")
-LOC_LINE_RE = re.compile(r"L(\d+)|(\d+)行")
+# 行番号の綴りの揺れを覆う。`L12`・`l12`・`12行`・`12 行`・`line 12`。
+# 一つの綴りだけを見ていたので、小文字や空白で検査を外せた(INC-035)。
+LOC_LINE_RE = re.compile(r"[Ll](\d+)\b|(\d+)\s*行|\bline\s+(\d+)\b",
+                         re.IGNORECASE)
 LOC_QUOTE_RE = re.compile(r"「([^」]+)」|『([^』]+)』")
-DEP_EDGE_RE = re.compile(r"dep-graph|depends_on|impacts")
+# 依存グラフの辺を Flow へ化かした形。ASCII の三語だけを見ていたので、
+# 和文の言い換えで外せた(INC-035)。字面の検査であることは変わらない。
+DEP_EDGE_RE = re.compile(
+    r"dep-graph|dep graph|depends_on|depends on|impacts"
+    r"|依存グラフ|依存の辺|被影響|逆依存")
 BLOB_URL_RE = re.compile(r"/blob/([0-9a-f]{7,40})/([^#?]+)")
 
 
@@ -165,6 +172,38 @@ def _sources_of(where, entity):
             yield "%s.provenance[%d]" % (where, j), src
 
 
+def check_provenance_present(model, findings):
+    """出所を持たない実体を咎める(INC-035)。
+
+    「最低 1 件」は references/provenance-rules.md が既に求めているのに、
+    機械が見ていなかった。省くと 0 所見・0 機械検証不能で通る —— 全部を
+    捏造した模型が最も静かに通る形であった。
+    """
+    for where, entity in _entities(model):
+        if where.startswith("anchors["):
+            # アンカーは「どこを指すか」の記述であって、値ではない。
+            # 指し先の当否は D4(範囲の照合と source_revision)が見る。
+            continue
+        prov = entity.get("provenance")
+        if prov is None:
+            _f(findings, "D2_SOURCE_UNRESOLVED", where,
+               "provenance が無い(全ての値に出所を付ける。最低 1 件)")
+            continue
+        if not isinstance(prov, list):
+            _f(findings, "D2_SOURCE_UNRESOLVED", where,
+               "provenance が配列でない: %r" % (type(prov).__name__,))
+            continue
+        if not prov:
+            _f(findings, "D2_SOURCE_UNRESOLVED", where,
+               "provenance が空(最低 1 件の出所が要る)")
+            continue
+        for j, src in enumerate(prov):
+            if not isinstance(src, dict):
+                _f(findings, "D2_SOURCE_UNRESOLVED",
+                   "%s.provenance[%d]" % (where, j),
+                   "Source が dict でない: %r" % (src,))
+
+
 def _iter_sources(model):
     for where, entity in _entities(model):
         for sw, src in _sources_of(where, entity):
@@ -177,12 +216,50 @@ def check_d1(model, findings):
     """D1: 下書きは自分を確定しない。review_status は proposed に限る。"""
     for where, entity in _entities(model):
         if "review_status" not in entity:
+            # 省けば検査が飛ぶ、では自己確定を防げない(INC-035)。ただし
+            # アンカーは「どこを指すか」の記述であって、確定の対象となる
+            # 値ではない。求めるのは値を担う実体だけとする。
+            if not where.startswith("anchors["):
+                _f(findings, "D1_NOT_PROPOSED", where,
+                   "review_status が無い。下書きの実体は proposed を明記する")
             continue
         value = entity.get("review_status")
         if value != "proposed":
             _f(findings, "D1_NOT_PROPOSED", where,
                "review_status が %r。下書きの実体は proposed に限る"
                "(M-07 の早期検査)" % (value,))
+    _check_nested_confirmed(model, findings)
+
+
+def _check_nested_confirmed(model, findings, _limit=2000):
+    """入れ子のどこかに confirmed が潜んでいないか(INC-035)。
+
+    最上位の六箇所しか歩いていなかったので、`contracts[].evidence[]` などに
+    書いた confirmed が見えなかった。深さは上限で切る —— 深い入れ子で
+    再帰の限界に当たると、終了コードが「対象が無い」に化けていた。
+    """
+    seen = [0]
+
+    def walk(node, where):
+        seen[0] += 1
+        if seen[0] > _limit:
+            return
+        if isinstance(node, dict):
+            v = node.get("review_status")
+            if v is not None and v != "proposed":
+                _f(findings, "D1_NOT_PROPOSED", where,
+                   "入れ子の review_status が %r" % (v,))
+            for k, sub in node.items():
+                if isinstance(sub, (dict, list)):
+                    walk(sub, "%s.%s" % (where, k))
+        elif isinstance(node, list):
+            for i, sub in enumerate(node):
+                if isinstance(sub, (dict, list)):
+                    walk(sub, "%s[%d]" % (where, i))
+
+    for label in ENTITY_LISTS:
+        walk(model.get(label), label)
+    walk(model.get("system"), "system")
 
 
 def check_d7(model, findings):
@@ -233,9 +310,71 @@ def _enum(findings, where, key, entity, allowed):
 
 # ---- D2: 出所の実在(この門に固有の務め) ------------------------------------
 
+def check_integrity(model, findings):
+    """非 dict の要素・id の重複・行き先の無い Flow(INC-035)。
+
+    一覧の非 dict は黙って飛ばされていたので、`"elements": ["ghost"]` が
+    何の所見も出さずに通った。id の重複と、実在しない要素を指す Flow も
+    誰も見ていなかった。
+    """
+    ids = {}
+    for label in ENTITY_LISTS:
+        seq = model.get(label)
+        if not isinstance(seq, list):
+            continue
+        for i, item in enumerate(seq):
+            if not isinstance(item, dict):
+                _f(findings, "D7_SHAPE", "%s[%d]" % (label, i),
+                   "一覧の要素が dict でない: %r" % (item,))
+                continue
+            ident = item.get("id")
+            if isinstance(ident, str) and ident:
+                if ident in ids:
+                    _f(findings, "D7_SHAPE", "%s[%s]" % (label, ident),
+                       "id が重複している(先に %s)" % ids[ident])
+                else:
+                    ids[ident] = "%s[%d]" % (label, i)
+    element_ids = {item.get("id") for _w, item in _named(model, "elements")
+                   if isinstance(item.get("id"), str)}
+    for where, item in _named(model, "flows"):
+        for key in ("from", "to"):
+            ref = item.get(key)
+            if isinstance(ref, str) and ref and ref not in element_ids:
+                _f(findings, "D7_SHAPE", where,
+                   "%s が実在しない要素を指す: %s" % (key, ref))
+
+
+def _infer_repo_prefix(model):
+    """--repo-prefix が無いとき、検証対象の接頭を模型から推す(INC-035)。
+
+    接頭を無視すると、別リポジトリを読んだという主張が、こちらの木に偶然
+    在るパスで「検証済み」になる。かといって --repo の名で決めると、木の
+    置き場を変えただけで検査が黙って止まる（それは門を弱める側の誤り）。
+
+    そこで**模型の中の多数派**を検証対象とみなす。単一の接頭しか無い模型は
+    従来どおり全件が検査され、越境の引用を混ぜた模型では少数派だけが
+    「機械検証不能」へ回る。並んだら決められないので全件を検査する。
+    """
+    counts = {}
+    for _sw, src in _iter_sources(model):
+        source = src.get("source")
+        if not isinstance(source, str) or source.startswith(("http://", "https://")):
+            continue
+        m = SOURCE_RE.match(source.strip())
+        if m:
+            counts[m.group(1)] = counts.get(m.group(1), 0) + 1
+    if len(counts) < 2:
+        return None
+    top = max(counts.values())
+    leaders = [k for k, v in counts.items() if v == top]
+    return leaders[0] if len(leaders) == 1 else None
+
+
 def check_d2(model, opts, git, findings, unver):
     """D2: 出所の実在。検証の道が無いものは所見にせず一覧へ回す。"""
     n = 0
+    if not opts.get("repo_prefix"):
+        opts["default_prefix"] = _infer_repo_prefix(model)
     for sw, src in _iter_sources(model):
         n += 1
         _check_one_source(sw, src, opts, git, findings, unver)
@@ -258,44 +397,122 @@ def _check_one_source(sw, src, opts, git, findings, unver):
            "URL でもリポジトリ接頭付きパスでもない。機械検証の道が無い")
         return
     prefix, rev = m.group(1), m.group(3)
-    if opts["repo_prefix"] and prefix != opts["repo_prefix"]:
+    expected = opts["repo_prefix"] or opts.get("default_prefix")
+    if expected and prefix != expected:
+        # 他リポジトリを読んだという主張を、こちらの木に対して検証しない。
+        # --repo-prefix が無いときも接頭を無視しない —— 無視すると、別の
+        # リポジトリの主張が偶然こちらに在るパスで通ってしまう(INC-035)。
         _u(unver, sw, source,
-           "接頭 %s は --repo-prefix(%s)と異なり --repo の対象外"
-           % (prefix, opts["repo_prefix"]))
+           "接頭 %s は検証対象(%s)と異なる。他リポジトリの出所は機械検証できない"
+           % (prefix, expected))
         return
-    abspath = os.path.join(opts["repo"], path)
+    abspath, why = _safe_join(opts["repo"], path)
+    if abspath is None:
+        _f(findings, "D2_SOURCE_UNRESOLVED", sw, why)
+        return
     if not os.path.isfile(abspath):
         _f(findings, "D2_SOURCE_UNRESOLVED", sw,
            "出所のファイルが --repo の作業木に無い: %s" % path)
         return
-    _check_locator(sw, src, abspath, findings)
+    _check_locator(sw, src, abspath, findings, unver)
     if rev:
         _check_rev(sw, source, path, rev, git, findings, unver)
 
 
-def _check_locator(sw, src, abspath, findings):
-    """locator のできる範囲の照合。行番号は行数以内、引用は本文に実在。"""
+def _safe_join(repo, path):
+    """出所のパスを作業木の中へ閉じ込める。外を指すなら理由つきで拒む。
+
+    絶対パスは `os.path.join` が土台を捨てるので、`/etc/hosts` がそのまま
+    実在ファイルとして通っていた。`..` とシンボリックリンクも同じ抜け道で
+    あり、いずれも「読んだ」と称して作業木の外を指せる(INC-035)。
+    """
+    if os.path.isabs(path):
+        return None, "出所が絶対パス。--repo の中の相対パスで書く: %s" % path
+    joined = os.path.join(repo, path)
+    real_repo = os.path.realpath(repo)
+    real = os.path.realpath(joined)
+    if real != real_repo and not real.startswith(real_repo + os.sep):
+        return None, ("出所が --repo の作業木の外を指す(`..` かリンク): %s"
+                      % path)
+    return joined, None
+
+
+# 引用がこれより短いと、どの日本語の本文にも当たってしまい検証にならない。
+MIN_QUOTE_CHARS = 4
+# 「その行を読んだ」の許容幅。行番号と引用が両方あるとき、引用がその近傍に
+# 在ることを求める。ファイル全体に対する照合は「読んだ」を示さない。
+QUOTE_WINDOW_LINES = 3
+
+
+def _check_locator(sw, src, abspath, findings, unver):
+    """locator が実際に位置を指しているか。
+
+    従来は「行番号が行数以内」と「引用がファイルのどこかに在る」だけを見て
+    いた。それは *読んだこと* を示さない —— 実在ファイルから一語を拾えば
+    通る。錨(行番号か引用)が一つも無い locator は素通りしていた(INC-035)。
+    """
     locator = src.get("locator")
-    if not isinstance(locator, str) or not locator:
+    if not isinstance(locator, str) or not locator.strip():
+        _u(unver, sw, src.get("source") or "",
+           "locator が無い。どこを読んだかを示す錨(行番号か「引用」)を書く")
         return
     try:
         with open(abspath, "r", encoding="utf-8", errors="replace") as fh:
             text = fh.read()
     except OSError:
         return
-    total = len(text.splitlines())
+    lines = text.splitlines()
+    total = len(lines)
+    silent = src.get("verdict") == "silent"
+
+    cited = []
     for m in LOC_LINE_RE.finditer(locator):
-        line = int(m.group(1) or m.group(2))
+        raw = m.group(1) or m.group(2) or m.group(3)
+        line = int(raw)
+        cited.append(line)
         if line < 1 or line > total:
             _f(findings, "D2_SOURCE_UNRESOLVED", sw,
                "locator の行 %d がファイルの行数(%d)を超える" % (line, total))
-    if src.get("verdict") == "silent":
-        return  # 負の出所の引用は「無いこと」の要約でありうる。実在を求めない
-    for m in LOC_QUOTE_RE.finditer(locator):
-        quote = m.group(1) or m.group(2)
-        if quote and quote not in text:
+
+    quotes = [m.group(1) or m.group(2) for m in LOC_QUOTE_RE.finditer(locator)]
+    quotes = [q for q in quotes if q]
+
+    if not cited and not quotes:
+        _u(unver, sw, src.get("source") or "",
+           "locator に錨が無い(行番号も「引用」も無い): %s" % locator)
+        return
+
+    for quote in quotes:
+        if len(quote) < MIN_QUOTE_CHARS:
+            _u(unver, sw, src.get("source") or "",
+               "引用「%s」が短すぎて検証にならない(%d 文字未満)"
+               % (quote, MIN_QUOTE_CHARS))
+            continue
+        present = quote in text
+        if silent:
+            # 負の出所の主張は「読んだが無かった」である。在れば主張が偽。
+            if present:
+                _f(findings, "D2_SOURCE_UNRESOLVED", sw,
+                   "verdict が silent なのに引用「%s」が本文に在る"
+                   "(『無い』という主張と食い違う)" % quote)
+            continue
+        if not present:
             _f(findings, "D2_SOURCE_UNRESOLVED", sw,
                "locator の引用「%s」が本文に見つからない" % quote)
+            continue
+        if cited:
+            near = False
+            for line in cited:
+                lo = max(1, line - QUOTE_WINDOW_LINES)
+                hi = min(total, line + QUOTE_WINDOW_LINES)
+                if any(quote in l for l in lines[lo - 1:hi]):
+                    near = True
+                    break
+            if not near:
+                _f(findings, "D2_SOURCE_UNRESOLVED", sw,
+                   "引用「%s」が示された行(%s)の近くに無い"
+                   "(ファイルのどこかに在るだけでは読んだ証にならない)"
+                   % (quote, "・".join("L%d" % n for n in cited)))
 
 
 def _check_rev(sw, source, path, rev, git, findings, unver):
@@ -489,8 +706,8 @@ def _render_text(model_path, findings, unver, totals):
 def _parse_args(argv):
     """最小の引数解析。誤りがあれば (None, 理由) を返す。"""
     opts = {"model": None, "repo": None, "docs_root": None,
-            "repo_prefix": None, "today": None, "trace_json": None,
-            "json": False}
+            "repo_prefix": None, "default_prefix": None, "today": None,
+            "trace_json": None, "json": False}
     flags = {"--model": "model", "--repo": "repo", "--docs-root": "docs_root",
              "--repo-prefix": "repo_prefix", "--today": "today",
              "--trace-json": "trace_json"}
@@ -546,6 +763,12 @@ def main(argv=None):
         model = json.loads(text)
     except ValueError as exc:
         _f(findings, "D7_SHAPE", "(top)", "JSON として読めない(%s)" % exc)
+    except RecursionError:
+        # 入れ子が深すぎて読み手が折れた。これは模型の形の問題であって
+        # 「対象が無い」ではない。終了コードを取り違えると、呼び手が
+        # 「飛ばしてよい」と読む(INC-035)。
+        _f(findings, "D7_SHAPE", "(top)",
+           "入れ子が深すぎて JSON として読めない(読み手の再帰の限界)")
     if model is not None and not isinstance(model, dict):
         _f(findings, "D7_SHAPE", "(top)", "最上位が JSON オブジェクトでない")
         model = None
@@ -554,6 +777,8 @@ def main(argv=None):
         git = _Git(opts["repo"])
         check_d7(model, findings)
         check_d1(model, findings)
+        check_provenance_present(model, findings)
+        check_integrity(model, findings)
         n_sources = check_d2(model, opts, git, findings, unver)
         check_d3(model, opts["today"], findings)
         check_d4(model, opts, git, findings, unver)
