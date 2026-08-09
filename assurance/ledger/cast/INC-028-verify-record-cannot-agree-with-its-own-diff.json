@@ -1,0 +1,659 @@
+{
+  "accepted_flaws": [
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "検証記録の格納先が assurance/ledger/verify/ 配下、すなわち検証対象と同じ枝・同じ commit 系列の内側に置かれている。記録は commit 前の diff に対して生成されるが、記録自身が次の commit で同じ枝へ入るため、記録の主張対象（diff_range 'e715616..6358f7c'）と、記録を同梱した変更集合とは定義上ずれる。観測する側が被観測系の内側に入る配置であり、統制の対象範囲（何を検証したか）が設計時の想定（対象＝この変更集合）と食い違う。",
+      "evidence_ref": "assurance/ledger/verify/INC-027-ledger-write-not-atomic.json",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "verify-decomposition-assumptions",
+        "control-both-behavior-and-interaction",
+        "単一コンポーネント集中の回避"
+      ],
+      "why_it_seemed_adequate": "保証記録をリポジトリ内の台帳へ一元的に積む規約は、OWNER の手掛かり（台帳 assurance/ledger/、PR の diff）を一箇所に集め、記録と事象を同じ版管理の追跡下に置くという既定の設計方針とそのまま整合していた。記録を対象の外へ出す設計は追跡可能性を下げる方向に見え、記録の同梱が検証対象そのものを変えるという再帰は、独立検証が同一の不一致を繰り返し挙げるまで観測されていなかった。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "verify 記録は「どの変更集合を検証したか」を diff_range という形で持つが、記録を読む側（門の判定、独立検証）は記録を含む変更集合に対する保証として読む。両者が指す集合が常に異なるため、手掛かりは形式上は存在しながら、その内容が読み手の解釈と一致しない。記録に diff の内容同一性を機械照合できる値（diff_sha256 等）が無いため、読み手が食い違いを判定する手段も無い。",
+      "evidence_ref": "assurance/harness/verify_fix.py",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "defects-in-information-providing-systems",
+        "include-information-supplier-defect",
+        "process-model-inconsistency-causes-unsafe-control"
+      ],
+      "why_it_seemed_adequate": "diff_range は人が読んで対象を特定できる十分な記述に見え、記録が同じ枝にある限り「直前の作業＝検証対象」という近接性の前提が成り立っているように見えていた。門が要求するのは PASS の記録の存在であり、記録の主張対象の同一性までは要求として書かれていなかった。"
+    },
+    {
+      "control_element_id": "OWNER",
+      "description": "OWNER が push / PR / merge の可否を決める際の手掛かりは PR の diff と台帳である。この二つが同一 commit に同梱されるため、diff を見た時点で「この変更は検証済み」と読める一方、同梱された記録はその diff を対象にしていない。OWNER の既知の穴（報告が実施ではなく意図を書いていても人からは見分けにくい）と同型の、実施と記録の見分けにくさが構造として再生産されている。",
+      "evidence_ref": "doctrine_docs/packaging/decisions/ADR-139-verify-runner-and-fixed-gate.md",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "情報システム保有と有用性の乖離",
+        "controller-needs-concrete-feedback-channels",
+        "分析出力の客観性を僭称しない"
+      ],
+      "why_it_seemed_adequate": "記録が diff の中に見えることは、報告と実施の乖離を減らす方向の設計に見えた。記録が同梱されているほど、意図だけの報告と区別しやすいという理解が成り立っていた。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "ADR-139 が定めた門（fixed:true には PASS の verify 記録を要す）と、既存の台帳格納規約（保証記録は枝の中の assurance/ledger/ へ積む）は、それぞれ単体では整合する決定として別々に導入された。門の入力（記録）の生成・格納経路が門の対象（変更集合）を変えるという相互作用を評価する工程が、どちらの決定にも含まれていない。",
+      "flaw_type": "統制どうしの調整の欠如",
+      "normative_refs": [
+        "変更へのハザード分析と承認",
+        "全体構造の分析",
+        "trace-why-design-flaw-was-introduced"
+      ],
+      "why_it_seemed_adequate": "門の追加は既存の記録規約を変更しない追加的な制約であり、既存構造への影響が無い変更として扱えるように見えた。両者は別々の関心（判定条件／記録の置き場）に属しており、相互作用を疑う手がかりが決定時点に無かった。"
+    },
+    {
+      "control_element_id": "GOVERNANCE_TREE",
+      "description": "ADR-139 が置いた安全上の想定（「検証記録はそれが検証した変更集合の外にある」「PASS の記録の存在は当該変更集合の検証を意味する」）が決定文書に明示されておらず、その想定が成立しなくなったことを示す先行指標も定義されていない。想定が破れていること自体が、統治木の手掛かり（docs-audit の findings、dep-graph の逆依存）のどちらにも現れない。",
+      "evidence_ref": "doctrine_docs/packaging/decisions/ADR-139-verify-runner-and-fixed-gate.md",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "安全想定の記録と失効先行指標の定義",
+        "想定の記録と変更時再検査",
+        "設計時想定の運用中再検査"
+      ],
+      "why_it_seemed_adequate": "ADR は決定と根拠を記す様式であり、記録の物理的な置き場は実装細部として決定本文の範囲外に見えた。想定を書き出す欄が様式に無い以上、書かれていないことが欠落として目に付く経路も無かった。"
+    },
+    {
+      "control_element_id": "CI_RELEASE_CHECK",
+      "description": "CI は merge 前に赤で止める制御を持つが、その判定材料はジョブの成否と docs-audit の JSON であり、「台帳の記録が、その記録を含む変更集合の内側にあるか」「記録の主張対象と実際の変更集合が一致するか」を検査する決定論試験が無い。構造上必ず成立する不一致が、毎回すり抜ける。",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "監査の検出力評価",
+        "監査のすり抜け時に監査手順を是正",
+        "verify-all-hazard-preventing-systems"
+      ],
+      "why_it_seemed_adequate": "台帳は人と保証レーンが読むデータであり、CI の担当範囲は本体試験と文書監査であるという役割分担が成り立っていた。台帳の中身の整合はレーン側の関心とされ、CI 側に検査対象として持ち込む理由が無かった。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "「事象を台帳へ積み、分析が済むまで閉じない」制御は未閉件を蓄積するが、閉じられない理由が是正の内容にあるのか記録の置き場にあるのかを分類する手段が無い。門が修正の質と別の理由で閉じない状態が続いても、それは未閉件数の増加としてしか現れず、統制自身の劣化としては観測されない。",
+      "flaw_type": "統制自身の劣化を検出できない",
+      "normative_refs": [
+        "audit-findings-must-be-closed",
+        "指摘欠点の是正完了追跡",
+        "先行指標による監査強化"
+      ],
+      "why_it_seemed_adequate": "未閉件が残ること自体は、閉じる基準が厳しいことの正常な帰結として読める。門が緩むより閉じない方が安全側であるという判断は、保証レーンの設計意図と一致していた。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "独立検証は同一の不一致を二回とも single_change の減点材料として挙げているが、その出力は当該変更集合の合否として消費され、同一指摘の反復を集計して構造欠陥の兆候として上流（ADR・記録規約）へ戻す経路が無い。構造の欠陥を示す情報は最初の検証時点で既に出ていたが、それが構造の問題として扱われるまでに二回分の遅れが生じている。加えて、評価者が同系 model であるという既知の穴により、二回の指摘は独立した確認ではなく共通入力に対する同一反応である可能性を排除できない。",
+      "flaw_type": "手掛かりが遅い",
+      "normative_refs": [
+        "ニアミスの構造欠陥特定への利用",
+        "要約統計偏重による傾向情報の喪失",
+        "運用フィードバックで設計改善",
+        "共通の体系的要因による多重防護の無効化"
+      ],
+      "why_it_seemed_adequate": "個々の検証の減点は当該変更集合への評価であり、その場で処理して次へ進むのが検証の設計上の役目に見えた。反復を数える仕組みは、単発の指摘が積み上がるまで必要性が現れない。"
+    }
+  ],
+  "analysis": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "検証記録の格納先が assurance/ledger/verify/ 配下、すなわち検証対象と同じ枝・同じ commit 系列の内側に置かれている。記録は commit 前の diff に対して生成されるが、記録自身が次の commit で同じ枝へ入るため、記録の主張対象（diff_range 'e715616..6358f7c'）と、記録を同梱した変更集合とは定義上ずれる。観測する側が被観測系の内側に入る配置であり、統制の対象範囲（何を検証したか）が設計時の想定（対象＝この変更集合）と食い違う。",
+        "evidence_ref": "assurance/ledger/verify/INC-027-ledger-write-not-atomic.json",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "verify-decomposition-assumptions",
+          "control-both-behavior-and-interaction",
+          "単一コンポーネント集中の回避"
+        ],
+        "why_it_seemed_adequate": "保証記録をリポジトリ内の台帳へ一元的に積む規約は、OWNER の手掛かり（台帳 assurance/ledger/、PR の diff）を一箇所に集め、記録と事象を同じ版管理の追跡下に置くという既定の設計方針とそのまま整合していた。記録を対象の外へ出す設計は追跡可能性を下げる方向に見え、記録の同梱が検証対象そのものを変えるという再帰は、独立検証が同一の不一致を繰り返し挙げるまで観測されていなかった。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "verify 記録は「どの変更集合を検証したか」を diff_range という形で持つが、記録を読む側（門の判定、独立検証）は記録を含む変更集合に対する保証として読む。両者が指す集合が常に異なるため、手掛かりは形式上は存在しながら、その内容が読み手の解釈と一致しない。記録に diff の内容同一性を機械照合できる値（diff_sha256 等）が無いため、読み手が食い違いを判定する手段も無い。",
+        "evidence_ref": "assurance/harness/verify_fix.py",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "defects-in-information-providing-systems",
+          "include-information-supplier-defect",
+          "process-model-inconsistency-causes-unsafe-control"
+        ],
+        "why_it_seemed_adequate": "diff_range は人が読んで対象を特定できる十分な記述に見え、記録が同じ枝にある限り「直前の作業＝検証対象」という近接性の前提が成り立っているように見えていた。門が要求するのは PASS の記録の存在であり、記録の主張対象の同一性までは要求として書かれていなかった。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "OWNER が push / PR / merge の可否を決める際の手掛かりは PR の diff と台帳である。この二つが同一 commit に同梱されるため、diff を見た時点で「この変更は検証済み」と読める一方、同梱された記録はその diff を対象にしていない。OWNER の既知の穴（報告が実施ではなく意図を書いていても人からは見分けにくい）と同型の、実施と記録の見分けにくさが構造として再生産されている。",
+        "evidence_ref": "doctrine_docs/packaging/decisions/ADR-139-verify-runner-and-fixed-gate.md",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "情報システム保有と有用性の乖離",
+          "controller-needs-concrete-feedback-channels",
+          "分析出力の客観性を僭称しない"
+        ],
+        "why_it_seemed_adequate": "記録が diff の中に見えることは、報告と実施の乖離を減らす方向の設計に見えた。記録が同梱されているほど、意図だけの報告と区別しやすいという理解が成り立っていた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "ADR-139 が定めた門（fixed:true には PASS の verify 記録を要す）と、既存の台帳格納規約（保証記録は枝の中の assurance/ledger/ へ積む）は、それぞれ単体では整合する決定として別々に導入された。門の入力（記録）の生成・格納経路が門の対象（変更集合）を変えるという相互作用を評価する工程が、どちらの決定にも含まれていない。",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "変更へのハザード分析と承認",
+          "全体構造の分析",
+          "trace-why-design-flaw-was-introduced"
+        ],
+        "why_it_seemed_adequate": "門の追加は既存の記録規約を変更しない追加的な制約であり、既存構造への影響が無い変更として扱えるように見えた。両者は別々の関心（判定条件／記録の置き場）に属しており、相互作用を疑う手がかりが決定時点に無かった。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "ADR-139 が置いた安全上の想定（「検証記録はそれが検証した変更集合の外にある」「PASS の記録の存在は当該変更集合の検証を意味する」）が決定文書に明示されておらず、その想定が成立しなくなったことを示す先行指標も定義されていない。想定が破れていること自体が、統治木の手掛かり（docs-audit の findings、dep-graph の逆依存）のどちらにも現れない。",
+        "evidence_ref": "doctrine_docs/packaging/decisions/ADR-139-verify-runner-and-fixed-gate.md",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "安全想定の記録と失効先行指標の定義",
+          "想定の記録と変更時再検査",
+          "設計時想定の運用中再検査"
+        ],
+        "why_it_seemed_adequate": "ADR は決定と根拠を記す様式であり、記録の物理的な置き場は実装細部として決定本文の範囲外に見えた。想定を書き出す欄が様式に無い以上、書かれていないことが欠落として目に付く経路も無かった。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "CI は merge 前に赤で止める制御を持つが、その判定材料はジョブの成否と docs-audit の JSON であり、「台帳の記録が、その記録を含む変更集合の内側にあるか」「記録の主張対象と実際の変更集合が一致するか」を検査する決定論試験が無い。構造上必ず成立する不一致が、毎回すり抜ける。",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "監査の検出力評価",
+          "監査のすり抜け時に監査手順を是正",
+          "verify-all-hazard-preventing-systems"
+        ],
+        "why_it_seemed_adequate": "台帳は人と保証レーンが読むデータであり、CI の担当範囲は本体試験と文書監査であるという役割分担が成り立っていた。台帳の中身の整合はレーン側の関心とされ、CI 側に検査対象として持ち込む理由が無かった。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "「事象を台帳へ積み、分析が済むまで閉じない」制御は未閉件を蓄積するが、閉じられない理由が是正の内容にあるのか記録の置き場にあるのかを分類する手段が無い。門が修正の質と別の理由で閉じない状態が続いても、それは未閉件数の増加としてしか現れず、統制自身の劣化としては観測されない。",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "audit-findings-must-be-closed",
+          "指摘欠点の是正完了追跡",
+          "先行指標による監査強化"
+        ],
+        "why_it_seemed_adequate": "未閉件が残ること自体は、閉じる基準が厳しいことの正常な帰結として読める。門が緩むより閉じない方が安全側であるという判断は、保証レーンの設計意図と一致していた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "独立検証は同一の不一致を二回とも single_change の減点材料として挙げているが、その出力は当該変更集合の合否として消費され、同一指摘の反復を集計して構造欠陥の兆候として上流（ADR・記録規約）へ戻す経路が無い。構造の欠陥を示す情報は最初の検証時点で既に出ていたが、それが構造の問題として扱われるまでに二回分の遅れが生じている。加えて、評価者が同系 model であるという既知の穴により、二回の指摘は独立した確認ではなく共通入力に対する同一反応である可能性を排除できない。",
+        "flaw_type": "手掛かりが遅い",
+        "normative_refs": [
+          "ニアミスの構造欠陥特定への利用",
+          "要約統計偏重による傾向情報の喪失",
+          "運用フィードバックで設計改善",
+          "共通の体系的要因による多重防護の無効化"
+        ],
+        "why_it_seemed_adequate": "個々の検証の減点は当該変更集合への評価であり、その場で処理して次へ進むのが検証の設計上の役目に見えた。反復を数える仕組みは、単発の指摘が積み上がるまで必要性が現れない。"
+      }
+    ],
+    "hazard": "保証レーンが、自らの判定根拠となる記録を、その判定の対象である変更集合と同一の commit 対象の内側に置いた状態で門を運転している。記録の主張対象（diff_range）と、記録を含む変更集合とが構造上一致し得ないため、「この変更集合は検証された」という制約が、変更の質とは独立な理由で強制できない。",
+    "incident_id": "INC-028-verify-record-cannot-agree-with-its-own-diff",
+    "leading_indicators": [
+      {
+        "indicator": "検証記録の主張対象と、その記録を含む変更集合の不一致",
+        "observable": "assurance/ledger/verify/*.json の diff_range 終端 sha（または diff_sha256）と、その JSON を追加した commit の第一親の tree を照合した結果",
+        "threshold": "照合が一致しない記録が 1 件でもあれば異常。現行の格納規約下では常に不一致になるため、この指標は 100% から下がることをもって是正の進捗を測る",
+        "version_independent": true,
+        "where": "リポジトリ正本。CI_RELEASE_CHECK の決定論試験として、または ASSURANCE_LANE のレーン内試験として実行",
+        "why_version_independent": "照合はリポジトリ正本の git 履歴と台帳ファイルだけで計算でき、利用者環境へ導入された複製の版に依存しない"
+      },
+      {
+        "indicator": "検証対象コードと検証記録が同居する commit の割合",
+        "observable": "git log --name-only で、assurance/ledger/verify/ 配下のパスと、それ以外のパスが同一 commit に含まれる件数 / 全 commit 数",
+        "threshold": "直近 20 commit のうち同居 commit が 1 件でもあれば異常",
+        "version_independent": true,
+        "where": "リポジトリ正本の git 履歴。CI_RELEASE_CHECK のジョブとして",
+        "why_version_independent": "git 履歴のみを入力とし、plugin の導入複製を経由しない"
+      },
+      {
+        "indicator": "記録配置に関する同一指摘の反復",
+        "observable": "独立検証の出力テキスト中、記録の同梱・記録と diff の不一致に類する減点理由の出現回数",
+        "threshold": "直近 5 回の検証のうち 2 回以上で同種の指摘が現れたら、当該変更集合の合否とは別に構造の再検討を起動する",
+        "version_independent": true,
+        "where": "検証結果の保存先（台帳の verify 記録、または runs/）を ASSURANCE_LANE が集計",
+        "why_version_independent": "レーン内で生成・保存される出力の集計であり、導入複製の版を参照しない"
+      },
+      {
+        "indicator": "PASS の verify 記録を得ながら fixed:true が書かれていない未閉件",
+        "observable": "assurance/ledger/ 内で、red_was_red PASS の記録が存在し、かつ fixed:false のまま滞留している事象の件数と滞留セッション数",
+        "threshold": "1 件でも 2 セッションを超えて滞留したら異常として扱う",
+        "version_independent": true,
+        "where": "assurance/ledger/。ASSURANCE_LANE の次行動決定時に算出し、OWNER への進捗報告に含める",
+        "why_version_independent": "台帳ファイルのみを入力とする"
+      },
+      {
+        "indicator": "記録配置規約の変更が導入複製へ届いているか",
+        "observable": "HEARTBEAT が読む導入複製の版と、リポジトリ正本で verify_fix.py / 記録規約が更新された版との差",
+        "threshold": "導入複製が正本より 1 世代でも遅れている場合、上記指標 1〜4 の観測は正本側でのみ有効と明示的に扱う",
+        "version_independent": false,
+        "where": "利用者環境の導入複製（HEARTBEAT の警告、claude plugin update の応答）",
+        "why_version_independent": "検出器自身が導入複製の側で動くため、複製の版が遅れると本指標も遅れる（INC-005 の古びの検出器が古びる共通原因故障）。リポジトリ側からは複製が何世代遅れているかを観測できない"
+      }
+    ],
+    "loss": "保証の判定根拠（verify 記録）と、その判定が対象としたはずの変更集合との対応が確定できないまま、ADR-139 の門（新規の fixed:true は PASS の verify 記録を要す）の入力に使われている。結果として、是正が実施されていても台帳上は未閉のまま残り、台帳・PR の diff を手掛かりに状態を読む OWNER と ASSURANCE_LANE の双方が、実際の是正状態と一致しない像を持つ。INC-027 は二回の検証で red_was_red PASS を得ながら fixed:true が書かれていない状態にある。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "事象台帳・分析記録が対象を diff ではなく事象 id で参照しており、commit 系列との依存が無いことが確認できれば、この仮説は当たらない。",
+        "hypothesis": "事象台帳および CAST_ANALYSIS の記録も同じ枝へ commit されるなら、それらも自らの対象の内側に入り、verify 記録と同型の不一致を持つ。",
+        "oracle": "各記録 JSON が参照する対象（事象 id / diff / 分析対象）と、その記録を追加した commit の第一親を照合し、一致するか判定する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "docs-audit の走査対象に runs/ を追加でき、かつ diff_sha256 の照合だけで記録の同一性が担保できることが示されれば、影響は限定される。",
+        "hypothesis": "候補 (b)（記録を runs/ へ置き台帳には diff_sha256 だけ残す）を採ると、記録が SESSION_END_AUDIT / docs-audit の走査範囲と GOVERNANCE_TREE の外へ出て、記録の欠落・改変が検出されなくなる。",
+        "oracle": "docs-audit の走査対象パスと、runs/ の版管理状態を確認する。走査対象に runs/ が含まれず、かつ runs/ が版管理外なら成立。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "PR 本文や CI のジョブ成否など、diff 以外の経路で検証結果が OWNER に届いていることが確認できれば成立しない。",
+        "hypothesis": "候補 (a)（merge 後の別 commit で記録を積む）を採ると、OWNER の手掛かりである PR の diff から検証結果が消え、merge 可否の判断時点で検証状態が見えなくなる。",
+        "oracle": "OWNER が merge 可否を決める時点で参照できる手掛かりを列挙し、その中に検証結果が含まれるかを確認する。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "除外を model の判断ではなくパス指定による機械的な前処理として実装でき、その適用率が 100% であれば成立しない。",
+        "hypothesis": "候補 (c)（検証プロンプトで記録を対象外と宣言）は、除外範囲の判断を同系 model に委ねるため、共通原因故障により除外が効かない回が確率的に生じる。",
+        "oracle": "同一の変更集合に対して検証を複数回実行し、記録を対象外として扱った回の割合を数える。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "記録の格納位置を変えるだけで fixed:true が書ける事例が一つでも再現できれば、この追加要因は不要。",
+        "hypothesis": "門が閉じない未閉件の滞留は、記録の置き場だけでなく、fixed:true を書く主体と検証を実行する主体の順序関係（記録が commit された後でなければ fixed:true を書けない）にも由来する。",
+        "oracle": "fixed:true の書き込み時点と verify 記録の commit 時点の前後関係を、既存の未閉件について確認する。",
+        "severity": "P2"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "verify 記録の格納位置を決める前に、候補 (a) merge 後の別 commit、(b) 記録は台帳の外（runs/）へ置き台帳には diff_sha256 だけ残す、(c) 検証プロンプトで記録を対象外と宣言、の三案それぞれについて、OWNER の手掛かりの欠落・SESSION_END_AUDIT の走査範囲からの脱落・同系 model への判断委譲という副作用を並べ、どれを許容するかを決める。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "verify 記録に、検証対象の変更集合を機械照合できる値（diff_sha256 と基点 sha）を必須項目として持たせ、門の判定を「PASS の記録が存在する」から「PASS の記録が、判定対象の変更集合と照合一致する」へ変更する。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "記録の主張対象と、その記録を含む commit の親との照合を決定論試験として CI_RELEASE_CHECK に追加し、不一致を merge 前に赤で止める。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "assurance/ledger/verify/ 配下と他パスが同一 commit に同居する割合、および PASS を得ながら fixed:false のまま滞留する事象の件数と滞留期間を、ASSURANCE_LANE が毎回算出して OWNER の進捗報告に含める。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "独立検証の指摘テキストを分類・集計し、同種指摘が直近 5 回中 2 回以上現れた場合に、当該変更集合の合否とは別経路で構造の再検討を起動する。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "ADR-139 に、置いた安全上の想定（検証記録は検証対象の外にある／PASS の記録の存在は当該変更集合の検証を意味する）と、その想定の失効を示す先行指標を明記する。以後、門や判定条件を追加する決定には、入力の生成経路が対象に与える影響の評価欄を設ける。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "台帳以外で、記録が自らの対象の内側に入る配置（事象台帳、CAST_ANALYSIS の記録、docs-audit のキャッシュ、SessionEnd の要約）を棚卸しし、同型の再帰が門の判定に使われている箇所を列挙する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "evidence_refs の三つ（verify 記録、verify_fix.py、ADR-139）の実在と内容を、リポジトリ正本に対して確認する。確認できるまで本分析の結論は仮定付きとして扱う。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "保証の記録を被保証物と同じ枝・同じ版管理へ置くという既定（追跡可能性の最大化）が、観測者を被観測系の内側へ入れる配置を全域で生む。同型の再帰は verify 記録に限らず、事象台帳・CAST_ANALYSIS の記録・docs-audit のキャッシュにも潜在する。",
+      "門や判定条件を追加する際に、その入力の生成経路が判定対象へ与える影響を評価する変更管理の工程（変更へのハザード分析と承認）が構造に無い。",
+      "評価者と被評価者が同系 model であり、独立検証の独立性は入力の独立性を含まない。共通入力に対する反復した同一指摘が、独立した二回の確認として読まれうる。",
+      "指摘や検証結果が個別の合否として消費され、傾向情報（同一指摘の反復、未閉件の滞留理由）として保持されないため、構造の欠陥が単発の減点の背後に埋もれる。",
+      "決定文書に安全上の想定を明示する欄が無く、想定の失効を示す先行指標を定める工程も無いため、想定が破れたことが統治木の手掛かりに現れない。",
+      "OWNER の手掛かり（PR の diff、台帳、進捗報告）は、いずれも被評価側が生成する成果物であり、独立した情報源からの照合が構造に組み込まれていない。"
+    ],
+    "unknowns": [
+      "事象が名指しする機構が、与えられた統制構造のどの要素としても見当たらない。VERIFY の実行体（assurance/harness/verify_fix.py）、ADR-139 の fixed:true 門、独立検証の実施主体は、ASSURANCE_LANE（実体 assurance/harness/orchestrator.py）の手掛かりとして台帳が挙がる以外に要素化されていない。加えて本分析の作業ディレクトリ（/tmp/assurance-cast-mp852919）は空であり、evidence_refs の三つのファイルの実在をこの場で確認できていない。以下の統制欠陥はすべて「事象の記録が記述するとおりの機構が実在する」という仮定の下での分析であり、この仮定が崩れれば分析全体が無効になる。confidence を low としたのはこの理由による。",
+      "verify_fix.py が diff_range をどのように決めているか（作業ツリーの未 commit diff か、既に commit 済みの範囲か、比較基点は何か）が不明。記録の生成時点と commit 時点の関係が確定できない。",
+      "独立検証の「二回」が、異なる入力・異なる時点・異なる評価者による二回だったのか、同一プロンプトの再実行だったのかが不明。共通原因故障の寄与度が判定できない。",
+      "ADR-139 の門が fixed:true を要求する粒度（事象単位か、変更集合単位か、両方か）が不明。粒度によっては候補 (a) の merge 後別 commit でも門が閉じない可能性がある。",
+      "独立検証の single_change 減点が門の合否に直接効くのか、助言に留まり別の判定が合否を決めるのかが不明。",
+      "INC-027 の是正内容そのものの妥当性は本分析では判定していない。門が閉じない理由が記録の置き場に尽きるかどうかは確定できない。",
+      "修正候補 (a)(b)(c) のそれぞれが、OWNER の手掛かり（PR の diff で検証結果が見えること）と、SESSION_END_AUDIT / docs-audit の走査範囲に与える影響が未評価。",
+      "台帳以外に同型の自己言及（記録が自らの対象の内側に入る配置）がどこに存在するかを棚卸ししていない。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は「記録が存在するか」（ADR-139 の門）「文書が統治木と整合するか」（docs-audit / POST_TOOL_LINTER）「試験が緑か」（CI_RELEASE_CHECK）を見る構成であり、記録とその主張対象の同一性を検査する要素はどこにも割り当てられていない。門を追加した決定は既存の記録格納規約を所与として扱い、記録の格納経路が門の対象を変えるという相互作用は、どちらの決定の審査範囲にも入らなかった。不一致を実際に検出していた唯一の要素は独立検証だが、その出力は当該変更集合の減点として消費される設計であり、同一指摘の反復を構造の兆候として集計・還流する経路が無い。さらに評価者が ASSURANCE_LANE の既知の穴どおり同系 model であるため、二回の指摘は独立な二つの確認ではなく、同一の共通入力に対する同一反応でありうる。すなわち、検出は起きていたが、検出結果を構造の欠陥として受け取る側の統制が存在しなかった。事象が未修正であることは、この分析の必要性を減らさない。"
+  },
+  "control_structure_ids": [
+    "OWNER",
+    "CI_RELEASE_CHECK",
+    "SESSION_START_CONTRACT",
+    "HEARTBEAT",
+    "PRE_TOOL_GUARD",
+    "POST_TOOL_LINTER",
+    "SESSION_END_AUDIT",
+    "CAPTURE_NUDGE",
+    "PLUGIN_DISTRIBUTION",
+    "ASSURANCE_LANE",
+    "GOVERNANCE_TREE"
+  ],
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "duration_ms": 253952,
+  "errors": [],
+  "execution_kind": "real-sdk",
+  "flaws_with_citation_defect": [],
+  "generated_at": "2026-08-09T17:51:18Z",
+  "git_dirty": true,
+  "git_sha": "db89de2c1f5ae1c75558514a69b007cc9e074684",
+  "incident_evidence": {
+    "kind": "measurement",
+    "refs": [
+      "assurance/ledger/verify/INC-027-ledger-write-not-atomic.json",
+      "assurance/harness/verify_fix.py",
+      "doctrine_docs/packaging/decisions/ADR-139-verify-runner-and-fixed-gate.md"
+    ],
+    "resolved": [
+      "assurance/ledger/verify/INC-027-ledger-write-not-atomic.json",
+      "assurance/harness/verify_fix.py",
+      "doctrine_docs/packaging/decisions/ADR-139-verify-runner-and-fixed-gate.md"
+    ],
+    "unresolved": [],
+    "verifiable": true
+  },
+  "incident_id": "INC-028-verify-record-cannot-agree-with-its-own-diff",
+  "incident_sha256": "977c2d8b33997250aee9a35ddf4cc6b5dd217a2dc505793da4fbaab968214533",
+  "init": {
+    "claude_code_version": "2.1.221",
+    "model": "claude-opus-5",
+    "session_id": "4d523a47-a534-4f5a-a99c-8531d9879277",
+    "tools_count": 27
+  },
+  "kind": "cast-analysis",
+  "leading_indicators_defined": true,
+  "options": {
+    "allowed_tools": [],
+    "cwd": "/tmp/assurance-cast-mp852919",
+    "effort": "high",
+    "max_budget_usd": 4.0,
+    "max_turns": 8,
+    "model": "claude-opus-5",
+    "setting_sources": [],
+    "timeout_s": 900
+  },
+  "oracle": "structured_output がレーン側再検証にも適合",
+  "principles_offered": 337,
+  "prompt_sha256": "296e10970e67a95e3d48ff688301293b51a06feb6aae0d5b58df56b13d4a3e36",
+  "rejected_flaws": [],
+  "result_meta": {
+    "duration_api_ms": 254377,
+    "is_error": false,
+    "num_turns": 3,
+    "session_id": "4d523a47-a534-4f5a-a99c-8531d9879277",
+    "subtype": "success",
+    "total_cost_usd": 0.8727670000000001,
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 40171,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 40171,
+      "cache_read_input_tokens": 71462,
+      "inference_geo": "not_available",
+      "input_tokens": 4,
+      "iterations": "list",
+      "output_tokens": 15946,
+      "server_tool_use": {
+        "web_fetch_requests": 0,
+        "web_search_requests": 0
+      },
+      "service_tier": "standard",
+      "speed": "standard"
+    }
+  },
+  "schema_sha256": "0d1643d5e16353723405302c1f6ffcf753915e2a4f27a3530e8ef9a9ee45cb46",
+  "sdk_version": "0.2.129",
+  "settled": true,
+  "status": "PASS",
+  "structured_output": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "検証記録の格納先が assurance/ledger/verify/ 配下、すなわち検証対象と同じ枝・同じ commit 系列の内側に置かれている。記録は commit 前の diff に対して生成されるが、記録自身が次の commit で同じ枝へ入るため、記録の主張対象（diff_range 'e715616..6358f7c'）と、記録を同梱した変更集合とは定義上ずれる。観測する側が被観測系の内側に入る配置であり、統制の対象範囲（何を検証したか）が設計時の想定（対象＝この変更集合）と食い違う。",
+        "evidence_ref": "assurance/ledger/verify/INC-027-ledger-write-not-atomic.json",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "verify-decomposition-assumptions",
+          "control-both-behavior-and-interaction",
+          "単一コンポーネント集中の回避"
+        ],
+        "why_it_seemed_adequate": "保証記録をリポジトリ内の台帳へ一元的に積む規約は、OWNER の手掛かり（台帳 assurance/ledger/、PR の diff）を一箇所に集め、記録と事象を同じ版管理の追跡下に置くという既定の設計方針とそのまま整合していた。記録を対象の外へ出す設計は追跡可能性を下げる方向に見え、記録の同梱が検証対象そのものを変えるという再帰は、独立検証が同一の不一致を繰り返し挙げるまで観測されていなかった。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "verify 記録は「どの変更集合を検証したか」を diff_range という形で持つが、記録を読む側（門の判定、独立検証）は記録を含む変更集合に対する保証として読む。両者が指す集合が常に異なるため、手掛かりは形式上は存在しながら、その内容が読み手の解釈と一致しない。記録に diff の内容同一性を機械照合できる値（diff_sha256 等）が無いため、読み手が食い違いを判定する手段も無い。",
+        "evidence_ref": "assurance/harness/verify_fix.py",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "defects-in-information-providing-systems",
+          "include-information-supplier-defect",
+          "process-model-inconsistency-causes-unsafe-control"
+        ],
+        "why_it_seemed_adequate": "diff_range は人が読んで対象を特定できる十分な記述に見え、記録が同じ枝にある限り「直前の作業＝検証対象」という近接性の前提が成り立っているように見えていた。門が要求するのは PASS の記録の存在であり、記録の主張対象の同一性までは要求として書かれていなかった。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "OWNER が push / PR / merge の可否を決める際の手掛かりは PR の diff と台帳である。この二つが同一 commit に同梱されるため、diff を見た時点で「この変更は検証済み」と読める一方、同梱された記録はその diff を対象にしていない。OWNER の既知の穴（報告が実施ではなく意図を書いていても人からは見分けにくい）と同型の、実施と記録の見分けにくさが構造として再生産されている。",
+        "evidence_ref": "doctrine_docs/packaging/decisions/ADR-139-verify-runner-and-fixed-gate.md",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "情報システム保有と有用性の乖離",
+          "controller-needs-concrete-feedback-channels",
+          "分析出力の客観性を僭称しない"
+        ],
+        "why_it_seemed_adequate": "記録が diff の中に見えることは、報告と実施の乖離を減らす方向の設計に見えた。記録が同梱されているほど、意図だけの報告と区別しやすいという理解が成り立っていた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "ADR-139 が定めた門（fixed:true には PASS の verify 記録を要す）と、既存の台帳格納規約（保証記録は枝の中の assurance/ledger/ へ積む）は、それぞれ単体では整合する決定として別々に導入された。門の入力（記録）の生成・格納経路が門の対象（変更集合）を変えるという相互作用を評価する工程が、どちらの決定にも含まれていない。",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "変更へのハザード分析と承認",
+          "全体構造の分析",
+          "trace-why-design-flaw-was-introduced"
+        ],
+        "why_it_seemed_adequate": "門の追加は既存の記録規約を変更しない追加的な制約であり、既存構造への影響が無い変更として扱えるように見えた。両者は別々の関心（判定条件／記録の置き場）に属しており、相互作用を疑う手がかりが決定時点に無かった。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "ADR-139 が置いた安全上の想定（「検証記録はそれが検証した変更集合の外にある」「PASS の記録の存在は当該変更集合の検証を意味する」）が決定文書に明示されておらず、その想定が成立しなくなったことを示す先行指標も定義されていない。想定が破れていること自体が、統治木の手掛かり（docs-audit の findings、dep-graph の逆依存）のどちらにも現れない。",
+        "evidence_ref": "doctrine_docs/packaging/decisions/ADR-139-verify-runner-and-fixed-gate.md",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "安全想定の記録と失効先行指標の定義",
+          "想定の記録と変更時再検査",
+          "設計時想定の運用中再検査"
+        ],
+        "why_it_seemed_adequate": "ADR は決定と根拠を記す様式であり、記録の物理的な置き場は実装細部として決定本文の範囲外に見えた。想定を書き出す欄が様式に無い以上、書かれていないことが欠落として目に付く経路も無かった。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "CI は merge 前に赤で止める制御を持つが、その判定材料はジョブの成否と docs-audit の JSON であり、「台帳の記録が、その記録を含む変更集合の内側にあるか」「記録の主張対象と実際の変更集合が一致するか」を検査する決定論試験が無い。構造上必ず成立する不一致が、毎回すり抜ける。",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "監査の検出力評価",
+          "監査のすり抜け時に監査手順を是正",
+          "verify-all-hazard-preventing-systems"
+        ],
+        "why_it_seemed_adequate": "台帳は人と保証レーンが読むデータであり、CI の担当範囲は本体試験と文書監査であるという役割分担が成り立っていた。台帳の中身の整合はレーン側の関心とされ、CI 側に検査対象として持ち込む理由が無かった。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "「事象を台帳へ積み、分析が済むまで閉じない」制御は未閉件を蓄積するが、閉じられない理由が是正の内容にあるのか記録の置き場にあるのかを分類する手段が無い。門が修正の質と別の理由で閉じない状態が続いても、それは未閉件数の増加としてしか現れず、統制自身の劣化としては観測されない。",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "audit-findings-must-be-closed",
+          "指摘欠点の是正完了追跡",
+          "先行指標による監査強化"
+        ],
+        "why_it_seemed_adequate": "未閉件が残ること自体は、閉じる基準が厳しいことの正常な帰結として読める。門が緩むより閉じない方が安全側であるという判断は、保証レーンの設計意図と一致していた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "独立検証は同一の不一致を二回とも single_change の減点材料として挙げているが、その出力は当該変更集合の合否として消費され、同一指摘の反復を集計して構造欠陥の兆候として上流（ADR・記録規約）へ戻す経路が無い。構造の欠陥を示す情報は最初の検証時点で既に出ていたが、それが構造の問題として扱われるまでに二回分の遅れが生じている。加えて、評価者が同系 model であるという既知の穴により、二回の指摘は独立した確認ではなく共通入力に対する同一反応である可能性を排除できない。",
+        "flaw_type": "手掛かりが遅い",
+        "normative_refs": [
+          "ニアミスの構造欠陥特定への利用",
+          "要約統計偏重による傾向情報の喪失",
+          "運用フィードバックで設計改善",
+          "共通の体系的要因による多重防護の無効化"
+        ],
+        "why_it_seemed_adequate": "個々の検証の減点は当該変更集合への評価であり、その場で処理して次へ進むのが検証の設計上の役目に見えた。反復を数える仕組みは、単発の指摘が積み上がるまで必要性が現れない。"
+      }
+    ],
+    "hazard": "保証レーンが、自らの判定根拠となる記録を、その判定の対象である変更集合と同一の commit 対象の内側に置いた状態で門を運転している。記録の主張対象（diff_range）と、記録を含む変更集合とが構造上一致し得ないため、「この変更集合は検証された」という制約が、変更の質とは独立な理由で強制できない。",
+    "incident_id": "INC-028-verify-record-cannot-agree-with-its-own-diff",
+    "leading_indicators": [
+      {
+        "indicator": "検証記録の主張対象と、その記録を含む変更集合の不一致",
+        "observable": "assurance/ledger/verify/*.json の diff_range 終端 sha（または diff_sha256）と、その JSON を追加した commit の第一親の tree を照合した結果",
+        "threshold": "照合が一致しない記録が 1 件でもあれば異常。現行の格納規約下では常に不一致になるため、この指標は 100% から下がることをもって是正の進捗を測る",
+        "version_independent": true,
+        "where": "リポジトリ正本。CI_RELEASE_CHECK の決定論試験として、または ASSURANCE_LANE のレーン内試験として実行",
+        "why_version_independent": "照合はリポジトリ正本の git 履歴と台帳ファイルだけで計算でき、利用者環境へ導入された複製の版に依存しない"
+      },
+      {
+        "indicator": "検証対象コードと検証記録が同居する commit の割合",
+        "observable": "git log --name-only で、assurance/ledger/verify/ 配下のパスと、それ以外のパスが同一 commit に含まれる件数 / 全 commit 数",
+        "threshold": "直近 20 commit のうち同居 commit が 1 件でもあれば異常",
+        "version_independent": true,
+        "where": "リポジトリ正本の git 履歴。CI_RELEASE_CHECK のジョブとして",
+        "why_version_independent": "git 履歴のみを入力とし、plugin の導入複製を経由しない"
+      },
+      {
+        "indicator": "記録配置に関する同一指摘の反復",
+        "observable": "独立検証の出力テキスト中、記録の同梱・記録と diff の不一致に類する減点理由の出現回数",
+        "threshold": "直近 5 回の検証のうち 2 回以上で同種の指摘が現れたら、当該変更集合の合否とは別に構造の再検討を起動する",
+        "version_independent": true,
+        "where": "検証結果の保存先（台帳の verify 記録、または runs/）を ASSURANCE_LANE が集計",
+        "why_version_independent": "レーン内で生成・保存される出力の集計であり、導入複製の版を参照しない"
+      },
+      {
+        "indicator": "PASS の verify 記録を得ながら fixed:true が書かれていない未閉件",
+        "observable": "assurance/ledger/ 内で、red_was_red PASS の記録が存在し、かつ fixed:false のまま滞留している事象の件数と滞留セッション数",
+        "threshold": "1 件でも 2 セッションを超えて滞留したら異常として扱う",
+        "version_independent": true,
+        "where": "assurance/ledger/。ASSURANCE_LANE の次行動決定時に算出し、OWNER への進捗報告に含める",
+        "why_version_independent": "台帳ファイルのみを入力とする"
+      },
+      {
+        "indicator": "記録配置規約の変更が導入複製へ届いているか",
+        "observable": "HEARTBEAT が読む導入複製の版と、リポジトリ正本で verify_fix.py / 記録規約が更新された版との差",
+        "threshold": "導入複製が正本より 1 世代でも遅れている場合、上記指標 1〜4 の観測は正本側でのみ有効と明示的に扱う",
+        "version_independent": false,
+        "where": "利用者環境の導入複製（HEARTBEAT の警告、claude plugin update の応答）",
+        "why_version_independent": "検出器自身が導入複製の側で動くため、複製の版が遅れると本指標も遅れる（INC-005 の古びの検出器が古びる共通原因故障）。リポジトリ側からは複製が何世代遅れているかを観測できない"
+      }
+    ],
+    "loss": "保証の判定根拠（verify 記録）と、その判定が対象としたはずの変更集合との対応が確定できないまま、ADR-139 の門（新規の fixed:true は PASS の verify 記録を要す）の入力に使われている。結果として、是正が実施されていても台帳上は未閉のまま残り、台帳・PR の diff を手掛かりに状態を読む OWNER と ASSURANCE_LANE の双方が、実際の是正状態と一致しない像を持つ。INC-027 は二回の検証で red_was_red PASS を得ながら fixed:true が書かれていない状態にある。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "事象台帳・分析記録が対象を diff ではなく事象 id で参照しており、commit 系列との依存が無いことが確認できれば、この仮説は当たらない。",
+        "hypothesis": "事象台帳および CAST_ANALYSIS の記録も同じ枝へ commit されるなら、それらも自らの対象の内側に入り、verify 記録と同型の不一致を持つ。",
+        "oracle": "各記録 JSON が参照する対象（事象 id / diff / 分析対象）と、その記録を追加した commit の第一親を照合し、一致するか判定する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "docs-audit の走査対象に runs/ を追加でき、かつ diff_sha256 の照合だけで記録の同一性が担保できることが示されれば、影響は限定される。",
+        "hypothesis": "候補 (b)（記録を runs/ へ置き台帳には diff_sha256 だけ残す）を採ると、記録が SESSION_END_AUDIT / docs-audit の走査範囲と GOVERNANCE_TREE の外へ出て、記録の欠落・改変が検出されなくなる。",
+        "oracle": "docs-audit の走査対象パスと、runs/ の版管理状態を確認する。走査対象に runs/ が含まれず、かつ runs/ が版管理外なら成立。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "PR 本文や CI のジョブ成否など、diff 以外の経路で検証結果が OWNER に届いていることが確認できれば成立しない。",
+        "hypothesis": "候補 (a)（merge 後の別 commit で記録を積む）を採ると、OWNER の手掛かりである PR の diff から検証結果が消え、merge 可否の判断時点で検証状態が見えなくなる。",
+        "oracle": "OWNER が merge 可否を決める時点で参照できる手掛かりを列挙し、その中に検証結果が含まれるかを確認する。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "除外を model の判断ではなくパス指定による機械的な前処理として実装でき、その適用率が 100% であれば成立しない。",
+        "hypothesis": "候補 (c)（検証プロンプトで記録を対象外と宣言）は、除外範囲の判断を同系 model に委ねるため、共通原因故障により除外が効かない回が確率的に生じる。",
+        "oracle": "同一の変更集合に対して検証を複数回実行し、記録を対象外として扱った回の割合を数える。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "記録の格納位置を変えるだけで fixed:true が書ける事例が一つでも再現できれば、この追加要因は不要。",
+        "hypothesis": "門が閉じない未閉件の滞留は、記録の置き場だけでなく、fixed:true を書く主体と検証を実行する主体の順序関係（記録が commit された後でなければ fixed:true を書けない）にも由来する。",
+        "oracle": "fixed:true の書き込み時点と verify 記録の commit 時点の前後関係を、既存の未閉件について確認する。",
+        "severity": "P2"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "verify 記録の格納位置を決める前に、候補 (a) merge 後の別 commit、(b) 記録は台帳の外（runs/）へ置き台帳には diff_sha256 だけ残す、(c) 検証プロンプトで記録を対象外と宣言、の三案それぞれについて、OWNER の手掛かりの欠落・SESSION_END_AUDIT の走査範囲からの脱落・同系 model への判断委譲という副作用を並べ、どれを許容するかを決める。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "verify 記録に、検証対象の変更集合を機械照合できる値（diff_sha256 と基点 sha）を必須項目として持たせ、門の判定を「PASS の記録が存在する」から「PASS の記録が、判定対象の変更集合と照合一致する」へ変更する。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "記録の主張対象と、その記録を含む commit の親との照合を決定論試験として CI_RELEASE_CHECK に追加し、不一致を merge 前に赤で止める。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "assurance/ledger/verify/ 配下と他パスが同一 commit に同居する割合、および PASS を得ながら fixed:false のまま滞留する事象の件数と滞留期間を、ASSURANCE_LANE が毎回算出して OWNER の進捗報告に含める。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "独立検証の指摘テキストを分類・集計し、同種指摘が直近 5 回中 2 回以上現れた場合に、当該変更集合の合否とは別経路で構造の再検討を起動する。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "ADR-139 に、置いた安全上の想定（検証記録は検証対象の外にある／PASS の記録の存在は当該変更集合の検証を意味する）と、その想定の失効を示す先行指標を明記する。以後、門や判定条件を追加する決定には、入力の生成経路が対象に与える影響の評価欄を設ける。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "台帳以外で、記録が自らの対象の内側に入る配置（事象台帳、CAST_ANALYSIS の記録、docs-audit のキャッシュ、SessionEnd の要約）を棚卸しし、同型の再帰が門の判定に使われている箇所を列挙する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "evidence_refs の三つ（verify 記録、verify_fix.py、ADR-139）の実在と内容を、リポジトリ正本に対して確認する。確認できるまで本分析の結論は仮定付きとして扱う。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "保証の記録を被保証物と同じ枝・同じ版管理へ置くという既定（追跡可能性の最大化）が、観測者を被観測系の内側へ入れる配置を全域で生む。同型の再帰は verify 記録に限らず、事象台帳・CAST_ANALYSIS の記録・docs-audit のキャッシュにも潜在する。",
+      "門や判定条件を追加する際に、その入力の生成経路が判定対象へ与える影響を評価する変更管理の工程（変更へのハザード分析と承認）が構造に無い。",
+      "評価者と被評価者が同系 model であり、独立検証の独立性は入力の独立性を含まない。共通入力に対する反復した同一指摘が、独立した二回の確認として読まれうる。",
+      "指摘や検証結果が個別の合否として消費され、傾向情報（同一指摘の反復、未閉件の滞留理由）として保持されないため、構造の欠陥が単発の減点の背後に埋もれる。",
+      "決定文書に安全上の想定を明示する欄が無く、想定の失効を示す先行指標を定める工程も無いため、想定が破れたことが統治木の手掛かりに現れない。",
+      "OWNER の手掛かり（PR の diff、台帳、進捗報告）は、いずれも被評価側が生成する成果物であり、独立した情報源からの照合が構造に組み込まれていない。"
+    ],
+    "unknowns": [
+      "事象が名指しする機構が、与えられた統制構造のどの要素としても見当たらない。VERIFY の実行体（assurance/harness/verify_fix.py）、ADR-139 の fixed:true 門、独立検証の実施主体は、ASSURANCE_LANE（実体 assurance/harness/orchestrator.py）の手掛かりとして台帳が挙がる以外に要素化されていない。加えて本分析の作業ディレクトリ（/tmp/assurance-cast-mp852919）は空であり、evidence_refs の三つのファイルの実在をこの場で確認できていない。以下の統制欠陥はすべて「事象の記録が記述するとおりの機構が実在する」という仮定の下での分析であり、この仮定が崩れれば分析全体が無効になる。confidence を low としたのはこの理由による。",
+      "verify_fix.py が diff_range をどのように決めているか（作業ツリーの未 commit diff か、既に commit 済みの範囲か、比較基点は何か）が不明。記録の生成時点と commit 時点の関係が確定できない。",
+      "独立検証の「二回」が、異なる入力・異なる時点・異なる評価者による二回だったのか、同一プロンプトの再実行だったのかが不明。共通原因故障の寄与度が判定できない。",
+      "ADR-139 の門が fixed:true を要求する粒度（事象単位か、変更集合単位か、両方か）が不明。粒度によっては候補 (a) の merge 後別 commit でも門が閉じない可能性がある。",
+      "独立検証の single_change 減点が門の合否に直接効くのか、助言に留まり別の判定が合否を決めるのかが不明。",
+      "INC-027 の是正内容そのものの妥当性は本分析では判定していない。門が閉じない理由が記録の置き場に尽きるかどうかは確定できない。",
+      "修正候補 (a)(b)(c) のそれぞれが、OWNER の手掛かり（PR の diff で検証結果が見えること）と、SESSION_END_AUDIT / docs-audit の走査範囲に与える影響が未評価。",
+      "台帳以外に同型の自己言及（記録が自らの対象の内側に入る配置）がどこに存在するかを棚卸ししていない。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は「記録が存在するか」（ADR-139 の門）「文書が統治木と整合するか」（docs-audit / POST_TOOL_LINTER）「試験が緑か」（CI_RELEASE_CHECK）を見る構成であり、記録とその主張対象の同一性を検査する要素はどこにも割り当てられていない。門を追加した決定は既存の記録格納規約を所与として扱い、記録の格納経路が門の対象を変えるという相互作用は、どちらの決定の審査範囲にも入らなかった。不一致を実際に検出していた唯一の要素は独立検証だが、その出力は当該変更集合の減点として消費される設計であり、同一指摘の反復を構造の兆候として集計・還流する経路が無い。さらに評価者が ASSURANCE_LANE の既知の穴どおり同系 model であるため、二回の指摘は独立な二つの確認ではなく、同一の共通入力に対する同一反応でありうる。すなわち、検出は起きていたが、検出結果を構造の欠陥として受け取る側の統制が存在しなかった。事象が未修正であることは、この分析の必要性を減らさない。"
+  }
+}

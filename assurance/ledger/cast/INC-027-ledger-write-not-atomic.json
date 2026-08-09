@@ -1,0 +1,776 @@
+{
+  "accepted_flaws": [
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "レーンの台帳書き込み 14 箇所が、既存ファイルを直接開いて書き下す非原子的な手順であった。書き込みが途中で終わると既存台帳が断片に置き換わり、以後 json.load が通らない。『台帳は常に構文的に読める正本である』という安全制約が、書き込み側の物理設計で強制されていなかった（カオス試験では 60B の台帳が 4653B の断片に置き換わることが実測されている）。",
+      "evidence_ref": "assurance/ledger/red/INC-027-ledger-write-not-atomic.json",
+      "flaw_type": "制御動作が誤っている",
+      "normative_refs": [
+        "accidents-from-inadequate-constraint-enforcement",
+        "危険状態の排除を最優先",
+        "software-does-not-fail-requirements-defect"
+      ],
+      "why_it_seemed_adequate": "直接書き込みは決定論試験の正常終了経路では常に完走し、レーンが単一走らせ手・短時間の書き込みで動く前提の下では中断の観測機会が一度も生じなかった。台帳が小さいうちは書き込み窓が短く、中断が現実的でないという想定が成り立っているように見えた。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "正本の読み手（latest_formalize 等）が ValueError を握り潰すため、破損した台帳と存在しない台帳が同一の値（空）として上位へ返る。誤った手掛かりが正常値に偽装されて制御に入るため、formalize・scenarios・verify・recommendation-status のいずれが壊れても next_actions が黙って縮む。この握り潰しは今回の是正でも変えられていない。",
+      "evidence_ref": "事象記録 residual (1)",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "process-model-inconsistency-causes-unsafe-control",
+        "defects-in-information-providing-systems",
+        "プロセスモデルと実状態の不整合"
+      ],
+      "why_it_seemed_adequate": "台帳がまだ存在しない初回セッションを安全に扱うため、読み取り例外を『まだ無い』へ吸収する設計は素直であり、破損という第三の状態が起こり得ないという想定の下では欠落と等価だった。例外を握り潰す実装は、走らせ手を落とさないという可用性の目的にも適っていた。"
+    },
+    {
+      "control_element_id": "PLUGIN_DISTRIBUTION",
+      "description": "配布側 plugin/scripts/ は tmp + os.replace で既に原子化されており、同じ組織内に解決済みの安全設計が存在していたにもかかわらず、その設計上の想定と根拠が保証レーン側へ伝わる経路が無く、レーンだけが非原子のまま取り残された。安全設計の横展開が個別の気付きに依存していた。",
+      "evidence_ref": "事象記録 impact（配布側は原子化済みという非対称の記述）",
+      "flaw_type": "統制どうしの調整の欠如",
+      "normative_refs": [
+        "分析結果の共有と横展開",
+        "供給要素の変更を利用者へ通知",
+        "symptom-vs-systemic-cause"
+      ],
+      "why_it_seemed_adequate": "配布側は利用者環境という他者の資産に触れるため原子性が要求される一方、レーンは自リポジトリ内部の作業用データを扱う内輪の機構と位置づけられており、同じ強度の保護が要るという判断が生じる契機がなかった。境界の性質が違うのだから扱いが違うのは自然に見えた。"
+    },
+    {
+      "control_element_id": "CI_RELEASE_CHECK",
+      "description": "merge 前に赤で止める門は存在するが、プロセスが途中で消える環境下の不変条件（中断耐性）を試す軸を持たない。そのため 14 箇所の非原子的書き込みは全ジョブ緑のまま通過し続けた。門が見ていたのは『正常終了したときに正しい結果が出るか』であり、『途中で終わったときに既存資産を壊さないか』ではない。",
+      "evidence_ref": "detected_by（Phase G のカオス試験という新規軸で初めて観測）",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "安全立証でなく非安全状態の探索",
+        "最悪環境を前提に設計運用",
+        "監査の検出力評価"
+      ],
+      "why_it_seemed_adequate": "決定論試験はすべて正常終了経路を走らせ、その経路では書き込みは常に完走するため、緑は嘘をついていない真の緑だった。中断は環境の異常であって被試験系の責任外という見方が成り立ち、試験軸として要求されていなかった。"
+    },
+    {
+      "control_element_id": "SESSION_END_AUDIT",
+      "description": "全件監査は統治木（doctrine_docs 配下の文書）を走査対象とし、レーンのデータ正本である assurance/ledger/ の JSON が読めるかどうかは走査していない。台帳の破損はどの sensor の視野にも入らず、破損が『空』として正常系に吸収される限り、監査要約にも鼓動にも何の異常も現れない。",
+      "evidence_ref": "統制構造 SESSION_END_AUDIT の制御記述",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "分析境界の定義",
+        "do-not-start-too-narrow",
+        "scope-beyond-operating-process"
+      ],
+      "why_it_seemed_adequate": "監査は統治文書の整合を守る機構として設計され、台帳はレーンが自分で読み書きする作業データと位置づけられていた。責任分界としては筋が通っており、台帳の健全性はレーン自身が担うという分担に見えた。"
+    },
+    {
+      "control_element_id": "OWNER",
+      "description": "所有者の手掛かりは進捗報告・PR の diff・台帳の三つだが、そのうち事象の実在を示すのは台帳のみである。台帳が壊れて空に見えるとき、所有者は『事象が無い』と『事象が読めない』を区別する独立した手段を持たない。制御の入力と監督のフィードバックが同一資源に載っているため、一つの破損が制御と監督を同時に盲にする。",
+      "evidence_ref": "統制構造 OWNER の手掛かり一覧",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "共通の体系的要因による多重防護の無効化",
+        "controller-needs-concrete-feedback-channels",
+        "全コントロールループにフィードバック必須"
+      ],
+      "why_it_seemed_adequate": "台帳を単一の正本に集約することは、報告が意図を書いていても実施と見分けにくいという既知の穴への対策として合理的であり、正本を一本化するほど所有者の判断は確かになるはずだった。正本自体が壊れ得るという故障様相が想定に入っていなかった。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "是正後、破損と欠落の区別は orchestrator.validate 一本に依存する。validate を経由しない読み口が残っている限り、破損は無症状のまま通過し得る。さらに『台帳書き込みは原子的だから安全』という新しい想定が、その想定の失効（新たな非原子経路の追加、validate を通さない読み口の追加）を自ら検出する仕組みを伴っていない。",
+      "evidence_ref": "事象記録 residual (1)",
+      "flaw_type": "統制自身の劣化を検出できない",
+      "normative_refs": [
+        "全体健全性と部分健全性の分離評価",
+        "想定の記録と変更時再検査",
+        "リスク先行指標の検出"
+      ],
+      "why_it_seemed_adequate": "検査を一箇所に集約するのは重複と食い違いを避ける定石であり、集約点が必ず通る前提が成り立つなら十分に見えた。是正直後は 14 箇所すべてを移送したという事実が、この前提を当面は保証しているように見える。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "是正の緑を出す oracle が、是正と同じ変更で生まれた新規ファイル（ledger_io.py とその軸試験）の上にある。赤で害を測った観測（json.dump 途中の SIGKILL）は write_json にとっては生まれたときから緑であり、赤→緑に転じたのは静的な軸試験だけである。製品の呼び口（triage_candidates.write_doc）を途中で殺す観測は後から足された。したがって『直った』という手掛かりは、製品経路の遷移ではなく新設経路の自己申告に近い。加えて verify 記録が自分の検証対象の diff に同梱されるため、記録と diff は原理的に一致しない。",
+      "evidence_ref": "事象記録 fix_note・residual (3)",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "安全活動の独立確認",
+        "監査のすり抜け時に監査手順を是正",
+        "同一対象の旧新手法比較による有効性実証"
+      ],
+      "why_it_seemed_adequate": "新しい安全機構を専用モジュールとして切り出し、その振る舞いを直接試験するのは正しい作法であり、赤の証拠と緑の証拠が同じ抽象で書かれていれば対応関係は自明に見えた。二回の独立検証で red_was_red が PASS していることも、証拠系が機能している印象を与える。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "原子化は単一書き手の中断だけを扱い、同時に走る二つの走らせ手の read-modify-write（INC-008 の故障様相）による更新喪失は対象外である。しかも原子化後の喪失は部分書きより静かで、台帳は常に構文的に正しいまま片方の更新だけが消える。是正の名前（『台帳書き込みの原子化』）が実際の保護範囲より広く読めるため、統制の対象範囲についての想定が構造全体で食い違う余地が残る。",
+      "evidence_ref": "事象記録 residual (2)",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "verify-decomposition-assumptions",
+        "破られた想定の再検討",
+        "単一コンポーネント集中の回避"
+      ],
+      "why_it_seemed_adequate": "今回の事象は中断による切り詰めとして観測されており、その害に正確に対応する是正を当てることは範囲を絞る良い規律である。同時実行は別事象（INC-008）として既に台帳に載っているため、ここで扱わない判断は重複回避としても妥当に見えた。"
+    }
+  ],
+  "analysis": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "レーンの台帳書き込み 14 箇所が、既存ファイルを直接開いて書き下す非原子的な手順であった。書き込みが途中で終わると既存台帳が断片に置き換わり、以後 json.load が通らない。『台帳は常に構文的に読める正本である』という安全制約が、書き込み側の物理設計で強制されていなかった（カオス試験では 60B の台帳が 4653B の断片に置き換わることが実測されている）。",
+        "evidence_ref": "assurance/ledger/red/INC-027-ledger-write-not-atomic.json",
+        "flaw_type": "制御動作が誤っている",
+        "normative_refs": [
+          "accidents-from-inadequate-constraint-enforcement",
+          "危険状態の排除を最優先",
+          "software-does-not-fail-requirements-defect"
+        ],
+        "why_it_seemed_adequate": "直接書き込みは決定論試験の正常終了経路では常に完走し、レーンが単一走らせ手・短時間の書き込みで動く前提の下では中断の観測機会が一度も生じなかった。台帳が小さいうちは書き込み窓が短く、中断が現実的でないという想定が成り立っているように見えた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "正本の読み手（latest_formalize 等）が ValueError を握り潰すため、破損した台帳と存在しない台帳が同一の値（空）として上位へ返る。誤った手掛かりが正常値に偽装されて制御に入るため、formalize・scenarios・verify・recommendation-status のいずれが壊れても next_actions が黙って縮む。この握り潰しは今回の是正でも変えられていない。",
+        "evidence_ref": "事象記録 residual (1)",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "process-model-inconsistency-causes-unsafe-control",
+          "defects-in-information-providing-systems",
+          "プロセスモデルと実状態の不整合"
+        ],
+        "why_it_seemed_adequate": "台帳がまだ存在しない初回セッションを安全に扱うため、読み取り例外を『まだ無い』へ吸収する設計は素直であり、破損という第三の状態が起こり得ないという想定の下では欠落と等価だった。例外を握り潰す実装は、走らせ手を落とさないという可用性の目的にも適っていた。"
+      },
+      {
+        "control_element_id": "PLUGIN_DISTRIBUTION",
+        "description": "配布側 plugin/scripts/ は tmp + os.replace で既に原子化されており、同じ組織内に解決済みの安全設計が存在していたにもかかわらず、その設計上の想定と根拠が保証レーン側へ伝わる経路が無く、レーンだけが非原子のまま取り残された。安全設計の横展開が個別の気付きに依存していた。",
+        "evidence_ref": "事象記録 impact（配布側は原子化済みという非対称の記述）",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "分析結果の共有と横展開",
+          "供給要素の変更を利用者へ通知",
+          "symptom-vs-systemic-cause"
+        ],
+        "why_it_seemed_adequate": "配布側は利用者環境という他者の資産に触れるため原子性が要求される一方、レーンは自リポジトリ内部の作業用データを扱う内輪の機構と位置づけられており、同じ強度の保護が要るという判断が生じる契機がなかった。境界の性質が違うのだから扱いが違うのは自然に見えた。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "merge 前に赤で止める門は存在するが、プロセスが途中で消える環境下の不変条件（中断耐性）を試す軸を持たない。そのため 14 箇所の非原子的書き込みは全ジョブ緑のまま通過し続けた。門が見ていたのは『正常終了したときに正しい結果が出るか』であり、『途中で終わったときに既存資産を壊さないか』ではない。",
+        "evidence_ref": "detected_by（Phase G のカオス試験という新規軸で初めて観測）",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "安全立証でなく非安全状態の探索",
+          "最悪環境を前提に設計運用",
+          "監査の検出力評価"
+        ],
+        "why_it_seemed_adequate": "決定論試験はすべて正常終了経路を走らせ、その経路では書き込みは常に完走するため、緑は嘘をついていない真の緑だった。中断は環境の異常であって被試験系の責任外という見方が成り立ち、試験軸として要求されていなかった。"
+      },
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "全件監査は統治木（doctrine_docs 配下の文書）を走査対象とし、レーンのデータ正本である assurance/ledger/ の JSON が読めるかどうかは走査していない。台帳の破損はどの sensor の視野にも入らず、破損が『空』として正常系に吸収される限り、監査要約にも鼓動にも何の異常も現れない。",
+        "evidence_ref": "統制構造 SESSION_END_AUDIT の制御記述",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "分析境界の定義",
+          "do-not-start-too-narrow",
+          "scope-beyond-operating-process"
+        ],
+        "why_it_seemed_adequate": "監査は統治文書の整合を守る機構として設計され、台帳はレーンが自分で読み書きする作業データと位置づけられていた。責任分界としては筋が通っており、台帳の健全性はレーン自身が担うという分担に見えた。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者の手掛かりは進捗報告・PR の diff・台帳の三つだが、そのうち事象の実在を示すのは台帳のみである。台帳が壊れて空に見えるとき、所有者は『事象が無い』と『事象が読めない』を区別する独立した手段を持たない。制御の入力と監督のフィードバックが同一資源に載っているため、一つの破損が制御と監督を同時に盲にする。",
+        "evidence_ref": "統制構造 OWNER の手掛かり一覧",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "共通の体系的要因による多重防護の無効化",
+          "controller-needs-concrete-feedback-channels",
+          "全コントロールループにフィードバック必須"
+        ],
+        "why_it_seemed_adequate": "台帳を単一の正本に集約することは、報告が意図を書いていても実施と見分けにくいという既知の穴への対策として合理的であり、正本を一本化するほど所有者の判断は確かになるはずだった。正本自体が壊れ得るという故障様相が想定に入っていなかった。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "是正後、破損と欠落の区別は orchestrator.validate 一本に依存する。validate を経由しない読み口が残っている限り、破損は無症状のまま通過し得る。さらに『台帳書き込みは原子的だから安全』という新しい想定が、その想定の失効（新たな非原子経路の追加、validate を通さない読み口の追加）を自ら検出する仕組みを伴っていない。",
+        "evidence_ref": "事象記録 residual (1)",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "全体健全性と部分健全性の分離評価",
+          "想定の記録と変更時再検査",
+          "リスク先行指標の検出"
+        ],
+        "why_it_seemed_adequate": "検査を一箇所に集約するのは重複と食い違いを避ける定石であり、集約点が必ず通る前提が成り立つなら十分に見えた。是正直後は 14 箇所すべてを移送したという事実が、この前提を当面は保証しているように見える。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "是正の緑を出す oracle が、是正と同じ変更で生まれた新規ファイル（ledger_io.py とその軸試験）の上にある。赤で害を測った観測（json.dump 途中の SIGKILL）は write_json にとっては生まれたときから緑であり、赤→緑に転じたのは静的な軸試験だけである。製品の呼び口（triage_candidates.write_doc）を途中で殺す観測は後から足された。したがって『直った』という手掛かりは、製品経路の遷移ではなく新設経路の自己申告に近い。加えて verify 記録が自分の検証対象の diff に同梱されるため、記録と diff は原理的に一致しない。",
+        "evidence_ref": "事象記録 fix_note・residual (3)",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "安全活動の独立確認",
+          "監査のすり抜け時に監査手順を是正",
+          "同一対象の旧新手法比較による有効性実証"
+        ],
+        "why_it_seemed_adequate": "新しい安全機構を専用モジュールとして切り出し、その振る舞いを直接試験するのは正しい作法であり、赤の証拠と緑の証拠が同じ抽象で書かれていれば対応関係は自明に見えた。二回の独立検証で red_was_red が PASS していることも、証拠系が機能している印象を与える。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "原子化は単一書き手の中断だけを扱い、同時に走る二つの走らせ手の read-modify-write（INC-008 の故障様相）による更新喪失は対象外である。しかも原子化後の喪失は部分書きより静かで、台帳は常に構文的に正しいまま片方の更新だけが消える。是正の名前（『台帳書き込みの原子化』）が実際の保護範囲より広く読めるため、統制の対象範囲についての想定が構造全体で食い違う余地が残る。",
+        "evidence_ref": "事象記録 residual (2)",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "verify-decomposition-assumptions",
+          "破られた想定の再検討",
+          "単一コンポーネント集中の回避"
+        ],
+        "why_it_seemed_adequate": "今回の事象は中断による切り詰めとして観測されており、その害に正確に対応する是正を当てることは範囲を絞る良い規律である。同時実行は別事象（INC-008）として既に台帳に載っているため、ここで扱わない判断は重複回避としても妥当に見えた。"
+      }
+    ],
+    "hazard": "統制構造の唯一のフィードバック正本である台帳（assurance/ledger/）が、書き込み中断によって構文的に読めない状態になり得、かつその状態が読み手側で「不在（空）」と同じ値へ写像される状態。すなわち「壊れている」と「何も無い」を統制構造のどこでも区別できないまま制御動作が決まる状態。",
+    "incident_id": "INC-027-ledger-write-not-atomic",
+    "leading_indicators": [
+      {
+        "indicator": "台帳全件のパース可否",
+        "observable": "assurance/ledger/ 配下の全 JSON を起動時に json.load し、失敗件数と LedgerCorrupt の送出回数を数える",
+        "threshold": "失敗 1 件、または LedgerCorrupt 1 回で異常（ゼロ許容）",
+        "version_independent": true,
+        "where": "orchestrator の起動時検査、および CI_RELEASE_CHECK のジョブ（リポジトリ正本側）",
+        "why_version_independent": "リポジトリ正本のファイルを正本側の実行系で走査するため、利用者環境の導入複製の版に依存しない"
+      },
+      {
+        "indicator": "ledger_io を経由しない台帳書き込み経路の数",
+        "observable": "assurance/ 配下で台帳パスに対する open(...,'w') / json.dump の静的出現のうち、ledger_io.write_json を通らないものの件数",
+        "threshold": "1 件でも検出されたら赤（現状 0 を維持）",
+        "version_independent": true,
+        "where": "CI_RELEASE_CHECK の静的軸",
+        "why_version_independent": "リポジトリ正本のソースに対する静的走査であり、配布複製の版と無関係"
+      },
+      {
+        "indicator": "破損を欠落へ写像する読み口の数",
+        "observable": "台帳読み取り関数における except ValueError / except Exception のうち、LedgerCorrupt を再送出せず既定値（空）を返す箇所の件数",
+        "threshold": "現在値からの増加、または orchestrator.validate を経ない読み口に 1 件でも存在したら異常",
+        "version_independent": true,
+        "where": "CI_RELEASE_CHECK の静的軸、assurance/harness 配下",
+        "why_version_independent": "正本ソースの静的性質であり、導入複製に依存しない"
+      },
+      {
+        "indicator": "committed 台帳のバイト数・件数の単調性",
+        "observable": "書き込み前後で台帳のサイズと要素数を記録し、減少イベントを数える",
+        "threshold": "対応する削除・クローズ操作が無いのにサイズまたは件数が減少したら 1 回で異常",
+        "version_independent": true,
+        "where": "ledger_io.write_json の書き込み直後の検査と、その記録を残すログ",
+        "why_version_independent": "レーン内部の観測であり、配布経路を通らない"
+      },
+      {
+        "indicator": "next_actions の説明のつかない縮小",
+        "observable": "セッション間の next_actions 件数と、その差分に対応する closed 事象の有無の突き合わせ結果",
+        "threshold": "件数が減ったのに対応する分析完了・クローズ記録が無い回が 1 回でも出たら異常",
+        "version_independent": true,
+        "where": "orchestrator の実行記録（assurance/ledger/ 側に残す）",
+        "why_version_independent": "レーンの出力どうしの整合検査であり、導入複製の版に依存しない"
+      },
+      {
+        "indicator": "製品呼び口に対する中断試験の未実施期間",
+        "observable": "triage_candidates.write_doc 等の製品経路を書き込み途中で SIGKILL する軸が、直近のマージ以降に実行された回数",
+        "threshold": "直近マージ以降の実行回数が 0 なら異常",
+        "version_independent": false,
+        "where": "実装場所による。CI_RELEASE_CHECK のジョブ履歴で見るか、HEARTBEAT が読む .claude/.cache/last-audit.json の古びとして見るか",
+        "why_version_independent": "この指標を鼓動（HEARTBEAT）や導入複製側の監査キャッシュに載せると、検出器自身が導入複製の上で動くため、版が遅れれば警告も遅れる（INC-005 の共通原因故障をそのまま継承する）。CI 側だけに置けば版非依存にできるが、現状の古び検知経路に乗せる限り版依存として扱う"
+      }
+    ],
+    "loss": "保証キャンペーンが導く「次の行動」が、未処理の事象を残したまま静かに縮む／消える。結果として所有者と走らせ手は「処理すべき事象は無い」という誤ったプロセスモデルで運転を続け、未分析・未是正の事象が閉じられないまま視界から外れる（INC-006 と同型の沈黙の損失）。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "すべての読み口が LedgerCorrupt を明示的に捕捉して名指しで報告し、副作用を残さずに停止する",
+        "hypothesis": "LedgerCorrupt が ValueError を継がないため、従来 except ValueError で吸収されていた読み口が、破損時に未捕捉例外で走らせ手ごと落ちる。故障様相が『黙って縮む』から『途中で落ちる』へ移り、部分的に処理済みの状態が残る。",
+        "oracle": "意図的に破損させた台帳を置き、正本のすべての読み口を一つずつ走らせ、未捕捉例外の有無と、落ちた時点までに書かれた副作用の有無を数える",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "書き込み失敗が例外として上位に伝播し、走らせ手が続行せずに停止する",
+        "hypothesis": "ディスク満杯等で tmp への書き込みが途中で失敗し、os.replace に到達しないまま呼び出し側が例外を握り潰して『書けた』として先へ進む。台帳は無傷だが更新が消える。",
+        "oracle": "小容量の tmpfs 上でレーンを走らせ、write_json の失敗が呼び出し側でどう扱われるかと next_actions のその後を観測する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "最終件数が常に 2N になる（ロックまたは追記専用形式で保護されている）",
+        "hypothesis": "同時に走る二つの走らせ手の read-modify-write で、原子化により片方の更新が完全に、かつ構文的に無傷な形で失われる。破損より静かなため、パース検査では検出できない。",
+        "oracle": "2 プロセスから同一台帳へ N 件ずつ追記させ、最終件数が 2N であるかを数える",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "残骸が走査対象外の命名・場所にあり、次回起動で回収される",
+        "hypothesis": "pid 付き一時ファイルが中断時に assurance/ledger/ 配下へ残留し、後続の全件走査が残骸を台帳として数えるかパース失敗として誤検出する。先行指標自体が偽陽性を出し続けて無視されるようになる。",
+        "oracle": "書き込み途中で SIGKILL した直後にディレクトリを走査し、残骸が列挙対象・パース対象に入るかを確認する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "ledger_io 以外から台帳パスへ書く経路が 0 件である",
+        "hypothesis": "ledger_io へ移送されなかった台帳書き込み経路が、14 箇所の数え上げの外に存在する（テンプレート生成、別名の書き込み、外部ツール経由）。",
+        "oracle": "assurance/ 配下で台帳パスを引数に取る全書き込み元を静的に列挙し、ledger_io を経由しない件数を数える",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "一時ファイルが常に対象と同一ディレクトリに作られ、境界をまたぐ経路が構造上存在しない",
+        "hypothesis": "os.replace が異なるファイルシステム境界（一時ディレクトリが別マウント、ネットワークマウント上のリポジトリ）で失敗し、原子化が想定どおり働かない環境が存在する。",
+        "oracle": "tmp を別マウントに置いた構成で write_json を走らせ、os.replace が成功するかを確認する",
+        "severity": "P3"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "正本の読み手（latest_formalize 等）の例外処理を、LedgerCorrupt と欠落を別の値・別の経路として返す形へ改める。破損を『空』へ写像する経路を残さない（本事象の害の中心は書き込み側ではなくこの写像にある）。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "assurance/ledger/ 配下の全件パース検査を起動時と CI の両方に置く。失敗 1 件で赤とし、破損が静かに吸収される経路を塞ぐ。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "台帳パスへの書き込みが ledger_io.write_json を経由すること、および台帳を読む経路が LedgerCorrupt を明示的に扱うことを、CI の静的軸で強制する（是正の劣化検出）。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "中断試験（書き込み途中の SIGKILL）を、新設モジュールの軸試験ではなく製品の呼び口（triage_candidates.write_doc 等）に対して常設化し、緑の oracle が是正と同じ変更で生まれない状態を構造で担保する。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "SESSION_END_AUDIT の走査対象にレーンのデータ正本（assurance/ledger/）の可読性を含めるかを決める。sensor の対象範囲を『文書』から『統制が依存する正本』へ広げる境界変更にあたる。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "verify 記録が自分の検証対象の diff に同梱される構造（INC-028）の解き方（記録の置き場所を分ける、検証を別の変更に切り出す等）を決める。配布・リポジトリ境界に触れるため所有者の判断を要する。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "green_is_green が UNKNOWN のまま是正が着地している状態を、いつ・どの証拠で fixed:true と書けるのかの条件として明文化する（ADR-139・運転手順 §2 の運用）。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "『台帳は常に構文的に読める正本である』『台帳への書き込みは単一の書き手による』という二つの安全上の想定を明示的に記録し、失効を示す先行指標をそれぞれに紐づけて登録する。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "台帳自体の健全性に対する責任をどの要素が負うのかを統制構造の仕様に明記する（現状は割当が見当たらない）。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "配布側 plugin/scripts/ で既に採られている安全設計をレーンを含む全書き込み経路に対して棚卸しし、非対称が残っている箇所を列挙する（今回の非対称が唯一かを確かめる）。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "同時に走る二つの走らせ手の read-modify-write（INC-008）は原子化では直らないことを台帳に明記し、別事象として調査を継続する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "LedgerCorrupt が ValueError を継がない変更により、従来守られていた経路が未捕捉例外に転じていないかを、破損台帳を置いた全読み口の走査で確認する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "沈黙が既定の故障様相である。例外を握り潰して欠落値へ写像する書き方が複数の読み手に共通しており、害が信号を伴わない（INC-006 と同型）。",
+      "制御の入力と監督のフィードバックが同一資源（台帳）に載っている。台帳の破損は ASSURANCE_LANE の制御と OWNER の監督を同時に盲にし、独立であるはずの多重防護をひとつの原因でまとめて無効化する。",
+      "配布側（plugin/scripts）と保証レーン（assurance/harness）で同じ安全設計が非対称に適用され、片側で解いた問題が他方へ伝わる経路が構造として存在しない。",
+      "sensor 群（SESSION_END_AUDIT、POST_TOOL_LINTER、HEARTBEAT）の走査対象が統治木の文書に偏っており、統制が依存するデータ正本の健全性はどの監視の視野にも入っていない。",
+      "試験の想定が正常終了経路に閉じており、中断・資源枯渇・同時実行といった最悪環境が軸として存在しない。決定論を保つ設計そのものが、非決定的な環境要因を試験対象から締め出す方向に働く。",
+      "是正と同じ変更の中で緑の oracle が生まれ、検証記録が検証対象の diff に同梱される。証拠と対象の分離が構造的に取れておらず、赤→緑の遷移が製品経路の外で観測される。",
+      "台帳が『分析が済むまで閉じない』という統制の要であるにもかかわらず、その健全性に責任を持つ要素が統制構造上明示されていない（責任の空白の可能性）。"
+    ],
+    "unknowns": [
+      "事象が名指す機構の実在を本分析は確認できていない。作業環境（/tmp/assurance-cast-z34yvhy8）は空であり、assurance/harness/ledger_io.py、assurance/tests/test_ledger_io.py、assurance/ledger/red・verify の各記録、assurance/harness/orchestrator.py、plugin/scripts/、.github/workflows、doctrine_docs のいずれも存在しない。さらに『独立検証（verify）の判定機構』『ADR-139』『運転手順 §2』『INC-028』は、与えられた統制構造のどの要素 id にも対応する要素がなく、ASSURANCE_LANE の内部としてしか位置づけられない。本分析は事象記録の記述のみを根拠としており、記録は与えられた入力であって実在の証明ではない（confidence を low とした理由）。",
+      "『14 箇所すべてを ledger_io へ移送した』ことを実装者以外が独立に数え直した記録があるか。移送漏れが 0 である根拠は fix_note の主張のみである。",
+      "正本の読み手が何箇所あり、そのうち orchestrator.validate を経ずに台帳を読む経路が何本残っているか。破損検出が validate 一本に依存する度合いの実効的な広さが不明。",
+      "green_is_green と single_change が UNKNOWN に留まる理由として記録は二点（oracle の同時生成、verify 記録の diff 同梱）を挙げるが、それ以外の要因が判定に寄与したかは不明。",
+      "二つの走らせ手が同時に走る実運用上の頻度と条件（INC-008 の再現条件）。原子化後に更新喪失が静かに起きる確率を見積もれない。",
+      "過去に 351KB 級の committed 台帳が中断で切り詰められた実例があったか、あったとして『空』として吸収され気付かれていなかったか。過去の沈黙の縮みを遡って検出する手段が存在するかも不明。",
+      "SIGKILL 以外の中断様相（ディスク満杯、fsync 失敗、os.replace の跨ファイルシステム失敗、権限喪失）下での write_json の挙動は未観測。",
+      "LedgerCorrupt が ValueError を継がない変更により、従来 except ValueError で吸収されていた経路が未捕捉例外で落ちるようになったかどうか（故障様相が『黙る』から『落ちる』へ移った可能性）は未確認。",
+      "台帳自体の健全性に責任を持つ要素が統制構造上のどこに割り当てられているかが文書上特定できない（責任の空白か、単に本資料に現れていないだけかが判らない）。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は二重に沈黙していた。第一に、決定論試験と CI は正常終了経路だけを回し、プロセスが途中で消える環境を試す軸を持たなかったため、非原子的な書き込みは常に完走し、常に緑を返した（緑は嘘ではなく、問う質問が違った）。第二に、仮に破損が起きても、読み手が ValueError を握り潰して破損を『空』へ写像するため、下流には異常ではなく正常な空値が流れる。空の台帳は初回セッションの正当な状態でもあるので、どの sensor もそれを異常と判定する根拠を持たない。監査系（SESSION_END_AUDIT／POST_TOOL_LINTER）の走査対象は統治木の文書に限られ、台帳の可読性は誰の視野にも入っていなかった。結果として、害は起きても信号が出ない構造になっており、検出は既存の保証の内側からではなく、独立再監査が Phase G で新しい軸（書き込み途中の SIGKILL）を持ち込んだときに初めて起きた。是正が着地した現在も読み手の握り潰しは残っており、破損と欠落の区別は orchestrator.validate 一本に依存する。すなわち「修正済み」は見逃しの構造が解けたことを意味しない。"
+  },
+  "control_structure_ids": [
+    "OWNER",
+    "CI_RELEASE_CHECK",
+    "SESSION_START_CONTRACT",
+    "HEARTBEAT",
+    "PRE_TOOL_GUARD",
+    "POST_TOOL_LINTER",
+    "SESSION_END_AUDIT",
+    "CAPTURE_NUDGE",
+    "PLUGIN_DISTRIBUTION",
+    "ASSURANCE_LANE",
+    "GOVERNANCE_TREE"
+  ],
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "duration_ms": 776824,
+  "errors": [],
+  "execution_kind": "real-sdk",
+  "flaws_with_citation_defect": [],
+  "generated_at": "2026-08-09T17:47:01Z",
+  "git_dirty": true,
+  "git_sha": "db89de2c1f5ae1c75558514a69b007cc9e074684",
+  "incident_evidence": {
+    "kind": "measurement",
+    "refs": [
+      "assurance/ledger/red/INC-027-ledger-write-not-atomic.json",
+      "assurance/harness/ledger_io.py",
+      "assurance/tests/test_ledger_io.py"
+    ],
+    "resolved": [
+      "assurance/ledger/red/INC-027-ledger-write-not-atomic.json",
+      "assurance/harness/ledger_io.py",
+      "assurance/tests/test_ledger_io.py"
+    ],
+    "unresolved": [],
+    "verifiable": true
+  },
+  "incident_id": "INC-027-ledger-write-not-atomic",
+  "incident_sha256": "5e9a8483f50e5cdcb12da94a20374e12fc4c0d03dcf0d8507bd173c20acf6de5",
+  "init": {
+    "claude_code_version": "2.1.221",
+    "model": "claude-opus-5",
+    "session_id": "19ccd403-c62c-4467-8b22-058f72909e77",
+    "tools_count": 27
+  },
+  "kind": "cast-analysis",
+  "leading_indicators_defined": true,
+  "options": {
+    "allowed_tools": [],
+    "cwd": "/tmp/assurance-cast-z34yvhy8",
+    "effort": "high",
+    "max_budget_usd": 4.0,
+    "max_turns": 8,
+    "model": "claude-opus-5",
+    "setting_sources": [],
+    "timeout_s": 900
+  },
+  "oracle": "structured_output がレーン側再検証にも適合",
+  "principles_offered": 337,
+  "prompt_sha256": "30e2cae506229ed4f3e5067679e366a4d0ee80a26e486829b8b4c6352d723461",
+  "rejected_flaws": [],
+  "result_meta": {
+    "duration_api_ms": 770741,
+    "is_error": false,
+    "num_turns": 6,
+    "session_id": "19ccd403-c62c-4467-8b22-058f72909e77",
+    "subtype": "success",
+    "total_cost_usd": 2.3566439999999997,
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 96392,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 96392,
+      "cache_read_input_tokens": 243034,
+      "inference_geo": "not_available",
+      "input_tokens": 10,
+      "iterations": "list",
+      "output_tokens": 49364,
+      "server_tool_use": {
+        "web_fetch_requests": 0,
+        "web_search_requests": 0
+      },
+      "service_tier": "standard",
+      "speed": "standard"
+    }
+  },
+  "schema_sha256": "0d1643d5e16353723405302c1f6ffcf753915e2a4f27a3530e8ef9a9ee45cb46",
+  "sdk_version": "0.2.129",
+  "settled": true,
+  "status": "PASS",
+  "structured_output": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "レーンの台帳書き込み 14 箇所が、既存ファイルを直接開いて書き下す非原子的な手順であった。書き込みが途中で終わると既存台帳が断片に置き換わり、以後 json.load が通らない。『台帳は常に構文的に読める正本である』という安全制約が、書き込み側の物理設計で強制されていなかった（カオス試験では 60B の台帳が 4653B の断片に置き換わることが実測されている）。",
+        "evidence_ref": "assurance/ledger/red/INC-027-ledger-write-not-atomic.json",
+        "flaw_type": "制御動作が誤っている",
+        "normative_refs": [
+          "accidents-from-inadequate-constraint-enforcement",
+          "危険状態の排除を最優先",
+          "software-does-not-fail-requirements-defect"
+        ],
+        "why_it_seemed_adequate": "直接書き込みは決定論試験の正常終了経路では常に完走し、レーンが単一走らせ手・短時間の書き込みで動く前提の下では中断の観測機会が一度も生じなかった。台帳が小さいうちは書き込み窓が短く、中断が現実的でないという想定が成り立っているように見えた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "正本の読み手（latest_formalize 等）が ValueError を握り潰すため、破損した台帳と存在しない台帳が同一の値（空）として上位へ返る。誤った手掛かりが正常値に偽装されて制御に入るため、formalize・scenarios・verify・recommendation-status のいずれが壊れても next_actions が黙って縮む。この握り潰しは今回の是正でも変えられていない。",
+        "evidence_ref": "事象記録 residual (1)",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "process-model-inconsistency-causes-unsafe-control",
+          "defects-in-information-providing-systems",
+          "プロセスモデルと実状態の不整合"
+        ],
+        "why_it_seemed_adequate": "台帳がまだ存在しない初回セッションを安全に扱うため、読み取り例外を『まだ無い』へ吸収する設計は素直であり、破損という第三の状態が起こり得ないという想定の下では欠落と等価だった。例外を握り潰す実装は、走らせ手を落とさないという可用性の目的にも適っていた。"
+      },
+      {
+        "control_element_id": "PLUGIN_DISTRIBUTION",
+        "description": "配布側 plugin/scripts/ は tmp + os.replace で既に原子化されており、同じ組織内に解決済みの安全設計が存在していたにもかかわらず、その設計上の想定と根拠が保証レーン側へ伝わる経路が無く、レーンだけが非原子のまま取り残された。安全設計の横展開が個別の気付きに依存していた。",
+        "evidence_ref": "事象記録 impact（配布側は原子化済みという非対称の記述）",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "分析結果の共有と横展開",
+          "供給要素の変更を利用者へ通知",
+          "symptom-vs-systemic-cause"
+        ],
+        "why_it_seemed_adequate": "配布側は利用者環境という他者の資産に触れるため原子性が要求される一方、レーンは自リポジトリ内部の作業用データを扱う内輪の機構と位置づけられており、同じ強度の保護が要るという判断が生じる契機がなかった。境界の性質が違うのだから扱いが違うのは自然に見えた。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "merge 前に赤で止める門は存在するが、プロセスが途中で消える環境下の不変条件（中断耐性）を試す軸を持たない。そのため 14 箇所の非原子的書き込みは全ジョブ緑のまま通過し続けた。門が見ていたのは『正常終了したときに正しい結果が出るか』であり、『途中で終わったときに既存資産を壊さないか』ではない。",
+        "evidence_ref": "detected_by（Phase G のカオス試験という新規軸で初めて観測）",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "安全立証でなく非安全状態の探索",
+          "最悪環境を前提に設計運用",
+          "監査の検出力評価"
+        ],
+        "why_it_seemed_adequate": "決定論試験はすべて正常終了経路を走らせ、その経路では書き込みは常に完走するため、緑は嘘をついていない真の緑だった。中断は環境の異常であって被試験系の責任外という見方が成り立ち、試験軸として要求されていなかった。"
+      },
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "全件監査は統治木（doctrine_docs 配下の文書）を走査対象とし、レーンのデータ正本である assurance/ledger/ の JSON が読めるかどうかは走査していない。台帳の破損はどの sensor の視野にも入らず、破損が『空』として正常系に吸収される限り、監査要約にも鼓動にも何の異常も現れない。",
+        "evidence_ref": "統制構造 SESSION_END_AUDIT の制御記述",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "分析境界の定義",
+          "do-not-start-too-narrow",
+          "scope-beyond-operating-process"
+        ],
+        "why_it_seemed_adequate": "監査は統治文書の整合を守る機構として設計され、台帳はレーンが自分で読み書きする作業データと位置づけられていた。責任分界としては筋が通っており、台帳の健全性はレーン自身が担うという分担に見えた。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者の手掛かりは進捗報告・PR の diff・台帳の三つだが、そのうち事象の実在を示すのは台帳のみである。台帳が壊れて空に見えるとき、所有者は『事象が無い』と『事象が読めない』を区別する独立した手段を持たない。制御の入力と監督のフィードバックが同一資源に載っているため、一つの破損が制御と監督を同時に盲にする。",
+        "evidence_ref": "統制構造 OWNER の手掛かり一覧",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "共通の体系的要因による多重防護の無効化",
+          "controller-needs-concrete-feedback-channels",
+          "全コントロールループにフィードバック必須"
+        ],
+        "why_it_seemed_adequate": "台帳を単一の正本に集約することは、報告が意図を書いていても実施と見分けにくいという既知の穴への対策として合理的であり、正本を一本化するほど所有者の判断は確かになるはずだった。正本自体が壊れ得るという故障様相が想定に入っていなかった。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "是正後、破損と欠落の区別は orchestrator.validate 一本に依存する。validate を経由しない読み口が残っている限り、破損は無症状のまま通過し得る。さらに『台帳書き込みは原子的だから安全』という新しい想定が、その想定の失効（新たな非原子経路の追加、validate を通さない読み口の追加）を自ら検出する仕組みを伴っていない。",
+        "evidence_ref": "事象記録 residual (1)",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "全体健全性と部分健全性の分離評価",
+          "想定の記録と変更時再検査",
+          "リスク先行指標の検出"
+        ],
+        "why_it_seemed_adequate": "検査を一箇所に集約するのは重複と食い違いを避ける定石であり、集約点が必ず通る前提が成り立つなら十分に見えた。是正直後は 14 箇所すべてを移送したという事実が、この前提を当面は保証しているように見える。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "是正の緑を出す oracle が、是正と同じ変更で生まれた新規ファイル（ledger_io.py とその軸試験）の上にある。赤で害を測った観測（json.dump 途中の SIGKILL）は write_json にとっては生まれたときから緑であり、赤→緑に転じたのは静的な軸試験だけである。製品の呼び口（triage_candidates.write_doc）を途中で殺す観測は後から足された。したがって『直った』という手掛かりは、製品経路の遷移ではなく新設経路の自己申告に近い。加えて verify 記録が自分の検証対象の diff に同梱されるため、記録と diff は原理的に一致しない。",
+        "evidence_ref": "事象記録 fix_note・residual (3)",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "安全活動の独立確認",
+          "監査のすり抜け時に監査手順を是正",
+          "同一対象の旧新手法比較による有効性実証"
+        ],
+        "why_it_seemed_adequate": "新しい安全機構を専用モジュールとして切り出し、その振る舞いを直接試験するのは正しい作法であり、赤の証拠と緑の証拠が同じ抽象で書かれていれば対応関係は自明に見えた。二回の独立検証で red_was_red が PASS していることも、証拠系が機能している印象を与える。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "原子化は単一書き手の中断だけを扱い、同時に走る二つの走らせ手の read-modify-write（INC-008 の故障様相）による更新喪失は対象外である。しかも原子化後の喪失は部分書きより静かで、台帳は常に構文的に正しいまま片方の更新だけが消える。是正の名前（『台帳書き込みの原子化』）が実際の保護範囲より広く読めるため、統制の対象範囲についての想定が構造全体で食い違う余地が残る。",
+        "evidence_ref": "事象記録 residual (2)",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "verify-decomposition-assumptions",
+          "破られた想定の再検討",
+          "単一コンポーネント集中の回避"
+        ],
+        "why_it_seemed_adequate": "今回の事象は中断による切り詰めとして観測されており、その害に正確に対応する是正を当てることは範囲を絞る良い規律である。同時実行は別事象（INC-008）として既に台帳に載っているため、ここで扱わない判断は重複回避としても妥当に見えた。"
+      }
+    ],
+    "hazard": "統制構造の唯一のフィードバック正本である台帳（assurance/ledger/）が、書き込み中断によって構文的に読めない状態になり得、かつその状態が読み手側で「不在（空）」と同じ値へ写像される状態。すなわち「壊れている」と「何も無い」を統制構造のどこでも区別できないまま制御動作が決まる状態。",
+    "incident_id": "INC-027-ledger-write-not-atomic",
+    "leading_indicators": [
+      {
+        "indicator": "台帳全件のパース可否",
+        "observable": "assurance/ledger/ 配下の全 JSON を起動時に json.load し、失敗件数と LedgerCorrupt の送出回数を数える",
+        "threshold": "失敗 1 件、または LedgerCorrupt 1 回で異常（ゼロ許容）",
+        "version_independent": true,
+        "where": "orchestrator の起動時検査、および CI_RELEASE_CHECK のジョブ（リポジトリ正本側）",
+        "why_version_independent": "リポジトリ正本のファイルを正本側の実行系で走査するため、利用者環境の導入複製の版に依存しない"
+      },
+      {
+        "indicator": "ledger_io を経由しない台帳書き込み経路の数",
+        "observable": "assurance/ 配下で台帳パスに対する open(...,'w') / json.dump の静的出現のうち、ledger_io.write_json を通らないものの件数",
+        "threshold": "1 件でも検出されたら赤（現状 0 を維持）",
+        "version_independent": true,
+        "where": "CI_RELEASE_CHECK の静的軸",
+        "why_version_independent": "リポジトリ正本のソースに対する静的走査であり、配布複製の版と無関係"
+      },
+      {
+        "indicator": "破損を欠落へ写像する読み口の数",
+        "observable": "台帳読み取り関数における except ValueError / except Exception のうち、LedgerCorrupt を再送出せず既定値（空）を返す箇所の件数",
+        "threshold": "現在値からの増加、または orchestrator.validate を経ない読み口に 1 件でも存在したら異常",
+        "version_independent": true,
+        "where": "CI_RELEASE_CHECK の静的軸、assurance/harness 配下",
+        "why_version_independent": "正本ソースの静的性質であり、導入複製に依存しない"
+      },
+      {
+        "indicator": "committed 台帳のバイト数・件数の単調性",
+        "observable": "書き込み前後で台帳のサイズと要素数を記録し、減少イベントを数える",
+        "threshold": "対応する削除・クローズ操作が無いのにサイズまたは件数が減少したら 1 回で異常",
+        "version_independent": true,
+        "where": "ledger_io.write_json の書き込み直後の検査と、その記録を残すログ",
+        "why_version_independent": "レーン内部の観測であり、配布経路を通らない"
+      },
+      {
+        "indicator": "next_actions の説明のつかない縮小",
+        "observable": "セッション間の next_actions 件数と、その差分に対応する closed 事象の有無の突き合わせ結果",
+        "threshold": "件数が減ったのに対応する分析完了・クローズ記録が無い回が 1 回でも出たら異常",
+        "version_independent": true,
+        "where": "orchestrator の実行記録（assurance/ledger/ 側に残す）",
+        "why_version_independent": "レーンの出力どうしの整合検査であり、導入複製の版に依存しない"
+      },
+      {
+        "indicator": "製品呼び口に対する中断試験の未実施期間",
+        "observable": "triage_candidates.write_doc 等の製品経路を書き込み途中で SIGKILL する軸が、直近のマージ以降に実行された回数",
+        "threshold": "直近マージ以降の実行回数が 0 なら異常",
+        "version_independent": false,
+        "where": "実装場所による。CI_RELEASE_CHECK のジョブ履歴で見るか、HEARTBEAT が読む .claude/.cache/last-audit.json の古びとして見るか",
+        "why_version_independent": "この指標を鼓動（HEARTBEAT）や導入複製側の監査キャッシュに載せると、検出器自身が導入複製の上で動くため、版が遅れれば警告も遅れる（INC-005 の共通原因故障をそのまま継承する）。CI 側だけに置けば版非依存にできるが、現状の古び検知経路に乗せる限り版依存として扱う"
+      }
+    ],
+    "loss": "保証キャンペーンが導く「次の行動」が、未処理の事象を残したまま静かに縮む／消える。結果として所有者と走らせ手は「処理すべき事象は無い」という誤ったプロセスモデルで運転を続け、未分析・未是正の事象が閉じられないまま視界から外れる（INC-006 と同型の沈黙の損失）。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "すべての読み口が LedgerCorrupt を明示的に捕捉して名指しで報告し、副作用を残さずに停止する",
+        "hypothesis": "LedgerCorrupt が ValueError を継がないため、従来 except ValueError で吸収されていた読み口が、破損時に未捕捉例外で走らせ手ごと落ちる。故障様相が『黙って縮む』から『途中で落ちる』へ移り、部分的に処理済みの状態が残る。",
+        "oracle": "意図的に破損させた台帳を置き、正本のすべての読み口を一つずつ走らせ、未捕捉例外の有無と、落ちた時点までに書かれた副作用の有無を数える",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "書き込み失敗が例外として上位に伝播し、走らせ手が続行せずに停止する",
+        "hypothesis": "ディスク満杯等で tmp への書き込みが途中で失敗し、os.replace に到達しないまま呼び出し側が例外を握り潰して『書けた』として先へ進む。台帳は無傷だが更新が消える。",
+        "oracle": "小容量の tmpfs 上でレーンを走らせ、write_json の失敗が呼び出し側でどう扱われるかと next_actions のその後を観測する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "最終件数が常に 2N になる（ロックまたは追記専用形式で保護されている）",
+        "hypothesis": "同時に走る二つの走らせ手の read-modify-write で、原子化により片方の更新が完全に、かつ構文的に無傷な形で失われる。破損より静かなため、パース検査では検出できない。",
+        "oracle": "2 プロセスから同一台帳へ N 件ずつ追記させ、最終件数が 2N であるかを数える",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "残骸が走査対象外の命名・場所にあり、次回起動で回収される",
+        "hypothesis": "pid 付き一時ファイルが中断時に assurance/ledger/ 配下へ残留し、後続の全件走査が残骸を台帳として数えるかパース失敗として誤検出する。先行指標自体が偽陽性を出し続けて無視されるようになる。",
+        "oracle": "書き込み途中で SIGKILL した直後にディレクトリを走査し、残骸が列挙対象・パース対象に入るかを確認する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "ledger_io 以外から台帳パスへ書く経路が 0 件である",
+        "hypothesis": "ledger_io へ移送されなかった台帳書き込み経路が、14 箇所の数え上げの外に存在する（テンプレート生成、別名の書き込み、外部ツール経由）。",
+        "oracle": "assurance/ 配下で台帳パスを引数に取る全書き込み元を静的に列挙し、ledger_io を経由しない件数を数える",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "一時ファイルが常に対象と同一ディレクトリに作られ、境界をまたぐ経路が構造上存在しない",
+        "hypothesis": "os.replace が異なるファイルシステム境界（一時ディレクトリが別マウント、ネットワークマウント上のリポジトリ）で失敗し、原子化が想定どおり働かない環境が存在する。",
+        "oracle": "tmp を別マウントに置いた構成で write_json を走らせ、os.replace が成功するかを確認する",
+        "severity": "P3"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "正本の読み手（latest_formalize 等）の例外処理を、LedgerCorrupt と欠落を別の値・別の経路として返す形へ改める。破損を『空』へ写像する経路を残さない（本事象の害の中心は書き込み側ではなくこの写像にある）。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "assurance/ledger/ 配下の全件パース検査を起動時と CI の両方に置く。失敗 1 件で赤とし、破損が静かに吸収される経路を塞ぐ。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "台帳パスへの書き込みが ledger_io.write_json を経由すること、および台帳を読む経路が LedgerCorrupt を明示的に扱うことを、CI の静的軸で強制する（是正の劣化検出）。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "中断試験（書き込み途中の SIGKILL）を、新設モジュールの軸試験ではなく製品の呼び口（triage_candidates.write_doc 等）に対して常設化し、緑の oracle が是正と同じ変更で生まれない状態を構造で担保する。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "SESSION_END_AUDIT の走査対象にレーンのデータ正本（assurance/ledger/）の可読性を含めるかを決める。sensor の対象範囲を『文書』から『統制が依存する正本』へ広げる境界変更にあたる。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "verify 記録が自分の検証対象の diff に同梱される構造（INC-028）の解き方（記録の置き場所を分ける、検証を別の変更に切り出す等）を決める。配布・リポジトリ境界に触れるため所有者の判断を要する。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "green_is_green が UNKNOWN のまま是正が着地している状態を、いつ・どの証拠で fixed:true と書けるのかの条件として明文化する（ADR-139・運転手順 §2 の運用）。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "『台帳は常に構文的に読める正本である』『台帳への書き込みは単一の書き手による』という二つの安全上の想定を明示的に記録し、失効を示す先行指標をそれぞれに紐づけて登録する。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "台帳自体の健全性に対する責任をどの要素が負うのかを統制構造の仕様に明記する（現状は割当が見当たらない）。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "配布側 plugin/scripts/ で既に採られている安全設計をレーンを含む全書き込み経路に対して棚卸しし、非対称が残っている箇所を列挙する（今回の非対称が唯一かを確かめる）。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "同時に走る二つの走らせ手の read-modify-write（INC-008）は原子化では直らないことを台帳に明記し、別事象として調査を継続する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "LedgerCorrupt が ValueError を継がない変更により、従来守られていた経路が未捕捉例外に転じていないかを、破損台帳を置いた全読み口の走査で確認する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "沈黙が既定の故障様相である。例外を握り潰して欠落値へ写像する書き方が複数の読み手に共通しており、害が信号を伴わない（INC-006 と同型）。",
+      "制御の入力と監督のフィードバックが同一資源（台帳）に載っている。台帳の破損は ASSURANCE_LANE の制御と OWNER の監督を同時に盲にし、独立であるはずの多重防護をひとつの原因でまとめて無効化する。",
+      "配布側（plugin/scripts）と保証レーン（assurance/harness）で同じ安全設計が非対称に適用され、片側で解いた問題が他方へ伝わる経路が構造として存在しない。",
+      "sensor 群（SESSION_END_AUDIT、POST_TOOL_LINTER、HEARTBEAT）の走査対象が統治木の文書に偏っており、統制が依存するデータ正本の健全性はどの監視の視野にも入っていない。",
+      "試験の想定が正常終了経路に閉じており、中断・資源枯渇・同時実行といった最悪環境が軸として存在しない。決定論を保つ設計そのものが、非決定的な環境要因を試験対象から締め出す方向に働く。",
+      "是正と同じ変更の中で緑の oracle が生まれ、検証記録が検証対象の diff に同梱される。証拠と対象の分離が構造的に取れておらず、赤→緑の遷移が製品経路の外で観測される。",
+      "台帳が『分析が済むまで閉じない』という統制の要であるにもかかわらず、その健全性に責任を持つ要素が統制構造上明示されていない（責任の空白の可能性）。"
+    ],
+    "unknowns": [
+      "事象が名指す機構の実在を本分析は確認できていない。作業環境（/tmp/assurance-cast-z34yvhy8）は空であり、assurance/harness/ledger_io.py、assurance/tests/test_ledger_io.py、assurance/ledger/red・verify の各記録、assurance/harness/orchestrator.py、plugin/scripts/、.github/workflows、doctrine_docs のいずれも存在しない。さらに『独立検証（verify）の判定機構』『ADR-139』『運転手順 §2』『INC-028』は、与えられた統制構造のどの要素 id にも対応する要素がなく、ASSURANCE_LANE の内部としてしか位置づけられない。本分析は事象記録の記述のみを根拠としており、記録は与えられた入力であって実在の証明ではない（confidence を low とした理由）。",
+      "『14 箇所すべてを ledger_io へ移送した』ことを実装者以外が独立に数え直した記録があるか。移送漏れが 0 である根拠は fix_note の主張のみである。",
+      "正本の読み手が何箇所あり、そのうち orchestrator.validate を経ずに台帳を読む経路が何本残っているか。破損検出が validate 一本に依存する度合いの実効的な広さが不明。",
+      "green_is_green と single_change が UNKNOWN に留まる理由として記録は二点（oracle の同時生成、verify 記録の diff 同梱）を挙げるが、それ以外の要因が判定に寄与したかは不明。",
+      "二つの走らせ手が同時に走る実運用上の頻度と条件（INC-008 の再現条件）。原子化後に更新喪失が静かに起きる確率を見積もれない。",
+      "過去に 351KB 級の committed 台帳が中断で切り詰められた実例があったか、あったとして『空』として吸収され気付かれていなかったか。過去の沈黙の縮みを遡って検出する手段が存在するかも不明。",
+      "SIGKILL 以外の中断様相（ディスク満杯、fsync 失敗、os.replace の跨ファイルシステム失敗、権限喪失）下での write_json の挙動は未観測。",
+      "LedgerCorrupt が ValueError を継がない変更により、従来 except ValueError で吸収されていた経路が未捕捉例外で落ちるようになったかどうか（故障様相が『黙る』から『落ちる』へ移った可能性）は未確認。",
+      "台帳自体の健全性に責任を持つ要素が統制構造上のどこに割り当てられているかが文書上特定できない（責任の空白か、単に本資料に現れていないだけかが判らない）。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は二重に沈黙していた。第一に、決定論試験と CI は正常終了経路だけを回し、プロセスが途中で消える環境を試す軸を持たなかったため、非原子的な書き込みは常に完走し、常に緑を返した（緑は嘘ではなく、問う質問が違った）。第二に、仮に破損が起きても、読み手が ValueError を握り潰して破損を『空』へ写像するため、下流には異常ではなく正常な空値が流れる。空の台帳は初回セッションの正当な状態でもあるので、どの sensor もそれを異常と判定する根拠を持たない。監査系（SESSION_END_AUDIT／POST_TOOL_LINTER）の走査対象は統治木の文書に限られ、台帳の可読性は誰の視野にも入っていなかった。結果として、害は起きても信号が出ない構造になっており、検出は既存の保証の内側からではなく、独立再監査が Phase G で新しい軸（書き込み途中の SIGKILL）を持ち込んだときに初めて起きた。是正が着地した現在も読み手の握り潰しは残っており、破損と欠落の区別は orchestrator.validate 一本に依存する。すなわち「修正済み」は見逃しの構造が解けたことを意味しない。"
+  }
+}
