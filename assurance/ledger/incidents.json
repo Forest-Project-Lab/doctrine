@@ -547,6 +547,24 @@
         "assurance/harness/verify_fix.py",
         "doctrine_docs/packaging/decisions/ADR-139-verify-runner-and-fixed-gate.md"
       ]
+    },
+    {
+      "id": "INC-029-index-counts-no-tests",
+      "date": "2026-08-09",
+      "summary": "索引が試験を全ファイル 0 件と数え、その偽の事実が全評価プロンプトへ注入されていた。_DEF_TEST_RE が桁 0 に錨を打つため、クラス内で字下げされる unittest のメソッドを一件も数えない（列 0 は 0 件、字下げは 1267 件）",
+      "detected_by": "独立再監査 2026-08-09 の Phase D。system_index.test_files() が 27 ファイル・合計 0 件を返し、as_prompt_text が『### 試験ファイル（件数つき。合計 0 件）』を出力していることを実測した",
+      "impact": "評価者は『この体系に試験は一つも無い』と告げられたうえで判定していた。その入力の下で 240 件が『実装・試験・証拠あり』と判定され、うち 125 件（52%）は試験証拠を一つも挙げていない。索引が提供する ::test_名 のポインタ形式も、試験名が一つも表示されないため実質使えなかった",
+      "fixed": false,
+      "fix_note": "検出器を ^[ \\t]*def (test_[A-Za-z0-9_]+) へ直し、索引は 1267 件を報告するようになった（unittest の loader が収集する数と一致することを第三の対照で確認）。独立検証（ADR-139）は未実施のため fixed:true とは書かない",
+      "next_step": "所有者裁定 2026-08-09: 索引を直したうえで 240 件の『実装・試験・証拠あり』を再判定する。文書変更の一括と合わせて一度の再判定に含める",
+      "residual": "評価プロンプトは件数を出すだけで試験名を出さない。rubric が案内する plugin/tests/x.py::test_名 の形は、評価者が名を知る手段が無いままである。件数の虚偽は消えたが、ポインタ形式の実用性は別に残る",
+      "cast_analysis": "pending",
+      "evidence_kind": "measurement",
+      "evidence_refs": [
+        "assurance/ledger/red/INC-029-index-counts-no-tests.json",
+        "assurance/harness/system_index.py",
+        "assurance/tests/test_system_index_counts.py"
+      ]
     }
   ]
 }
