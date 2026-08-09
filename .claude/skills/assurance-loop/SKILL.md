@@ -140,7 +140,9 @@ python3 plugin/scripts/docs-audit.py --root doctrine_docs --json # 監査
    主題が二つ終わったら **PR を二つ**に分ける。一つの反復で複数 PR を出してよい。
 2. §8 の全門が緑（レーン試験・本体試験・linter 一括・監査・投影・release-check・
    consistency-check・code-audit）。
-3. PR の CI が pass。**赤いまま merge しない。赤を避けるために門を緩めない。**
+3. PR の CI が pass。merge 直前の判定は `merge_gate.py` の三値による（適合だけを
+   適合とし、走れない CI は前提欠如で待機。ADR-129）。**赤いまま merge しない。
+   赤を避けるために門を緩めない。**
 4. 上の所有者判断に触れていない。触れるなら PR は作ってよいが **merge せず**、
    判断を仰ぐ。
 5. 自分が作った PR だけを merge する。他者の PR には触れない。

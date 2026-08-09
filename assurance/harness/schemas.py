@@ -457,3 +457,17 @@ CHALLENGE_SCHEMA = {
     "additionalProperties": False,
 }
 
+
+
+# 想定の独立検証の応答（ADR-126・ADR-144。verify_assumptions.py が使う）
+ASSUMPTION_VERDICT_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "asm_id": {"type": "string"},
+        "holds": {"enum": ["PASS", "FAIL", "UNKNOWN"]},
+        "reasons": {"type": "array", "items": {"type": "string"},
+                    "minItems": 1},
+    },
+    "required": ["asm_id", "holds", "reasons"],
+    "additionalProperties": False,
+}

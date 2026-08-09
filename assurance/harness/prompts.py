@@ -733,3 +733,43 @@ def build_verify_prompt(verify_input_json):
         "写し、verdict・reasons・checks（red_was_red / green_is_green / "
         "single_change の三値）を必ず持つ。判定できない check は UNKNOWN と書く"
         "（沈黙や省略は PASS とは読まれない）。" % (_VERIFY_CHARTER, payload))
+
+
+_ASSUMPTION_CHARTER = """\
+あなたは保証キャンペーンの想定検証の担当（jerg レーン＝検証計画と客観的証拠の
+観点）である。想定の登記（下の JSON）だけを受け取り、観測に照らして想定が
+成り立つかを独立に判じる。実装者との会話履歴は存在しないし、要求もしない。
+
+規律:
+- 証拠は与えられた観測（observations・observation_history）だけである。観測に
+  無いことを補完しない。観測が古い・欠けているなら、それ自体を reasons に書く。
+- AI の一致は客観的証拠ではない。あなたの判定は「観測が想定をどう裏付けるか
+  （または反するか）」の読みであり、観測の代わりにはならない。
+- 判定は PASS（観測が想定を支える）/ FAIL（観測が想定に反する）/
+  UNKNOWN（観測からは判じられない）。迷ったら PASS ではなく UNKNOWN。
+"""
+
+
+def build_assumption_verification_prompt(assumption_json):
+    """想定検証の一回限りセッション用プロンプト（ADR-126・ADR-144）。
+
+    引数は構造化された一つの登記 {asm_id, assumption, leading_indicators,
+    observations, observation_history} だけ。会話・弁明の口は作らない。
+    """
+    if isinstance(assumption_json, dict):
+        if not assumption_json.get("asm_id"):
+            raise ValueError("asm_id を持つ構造化された登記だけを受け取る")
+        payload = json.dumps(assumption_json, ensure_ascii=False, indent=2)
+    elif isinstance(assumption_json, str) and assumption_json.strip():
+        parsed = json.loads(assumption_json)
+        if not isinstance(parsed, dict) or not parsed.get("asm_id"):
+            raise ValueError("asm_id を持つ構造化された登記だけを受け取る")
+        payload = assumption_json
+    else:
+        raise ValueError("想定の構造化 JSON だけを受け取る")
+    return (
+        "%s\n--- 想定の登記（これが唯一の入力。会話履歴は存在しない）---\n%s\n"
+        "--- 登記ここまで ---\n\n"
+        "ASSUMPTION_VERDICT_SCHEMA に適合する JSON だけを返す。asm_id をそのまま"
+        "写し、holds（PASS/FAIL/UNKNOWN）と reasons を必ず持つ。"
+        % (_ASSUMPTION_CHARTER, payload))

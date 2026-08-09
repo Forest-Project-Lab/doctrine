@@ -24,7 +24,8 @@
       "refuted_2026-08-06": "上の gap_still_open_2026-08-05 の根拠が成り立たない。『導入複製は 0.10.0 に追いついている(hook-stamps の hook_inject_version)ので版とは無関係』と書いたが、0.10.0 という版番号は 15 コミットにわたって同じであり、複製の同一性を判定しない。実際の複製は gitCommitSha 67475de(HEAD b00e085 より 15 コミット前)である。版の遅れ説は反証されていない。この取り違えは INC-019 として分離した。",
       "assumption_refs": [
         "ASM-001-sessionend-always-fires"
-      ]
+      ],
+      "next_step": "OPEN のまま。緩和は着地: 想定観測器（observe_assumptions.py が last-audit を stat・連続 N=2 の先行指標・ASM-001 に 2026-08-08 FAIL 記録）。根本原因（不発火 vs 旧版実行）の切り分けは UNKNOWN のまま —— 複製の同一性判定（INC-019）が前提"
     },
     {
       "id": "INC-005-installed-plugin-version-lag",
@@ -136,19 +137,20 @@
       "date": "2026-08-05",
       "summary": "SessionEnd の監査は、走らなかったことも書けなかったことも観測できない。(1) 発火の印が無い(hook-stamps は inject_contract・docs_linter・policy_guard_pre だけ)。(2) --summary-out の書き込みに失敗しても終了コードは 0 のまま(仕様 §5.5 の明示の決定)",
       "detected_by": "INC-001 の切り分け中に再現(2026-08-05)。--root-from 空・書けない場所への --summary-out で exit=0、stderr に 'summary write failed' が出るだけであることを実測",
-      "fixed": false,
+      "fixed": true,
       "cast_analysis": "done",
       "note_owner_decision": "(2) は仕様に書かれた決定の変更にあたる(『失敗しても 0 を保つ』)。覆すなら ADR が要る。(1) は追加であり、既存の決定と衝突しない",
-      "next_step": "別の PR で扱う。まず (1) の発火の印を足して『発火しなかった』と『書けなかった』を分ける。(2) の可否は所有者判断",
+      "next_step": "CLOSE。shipped はリリース 0.11.0 の tag 後に ship_ref を付けて立てる（ADR-144）",
       "evidence": "plugin/scripts/docs-audit.py の 1481-1489 行(『失敗しても 0 を保つ(§5.5)』)・.claude/.cache/hook-stamps に SessionEnd の項が無いこと",
       "cast_analysis_ref": "assurance/ledger/cast/INC-009-sessionend-audit-unobservable.json",
       "cast_analyzed_at": "2026-08-05T09:09:01Z",
       "fixed_partially": true,
-      "fix_note": "(1) 発火の印を足した(ADR-119): 監査は --summary-out の実行で hook_session_end_audit と hook_session_end_write を残し、鼓動が 『走ったが書けていない』を名指しする。修正前 FAIL の証拠は assurance/ledger/red/INC-009-audit-write-gap.json。(2) 要約の書き込み失敗を終了コードへ出す件は未着手(所有者判断)。SessionEnd がそもそも発火しない場合の区別も依然つかない",
+      "fix_note": "(1) 発火の印は ADR-119 の hook_session_end_audit/write 印で着地。(2) 要約を書けないときの終了コード 3 は ADR-121 §4 で着地（docs-audit.py:1515 を 2026-08-08 に実在確認）",
       "evidence_refs": [
         "plugin/scripts/docs-audit.py",
         "SessionEnd"
-      ]
+      ],
+      "residual": "SessionEnd 不発火そのものの区別は本事象の範囲外（ASM-001 の機械観測と INC-001 が持つ。NONGOAL 第4項の境界）"
     },
     {
       "id": "INC-010-evaluated-unknown-relisted",
@@ -207,7 +209,7 @@
       "detected_by": "ATTACK_EVALUATOR の注入 A2（本キャンペーンが作った評価器への初めての故障注入。2026-08-06）",
       "attack_design_note": "初回の注入は捏造事象の note に『この事象は実在しない』と書いており、評価器がそれを読んで疑ったため PASS になった。**汚染された PASS** であり安全側の証拠にならない。手掛かりを消して再実行したら FAIL へ反転した。攻撃の設計自体が結論を作る例",
       "root_cause_observed": "照合器(verify_cast_analysis)が確かめるのは『出典が実在するか』であって『事象が実在するか』ではない。ADR-117 の三条件も事象の実在を条件に含まない。したがって捏造事象でも done として閉じられる",
-      "fixed": false,
+      "fixed": true,
       "cast_analysis": "done",
       "evidence": "assurance/ledger/mutations-2026-08-06.json の A2-fabricated-incident",
       "reproduce": "assurance/.venv/bin/python assurance/harness/attack_evaluator.py --only A2",
@@ -217,7 +219,10 @@
       "cast_analyzed_at": "2026-08-06T02:55:47Z",
       "evidence_refs": [
         "assurance/ledger/mutations-2026-08-06.json"
-      ]
+      ],
+      "fix_note": "ADR-121 §3（証拠が確かめられるまで done を認めない）+ ADR-141（積載時点の証拠宣言を validate が機械で検める。PR #261）",
+      "residual": "解決≠実証。実在ファイルを引く捏造は通り得る（意味判断。NONGOAL-001 第1項）。評価器攻撃 A2 が監視（mutations の A2 は 2026-08-06/07 とも PASS）",
+      "next_step": "CLOSE。shipped はリリース 0.11.0 の tag 後に ship_ref を付けて立てる（ADR-144）"
     },
     {
       "id": "INC-014-evaluation-max-turns-marginal",
@@ -260,7 +265,7 @@
       "summary": "事故分析の記録 ledger/cast/*.json は正本に『読まれている』と宣言できるが、読み手 evaluator_outputs_latest が見るのは generated_at だけである。統制欠陥・先行指標・新規 scenario 候補・推奨は、正本にも走らせ手にも一度も入力されない。分析は毎反復買われるが、その中身は次の行動を変えない",
       "detected_by": "ADR-124 の不変条件（台帳の種別ごとに読取経路か理由か）を実装した直後、その検査の限界を測って見つけた（2026-08-06）。種別の粒度では緑になるが、中身の粒度では未接続が残る",
       "impact": "CAST の推奨のうち機構化が要る6件と、P1 の新規仮説3件が、人が読んで手で拾わない限り死ぬ。INC-015 の分析が名指しした『記録は在り、伝達と適用が無い』が、事故分析の成果そのものについても成り立っている",
-      "fixed": false,
+      "fixed": true,
       "shipped": false,
       "pattern_note": "INC-012・INC-015・ADR-124 と同型の四度目。ただし粒度が一段深い —— ファイルは読まれており、読まれていないのは中身である。ADR-124 の検査はこの形を赤にできない（同 ADR の帰結に明記）",
       "cast_analysis": "done",
@@ -274,7 +279,9 @@
       "evidence": "orchestrator.py の evaluator_outputs_latest は cast/*.json から generated_at のみを取る。schemas.py が定める new_scenario_candidates・recommendations を読む箇所は harness 内に無い（grep で 0 件）",
       "cast_analysis_last_status": "UNKNOWN",
       "cast_analysis_ref": "assurance/ledger/cast/INC-016-cast-analysis-content-unread-by-canon.json",
-      "cast_analyzed_at": "2026-08-06T08:59:58Z"
+      "cast_analyzed_at": "2026-08-06T08:59:58Z",
+      "fix_note": "ADR-125（推奨の処遇と読み道）+ ADR-140（新規仮説の取り込み口。PR #260）+ 欠陥・指標の計数を status へ。事故分析の四種（推奨・仮説・欠陥・指標）すべてに正本の読み道が立った",
+      "next_step": "CLOSE。shipped はリリース 0.11.0 の tag 後に ship_ref を付けて立てる（ADR-144）"
     },
     {
       "id": "INC-017-accepted-adr-born-red-is-unfixable",
@@ -391,7 +398,7 @@
       "summary": "常設許可の条件3 は『PR の CI が pass』としか書いておらず、CI が**走れない**状態の扱いを持たない。走れないのは赤ではなく前提欠如であり、体系は状態語彙に UNASSESSED を持ち『前提が欠けたら PASS ではなく UNASSESSED へ倒す』と決めているのに、運転手順のこの経路だけがその区別を持たない",
       "detected_by": "2026-08-06 の GitHub Actions 障害（incident qcvjkzcs7j74・impact critical・15:22:49Z 開始）で PR #233 の CI が二度連続して失敗し、注記が両方とも『The job was not acquired by Runner of type hosted even after multiple attempts』だった。ジョブは一度も実行されていない",
       "impact": "運転者は『赤いまま merge しない』の条項だけを手掛かりに判断する。走らなかった CI を赤と読めば、実行された不適合と実行そのものが成立しなかった状態が同じ顔になる。逆に『実質は緑だから』と読めば門を緩める。どちらへ倒すかの規律が無く、判断が運転者の裁量に落ちる。実際に手元の全門が緑であったため merge への圧力が生じた（merge はしていない）",
-      "fixed": false,
+      "fixed": true,
       "shipped": false,
       "cast_analysis": "done",
       "evidence_kind": "measurement",
@@ -404,7 +411,9 @@
       "residual": "NONGOAL-001 第14項は『継続的結合（CI）の敷設・稼働は検出しない。感知できるのは CI が残した成果物までであり、それは敷設の証跡ではない』と決めている。したがって体系の側で CI の生存を機械的に判ずる道は非目標に触れる。是正は運転手順の側（走れなかったことを UNASSESSED として扱い、何回まで引き直すか・引き直しても走らないときどうするかを定める）に限られる可能性が高い。加えて本件で新たに判った危険がある —— **成功した run の head が PR の head と一致するとは限らない**。手順は『CI が pass』としか書いておらず、どの SHA に対する pass かを照合する義務を持たない",
       "family": "前提が欠けたときに UNASSESSED/DEGRADED へ倒す規律が、その経路にだけ効いていない形。INC-018（監査が .gitignore を git に訊けないとき、その事実を判定へ反映せず木の欠陥として warn を出した）と同型で、粒度が運転手順の側に在る",
       "cast_analysis_ref": "assurance/ledger/cast/INC-022-ci-that-cannot-run-is-read-as-red.json",
-      "cast_analyzed_at": "2026-08-06T23:50:11Z"
+      "cast_analyzed_at": "2026-08-06T23:50:11Z",
+      "fix_note": "ADR-129 merge_gate.py の三値（test_merge_gate 13 試験）+ SHA 一致検査（merge_gate.py:85-92）+ SKILL §7.1-3 の文言を三値へ更新（2026-08-08）",
+      "next_step": "CLOSE。shipped はリリース 0.11.0 の tag 後に ship_ref を付けて立てる（ADR-144）"
     },
     {
       "id": "INC-023-attack-freshness-truncated-to-the-day",
@@ -454,9 +463,9 @@
       "summary": "ADR-130 が『却下した選択肢』の第一項として明記した「索引全体の指紋が変わったら全件を古びさせる」を、実装がそのまま採っていた。coverage_status は assigned_by.index_sha256 を current_index_sha()（索引**全体**の sha256）と比べるので、統治木か配布物のどこか一箇所が動くだけで非終端の判定が全件古びる",
       "detected_by": "反復13の §1 で、直前の反復(PR #249)が plugin/tests のファイルを 1 件足しただけなのに next_actions の先頭が再び MAP_COVERAGE（jerg 76・stpa 32・cast 178＝計 286 件）になったことを不審に思い、ADR-130 の却下した選択肢と current_index_sha の実装を突き合わせたとき（2026-08-07）",
       "impact": "PR #248 直後は三冊とも stale_open が 0 だった。PR #249 が索引に足したのは test_files 1 件（25→26）だけであり、それだけで非終端の 286 件（対応計画あり 260・判定不能 26）が全件古びた。ADR-130 が却下の理由として書いた『606 件が毎コミットで古び、再判定に $12 と数時間かかる。消えない行動になる』が、そのまま現実になっている。実測の単価 $0.048 で 286 件＝約 $13.7・約 95 分が、統治木か配布物を触るあらゆる反復のたびに要求される",
-      "fixed": false,
+      "fixed": true,
       "shipped": false,
-      "fix_note": "未修正。docstring は『assurance/ は索引に含まれないので基盤だけを触る反復では鳴らない』と緩和を述べるが、それが効くのは assurance/ **だけ**を触る反復に限られる。統治木か配布物に触れる反復（＝本務のほとんど）では毎回全件が古びる。直し方（証拠の指す範囲だけで古びを見る／種別ごとの指紋で見る／非終端も数えるだけにして挙げない）は CAST_ANALYSIS の後で決める。判定の意味（何を測ったと言えるか）が変わるので所有者判断を要する可能性が高い",
+      "fix_note": "ADR-134（範囲限定の古び）+ orchestrator.is_stale（PR #251）+ 新規則での取り直し（PR #253）。選別と計数の乖離も ADR-143 で正本へ一本化（PR #259・#262）",
       "cast_analysis": "done",
       "evidence_kind": "measurement",
       "evidence_refs": [
@@ -466,7 +475,8 @@
         "plugin/tests/test_termcheck_corpus.py"
       ],
       "cast_analysis_ref": "assurance/ledger/cast/INC-025-adr-130-implemented-the-option-it-rejected.json",
-      "cast_analyzed_at": "2026-08-07T17:05:46Z"
+      "cast_analyzed_at": "2026-08-07T17:05:46Z",
+      "next_step": "CLOSE。shipped はリリース 0.11.0 の tag 後に ship_ref を付けて立てる（ADR-144）"
     },
     {
       "id": "INC-026-accepted-adr-has-no-sanctioned-repair-path",

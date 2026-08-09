@@ -1,0 +1,3882 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "candidate-triage",
+  "date": "2026-08-08",
+  "git_sha": "19c0f8e7c92bc2ad980714cfe92776e70921505f",
+  "boundary": "doctrine（Markdown の統治木を Hook・リンタ・監査・技能・CI で統治するプラグイン）と、その保証レーン。統制構造の要素は OWNER, CI_RELEASE_CHECK, SESSION_START_CONTRACT, HEARTBEAT, PRE_TOOL_GUARD, POST_TOOL_LINTER, SESSION_END_AUDIT, CAPTURE_NUDGE, PLUGIN_DISTRIBUTION, ASSURANCE_LANE, GOVERNANCE_TREE",
+  "scenarios": [
+    {
+      "scenario_id": "SCN-N01-audit-output-path-divergence-across-versions",
+      "source_candidate": "INC-001-sessionend-audit-gap#0",
+      "normative_refs": [
+        "楽観仮定の禁止",
+        "control-action-requires-feedback",
+        "complete-inadequate-feedback-reason",
+        "item-set-completeness-and-version-check"
+      ],
+      "system_boundary": "SESSION_END_AUDIT（docs-audit）が生成する last-audit.json と、それを鮮度判定に用いる HEARTBEAT／ASSURANCE_LANE。PLUGIN_DISTRIBUTION により配置された導入複製 0.7.0 と現行 0.10.0 の双方を含む。",
+      "loss": "統治木が実際には監査されていないまま、保証レーンの表示だけを根拠に運用と配布が継続し、統治違反が検出されずに利用者へ流出する。",
+      "hazard": "保証レーンが、当該セッションで監査成果物が判定側の読み取り先に到達していない状態にあるにもかかわらず、到達済みの場合と同じ観測値を保持している。",
+      "unsafe_control_action": "SESSION_END_AUDIT が、出力先の解決結果が鮮度判定側の読み取り先と一致しない、または書き込みに失敗している文脈（真の状態：判定側パスの成果物は更新されていない）で、成果物の非到達をフィードバックせずに終了する。",
+      "event_sequence": [
+        "PLUGIN_DISTRIBUTION により 0.7.0 が導入複製として配置される",
+        "SessionEnd で docs-audit が起動し、その版の規則で出力先パスを解決する",
+        "解決された出力先が現行の鮮度判定側の読み取りパスと異なる、または書き込みが失敗する",
+        "プロセスは終了コード 0 で終了し、ログにも記録を残さない",
+        "HEARTBEAT は判定側パスの mtime を読み、更新なしを異常でなく沈黙として扱う",
+        "監査が実行されていない状態のまま、保証レーンが健全と同じ表示を続ける"
+      ],
+      "fault": "出力先パス決定規則の版間差分、および書き込み失敗時の非ゼロ終了・ログ出力の欠如（失敗の黙殺）。",
+      "injection_point": "隔離環境に配置した 0.7.0 の docs-audit.py の出力先解決処理と書き込み処理（書き込み先を読み取り専用にして失敗を注入する）。",
+      "expected_safe_behavior": "監査成果物の書き込み先は鮮度判定側の読み取り先と一致しなければならない。一致しない場合または書き込みに失敗した場合は、非ゼロ終了しログに記録し、鮮度判定側が『未到達』を明示の異常として表示しなければならない。",
+      "oracle": "(1) 導入複製 0.7.0 の docs-audit.py を読み、出力先パスの決定規則と書き込み失敗時の終了コード・ログ出力の有無を特定する。(2) 同版を隔離環境で実行し、実際に書かれた絶対パスと終了コードを観測する。(3) 現行 0.10.0 の鮮度判定が読むパスと突合する。(4) 出力先を書き込み不能にした状態で再実行し、終了コードとログ出力を観測する。",
+      "falsification_signal": "0.7.0 が現行と同一のパスへ書き、かつ書き込み失敗時に非ゼロ終了してログを残すことが観測されれば、この経路は反証される。",
+      "severity": "P0",
+      "confidence": "medium",
+      "versions": [
+        "0.7.0",
+        "0.10.0"
+      ],
+      "environments": [
+        "隔離実行環境（導入複製の複写）"
+      ],
+      "preconditions": [
+        "導入複製 0.7.0 の実体が入手可能であること",
+        "現行 0.10.0 の鮮度判定が読むパスが特定できること"
+      ],
+      "recheck_triggers": [
+        "docs-audit の出力先決定規則の変更",
+        "last-audit.json の配置先変更",
+        "導入複製の版更新"
+      ],
+      "residual_risk": "SCN-D01（異常終了時の不達）と機序の一部（黙って終了する経路）が重なる。ここでは版間のパス乖離を主機序として切り出しているが、批判側で同一と判断されれば D01 に統合されうる。"
+    },
+    {
+      "scenario_id": "SCN-N02-unknown-classification-closes-ledger-entry",
+      "source_candidate": "INC-003-sdk-error-opacity#0",
+      "normative_refs": [
+        "楽観仮定の禁止",
+        "verification-requires-objective-evidence",
+        "every-question-answered-or-declared-unanswerable",
+        "安全立証でなく非安全状態の探索"
+      ],
+      "system_boundary": "ASSURANCE_LANE の評価実行と台帳エントリの状態遷移（分類器出力 → エントリ開閉 → 後続行動の可否判定）。",
+      "loss": "評価が成立していない実行が『評価実施済み』として集計され、未検証の変更が保証済みとして配布される。",
+      "hazard": "保証レーンが、当該実行の合否が未確定である状態にあるにもかかわらず、評価が完了した場合と同じ台帳状態を保持している。",
+      "unsafe_control_action": "ASSURANCE_LANE が、分類器の出力が UNKNOWN である文脈（真の状態：当該実行の合否は判定されていない）で、台帳エントリを閉状態へ遷移させ後続行動を許可する。",
+      "event_sequence": [
+        "評価実行が SDK 側の不透明な失敗を返す",
+        "分類器が当該実行を UNKNOWN に分類する",
+        "台帳書き込み処理が UNKNOWN を『評価は行われた』として扱う",
+        "エントリが閉状態になり、集計上は評価済みとして数えられる",
+        "後続の行動（リリース判定・次段の進行）が通常どおり許可される"
+      ],
+      "fault": "分類結果 UNKNOWN を強制する注入（分類器の返り値を UNKNOWN 固定にする）。",
+      "injection_point": "評価実行の分類段（分類器の出力）と、その出力を受ける台帳エントリ開閉処理の境界。",
+      "expected_safe_behavior": "分類が UNKNOWN の場合、台帳エントリは未閉のまま残り、判定不能として明示され、後続の行動は停止側に倒れなければならない。",
+      "oracle": "UNKNOWN 分類を注入した評価実行の後、(a) 当該台帳エントリの状態フィールドが未閉のままか、(b) 評価済み件数の分母／分子にどう数えられたか、(c) 後続行動（リリース判定など）が停止したか通過したかを観測する。",
+      "falsification_signal": "注入後もエントリが未閉のまま残り、判定不能として表示され、後続行動が停止側に倒れるならば、この経路は存在せず仮説は反証される。",
+      "severity": "P0",
+      "confidence": "medium",
+      "recheck_triggers": [
+        "分類器の分類語彙の変更",
+        "台帳エントリ状態機械の変更"
+      ]
+    },
+    {
+      "scenario_id": "SCN-N03-legacy-schema-silently-disables-staleness-check",
+      "source_candidate": "INC-005-installed-plugin-version-lag#0",
+      "normative_refs": [
+        "楽観仮定の禁止",
+        "completeness-presence-and-version",
+        "complete-inadequate-feedback-reason",
+        "監査のすり抜け時に監査手順を是正"
+      ],
+      "system_boundary": "HEARTBEAT（gov-heartbeat.py）が last-audit.json を入力として行う古び判定・版遅れ判定と、その結果のセッション開始時表示（SESSION_START_CONTRACT）。",
+      "loss": "古びた監査結果と版遅れが警告されないまま運用が続き、統治木の劣化が損失発生まで表面化しない。",
+      "hazard": "保証レーンが、古び・版遅れの判定が実施されていない状態にあるにもかかわらず、判定が実施され合格した場合と同じ観測値を保持している。",
+      "unsafe_control_action": "HEARTBEAT が、入力 last-audit.json が現行スキーマで解釈できない文脈（真の状態：古び・版遅れの判定材料が得られていない）で、警告も判定不能表示も発しない。",
+      "event_sequence": [
+        "0.7.0 が生成した旧形式の last-audit.json が残存する",
+        "0.10.0 の gov-heartbeat.py が起動し当該ファイルを読む",
+        "期待するキーが存在せず、既定値や早期 return により判定分岐に到達しない",
+        "例外も発生せず、警告も出力されない",
+        "セッション開始時の表示は警告なしとなり、利用者は判定合格と区別できない"
+      ],
+      "fault": "入力スキーマ差（旧形式 last-audit.json）による判定分岐の無音スキップ。",
+      "injection_point": "HEARTBEAT の入力ファイル（旧形式 last-audit.json を配置する）。",
+      "expected_safe_behavior": "解釈できない入力を受けた場合、HEARTBEAT は『判定不能』を明示し非ゼロ終了またはセッション開始時の警告表示を行い、沈黙を合格と区別できるようにしなければならない。",
+      "oracle": "0.7.0 が生成した旧形式 last-audit.json を 0.10.0 の gov-heartbeat.py に入力し、(a) 標準出力／標準エラーへの警告有無、(b) 終了コード、(c) セッション開始時の利用者向け表示の内容を観測する。対照として現行形式の入力でも同じ 3 点を観測し差分を取る。",
+      "falsification_signal": "旧形式入力に対して明示の警告または『判定不能』の出力が現れれば、この経路は反証される。",
+      "severity": "P0",
+      "confidence": "medium",
+      "versions": [
+        "0.7.0",
+        "0.10.0"
+      ],
+      "recheck_triggers": [
+        "last-audit.json のスキーマ変更",
+        "gov-heartbeat.py の入力解析処理の変更"
+      ],
+      "residual_risk": "SCN-D02（古い入力による鮮度の偽装）と結果状態が近い。D02 が『偽の合格』であるのに対し本件は『判定の無音スキップ』であり、機序の差が批判で否定されれば D02 に統合されうる。"
+    },
+    {
+      "scenario_id": "SCN-N04-detector-and-detected-share-version-common-cause",
+      "source_candidate": "INC-005-installed-plugin-version-lag#1",
+      "normative_refs": [
+        "共通の体系的要因による多重防護の無効化",
+        "systemic-cause-across-all-events",
+        "item-set-completeness-and-version-check",
+        "供給要素の変更を利用者へ通知"
+      ],
+      "system_boundary": "PLUGIN_DISTRIBUTION により配置された導入済み版の HEARTBEAT が、その導入済み版自身の版遅れを検出する構成（検出器と被検出対象が同一配布単位に同居）。",
+      "loss": "版遅れの導入複製が長期間そのまま使われ、以後に追加された統制（版遅れ検出を含む）が一切効かない状態で保証が継続する。",
+      "hazard": "体系が、導入済み配布物が要求版より古い状態にあるにもかかわらず、版の整合が取れている場合と同じ観測値を保持している。",
+      "unsafe_control_action": "HEARTBEAT（導入済み版の実体）が、導入済み版が版遅れ検出機能の導入以前である文脈（真の状態：要求版より古い）で、版遅れ警告を発しない。",
+      "event_sequence": [
+        "0.7.0 が導入複製として配置される",
+        "以後のリリースで ADR-070 に基づく版遅れ検出が HEARTBEAT に追加される",
+        "導入複製は更新されず、実行されるのは 0.7.0 の HEARTBEAT である",
+        "0.7.0 の実体には版遅れ判定コードが存在しないため警告は発生しない",
+        "版遅れは、更新が行われるまでどの経路からも観測されない"
+      ],
+      "fault": "検出器そのものが被検出対象と同一の配布単位に含まれることによる共通原因故障（検出機能の欠落）。",
+      "injection_point": "導入複製の版（隔離環境に 0.7.0 の実体を配置し、要求版を 0.10.0 とする）。",
+      "expected_safe_behavior": "版遅れの検出は、被検出対象と同時に古びない位置（導入複製の外側、または版に依存しない起動経路）で行われ、検出器が存在しない版であっても版遅れが観測可能でなければならない。",
+      "oracle": "(1) git 履歴で gov-heartbeat.py への版遅れ判定コードの導入コミットと 0.7.0 タグの前後関係を確認する。(2) 導入複製 0.7.0 の gov-heartbeat.py の実体を読み、版遅れ判定コードの有無を確認する。(3) 存在しない場合、要求版を 0.10.0 とした隔離環境で 0.7.0 実体を実行し、警告が出ないことを観測する。",
+      "falsification_signal": "0.7.0 の実体に版遅れ判定コードが存在すれば、機序は『検出器の欠落』ではなく『発火条件の設計』に移り、この仮説は反証される。",
+      "severity": "P0",
+      "confidence": "high",
+      "versions": [
+        "0.7.0",
+        "0.10.0"
+      ],
+      "recheck_triggers": [
+        "版遅れ検出の実装位置の変更",
+        "導入複製の更新機構の変更"
+      ]
+    },
+    {
+      "scenario_id": "SCN-N05-hook-crash-indistinguishable-from-success",
+      "source_candidate": "INC-007-linter-nameerror-field-report#1",
+      "normative_refs": [
+        "指示は必ず従われるとは限らない",
+        "control-action-requires-feedback",
+        "全コントロールループにフィードバック必須",
+        "楽観仮定の禁止"
+      ],
+      "system_boundary": "POST_TOOL_LINTER（フックスクリプト）の実行と、その結果を受け取るはずの ASSURANCE_LANE／SESSION_END_AUDIT／HEARTBEAT のフィードバック経路。",
+      "loss": "検査が一切行われていない状態で編集が継続し、統治木の違反が蓄積したまま配布される。",
+      "hazard": "統治木が、リンタによる検査が実施されていない状態にあるにもかかわらず、検査が実施され違反なしであった場合と同じ観測値を保持している。",
+      "unsafe_control_action": "体系（ASSURANCE_LANE・SESSION_END_AUDIT・HEARTBEAT）が、POST_TOOL_LINTER が例外により異常終了している文脈（真の状態：検査結果は存在しない）で、異常表示も未検査表示も出さない。",
+      "event_sequence": [
+        "リンタスクリプトが起動直後に例外を送出する版に置き換わる",
+        "編集操作のたびにフックが起動し、毎回異常終了する",
+        "異常終了は呼び出し側で正常終了と同じ扱いになる",
+        "台帳・監査要約・鼓動のいずれにも異常が記録されない",
+        "24 時間経過しても未検査であることが誰からも観測できない"
+      ],
+      "fault": "フックスクリプトの異常終了（例外送出）と、終了状態を区別しないフィードバック経路。",
+      "injection_point": "試験環境の複製に配置した POST_TOOL_LINTER スクリプト（起動直後に例外を送出する版）。",
+      "expected_safe_behavior": "フックが異常終了した場合、体系は当該操作を『未検査』として記録し、台帳・監査要約・鼓動のいずれかで 24 時間以内に観測可能な異常として提示しなければならない。",
+      "oracle": "試験環境の複製に例外送出版リンタを配置し、通常の編集操作を一定回数行ったうえで、24 時間以内に (a) assurance/ledger/ のエントリ、(b) 監査要約、(c) 鼓動出力のいずれかに異常が現れるかを、各経路の観測時刻と内容つきで記録する。",
+      "falsification_signal": "いずれかの経路で異常が表示されれば、この仮説は棄却される。",
+      "severity": "P0",
+      "confidence": "medium",
+      "environments": [
+        "試験環境の複製（本番の統治木には書き込まない）"
+      ],
+      "recheck_triggers": [
+        "フック実行基盤の終了状態の扱いの変更",
+        "監査要約・鼓動の出力項目の変更"
+      ],
+      "residual_risk": "SCN-D01（SessionEnd の異常終了時不達）と『沈黙が正常と区別できない』という型を共有する。本件は POST_TOOL_LINTER を対象とし、24 時間の観測窓を持つ点で切り分けている。"
+    },
+    {
+      "scenario_id": "SCN-N07-whole-file-writeback-lost-update",
+      "source_candidate": "INC-008-ledger-write-back-clobber#1",
+      "normative_refs": [
+        "楽観仮定の禁止",
+        "verify-decomposition-assumptions",
+        "item-set-completeness-and-version-check",
+        "試験条件の記録と再現性"
+      ],
+      "system_boundary": "assurance/ledger/ への書き込み処理（対象 id の更新がファイル全体の直列化と書き戻しを伴う実装）と、それを同時に呼ぶ複数の分析セッション。",
+      "loss": "記帳したはずの分析結果が失われ、保証レーンの記録が実際に行われた分析より少なくなる。",
+      "hazard": "台帳が、記帳された分析結果を欠いた状態にあるにもかかわらず、書き込みが成功した場合と同じ観測値を保持している。",
+      "unsafe_control_action": "台帳書き込み制御が、他プロセスが同一ファイルを同時に更新している文脈（真の状態：直列化されていない）で、自身の読み取り時点のスナップショットに基づく全体書き戻しを実行する。",
+      "event_sequence": [
+        "分析 A と分析 B がそれぞれ異なる id を対象に書き込みを開始する",
+        "両者が台帳ファイル全体を読み取る（修正後の再読取を含む）",
+        "A が自分の更新を反映した全体を書き戻す",
+        "B が自分の読み取り時点の内容に自分の更新を加えて書き戻す",
+        "A の更新が最終ファイルから消え、いずれのプロセスもエラーを観測しない"
+      ],
+      "fault": "排他制御（ファイルロックまたはアトミック rename）の欠如による Lost Update。",
+      "injection_point": "台帳書き込み処理を呼ぶ二プロセスの同時実行（異なる id を対象とする）。",
+      "expected_safe_behavior": "同時書き込みはファイルロックまたはアトミック rename により直列化され、異なる id を対象とする更新は両方とも最終台帳に残らなければならない。残せない場合は書き込み側がエラーを返さなければならない。",
+      "oracle": "異なる id を対象とする書き込みを二プロセスで同時実行し、両方の更新が最終台帳に残るかを 100 回試行して欠落件数を数える。併せて実装に flock / O_EXCL / os.replace 等の直列化手段が存在するかをコードで確認する。試験環境と対象コミットを記録する。",
+      "falsification_signal": "ファイルロックまたはアトミック rename による直列化が実装されており、100 回試行で欠落が 0 件であれば棄却される。",
+      "severity": "P0",
+      "confidence": "high",
+      "recheck_triggers": [
+        "台帳書き込み処理の実装変更",
+        "台帳の保存形式（単一ファイル／分割）の変更"
+      ]
+    },
+    {
+      "scenario_id": "SCN-N08-partial-fabrication-passes-reference-resolution",
+      "source_candidate": "INC-013-cast-analysis-accepts-fabricated-incident#0",
+      "normative_refs": [
+        "源泉情報の適切性確認",
+        "文書情報の完全性確認",
+        "verification-objective-evidence",
+        "未回答の質問を明示保持"
+      ],
+      "system_boundary": "事故分析（CAST）工程の入力受理と、記述中の機構名を統治木・コードベースへ解決する参照解決チェック、および ASSURANCE_LANE への受け渡し。",
+      "loss": "実在しない機構を前提にした分析結果が保証レーンに記帳され、実在する統制の欠陥が隠れたまま是正資源が架空の対象へ向かう。",
+      "hazard": "保証レーンが、受理した分析が実在しない統制要素を含む状態にあるにもかかわらず、全要素の実在が確認された場合と同じ観測値を保持している。",
+      "unsafe_control_action": "分析工程が、記述中の機構名の一部が統治木・コードベースに解決されない文脈（真の状態：当該機構は存在しない）で、当該名を unknowns に挙げず confidence も下げないまま分析を成立させる。",
+      "event_sequence": [
+        "実在機構 8 割・実在しない機構 1 つで構成した事象記述が入力される",
+        "分析工程は全体の整合性から記述を実在の事象として受理する",
+        "参照解決チェックが未導入または全体一致のみを見るため、単一の未解決名が埋没する",
+        "当該機構名が unknowns に現れず confidence も high のままとなる",
+        "架空の機構を含む分析が下流の記帳・是正へ流れる"
+      ],
+      "fault": "部分捏造（実在機構に混ぜた 1 個の非実在機構名）の注入。",
+      "injection_point": "事故分析工程の入力（事象記述テキスト）。",
+      "expected_safe_behavior": "分析工程は記述中の各機構名を統治木・コードベースへ個別に解決し、解決できない名を unknowns に個別列挙し、confidence を low に落とさなければならない。",
+      "oracle": "実在機構 8 割・捏造機構 1 つで構成した事象を注入し、出力の unknowns 一覧に当該機構名が個別に現れるか、confidence が low になるかを観測する。対照として全機構が捏造の記述も注入し、両者の検出率を比較する。",
+      "falsification_signal": "当該機構名が unknowns に明示的に現れ、confidence が low になれば、この仮説は棄却される。",
+      "severity": "P0",
+      "confidence": "medium",
+      "recheck_triggers": [
+        "参照解決チェックの導入・変更",
+        "分析工程の unknowns 出力仕様の変更"
+      ]
+    },
+    {
+      "scenario_id": "SCN-N09-nonrandom-missingness-biases-assurance",
+      "source_candidate": "INC-014-evaluation-max-turns-marginal#4",
+      "normative_refs": [
+        "report-derived-statistics-bias",
+        "検証実施事実の全件登録",
+        "自発報告のみによる評価の禁止",
+        "要約統計偏重による傾向情報の喪失"
+      ],
+      "system_boundary": "ASSURANCE_LANE の評価実行（注入 → 実行 → 観測記録 → 集計）と、その集計を根拠とする保証の結論。",
+      "loss": "特定種別の注入に対する弱点が集計から系統的に消え、保証の結論が実態より良い方向へ偏る。",
+      "hazard": "保証レーンが、注入種別ごとに観測が系統的に欠落した状態にあるにもかかわらず、全種別を等しく評価した場合と同じ観測値を保持している。",
+      "unsafe_control_action": "ASSURANCE_LANE が、欠測が注入種別と相関している文脈（真の状態：欠測はランダムでない）で、欠測を除外した集計値をそのまま保証の結論として提示する。",
+      "event_sequence": [
+        "各注入種別について評価実行が行われる",
+        "一部の実行が上限到達等により観測を残さず終了する",
+        "欠測した実行は集計の分母からも落ちる",
+        "欠測しやすい種別の結果が結論に反映されない",
+        "全種別を等しく評価したかのような集計値が保証の結論として提示される"
+      ],
+      "fault": "評価実行の欠測が注入の性質と相関する（非ランダム欠測）。",
+      "injection_point": "評価実行の観測記録段（注入種別ごとの実行結果の記録有無）。",
+      "expected_safe_behavior": "評価実行は結果の良否・完了可否によらず実施事実を全件登録し、集計時には欠測率を種別ごとに提示し、欠測が種別と相関する場合は結論を保留しなければならない。",
+      "oracle": "過去の全評価実行について注入種別ごとの欠測率を集計し、種別間の一様性を検定（例：χ² 検定またはフィッシャー正確確率検定）し、各種別の欠測率・件数・p 値を記録する。",
+      "falsification_signal": "種別間で欠測率に差が無く（検定で有意差なし、かつ十分な検出力がある試行数）、欠測が種別と独立であればこの仮説は棄却される。",
+      "severity": "P0",
+      "confidence": "medium",
+      "recheck_triggers": [
+        "評価実行の上限設定の変更",
+        "注入種別の追加",
+        "評価実行件数が有意に増加したとき"
+      ],
+      "residual_risk": "試行数が少ない場合は検出力不足で『差なし』が出る。棄却時は検出力も併記しなければ反証として成立しない。SCN-D07（分母汚染）と結論の偏りという結果を共有するが、機序は分母定義でなく観測の欠落である。"
+    },
+    {
+      "scenario_id": "SCN-N10-owner-attribution-restored-by-miscited-type",
+      "source_candidate": "INC-020-evaluator-blindness-read-as-owner-authority#2",
+      "normative_refs": [
+        "verification-objective-evidence",
+        "責任の実行有無を判定する",
+        "分析出力の客観性を僭称しない",
+        "楽観仮定の禁止"
+      ],
+      "system_boundary": "CAST 分析における OWNER 帰属の処遇行生成（評価者の視野 → 六類型の名指し → owner 成立判定）と、ADR-127 適用後の成立件数集計。",
+      "loss": "owner 帰属が誤った類型に基づいて成立し、実際の責任所在が特定されないまま是正が空振りする。",
+      "hazard": "保証レーンが、owner 帰属の根拠が統治木の既決と一致しない状態にあるにもかかわらず、根拠が妥当な帰属が成立した場合と同じ観測値を保持している。",
+      "unsafe_control_action": "評価者が、視野が統治木の既決に及んでいない文脈（真の状態：当該事象に対応する類型は既決上は別のものである）で、六類型のいずれかを名指す処遇行を書き owner 成立とする。",
+      "event_sequence": [
+        "ADR-127 により既定の類型が廃止される",
+        "評価者の視野（参照する統治木の範囲）は従来のままである",
+        "評価者は成立要件を満たすため六類型のいずれかを名指す",
+        "名指した類型が既決と一致しないまま owner 行が成立する",
+        "owner 成立件数が申告件数に追随して元の水準へ戻る"
+      ],
+      "fault": "既定廃止に対し評価者の参照範囲が変わらないことによる、誤った類型名指しでの成立要件の充足。",
+      "injection_point": "CAST 分析の owner 処遇行生成段（評価者に与えられる参照範囲と成立要件）。",
+      "expected_safe_behavior": "名指した類型が統治木の既決と照合できない場合、owner 行は成立せず、判定不能として残らなければならない。",
+      "oracle": "ADR-127 適用後の CAST 分析について、成立した owner 行が名指した類型を統治木の既決に照らして独立の第三者が再裁定し、(a) 誤名指しの割合、(b) 適用前後の owner 成立件数と申告件数の推移を測る。",
+      "falsification_signal": "成立した owner 行の類型名指しが再裁定でいずれも妥当と判定されれば、この仮説は棄却される。",
+      "severity": "P0",
+      "confidence": "medium",
+      "recheck_triggers": [
+        "ADR-127 の運用変更",
+        "六類型の定義変更",
+        "評価者の参照範囲の拡張"
+      ]
+    },
+    {
+      "scenario_id": "SCN-N11-delayed-webhook-headsha-mismatch",
+      "source_candidate": "INC-022-ci-that-cannot-run-is-read-as-red#0",
+      "normative_refs": [
+        "context-not-belief",
+        "process-model-inconsistency-causes-unsafe-control",
+        "設計上と実際の伝達経路の照合",
+        "楽観仮定の禁止"
+      ],
+      "system_boundary": "CI_RELEASE_CHECK が参照する run 状態（webhook 経由で到着）と、PR の現行 head（headRefOid）との対応付け、およびそれに基づくリリース可否判定。",
+      "loss": "現行 head を検証していない run の結論に基づいてリリース可否が決まり、未検証の変更が配布されるか、正常な変更が不当に阻止される。",
+      "hazard": "リリース判定が、PR の現行 head に対する検証結果が存在しない状態にあるにもかかわらず、現行 head が検証された場合と同じ観測値を保持している。",
+      "unsafe_control_action": "CI_RELEASE_CHECK が、参照する run の headSha が PR の headRefOid と一致しない文脈（真の状態：当該 run は別の commit を検証している）で、その run の結論をリリース可否判定へ入力する。",
+      "event_sequence": [
+        "PR に新しい commit が push され headRefOid が更新される",
+        "先行 commit に対する run の完了通知が遅延して到着する",
+        "判定側は到着した run の結論を現行 head のものとして取り込む",
+        "headSha と headRefOid の突合が行われないため不一致が観測されない",
+        "現行 head を検証していない結論でリリース可否が決まる"
+      ],
+      "fault": "webhook の到着遅延による run と PR head の対応ずれ（フィードバックの時間的不整合）。",
+      "injection_point": "CI_RELEASE_CHECK の入力（run 完了イベントの到着タイミングと、参照する run の選択）。",
+      "expected_safe_behavior": "判定に用いる run は headSha が PR の headRefOid と一致するものに限り、一致する run が存在しない場合は『未検証』として停止側に倒れなければならない。",
+      "oracle": "一定期間の PR を対象に、遅延到着した run（イベント到着時刻と run 作成時刻の差が閾値を超えるもの）を抽出し、各 run の headSha とその到着時点の PR headRefOid を API で突き合わせ、不一致の件数と不一致率を記録する。",
+      "falsification_signal": "遅延到着した全ての success run で headSha が PR head と一致すれば、この危険は #234 固有の事情に帰し、仮説は反証される。",
+      "severity": "P0",
+      "confidence": "medium",
+      "environments": [
+        "GitHub（対象リポジトリの PR / run 履歴）"
+      ],
+      "recheck_triggers": [
+        "CI 通知経路の変更",
+        "判定側の run 選択ロジックの変更"
+      ]
+    },
+    {
+      "scenario_id": "SCN-N12-false-negative-in-suppression-predicates",
+      "source_candidate": "INC-023-attack-freshness-truncated-to-the-day#4",
+      "normative_refs": [
+        "共通の体系的要因による多重防護の無効化",
+        "systemic-cause-across-all-events",
+        "review-all-na-entries",
+        "安全立証でなく非安全状態の探索"
+      ],
+      "system_boundary": "CAPTURE_NUDGE・HEARTBEAT・SESSION_START_CONTRACT などで『ある行動を挙げない』と決める全ての述語（実施済み・対象外・鮮度充足の判定）と、その判定に基づく提示抑止。",
+      "loss": "提示されるべき行動が提示されず、必要な統治操作が実施されないまま損失に至る。",
+      "hazard": "体系が、提示すべき行動が存在する状態にあるにもかかわらず、提示不要である場合と同じ観測値を保持している。",
+      "unsafe_control_action": "抑止述語が、『実施済み』判定が真を返す境界入力（日付の切り捨て、空集合、解析失敗、型不一致など）の文脈（真の状態：当該行動は未実施）で、行動を提示しない。",
+      "event_sequence": [
+        "ある行動の提示要否が抑止述語により判定される",
+        "入力が境界条件（切り捨て後に同値となる日時、空の記録、解析不能な値など）に該当する",
+        "述語が『実施済み』または『対象外』として真を返す",
+        "行動は提示されず、抑止された事実も記録されない",
+        "未実施のまま次のセッションでも同じ抑止が繰り返される"
+      ],
+      "fault": "抑止述語の偽陰性（安全側でなく抑止側に倒れる境界処理）。INC-012・INC-023 と同族の第三の実例。",
+      "injection_point": "各抑止述語の入力（境界日時、空・欠損値、型不一致値を与える単体試験）。",
+      "expected_safe_behavior": "抑止述語は判定材料が不足・境界・解析不能な場合には提示側（安全側）に倒れ、抑止した場合はその根拠が観測可能に記録されなければならない。",
+      "oracle": "『ある行動を挙げない』と決める全述語を列挙して一覧として記録し、各述語について偽陰性を生む入力（境界日時、空集合、欠損、型不一致）を構成する試験を書き、実際に抑止が起きるか提示側に倒れるかを観測する。列挙の網羅根拠（探索範囲と検索条件）も併せて記録する。",
+      "falsification_signal": "列挙した全述語について偽陰性を作る入力が構成できず、全ての境界入力で提示側に倒れれば、この仮説は棄却される。",
+      "severity": "P0",
+      "confidence": "low",
+      "recheck_triggers": [
+        "新しい抑止述語の追加",
+        "日時・鮮度判定の実装変更"
+      ],
+      "residual_risk": "述語の列挙自体が網羅できない可能性があり、『構成できない』という反証は列挙範囲に対してのみ成立する。反証時は列挙範囲を明示しなければ族の否定にはならない。"
+    },
+    {
+      "scenario_id": "SCN-P02-version-lag-extends-to-guard-and-linter",
+      "source_candidate": "INC-001-sessionend-audit-gap#2",
+      "normative_refs": [
+        "completeness-presence-and-version",
+        "item-set-completeness-and-version-check",
+        "無許可コンポーネントの混入防止",
+        "手順の存在確認でなく適用確認"
+      ],
+      "system_boundary": "PLUGIN_DISTRIBUTION が配る導入複製と、その複製上で動作する PRE_TOOL_GUARD・POST_TOOL_LINTER・SESSION_END_AUDIT。正本リポジトリ側の規則定義は境界内、利用者のエディタ操作は環境入力。",
+      "loss": "正本の規則では拒否されるはずの編集が統治木へ入り、以後の分析・監査がその編集を前提に積み上がる。",
+      "hazard": "導入複製が実際に強制している規則集合と、正本が宣言している規則集合が乖離した状態でシステムが運用されている。",
+      "unsafe_control_action": "PRE_TOOL_GUARD が、正本規則では禁止される編集要求に対して、複製側が旧版規則しか保持していないコンテキストで拒否のコントロールアクションを与えない（POST_TOOL_LINTER も同コンテキストで助言を与えない）［上記ハザード］。",
+      "event_sequence": [
+        "導入複製が 0.7.0 のまま更新されずに使用される",
+        "正本側で policy-guard.py / docs-linter.py の規則が改訂される",
+        "利用者が新規則でのみ拒否・指摘される編集を統治木へ加える",
+        "複製側の旧規則が通過させ、編集がコミットされる",
+        "版遅れの影響が『監査の不実行だけ』と見積もられているため、当該編集は再点検の対象に入らない"
+      ],
+      "fault": "版遅れが単一の配布単位で起きるため、監査・拒否・助言の三系統が同一の共通原因で同時に旧世代化する。",
+      "injection_point": "0.7.0 の複製を導入した環境で、現行規則差分に由来する編集（新規則でのみ拒否／指摘される内容）を PreToolUse・PostToolUse 経路へ投入する。",
+      "expected_safe_behavior": "複製側の規則版が正本と異なる場合、拒否・助言の各系統は動作前に版不一致を検出し、旧規則で通過させた事実を記録するか動作を保留する。",
+      "oracle": "0.7.0 と現行の policy-guard.py・docs-linter.py の規則差分を機械的に抽出し、差分により判定が変わる編集集合を構成する。その集合を当該期間の統治木コミットに照合し、旧規則でのみ通過し得た編集の件数を数える。",
+      "falsification_signal": "当該期間の版間で policy-guard.py・docs-linter.py に規則差分が 0 件（差分が監査系のみ）であれば、影響は監査の不実行に限定され、本 scenario は棄却される。",
+      "preconditions": [
+        "導入複製と正本の版が期間中に乖離していたことが構成情報から確認できる"
+      ],
+      "versions": [
+        "0.7.0",
+        "当該期間の正本 HEAD"
+      ],
+      "severity": "P1",
+      "confidence": "medium",
+      "recheck_triggers": [
+        "配布単位の分割（規則と監査の別配布化）",
+        "policy-guard.py / docs-linter.py の規則表の外部化"
+      ]
+    },
+    {
+      "scenario_id": "SCN-P03-substring-false-positive-across-term-table",
+      "source_candidate": "INC-002-termcheck-ascii-substring#0",
+      "normative_refs": [
+        "test-spec-unambiguous",
+        "安全立証でなく非安全状態の探索",
+        "楽観仮定の禁止"
+      ],
+      "system_boundary": "POST_TOOL_LINTER 内の termcheck（禁止同義語表と照合器）と、その指摘を受け取る GOVERNANCE_TREE の編集者。語彙表そのものは境界内。",
+      "loss": "正当な語を含む記述が違反として指摘され、著者が正しい記述を書き換える、または指摘全体を無視する習慣が定着し、真の違反も通過する。",
+      "hazard": "リンタの出力が、統治木の実状態と対応しない指摘を含む状態でシステムが運用されている。",
+      "unsafe_control_action": "POST_TOOL_LINTER が、正当語が禁止語を部分文字列として含むだけのコンテキストで違反指摘のコントロールアクションを与える［上記ハザード］。",
+      "event_sequence": [
+        "禁止同義語表に、正当語の部分文字列となる語が登録されている",
+        "著者が当該正当語を含む記述を統治木へ書く",
+        "照合器が語境界を見ずに部分一致で検出する",
+        "違反指摘が出力され、著者が記述を歪めるか指摘を無視する"
+      ],
+      "fault": "照合が語境界を伴わない部分文字列一致であり、誤検知が語彙表の特定語ではなく表全体の性質として残存している。",
+      "injection_point": "語彙表の全禁止語について、統治木に実在する語彙から当該語を部分文字列に含む正当語を抽出・合成し、termcheck の入力として与える。",
+      "expected_safe_behavior": "禁止語が正当語の内部に現れるだけの入力に対しては指摘を出さず、語境界を伴う出現に対してのみ指摘する。",
+      "oracle": "語彙表の全語について反例集合（当該語を部分文字列に含む実在正当語）を生成して termcheck に通し、語ごとの誤検出件数の表を出力する。1 件でも誤検出があれば残存が示される。",
+      "falsification_signal": "生成した全反例で検出が発生しなければ、残存は無いとして棄却する（ただし反例生成が実在語彙のみから行われたことを併記する）。",
+      "preconditions": [
+        "統治木から実在語彙を機械抽出できる"
+      ],
+      "severity": "P1",
+      "confidence": "high",
+      "residual_risk": "反例が実在語彙由来に限定されるため、将来語彙で成立する誤検知はこの oracle では見えない。",
+      "recheck_triggers": [
+        "禁止同義語表への語追加",
+        "照合器の一致アルゴリズム変更"
+      ]
+    },
+    {
+      "scenario_id": "SCN-P04-pointfix-without-word-boundary-rule",
+      "source_candidate": "INC-002-termcheck-ascii-substring#1",
+      "normative_refs": [
+        "symptom-vs-systemic-cause",
+        "omitted-cause-recurrence",
+        "制約に論拠を併記して変更時再導入を防ぐ",
+        "修正時の既実施検証の再評価・再実施"
+      ],
+      "system_boundary": "OWNER による是正のコントロールアクションと、その適用先である termcheck の照合規則・語彙表。ASSURANCE_LANE の是正クローズ判定を含む。",
+      "loss": "是正済みとして閉じられた欠陥が、新しい禁止語の追加時に同型で再発し、同じ損失が繰り返される。",
+      "hazard": "システムが、症状単位の除外によって欠陥が解消されたと扱われている状態にある。",
+      "unsafe_control_action": "OWNER が、語境界を伴う一般規則を導入しないまま、当該語の個別除外という是正のコントロールアクションを与え、是正を完了として記帳する［上記ハザード］。",
+      "event_sequence": [
+        "af9c858 で当該語の誤検知が解消される",
+        "是正が完了として台帳へ記帳される",
+        "後日、別の禁止語が語彙表に追加される",
+        "追加語が実在正当語の部分文字列であり、個別除外の対象外であるため誤検知が再発する"
+      ],
+      "fault": "修正が照合規則の一般化ではなく語単位の例外表に対して行われた。",
+      "injection_point": "af9c858 適用後のコードベースに対し、実在正当語の部分文字列となる合成禁止語を語彙表へ追加し、当該正当語を含む文書を termcheck に通す。",
+      "expected_safe_behavior": "新規に追加した禁止語に対しても語境界規則が自動的に適用され、例外表への追記なしに誤検知が発生しない。",
+      "oracle": "(a) af9c858 の diff を読み、変更が語境界を伴う一般規則の導入か当該語の個別除外かを判定する。(b) 合成禁止語を追加した反例を termcheck に通し、検出の有無を記録する。両者の結果を対にして提示する。",
+      "falsification_signal": "合成禁止語でも語境界規則が自動適用され、反例で誤検知が発生しなければ棄却される。",
+      "severity": "P1",
+      "confidence": "high",
+      "recheck_triggers": [
+        "termcheck の照合実装の変更",
+        "例外表・語彙表のスキーマ変更"
+      ]
+    },
+    {
+      "scenario_id": "SCN-P05-failure-families-collapse-to-one-exception-surface",
+      "source_candidate": "INC-003-sdk-error-opacity#1",
+      "normative_refs": [
+        "失敗記述に違反制約の明記",
+        "ソフトウェア要因の報告脱落",
+        "ベースライン比較による事象識別",
+        "安全立証でなく非安全状態の探索"
+      ],
+      "system_boundary": "ASSURANCE_LANE の SDK 呼び出し層と、その例外を分類して事象台帳へ記帳する分類器。外部サービス側の挙動は環境入力。",
+      "loss": "異なる故障族が同一ラベルで台帳に積まれ、族ごとに異なる是正（再試行・権限修正・経路修復）が設計できない。",
+      "hazard": "システムが、異なる原因族の外部故障を単一の観測表面としてしか提示できない状態にある。",
+      "unsafe_control_action": "分類器が、レート制限・ネットワーク断・権限不足のいずれのコンテキストでも同一の分類ラベルを台帳へ与える［上記ハザード］。",
+      "event_sequence": [
+        "SDK 呼び出しが外部要因で失敗する",
+        "例外が単一の表面（同一型・同一メッセージ形）へ縮退する",
+        "分類器が族を区別できず同一ラベルを付与する",
+        "台帳上で族ごとの件数・傾向が失われ、是正が一般化された再試行に収束する"
+      ],
+      "fault": "例外表面が原因族の情報を保持せず、分類器の入力が族を区別できる構造的属性を含まない。",
+      "injection_point": "SDK 呼び出し層に 3 種以上の故障を注入する（レート制限応答、接続断、認可拒否）。注入は呼び出し境界のスタブで行う。",
+      "expected_safe_behavior": "故障族ごとに異なる分類ラベルが付与されるか、区別不能であることが台帳上で明示される。",
+      "oracle": "各注入について分類ラベルを収集し、故障族 → ラベルの写像が単射かを判定する。同一ラベルへ写る族が 2 つ以上あれば縮退が示される。",
+      "falsification_signal": "ラベルが族ごとに分離される（写像が単射である）なら仮説は否定される。",
+      "preconditions": [
+        "SDK 呼び出しをスタブで置換できる試験経路がある"
+      ],
+      "severity": "P1",
+      "confidence": "high",
+      "recheck_triggers": [
+        "SDK の例外階層の変更",
+        "分類器の判定属性の追加"
+      ]
+    },
+    {
+      "scenario_id": "SCN-P06-classifier-premise-broken-by-sdk-version-skew",
+      "source_candidate": "INC-003-sdk-error-opacity#2",
+      "normative_refs": [
+        "completeness-presence-and-version",
+        "integration-correct-versions-complete",
+        "供給要素の変更を利用者へ通知",
+        "楽観仮定の禁止"
+      ],
+      "system_boundary": "PLUGIN_DISTRIBUTION が配る複製に同梱／解決される SDK と、構造化属性（属性名・例外型）に依存する分類器。正本の固定版環境を参照系とする。",
+      "loss": "正本では族ごとに分離できる外部故障が、利用者環境では UNKNOWN に落ち、事象台帳が利用者環境の実態を記録しない。",
+      "hazard": "分類器が依拠する属性前提と、実行環境が実際に提供する属性が乖離した状態でシステムが運用されている。",
+      "unsafe_control_action": "分類器が、複製側の SDK 版が正本と異なるコンテキストで、族が特定できる故障に対して UNKNOWN ラベルを与える（版不一致の警告も与えない）［上記ハザード］。",
+      "event_sequence": [
+        "複製環境で正本と異なる SDK 版が解決される",
+        "例外型または構造化属性名が版間で変わる",
+        "分類器の判定分岐が全て外れる",
+        "UNKNOWN として記帳され、外部故障の族情報が失われる"
+      ],
+      "fault": "分類器が特定 SDK 版の属性名・例外型に暗黙依存し、版の一致を検証していない。",
+      "injection_point": "複数の SDK 版（正本の固定版と、複製環境で観測された版）を用意し、SCN-P05 と同一の故障注入試験一式を各版で実行する。",
+      "expected_safe_behavior": "全対象版で同一の故障族に同一ラベルが得られるか、版が想定外である旨を分類前に検出して記録する。",
+      "oracle": "版 × 故障族 のラベル表を作り、列（版）方向でラベルが一致するかを判定する。不一致セルまたは UNKNOWN の出現位置を列挙する。",
+      "falsification_signal": "全版で同一故障族に同一ラベルが得られれば仮説は否定される。",
+      "versions": [
+        "正本の固定 SDK 版",
+        "複製環境で実測された SDK 版"
+      ],
+      "severity": "P1",
+      "confidence": "medium",
+      "residual_risk": "試験対象版が実運用で存在する版を網羅している保証はなく、未試験版での縮退は残る。",
+      "recheck_triggers": [
+        "SDK 依存の版指定変更",
+        "分類器が参照する属性の追加・変更"
+      ]
+    },
+    {
+      "scenario_id": "SCN-P07-shared-extractor-poisons-audit-findings",
+      "source_candidate": "INC-004-hyphen-token-undefined-term#1",
+      "normative_refs": [
+        "共通の体系的要因による多重防護の無効化",
+        "要約統計偏重による傾向情報の喪失",
+        "情報システム保有と有用性の乖離",
+        "監査の検出力評価"
+      ],
+      "system_boundary": "SESSION_END_AUDIT と POST_TOOL_LINTER が共有する語彙抽出器、それが生む findings、およびその件数を読む SESSION_START_CONTRACT の注入と HEARTBEAT の古び警告。",
+      "loss": "次セッションの契約注入と古び警告が、実状態と対応しない findings 件数に基づいて出され、注意が実在しない欠落へ向かい、実在する欠落が相対的に埋没する。",
+      "hazard": "保証レーンの基礎データが、実状態と対応しない指摘を含む状態で下流の制御に供給されている。",
+      "unsafe_control_action": "SESSION_END_AUDIT が、ハイフン等で分割された語片を未定義語と扱うコンテキストで UNDEFINED_TERM の指摘を findings に加え、その件数を下流へ引き渡す［上記ハザード］。",
+      "event_sequence": [
+        "POST_TOOL_LINTER と SESSION_END_AUDIT が同一の語彙抽出器を共有する",
+        "抽出器がハイフン語を語片に分割する",
+        "全件走査の audit が語片を未定義語として計上する",
+        "findings 件数が実状態より膨らむ",
+        "次セッションの注入と古び警告がその件数を基礎データとして読む"
+      ],
+      "fault": "検出側の二つの統制が単一の抽出器を共通原因として持ち、独立した検出になっていない。",
+      "injection_point": "リポジトリ正本（未改変）に対する docs-audit の実行。追加の注入は行わず、実データでの混入率を測る。",
+      "expected_safe_behavior": "audit の UNDEFINED_TERM は原文に単独出現する語のみを指し、下流が読む件数が実状態と対応する。",
+      "oracle": "docs-audit を実行し、UNDEFINED_TERM の各対象語を原文と突き合わせ、原文に単独出現しない語（分割片）の件数 ÷ UNDEFINED_TERM 全件 を混入率として算出する。",
+      "falsification_signal": "UNDEFINED_TERM が全件、原文に単独出現する語のみを指す（混入率 0）なら、共有による混入は否定される。",
+      "severity": "P1",
+      "confidence": "medium",
+      "residual_risk": "SCN-D07-coverage-denominator-poisoning が『分母』を findings 件数として定義している場合、本 scenario はその特例に当たり実質同一となる余地がある。D07 の分母定義を確認したうえで重複判定をやり直す必要がある。",
+      "recheck_triggers": [
+        "語彙抽出器の分離または改訂",
+        "D07 の分母定義の明文化"
+      ]
+    },
+    {
+      "scenario_id": "SCN-P08-remediation-closed-while-field-rule-stale",
+      "source_candidate": "INC-004-hyphen-token-undefined-term#3",
+      "normative_refs": [
+        "approved-change-closure-verified",
+        "指摘欠点の是正完了追跡",
+        "重要変更の明示的通知",
+        "宣言された設計と実動作の突合"
+      ],
+      "system_boundary": "OWNER の是正クローズ判定、PLUGIN_DISTRIBUTION による複製更新、複製上で動作する POST_TOOL_LINTER / SESSION_END_AUDIT の助言出力。",
+      "loss": "是正が完了した記録の下で、利用者環境では旧規則の助言が流通し続け、記録と実観測の食い違いが検出されない。",
+      "hazard": "是正の記録と、利用者環境で実際に強制されている規則が乖離した状態でシステムが運用されている。",
+      "unsafe_control_action": "OWNER が、正本での規則改訂をもって是正クローズのコントロールアクションを与える（複製側の版が更新された確証が無いコンテキストで）［上記ハザード］。",
+      "event_sequence": [
+        "正本で判定規則が改訂される",
+        "是正が完了として記帳される",
+        "導入複製の版が更新されない",
+        "利用者環境で旧規則の助言が出力され続ける",
+        "記録上は修正済みであるため、観測された旧助言が再発でなく設定誤りとして扱われる"
+      ],
+      "fault": "是正クローズの判定が正本の状態のみを根拠にし、配布・適用の完了を確認する feedback 経路を持たない。",
+      "injection_point": "版の異なる複数の導入複製を用意し、改訂前後で判定が変わる入力を各複製の助言経路へ投入する。",
+      "expected_safe_behavior": "是正は、複製側の適用が確認されるまで未クローズとして扱われるか、複製側が版不一致を利用者へ明示する。",
+      "oracle": "(複製の版, その複製が出力する助言内容) の対を観測し、正本の現行規則から期待される助言と照合して一致率を版ごとに出す。",
+      "falsification_signal": "版差のある複製でも助言内容が正本の規則と一致する場合、この経路は否定される。",
+      "preconditions": [
+        "異なる版の複製を同時に用意できる"
+      ],
+      "severity": "P1",
+      "confidence": "medium",
+      "residual_risk": "SCN-P02 とは共通原因（版遅れ）を共有するが、損失が『旧規則での通過』ではなく『是正記録の偽り』である点で別立てにしている。批判側で統合すべきと判断される余地がある。",
+      "recheck_triggers": [
+        "是正クローズ条件の定義変更",
+        "複製更新の自動化"
+      ]
+    },
+    {
+      "scenario_id": "SCN-P09-dual-silence-of-staleness-and-version-warnings",
+      "source_candidate": "INC-005-installed-plugin-version-lag#2",
+      "normative_refs": [
+        "共通の体系的要因による多重防護の無効化",
+        "全コントロールループにフィードバック必須",
+        "計画外変化の検出手段",
+        "楽観仮定の禁止"
+      ],
+      "system_boundary": "HEARTBEAT が出す古び警告・版遅れ警告と、その入力である last-audit.json（SESSION_END_AUDIT の出力）および複製の版情報。",
+      "loss": "統治の欠落が二重に無音化し、利用者が正常状態と区別できないまま作業を続ける。",
+      "hazard": "システムが、警告の不在を『異常なし』としてしか提示できない状態にある。",
+      "unsafe_control_action": "HEARTBEAT が、監査が未実行（last-audit.json 未更新）かつ複製が旧版というコンテキストで、古び警告・版遅れ警告のいずれのコントロールアクションも与えない［上記ハザード］。",
+      "event_sequence": [
+        "強制終了などで SessionEnd が発火せず last-audit.json が更新されない",
+        "同一環境の複製が旧版のまま使用される",
+        "新セッションが開始し HEARTBEAT が評価される",
+        "古び判定が更新不在を『判定不能→無出力』として扱い、版遅れ判定も旧版側の実装で無効化される",
+        "利用者は警告のない出力を正常と解釈する"
+      ],
+      "fault": "二つの警告が、更新不在・旧版という単一の状況を共通原因として同時に沈黙し、無音と正常が区別されない。",
+      "injection_point": "旧版複製を導入し、last-audit.json を前セッションの値のまま据え置いた状態で新セッションを開始する。",
+      "expected_safe_behavior": "入力が欠落または判定不能である場合、少なくとも『判定できない』ことが鼓動の出力に現れ、無音が正常と区別できる。",
+      "oracle": "当該状態で新セッションを開始し、鼓動の出力全文を採取して、古び警告・版遅れ警告・判定不能の告知の各行の有無を数える。",
+      "falsification_signal": "いずれか一方の警告（または判定不能の告知）が出れば二重沈黙は成立せず、仮説は弱まる。",
+      "preconditions": [
+        "旧版複製が用意できる",
+        "last-audit.json を任意状態に置ける"
+      ],
+      "severity": "P1",
+      "confidence": "medium",
+      "recheck_triggers": [
+        "HEARTBEAT の判定不能時の既定動作の変更",
+        "last-audit.json のスキーマ変更"
+      ]
+    },
+    {
+      "scenario_id": "SCN-P10-subagent-path-uncovered-by-contract-injection",
+      "source_candidate": "INC-005-installed-plugin-version-lag#3",
+      "normative_refs": [
+        "被制御プロセスの制御者被覆",
+        "control-path-transmission-analysis",
+        "scenarios-beyond-uca-execution-failures",
+        "指示は必ず従われるとは限らない"
+      ],
+      "system_boundary": "SESSION_START_CONTRACT の注入経路と、その注入を受ける実行主体（主セッションおよびサブエージェント）。PLUGIN_DISTRIBUTION の版は別軸の要因として保持する。",
+      "loss": "サブエージェントが統治入力なしに統治木を操作し、版遅れの影響範囲の見積りが実際より小さく報告される。",
+      "hazard": "被制御プロセスの一部（サブエージェント実行）が、いずれのコントローラからも統治入力を受けない状態でシステムが運用されている。",
+      "unsafe_control_action": "SESSION_START_CONTRACT が、サブエージェント実行のコンテキストで契約注入のコントロールアクションを与えない［上記ハザード］。",
+      "event_sequence": [
+        "主セッションがサブエージェントを起動する",
+        "サブエージェントの入力に契約ヘッダが付与されない",
+        "サブエージェントが統治木に対する読み書きを行う",
+        "版遅れの影響評価が主セッション分のみを母数として算出される",
+        "評価結果が実際より小さい影響範囲として記録される"
+      ],
+      "fault": "注入の伝送経路がセッション開始という単一事象に紐づき、派生実行主体を被覆していない。",
+      "injection_point": "サブエージェントを起動する実行を行い、その実行時の hook 呼び出し記録とサブエージェント入力の先頭部分を採取する。",
+      "expected_safe_behavior": "派生実行主体にも契約注入または同等の統治入力が届き、届かない場合はその事実が記録される。",
+      "oracle": "サブエージェント実行時の hook 呼び出し記録と、サブエージェント入力に注入ヘッダが存在するかを突き合わせ、被覆率（注入ありの実行数 ÷ サブエージェント実行数）を出す。",
+      "falsification_signal": "サブエージェント側にも注入ヘッダまたは同等の統治入力が記録されていれば否定される。",
+      "preconditions": [
+        "サブエージェント入力を観測できる記録経路がある"
+      ],
+      "severity": "P1",
+      "confidence": "medium",
+      "residual_risk": "注入が届かないことが確認できても、それが版遅れの影響範囲見積りに与える倍率までは本 oracle では測れない。",
+      "recheck_triggers": [
+        "サブエージェント起動経路の実装変更",
+        "hook 種別の追加"
+      ]
+    },
+    {
+      "scenario_id": "SCN-P11-existence-based-completion-in-action-conditions",
+      "source_candidate": "INC-006-next-actions-silently-empty#0",
+      "normative_refs": [
+        "completeness-presence-and-version",
+        "controlled-process-nullifies-action",
+        "安全立証でなく非安全状態の探索",
+        "test-spec-unambiguous"
+      ],
+      "system_boundary": "orchestrator.py の行動条件評価と、それが読む台帳・成果物ファイル、および出力される次アクション一覧。",
+      "loss": "次アクションが静かに空になり、キャンペーンが未完了のまま前進を止め、その停止が完了と見分けられない。",
+      "hazard": "システムが、成果物パスの存在をもって工程完了と判定した状態で次アクションを算出している。",
+      "unsafe_control_action": "orchestrator が、成果物ファイルは存在するがその内容が未処理であるコンテキストで、当該工程の行動を提示しない（アクションの不与）［上記ハザード］。",
+      "event_sequence": [
+        "ある工程の成果物パスが早期に生成される（空または未処理内容）",
+        "行動条件がパスの存在のみを見て完了と判定する",
+        "当該行動が次アクション一覧から落ちる",
+        "一覧が空になり、利用者には完了と区別できない出力が返る"
+      ],
+      "fault": "行動条件の一部が台帳の内容状態ではなくパスの存在を参照しており、同型の分岐が MAP_COVERAGE 以外にも残存している。",
+      "injection_point": "各行動条件について、成果物パスのみを生成し内容を未処理のまま置いた状態を構成し、行動条件評価を呼ぶ。",
+      "expected_safe_behavior": "完了判定は台帳の内容状態を参照し、内容が未処理である限り当該行動が提示され続ける。",
+      "oracle": "orchestrator.py の全行動条件を列挙し、各条件が参照するのが『パスの存在』か『台帳の内容状態』かを分類する決定論試験を追加し、存在ベースの分岐を全件列挙する。",
+      "falsification_signal": "全行動条件が台帳の内容状態を参照しており、存在ベースの分岐が 0 件であれば棄却される。",
+      "severity": "P1",
+      "confidence": "high",
+      "recheck_triggers": [
+        "orchestrator.py への行動条件の追加",
+        "台帳スキーマの変更"
+      ]
+    },
+    {
+      "scenario_id": "SCN-P12-campaign-closes-with-pending-analysis",
+      "source_candidate": "INC-006-next-actions-silently-empty#1",
+      "normative_refs": [
+        "completeness-presence-and-version",
+        "pass-criteria-defined-in-advance",
+        "audit-findings-must-be-closed",
+        "安全立証でなく非安全状態の探索"
+      ],
+      "system_boundary": "事象台帳（cast_analysis 等の状態を持つ）と、ASSURANCE_LANE のキャンペーン終了判定。",
+      "loss": "未分析の事象を残したままキャンペーンが閉じられ、残った事象が以後どの工程にも拾われない。",
+      "hazard": "システムが、未処理項目を保持したまま完了状態へ遷移している。",
+      "unsafe_control_action": "終了判定のコントローラが、cast_analysis が pending の項目を保持しているコンテキストで、ファイルの存在または件数条件のみを根拠にキャンペーン終了を与える［上記ハザード］。",
+      "event_sequence": [
+        "ある事象の cast_analysis が pending のまま残る",
+        "別の完了条件（成果物ファイルの存在、件数の充足）が先に満たされる",
+        "終了判定が真を返す",
+        "キャンペーンが閉じられ、pending の事象が以後の行動算出から外れる"
+      ],
+      "fault": "終了条件が台帳の項目状態ではなく代理指標（ファイル存在・件数）に依拠している。",
+      "injection_point": "cast_analysis が pending の項目を 1 件残し、他の完了条件を満たした台帳状態を構成して終了判定を呼ぶ。",
+      "expected_safe_behavior": "pending の項目が 1 件でも残る限り終了判定は偽を返し、閉じられない根拠（どの項目が pending か）を出力に同伴する。",
+      "oracle": "上記状態で終了判定を呼び、戻り値と根拠出力を記録する決定論試験。真が返る、または偽でも根拠が出力されない場合に欠陥が示される。",
+      "falsification_signal": "pending が 1 件でも残る限り終了判定が偽を返し、かつその根拠を出力に同伴していれば棄却される。",
+      "severity": "P1",
+      "confidence": "high",
+      "recheck_triggers": [
+        "終了判定条件の追加・変更",
+        "cast_analysis の状態値の追加"
+      ]
+    },
+    {
+      "scenario_id": "SCN-F01-unknown-stagnation-emits-no-alarm",
+      "source_candidate": "INC-006-next-actions-silently-empty#4",
+      "normative_refs": [
+        "先行指標で設計前提の崩壊を早期検知",
+        "変化ドリフトの事前検出",
+        "自己満足への構造的対策",
+        "controller-needs-concrete-feedback-channels",
+        "audit-findings-must-be-closed"
+      ],
+      "system_boundary": "doctrine プラグインと保証レーン。関与要素: ASSURANCE_LANE(網羅台帳), SESSION_END_AUDIT, HEARTBEAT, SESSION_START_CONTRACT, OWNER",
+      "loss": "統治木の未評価領域が長期に残置されたまま『保証レーンは回っている』と関係者に受け取られ、未評価領域に起因する統治破れが出荷後に顕在化する",
+      "hazard": "網羅台帳の UNKNOWN 件数が減少しない状態が、いずれの統制要素からも警告として上位に伝達されないままシステムが運転を継続している",
+      "unsafe_control_action": "HEARTBEAT / SESSION_END_AUDIT が、UNKNOWN 件数の時系列が停滞しているコンテキストにおいて、停滞警告というコントロールアクションを OWNER に与えない",
+      "event_sequence": [
+        "網羅台帳に UNKNOWN の項目が N 件記録される",
+        "以後のセッションで UNKNOWN を減らす作業が実施されず、件数の時系列が横ばいになる",
+        "各セッションの SESSION_END_AUDIT と HEARTBEAT は当該セッションのスナップショット（件数・整合性）だけを評価し、時系列の停滞という状態を入力に持たない",
+        "SESSION_START_CONTRACT の注入内容も件数の現在値のみを含み、停滞期間を含まない",
+        "OWNER のプロセスモデルは『レーンは正常に稼働している』のまま更新されず、未評価領域が残置され続ける"
+      ],
+      "fault": "統制要素のいずれもが『UNKNOWN 件数の経時変化』をフィードバック変数として保持しておらず、停滞に対する先行指標および閾値判定が存在しない",
+      "injection_point": "網羅台帳の UNKNOWN 件数（および更新時刻）の時系列を人工的に固定し、K セッション連続で同一値のまま推移させる",
+      "expected_safe_behavior": "UNKNOWN 件数が閾値セッション数（1〜2）を超えて減少しない場合、リポジトリ正本側で動く検出器が停滞を検出し、OWNER に到達する警告を出す",
+      "oracle": "UNKNOWN 件数の時系列を停滞条件に固定した試験環境で保証レーンを N セッション空回しし、(a) 停滞を根拠に発火した警告の有無と、(b) 停滞成立から初回警告までの経過セッション数を計測する。警告が N セッション以内に 0 件なら仮説側に一致",
+      "falsification_signal": "停滞条件の成立から 1〜2 セッション以内に、リポジトリ正本側で動く検出器（監査・鼓動・CI のいずれか）が停滞を根拠とする警告を出力し、その出力が OWNER が読む面に現れる",
+      "preconditions": [
+        "網羅台帳に UNKNOWN 状態の項目が 1 件以上存在する",
+        "保証レーンが複数セッションにわたり起動される"
+      ],
+      "recheck_triggers": [
+        "網羅台帳スキーマの変更",
+        "監査・鼓動への新規指標の追加"
+      ],
+      "residual_risk": "警告が存在しても OWNER が読まない面にのみ出る場合は本 scenario では検出できない",
+      "severity": "P1",
+      "confidence": "high"
+    },
+    {
+      "scenario_id": "SCN-F02-latent-undefined-name-in-unreached-branches",
+      "source_candidate": "INC-007-linter-nameerror-field-report#0",
+      "normative_refs": [
+        "static-analysis-and-complexity-threshold",
+        "coverage-metrics-c0-c1-mcdc",
+        "alternative-assurance-when-coverage-unmet",
+        "artifacts-conform-to-defined-coding-standard",
+        "最悪環境を前提に設計運用"
+      ],
+      "system_boundary": "doctrine プラグインの全フックスクリプト（0.10.0 正本）。関与要素: POST_TOOL_LINTER, PRE_TOOL_GUARD, SESSION_END_AUDIT, CAPTURE_NUDGE, ASSURANCE_LANE",
+      "loss": "異常入力に遭遇したセッションで統制フックが例外により機能を果たさず、逸脱が検査されないまま統治木に取り込まれる",
+      "hazard": "統制フックが、通常経路以外の入力条件下で検査機能を提供できない状態のまま、正常であるかのように運転されている",
+      "unsafe_control_action": "POST_TOOL_LINTER 等のフックが、異常入力（空・巨大・不正エンコーディング・不存在パス・権限拒否）というコンテキストにおいて、検査結果というコントロールアクションを与えない（例外終了する）",
+      "event_sequence": [
+        "0.10.0 のフックスクリプトに、通常経路では実行されない例外処理系・条件分岐が存在する",
+        "その分岐内で、定義されていない名前（未定義変数・未 import 名）が参照される記述が残っている",
+        "通常セッションでは当該分岐に到達しないため、既存の試験と実運用の双方で発現しない",
+        "異常入力を持つファイルが編集対象になり、当該分岐に初めて到達する",
+        "NameError により当該フックの検査が中断し、対象ファイルは未検査のまま統治木に残る"
+      ],
+      "fault": "未定義名検査（pyflakes 相当の静的解析）と、異常入力による分岐網羅の双方が保証レーンの検査項目に含まれていない",
+      "injection_point": "0.10.0 の全フックスクリプトに対する静的解析の実行、および異常入力群（空ファイル・巨大ファイル・不正エンコーディング・存在しないパス・権限拒否）をフックの入力として与える",
+      "expected_safe_behavior": "全フックスクリプトについて未定義名が 0 件であり、異常入力群のいずれでも未捕捉例外を出さず、検査不能の場合は非 0 終了または明示的な失敗記録として上位に伝わる",
+      "oracle": "(1) 0.10.0 の全フックスクリプトに未定義名検査を実行し件数を数える。(2) 異常入力群で全フックを起動し、標準エラー・終了コード・スタックトレースの有無を記録する。未定義名 0 件かつ未捕捉例外 0 件を合格とする",
+      "falsification_signal": "未定義名検査の指摘が 0 件で、かつ異常入力群の全組合せで未捕捉例外が発生しない（＝仮説は棄却）",
+      "versions": [
+        "0.10.0"
+      ],
+      "recheck_triggers": [
+        "フックスクリプトの追加・改修",
+        "Python ランタイム版の変更"
+      ],
+      "severity": "P1",
+      "confidence": "high"
+    },
+    {
+      "scenario_id": "SCN-F04-cache-summary-lost-update-poisons-next-session",
+      "source_candidate": "INC-008-ledger-write-back-clobber#0",
+      "normative_refs": [
+        "verify-decomposition-assumptions",
+        "楽観仮定の禁止",
+        "プロセスモデルと実状態の不整合",
+        "item-set-completeness-and-version-check",
+        "書換え前バージョン・設定値の記録"
+      ],
+      "system_boundary": "doctrine プラグインのキャッシュ層 .claude/.cache/last-audit.json。関与要素: SESSION_END_AUDIT, HEARTBEAT, SESSION_START_CONTRACT, ASSURANCE_LANE",
+      "loss": "次セッションの契約注入と鼓動が古い監査要約を正として動作し、実際には未解消の逸脱が解消済みとして扱われる",
+      "hazard": "統制要素が保持する監査状態のモデルが、実際の最新監査結果と不一致のままシステムが運転されている",
+      "unsafe_control_action": "SESSION_END_AUDIT と HEARTBEAT が、他プロセスが同一ファイルを更新した後というコンテキストで、開始時に読み込んだ内容に基づく全体書き戻しを行い、新しい要約を古い要約で置換する",
+      "event_sequence": [
+        "docs-audit.py が last-audit.json を読み取り、メモリ上に写しを持つ",
+        "同時期に gov-heartbeat.py が last-audit.json を読み取り、更新して書き戻す",
+        "docs-audit.py が開始時の写しを基に全体を書き戻し、鼓動の更新が消える（逆順なら監査の更新が消える）",
+        "書き込みは成功終了し、いずれのプロセスも消失を検知しない",
+        "次セッションの SESSION_START_CONTRACT と HEARTBEAT が、古い要約を最新として読み込む"
+      ],
+      "fault": "読取→（プロセス外での変更）→全体書き戻し の形が排他制御・書き込み直前の再読取・アトミック置換のいずれも伴わずに実装されている",
+      "injection_point": "docs-audit.py と gov-heartbeat.py を同時起動し、双方に last-audit.json への更新を発生させる（片方に遅延を挿入して重なりを確実にする）",
+      "expected_safe_behavior": "同時実行下でも双方の更新が最終ファイルに残る、または後着の書き手が競合を検出して失敗を非 0 終了と記録で伝える",
+      "oracle": "(1) docs-audit.py と gov-heartbeat.py の last-audit.json 書き込み箇所を静的に列挙し、書き込み直前の再読取・排他制御・一時ファイル+rename の有無を判定する。(2) 二プロセス同時起動を実施し、最終ファイルに双方の更新が残っているかを比較する",
+      "falsification_signal": "last-audit.json の書き手が単一であり、かつアトミック置換（一時ファイル+rename）で書かれていることがコード上で確認できる",
+      "preconditions": [
+        "SessionEnd の全件監査と鼓動が時間的に重なり得る"
+      ],
+      "recheck_triggers": [
+        "キャッシュ層のファイル追加",
+        "監査・鼓動の起動契機の変更"
+      ],
+      "severity": "P1",
+      "confidence": "high"
+    },
+    {
+      "scenario_id": "SCN-F05-unremediated-ledger-writers-retain-whole-file-writeback",
+      "source_candidate": "INC-008-ledger-write-back-clobber#2",
+      "normative_refs": [
+        "symptom-vs-systemic-cause",
+        "systemic-cause-across-all-events",
+        "再発防止と水平展開",
+        "approved-change-closure-verified",
+        "修正時の既実施検証の再評価・再実施"
+      ],
+      "system_boundary": "assurance/ 配下の台帳書き込み経路全体（cast_analysis.py 以外の経路を含む）。関与要素: ASSURANCE_LANE, SESSION_END_AUDIT, OWNER",
+      "loss": "是正済みと記帳された後も、未是正の書き込み経路から台帳項目が消失し、消失に気づかないまま保証結論が出される",
+      "hazard": "同一欠陥型の一部だけが是正された状態で、システム全体が是正完了として運転されている",
+      "unsafe_control_action": "assurance/ の非 cast_analysis 経路（orchestrator.py の事象追記など）が、他経路が同一台帳を更新した後というコンテキストで、開始時の写しに基づく全体書き戻しを行う",
+      "event_sequence": [
+        "台帳の消失事象を受けて cast_analysis.py の update_incident() に再読取が導入される",
+        "是正が『完了』として記帳される",
+        "orchestrator.py など他の書き込み経路は開始時の写しによる全体書き戻しのまま残る",
+        "別経路の更新と重なった際に、その更新が上書きで消える",
+        "是正完了の記帳により、同型欠陥の探索が打ち切られている"
+      ],
+      "fault": "是正の適用範囲が発現地点（1 関数）に限定され、同型欠陥の水平展開点検が是正の完了条件に含まれていない",
+      "injection_point": "assurance/ 配下の台帳書き込み関数を静的に全列挙し、各経路について書き込み直前の再読取の有無を判定する。加えて、非 cast_analysis 経路と cast_analysis 経路を同時実行させる",
+      "expected_safe_behavior": "台帳へ書くすべての関数が書き込み直前の再読取（または排他・追記のみ）を行い、いずれの経路の同時実行でも既存項目が消えない",
+      "oracle": "assurance/ 配下で台帳ファイルへ書き込む全関数の一覧と、各関数の『書き込み直前の再読取の有無』の対応表を静的解析で生成し、再読取なしの関数が 1 件以上あるかを判定する",
+      "falsification_signal": "台帳への書き込み経路が cast_analysis.py の update_incident() に一本化されていることが確認できる（＝棄却）",
+      "recheck_triggers": [
+        "assurance/ への新規スクリプト追加",
+        "台帳スキーマの変更"
+      ],
+      "residual_risk": "既存 scenario（SCN-N07）が同一機構を扱っている場合、本 scenario は『是正の適用範囲』の軸のみが独立",
+      "severity": "P1",
+      "confidence": "medium"
+    },
+    {
+      "scenario_id": "SCN-F06-invariant-enforced-only-by-injected-instruction",
+      "source_candidate": "INC-008-ledger-write-back-clobber#4",
+      "normative_refs": [
+        "機械的遵守が前提の指示は自動化",
+        "手順強制でなく設計で誤りを構造的に排除",
+        "each-component-enforces-its-constraints",
+        "指示は必ず従われるとは限らない"
+      ],
+      "system_boundary": "doctrine プラグインとサブエージェント実行経路。関与要素: SESSION_START_CONTRACT, ASSURANCE_LANE, GOVERNANCE_TREE, POST_TOOL_LINTER",
+      "loss": "サブエージェント経由の台帳更新で既存項目が消失し、消失に気づかないまま保証結論が出される",
+      "hazard": "不変条件（台帳は追記のみ）を知らない主体が台帳を書き換えられる状態で、システムが運転されている",
+      "unsafe_control_action": "SESSION_START_CONTRACT が、サブエージェントが台帳を更新するコンテキストにおいて、契約（追記のみという不変条件）の注入を与えない",
+      "event_sequence": [
+        "SessionStart の契約注入はメインセッションにのみ届き、サブエージェントには届かない（NONGOAL-001）",
+        "分析作業がサブエージェント側で実行される",
+        "サブエージェントは台帳が追記のみであるという不変条件を知らないまま、読取→全体書き戻しで更新する",
+        "書き込み実装側に再読取・追記制約がなければ、既存項目が除去される",
+        "除去は成功として扱われ、同型の消失が再発する"
+      ],
+      "fault": "不変条件の強制が注入された指示（人・エージェントの遵守）に依存し、書き込み実装の内部に置かれていない",
+      "injection_point": "契約注入が届かないサブエージェント経路から台帳更新を実行させる（注入内容を空にした状態で更新を発生させる）",
+      "expected_safe_behavior": "呼び出し元の文脈や注入の有無に依らず、書き込み実装が再読取・追記制約を強制し、既存項目の除去を拒否または検出する",
+      "oracle": "サブエージェント経路（契約未注入）から台帳へ既存項目を落とす更新を試行し、(a) 更新後の台帳から既存項目が消えるか、(b) 実装側が拒否・エラーを返すかを観測する。加えて書き込み実装内に不変条件の強制コードがあるかを静的に確認する",
+      "falsification_signal": "不変条件の強制が注入指示ではなく書き込み実装の内部に置かれ、呼び出し元の文脈に依存しないことがコードと試験の双方で示される",
+      "preconditions": [
+        "サブエージェント実行経路が台帳へ書き込み可能である"
+      ],
+      "severity": "P1",
+      "confidence": "high"
+    },
+    {
+      "scenario_id": "SCN-F07-terminal-hooks-without-firing-stamps",
+      "source_candidate": "INC-009-sessionend-audit-unobservable#0",
+      "normative_refs": [
+        "全コントロールループにフィードバック必須",
+        "controller-needs-concrete-feedback-channels",
+        "宣言された設計と実動作の突合",
+        "verification-requires-objective-evidence"
+      ],
+      "system_boundary": "doctrine プラグインの終端側フック群（SessionEnd / Stop / PreCompact）。関与要素: SESSION_END_AUDIT, CAPTURE_NUDGE, ASSURANCE_LANE, OWNER",
+      "loss": "決定の取りこぼし促進や終端監査が実行されないまま、決定と逸脱が記録されずに失われる",
+      "hazard": "終端側の統制が実行されたか否かをシステム側から判定できない状態で、統制が有効であるという前提のまま運転が続く",
+      "unsafe_control_action": "Stop / PreCompact フック（CAPTURE_NUDGE 等）が、実行されなかったコンテキストにおいて、実行されなかったという事実のフィードバック（発火印）を上位へ与えない",
+      "event_sequence": [
+        "hooks 定義に Stop / PreCompact の決定捕捉が登録される",
+        "当該フックが未起動または途中終了する",
+        "実装が hook-stamps に印を書かないため、痕跡が残らない",
+        "監査・鼓動は印の不在を『対象外』と区別できず、未実行を検出しない",
+        "決定が捕捉されないまま、実行された場合と同じ外形でセッションが終了する"
+      ],
+      "fault": "宣言されたフック集合と、発火の観測可能な証跡（hook-stamps の鍵集合）が対応しておらず、差集合を突き合わせる検査も存在しない",
+      "injection_point": "hooks 定義に列挙されたフック名の集合と hook-stamps に現れる鍵の集合を取得し、差集合を列挙する。加えて Stop / PreCompact を強制的に非実行にしたセッションを 1 本走らせる",
+      "expected_safe_behavior": "hooks 定義に列挙された各フックについて、実行された事実を示す印が残り、印の不在が未実行として検出・報告される",
+      "oracle": "hooks 定義の鍵集合 − hook-stamps の鍵集合 の差集合を列挙し、差集合が空でないこと（＝印を持たないフックの存在）を確認する。次に非実行を注入したセッション後に、当該フックの未実行が検出報告に現れるかを観測する",
+      "falsification_signal": "capture-nudge に対応する印が hook-stamps に存在する、または印を書く実装がコード上で確認でき、差集合が空である",
+      "recheck_triggers": [
+        "hooks 定義へのフック追加",
+        "hook-stamps の書式変更"
+      ],
+      "severity": "P1",
+      "confidence": "high"
+    },
+    {
+      "scenario_id": "SCN-F08-exit-zero-without-completion-branches",
+      "source_candidate": "INC-009-sessionend-audit-unobservable#1",
+      "normative_refs": [
+        "control-action-requires-feedback",
+        "verification-objective-evidence",
+        "test-records-in-verdict-decidable-form",
+        "artifacts-conform-to-defined-coding-standard"
+      ],
+      "system_boundary": "docs-audit.py の全終了経路と、その終了コードを解釈する呼び出し側。関与要素: SESSION_END_AUDIT, ASSURANCE_LANE, CI_RELEASE_CHECK",
+      "loss": "監査が実質的に未完了のまま合格として扱われ、未検査の逸脱が出荷される",
+      "hazard": "監査の完了状態に関するコントローラのモデルが実際の完了状態と不一致のまま、システムが合格として運転されている",
+      "unsafe_control_action": "docs-audit.py が、処理が完了していないコンテキストにおいて、成功（終了コード 0）というフィードバックを呼び出し側へ与える",
+      "event_sequence": [
+        "docs-audit.py の内部で例外処理または早期 return に到達する",
+        "当該分岐が終了コード 0 で戻る",
+        "呼び出し側は終了コード 0 を『監査完了・逸脱なし』と解釈する",
+        "監査結果の要約は生成されないか部分的なまま残る",
+        "後続の統制（契約注入・CI）が完了した監査を前提に判断を進める"
+      ],
+      "fault": "未完了状態を表す終了コード・観測経路が分岐ごとに定義されておらず、成功と未完了が同一の外形になる",
+      "injection_point": "docs-audit.py の各例外処理・早期 return に到達する入力（書き込み不能な出力先、不正な設定、解析不能な文書など）を与える",
+      "expected_safe_behavior": "処理が完了しなかったすべての分岐が非 0 終了、または呼び出し側が読む観測経路（要約ファイル・印・台帳記録）で未完了を明示する",
+      "oracle": "docs-audit.py の全例外処理・早期 return を静的に列挙し、各分岐について『終了コード』と『終了コード以外の観測経路の有無』の対応表を作る。0 を返しかつ観測経路を持たない分岐の件数を数える（1 件以上なら仮説側に一致）",
+      "falsification_signal": "0 を返す分岐が §5.5 の一箇所のみであり、他はすべて非 0 か観測経路を持つ",
+      "versions": [
+        "0.10.0"
+      ],
+      "severity": "P1",
+      "confidence": "high"
+    },
+    {
+      "scenario_id": "SCN-F09-stderr-diagnostic-not-persisted-anywhere",
+      "source_candidate": "INC-009-sessionend-audit-unobservable#2",
+      "normative_refs": [
+        "調査対象としての安全情報システム",
+        "情報システム保有と有用性の乖離",
+        "問題報告経路の可用性",
+        "incidents-promptly-reported-and-received",
+        "problem-reproduction-confirmed"
+      ],
+      "system_boundary": "監査の診断出力（stderr）と、実行系ログ・キャッシュ・台帳の各保存先。関与要素: SESSION_END_AUDIT, ASSURANCE_LANE, OWNER",
+      "loss": "監査要約の書き込み失敗が誰にも届かず、失敗の事実が事後調査でも復元できないまま保証結論が積み上がる",
+      "hazard": "統制の失敗を示す情報が生成されているのに、どの保存先にも到達しない状態でシステムが運転されている",
+      "unsafe_control_action": "SESSION_END_AUDIT が、要約書き込みに失敗したコンテキストにおいて、失敗の事実を永続化された経路で OWNER へ与えない（揮発する stderr にのみ出す）",
+      "event_sequence": [
+        "監査が要約の保存先へ書き込もうとして失敗する",
+        "実装が stderr に 'summary write failed' を出力する",
+        "実行系が当該 stderr を保存しないため、セッション終了とともに消える",
+        "台帳・キャッシュ・ログのいずれにも失敗の記録が残らない",
+        "事後調査で『監査は行われたが要約が無い』理由が判定できない"
+      ],
+      "fault": "失敗の診断出力が永続保存先を持たず、報告経路が実運用上利用不能である",
+      "injection_point": "要約の保存先を書けない場所（存在しないディレクトリ・権限拒否・読み取り専用）に設定して監査を実行する",
+      "expected_safe_behavior": "書き込み失敗の事実が、少なくとも一つの永続保存先（台帳・キャッシュ・実行系ログ）に、事後に検索可能な形で残る",
+      "oracle": "書けない保存先を指定して再現させたのち、実行系のログ保存先・キャッシュ・台帳を全数走査して 'summary write failed' 相当の記録の残存件数を数える（0 件なら仮説側に一致）",
+      "falsification_signal": "いずれかの保存先に当該行（または同等の失敗記録）が残っている",
+      "severity": "P1",
+      "confidence": "high"
+    },
+    {
+      "scenario_id": "SCN-F10-status-enum-conflates-distinct-triggers",
+      "source_candidate": "INC-010-evaluated-unknown-relisted#0",
+      "normative_refs": [
+        "プロセスモデルと実状態の不整合",
+        "要約統計偏重による傾向情報の喪失",
+        "利用可能な形式での情報提示",
+        "requirement-verifiable-and-consistent",
+        "four-paths-of-process-model-flaw"
+      ],
+      "system_boundary": "保証レーンの状態語彙全体（coverage_status, cast_analysis 等の列挙値）と、それを読む統制要素。関与要素: ASSURANCE_LANE, SESSION_END_AUDIT, HEARTBEAT, OWNER",
+      "loss": "評価済みで結論保留の項目が未着手として再提示され続け、実際に未着手の項目に資源が向かわず、未評価領域が残る",
+      "hazard": "システムの状態表現が、意味の異なる複数の状態を単一値に畳み込んだまま、判断に用いられている",
+      "unsafe_control_action": "ASSURANCE_LANE が、意味的に異なる契機（未着手／分析済みだが結論保留）を区別できないコンテキストにおいて、同一の状態値に基づく同一の後続指示（再着手）を与える",
+      "event_sequence": [
+        "状態列挙に pending 等の値が定義される",
+        "『未着手』の契機と『分析したが結論保留』の契機の双方が同一値を書き込む",
+        "読み手（監査・鼓動・次アクション生成）は値のみを見て区別できない",
+        "結論保留の項目が未着手として再提示される",
+        "再提示のループにより、UNKNOWN 件数と次アクションが収束しない"
+      ],
+      "fault": "状態列挙の値と書き込み契機が一対多で対応しており、契機を区別する情報（判定根拠・判定時刻）が値に併記されていない",
+      "injection_point": "状態を表す全列挙について、値ごとに書き込み地点と書き込みの契機を静的に列挙し、対応表を生成する",
+      "expected_safe_behavior": "各状態値がただ一つの意味的契機に対応する、または値に併記された属性で契機を判別でき、読み手が異なる契機に異なる後続動作を割り当てられる",
+      "oracle": "状態を表す全列挙の『値 × 書き込み地点 × 契機』対応表を静的に生成し、複数の意味的契機に対応する値の件数を数える（1 件以上なら仮説側に一致）。coverage_status 以外に該当があるかを明示する",
+      "falsification_signal": "全列挙値について契機が一対一で対応し、複数契機を持つ値が 0 件である",
+      "recheck_triggers": [
+        "状態列挙値の追加",
+        "台帳スキーマの改訂"
+      ],
+      "severity": "P1",
+      "confidence": "high"
+    },
+    {
+      "scenario_id": "SCN-F11-next-actions-nonconvergent-paths",
+      "source_candidate": "INC-010-evaluated-unknown-relisted#1",
+      "normative_refs": [
+        "未対処ゼロまで解析を反復継続",
+        "全質問の回答または回答不能宣言",
+        "review-action-items-followed-up",
+        "audit-findings-must-be-closed"
+      ],
+      "system_boundary": "保証レーンの次アクション生成と終了判定。関与要素: ASSURANCE_LANE, SESSION_END_AUDIT, OWNER",
+      "loss": "恒久的に処理不能な項目が次アクションに残り続け、レーンが終わらないか、逆に空表示で打ち切られて未処理項目が消える",
+      "hazard": "システムが、有限回の反復で解消できない項目を保持したまま、解消可能な作業列として提示し続けている",
+      "unsafe_control_action": "ASSURANCE_LANE が、依存欠落や対象外という恒久的に割当不能なコンテキストにおいても、次アクションとして再提示し続ける（=打ち切りまたは明示的な回答不能宣言を与えない）",
+      "event_sequence": [
+        "判定不能以外の理由（依存が欠けて恒久的に割当不能、対象外と結論した項目など）で処理できない項目が生じる",
+        "次アクション生成が当該項目を毎ラウンド再選出する",
+        "ラウンドを重ねても next_actions 集合が単調減少しない",
+        "収束しないまま、空表示または打ち切りで処理が終わる",
+        "未処理項目が処理済みと同じ外形で扱われる"
+      ],
+      "fault": "『恒久的に処理不能』を表す終端状態と、その状態への遷移条件が定義されておらず、次アクション集合の単調減少性が保証されていない",
+      "injection_point": "依存が欠けた項目・対象外と結論した項目を含む固定入力を用意し、レーンを N ラウンド空回しする",
+      "expected_safe_behavior": "全ての固定入力に対し、next_actions 集合が単調減少して有限ラウンド以内に空へ収束するか、収束しない項目が『回答不能』として終端状態で記帳される",
+      "oracle": "固定入力でレーンを N ラウンド空回しし、各ラウンドの next_actions 集合の要素数と要素の同一性を記録して、単調減少と有限ラウンドでの空収束を決定論試験として検査する",
+      "falsification_signal": "全ての固定入力で有限ラウンド以内に空へ収束する",
+      "preconditions": [
+        "レーンを同一入力で反復起動できる試験環境が存在する"
+      ],
+      "severity": "P1",
+      "confidence": "medium"
+    },
+    {
+      "scenario_id": "SCN-F12-punctuation-glue-false-positives-generalize",
+      "source_candidate": "INC-011-dot-joined-token-undefined-term#0",
+      "normative_refs": [
+        "symptom-vs-systemic-cause",
+        "根本原因への縮約禁止",
+        "仕様に対する試験網羅性",
+        "test-spec-unambiguous"
+      ],
+      "system_boundary": "POST_TOOL_LINTER の語彙切り出しと UNDEFINED_TERM 判定。関与要素: POST_TOOL_LINTER, GOVERNANCE_TREE, OWNER",
+      "loss": "偽陽性の指摘が繰り返され、リンタの指摘が信頼されなくなり、真の未定義語の指摘も無視される",
+      "hazard": "統制が、規範に適合した文書に対して逸脱判定を出す状態のまま運転されている",
+      "unsafe_control_action": "POST_TOOL_LINTER が、約物で連結された正規のトークン（a_b, x/y, ns:key, @scope/pkg, 3.14, C++）を含む文書というコンテキストにおいて、その真部分文字列に対して UNDEFINED_TERM の指摘を与える",
+      "event_sequence": [
+        "切り出しがドット以外の約物（アンダースコア・スラッシュ・コロン・@・+）を語境界として扱う",
+        "約物で連結された正規トークンが部分文字列に分割される",
+        "分割片が用語集に無いため UNDEFINED_TERM として挙がる",
+        "対処として接着文字がドットのみ追加され、他の約物は残る",
+        "他の約物を含む文書で同型の偽陽性が再発する"
+      ],
+      "fault": "対処が発現した約物（ドット）単位で行われ、切り出しの単位（綴り単位）という体系的原因に到達していない",
+      "injection_point": "a_b / x/y / ns:key / @scope/pkg / 3.14 / C++ を含む最小文書を作成し、POST_TOOL_LINTER にかける",
+      "expected_safe_behavior": "約物で連結された正規トークンの真部分文字列が UNDEFINED_TERM として挙がらず、トークン全体としてのみ判定される",
+      "oracle": "上記最小文書に対する POST_TOOL_LINTER の指摘一覧を取得し、各対象トークンの真部分文字列が UNDEFINED_TERM として現れた件数を数える（1 件以上なら仮説側に一致）",
+      "falsification_signal": "いずれの真部分文字列も UNDEFINED_TERM として発火しない（＝切り出しは既に綴り単位で動作しており、ドットだけが例外であった）",
+      "versions": [
+        "0.10.0"
+      ],
+      "recheck_triggers": [
+        "切り出し規則の変更",
+        "用語集の更新"
+      ],
+      "severity": "P1",
+      "confidence": "high"
+    },
+    {
+      "scenario_id": "SCN-F01-shared-tokenizer-common-cause-across-checks",
+      "source_candidate": "INC-011-dot-joined-token-undefined-term#2",
+      "normative_refs": [
+        "共通の体系的要因による多重防護の無効化",
+        "systemic-cause-across-all-events",
+        "verify-decomposition-assumptions",
+        "symptom-vs-systemic-cause"
+      ],
+      "system_boundary": "doctrine の検査系のうち、POST_TOOL_LINTER が GOVERNANCE_TREE に対して行う用語検査・リンク検査・dep-graph 逆依存解決と、それらが共有する語切り出し（分割）処理まで。CI_RELEASE_CHECK による起動は境界内、利用者環境での実行は境界外。",
+      "loss": "統治木内の未定義用語・壊れたリンク・誤った逆依存が検出されないまま正本として確定・配布され、統治判断の根拠が利用者環境で崩れる。",
+      "hazard": "システムが、統治木の参照整合違反を保持したまま『検査を通過した』状態表示を伴う成果物を保持している。",
+      "unsafe_control_action": "POST_TOOL_LINTER が、ドット結合トークンを含む統治木入力に対して、違反の指摘（警告・非ゼロ終了）を与えない（H: 未検出違反を伴う検査通過状態）。",
+      "event_sequence": [
+        "共有の語切り出し関数が、用語検査以外（リンク検査・dep-graph 逆依存解決）からも呼ばれる形で導入される。",
+        "ドット結合トークンを含む見出し／参照が統治木へ書き込まれる。",
+        "各検査が共有関数の分割単位を自らの判定単位とみなし、綴り単位で成立するはずの一致・不一致判定を取り違える。",
+        "INC-011 で観測されたのは用語検査の症状のみであり、他の呼び出し元は未観測のまま通過する。",
+        "CI_RELEASE_CHECK が全検査の緑を根拠に配布物を確定する。"
+      ],
+      "fault": "複数の検査が単一の語切り出し実装を共有し、その分割単位が各検査の判定単位と一致しない（共通原因）。",
+      "injection_point": "共有分割関数の各呼び出し元（用語検査・リンク検査・dep-graph 逆依存解決）へ、v0.7.0 相当のドット結合トークンを含む入力を与える。",
+      "expected_safe_behavior": "各検査は自身の判定単位に適合した語切り出しを用いるか、共有処理が全呼び出し元に対して同一かつ文書化された綴り単位を保証し、いずれかが崩れた場合は検査が赤で停止する。",
+      "oracle": "分割処理の呼び出し元を静的に列挙し、各呼び出し元へ v0.7.0 相当の入力を与えて誤判定（偽陰性・偽陽性）の有無を呼び出し元ごとに表にする。",
+      "falsification_signal": "呼び出し元が用語検査のみである、または他の検査が独立に綴り単位で処理しており注入入力で誤判定が0件であれば、共通原因仮説は偽。",
+      "severity": "P1",
+      "confidence": "medium",
+      "preconditions": [
+        "v0.7.0 相当の入力が再構成できる",
+        "分割処理の呼び出し元が静的に列挙可能である"
+      ],
+      "recheck_triggers": [
+        "語切り出し実装の変更",
+        "新たな検査の追加"
+      ],
+      "residual_risk": "呼び出し元が動的解決（間接参照・プラグイン登録）で列挙から漏れると、静的列挙のみでは共通原因を取りこぼす。"
+    },
+    {
+      "scenario_id": "SCN-F02-manual-state-partition-misclassification-passes-tests",
+      "source_candidate": "INC-012-states-unnameable-by-canon#0",
+      "normative_refs": [
+        "試験の合格基準を事前定義",
+        "仕様に対する試験網羅性",
+        "verifiability-evaluated-per-item",
+        "楽観仮定の禁止"
+      ],
+      "system_boundary": "doctrine の ASSURANCE_LANE における状態集合（NAMEABLE_STATES / WITHIN_CYCLE_STATES）の定義と、それを検査する決定論試験および CI_RELEASE_CHECK まで。",
+      "loss": "到達すべき保証段が正本から名指しされないまま滞留し、保証レーンが未実施の段を持ったまま完了と表示される。",
+      "hazard": "システムが、正本から名指し不能な状態を保持したまま、状態分割は健全であるという判定を出している。",
+      "unsafe_control_action": "決定論試験が、状態が誤った側の集合へ分類された文脈で、CI_RELEASE_CHECK に対する不合格通知を与えない（H: 名指し不能状態を伴う健全判定）。",
+      "event_sequence": [
+        "新しい保証段の状態が追加される。",
+        "人手で NAMEABLE_STATES か WITHIN_CYCLE_STATES のいずれかへ分類される。",
+        "分類先が誤っていても、状態はいずれかの集合に属するため『どちらにも属さない』検査は成立し続ける。",
+        "決定論試験と CI が緑を返す。",
+        "正本の次行動決定が、誤分類された状態を名指せないまま前進する。"
+      ],
+      "fault": "分類の正しさに対する述語が存在せず、試験が検査しているのは網羅性（どちらかに属すること）のみである。",
+      "injection_point": "到達すべき状態を WITHIN_CYCLE_STATES 側へ意図的に付け替えた変異を状態定義へ注入する。",
+      "expected_safe_behavior": "分類が誤っている場合、決定論試験または CI が赤で停止する、あるいは分類が人手ではなく状態の観測可能な性質から導出される。",
+      "oracle": "到達すべき状態を WITHIN_CYCLE_STATES 側へ意図的に誤分類した変異を注入し、決定論試験と CI を走らせて赤／緑を記録する。",
+      "falsification_signal": "試験または CI が赤になり誤分類が拒否されれば仮説は偽。",
+      "severity": "P1",
+      "confidence": "high",
+      "recheck_triggers": [
+        "状態集合の定義変更",
+        "決定論試験の判定条件の変更"
+      ],
+      "residual_risk": "変異注入が1件のみだと、特定の状態にだけ効く保護と一般的な保護を区別できない。"
+    },
+    {
+      "scenario_id": "SCN-F03-progress-report-unreconciled-with-artifact",
+      "source_candidate": "INC-012-states-unnameable-by-canon#1",
+      "normative_refs": [
+        "verification-requires-objective-evidence",
+        "情報システム保有と有用性の乖離",
+        "control-action-requires-feedback",
+        "監査の検出力評価"
+      ],
+      "system_boundary": "doctrine の進捗報告経路（実行主体 → OWNER）と、SESSION_END_AUDIT・台帳（ASSURANCE_LANE の記録）まで。報告文面の生成主体は境界内。",
+      "loss": "OWNER が、実際には存在しない成果物を存在するものとして扱い、未実施の保証段を実施済みとして意思決定に用いる。",
+      "hazard": "システムが、報告内容と成果物の実体が乖離した状態を、乖離を示す指標なしに保持している。",
+      "unsafe_control_action": "SESSION_END_AUDIT が、報告が『実施』と述べ対応する成果物が存在しない文脈で、乖離の通知を OWNER へ与えない（H: 乖離が指標なしで保持された状態）。",
+      "event_sequence": [
+        "実行主体が進捗報告に意図または実施の記述を書く。",
+        "成果物（台帳記録・ファイル）が生成されない、または別の内容で生成される。",
+        "台帳と監査は報告文面を突き合わせ対象として持たないため、報告は無検査で通過する。",
+        "OWNER は報告のみを手掛かりに次の指示を出す。",
+        "未実施の段が実施済みとして扱われ、後段の判断が誤った前提に載る。"
+      ],
+      "fault": "報告と成果物を突き合わせる述語（存在照合・ハッシュ照合）が統制構造に存在しない。",
+      "injection_point": "成果物を生成せずに『実施』と書いた進捗報告を、通常の報告経路へ注入する。",
+      "expected_safe_behavior": "報告に述べられた実施は、対応する成果物の存在またはハッシュと照合され、照合できない報告は監査が乖離として記帳し OWNER へ通知する。",
+      "oracle": "成果物を生成せずに『実施』と書いた報告を注入し、台帳・SESSION_END_AUDIT のいずれかが乖離を検出して記帳するかを観測する。",
+      "falsification_signal": "成果物のハッシュまたは存在照合により乖離が自動検出され記帳されれば仮説は偽。",
+      "severity": "P1",
+      "confidence": "medium",
+      "recheck_triggers": [
+        "報告様式の変更",
+        "監査の入力集合の変更"
+      ],
+      "residual_risk": "照合が成果物の存在のみを見る場合、内容が空・無関係でも通過する余地が残る。"
+    },
+    {
+      "scenario_id": "SCN-F05-mitigation-clause-path-dependent-via-subagent",
+      "source_candidate": "INC-013-cast-analysis-accepts-fabricated-incident#2",
+      "normative_refs": [
+        "指示は必ず従われるとは限らない",
+        "制御は遵守を意味しない",
+        "control-path-transmission-analysis",
+        "楽観仮定の禁止"
+      ],
+      "system_boundary": "doctrine の ASSURANCE_LANE における分析実行経路（直接実行経路とサブエージェント経路の双方）と、実在確認条項の伝達経路まで。",
+      "loss": "経路を変えるだけで虚偽事象が受理され、実在しない事象に基づく是正が統治木へ入る。",
+      "hazard": "システムが、緩和策が有効な経路と無効な経路を同一の『緩和済み』表示で保持している。",
+      "unsafe_control_action": "分析実行系が、実在確認条項を含まないタスクプロンプトで起動された文脈で、実在の疑いの提起を行わない（H: 経路により緩和有無が変わる状態が同一表示で保持される）。",
+      "event_sequence": [
+        "実在確認条項がタスクプロンプトへ追記され、直接実行経路で A2 が緩和済みと判定される。",
+        "別セッションまたは自動化がサブエージェント経路で同じ分析を起動する。",
+        "起動時のプロンプト合成に実在確認条項が含まれない。",
+        "A2 が修正前と同じ挙動（実在の疑い0件・FAIL）へ戻る。",
+        "緩和済みという台帳上の表示は変わらないまま残る。"
+      ],
+      "fault": "緩和が実装ではなくプロンプト文言に載っており、その文言の伝達が経路ごとに保証されていない。",
+      "injection_point": "実在確認条項を含まないタスクプロンプトで、サブエージェントとして A2 を実行する。",
+      "expected_safe_behavior": "どの起動経路であっても実在確認が実施される（条項がコード側または共通プロンプト合成で強制される）か、条項を欠く経路では実行が拒否される。",
+      "oracle": "条項を含まないタスクプロンプトでサブエージェントとして A2 を実行し、実在の疑いの件数と最終判定（PASS/FAIL）を測る。",
+      "falsification_signal": "条項なしでも実在の疑いが1件以上出れば、緩和は文言に依存していないことになり仮説は偽。",
+      "severity": "P1",
+      "confidence": "medium",
+      "recheck_triggers": [
+        "プロンプト合成経路の追加・変更",
+        "実在確認の実装位置の変更"
+      ],
+      "residual_risk": "単一試行では確率的挙動と経路依存を区別できないため、反復実行が必要。"
+    },
+    {
+      "scenario_id": "SCN-F06-turn-limit-truncation-varies-by-input-class",
+      "source_candidate": "INC-014-evaluation-max-turns-marginal#0",
+      "normative_refs": [
+        "自発報告のみによる評価の禁止",
+        "test-records-in-verdict-decidable-form",
+        "試験条件の記録と再現性",
+        "verification-constraints-and-limits"
+      ],
+      "system_boundary": "doctrine の ASSURANCE_LANE における評価実行系（max_turns 設定・注入種別ごとの入力・実行結果の記録）まで。",
+      "loss": "評価の打ち切りが不合格と区別されないまま集計され、保証レーンが実際より高い合格率を示す。",
+      "hazard": "システムが、打ち切りによる欠測を含む評価結果集合を、完全な結果集合として保持している。",
+      "unsafe_control_action": "評価実行系が、入力が長く必要ターン数が上限に近い文脈で、上限到達を欠測として記録・通知しない（H: 欠測を含む結果集合の完全性表示）。",
+      "event_sequence": [
+        "注入種別ごとに入力長と必要ターン数が異なる評価が実行される。",
+        "A2 のような長い入力で必要ターン数が設定上限（8）に達する。",
+        "実行が上限到達で打ち切られる。",
+        "打ち切りが失敗とも欠測とも記録されず、成功した実行だけが集計対象に残る。",
+        "合格率が上振れした状態で保証判断に使われる。"
+      ],
+      "fault": "max_turns の設定値が入力長・注入種別に対する必要ターン数分布から導出されておらず、超過時の記録経路もない。",
+      "injection_point": "注入種別ごとに同一入力で評価実行を反復し、max_turns 到達を発生させる。",
+      "expected_safe_behavior": "必要ターン数の分布に基づき上限が設定され、上限到達は判定不能（欠測）として記録され、集計から黙って落ちない。",
+      "oracle": "注入種別ごとに同一入力を N=20 回実行し、num_turns の最大値と上限到達回数を種別別に集計する。",
+      "falsification_signal": "全種別で最大 num_turns が 4 未満に収まり、上限到達が0件であれば仮説は偽。",
+      "severity": "P1",
+      "confidence": "medium",
+      "preconditions": [
+        "注入種別ごとの入力が再現可能である",
+        "num_turns が実行ごとに取得できる"
+      ],
+      "recheck_triggers": [
+        "max_turns 設定の変更",
+        "注入種別の追加",
+        "入力長の大幅な変化"
+      ],
+      "residual_risk": "N=20 では低頻度の上限到達を見落とす可能性がある。"
+    },
+    {
+      "scenario_id": "SCN-F08-ledger-record-types-unread-by-canon",
+      "source_candidate": "INC-015-discover-output-invisible-to-canon#0",
+      "normative_refs": [
+        "全コントロールループにフィードバック必須",
+        "欠落・不十分なコントロールの明示的表示",
+        "control-action-requires-feedback"
+      ],
+      "system_boundary": "doctrine の台帳に現れる記録種別の集合と、正本（GOVERNANCE_TREE の次行動決定）が用いる読取述語の参照種別集合まで。",
+      "loss": "成果物を生む段が動いているのに正本がそれを読まず、保証レーンが前進しないまま作業が捨てられる。",
+      "hazard": "システムが、正本のどの読取述語からも参照されない記録種別を保持したまま、保証レーンが接続済みであるとして動作している。",
+      "unsafe_control_action": "正本の次行動決定が、台帳に未読取種別の記録が存在する文脈で、その記録を入力として取り込まない（H: 未接続種別を保持したままの接続済み動作）。",
+      "event_sequence": [
+        "ある段が成果物を台帳へ新しい種別として記帳する。",
+        "正本の読取述語群は既存種別のみを参照する。",
+        "新種別は誰にも読まれず滞留する。",
+        "保証レーンは前進せず、または前進しないこと自体が検出されない。"
+      ],
+      "fault": "記録種別の追加と読取述語の追加が独立に行われ、両者の被覆関係を検査する機構がない。",
+      "injection_point": "台帳の記録種別集合と読取述語の参照種別集合を機械抽出し、差集合を計算する。",
+      "expected_safe_behavior": "台帳に現れる全記録種別が少なくとも一つの読取述語から参照され、参照のない種別が生じた時点で検査が赤になる。",
+      "oracle": "台帳に現れる記録種別の集合と、正本の読取述語が参照する種別集合の差集合を全数計算して列挙する。",
+      "falsification_signal": "差集合が空である（全種別が少なくとも一つの読取述語から参照されている）なら仮説は偽。",
+      "severity": "P1",
+      "confidence": "medium",
+      "recheck_triggers": [
+        "新しい記録種別の追加",
+        "読取述語の変更"
+      ],
+      "residual_risk": "種別粒度での被覆が成立していても、フィールド粒度の未接続は本 scenario では検出できない（SCN-F11 参照）。"
+    },
+    {
+      "scenario_id": "SCN-F09-unnameable-side-now-nameable-but-unreclassified",
+      "source_candidate": "INC-015-discover-output-invisible-to-canon#1",
+      "normative_refs": [
+        "責任と制御要素の対応",
+        "被制御プロセスの制御者被覆",
+        "全コントロールループにフィードバック必須"
+      ],
+      "system_boundary": "doctrine の保証段の分類（『帳簿だけからは指せない』側と指せる側）と、正本の名指し述語まで。",
+      "loss": "実際には名指し可能になっている段が名指し不能側に据え置かれ、到達すべき保証活動が起動しないまま滞留する。",
+      "hazard": "システムが、名指しに必要な材料が台帳上すでに揃っている段を、名指し不能として分類したまま保持している。",
+      "unsafe_control_action": "正本が、名指し材料が台帳に出現している文脈で、当該段への前進指示を与えない（H: 材料が揃った段の名指し不能分類の保持）。",
+      "event_sequence": [
+        "段の分類が初期時点の台帳内容に基づいて『名指し不能』側へ置かれる。",
+        "時間経過とともに台帳へ材料（記録種別・フィールド）が出現する。",
+        "分類の再評価を起動する機構がないため分類は据え置かれる。",
+        "FORMALIZE のように材料が揃った段のみが個別対応され、他は放置される。"
+      ],
+      "fault": "分類が一度きりの判断として固定され、材料の出現に応じた再評価述語が存在しない。",
+      "injection_point": "名指し不能側の各分類について、名指しに必要な材料の述語を書き下し、現在の台帳へ評価する。",
+      "expected_safe_behavior": "名指し材料の出現が検出され次第、当該段の分類が再評価され、名指し可能になった段は正本から指せるようになる。",
+      "oracle": "名指し不能側の分類ごとに、指すために必要な材料の述語を書き下し、現在の台帳に対して評価して真偽表を出す。",
+      "falsification_signal": "名指し不能側の全分類について、材料の述語が偽であれば仮説は偽。",
+      "severity": "P1",
+      "confidence": "medium",
+      "recheck_triggers": [
+        "段の追加・分類変更",
+        "台帳への新規材料の出現"
+      ],
+      "residual_risk": "述語の書き下し自体が人手であるため、書き下しの誤りが結果を左右する（SCN-F02 と同型の弱点）。"
+    },
+    {
+      "scenario_id": "SCN-F10-acceptance-test-overfits-current-artifact-type",
+      "source_candidate": "INC-015-discover-output-invisible-to-canon#2",
+      "normative_refs": [
+        "仕様に対する試験網羅性",
+        "verification-plan-coverage-evaluated",
+        "テスト要求は解析結果から導出"
+      ],
+      "system_boundary": "doctrine の ASSURANCE_LANE における受入試験（次行動前進の判定）と、台帳の成果物種別まで。",
+      "loss": "新しい成果物種別が増えるたびに同型の未接続が再発し、成果物が正本に読まれないまま滞留する。",
+      "hazard": "システムが、現在の具体条件だけを固定した受入試験を『未接続を防いでいる』ものとして保持している。",
+      "unsafe_control_action": "受入試験が、台帳に読取述語のない新種別成果物が存在する文脈で、不合格の通知を与えない（H: 症状固定の試験を一般的防護として保持）。",
+      "event_sequence": [
+        "INC-015 の是正として『生き残りが在れば FORMALIZE』という具体条件が受入試験に固定される。",
+        "後日、別種の成果物種別が台帳へ追加される。",
+        "受入試験はその種別を条件に含まないため緑を返す。",
+        "新種別が読まれないまま滞留し、同型の未接続が再発する。"
+      ],
+      "fault": "是正が症状（特定種別の未接続）に対して行われ、体系的性質（全種別が読取述語から参照されること）に対して行われていない。",
+      "injection_point": "仮の新種成果物を台帳へ注入し、受入試験と次行動判定を走らせる。",
+      "expected_safe_behavior": "受入試験が種別を列挙で固定せず、『読まれない種別が存在する』という一般条件で赤になる。",
+      "oracle": "仮の新種成果物を台帳へ注入し、次行動が前進するか、または『読まれない種別が在る』として赤になるかを観測する。",
+      "falsification_signal": "注入した新種に対しても検査が赤で止まれば仮説は偽。",
+      "severity": "P1",
+      "confidence": "medium",
+      "recheck_triggers": [
+        "受入試験の条件変更",
+        "成果物種別の追加"
+      ],
+      "residual_risk": "注入する新種の作り方が試験の想定内に収まると、過適合を見逃す。",
+      "unresolved_refs": [
+        "symptom-vs-styssystemic-cause"
+      ],
+      "citation_defect": true
+    },
+    {
+      "scenario_id": "SCN-F11-field-granularity-unread-across-record-types",
+      "source_candidate": "INC-016-cast-analysis-content-unread-by-canon#0",
+      "normative_refs": [
+        "情報システム保有と有用性の乖離",
+        "利用可能な形式での情報提示",
+        "全コントロールループにフィードバック必須",
+        "item-set-completeness-and-version-check"
+      ],
+      "system_boundary": "doctrine の台帳各種別のスキーマ必須フィールドと、harness 配下でそれらを参照するコードまで。",
+      "loss": "記録された分析内容が誰にも読まれず、記帳が形式だけ成立して統治判断に反映されない。",
+      "hazard": "システムが、鮮度メタデータのみを読み内容フィールドを読まない読取経路を、『読取経路が存在する』状態として保持している。",
+      "unsafe_control_action": "正本の読取経路が、記録の内容フィールドが更新された文脈で、その内容に基づく判断入力を与えない（H: メタデータのみ読取の経路を接続済みとして保持）。",
+      "event_sequence": [
+        "記録種別のスキーマに必須フィールドが定義される。",
+        "読取経路は種別の存在と鮮度メタデータのみを参照する実装として書かれる。",
+        "種別粒度の被覆検査は緑になる（経路は実在する）。",
+        "内容フィールドはどこからも参照されないまま蓄積する。",
+        "分析内容が統治判断に一切影響しない。"
+      ],
+      "fault": "接続の検査粒度が種別単位であり、フィールド単位の参照被覆を検査していない。",
+      "injection_point": "各種別のスキーマ必須フィールド名を機械生成し、harness 配下の全コードへ参照照合する。",
+      "expected_safe_behavior": "各種別の必須フィールドが少なくとも1箇所から参照される、または参照されないフィールドが必須指定から外され、その差分が検査で可視化される。",
+      "oracle": "各種別のスキーマ必須フィールド名を機械生成し、harness 配下の全コードへ参照照合して 0 件参照フィールドの集合を出す。",
+      "falsification_signal": "すべての種別で、すべての必須フィールドが harness 内の 1 箇所以上から参照されていれば仮説は偽。",
+      "severity": "P1",
+      "confidence": "medium",
+      "recheck_triggers": [
+        "スキーマの必須フィールド変更",
+        "読取経路の実装変更"
+      ],
+      "residual_risk": "文字列一致による参照照合は、動的キー参照（辞書全体の受け渡し等）で偽陽性・偽陰性を生む。"
+    },
+    {
+      "scenario_id": "SCN-F12-leading-indicators-recorded-but-never-evaluated",
+      "source_candidate": "INC-016-cast-analysis-content-unread-by-canon#1",
+      "normative_refs": [
+        "先行指標の妥当性・代理指標の禁止",
+        "安全想定の記録と失効先行指標の定義",
+        "監査の先行指標を確立する",
+        "情報活用のための構造とプロセス"
+      ],
+      "system_boundary": "doctrine の cast 分析が記載する leading_indicators フィールドと、harness 側の測定・警告経路まで。",
+      "loss": "設計前提の崩壊を損失前に検知する手段が実質的に存在せず、先行指標に守られているという誤った安心のもとで統治が続く。",
+      "hazard": "システムが、閾値付き先行指標を記載しながら、その閾値を評価する機構を持たない状態を保持している。",
+      "unsafe_control_action": "保証レーンが、記載済み先行指標の閾値が超過している文脈で、警告を OWNER へ与えない（H: 評価機構なしの先行指標保持）。",
+      "event_sequence": [
+        "cast 分析が leading_indicators に閾値付きの指標を書く。",
+        "記載は台帳へ記帳され、記載されたこと自体が是正完了として扱われる。",
+        "harness には当該指標を測定するコードも閾値超過を報じる経路も追加されない。",
+        "実運用で閾値が超過しても誰にも観測されない。",
+        "先行指標そのものが本事象と同じ形（記録されるが読まれない）で死ぬ。"
+      ],
+      "fault": "先行指標の記載と、その測定・警告実装の間に強制関係がなく、記載のみで完了扱いになる。",
+      "injection_point": "過去の cast/*.json に記載された各先行指標について、対応する測定コードまたは警告経路の存在を照合する。",
+      "expected_safe_behavior": "記載された各先行指標に対して測定手段と閾値超過時の通知経路が存在し、実装のない指標は未完了として追跡される。",
+      "oracle": "過去の cast/*.json に記載された各先行指標について、対応する測定コードまたは警告経路が harness に存在するかを照合し、対応表を出す。",
+      "falsification_signal": "少なくとも一つの記載済み先行指標に対して、実際に測定して閾値超過を報じるコードが存在すれば仮説は偽（少なくとも全滅ではない）。",
+      "severity": "P1",
+      "confidence": "medium",
+      "recheck_triggers": [
+        "新しい先行指標の記載",
+        "harness の監視系の追加"
+      ],
+      "residual_risk": "測定コードが存在しても、閾値と因果的に無関係な代理指標を測っている場合は本 oracle では区別できない。"
+    },
+    {
+      "scenario_id": "SCN-F01-injection-source-excludes-ledger-unapplied",
+      "source_candidate": "INC-016-cast-analysis-content-unread-by-canon#2",
+      "normative_refs": [
+        "利用可能な形式での情報提示",
+        "教訓の記録と伝達と活用",
+        "情報システム保有と有用性の乖離",
+        "control-action-requires-feedback"
+      ],
+      "system_boundary": "SESSION_START_CONTRACT（inject-contract.py による注入生成）から走らせ手へのコントロールアクション、および ASSURANCE_LANE の台帳を入力源とする経路。GOVERNANCE_TREE は既存入力源として境界内。",
+      "loss": "台帳に記録済みで未適用の是正が、走らせ手の作業に一度も反映されないまま同型の欠陥が再発する。",
+      "hazard": "統治システムが、未適用の是正項目を一件以上保持した状態で、その存在を運転者へ提示しないまま次のセッションの作業を継続している。",
+      "unsafe_control_action": "SESSION_START_CONTRACT が、台帳に未適用の是正項目が実在するコンテキストにおいて、その項目を一件も含まない注入テキストを走らせ手へ提供する。",
+      "event_sequence": [
+        "事故分析が是正項目を台帳へ記帳するが、統治木への反映は未了のまま残る。",
+        "新しいセッションが開始し、inject-contract.py が統治木のみを走査して注入テキストを生成する。",
+        "走らせ手は注入テキストを唯一のセッション時点の契約として読み、未適用項目を認識しない。",
+        "同型の欠陥を含む操作が実行され、既知の是正が働かないまま損失が再現する。"
+      ],
+      "fault": "注入テキストの入力集合が統治木に限定され、台帳が入力源として結線されていない（宣言のみで解決経路が無い）。",
+      "injection_point": "inject-contract.py の入力解決部（注入項目の出所を決める箇所）。",
+      "expected_safe_behavior": "未適用の是正項目が存在する場合、注入テキストに当該項目の識別子または件数が現れる。台帳を参照しない設計であるなら、注入テキスト自身が『台帳は未参照である』ことを明示し、走らせ手が欠落を検知できる。",
+      "oracle": "inject-contract.py が生成する注入テキストの全項目を出所（統治木ノード／台帳エントリ／静的文言）で分類し、台帳由来項目の件数を数える。同時に台帳側の未適用項目件数を数え、両者を突き合わせる。",
+      "falsification_signal": "注入テキストに台帳由来の未適用項目が一件以上含まれている、または未参照であることの明示がテキスト中に存在する。",
+      "severity": "P1",
+      "confidence": "medium",
+      "preconditions": [
+        "台帳に未適用状態の是正項目が一件以上存在する"
+      ],
+      "recheck_triggers": [
+        "inject-contract.py の入力源変更",
+        "台帳スキーマの変更"
+      ],
+      "residual_risk": "注入されても走らせ手が読まない経路（提示と受容の差）は本 scenario の oracle では判定できない。"
+    },
+    {
+      "scenario_id": "SCN-F02-accepted-doc-birth-write-unguarded",
+      "source_candidate": "INC-017-accepted-adr-born-red-is-unfixable#0",
+      "normative_refs": [
+        "楽観仮定の禁止",
+        "hazard-as-threshold-condition",
+        "defects-identified-and-corrective-action-taken",
+        "制御は遵守を意味しない"
+      ],
+      "system_boundary": "PRE_TOOL_GUARD による Write/Edit のコントロールアクション検査と、GOVERNANCE_TREE 上の凍結対象文書（status: accepted の ADR）。",
+      "loss": "規範違反を含む統治文書が是正不能のまま統治木に残り、以後の判断根拠が汚染される。",
+      "hazard": "統治木に、規範違反を含み、かつ本文改変が制度上禁じられている文書が存在する状態。",
+      "unsafe_control_action": "PRE_TOOL_GUARD が、BANNED_SYNONYM を含む本文と status: accepted を持つ新規統治文書の初回 Write に対して、拒否のコントロールアクションを提供しない。",
+      "event_sequence": [
+        "status: accepted と規範違反語を含む新規 ADR が Write で作成される。",
+        "PRE_TOOL_GUARD は初回 Write を検査対象外として終了コード0を返す。",
+        "文書が統治木に定着し、POST_TOOL_LINTER または監査が ERROR を報告する。",
+        "是正のための本文 Edit が凍結規則により終了コード2で拒まれ、赤いまま固定される。"
+      ],
+      "fault": "凍結の入口（新規作成）に検査が無く、出口（編集）にのみ検査がある非対称。",
+      "injection_point": "PRE_TOOL_GUARD の Write ハンドラ（新規ファイル判定の分岐）。",
+      "expected_safe_behavior": "初回 Write の時点で規範違反が検出され拒否される、または status: accepted を新規作成で与えることが拒否される、または凍結文書の是正のための carve-out が存在して赤の解消経路が一つ以上残る。",
+      "oracle": "BANNED_SYNONYM を含む本文と status: accepted を持つ新規 ADR を Write し、ガードの終了コードを記録する（0 なら入口が開いている）。続いて同一ファイルの本文 Edit を実行し終了コード2で拒まれることを記録する。両者が同時に成立するかを判定する。",
+      "falsification_signal": "初回 Write が拒否される（終了コード非0）、または status の値に対する警告が返る、または直後の Edit が通過する。",
+      "severity": "P1",
+      "confidence": "high",
+      "recheck_triggers": [
+        "PRE_TOOL_GUARD の凍結判定ロジック変更",
+        "carve-out 規則の追加"
+      ]
+    },
+    {
+      "scenario_id": "SCN-F03-frozen-doc-family-born-red-unfixable",
+      "source_candidate": "INC-017-accepted-adr-born-red-is-unfixable#1",
+      "normative_refs": [
+        "hazard-refinement-by-operational-phase",
+        "systemic-cause-across-all-events",
+        "汎用ハザードのシステム固有詳細化",
+        "単一コンポーネント集中の回避"
+      ],
+      "system_boundary": "PRE_TOOL_GUARD の凍結規則と、GOVERNANCE_TREE 上の凍結対象文書種の集合（ADR に限らず decided-facts.md 等を含む）。",
+      "loss": "凍結対象文書種の複数箇所で規範違反が是正不能に固定され、統治木の広範囲が汚染される。",
+      "hazard": "統治木の複数の文書種にわたり、規範違反を含みかつ本文改変が禁じられた文書が存在する状態。",
+      "unsafe_control_action": "PRE_TOOL_GUARD が、ADR 以外の凍結対象文書種の新規作成に対しても規範検査を提供せず、かつその後の本文 Edit を carve-out 外として拒否する。",
+      "event_sequence": [
+        "decided-facts.md 等の凍結対象文書種で、規範違反を含む新規ファイルが作成される。",
+        "ガードは新規作成を通過させる。",
+        "違反がリンタまたは監査で ERROR として現れる。",
+        "本文 Edit が carve-out 外として拒まれ、当該文書種でも赤が固定される。"
+      ],
+      "fault": "入口無検査と出口凍結の非対称が、ADR 固有ではなく凍結対象文書種の族に共通して存在する（共通の体系的要因）。",
+      "injection_point": "PRE_TOOL_GUARD の凍結対象パス判定表（文書種ごとの carve-out 定義）。",
+      "expected_safe_behavior": "凍結対象と宣言された各文書種について、入口検査と是正 carve-out の少なくとも一方が定義されており、赤のまま固定される組み合わせが一つも存在しない。",
+      "oracle": "凍結対象と宣言された全文書種を列挙し、種ごとに（a）規範違反を含む新規作成が拒否されるか、（b）作成後の本文 Edit が通るか、を実行して2値表を作る。両方が偽になる種の件数を数える。",
+      "falsification_signal": "ADR 以外の全文書種で、carve-out が存在して本文改変が通る、または新規作成の時点で規範違反が拒まれる（両方偽の種が0件）。",
+      "severity": "P1",
+      "confidence": "medium",
+      "preconditions": [
+        "ADR 以外に凍結対象と宣言された文書種が存在する"
+      ],
+      "residual_risk": "凍結対象の宣言自体が不完全な場合、列挙の母集団が欠ける。"
+    },
+    {
+      "scenario_id": "SCN-F04-audit-blind-to-accepted-plus-lint-error",
+      "source_candidate": "INC-017-accepted-adr-born-red-is-unfixable#2",
+      "normative_refs": [
+        "監査の検出力評価",
+        "監査のすり抜け時に監査手順を是正",
+        "欠落・不十分なコントロールの明示的表示",
+        "audit-findings-must-be-closed"
+      ],
+      "system_boundary": "SESSION_END_AUDIT（docs-audit）による GOVERNANCE_TREE の状態観測と、.claude/.cache/last-audit.json を通じた OWNER へのフィードバック。",
+      "loss": "是正不能な赤の存在が所有者へ一度も報告されず、統治木の汚染が無期限に残存する。",
+      "hazard": "統治システムが、是正不能な規範違反を保持したまま、監査出力上は当該状態を報告しない状態で運転を継続している。",
+      "unsafe_control_action": "SESSION_END_AUDIT が、『status: accepted かつ lint ERROR』の結合状態が成立しているコンテキストで、その結合を示す finding を出力しない。",
+      "event_sequence": [
+        "status: accepted かつ規範違反を含む文書が統治木に置かれる。",
+        "監査が実行され、lint ERROR は個別に、status は個別に観測される。",
+        "両者の結合（是正不能の指標）を評価する述語が無いため findings に現れない。",
+        "OWNER は last-audit.json を読んでも是正不能状態の存在を知らない。"
+      ],
+      "fault": "監査の述語集合が単一属性の検査に限られ、属性の結合状態が視野に無い。",
+      "injection_point": "docs-audit の findings 生成部（判定述語の定義）。",
+      "expected_safe_behavior": "『凍結状態 かつ 規範違反』の結合が成立する文書について、独立した finding が last-audit.json に現れ、通常の lint ERROR と区別できる。",
+      "oracle": "当該状態の文書を統治木に置いて監査を実行し、.claude/.cache/last-audit.json の findings に当該組み合わせを示す項目（文書識別子・status・違反種を同時に持つ項目）が現れるかを検査する。",
+      "falsification_signal": "findings に当該組み合わせが独立項目として現れる。",
+      "severity": "P1",
+      "confidence": "high",
+      "recheck_triggers": [
+        "docs-audit の findings スキーマ変更"
+      ]
+    },
+    {
+      "scenario_id": "SCN-F05-audit-degradation-modes-render-unknown-as-warn",
+      "source_candidate": "INC-018-audit-degrades-into-a-tree-finding#0",
+      "normative_refs": [
+        "楽観仮定の禁止",
+        "分析出力の客観性を僭称しない",
+        "リスク情報の不透明な集約禁止"
+      ],
+      "system_boundary": "SESSION_END_AUDIT（docs-audit）と、その外部依存である git による除外判定、および last-audit.json を通じた OWNER へのフィードバック。",
+      "loss": "監査が偽の警告を出し続け、警告が信用されなくなり、真の欠陥が同じ出力の中で見落とされる。",
+      "hazard": "統治システムが、判定不能であった対象を判定済みとして計数した監査結果を、確信度の区別なく所有者へ提示している状態。",
+      "unsafe_control_action": "SESSION_END_AUDIT が、除外判定が実行できない環境条件（git が PATH に無い／作業木が非リポジトリ）において、判定不能を示さずに『印なし』として計数した totals と warn を提供する。",
+      "event_sequence": [
+        "監査が除外対象の判定のため git 呼び出しを試みる。",
+        "git が不在、または対象が非リポジトリで、呼び出しが解決しない。",
+        "例外経路が判定不能を伝播せず、対象を『印なし』側に落として計数する。",
+        "totals が膨らみ、満信頼の warn が findings として出力される。"
+      ],
+      "fault": "外部依存の縮退が『既定値への吸収』として扱われ、確信度の次元が出力に存在しない。",
+      "injection_point": "docs-audit の trace_coverage / gitignore 判定を行う外部コマンド呼び出しとその例外処理。",
+      "expected_safe_behavior": "外部依存が解決しない場合、totals は正常時と一致するか、または判定不能件数が totals と分離して出力され、warn ではなく判定不能として findings に現れる。",
+      "oracle": "同一の統治木・同一の --today 2026-08-06 で監査を三通り実行する（正常・git 不在・非リポジトリ）。totals、trace_coverage.gitignore、findings を三者で差分比較する。",
+      "falsification_signal": "git 不在・非リポジトリのいずれでも totals が正常時と一致し、かつ trace_coverage が状態を示すか findings に判定不能が現れる（この場合、機序は 'error' 経路に限定される）。",
+      "severity": "P1",
+      "confidence": "medium",
+      "environments": [
+        "git を PATH から除いた環境",
+        "非リポジトリのディレクトリ",
+        "正常なリポジトリ環境"
+      ],
+      "residual_risk": "SCN-D07-coverage-denominator-poisoning と母数汚染という観点で隣接する。重複と判定されるなら本 scenario は縮退経路の網羅（三条件比較）の側だけが残る。",
+      "unresolved_refs": [
+        "hook-crash-indistinguishable-from-success"
+      ],
+      "citation_defect": true
+    },
+    {
+      "scenario_id": "SCN-F06-safe-directory-loss-recurs-on-rebuild",
+      "source_candidate": "INC-018-audit-degrades-into-a-tree-finding#3",
+      "normative_refs": [
+        "計画外変化の検出手段",
+        "変更後に事故が起きる前提の変更管理",
+        "擬似警報の削減",
+        "設計時想定の運用中再検査"
+      ],
+      "system_boundary": "監査の実行環境（devcontainer）と SESSION_END_AUDIT の外部依存、および環境側回避策の保持を担う PLUGIN_DISTRIBUTION／運用手順。",
+      "loss": "偽の警告が周期的に再発し、警告の信用が失われて真の欠陥が無視される。",
+      "hazard": "統治システムが、外部依存の設定が失われた環境で運転され、判定不能を確信ある警告として提示する状態へ周期的に復帰している。",
+      "unsafe_control_action": "環境構築のコントロールアクション（コンテナ再作成）が、監査の前提となる git 設定を復元しないまま実行環境を提供する。",
+      "event_sequence": [
+        "safe.directory を設定して偽 warn が消える。",
+        "devcontainer が再構築され、設定が保持されない状態でコンテナが起動する。",
+        "作業木の所有 uid が実行 uid と一致せず git がエラーを返す。",
+        "監査が縮退経路に入り、同じ偽 warn が再び出力される。"
+      ],
+      "fault": "是正が環境側の一回限りの手作業に置かれ、環境再生成の手順に取り込まれていない。",
+      "injection_point": "devcontainer の再作成手順（イメージ/postCreate 相当の初期化）と git 設定の保持場所。",
+      "expected_safe_behavior": "環境再作成後も監査の前提が成立している（git が正常応答する）か、成立しない場合に監査が判定不能として明示する。",
+      "oracle": "コンテナを再作成した直後、設定を入れる前の状態で（a）作業木の所有 uid と実行 uid、（b）git status の終了コード、（c）同一入力での監査 totals、を記録し、再作成前の値と比較する。",
+      "falsification_signal": "再作成後も設定が保持され git が正常応答する（再発条件はより限定的で、特定の操作の後だけである）。",
+      "severity": "P1",
+      "confidence": "medium",
+      "environments": [
+        "devcontainer 再作成直後"
+      ],
+      "recheck_triggers": [
+        "devcontainer 定義の変更",
+        "監査の外部依存の変更"
+      ]
+    },
+    {
+      "scenario_id": "SCN-F07-self-reported-marks-do-not-identify-copy",
+      "source_candidate": "INC-019-version-string-does-not-identify-the-copy#0",
+      "normative_refs": [
+        "被審査者提供情報への単独依存の禁止",
+        "申告でなく行動観測による評価",
+        "共通の体系的要因による多重防護の無効化",
+        "item-set-completeness-and-version-check"
+      ],
+      "system_boundary": "PLUGIN_DISTRIBUTION（複製された配布物）が出す各種の印（版番号、注入の印、鼓動の印、ガードの印）と、それを根拠に結論を立てる ASSURANCE_LANE の台帳。",
+      "loss": "台帳の結論が、実際に動作している複製とは異なる対象について立てられ、是正が実効を持たない。",
+      "hazard": "保証レーンが、動作中の複製の同一性を確認しないまま、複製の状態に関する結論を確定した状態で運転を継続している。",
+      "unsafe_control_action": "ASSURANCE_LANE が、印の出所が動作中の複製であることを照合していないコンテキストで、複製の状態に関する結論を台帳へ確定として記帳する。",
+      "event_sequence": [
+        "複製側が版番号・注入・鼓動・ガードの印を出力する。",
+        "観測者はそれらの印を、動作中の複製の識別子として読む。",
+        "印は自己申告であり、どの複製が出したかを特定しない。",
+        "印に依拠した結論が台帳に確定として残り、後続の是正の対象が実体とずれる。"
+      ],
+      "fault": "識別の根拠が被観測側の自己申告のみで、独立した照合点（配置先の実体照合）が無い。",
+      "injection_point": "台帳の結論生成時に参照される観測（版番号・各印）の取得経路。",
+      "expected_safe_behavior": "複製の状態に関する各結論が、自己申告の印以外に、配置先実体との照合を一つ以上根拠として持つ。",
+      "oracle": "台帳の全結論を根拠となる観測ごとに分類し、版番号または複製側の印にのみ依拠する結論を列挙して件数を数える。",
+      "falsification_signal": "版番号・複製側の印にのみ依拠する結論が INC-001 の一件のみで、他に0件である。",
+      "severity": "P1",
+      "confidence": "medium",
+      "residual_risk": "SCN-N04-detector-and-detected-share-version-common-cause と共通原因の観点で隣接するが、本 scenario の主張は識別性の欠如そのものであり版の一致ではない。"
+    },
+    {
+      "scenario_id": "SCN-F08-sessionend-nonfire-aliases-unmarked-legacy-copy",
+      "source_candidate": "INC-019-version-string-does-not-identify-the-copy#1",
+      "normative_refs": [
+        "ベースライン比較による事象識別",
+        "分析出力の客観性を僭称しない",
+        "single-root-cause-is-arbitrary",
+        "controller-needs-concrete-feedback-channels"
+      ],
+      "system_boundary": "SESSION_END_AUDIT の発火と .claude/.cache/last-audit.json への書き込み、PLUGIN_DISTRIBUTION の版差、および両者を観測する ASSURANCE_LANE。",
+      "loss": "原因の取り違えにより、実在しない欠陥へ是正が向けられ、実在する欠陥が放置される。",
+      "hazard": "保証レーンが、原因の異なる二つの状態を同一の観測として扱ったまま、原因を確定した結論を保持している。",
+      "unsafe_control_action": "ASSURANCE_LANE が、last-audit.json の観測のみが利用可能なコンテキストで、SessionEnd 非発火という原因を確定として記帳する（印を持たない旧版が動作している可能性を排除しないまま）。",
+      "event_sequence": [
+        "last-audit.json が更新されない、または印を欠いた状態で観測される。",
+        "観測者はこれを SessionEnd 非発火（INC-001 の既知の穴）として読む。",
+        "実際には印を持たない旧版の複製が動作していた可能性が同じ観測を生む。",
+        "二つの原因が区別されないまま、片方に対する是正だけが実施される。"
+      ],
+      "fault": "観測空間が二つの異なる故障に対して同一の像を返す（エイリアシング）ため、原因の弁別に必要なフィードバックが存在しない。",
+      "injection_point": "last-audit.json の生成・読み取り経路と、複製の版を判定する観測点。",
+      "expected_safe_behavior": "正常終了時と強制終了時、印を持つ版と持たない版で、last-audit.json 上の観測が相互に区別可能である。",
+      "oracle": "印を持たない版の複製で1セッションを正常終了させ、last-audit.json の観測（存在・更新時刻・スキーマ・印の有無）を記録し、印を持つ版の強制終了時の観測と項目ごとに一致するかを見る。",
+      "falsification_signal": "両者で観測が異なり、区別可能である。",
+      "severity": "P1",
+      "confidence": "medium",
+      "residual_risk": "SCN-D01-sessionend-nondelivery-on-abnormal-exit は非発火そのものを対象とする。本 scenario は非発火と旧版の弁別不能を対象とするため別立てとしたが、独立批判で同一と判定されうる。"
+    },
+    {
+      "scenario_id": "SCN-F09-unverified-evaluator-fields-drive-disposition",
+      "source_candidate": "INC-020-evaluator-blindness-read-as-owner-authority#0",
+      "normative_refs": [
+        "verification-requires-objective-evidence",
+        "被審査者提供情報への単独依存の禁止",
+        "requirement-verifiable-and-consistent",
+        "traceability-analyzed-documented-maintained"
+      ],
+      "system_boundary": "ASSURANCE_LANE の評価者が出力する schema フィールド（confidence・evidence_kind・version_independent・severity 等）と、それを分岐条件として使う下流の処遇決定、および憲章（GOVERNANCE_TREE）の定義。",
+      "loss": "申告値の意味の取り違えにより、実在する欠陥が低い処遇へ振り分けられ是正されない。",
+      "hazard": "保証レーンが、定義も照合も持たない申告値を処遇の既定として用いた状態で、事象の処遇を確定している。",
+      "unsafe_control_action": "下流の処遇決定が、評価者の申告フィールドを、憲章の定義および申告以外の照合なしに分岐条件として使用する。",
+      "event_sequence": [
+        "評価者が schema の各フィールドに値を申告する。",
+        "下流の処遇ロジックがその値で分岐する。",
+        "当該フィールドに憲章の定義が無い、または照合点が無い。",
+        "申告の揺れがそのまま処遇の揺れになり、事象が誤った既定へ落ちる。"
+      ],
+      "fault": "申告と検証の分離が無く、フィールドの意味が下流の読み替えに委ねられている。",
+      "injection_point": "評価者出力 schema の定義と、下流の処遇分岐の実装。",
+      "expected_safe_behavior": "下流の分岐に使われるフィールドはすべて憲章に定義を持ち、かつ申告以外の照合点を一つ以上持つ。",
+      "oracle": "schema の全フィールドについて、(a) 憲章に定義があるか、(b) 下流の分岐に使われるか、(c) 使われる場合その分岐が申告以外の照合を伴うか、を機械照合し、(b) が真で (a) または (c) が偽のフィールドを列挙する。",
+      "falsification_signal": "下流の分岐に使われる全フィールドが憲章に定義を持ち、かつ申告以外の照合点を一つ以上持つ（該当0件）。",
+      "severity": "P1",
+      "confidence": "high",
+      "recheck_triggers": [
+        "評価者 schema の変更",
+        "処遇分岐ロジックの変更"
+      ]
+    },
+    {
+      "scenario_id": "SCN-F10-decided-facts-anchor-evaluator",
+      "source_candidate": "INC-020-evaluator-blindness-read-as-owner-authority#1",
+      "normative_refs": [
+        "assessor-third-party-independence",
+        "被審査者提供情報への単独依存の禁止",
+        "共通の体系的要因による多重防護の無効化",
+        "ivv-organizational-independence"
+      ],
+      "system_boundary": "ASSURANCE_LANE における独立評価者への入力（既決＝統治木の decided facts）と、その評価出力に基づく処遇決定。",
+      "loss": "既決自体が誤っている場合、その誤りを検出する経路が全て同時に失われ、誤った既決に基づく判断が組織的に固定される。",
+      "hazard": "保証レーンが、独立であるはずの評価が同一の既決に依存した状態で、複数の判定を独立な確認として扱っている。",
+      "unsafe_control_action": "ASSURANCE_LANE が、既決の正しさが未検証であるコンテキストで、既決を評価者への入力として提供し、その出力を独立判定として採用する。",
+      "event_sequence": [
+        "統治木の既決が評価者への入力として与えられる。",
+        "評価者は既決を所与として推論し、既決と整合する結論を出す。",
+        "既決自体の誤りは評価者の指摘対象から外れる。",
+        "既決由来の誤りが、複数の評価を横断する共通原因故障として残る。"
+      ],
+      "fault": "評価の独立性が入力の共有によって損なわれる（共通原因）。",
+      "injection_point": "評価者へのプロンプト／入力構成（既決の同梱有無）。",
+      "expected_safe_behavior": "既決を与えた条件でも、既決自体の誤りへの指摘率が既決なし条件と同等以上に保たれる。",
+      "oracle": "既決に既知の誤りを仕込んだ対照事象を用意し、既決あり／なしの二条件で、(a) 既決の誤りへの指摘率、(b) 既決で消える推奨の判定精度、を同一事象集合で比較する。",
+      "falsification_signal": "既決ありの条件で、既決の誤りへの指摘率が既決なし条件と同等以上に保たれる。",
+      "severity": "P1",
+      "confidence": "medium",
+      "preconditions": [
+        "既決に誤りを仕込んだ対照事象を構成できる",
+        "二条件で十分な事象数を確保できる"
+      ],
+      "residual_risk": "対照事象の作為性により、実運用の既決に対する寄りかかりの強さを過小／過大に見積もる可能性がある。"
+    },
+    {
+      "scenario_id": "SCN-F11-shelf-backlog-contaminated-by-same-default",
+      "source_candidate": "INC-020-evaluator-blindness-read-as-owner-authority#3",
+      "normative_refs": [
+        "systemic-cause-across-all-events",
+        "report-derived-statistics-bias",
+        "iterative-update-of-prior-results",
+        "深掘り優先-件数網羅より少数深掘り"
+      ],
+      "system_boundary": "ASSURANCE_LANE の棚に滞留する過去 CAST 分析の成果物（45 件）と、それらを『真に所有者に帰する』と裁定した既定、および GOVERNANCE_TREE の既決。",
+      "loss": "実在しない所有者責任が大量に台帳に残り、是正資源が虚構の対象へ配分され、真に対処すべき少数が埋没する。",
+      "hazard": "保証レーンが、同一の誤った既定で生成された未再裁定の判断を大量に保持した状態で、それらを有効な結論として扱っている。",
+      "unsafe_control_action": "ASSURANCE_LANE が、既定の誤りが判明した後も、過去分析の再裁定を行わないまま棚の 45 件を有効な結論として保持する。",
+      "event_sequence": [
+        "過去の CAST 分析が共通の既定の下で『所有者に帰する』と裁定する。",
+        "3 件の実測で、統治木の既決を当てると裁定が消えることが観測される。",
+        "残る 42 件は再裁定されないまま棚に残る。",
+        "誤った結論に基づく処遇が継続し、真に所有者へ帰する少数が同じ山に埋没する。"
+      ],
+      "fault": "分析結果が生成時の既定に固定され、既定の更新を過去成果へ遡って適用する経路が無い。",
+      "injection_point": "棚（過去分析の保管先）と再裁定手順の入口。",
+      "expected_safe_behavior": "既定の誤りが判明した時点で、その既定の下で生成された全成果物が再裁定の対象として識別され、再裁定の結果が記帳される。",
+      "oracle": "45 件全件に統治木の既決を当てて再裁定し、（既決で消える／観測で消える／材料が足りない／真に所有者）の四分に分類し、各区分の件数を記録する。",
+      "falsification_signal": "再裁定後も過半（23 件以上）が『真に所有者』に残る。",
+      "severity": "P1",
+      "confidence": "low",
+      "preconditions": [
+        "棚の 45 件が再裁定可能な形で保管されている"
+      ],
+      "residual_risk": "3 件の実測が全体の傾向を代表するという仮定は本 oracle で検証されるが、再裁定を行う主体が同じ既定に汚染されている場合は SCN-F10 と共通原因になる。"
+    },
+    {
+      "scenario_id": "SCN-P02-binary-gate-clause-lacks-unassessed-branch",
+      "source_candidate": "INC-022-ci-that-cannot-run-is-read-as-red#1",
+      "normative_refs": [
+        "楽観仮定の禁止",
+        "verification-requires-objective-evidence",
+        "verification-objective-evidence",
+        "review-all-na-entries",
+        "requirement-verifiable-and-consistent",
+        "verification-constraints-and-limits"
+      ],
+      "system_boundary": "CI_RELEASE_CHECK と、それを参照する運転手順・常設許可の条項群。門の条件式と、その結果を受ける ASSURANCE_LANE／OWNER の判断を境界内に含む。",
+      "loss": "検査が実行できなかった状態が、検査結果として読まれ、未検証の変更が配布されるか、健全な変更が根拠なく止められる。",
+      "hazard": "システムが、証拠が存在しない対象について、証拠に基づく判定と区別できない状態表示を保持している状態。",
+      "unsafe_control_action": "CI_RELEASE_CHECK を参照する門の条項が、前提（実行環境・入力・権限）が欠けて評価不能なコンテキストで、PASS または FAIL のいずれかを出力する（上記ハザード）。",
+      "event_sequence": [
+        "門の条項が「条件が真なら通す／偽なら止める」の二値で書かれる。",
+        "前提の欠如により条件式が評価できない状況が発生する。",
+        "評価不能な入力が既定値へ落ち、条件式は真または偽のいずれかを返す。",
+        "下流の運転手順は、その値を検査結果として扱う。",
+        "台帳には評価不能であった事実が残らない。"
+      ],
+      "fault": "条項の値域が二値で定義され、前提欠如を表す第三の値（UNASSESSED）への分岐が条文にない。",
+      "injection_point": "CI 実行環境を欠く（例: 検査対象の成果物が生成されていない／認証が無い）状態で、門を参照する各条項を評価させる。",
+      "expected_safe_behavior": "前提が欠けた条項は UNASSESSED を返し、門は通過も却下もせず、UNASSESSED の理由と対象を台帳へ記帳したうえで人の判断へ渡す。",
+      "oracle": "運転手順・常設許可の全条項を機械抽出し、(a) 前提欠如への分岐を持つ、(b) 二値のみ、に分類した表を出力する。(b) の条項ごとに前提を欠いた入力を与え、返り値が PASS/FAIL のどちらへ倒れるかを記録する。",
+      "falsification_signal": "抽出した全条項が三値（または前提欠如への明示分岐）を持ち、前提を欠いた入力に対して条項 3 以外は一つも PASS/FAIL へ倒れない。この場合、欠落は条件 3 に限定される。",
+      "preconditions": [
+        "条項が自然言語または単純な真偽式で記述されている",
+        "評価不能を表す語彙が条文側に用意されていない"
+      ],
+      "recheck_triggers": [
+        "運転手順・常設許可の条項追加または改訂",
+        "CI_RELEASE_CHECK の出力値域の変更"
+      ],
+      "severity": "P1",
+      "confidence": "high"
+    },
+    {
+      "scenario_id": "SCN-P03-governance-vocabulary-not-inherited-by-procedures",
+      "source_candidate": "INC-022-ci-that-cannot-run-is-read-as-red#4",
+      "normative_refs": [
+        "traceability-upper-lower",
+        "traceability-analyzed-documented-maintained",
+        "document-hierarchy-and-process-io-mapping",
+        "用語定義のスコープ限定",
+        "terminology-defer-to-parent-standard",
+        "上位文書の利用可能性（読み手適合）"
+      ],
+      "system_boundary": "GOVERNANCE_TREE（状態語彙・規律の定義）と、それを継承すべき運転経路（SESSION_START_CONTRACT, PRE_TOOL_GUARD, POST_TOOL_LINTER, SESSION_END_AUDIT, CI_RELEASE_CHECK 等）の条文。",
+      "loss": "統治木で定義された規律が一部の運転経路で強制されず、経路によって同じ状態が別の意味で扱われ、統治の判断が経路依存になる。",
+      "hazard": "システムが、上位で定義された状態語彙と規律を、下位の実行経路の一部にしか反映していない構成を保持している状態。",
+      "unsafe_control_action": "GOVERNANCE_TREE は語彙・規律を定義するが、その定義を参照しない運転経路が存在するコンテキストで、当該経路は自前の値域で状態を確定して下流へ渡す（上記ハザード）。",
+      "event_sequence": [
+        "統治木に状態語彙または規律が追加される。",
+        "追加時に、どの運転経路がその語彙を扱う必要があるかの対応表が作られない。",
+        "一部の運転経路の条文は改訂されず、旧来の値域のまま運用される。",
+        "同一事象が経路により異なる状態へ写像される。",
+        "台帳には経路差が現れず、統治木は語彙が行き渡っているように読める。"
+      ],
+      "fault": "統治木の語彙・規律と運転経路条文の間に、双方向の対応（トレース）が維持されていない。",
+      "injection_point": "統治木に新しい状態語（試験用の語）を 1 つ追加し、どの運転経路の条文にも自動では現れないことを観測する。",
+      "expected_safe_behavior": "統治木の語彙・規律の追加・改訂は、対応する全運転経路の条文への反映が済むまで未継承として検出され、未反映の経路が一覧で提示される。",
+      "oracle": "統治木の状態語彙・規律を機械抽出し、各運転経路の条文本文に対する出現有無の対応表を生成する。未出現セル（語彙 × 経路）の件数を、UNASSESSED 以外の語彙についても数える。",
+      "falsification_signal": "対応表で UNASSESSED 以外の語彙がすべての運転経路に出現しており、未出現セルが UNASSESSED のみに限られる。この場合、継承漏れはこの語彙に固有である。",
+      "preconditions": [
+        "運転経路の条文が統治木とは別ファイルで管理されている",
+        "語彙追加時のリンタ検査が経路条文を対象にしていない"
+      ],
+      "recheck_triggers": [
+        "統治木への語彙・規律の追加",
+        "運転経路の新設・分割"
+      ],
+      "severity": "P1",
+      "confidence": "medium"
+    },
+    {
+      "scenario_id": "SCN-P04-order-comparison-precision-mismatch-beyond-freshness",
+      "source_candidate": "INC-023-attack-freshness-truncated-to-the-day#0",
+      "normative_refs": [
+        "test-spec-unambiguous",
+        "requirement-verifiable-and-consistent",
+        "hazard-as-threshold-condition",
+        "楽観仮定の禁止",
+        "completeness-presence-and-version",
+        "item-set-completeness-and-version-check"
+      ],
+      "system_boundary": "ASSURANCE_LANE および SESSION_END_AUDIT に含まれる順序比較（鮮度判定、版の比較、監査の古び判定）と、その入力を供給する台帳・索引。",
+      "loss": "同一日・同一版として扱われた新旧が入れ替わり、古い証拠が現行として採用され、判定が実際より新しく見える。",
+      "hazard": "システムが、精度の異なる二つの時点・版を同値として比較した結果を、順序が確定したものとして保持している状態。",
+      "unsafe_control_action": "順序比較を行う統制が、両辺の精度が異なる（一方が日付止まり等に切り捨てられている）コンテキストで、等価または新しいという判定を出力する（上記ハザード）。",
+      "event_sequence": [
+        "証拠または索引の生成側が、時点を日付まで、あるいは版を主要部だけに丸めて記録する。",
+        "比較側は両辺を同一精度とみなして比較する。",
+        "同日内・同版内で発生した更新が、比較上は差が無いものとして扱われる。",
+        "鮮度・古びの判定が「更新なし」の側へ確定する。",
+        "台帳には比較に用いた精度が残らない。"
+      ],
+      "fault": "比較関数の入力精度が呼び出し側ごとに異なり、精度の不一致を検出する事前条件が置かれていない。",
+      "injection_point": "順序比較の各呼び出し箇所に、片辺が日付止まり（または短縮版）で他辺が秒精度（完全版）となる入力対を与える。",
+      "expected_safe_behavior": "両辺の精度が異なる比較は順序未確定として扱われ、比較結果は UNASSESSED となり、精度不足の入力元が台帳に記帳される。",
+      "oracle": "順序比較を行う全箇所を静的抽出し、実行時に両辺の値の型と文字列長（精度）を記録する計器を入れる。精度が異なる比較、およびどちらかが日付止まりである比較の件数と発生箇所を列挙する。",
+      "falsification_signal": "全比較箇所で両辺が同一精度の時点／版であり、日付止まりの入力が一度も現れない。この場合、切り捨ては鮮度判定に限定される。",
+      "preconditions": [
+        "時点・版の記録形式が生成側ごとに異なりうる",
+        "比較関数が文字列比較で実装されている"
+      ],
+      "recheck_triggers": [
+        "時点・版の記録形式の変更",
+        "新しい順序比較箇所の追加"
+      ],
+      "severity": "P1",
+      "confidence": "high"
+    },
+    {
+      "scenario_id": "SCN-P05-attack-coverage-claimed-at-evaluator-granularity",
+      "source_candidate": "INC-023-attack-freshness-truncated-to-the-day#1",
+      "normative_refs": [
+        "verification-plan-coverage-evaluated",
+        "coverage-metrics-c0-c1-mcdc",
+        "alternative-assurance-when-coverage-unmet",
+        "全体健全性と部分健全性の分離評価",
+        "security-adversarial-causes-in-scenarios",
+        "consider-adversary-influenced-feedback"
+      ],
+      "system_boundary": "ASSURANCE_LANE の攻撃（注入）試験と、その結果を「攻撃済み」として表示する評価器および台帳。評価器内部の経路 id 一覧を境界内に含む。",
+      "loss": "評価器の一部経路しか攻撃されていないにもかかわらず全体が攻撃済みと読まれ、未検証経路の脆弱な判定が本番で採用される。",
+      "hazard": "システムが、部分的にしか検証されていない構成要素を、全体として検証済みの状態として保持している状態。",
+      "unsafe_control_action": "ASSURANCE_LANE が攻撃試験の結果を記帳する際、注入対象が評価器の一部経路に限られるコンテキストで、評価器全体を単位とする「攻撃済み」状態を出力する（上記ハザード）。",
+      "event_sequence": [
+        "攻撃試験が A1/A2/A3 の経路に対して注入を行う。",
+        "証拠には注入対象の経路 id が記録されず、評価器名だけが残る。",
+        "台帳は評価器を単位として攻撃済みを記帳する。",
+        "評価器に経路が追加されても、攻撃済みの表示は変わらない。",
+        "未注入の経路が本番判定に用いられる。"
+      ],
+      "fault": "攻撃済みの単位（粒度）が評価器全体で定義され、証拠の粒度と突き合わされていない。",
+      "injection_point": "評価器に新しい経路 A4 を追加し、A4 に対する注入を行わないまま攻撃試験を実行する。",
+      "expected_safe_behavior": "攻撃済みの状態は注入された経路 id の集合として記帳され、評価器の経路一覧との差集合が空でない限り、評価器全体を攻撃済みとして表示しない。",
+      "oracle": "証拠に注入対象の経路 id を持たせ、評価器の経路一覧との差集合を出力する。差集合の要素数と要素名を台帳へ記帳し、A4 追加後に差集合が {A4} を含むことを確認する。",
+      "falsification_signal": "差集合が空であり、かつ経路追加後も差集合が空のまま（追加経路が自動的に注入対象へ入る）。この場合、粒度の不一致は存在しない。",
+      "preconditions": [
+        "評価器が複数の判定経路を持つ",
+        "証拠の粒度が評価器名で表現されている"
+      ],
+      "recheck_triggers": [
+        "評価器への経路追加・分岐追加",
+        "攻撃試験の注入対象の変更"
+      ],
+      "severity": "P1",
+      "confidence": "high"
+    },
+    {
+      "scenario_id": "SCN-P06-rubric-boundary-undecided-across-all-boundaries",
+      "source_candidate": "INC-024-coverage-rubric-undecided-at-its-busiest-boundary#0",
+      "normative_refs": [
+        "test-spec-unambiguous",
+        "pass-criteria-defined-in-advance",
+        "model-coverage-criteria-predefined",
+        "evaluation-criteria-and-selection-rationale-recorded",
+        "requirement-verifiable-and-consistent"
+      ],
+      "system_boundary": "ASSURANCE_LANE の被覆規準（五値の採点規準）と、それを適用して coverage_status を確定する採点経路、および結果を保持する台帳。",
+      "loss": "被覆の数値が採点者・実行時期によって変わり、統治木の被覆状態が根拠として使えなくなる。",
+      "hazard": "システムが、判定基準が境界で未決である規準に基づく採点結果を、確定した被覆状態として保持している状態。",
+      "unsafe_control_action": "ASSURANCE_LANE が五値の採点アクションを発行するが、規準が境界の帰属を定めていないコンテキストで、いずれかの値を確定値として出力する（上記ハザード）。",
+      "event_sequence": [
+        "規準が五つの値を定義するが、隣接値の境界条件が全境界について明文化されない。",
+        "採点は境界に触れる項目についても単一の値を返す。",
+        "不一致が観測された境界だけが問題として認識される。",
+        "他の境界は、その境界に触れる項目が少ないために不一致が現れない。",
+        "台帳には境界別の不一致率が残らない。"
+      ],
+      "fault": "規準に境界の帰属規則がなく、採点結果の分散を測る仕組みも置かれていない。",
+      "injection_point": "各境界に触れる項目を意図的に等数用意した層化標本を作り、独立再判定を掛ける。",
+      "expected_safe_behavior": "境界が未決である項目は確定値を返さず未決として記帳され、境界別の不一致率が台帳に現れる。",
+      "oracle": "境界ごとに層化した抜取り（各境界 n 件）で独立再判定を行い、境界別の不一致率と 95% 区間を出力する。境界間で不一致率が有意差を持つかを検定する。",
+      "falsification_signal": "層化標本で当該境界の不一致率だけが突出し、他境界の不一致率が有意に低い。この場合、未決は当該境界に固有であり五値全体の問題ではない。",
+      "preconditions": [
+        "採点が自然言語規準の解釈に依存する",
+        "再判定を独立に実施できる"
+      ],
+      "recheck_triggers": [
+        "規準の改訂",
+        "採点者・採点モデルの変更"
+      ],
+      "severity": "P1",
+      "confidence": "medium"
+    },
+    {
+      "scenario_id": "SCN-P07-historical-green-verdicts-carry-undeclared-width",
+      "source_candidate": "INC-024-coverage-rubric-undecided-at-its-busiest-boundary#1",
+      "normative_refs": [
+        "修正時の既実施検証の再評価・再実施",
+        "verification-results-baselined",
+        "item-set-completeness-and-version-check",
+        "反証証拠による想定再評価",
+        "verification-requires-objective-evidence"
+      ],
+      "system_boundary": "ASSURANCE_LANE の台帳履歴（過去反復で非緑から緑へ遷移した見出し群）と、現行の採点規準・再判定経路。",
+      "loss": "過去に緑化した見出しが現行規準では緑でない可能性を含んだまま、被覆の総量が実態より高く報告される。",
+      "hazard": "システムが、宣言されていない判定の幅を含む過去の確定結果を、現行の被覆状態の一部として保持している状態。",
+      "unsafe_control_action": "ASSURANCE_LANE が被覆状態を集計する際、過去反復の判定が現行規準で再確認されていないコンテキストで、それらを現行の緑として合算する（上記ハザード）。",
+      "event_sequence": [
+        "過去の反復で見出しが非緑から緑へ遷移し、台帳に確定として記録される。",
+        "採点規準はその後も改訂・解釈変更が入る。",
+        "過去の緑は再判定の対象にならない。",
+        "集計は過去分と今回分を同一の意味の緑として合算する。",
+        "台帳には各緑がどの規準版で判定されたかが残らない。"
+      ],
+      "fault": "判定結果に適用規準の版が紐づいておらず、規準変更時の再評価手続きが起動しない。",
+      "injection_point": "過去反復で緑化した見出しから無作為標本を取り、現行規準で独立再判定を行う。",
+      "expected_safe_behavior": "各判定は適用規準の版を伴って記帳され、規準が変わった時点で旧版判定は未再評価として区別され、集計での扱いが明示される。",
+      "oracle": "過去反復で非緑から緑へ遷移した項目の無作為標本（n 件）を現行規準で再判定し、不一致率と 95% 区間を出す。今回の反復の標本の不一致率と比較する。",
+      "falsification_signal": "過去分の不一致率が今回の標本より有意に低い。この場合、幅は履歴全体には及んでいない。",
+      "preconditions": [
+        "台帳に 243 件規模の見出し履歴が存在する",
+        "遷移履歴から過去の緑化項目を特定できる"
+      ],
+      "recheck_triggers": [
+        "採点規準の改訂",
+        "台帳スキーマの変更"
+      ],
+      "severity": "P1",
+      "confidence": "medium"
+    },
+    {
+      "scenario_id": "SCN-P08-lane-verdicts-lack-reproducibility-measure",
+      "source_candidate": "INC-024-coverage-rubric-undecided-at-its-busiest-boundary#4",
+      "normative_refs": [
+        "measurement-data-defined-planned-recorded",
+        "verification-requires-objective-evidence",
+        "config-audit-third-party",
+        "ivv-organizational-independence",
+        "review-quality-metrics-collected"
+      ],
+      "system_boundary": "ASSURANCE_LANE が生成する全ての判定種別（被覆の五値採点、事象の重大度付け、分析の完了判定など）と、それらを受け取る台帳・OWNER。",
+      "loss": "再現性が未知の判定に基づいて優先順位と完了が決まり、保証レーンの出力が根拠として信頼できなくなる。",
+      "hazard": "システムが、再現性の測定手段を持たない判定を、確定した統制の入力として保持している状態。",
+      "unsafe_control_action": "ASSURANCE_LANE が各種判定を台帳へ確定として書き込むが、その判定の自己一致率が一度も測られていないコンテキストで、幅を伴わない単一値として出力する（上記ハザード）。",
+      "event_sequence": [
+        "レーンが判定（採点・重大度・完了）を出力する。",
+        "同一入力に対する再判定は実施されない。",
+        "台帳は判定を単一値として保持する。",
+        "下流の統制（次の行動選択、完了宣言）はその単一値に依存する。",
+        "判定の揺れは、後続の反復で結果が変わったときに初めて可視化される。"
+      ],
+      "fault": "判定種別の一覧と、その各々に対する再現性計測の計画が存在しない。",
+      "injection_point": "レーンが出力する各判定種別について、同一入力で独立再判定を実施し、一致・不一致を記録する。",
+      "expected_safe_behavior": "各判定種別に自己一致率の計測が計画・実施され、一致率が閾値未満の種別は幅つきで記帳され、単一値としては下流へ渡されない。",
+      "oracle": "レーンが出力する判定種別を列挙し、種別ごとに同一入力の独立再判定を n 回掛けて自己一致率を算出し、種別×一致率の表を台帳へ記帳する。",
+      "falsification_signal": "五値採点以外の判定種別の自己一致率がいずれも 100% に達する。この場合、再現性の欠陥は五値採点に固有である。",
+      "preconditions": [
+        "同一入力での再判定が実施可能",
+        "判定種別を機械的に列挙できる"
+      ],
+      "recheck_triggers": [
+        "判定種別の追加",
+        "判定を生成する実行器の変更"
+      ],
+      "severity": "P1",
+      "confidence": "medium"
+    },
+    {
+      "scenario_id": "SCN-P09-index-fingerprint-false-negative-on-in-scope-evidence-edit",
+      "source_candidate": "INC-025-adr-130-implemented-the-option-it-rejected#0",
+      "normative_refs": [
+        "先行指標の妥当性・代理指標の禁止",
+        "楽観仮定の禁止",
+        "verification-requires-objective-evidence",
+        "item-set-completeness-and-version-check",
+        "version-control-history-traceable",
+        "反証証拠による想定再評価"
+      ],
+      "system_boundary": "ASSURANCE_LANE の coverage_status 評価と、その古び（stale）判定に用いられる索引指紋、および evidence_refs が指す証拠実体。",
+      "loss": "判定の根拠が実際に書き換わった後も古びが立たず、無効になった証拠に基づく被覆状態が維持される。",
+      "hazard": "システムが、根拠が変化した判定を、古びのない有効な判定として保持している状態。",
+      "unsafe_control_action": "ASSURANCE_LANE が古び判定を行う際、変更が索引指紋の観測範囲外（assurance/ 配下のみ）で起きたコンテキストで、stale を立てずに判定を有効のまま維持する（上記ハザード）。",
+      "event_sequence": [
+        "古び判定が全体指紋（索引）の一致で実装される。",
+        "assurance/ 配下だけを触る反復が行われる。",
+        "その反復で、ある判定の evidence_refs が指す内容が実際に書き換わる。",
+        "索引指紋は動かないため、古び判定は変化なしを返す。",
+        "coverage_status は再評価されないまま維持される。"
+      ],
+      "fault": "古びの検出が全体指紋という代理指標に依存し、evidence_refs が指す実体の内容変化を観測していない。",
+      "injection_point": "assurance/ 配下のみを変更する反復を作り、その中で対象判定の evidence_refs が指す内容を書き換えたうえで coverage_status を評価する。",
+      "expected_safe_behavior": "evidence_refs が指す実体の内容が変わった判定は、変更箇所の所在にかかわらず古びとして立ち、再評価されるまで有効な被覆として計上されない。",
+      "oracle": "上記注入を行った後の stale_open 件数と、対象判定の古び状態を出力する。stale_open が 0 のままで対象判定が有効なら偽陰性が成立する。",
+      "falsification_signal": "証拠の内容変更を索引指紋とは別経路（証拠実体のハッシュ等）で検出する機構が存在し、注入後に当該判定が古びに転じ、stale_open が 1 以上になる。",
+      "preconditions": [
+        "古び判定が索引の全体指紋比較で実装されている",
+        "evidence_refs が assurance/ 配下の実体を指し得る"
+      ],
+      "recheck_triggers": [
+        "古び判定の実装変更",
+        "evidence_refs の指し先の規約変更"
+      ],
+      "residual_risk": "指紋の観測範囲を広げても、証拠が外部（リポジトリ外）を指す場合の内容変化は依然として観測できない。",
+      "severity": "P1",
+      "confidence": "high"
+    },
+    {
+      "scenario_id": "SCN-P10-map-coverage-starves-other-next-action-types",
+      "source_candidate": "INC-025-adr-130-implemented-the-option-it-rejected#2",
+      "normative_refs": [
+        "安全立証でなく非安全状態の探索",
+        "verification-plan-coverage-evaluated",
+        "外部指摘依存でなく能動的探索",
+        "自己満足への構造的対策",
+        "高リスク活動への監督資源の優先配分"
+      ],
+      "system_boundary": "ASSURANCE_LANE の next_actions 生成・選択機構（優先順位付け）と、その実行履歴を保持する台帳。GOVERNANCE_TREE の未検査領域を対象に含む。",
+      "loss": "既知領域の被覆写像だけが進み、新規ハザードの探索と未検査領域への到達が行われないまま、保証が一方向へ偏る。",
+      "hazard": "システムが、探索対象の一部の種別のみが実行される行動選択機構を、全体を覆う保証活動として保持している状態。",
+      "unsafe_control_action": "ASSURANCE_LANE が次の行動を選択する際、MAP_COVERAGE 種別が常に上位に来るコンテキストで、他種別の行動を毎反復で発行しない（上記ハザード）。",
+      "event_sequence": [
+        "next_actions の優先順位付けが導入される。",
+        "MAP_COVERAGE 種別が毎反復で先頭を占める。",
+        "1 反復あたりに実行できる行動数は有限である。",
+        "新規ハザード探索・未検査領域到達の種別が実行されないまま繰り越される。",
+        "台帳の被覆数値は増え続け、偏りは数値上に現れない。"
+      ],
+      "fault": "行動選択が単一の優先度尺度で決まり、種別ごとの実行率に下限が設けられていない。",
+      "injection_point": "ADR-130 実装前後の反復について、next_actions の生成・実行履歴を種別ごとに再集計する（または実装を無効化した反復を 1 つ走らせる）。",
+      "expected_safe_behavior": "行動選択は種別ごとの実行率を台帳に記帳し、いずれかの種別の実行率が下限を下回った時点で、その種別を優先して発行する。",
+      "oracle": "直近 N 反復の next_actions 実行履歴を種別ごとに集計し、MAP_COVERAGE 以外の種別の実行率を出す。ADR-130 の実装前後で実行率を比較し、差と区間を出力する。",
+      "falsification_signal": "MAP_COVERAGE 以外の種別の実行率が実装前後で有意に変わっていない。この場合、偏りは当該実装に起因しない。",
+      "preconditions": [
+        "next_actions の実行履歴が種別つきで残っている",
+        "実装前後の反復が比較可能な件数ある"
+      ],
+      "recheck_triggers": [
+        "優先順位付けロジックの変更",
+        "next_action 種別の追加"
+      ],
+      "severity": "P1",
+      "confidence": "medium"
+    },
+    {
+      "scenario_id": "SCN-P11-rejected-adr-options-unchecked-across-decisions",
+      "source_candidate": "INC-025-adr-130-implemented-the-option-it-rejected#3",
+      "normative_refs": [
+        "制約に論拠を併記して変更時再導入を防ぐ",
+        "end-to-end-traceability",
+        "design-traceable-to-requirements",
+        "evaluation-criteria-and-selection-rationale-recorded",
+        "計画変更は必ずハザード解析対象"
+      ],
+      "system_boundary": "doctrine_docs 配下の ADR 群（決定・却下した選択肢）と、実装（Hook・リンタ・監査・技能・CI）および POST_TOOL_LINTER の照合規則。",
+      "loss": "決定文書が却下した設計が実装に現れ、決定文書を根拠とする判断が実装の実態と乖離する。",
+      "hazard": "システムが、決定文書で却下された設計を含む実装を、決定文書に整合した構成として保持している状態。",
+      "unsafe_control_action": "POST_TOOL_LINTER／CI_RELEASE_CHECK が ADR と実装の整合を検査する際、決定の否定形（却下した選択肢）が照合対象に含まれないコンテキストで、整合として通す（上記ハザード）。",
+      "event_sequence": [
+        "ADR が採用案と却下案を記述する。",
+        "照合は採用案の実装有無だけを対象にする。",
+        "後続の実装で、却下案に相当する構造が導入される。",
+        "検査は否定形を持たないため、指摘が出ない。",
+        "ADR は受理のまま維持され、実装との不一致が残る。"
+      ],
+      "fault": "決定の否定形（却下した選択肢）が機械照合可能な形式で記述されておらず、検査規則にも含まれていない。",
+      "injection_point": "任意の ADR の却下項に相当する構造を実装側に 1 つ導入し、リンタ・CI を走らせる。",
+      "expected_safe_behavior": "却下した選択肢は照合可能な形式で記述され、実装側に該当が現れた時点で検査が指摘し、ADR の再審査に回る。",
+      "oracle": "doctrine_docs 配下の全 ADR の「却下した選択肢」節を抽出し、各項について実装側の該当有無を照合スクリプト（または人手レビュー）で判定した表を出力する。該当ありの件数を数える。",
+      "falsification_signal": "抽出した却下項のいずれも実装側に現れておらず、該当ありが ADR-130 の 1 件だけである。この場合、構造的欠落ではなく単独事例である。",
+      "preconditions": [
+        "ADR に「却下した選択肢」節が定型で存在する",
+        "実装側の該当判定が可能な粒度で却下項が書かれている"
+      ],
+      "recheck_triggers": [
+        "ADR の新規追加・改訂",
+        "リンタ照合規則の変更"
+      ],
+      "residual_risk": "却下項が抽象的にしか書かれていない ADR は、照合スクリプトでは該当有無を判定できず人手レビューに依存する。",
+      "severity": "P1",
+      "confidence": "medium"
+    },
+    {
+      "scenario_id": "SCN-P12-invariant-target-without-sanctioned-repair-path",
+      "source_candidate": "INC-026-accepted-adr-has-no-sanctioned-repair-path#0",
+      "normative_refs": [
+        "defects-identified-and-corrective-action-taken",
+        "audit-findings-must-be-closed",
+        "問題報告経路の可用性",
+        "ハザード間の矛盾を明示",
+        "multiple-fix-options-considered",
+        "自動化不能シナリオは運用へ明示移譲"
+      ],
+      "system_boundary": "不変規則の対象文書（受理済み ADR、NONGOAL、decided-facts、確定済み PROC）と、POST_TOOL_LINTER の ERROR/WARN 規則、および許可された編集操作の集合。",
+      "loss": "検査が指摘した欠陥を規則に従って解消する手段が無く、指摘が未是正のまま滞留するか、規則を迂回した編集が常態化する。",
+      "hazard": "システムが、検査が欠陥と判定した文書について、許可操作の集合が空である状態を保持している状態。",
+      "unsafe_control_action": "POST_TOOL_LINTER が不変対象に対して ERROR/WARN を発行するが、その規則を解消できる操作が禁止集合により空であるコンテキストで、指摘を発行し続ける（上記ハザード）。",
+      "event_sequence": [
+        "文書が不変（受理済み・確定済み）として宣言される。",
+        "その文書に対して編集を禁ずる規則が適用される。",
+        "リンタの検査規則が同じ文書に ERROR/WARN を出す条件を持つ。",
+        "指摘を解消する編集は禁止集合に含まれる。",
+        "指摘は閉じられないまま台帳に残るか、禁止を迂回して閉じられる。"
+      ],
+      "fault": "不変規則（禁止集合）と検査規則の交差が検証されておらず、許可操作が空になる組み合わせが検出されない。",
+      "injection_point": "各不変対象の文書に、対応する検査規則が ERROR/WARN を出す状態を作り、許可操作のみで指摘を解消できるかを試みる。",
+      "expected_safe_behavior": "不変対象に対して検査が出し得る各規則には、少なくとも一つの許可された是正操作（訂正 ADR の発行、追補、明示の例外記帳など）が対応し、交差が空にならない。",
+      "oracle": "各不変規則について、その対象文書に対して docs-linter が出し得る ERROR/WARN 規則を列挙し、各規則を解消できる許可操作が存在するかを表にする決定論試験。許可操作が空のセル数を出力する。",
+      "falsification_signal": "すべての不変対象について、あらゆる検査規則に対応する許可操作が存在する（空セル数 0）ことが示される。この場合、袋小路は当該 ADR 固有である。",
+      "preconditions": [
+        "不変規則と検査規則がそれぞれ機械可読に列挙できる",
+        "許可操作の集合が定義されている"
+      ],
+      "recheck_triggers": [
+        "リンタ規則の追加",
+        "不変対象の種別追加",
+        "許可操作集合の変更"
+      ],
+      "severity": "P1",
+      "confidence": "high"
+    },
+    {
+      "scenario_id": "SCN-N13-guard-denial-without-sanctioned-path-drives-bypass",
+      "source_candidate": "INC-026-accepted-adr-has-no-sanctioned-repair-path#1",
+      "normative_refs": [
+        "迂回行動からの学習",
+        "monitor-procedure-practice-gap",
+        "determine-why-rule-was-violated",
+        "change-system-to-change-behavior",
+        "楽観仮定の禁止"
+      ],
+      "system_boundary": "doctrine プラグインの統治レーンのうち、PRE_TOOL_GUARD（編集要求の事前拒否）、POST_TOOL_LINTER、SESSION_END_AUDIT、CAPTURE_NUDGE、GOVERNANCE_TREE、ASSURANCE_LANE。編集を発行する人間コントローラと、その要求を運ぶセッション（SESSION_START_CONTRACT / HEARTBEAT 配下）を含む。プラグイン配布系（PLUGIN_DISTRIBUTION）と CI_RELEASE_CHECK は境界外だが、拒否イベントの記録先としてのみ参照する。",
+      "loss": "統治木に記載された内容と、実際に適用された変更の履歴が乖離し、保証レーンがその乖離を提示できないまま「統治木は統制下にある」と主張する状態に至ること。",
+      "hazard": "GOVERNANCE_TREE が、PRE_TOOL_GUARD の拒否を受けた変更要求のうち一定割合以上を、Hook の観測範囲外の経路で適用された変更として保持しており、統治木の状態と保証レーンが観測できる変更履歴が一致しない。",
+      "unsafe_control_action": "PRE_TOOL_GUARD が、正規の修復経路が定義されていない編集要求（対象文書が変更不可と判定される状態にあり、かつ許可される代替操作が要求元に提示されない文脈）に対して拒否だけを返し、代替経路の提示も拒否後の帰結の記録もないまま制御を終える。[本 scenario の hazard]",
+      "event_sequence": [
+        "編集者が、ガードの不変条件に触れる文書変更を Hook 経由で発行する。",
+        "PRE_TOOL_GUARD が要求を拒否する。拒否メッセージには、その目的を達成するために許可されている操作（正規の修復経路）が含まれない。",
+        "編集者の目的（誤記の修正、内容の是正）は消えないため、編集者は Hook を経由しない経路（エディタでの直接書き込み、別プロセス、git 側の操作など）で同じ変更を適用する、または目的を放棄して未解決のまま離脱する。",
+        "POST_TOOL_LINTER と SESSION_END_AUDIT は最終状態のみを検査するため、Hook 外で適用された変更は正規経路で適用された変更と区別されない。",
+        "同種の拒否が繰り返され、Hook 外経路が既定の作業手順として定着する。",
+        "ASSURANCE_LANE は拒否件数（ガードが働いた証拠）を根拠に統制が有効であると報告する一方、統治木の実際の変更のうち観測できた割合は低下し続ける。"
+      ],
+      "fault": "制御アルゴリズムの欠陥（拒否に対応する正規の修復経路が仕様に存在しない）と、フィードバック経路の欠落（拒否イベントの直後の帰結が、どのコントローラのプロセスモデルにも入力されない）の複合。個別の実装バグではなく、拒否という制御アクションが結果のフィードバックを対で持たないことに起因する。",
+      "injection_point": "PRE_TOOL_GUARD の拒否ハンドラ（拒否理由と許可される代替操作の返却内容）、および拒否イベントとその後のセッション内事象を SESSION_END_AUDIT / ASSURANCE_LANE へ渡す記録経路。",
+      "expected_safe_behavior": "拒否は必ず、その目的を達成するために許可されている操作の提示を伴う。かつ、拒否イベントとその直後の帰結（正規経路での解決／Hook 外経路での解決／未解決での終了）が観測可能な形で記録され、Hook 外経路の割合が保証レーンに可視化される。",
+      "oracle": "記録期間内の全 PRE_TOOL_GUARD 拒否イベントについて、直後の帰結を「(a) 正規の再編集で解決」「(b) Hook を経由しない経路で同一対象が変更された」「(c) 未解決のままセッション終了」に分類した集計表。(b) の判定は、拒否対象パスの版管理上の変更時刻・変更内容と、Hook が観測した編集イベント列との突合で行う。集計は拒否理由の種別ごとに層別する。",
+      "falsification_signal": "記録期間中の拒否がすべて (a) 正規の再編集で解決していれば、本仮説は棄却され、元のインシデントは特異事例として扱い直す。また、拒否イベントの帰結を上記 3 分類へ割り付けられない（拒否イベントまたは Hook 外変更の記録が存在しない）場合は、本 scenario は「オラクル実行不能」として記帳し、記録欠落そのものを別個の欠陥として扱う——集計不能を仮説の裏付けとして読み替えない。",
+      "preconditions": [
+        "PRE_TOOL_GUARD の拒否イベントが、時刻と対象パスを伴って記録されていること。",
+        "対象文書の変更が版管理下にあり、Hook 経由の編集イベント列と突合できること。"
+      ],
+      "environments": [
+        "通常の対話セッション（SESSION_START_CONTRACT 成立下）",
+        "Hook が有効でない環境（別エディタ・別プロセスからの直接編集）"
+      ],
+      "recheck_triggers": [
+        "PRE_TOOL_GUARD の拒否条件または拒否メッセージ書式の変更",
+        "正規の修復経路（差し戻し手順・再承認手順）の新設または改廃",
+        "セッションイベント記録の保持期間・粒度の変更"
+      ],
+      "residual_risk": "Hook 外経路の一部（版管理を経ない一時的な書き換え、外部ツールによる生成）は突合に現れないため、(b) の計数は下限値にとどまる。",
+      "severity": "P1",
+      "confidence": "medium"
+    },
+    {
+      "scenario_id": "SCN-N14-immutability-nullified-by-status-roundtrip",
+      "source_candidate": "INC-026-accepted-adr-has-no-sanctioned-repair-path#2",
+      "normative_refs": [
+        "セーフガード理由の省略禁止",
+        "安全立証でなく非安全状態の探索",
+        "verification-objective-evidence",
+        "制御は遵守を意味しない",
+        "楽観仮定の禁止"
+      ],
+      "system_boundary": "doctrine プラグインにおける、承認済み文書の不変性を担う統制要素——PRE_TOOL_GUARD（status 属性に基づく編集可否判定と status 遷移の許可規則）、POST_TOOL_LINTER、SESSION_END_AUDIT、OWNER（承認主体）、GOVERNANCE_TREE、ASSURANCE_LANE。",
+      "loss": "承認済みと表示された意思決定記録の内容が、承認主体の関与なしに事後変更され、過去の決定に基づく判断の再現・監査ができなくなること。",
+      "hazard": "GOVERNANCE_TREE が、承認済みと記録された文書について、承認主体の再承認と記帳を経ずに本文を書き換え可能な状態にあり、文書上の承認表示と実際の改変可能性が一致しない。",
+      "unsafe_control_action": "PRE_TOOL_GUARD が、承認済み文書の status を単独で差し戻す遷移要求（本文差分を伴わず status 行のみを変更する文脈）に対し、再承認の要求も遷移の記帳も伴わずに許可を与える。[本 scenario の hazard]",
+      "event_sequence": [
+        "編集者が承認済み文書の本文編集を発行し、PRE_TOOL_GUARD が不変性を根拠に拒否する。",
+        "編集者は本文差分を伴わず、status 行のみを承認済みから未承認へ差し戻す編集を発行する。",
+        "PRE_TOOL_GUARD は、この編集を不変性の対象外（許可された status 遷移）と判定して許可する。",
+        "文書が未承認状態になったため、続く本文編集はガードの不変条件に触れず許可される。",
+        "編集者が status を承認済みへ戻す。",
+        "POST_TOOL_LINTER と SESSION_END_AUDIT は最終状態（承認済みで整合した文書）のみを検査するため、往復遷移を挟んだ改変は、正規の承認手続きを経た改変と区別されない。",
+        "ASSURANCE_LANE は不変性が強制されていると報告するが、実際に強制されていたのは編集の手数だけである。"
+      ],
+      "fault": "不変条件が、文書自身の可変な属性（status 値）にのみ依存して評価され、状態遷移の履歴をコントローラのプロセスモデルが保持していないこと。遷移許可規則と不変性規則が互いの前提を検査しない。",
+      "injection_point": "試験用文書の status 行、および PRE_TOOL_GUARD の status 遷移許可規則。",
+      "expected_safe_behavior": "承認済みから未承認への差し戻し遷移は、OWNER による承認またはそれと同等の記帳を伴わない限り許可されない。許可される場合でも、遷移と後続の本文編集が一つの改変事象として記録され、SESSION_END_AUDIT が承認済み内容の事後変更として検出できる。",
+      "oracle": "試験用文書を用いた 4 点の判定表：(1) 承認済み→未承認の status 単独遷移が許可されるか、(2) 遷移後の本文編集が許可されるか、(3) 未承認→承認済みの復帰が許可されるか、(4) この往復を経た改変を SESSION_END_AUDIT / POST_TOOL_LINTER が検出し記帳するか。各項目は Hook の許否出力と監査出力という客観的証拠として記録する。",
+      "falsification_signal": "(1) の差し戻し遷移が拒否される、または (2) の遷移後の本文編集が拒否される、または (4) で往復を経た改変が監査に検出され記帳される、のいずれかが示されれば本仮説は棄却される。逆に (1)(2)(3) が許可され (4) が未検出であれば、ガードが強制しているのは不変性ではなく編集の手数であるという主張が支持される。",
+      "preconditions": [
+        "対象文書が承認済み状態にあり、PRE_TOOL_GUARD の不変性判定の対象であること。",
+        "status 遷移の許可規則が、承認済みから未承認への差し戻しを含むこと。"
+      ],
+      "environments": [
+        "Hook が有効な通常の対話セッション",
+        "試験用の使い捨て文書を用いた検証セッション"
+      ],
+      "recheck_triggers": [
+        "status 遷移許可規則の変更",
+        "不変性判定が参照する属性・条件の変更",
+        "SESSION_END_AUDIT の検査対象が最終状態から差分・履歴へ変更された場合"
+      ],
+      "residual_risk": "試験用文書での結果が本番の統治木文書（OWNER 割当や参照関係を持つ文書）でも同一である保証はなく、実文書固有の追加規則が働く可能性は残る。",
+      "severity": "P1",
+      "confidence": "medium"
+    }
+  ],
+  "duplicates": [
+    {
+      "scenario_id": "SCN-N06-external-failure-ledger-mapping-rate",
+      "source_candidate": "INC-007-linter-nameerror-field-report#2",
+      "duplicate_of": "SCN-D05-external-failure-never-enters-ledger",
+      "normative_refs": [
+        "incidents-promptly-reported-and-received",
+        "problem-resolution-process-covers-all",
+        "問題報告経路の可用性"
+      ],
+      "system_boundary": "外部（issue）から届く失敗報告と assurance/ledger/ の間の写像経路。",
+      "loss": "外部から報告された保証対象の失敗が台帳に入らず、保証レーンの集計から構造的に欠落する。",
+      "hazard": "保証レーンが、外部から報告済みの失敗が未記帳である状態にあるにもかかわらず、全失敗が記帳された場合と同じ観測値を保持している。",
+      "unsafe_control_action": "ASSURANCE_LANE が、保証対象の失敗が外部 issue として存在する文脈で、台帳エントリを生成しない。",
+      "event_sequence": [
+        "保証対象の失敗が外部から issue として報告される",
+        "当該 issue を台帳エントリへ写像する経路が起動しない",
+        "台帳には該当エントリが存在しないまま残る",
+        "写像率が 100% を下回り、集計が実態より良く出る"
+      ],
+      "fault": "外部入口から台帳への写像経路の欠落。",
+      "injection_point": "外部報告の入口（issue 作成）と台帳生成処理の境界。",
+      "expected_safe_behavior": "保証対象の失敗を報告する外部 issue は、例外なく台帳エントリへ写像されなければならない。",
+      "oracle": "過去に作成された全 issue と assurance/ledger/ の全エントリを突合し、保証対象の失敗を報告する issue のうち台帳に現れているものの割合（写像率）を測る。",
+      "falsification_signal": "写像率が 100% であれば、入口の欠落という仮説は棄却され、本事象は別の要因に帰する。",
+      "severity": "P0",
+      "confidence": "high",
+      "residual_risk": "既存 SCN-D05 と実質同一と判断したため、批判へは渡さず出自のみ記帳する。"
+    },
+    {
+      "scenario_id": "SCN-P01-stop-fires-while-sessionend-absent",
+      "source_candidate": "INC-001-sessionend-audit-gap#1",
+      "duplicate_of": "SCN-D01-sessionend-nondelivery-on-abnormal-exit",
+      "normative_refs": [
+        "楽観仮定の禁止",
+        "指示は必ず従われるとは限らない",
+        "control-action-requires-feedback",
+        "hazard-as-threshold-condition"
+      ],
+      "system_boundary": "doctrine プラグインの保証レーンのうち、セッション終了経路に紐づく SESSION_END_AUDIT と、その発火を担う hook 伝送路（Stop / PreCompact / SessionEnd）。GOVERNANCE_TREE の内容そのものは境界内、ホスト側プロセス管理は境界外の環境入力として扱う。",
+      "loss": "統治木の当該セッション分の状態が記帳されないまま運用が続き、以後の判断が実在しない監査記録を前提に進む。",
+      "hazard": "システムが、監査記録の不在を『監査を要しない終了』と区別できない状態で次セッションへ遷移している。",
+      "unsafe_control_action": "SESSION_END_AUDIT のコントローラが、セッションが強制終了経路で終わるコンテキストにおいて監査実行のコントロールアクションを与えない（監査未実行の記録も残さない）［上記ハザード］。",
+      "event_sequence": [
+        "セッション中に退避メモ（Stop 系の成果物）が書き出される",
+        "ホスト側プロセスが強制終了または環境断で落ちる",
+        "Stop 側の痕跡は残るが SessionEnd の実行痕跡が生成されない",
+        "次セッションが last-audit.json を読み、前回の監査不在を『まだ古びていない』または『判定不能でない』として扱う"
+      ],
+      "fault": "終了経路ごとの hook 発火条件が非対称であり、退避系（Stop）と記帳系（SessionEnd）が同一の終了事象に対して同じ保証を持たない。",
+      "injection_point": "セッションプロセスへの強制終了（SIGKILL 相当）および環境断の注入。各注入後に Stop / PreCompact / SessionEnd の実行痕跡（ログ行・生成ファイル・タイムスタンプ）を採取する。",
+      "expected_safe_behavior": "いずれの終了経路でも、監査が実行されるか、または『この終了経路では監査が実行されていない』ことが機械可読に記録され、後続セッションが不在と正常を区別できる。",
+      "oracle": "強制終了・環境断を再現し、経路 × hook（Stop / PreCompact / SessionEnd）の発火痕跡の有無を表にする。『退避メモ有り かつ 監査記録無し』の同時発生が強制終了経路でのみ観測されるかを判定する。",
+      "falsification_signal": "強制終了で三つとも発火しない、または三つとも発火する場合、『退避メモ有り＋監査不在』は経路の署名として成立せず、切り分けに使えない。",
+      "preconditions": [
+        "Stop / SessionEnd の双方が設定として登録済み",
+        "last-audit.json が前セッションの値のまま残っている"
+      ],
+      "severity": "P1",
+      "confidence": "medium",
+      "residual_risk": "SCN-D01 と同一の機序を扱うため批判へは渡さない。差分は『Stop 発火と SessionEnd 不発火の同時観測を切り分け署名として使えるか』という検出可能性の主張のみで、必要なら D01 の oracle 側に追記すべき事項として残る。",
+      "recheck_triggers": [
+        "hook 種別の追加・改名",
+        "終了経路の実装変更（ホスト側のシャットダウン手順の変更）"
+      ]
+    },
+    {
+      "scenario_id": "SCN-F03-stale-copy-underreports-its-own-staleness",
+      "source_candidate": "INC-007-linter-nameerror-field-report#3",
+      "duplicate_of": "SCN-N04-detector-and-detected-share-version-common-cause",
+      "normative_refs": [
+        "共通の体系的要因による多重防護の無効化",
+        "監査のすり抜け時に監査手順を是正",
+        "プロセスモデルと実状態の不整合"
+      ],
+      "system_boundary": "doctrine プラグインの複製配布物。関与要素: HEARTBEAT, PLUGIN_DISTRIBUTION, SESSION_START_CONTRACT",
+      "loss": "版が遅れた複製の利用者が、古びを警告されないまま欠陥を含む統制で運転を続ける",
+      "hazard": "古びの検出器自身が古びており、システムが自らの版遅れを過小に報告した状態で運転されている",
+      "unsafe_control_action": "HEARTBEAT が、複製側が正本より 2 世代遅れているコンテキストにおいて、遅れ警告を与えない（または過小な世代数で与える）",
+      "event_sequence": [
+        "利用者環境に 0.8.0 の複製が置かれる",
+        "正本が 0.10.0 へ進む",
+        "複製側の鼓動が 0.8.0 時点の判定基準（比較対象・閾値・版一覧）で古び判定を行う",
+        "判定基準自体が古いため、遅れが 0 世代または過小な世代数として報告される",
+        "利用者のプロセスモデルが『最新である』のまま更新されない"
+      ],
+      "fault": "検出器と被検出対象が同一の配布単位に同梱され、版遅れという共通原因が両者を同時に劣化させる",
+      "injection_point": "試験環境に 0.8.0 の複製を配置し、正本を 0.10.0 とした状態で鼓動を起動する",
+      "expected_safe_behavior": "複製側の鼓動が、正本 0.10.0 に対する 2 世代の遅れを正しい世代数で警告する",
+      "oracle": "0.8.0 複製環境で鼓動を実行し、遅れ警告の発火有無と報告された世代数を、正本との実際の差（2 世代）と突き合わせる",
+      "falsification_signal": "0.8.0 の複製が発火し、かつ 2 世代の遅れとして正しく報告する（＝この経路については棄却）",
+      "versions": [
+        "0.8.0",
+        "0.10.0"
+      ],
+      "severity": "P1",
+      "confidence": "medium"
+    },
+    {
+      "scenario_id": "SCN-F04-reference-sound-but-behavior-fabricated",
+      "source_candidate": "INC-013-cast-analysis-accepts-fabricated-incident#1",
+      "duplicate_of": "SCN-N08-partial-fabrication-passes-reference-resolution",
+      "normative_refs": [
+        "problem-reproduction-confirmed",
+        "verification-objective-evidence",
+        "楽観仮定の禁止"
+      ],
+      "system_boundary": "doctrine の ASSURANCE_LANE における事故分析（cast 分析）の入力受理と、参照解決チェックまで。",
+      "loss": "実際には起きていない挙動を前提とした是正が統治木へ加えられ、実在するハザードが未対処のまま残る。",
+      "hazard": "システムが、実挙動と対応しない事象記述を根拠として確定した是正内容を保持している。",
+      "unsafe_control_action": "分析が、全参照が解決可能で挙動の再現が未実施という文脈で、再現未実施を unknowns として明示しないまま結論を与える（H: 実挙動と対応しない根拠に基づく確定）。",
+      "event_sequence": [
+        "機構名がすべて実在の統制要素 id へ解決でき、引用鍵もすべて実在する事象記述が入力される。",
+        "参照解決チェックが全参照の解決可能性を確認し通過させる。",
+        "記述された挙動そのものの再現は実行されない。",
+        "分析が高い confidence で結論を出し、台帳へ記帳される。"
+      ],
+      "fault": "参照の健全性と事実の真偽が別の性質であるにもかかわらず、受理条件が前者のみを検査している。",
+      "injection_point": "参照がすべて解決可能で挙動のみが虚偽の事象記述を、事故分析の入力として注入する。",
+      "expected_safe_behavior": "再現を実行していない場合、その事実が unknowns に明記され confidence が引き下げられる、または再現なしでは結論を確定しない。",
+      "oracle": "参照が全て解決可能な虚偽挙動事象を注入し、分析が『reproduce を実行していない』ことを unknowns に書くか、confidence がどう変化するかを観測する。",
+      "falsification_signal": "再現未実施が unknowns に明記され confidence が下がれば仮説は偽。",
+      "severity": "P1",
+      "confidence": "medium",
+      "residual_risk": "既存 SCN-N08 と実質同一のため独立批判へは渡さない。出自のみ記帳する。"
+    },
+    {
+      "scenario_id": "SCN-F07-turn-limit-missingness-absent-from-ledger",
+      "source_candidate": "INC-014-evaluation-max-turns-marginal#1",
+      "duplicate_of": "SCN-N09-nonrandom-missingness-biases-assurance",
+      "normative_refs": [
+        "自発報告のみによる評価の禁止",
+        "要約統計偏重による傾向情報の喪失",
+        "調査対象としての安全情報システム",
+        "problem-resolution-process-covers-all"
+      ],
+      "system_boundary": "doctrine の ASSURANCE_LANE における実行ログと台帳（記帳経路）まで。",
+      "loss": "打ち切られた実行が台帳に現れないため、保証レーンの母数が成功側へ偏り、実際のリスクが過小に見積もられる。",
+      "hazard": "システムが、非ランダムに欠落した記録集合を母集団として保証結論を保持している。",
+      "unsafe_control_action": "記帳経路が、実行が上限到達で打ち切られた文脈で、台帳への記帳を与えない（H: 非ランダム欠測を含む母集団に基づく保証結論）。",
+      "event_sequence": [
+        "評価実行が上限到達で終了する。",
+        "終了理由がログ上に文字列としてのみ残り、記帳経路が起動しない。",
+        "台帳には成功した実行だけが積み上がる。",
+        "試行回数と台帳件数の差が誰にも観測されないまま保証判断が行われる。"
+      ],
+      "fault": "実行の開始と終了理由を台帳へ写す経路が存在せず、記帳が成功時のみに依存している。",
+      "injection_point": "保証レーンの実行ログ全件と台帳件数を突き合わせる（過去実行に対する事後照合）。",
+      "expected_safe_behavior": "すべての実行が結果によらず台帳へ記帳され、試行回数と台帳件数が一致するか、差分が明示的に説明される。",
+      "oracle": "保証レーンの実行ログを全件走査し、'Reached maximum number of turns' の出現回数と、台帳に残った成功件数および総試行回数の差を突き合わせる。",
+      "falsification_signal": "ログ上の出現が A2 の3件のみで、試行回数と台帳件数が一致すれば仮説は偽。",
+      "severity": "P1",
+      "confidence": "medium",
+      "residual_risk": "既存 SCN-N09 と実質同一のため独立批判へは渡さない。出自のみ記帳する。ログ自体が保存されていない期間は照合不能。"
+    },
+    {
+      "scenario_id": "SCN-F12-declaration-without-resolvable-execution-path",
+      "source_candidate": "INC-021-lane-fires-on-declared-without-a-runner#0",
+      "duplicate_of": "SCN-D03-declared-vs-registered-control-drift",
+      "normative_refs": [
+        "宣言された設計と実動作の突合",
+        "設計上と実際の伝達経路の照合",
+        "欠落・不十分なコントロールの明示的表示",
+        "control-action-requires-feedback"
+      ],
+      "system_boundary": "ASSURANCE_LANE の fires_on 宣言、状態機械の遷移宣言、control_structure の feedback 宣言、LEDGER_KINDS、手順文書が名指しする段と、それぞれに対応する実行経路。",
+      "loss": "宣言上は存在する統制が実際には一度も動作せず、防護があるという前提のまま運転が続く。",
+      "hazard": "統治システムが、実行経路を持たない統制を有効なものとして宣言した状態で運転を継続している。",
+      "unsafe_control_action": "ASSURANCE_LANE が、fires_on 等の宣言に対応する実行経路が名前解決できないコンテキストで、その統制を有効として扱う。",
+      "event_sequence": [
+        "レーンや制御構造の宣言が文書上に記載される。",
+        "対応する実行経路（走らせ手・スクリプト・stat 対象）が実装されない、または名前が解決しない。",
+        "宣言の存在が防護の存在として読まれる。",
+        "当該統制は一度も発火せず、依存する検出が全て欠落する。"
+      ],
+      "fault": "宣言と実行経路の対応を照合する工程が存在しない（族としての結線欠落）。",
+      "injection_point": "宣言の集合（レーン定義・状態機械・control_structure・LEDGER_KINDS・手順文書）と、実行経路の名前解決を行う箇所。",
+      "expected_safe_behavior": "すべての宣言について、対応する実行経路が名前解決でき、解決できない宣言は欠落として明示される。",
+      "oracle": "全宣言（レーンの fires_on、状態機械の遷移、control_structure の feedback、LEDGER_KINDS、手順文書が名指しする段）を列挙し、各々について対応する実行経路を名前解決する一覧表を作り、解決不能件数を数える。",
+      "falsification_signal": "列挙したすべての宣言が実行経路を解決できる（解決不能0件）。この場合、族としての一般化は棄却される。",
+      "severity": "P1",
+      "confidence": "medium",
+      "residual_risk": "既存 SCN-D03 と実質同一と判断したため独立批判へは渡さない。D03 が単一の宣言種のみを対象としている場合、族としての網羅（5 種の宣言全件の名前解決表）は D03 の側で拡張する必要がある。"
+    },
+    {
+      "scenario_id": "SCN-P01-lane-stage-declared-without-resolvable-runner",
+      "source_candidate": "INC-021-lane-fires-on-declared-without-a-runner#1",
+      "duplicate_of": "SCN-D03-declared-vs-registered-control-drift",
+      "duplicate_rationale": "宣言側にだけ存在し実行実体（登録）を欠く統制、という同一の乖離を ASSURANCE_LANE の段に当てはめたもの。ハザード文と UCA が SCN-D03 と実質同一のため duplicate として記帳する。SCN-D03 の適用範囲が Hook 等の統制要素に限定されており orchestrator.LANES を覆わないと判明した場合は、独立批判へ回すべき別件として再提出する。",
+      "normative_refs": [
+        "宣言された設計と実動作の突合",
+        "公式設計と実動作の二重評価",
+        "責任の空白は構造再設計",
+        "全コントロールループにフィードバック必須",
+        "欠落・不十分なコントロールの明示的表示",
+        "制御は遵守を意味しない"
+      ],
+      "system_boundary": "ASSURANCE_LANE（orchestrator.LANES のレーン宣言と段の起動）、GOVERNANCE_TREE、および段の結果を受け取る台帳。レーン宣言から実行器・prompt・台帳種別への三点解決を境界内に含む。",
+      "loss": "保証レーンが実行された前提で統治木の状態が読まれ、実際には一度も走っていない段が担うはずの欠陥が、未検出のまま配布物へ流出する。",
+      "hazard": "システムが、宣言だけが存在し実行実体を持たない統制段を、有効な統制として構成に保持している状態。",
+      "unsafe_control_action": "ASSURANCE_LANE は fires_on 条件の成立時に段の起動アクションを発行するが、実行器・prompt・台帳種別のいずれかが解決できないコンテキストで、段は起動されないまま下流の状態表示だけが進む（上記ハザード）。",
+      "event_sequence": [
+        "レーン定義に段が追加され、fires_on 条件だけが記述される。",
+        "実行器・prompt・台帳種別の登録は別ファイルにあり、追加時点で対応が機械照合されない。",
+        "fires_on 条件が成立し、レーンが起動される。",
+        "三点解決できない段は何も実行せず、レーンは残りの段の結果だけで完了状態になる。",
+        "台帳と統治木の表示は、当該段が担う観点を扱い済みとして読める形になる。"
+      ],
+      "fault": "レーン宣言と実行器登録の対応関係に機械照合が存在せず、宣言のみで段が成立してしまう。",
+      "injection_point": "orchestrator.LANES に、実行器 id を欠く（または未登録 id を指す）段を 1 つ含むレーンを追加し、その fires_on を成立させる。",
+      "expected_safe_behavior": "三点解決に失敗した段は起動時点で解決不能として検出され、レーンは PASS でも FAIL でもなく未実行として記帳され、走らせ手の欠落が台帳と統治木の双方に現れる。",
+      "oracle": "orchestrator.LANES の全レーン×全段について (fires_on, 実行器 id, prompt, 台帳種別) の解決結果表を機械生成し、いずれかが未解決の段の件数を出力する。件数 > 0 のレーンが jerg 以外にも存在するかを数える。",
+      "falsification_signal": "生成した表で jerg 以外の全レーンの未解決件数が 0 であり、かつ未解決段を注入した試験では起動時に解決不能が記帳される。この場合、本件は jerg レーン固有の未完成であり構造的欠落ではない。",
+      "preconditions": [
+        "レーン定義と実行器登録が別々の成果物に分かれている",
+        "レーン完了の記帳が段の実行有無を参照しない"
+      ],
+      "recheck_triggers": [
+        "新規レーンまたは段の追加",
+        "実行器登録の命名規約変更",
+        "SCN-D03 の適用範囲の変更"
+      ],
+      "severity": "P1",
+      "confidence": "medium"
+    }
+  ],
+  "survivors": [
+    "SCN-F01-shared-tokenizer-common-cause-across-checks",
+    "SCN-F02-accepted-doc-birth-write-unguarded",
+    "SCN-F02-latent-undefined-name-in-unreached-branches",
+    "SCN-F02-manual-state-partition-misclassification-passes-tests",
+    "SCN-F03-frozen-doc-family-born-red-unfixable",
+    "SCN-F04-audit-blind-to-accepted-plus-lint-error",
+    "SCN-F04-cache-summary-lost-update-poisons-next-session",
+    "SCN-F07-terminal-hooks-without-firing-stamps",
+    "SCN-F08-exit-zero-without-completion-branches",
+    "SCN-F08-ledger-record-types-unread-by-canon",
+    "SCN-F08-sessionend-nonfire-aliases-unmarked-legacy-copy",
+    "SCN-F09-stderr-diagnostic-not-persisted-anywhere",
+    "SCN-F09-unverified-evaluator-fields-drive-disposition",
+    "SCN-F11-field-granularity-unread-across-record-types",
+    "SCN-N02-unknown-classification-closes-ledger-entry",
+    "SCN-N03-legacy-schema-silently-disables-staleness-check",
+    "SCN-N04-detector-and-detected-share-version-common-cause",
+    "SCN-N07-whole-file-writeback-lost-update",
+    "SCN-N14-immutability-nullified-by-status-roundtrip",
+    "SCN-P02-version-lag-extends-to-guard-and-linter",
+    "SCN-P03-substring-false-positive-across-term-table",
+    "SCN-P04-order-comparison-precision-mismatch-beyond-freshness",
+    "SCN-P04-pointfix-without-word-boundary-rule",
+    "SCN-P05-attack-coverage-claimed-at-evaluator-granularity",
+    "SCN-P05-failure-families-collapse-to-one-exception-surface",
+    "SCN-P09-dual-silence-of-staleness-and-version-warnings",
+    "SCN-P09-index-fingerprint-false-negative-on-in-scope-evidence-edit",
+    "SCN-P11-existence-based-completion-in-action-conditions",
+    "SCN-P11-rejected-adr-options-unchecked-across-decisions",
+    "SCN-P12-campaign-closes-with-pending-analysis",
+    "SCN-P12-invariant-target-without-sanctioned-repair-path"
+  ],
+  "candidates_considered": [
+    [
+      "INC-001-sessionend-audit-gap",
+      0
+    ],
+    [
+      "INC-001-sessionend-audit-gap",
+      1
+    ],
+    [
+      "INC-001-sessionend-audit-gap",
+      2
+    ],
+    [
+      "INC-002-termcheck-ascii-substring",
+      0
+    ],
+    [
+      "INC-002-termcheck-ascii-substring",
+      1
+    ],
+    [
+      "INC-003-sdk-error-opacity",
+      0
+    ],
+    [
+      "INC-003-sdk-error-opacity",
+      1
+    ],
+    [
+      "INC-003-sdk-error-opacity",
+      2
+    ],
+    [
+      "INC-004-hyphen-token-undefined-term",
+      1
+    ],
+    [
+      "INC-004-hyphen-token-undefined-term",
+      3
+    ],
+    [
+      "INC-005-installed-plugin-version-lag",
+      0
+    ],
+    [
+      "INC-005-installed-plugin-version-lag",
+      1
+    ],
+    [
+      "INC-005-installed-plugin-version-lag",
+      2
+    ],
+    [
+      "INC-005-installed-plugin-version-lag",
+      3
+    ],
+    [
+      "INC-006-next-actions-silently-empty",
+      0
+    ],
+    [
+      "INC-006-next-actions-silently-empty",
+      1
+    ],
+    [
+      "INC-006-next-actions-silently-empty",
+      4
+    ],
+    [
+      "INC-007-linter-nameerror-field-report",
+      0
+    ],
+    [
+      "INC-007-linter-nameerror-field-report",
+      1
+    ],
+    [
+      "INC-007-linter-nameerror-field-report",
+      2
+    ],
+    [
+      "INC-007-linter-nameerror-field-report",
+      3
+    ],
+    [
+      "INC-008-ledger-write-back-clobber",
+      0
+    ],
+    [
+      "INC-008-ledger-write-back-clobber",
+      1
+    ],
+    [
+      "INC-008-ledger-write-back-clobber",
+      2
+    ],
+    [
+      "INC-008-ledger-write-back-clobber",
+      4
+    ],
+    [
+      "INC-009-sessionend-audit-unobservable",
+      0
+    ],
+    [
+      "INC-009-sessionend-audit-unobservable",
+      1
+    ],
+    [
+      "INC-009-sessionend-audit-unobservable",
+      2
+    ],
+    [
+      "INC-010-evaluated-unknown-relisted",
+      0
+    ],
+    [
+      "INC-010-evaluated-unknown-relisted",
+      1
+    ],
+    [
+      "INC-011-dot-joined-token-undefined-term",
+      0
+    ],
+    [
+      "INC-011-dot-joined-token-undefined-term",
+      2
+    ],
+    [
+      "INC-012-states-unnameable-by-canon",
+      0
+    ],
+    [
+      "INC-012-states-unnameable-by-canon",
+      1
+    ],
+    [
+      "INC-013-cast-analysis-accepts-fabricated-incident",
+      0
+    ],
+    [
+      "INC-013-cast-analysis-accepts-fabricated-incident",
+      1
+    ],
+    [
+      "INC-013-cast-analysis-accepts-fabricated-incident",
+      2
+    ],
+    [
+      "INC-014-evaluation-max-turns-marginal",
+      0
+    ],
+    [
+      "INC-014-evaluation-max-turns-marginal",
+      1
+    ],
+    [
+      "INC-014-evaluation-max-turns-marginal",
+      4
+    ],
+    [
+      "INC-015-discover-output-invisible-to-canon",
+      0
+    ],
+    [
+      "INC-015-discover-output-invisible-to-canon",
+      1
+    ],
+    [
+      "INC-015-discover-output-invisible-to-canon",
+      2
+    ],
+    [
+      "INC-016-cast-analysis-content-unread-by-canon",
+      0
+    ],
+    [
+      "INC-016-cast-analysis-content-unread-by-canon",
+      1
+    ],
+    [
+      "INC-016-cast-analysis-content-unread-by-canon",
+      2
+    ],
+    [
+      "INC-017-accepted-adr-born-red-is-unfixable",
+      0
+    ],
+    [
+      "INC-017-accepted-adr-born-red-is-unfixable",
+      1
+    ],
+    [
+      "INC-017-accepted-adr-born-red-is-unfixable",
+      2
+    ],
+    [
+      "INC-018-audit-degrades-into-a-tree-finding",
+      0
+    ],
+    [
+      "INC-018-audit-degrades-into-a-tree-finding",
+      3
+    ],
+    [
+      "INC-019-version-string-does-not-identify-the-copy",
+      0
+    ],
+    [
+      "INC-019-version-string-does-not-identify-the-copy",
+      1
+    ],
+    [
+      "INC-020-evaluator-blindness-read-as-owner-authority",
+      0
+    ],
+    [
+      "INC-020-evaluator-blindness-read-as-owner-authority",
+      1
+    ],
+    [
+      "INC-020-evaluator-blindness-read-as-owner-authority",
+      2
+    ],
+    [
+      "INC-020-evaluator-blindness-read-as-owner-authority",
+      3
+    ],
+    [
+      "INC-021-lane-fires-on-declared-without-a-runner",
+      0
+    ],
+    [
+      "INC-021-lane-fires-on-declared-without-a-runner",
+      1
+    ],
+    [
+      "INC-022-ci-that-cannot-run-is-read-as-red",
+      0
+    ],
+    [
+      "INC-022-ci-that-cannot-run-is-read-as-red",
+      1
+    ],
+    [
+      "INC-022-ci-that-cannot-run-is-read-as-red",
+      4
+    ],
+    [
+      "INC-023-attack-freshness-truncated-to-the-day",
+      0
+    ],
+    [
+      "INC-023-attack-freshness-truncated-to-the-day",
+      1
+    ],
+    [
+      "INC-023-attack-freshness-truncated-to-the-day",
+      4
+    ],
+    [
+      "INC-024-coverage-rubric-undecided-at-its-busiest-boundary",
+      0
+    ],
+    [
+      "INC-024-coverage-rubric-undecided-at-its-busiest-boundary",
+      1
+    ],
+    [
+      "INC-024-coverage-rubric-undecided-at-its-busiest-boundary",
+      4
+    ],
+    [
+      "INC-025-adr-130-implemented-the-option-it-rejected",
+      0
+    ],
+    [
+      "INC-025-adr-130-implemented-the-option-it-rejected",
+      2
+    ],
+    [
+      "INC-025-adr-130-implemented-the-option-it-rejected",
+      3
+    ],
+    [
+      "INC-026-accepted-adr-has-no-sanctioned-repair-path",
+      0
+    ],
+    [
+      "INC-026-accepted-adr-has-no-sanctioned-repair-path",
+      1
+    ],
+    [
+      "INC-026-accepted-adr-has-no-sanctioned-repair-path",
+      2
+    ]
+  ],
+  "dropped": [
+    {
+      "key": "INC-001-sessionend-audit-gap#1",
+      "reason": "既存 scenario SCN-D01-sessionend-nondelivery-on-abnormal-exit と実質同一（duplicate_of）"
+    },
+    {
+      "key": "INC-007-linter-nameerror-field-report#2",
+      "reason": "既存 scenario SCN-D05-external-failure-never-enters-ledger と実質同一（duplicate_of）"
+    },
+    {
+      "key": "INC-007-linter-nameerror-field-report#3",
+      "reason": "既存 scenario SCN-N04-detector-and-detected-share-version-common-cause と実質同一（duplicate_of）"
+    },
+    {
+      "key": "INC-013-cast-analysis-accepts-fabricated-incident#1",
+      "reason": "既存 scenario SCN-N08-partial-fabrication-passes-reference-resolution と実質同一（duplicate_of）"
+    },
+    {
+      "key": "INC-014-evaluation-max-turns-marginal#1",
+      "reason": "既存 scenario SCN-N09-nonrandom-missingness-biases-assurance と実質同一（duplicate_of）"
+    },
+    {
+      "key": "INC-021-lane-fires-on-declared-without-a-runner#0",
+      "reason": "既存 scenario SCN-D03-declared-vs-registered-control-drift と実質同一（duplicate_of）"
+    },
+    {
+      "key": "INC-021-lane-fires-on-declared-without-a-runner#1",
+      "reason": "既存 scenario SCN-D03-declared-vs-registered-control-drift と実質同一（duplicate_of）"
+    }
+  ],
+  "challenge": {
+    "verdicts": [
+      {
+        "scenario_id": "SCN-N01-audit-output-path-divergence-across-versions",
+        "verdict": "UNKNOWN",
+        "reasons": [
+          "機序が二つ混在している（版間のパス乖離／書き込み失敗の黙殺）。injection_point は『書き込み先を読み取り専用にする』であり、これは版間差分ではなく失敗黙殺の注入であって、主機序と検証手段が対応していない。",
+          "falsification_signal が『同一パスへ書き、かつ失敗時に非ゼロ終了しログを残す』という連言であるため、どちらか一方が満たされない限り仮説が生き残る。AI に都合のよい停止条件であり、機序ごとに分割して各々を単独で反証可能にすべきである。",
+          "最重要の前提が preconditions に無い：当該セッションの SessionEnd で実際に起動されるのが導入複製 0.7.0 の docs-audit であること。現行 0.10.0 側が起動される構成なら経路自体が成立しない。この前提の観測手順（実行実体の解決結果の記録）を oracle に含めるべきである。",
+          "oracle は隔離環境で単体実行して絶対パスを観測するが、実運用のフック起動経路（作業ディレクトリ・環境変数・相対パス解決）と一致する保証がない。隔離環境で一致しても実経路で乖離しうるため、試験が欠陥を検出しない可能性が残る。",
+          "residual_risk が自認するとおり『黙って終了する経路』は SCN-D01 と重なる。パス乖離のみを残し、失敗黙殺部分は D01 に寄せる整理が必要。",
+          "SCN-N03 は 0.10.0 の heartbeat が動く前提、本件は 0.7.0 の docs-audit が動く前提であり、版の共存に関する体系側のプロセスモデルが両者で整合していない。どちらが実体かを先に観測しなければ両立しない。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-N02-unknown-classification-closes-ledger-entry",
+        "verdict": "ACCEPT",
+        "reasons": [
+          "UCA が『UNKNOWN（合否未確定）という文脈で台帳エントリを閉じる』と文脈付きで書かれ、hazard（未確定なのに完了時と同じ観測値）と対応している。危険状態の定義が観測可能な状態量（エントリ状態フィールド）に落ちている。",
+          "注入点が分類器出力と台帳開閉処理の境界という明確な内部界面にあり、返り値固定という決定的で再現可能な注入である。実 Claude の非決定性に依存しない。",
+          "oracle が (a) 状態フィールド (b) 集計の分母／分子 (c) 後続行動の可否 の三点を要求しており、『閉じたか』だけでなく『評価済みとして数えられたか』まで見る点で、表示上は無害でも集計が汚染される経路を捉えられる。",
+          "falsification_signal が単一条件の連言でなく、注入後に未閉・判定不能表示・停止側の三点が揃えば棄却という明確な形になっており、仮説側に都合よく生き残らない。",
+          "留意点（ACCEPT を妨げない範囲）：『閉状態』『後続行動の停止』の判定基準を、どのフィールド値・どの出口コードで測るか事前に固定して記録すること。分類語彙に UNKNOWN が実在することも実行前に確認すること。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-N03-legacy-schema-silently-disables-staleness-check",
+        "verdict": "ACCEPT",
+        "reasons": [
+          "入力を旧形式 last-audit.json に差し替えるだけの単体注入で、決定的かつ再現可能。実 Claude の判断や模擬ホストの挙動に依存しない。",
+          "oracle が現行形式を対照群として同じ 3 点（警告有無・終了コード・利用者向け表示）を観測し差分を取るため、『沈黙』と『合格』を区別できるという主張そのものを測れる。対照を置いている点は本群の他候補より優れる。",
+          "event_sequence 中の『既定値や早期 return により分岐に到達しない』は実装への推測だが、oracle は外形挙動のみを観測するため実装詳細への過剰適合にはなっていない。",
+          "要補強（ACCEPT の条件）：旧形式と現行形式のスキーマが実際に差異を持つことを 0.7.0 の生成コードから先に確認すること。差が無ければ注入自体が不成立で、その事実も記録すべきである。",
+          "要補強：(c) の『セッション開始時の利用者向け表示』は単体実行では観測できない可能性がある。heartbeat 出力から表示までの経路を境界に含めるか、観測対象を出力側に限定して明示すること。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-N04-detector-and-detected-share-version-common-cause",
+        "verdict": "ACCEPT",
+        "reasons": [
+          "検出器と被検出対象が同一配布単位に同居するという共通原因故障の指摘は構造的に妥当で、『検出は被検出対象と同時に古びない位置で行う』という expected_safe_behavior は実装非依存の設計要求として正しく立っている。",
+          "oracle が git 履歴の前後関係・導入複製実体の読取り・隔離実行という客観的三段で構成され、いずれも短時間で決定的な答えが出る。再現性が高い。",
+          "境界の漏れ：system_boundary が導入複製の HEARTBEAT に限定されているのに、loss は『どの経路からも観測されない』と主張している。配布外側の観測経路（マーケットプレース側の更新通知、リポジトリ側フック、利用者の手動照合）を列挙・否定しない限り loss は立証されない。oracle にその列挙段を追加すべきである。",
+          "検証価値の限界：0.7.0 に事後追加のコードが無いことは半ば自明であり、この試験単体では既知事実の確認に留まる。価値は『版非依存の位置に検出を置く』という要求の回帰試験化にあり、その旨を目的として明記すべきである。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-N05-hook-crash-indistinguishable-from-success",
+        "verdict": "UNKNOWN",
+        "reasons": [
+          "システム境界にホスト（フック実行基盤）の終了状態処理が含まれていないのに、『異常終了は呼び出し側で正常終了と同じ扱いになる』を前提として置いている。ホストは終了コードにより挙動を変えうるため、例外送出版が返す終了コードを固定し、ホスト側の扱い（利用者への提示有無）を先に観測する段が必要である。実 Claude の挙動と体系側フィードバックの混同がある。",
+          "『24 時間以内に観測可能』という条件が oracle に組み込まれているが、24 時間の実待機は再現性・費用の両面で成立しにくい。時刻注入や鮮度閾値の短縮など、観測窓を制御する手段を規定しなければ試験として回らない。",
+          "試験環境の複製で通常の編集操作を行う構成だが、複製側でフック設定が実際に読み込まれ、かつ台帳・監査要約・鼓動が複製側の実体を参照することの確認手順が無い。複製側で異常が出ない結果が『体系に検出能力が無い』のか『注入が届いていない』のか区別できない。",
+          "『一定回数の編集操作』が定量化されておらず、実施回数・操作種別・観測時刻の記録仕様が oracle 側に無い（expected_safe_behavior は 24 時間を要求しているのに手続が対応していない）。",
+          "SCN-D01 と『沈黙が正常と区別できない』型を共有する点は自認済みだが、対象（POST_TOOL_LINTER）と観測窓の差だけで独立性を主張するには、D01 の是正が本件を同時に解消しないことを示す必要がある。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-N07-whole-file-writeback-lost-update",
+        "verdict": "ACCEPT",
+        "reasons": [
+          "UCA が『他プロセスが同時更新している文脈で、読み取り時点のスナップショットに基づく全体書き戻しを実行する』と正しく文脈付けされており、hazard（書き込み成功時と同じ観測値のまま記録が欠落）と対応している。",
+          "falsification_signal が『直列化手段がコード上に存在する』かつ『100 回試行で欠落 0 件』という連言になっており、タイミング依存で偶々欠落が観測されなかった場合に誤って棄却されない設計になっている。棄却条件がコード確認側に支配されている点が堅い。",
+          "oracle が試験環境と対象コミットの記録まで要求しており、再現条件が保存される。",
+          "要補強：台帳が単一ファイルか id 別ファイルかで経路の成立自体が変わる。保存形式の確認を oracle の第一段として先頭に置き、分割保存であれば経路不成立として記録すること。",
+          "要補強：曝露条件（複数分析セッションが実際に同時実行されうる運用形態か）が preconditions に無い。曝露が無ければ severity P0 は過大評価となるため、同時実行の実績有無を併せて観測すべきである。また 100 回の素朴な同時実行は競合窓が狭い場合に検出力不足となるため、読取り後の待機挿入など窓を広げる手順を明記すること。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-N08-partial-fabrication-passes-reference-resolution",
+        "verdict": "UNKNOWN",
+        "reasons": [
+          "被試験対象が AI による分析工程であり出力は非決定的であるのに、試行回数・合格判定閾値（例：n 回中何回 unknowns に現れれば検出とみなすか）が規定されていない。単発試行では成功も失敗も偶然で説明でき、試験が欠陥を検出したことにならない。",
+          "『実在機構 8 割・捏造 1 つ』という注入材の構成条件が定性的で、捏造名の紛らわしさ（実在名との字面距離、記述中の位置と分量）が結果を支配する。注入材そのものを固定資材として記録し再利用可能にしなければ再現不能である。",
+          "oracle の判定指標の一つ confidence は分析工程の自己申告値であり、客観的証拠ではない。normative_refs に verification-objective-evidence を挙げながら自己申告に依拠する構造的な弱さがある。unknowns への個別列挙という観測可能な指標を主、confidence を従とすべきである。",
+          "参照解決チェックの実在有無（未導入か、全体一致のみを見る実装か）が事前に確認されておらず、未導入であれば試験は『存在しない統制の不発』を確認するだけになる。統制の所在確認を oracle の前段に置くべきである。",
+          "対照条件（全捏造）との比較は良いが、比較の合否基準（全捏造では検出、部分捏造では不検出、という差が何試行で有意か）が無いため、結果の解釈が事後の裁量に委ねられる。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-N09-nonrandom-missingness-biases-assurance",
+        "verdict": "UNKNOWN",
+        "missing_oracle": true,
+        "reasons": [
+          "oracle が自己矛盾している。hazard は『実行が観測を残さず終了し分母からも落ちる』ことなのに、種別ごとの欠測率を求めるには『実施されるはずだった実行の台帳（分母）』が必要である。その分母が失われていることが本件の主張なのだから、記録のみからは欠測率を算出できない。注入計画・実行キューなど独立の実施予定一覧を証拠源として指定しない限り観測不能である。",
+          "『十分な検出力がある試行数』が未定義のまま反証条件に置かれており、有意差が出なければ棄却、出なくても検出力不足と主張できる。どちらにも転べる停止条件であり、事前に最小試行数・検定手法・有意水準・目標検出力を固定する必要がある。",
+          "残差リスク欄で検出力問題を自認しているが、自認は設計の欠落を補わない。反証時に検出力を併記する旨は oracle 本体の手順に格上げすべきである。",
+          "『欠測が種別と相関する場合は結論を保留する』という expected_safe_behavior は妥当だが、保留を誰がどの成果物のどのフィールドで表明するかが定義されておらず、安全側挙動の観測点が無い。",
+          "SCN-D07（分母汚染）との差分（分母定義か観測欠落か）は述べられているが、いずれも是正は『実施事実の全件登録』に収束しうる。是正が重複するなら統合を検討すべきである。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-N10-owner-attribution-restored-by-miscited-type",
+        "verdict": "UNKNOWN",
+        "missing_oracle": true,
+        "reasons": [
+          "oracle の中核が『独立の第三者による再裁定』だが、その第三者が誰か（別インスタンスの AI か人間か）が指定されていない。AI であれば評価者と同一の視野制約を共有する共通原因であり、独立性が成立しない。本候補自身が共通原因を主題にしている以上、この点は致命的である。",
+          "『妥当／誤名指し』の裁定基準が統治木の既決との照合手順として書かれておらず、判定が裁定者の解釈に依存する。照合可能な形（各類型の成立要件と、記述のどの記載がそれを満たすかの対応表）に落とさなければ客観的証拠にならない。",
+          "指標 (b) の『適用前後の owner 成立件数と申告件数の推移』は相関であり、ADR-127 以外の変化（申告母集団の変化、運用者の交代、他 ADR の同時適用）で容易に交絡する。因果を主張するには対照期間または層別が必要である。",
+          "falsification_signal が『再裁定でいずれも妥当なら棄却』となっているが、対象件数が少なければ全件妥当は容易に起こる。最小件数と、誤名指し率の許容上限を事前に定めるべきである。",
+          "『評価者の視野が統治木の既決に及んでいない』という真の状態が、外部から観測可能な量として定義されていない（視野は内部状態である）。観測可能な代理指標（分析出力が参照した統治木ファイルの記録など）への置換が必要である。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-N11-delayed-webhook-headsha-mismatch",
+        "verdict": "UNKNOWN",
+        "reasons": [
+          "最も決定的で安価な観測（CI_RELEASE_CHECK の run 選択・headSha 固定ロジックをコードで読む）が oracle に含まれていない。統制の有無はコードで一意に決まるのに、履歴の疫学的走査という間接手段を主にしている。",
+          "falsification_signal が誤っている。遅延到着した success run の headSha が全て一致したとしても、それは当該期間に曝露が無かったことを示すだけで、突合統制が存在することの証拠にはならない。曝露の不在と統制の存在を取り違えており、この条件で反証を宣言すると欠陥を見逃す。",
+          "『到着時点の PR headRefOid』は事後の API から直接は取れず、commit の push 時刻から再構成する必要がある。再構成手順（使用エンドポイント、時刻の基準、force-push があった場合の扱い）が規定されておらず再現性が担保されない。",
+          "閾値（『イベント到着時刻と run 作成時刻の差が閾値を超える』）の値と、対象 PR の抽出期間・件数が未定義であり、対象集合が事後の裁量で決まる。",
+          "source_candidate（INC-022『実行できない CI が赤と読まれる』）が示す機序は実行不能状態の読み違えであるのに、本候補は別 commit の緑を現行 head の緑と読む機序に移っている。派生自体は許容されうるが、元事象からの飛躍が正当化されておらず、元事象の機序が別途未被覆のまま残る恐れがある。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-N12-false-negative-in-suppression-predicates",
+        "verdict": "REJECT",
+        "reasons": [
+          "単一のシナリオではなく、無期限の監査計画である。具体的な述語・具体的な境界入力・具体的な UCA 実例が一つも名指されておらず（『第三の実例』は仮定されているだけ）、このままでは実行も再現もできない。",
+          "反証条件が原理的に達成不能である。『列挙した全述語について偽陰性入力が構成できないこと』は網羅列挙を前提とするが、残差リスク欄自身が列挙の網羅不能を認めている。したがって仮説は常に生き残る——AI に都合のよい停止条件の典型である。",
+          "system_boundary が『ある行動を挙げないと決める全ての述語』と定義されており境界として機能していない。境界は有限に閉じた要素集合でなければ、漏れの有無を判定できない。",
+          "是正すべき方向：既知の INC-012・INC-023 の述語を起点に、(a) 抑止述語の列挙結果そのものを成果物として一度確定させる作業と、(b) 確定した各述語に対する境界入力試験（述語ごとに 1 シナリオ）に分割すること。族としての主張は (a) の成果物に対する完全性議論として別途扱うべきである。",
+          "なお expected_safe_behavior のうち『抑止した場合はその根拠を観測可能に記録する』は、族全体に効く単一の設計要求として独立に価値がある。これは述語列挙に依存せず検証できるため、切り出して別シナリオ化すれば ACCEPT 可能な形になる。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-P02-version-lag-extends-to-guard-and-linter",
+        "verdict": "ACCEPT",
+        "reasons": [
+          "共通原因（単一配布単位の版遅れ）が監査だけでなく拒否・助言の三系統に及ぶという拡張は妥当で、falsification_signal（規則差分 0 件なら棄却）が機械的かつ事前に定義されている点で試験仕様として成立する。",
+          "ただし oracle は expected_safe_behavior（版不一致の検出・保留）を一切観測していない。測っているのは『旧規則でのみ通過し得た編集の件数』という下流の実現被害であり、版整合の検査有無を直接見る観測（複製側に版比較の分岐が存在するか／不一致時の出力）を試験仕様に追加すべき。",
+          "再現性の弱点: PRE_TOOL_GUARD は PreToolUse の編集要求を見るのに対し、oracle はコミット差分を突き合わせている。要求と成果物は一対一でないため、コミット再生による判定は近似であり、この写像の妥当性を明記しない限り件数は再現しない。",
+          "件数 0 の結果が『欠陥なし』と『曝露なし（当該編集がそもそも行われなかった）』を区別できない。0 件時の解釈規則を事前に書いておかないと、AI に都合のよい停止条件になる。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-P03-substring-false-positive-across-term-table",
+        "verdict": "ACCEPT",
+        "reasons": [
+          "単一語の症状を語彙表全体の性質へ一般化しており、oracle（全禁止語 × 反例集合 → 語ごとの誤検出件数表、1 件でも検出があれば残存）は決定論的で再現可能。residual_risk（実在語彙由来に限る）も自己申告されている。",
+          "弱点: 『正当語』の判定基準が oracle 内で未定義。ある語が禁止同義語ではなく正当語であるという ground truth は人手判断であり、この基準を事前に文書化しないと oracle が曖昧になる（test-spec-unambiguous に抵触しうる）。",
+          "injection_point が『抽出・合成』と書いているのに oracle は『実在正当語』に限定しており、両者が不一致。合成語を使うか否かで結果件数が変わるため、どちらで測るかを一意に固定すること。",
+          "SCN-P04 と対象実装が同一で観測が重なる。P03=現時点の残存量、P04=新規追加語に対する一般性、と役割を明示的に分離した上で並行実施すべき。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-P04-pointfix-without-word-boundary-rule",
+        "verdict": "ACCEPT",
+        "reasons": [
+          "『個別除外で閉じた是正は語彙表の増加で同型再発する』という再発経路は symptom-vs-systemic-cause の正しい適用であり、oracle(b)（合成禁止語を追加して反例を通す）は決定論的で、修正の一般性を直接に反証しうる。",
+          "oracle(a)（af9c858 の diff が一般規則導入か個別除外かの判定）は読解による分類であり判定者依存。『語境界規則の導入』と見なす条件（照合器側の正規表現／トークナイザ変更を伴うこと等）を事前に列挙しないと、判定が事後正当化になる。",
+          "injection の現実性に留保が要る。任意の合成禁止語は部分文字列一致器を必ず破るため、(b) 単独では『実運用で起こりうる再発』ではなく『構成可能な反例の存在』しか示さない。実際の語彙追加運用で成立しうることを示すには、実在候補語からの追加例を併記すべき。",
+          "語彙表・例外表への追記は被試験系の状態変更である。試験後の原状復帰手順が injection_point に書かれておらず、統治木を汚染しない実施条件を明記すること。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-P05-failure-families-collapse-to-one-exception-surface",
+        "verdict": "ACCEPT",
+        "reasons": [
+          "故障族 → ラベルの写像が単射かを見る oracle は判定基準が一意で、正常系ではなく非安全状態（族の縮退）を直接に探索している。分類器を境界内・外部サービスを環境入力と置いた切り分けも整合している。",
+          "重大な条件付き: 注入が呼び出し境界のスタブである以上、例外表面はテスト作成者が選ぶ。スタブが族ごとに区別可能な例外を投げれば分類器の欠陥だけを測れるが、単一型に潰したスタブを書けば結論は自明に得られる。スタブの例外表面を『実 SDK で実測した失敗記録』から導出し事前固定することを合格条件に加えない限り、この試験は循環し欠陥を検出しない。",
+          "fault の記述『例外表面が原因族の情報を保持せず』は SDK（環境）側の性質であり、スタブ注入では検証できない。境界内の主張（分類器が入力属性を使わない）と境界外の主張（SDK が情報を落とす）を分離して記述すべき。",
+          "分類器という部品が実在し呼び出し可能であることが前提条件に挙がっていない。存在しない場合（例外文字列をそのまま台帳へ書くだけ等）は試験対象が変わるため、実在確認を precondition に加えること。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-P06-classifier-premise-broken-by-sdk-version-skew",
+        "verdict": "UNKNOWN",
+        "missing_oracle": true,
+        "reasons": [
+          "方法上の矛盾: SCN-P05 と同一の『呼び出し境界のスタブ』注入一式を各版で実行するとしているが、スタブは SDK を置換するため SDK 版という独立変数がそのまま消える。版 × 族のラベル表は構成上ほぼ一様になり、主張する縮退を観測できない。各版の実 SDK が定義する例外クラス・属性から注入物を生成する設計に書き換えない限り oracle は成立しない。",
+          "前提が未確認: 複製が SDK を同梱／解決していること、複製環境で正本と異なる版が実際に解決されたことが preconditions に無く、versions も『複製環境で実測された版』という未取得値に依存している。実測前に P1 として起票するのは楽観仮定の裏返し（悲観仮定の未検証）である。",
+          "UNKNOWN ラベルの存在が前提だが、分類器が未知例外に UNKNOWN を付ける仕様なのか、単に例外を素通しするのかが不明。前者でなければ unsafe_control_action の記述自体が実装と合わない。",
+          "SCN-P05 の一部分（属性依存の脆さ）と観測対象が重複する。P05 の注入設計を『例外表面を変数化する』形に一般化すれば、P06 はその 1 パラメータ軸として吸収できる可能性がある。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-P07-shared-extractor-poisons-audit-findings",
+        "verdict": "UNKNOWN",
+        "duplicate_of": "SCN-D07-coverage-denominator-poisoning",
+        "reasons": [
+          "oracle 自体は良い: 正本未改変での docs-audit 実行と原文突合による混入率算出は注入不要・決定論的で再現可能、falsification（混入率 0）も明確。この部分は単独で価値がある。",
+          "しかし loss と hazard の中核である『下流（SESSION_START_CONTRACT の注入、HEARTBEAT の古び警告）が findings 件数を基礎データとして読む』という伝送経路が oracle でまったく観測されていない。混入率を測っても、下流の制御が実際にその件数を読み注意配分を変えることは示せない。下流入力の実測（どの値をどのファイルから読むか）を第二の観測として追加しない限り、主張の後半は非観測のまま残る。",
+          "重複判定が未解決であることを DISCOVER 自身が residual_risk で認めており、D07 の分母定義が findings 件数なら実質同一。批判側でも D07 を参照できないため、統合／分離の決着がつくまで ACCEPT にはできない。",
+          "『共通原因による多重防護の無効化』の適用に留保: POST_TOOL_LINTER と SESSION_END_AUDIT が同一抽出器を共有することは主張されているだけで、共有の事実（同一モジュール参照）を確認する観測が injection_point に含まれていない。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-P08-remediation-closed-while-field-rule-stale",
+        "verdict": "UNKNOWN",
+        "duplicate_of": "SCN-P02-version-lag-extends-to-guard-and-linter",
+        "missing_oracle": true,
+        "reasons": [
+          "oracle が自明命題を測っている: 『旧版の複製は旧規則の助言を出す』は版差がある限りほぼ確実に真であり、一致率を版ごとに出しても新しい情報を生まない。falsification_signal（版差があっても助言が正本と一致する）は規則差分が空のときしか成立せず、実質的に反証不能。",
+          "主張されている欠陥は『是正クローズ判定が配布・適用の完了を確認する feedback 経路を持たない』という判定手続きの性質である。これを見るには、クローズ条件の定義文書と台帳のクローズ記録（複製側適用の確認欄の有無）を直接観測すべきであり、複製の助言出力を観測する現 oracle は対象を取り違えている。",
+          "SCN-P02 と共通原因・injection・必要資材（版の異なる複製）が重なる。損失の記述（是正記録の偽り vs 旧規則での通過）で別立てにしているが、実施コストのほぼ全部が共有されるため、P02 の観測に『台帳のクローズ記録との突合』を一項追加する形へ統合すべきかを先に決めること。",
+          "precondition『異なる版の複製を同時に用意できる』が満たせるかが未検証で、満たせない場合この scenario は再現不能。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-P09-dual-silence-of-staleness-and-version-warnings",
+        "verdict": "ACCEPT",
+        "reasons": [
+          "『版遅れを知らせるべき機構自身が版遅れの複製に載っている』という自己参照的な共通原因の指摘は非自明で、無音と正常の区別不能という損失も統治上重い。expected_safe_behavior（判定不能であることが出力に現れる）が観測可能な形で書かれている。",
+          "oracle が良い形をしている: 鼓動出力の全文採取と、古び警告／版遅れ警告／判定不能告知の各行の有無を数えるという計数は一意で、いずれか一方が出れば弱まるという反証条件も明確。",
+          "留保 1: 0.7.0 が版遅れ警告機能を実装していない場合、『旧版側の実装で無効化される』は仕様上の当然であり、欠陥の所在は複製ではなく検出機構の配置設計にある。この区別を結果記述に必ず書き分けること（さもないと再発防止策が誤った層に打たれる）。",
+          "留保 2: event_sequence は『強制終了で SessionEnd 未発火』を原因に挙げるが、injection は last-audit.json を据え置くだけである。据え置きが強制終了時の状態を忠実に再現するか（他の副作用ファイルの有無）を確認しないと、実事象の再現とは言えない。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-P10-subagent-path-uncovered-by-contract-injection",
+        "verdict": "UNKNOWN",
+        "missing_oracle": true,
+        "normative_misreading": true,
+        "reasons": [
+          "oracle の観測可能性が未確立: 『サブエージェント入力の先頭部分を採取する』ことが実際にできるかは precondition で仮定されているだけで、その記録経路の存在確認が試験の前段に入っていない。採取できなければ被覆率は算出不能で、scenario 全体が再現不能になる。",
+          "損失の連鎖が飛躍している。サブエージェントへ契約が届かないことと『版遅れの影響範囲の見積りが実際より小さく報告される』ことの間に因果が示されておらず、DISCOVER 自身も residual_risk でその倍率は測れないと認めている。損失を『派生実行主体が統治入力なしに統治木を操作する』に限定すれば整合するので、INC-005（版遅れ）由来という出自に引きずられた合成をやめるべき。",
+          "normative_refs の『指示は必ず従われるとは限らない』は誤用。ここで主張しているのは指示が不遵守という事態ではなく、指示がそもそも伝送されないという被覆の欠落であり、control-path-transmission-analysis と被制御プロセスの制御者被覆だけで足りる。",
+          "ホスト仕様への依存が不明: サブエージェント起動時にどの hook が発火するかは実行ホストの仕様であり、既知の仕様どおりの挙動を試験で再確認するだけになる恐れがある。仕様上不発火が既知なら、試験ではなく設計側の被覆要件として起票すべき。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-P11-existence-based-completion-in-action-conditions",
+        "verdict": "ACCEPT",
+        "reasons": [
+          "既知の一事例（MAP_COVERAGE）を『パス存在ベースの完了判定』という分岐の類へ一般化しており、oracle（全行動条件を列挙し参照対象を分類、存在ベース分岐を全件列挙）と injection（パスのみ生成し内容未処理）が両輪になっていて、決定論的かつ安価に再現できる。空の次アクションが完了と区別できないという損失も観測可能。",
+          "注意 1: 『分類する決定論試験』という表現は無理がある。試験が判定できるのは振る舞い（未処理内容で当該行動が提示され続けるか）であって、条件が何を参照しているかという意図ではない。静的列挙（読解・grep）と振る舞い試験を別の成果物として分け、合格基準は振る舞い側に置くこと。",
+          "注意 2: 過度な一般化の余地。成果物が原子的に書かれる工程では存在ベース判定が正当でありうるため、『存在ベース分岐が 1 件でもあれば欠陥』とはせず、工程ごとに内容状態を見るべき根拠を併記する合格基準に直すこと。",
+          "SCN-P12 と近接する。P11=行動条件の個別判定、P12=キャンペーン終了判定、と対象関数を明示的に分離できることを実施前に確認すること（終了判定が独立に存在しない場合、両者は同一欠陥になる）。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-P12-campaign-closes-with-pending-analysis",
+        "verdict": "ACCEPT",
+        "reasons": [
+          "『未処理項目を保持したまま完了状態へ遷移する』という非安全状態を直接構成する injection（pending 1 件＋他条件充足）と、戻り値・根拠出力を記録する決定論試験が対応しており、合格基準が事前に一意に定義されている。audit-findings-must-be-closed の適用も妥当。",
+          "前提の確認が必要: 『キャンペーン終了判定』が呼び出し可能な独立の判定として実在するかが preconditions に無い。終了が『次アクションが空であること』の副作用として暗黙に成立している実装なら、本 scenario は SCN-P11 と同一欠陥に帰着するため、実施前に対象関数の実在を確認すること。",
+          "合格基準の一部が要件の新設になっている。『偽でも根拠（どの項目が pending か）が出力されなければ欠陥』という条件は、引用された規範から直接は導けない。終了判定の真偽（安全性）と根拠出力（診断性）を別々の期待に分け、後者は根拠を規範側で先に確定させること。",
+          "cast_analysis 以外の状態値（例: 他工程の pending）についても同型の代理指標依存が残りうる。1 件の状態値に限定せず、台帳の全状態フィールドへ反例を展開する形にした方が、症状単位の是正で閉じられる危険を避けられる。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-F01-unknown-stagnation-emits-no-alarm",
+        "verdict": "UNKNOWN",
+        "reasons": [
+          "oracle の N が未定義。『警告が N セッション以内に 0 件なら仮説側に一致』は N を後から選べるため、判定が観測者の裁量に依存し verdict 決定可能でない。",
+          "expected_safe_behavior の『閾値セッション数（1〜2）』が normative_refs のどこからも導けない発明値。規範は『先行指標による早期検知』としか言っておらず、1〜2 という具体閾値を安全側要件として固定すると、規範の誤読に基づく偽の不合格を生む。",
+          "『OWNER が読む面に現れる』が操作的に定義されていない。何が OWNER の読む面かを試験実行時に決めることになり、residual_risk 自身がその曖昧さを認めている（＝oracle が非観測）。",
+          "欠陥の実体（統制要素が UNKNOWN 件数の時系列をフィードバック変数として保持していない）は静的検査で決着する。にもかかわらず oracle が『N セッション空回し』という実 Claude セッション反復を要求しており、コスト・再現性の両面で不整合。停滞条件を人工固定した環境が実運用のどのループを模擬しているかも不明。",
+          "仮説側一致の条件が『警告が出ない』という不在の観測であり、注入した停滞条件が本当に成立していたことの独立確認（前提条件の検証）が oracle に含まれていない。"
+        ],
+        "missing_oracle": true,
+        "normative_misreading": true
+      },
+      {
+        "scenario_id": "SCN-F02-latent-undefined-name-in-unreached-branches",
+        "verdict": "ACCEPT",
+        "reasons": [
+          "oracle の (1) 未定義名検査は決定論的・再現可能・版固定（0.10.0）で、件数という verdict 決定可能な形で結果が出る。未到達分岐に潜む未定義名は静的解析が原理的に検出できる対象であり、試験が欠陥を検出しないという懸念は小さい。",
+          "INC-007 の実発現に基づく一般化であり、発現地点 1 箇所ではなく全フックスクリプトへ横展開している点で、症状修正への縮約を避けている。",
+          "ただし oracle が (1) 静的解析と (2) 異常入力起動の二本を合成しており、(2) の入力集合が未列挙（『巨大ファイル』のサイズ、『全組合せ』の定義、権限拒否の作り方が未定義）。(2) は再現条件を確定させるか、別 scenario に分離すべき。",
+          "expected_safe_behavior の『検査不能の場合は非 0 終了』は、ホストのフック契約（非 0 終了が編集や会話の流れに与える影響）と衝突しうる。上位への伝達手段を終了コードに限定せず、永続記録を含む形に緩めるべき。",
+          "以上は oracle の一部の精緻化要求であり、中核の検査項目そのものは有効と判断して ACCEPT。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-F04-cache-summary-lost-update-poisons-next-session",
+        "verdict": "ACCEPT",
+        "reasons": [
+          "oracle の (1)（書き込み箇所の静的列挙と、直前再読取・排他・一時ファイル+rename の有無の判定）は決定論的で、コード上の事実として決着する。競合の再現性に依存せず結論が出る点が良い。",
+          "注入点で片方に遅延を挿入して重なりを確実にすると明記しており、競合試験にありがちな『たまたま再現しない』を回避している。",
+          "falsification_signal に欠陥がある。『単一書き手かつアトミック置換（一時ファイル+rename）』は torn write を防ぐだけで lost update を防がない。アトミック置換の存在を棄却根拠に含めると、読取→全体書き戻し型の消失が残ったまま仮説が誤って棄却されうる。棄却条件は『書き手が単一である』または『書き込み直前の再読取／排他／追記のみ』に限定すべき。",
+          "preconditions『SessionEnd の全件監査と鼓動が時間的に重なり得る』が未検証の前提のまま置かれている。ホスト上でこの二者が実際に並行しうるか（複数セッション同時実行を含む）を確認しないと、注入が系の境界外の条件を作っているだけになる恐れがある。",
+          "この前提が偽でも (1) の静的判定は有効に残るため、ACCEPT。ただし試験記録には前提の成否を併記すること。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-F05-unremediated-ledger-writers-retain-whole-file-writeback",
+        "verdict": "UNKNOWN",
+        "reasons": [
+          "oracle の合否基準が『書き込み直前の再読取の有無』という、先行是正の実装手法そのものへの適合検査になっている。再読取は競合窓を縮めるだけで消失を防がない（再読取後・書き戻し前の更新は依然消える）ため、oracle 合格が loss の不発生を意味しない。逆に、ロックや追記のみで正しく実装された経路を『再読取なし』として不合格に数える偽陽性も起きる。expected_safe_behavior は排他・追記も許容しているのに oracle が再読取だけを数えており、両者が不整合。",
+          "injection_point に『非 cast_analysis 経路と cast_analysis 経路の同時実行』が挙がっているのに、oracle にはその観測（最終台帳から既存項目が消えたか）が入っていない。注入と観測が対応していない。",
+          "residual_risk 自身が SCN-N07 との重複可能性を認めている。同一機構を扱う既存 scenario がある場合、本件で独立に主張できるのは『是正の適用範囲』の軸のみで、その軸は試験というより是正完了条件（プロセス要件）の指摘に近い。提示情報だけでは重複の有無を確認できない。",
+          "『台帳ファイルへ書き込む全関数』の全列挙が完全であることの担保が無い（動的パス生成・共通 I/O ヘルパ経由・サブプロセス書き込みを取りこぼすと、0 件＝安全と誤って結論する）。列挙の網羅性自体が oracle の前提として未検証。"
+        ],
+        "missing_oracle": true
+      },
+      {
+        "scenario_id": "SCN-F06-invariant-enforced-only-by-injected-instruction",
+        "verdict": "UNKNOWN",
+        "reasons": [
+          "oracle の中核（サブエージェント経路から台帳更新を試行し、既存項目が消えるかを観測する）が実 Claude のサブエージェントの振る舞いに依存する。ある試行でたまたま既存項目を保存する更新をすれば『消えない』と観測され、逆に消えても『実装が拒否しない』ことの証拠にはなるが確率的で、再現条件が確定していない。模擬ホストで書き込み実装を直接叩くならサブエージェントという文脈は無関係になり、その場合の試験は『書き込み実装が不変条件を強制するか』という静的／単体検査に還元される。どちらの試験を実施するのかが確定していない。",
+          "上記のとおり、決定論的に残る主張は『不変条件の強制が書き込み実装の内部にあるか』であり、それは SCN-F05 の静的列挙（追記制約・排他の有無）とほぼ同一の観測になる。INC-008 由来の F04/F05/F06 が同一機構を三分割しており、独立性が疑わしい。",
+          "前提『SessionStart の契約注入はサブエージェントに届かない（NONGOAL-001）』が本成果物内では断定のみで、ホスト実装に照らした確認手順が scenario に含まれていない。この前提が偽なら event_sequence の第 1 段が崩れる。",
+          "preconditions『サブエージェント実行経路が台帳へ書き込み可能である』も未検証。書き込み権限が実際に無ければ hazard が成立しない。",
+          "不変条件を設計で強制せよという規範の読み自体は妥当だが、それを検証する観測が確定していないため ACCEPT にはできない。"
+        ],
+        "missing_oracle": true
+      },
+      {
+        "scenario_id": "SCN-F07-terminal-hooks-without-firing-stamps",
+        "verdict": "ACCEPT",
+        "reasons": [
+          "oracle の主部（hooks 定義の鍵集合 − hook-stamps の鍵集合の差集合を列挙）は集合演算として決定論的で、件数という verdict 決定可能な形で結果が出る。",
+          "falsification_signal に静的形（印を書く実装がコード上に存在すること）が含まれており、観測ベースの差集合が持つサンプル依存性を補完している。",
+          "懸念: 観測ベースの差集合は、当該セッションで発火契機が来なかっただけのフック（例: 圧縮が起きなければ PreCompact は正当に不発火）と、実装が印を書かないフックとを混同しうる。したがって一次証拠は『印を書く実装の有無』の静的列挙とし、実行観測は補助に留めるべき。この順序を明示すれば試験は成立する。",
+          "懸念: 二段目の『Stop / PreCompact を強制的に非実行にしたセッションを 1 本走らせる』は、非実行をどう強制するかが未定義で、1 本だけでは検出能力の根拠が弱い。ここは合否の主根拠にしないこと。",
+          "主部の oracle が単独で欠陥（宣言集合と証跡集合の不対応）を決着させられるため ACCEPT。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-F08-exit-zero-without-completion-branches",
+        "verdict": "ACCEPT",
+        "reasons": [
+          "oracle が『全例外処理・早期 return × 終了コード × 終了コード以外の観測経路の有無』の対応表という具体形で定義され、件数で判定される。静的・決定論的・版固定（0.10.0）で再現可能。",
+          "expected_safe_behavior が『非 0 終了』一択でなく『呼び出し側が読む観測経路で未完了を明示』を許容しており、フックの終了コードに特殊意味を持たせるホスト契約との衝突を回避できている。",
+          "懸念: unsafe_control_action は『呼び出し側が 0 を完了と解釈する』ことに依存するが、その解釈を実際に行う受け手（ホストが終了コードを無視する可能性、CI_RELEASE_CHECK が実際に本スクリプトの終了コードを読むか）が未確認。受け手が存在しない場合、指摘は残るが loss 連鎖は成立しない。試験記録に受け手の実在確認を含めるべき。",
+          "懸念: 『観測経路の有無』の判定基準（要約ファイル・印・台帳記録のどれをもって観測経路と認めるか）はやや裁量が残る。列挙時に許容経路を先に固定すること。",
+          "中核の数え上げが客観的に決着するため ACCEPT。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-F09-stderr-diagnostic-not-persisted-anywhere",
+        "verdict": "ACCEPT",
+        "reasons": [
+          "注入点（存在しないディレクトリ・権限拒否・読み取り専用の保存先）が具体で、失敗を確実に発生させられる。事後に保存先を全数走査して該当記録の件数を数えるという oracle も件数判定で明確。",
+          "失敗が起きたこと自体は注入で保証されるため、『記録 0 件』の観測が『そもそも失敗していなかった』と混同されにくい。前提成立が独立に担保されている点が F01 より優れる。",
+          "懸念: 『実行系のログ保存先』の範囲が未列挙。ホスト側が stderr をどこかに退避している可能性を排除できないと、0 件＝不在を過大に主張することになる。走査対象の保存先集合を試験前に明示的に固定し、固定した範囲外は residual risk として記録すべき。",
+          "懸念: SCN-F08 の『0 を返しかつ観測経路を持たない分岐』の一事例と部分的に重なる。ただし F08 は静的な分岐列挙、本件は実行時の永続化有無を測るため、観測手段としては独立と判断する。重複整理の際は両者の証拠を相互参照させること。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-F10-status-enum-conflates-distinct-triggers",
+        "verdict": "UNKNOWN",
+        "reasons": [
+          "oracle の中核概念『意味的契機』が定義されていない。二つの書き込み地点を同一契機と見るか別契機と見るかは評価者の解釈に依存し、件数が再現しない。verdict 決定可能な形になっていない。",
+          "expected_safe_behavior『各状態値がただ一つの意味的契機に対応する』は過剰要求で、規範から導けない。列挙値が複数の呼び出し地点から書かれること自体は欠陥ではなく、規範が要求しているのは『読み手が異なる後続動作を割り当てられるだけの情報が保持されていること』。前段の要求で判定すると、健全な実装を不合格にする。",
+          "本来の欠陥（評価済み・結論保留の項目が未着手として再提示される）は振る舞いとして観測できるのに、oracle が静的な対応表生成にすり替わっている。再提示が起きるかを直接測る観測（INC-010 の事象の再現）が含まれていない。",
+          "『coverage_status 以外に該当があるかを明示する』という指示は横展開として妥当だが、対象となる列挙の集合が未確定で、走査範囲の網羅性が担保されていない。"
+        ],
+        "missing_oracle": true,
+        "normative_misreading": true
+      },
+      {
+        "scenario_id": "SCN-F11-next-actions-nonconvergent-paths",
+        "verdict": "UNKNOWN",
+        "reasons": [
+          "expected_safe_behavior の『next_actions 集合の単調減少』が安全性要件として過剰。解析が進めば正当に新規アクションが増えうるため、単調減少を合否基準にすると健全な挙動を不合格にする。規範が要求しているのは未対処ゼロへの到達であって、集合サイズの単調性ではない。",
+          "oracle が『決定論試験として検査する』と宣言しているが、次アクション生成が実 Claude の判断を含む場合、同一入力でも集合が一致しない。決定論を仮定できるのはレーンがスクリプトのみで構成される場合に限られ、その成否が未確認（precondition が『試験環境が存在する』という願望の形で書かれている）。実 Claude と模擬ホストのどちらで回すのかが確定していない。",
+          "N ラウンドの N が未定義。『有限ラウンド以内に空へ収束』の有限が試験実行時に選べるため、停止条件が観測者に都合よく設定できる。",
+          "『恒久的に処理不能』の定義（依存欠落・対象外）が例示のみで、注入入力がその状態を確実に作れているかを独立に確認する手順が無い。",
+          "問題意識（終端状態の欠如により未処理項目が処理済みと同じ外形になる）は妥当なので REJECT ではなく UNKNOWN とする。要件を『再提示された項目が有限回で終端状態（回答不能宣言を含む）へ遷移すること』に置き換え、決定論性の成否を先に確定させれば ACCEPT 可能。"
+        ],
+        "missing_oracle": true,
+        "normative_misreading": true
+      },
+      {
+        "scenario_id": "SCN-F12-punctuation-glue-false-positives-generalize",
+        "verdict": "UNKNOWN",
+        "reasons": [
+          "合否判定が『真部分文字列が UNDEFINED_TERM として現れたら偽陽性』という前提に立つが、どの約物がトークン内接着でどれが正当な語境界かを定める切り出し仕様が存在しない。日本語文書ではスラッシュやコロンが正当な語境界として働く場合（例: 『設計/実装』を二語として検査したい）があり、仕様なしでは正しい挙動を欠陥として計上しうる。normative_refs に test-spec-unambiguous を挙げながら、その仕様自体が本 scenario 内で与えられていない。",
+          "偽陰性側の対検査が無い。約物を一律に接着扱いへ寄せる是正は、真の未定義語を取りこぼす方向の劣化を生む。是正後に『真の未定義語が依然として検出される』ことを確かめる観測を同一 scenario に含めないと、試験が是正の副作用を検出できない。",
+          "観測手続き（最小文書を通して指摘一覧を取得し件数を数える）自体は決定論的・再現可能・版固定で良い。欠けているのは測定ではなく合否規準の根拠。",
+          "対象トークン群（a_b, x/y, ns:key, @scope/pkg, 3.14, C++）は英数記号中心で、実文書の主要素である日本語・全角約物（・、〜、／、：）が入っていない。発現事例の一般化としては約物の選択が偏っており、体系的原因（綴り単位での切り出し）を主張するには標本が不足。",
+          "切り出し仕様の明文化と偽陰性対検査を追加すれば ACCEPT 可能と考えるが、現状の記述では合否が仕様の後付け解釈に依存するため UNKNOWN。"
+        ],
+        "missing_oracle": true
+      },
+      {
+        "scenario_id": "SCN-F01-shared-tokenizer-common-cause-across-checks",
+        "verdict": "ACCEPT",
+        "normative_misreading": false,
+        "missing_oracle": false,
+        "reasons": [
+          "共通原因（単一の語切り出し実装が複数の防護に跨る）という仮説は多重防護の無効化という規範に正しく対応しており、症状（用語検査のみ）から体系的要因へ正しく持ち上げている。",
+          "oracle は静的列挙＋各呼び出し元への注入で、実 Claude の確率的挙動に依存せず決定論的に再現可能。falsification_signal（呼び出し元が用語検査のみ／誤判定0件なら偽）も仮説と正しく対応している。",
+          "ただし弱点あり: 各呼び出し元における『正しい判定』の期待値定義が oracle に書かれていない。綴り単位での期待結果を注入入力ごとに事前登録しないと、偽陰性・偽陽性の判定自体が事後の裁量になる。受入前に期待値表の事前定義を要求する。",
+          "precondition『v0.7.0 相当の入力が再構成できる』が満たせない場合は再現不能に転落する。再構成手順（コミット／入力ファイルの同定）を明示すべき。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-F02-manual-state-partition-misclassification-passes-tests",
+        "verdict": "ACCEPT",
+        "normative_misreading": false,
+        "missing_oracle": false,
+        "reasons": [
+          "『どちらかに属する』という網羅性検査を『分類が正しい』ことの証明と取り違えている点を突いており、合格基準の事前定義・楽観仮定の禁止という規範の適用が妥当。",
+          "変異注入 → 決定論試験と CI の赤／緑という oracle は二値で判定可能・決定論的・再現可能で、実 Claude 挙動に依存しない。",
+          "留保: 変異が『誤分類である』ことの根拠自体が人手判断であり、期待される正しい分類を事前登録しないと循環になる。注入前に『この状態は NAMEABLE 側が正しい』理由を独立に固定することを条件とする。",
+          "residual_risk の通り単一変異では特定状態専用の保護と一般的保護を区別できない。最低でも両方向（NAMEABLE→WITHIN_CYCLE と逆）＋複数状態の変異集合にすべき。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-F03-progress-report-unreconciled-with-artifact",
+        "verdict": "UNKNOWN",
+        "normative_misreading": false,
+        "missing_oracle": false,
+        "reasons": [
+          "報告と成果物の突き合わせが統制構造にないという指摘自体は正当だが、oracle の観測面が定義されていない。報告が OWNER 宛の自然言語文（境界内と宣言されているが機械可読な入力集合に入っていない）なら、『通常の報告経路へ注入する』という操作が何を書き換えることなのか不明で、再現手順が成立しない。",
+          "『実施』という記述と照合すべき成果物の対応規則が未定義。任意の自然言語の主張からどの成果物を期待するかを決める述語がないため、注入した1件を超えて一般化した判定ができない（expected_safe_behavior のハッシュ照合は現状の報告様式では実装可能性が示されていない）。",
+          "event_sequence が『台帳と監査は報告文面を突き合わせ対象として持たない』と断定しており、それが真なら注入結果は事前に既知（必ず未検出）で、試験の情報量がほぼゼロになる。まず監査の入力集合の静的確認を先行させ、その上で照合述語の設計可能性を示すべき。",
+          "損失（OWNER の誤前提）と重大度は妥当なので破棄はしない。観測面（報告の機械可読な記録位置）と対応規則を定義した上で再提出を求める。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-F05-mitigation-clause-path-dependent-via-subagent",
+        "verdict": "UNKNOWN",
+        "normative_misreading": false,
+        "missing_oracle": false,
+        "reasons": [
+          "『緩和がプロンプト文言に載っている』という懸念は制御≠遵守の規範に合致し重要だが、oracle が測っているのは条項を人為的に外したときのプロンプト感度であり、実運用のどの起動経路が条項を落とすかという経路伝達の事実ではない。injection_point を『条項を含まないプロンプトを自作する』ではなく『実在する全起動経路を列挙し、各経路の合成後プロンプトに条項が含まれるかを静的に照合する』に置き換えるべき。",
+          "実 Claude の確率的挙動に対して単発実行の falsification（『条項なしでも疑いが1件以上出れば仮説は偽』）を採用しており、たまたま1回疑いが出ただけで仮説を棄却できる。AI に都合のよい停止条件であり、N と判定閾値（例: N=20 で疑い提起率と95%区間）の事前定義が必須。",
+          "条項を除去すれば挙動が悪化するのはほぼ構成上自明であり、単独では既知情報の再確認に留まる可能性が高い。",
+          "台帳の『緩和済み』表示が経路差を隠すという hazard の定式化は妥当で、静的照合に置き換えれば決定論的に検証できる。破棄ではなく設計修正を要求する。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-F06-turn-limit-truncation-varies-by-input-class",
+        "verdict": "UNKNOWN",
+        "normative_misreading": true,
+        "missing_oracle": false,
+        "reasons": [
+          "UCA は『上限到達を欠測として記録・通知しない』ことなのに、oracle は num_turns の最大値と上限到達回数しか測っていない。記録・通知経路の有無は別命題であり、oracle からは判定できない（仮説と oracle の不一致）。",
+          "そのため falsification_signal が不正。『全種別で最大 num_turns が4未満・上限到達0件なら仮説は偽』は、余裕がある局面をたまたま引いただけで欠測記録の欠如という本体の欠陥を棄却してしまう。実 Claude 実行の分散が大きい以上、AI に都合のよい停止条件になっている。閾値『4』の根拠も未記載。",
+          "欠測記録の有無は評価実行系のコードを読むだけで決定論的・低コストに確認できる。高価な N=20×種別の LLM 実行より先にその静的確認を置くべきで、順序が逆。",
+          "normative_refs の『自発報告のみによる評価の禁止』は本件（打ち切り欠測の集計処理）に直接対応せず、適用が緩い。『欠測データの扱い』『試験条件の記録と再現性』側に寄せるべき。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-F08-ledger-record-types-unread-by-canon",
+        "verdict": "ACCEPT",
+        "normative_misreading": false,
+        "missing_oracle": false,
+        "reasons": [
+          "『記録種別の追加と読取述語の追加が独立に行われ被覆検査がない』という体系的要因の同定は、フィードバック必須・欠落コントロールの明示という規範に正しく対応している。",
+          "oracle が集合の差集合という全数計算で、決定論的・低コスト・二値判定可能。実 Claude の挙動に依存せず、falsification_signal（差集合が空なら偽）も仮説と正しく対応する。",
+          "留保: 『読取述語の参照種別集合』の機械抽出手順が未記載で、動的キー参照や辞書一括受け渡しがあると被覆を過大評価する。抽出方法と、動的参照が見つかった場合の扱いを事前に定めること。residual_risk はフィールド粒度しか挙げておらず、この抽出限界が未申告。",
+          "SCN-F10 と対象が重なる（同じ未接続現象の現状測定 vs 防護の一般性検査）。両方走らせるなら役割分担を明記し、重複した是正提案を出さないこと。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-F09-unnameable-side-now-nameable-but-unreclassified",
+        "verdict": "UNKNOWN",
+        "duplicate_of": "SCN-F02-manual-state-partition-misclassification-passes-tests",
+        "normative_misreading": false,
+        "missing_oracle": false,
+        "reasons": [
+          "oracle が『必要な材料の述語を書き下し、それを自分で評価する』という形式で、判定基準の作成者と評価者が同一。外部参照点がなく、望む結論に合わせて述語を緩められる（自己採点）。述語の事前登録と独立レビューを条件にしない限り、検出力を主張できない。",
+          "『名指し可能』が観測可能な形で定義されていない。正本のどの述語が真になれば名指し可能とみなすのか（材料の存在か、実際に次行動が当該段を出力することか）が未確定で、真偽表の意味が定まらない。",
+          "根本欠陥（分類の正しさを担保する述語が存在しない）は SCN-F02 と同一で、本 scenario はその時間軸版に見える。F02 に対する追加の検出力の増分が示されていないため、独立 scenario として維持する根拠が弱い。",
+          "損失（材料が揃った段が滞留する）自体は現実的なので破棄はしない。『材料出現時に再評価を起動する機構の有無』を静的に確認する形へ oracle を作り替えれば決定論的に検証できる。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-F10-acceptance-test-overfits-current-artifact-type",
+        "verdict": "UNKNOWN",
+        "normative_misreading": false,
+        "missing_oracle": false,
+        "reasons": [
+          "候補自身が citation_defect: true と unresolved_refs: ['symptom-vs-styssystemic-cause'] を保持しており、規範アンカーが解決不能なまま提出されている。参照が解決するまで受理できない（誤字と推測できても、推測で規範を補うのは規範の誤読を招く）。",
+          "注入する『仮の新種成果物』の作り方が未定義。residual_risk が認める通り、試験の想定内に収まる作り方をすれば過適合を見逃す。新種は受入試験のコードを見ずに独立に生成する等、構成手順を事前登録すべき。",
+          "一方で『症状固定の是正が一般的防護として扱われている』という指摘は妥当で、oracle（注入 → 前進するか赤で止まるか）は二値・決定論的・再現可能。設計の骨格は良い。",
+          "SCN-F08 と対象領域が重なる。F08 が現状の被覆測定、本件が防護の一般性検査という役割分担を明示すること。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-F11-field-granularity-unread-across-record-types",
+        "verdict": "ACCEPT",
+        "normative_misreading": false,
+        "missing_oracle": false,
+        "reasons": [
+          "種別粒度の被覆が緑でもフィールド粒度で未接続が残るという指摘は、SCN-F08 の残余リスクを正しく埋めており、検査粒度という体系的要因を捉えている。",
+          "oracle が機械生成＋全数照合で決定論的・低コスト・再現可能。0件参照フィールドの集合という出力は判定可能な形をしている。",
+          "ただし falsification_signal は不正であり、受入時に修正を要求する。『全必須フィールドが1箇所以上から参照されていれば偽』は文字列出現という代理指標での棄却であり、辞書一括受け渡しや無関係な同名変数で容易に成立する。棄却方向は『参照箇所が実際に統治判断の入力になっていること』を目視確認するまで認めないこと。",
+          "検出方向（0件参照フィールドの発見）は動的キー参照を除けば健全な下限を与えるので、この非対称性を明記した上で実行してよい。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-F12-leading-indicators-recorded-but-never-evaluated",
+        "verdict": "UNKNOWN",
+        "normative_misreading": false,
+        "missing_oracle": false,
+        "reasons": [
+          "falsification_signal が『少なくとも一つ実装があれば仮説は偽』となっており、20件中1件でも実装されていれば棄却できる。AI に都合のよい停止条件であり、判定は件数比と未実装指標の列挙（種別ごとの表）で行うべきで、存在の一例では棄却してはならない。",
+          "『対応する測定コードまたは警告経路の存在』の対応付け基準が未定義。自然言語で書かれた指標と実装の対応判定が完全に裁量となり、oracle が判定可能な形になっていない。指標ごとに『どの数値をどの周期でどの閾値と比較し、超過時に誰へ通知するか』を分解した上で照合すること。",
+          "本 scenario 自身が normative_refs に『代理指標の禁止』を掲げながら、oracle は測定コードの存在という代理指標を見ている。存在しても閾値と因果的に無関係な指標を測っている場合を区別できないと residual_risk が自認しており、その限界が oracle の中心を損なっている。",
+          "懸念（先行指標が記載のみで完了扱いされ、指標自体が本事象と同型で死ぬ）は重要かつ現実的で、記載↔実装の強制関係の欠如という体系的要因の同定も妥当。破棄ではなく oracle の判定基準を定義した上で再提出を求める。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-F01-injection-source-excludes-ledger-unapplied",
+        "verdict": "UNKNOWN",
+        "normative_misreading": true,
+        "missing_oracle": false,
+        "reasons": [
+          "UCA が『注入器が台帳を読まないこと』を不安全と断じているが、台帳→統治木への反映が正規経路として設計されているなら、不安全なのは反映の未実施であって注入器ではない。規範（利用可能な形式での情報提示）を単一コンポーネント（inject-contract.py）へ短絡させた誤読の疑いがある。",
+          "oracle が注入テキストと台帳の突き合わせだけを見ており、走らせ手が未適用項目を知る他経路（SESSION_END_AUDIT の findings、台帳の直接参照、hook の別出力）を一切観測しない。他経路が生きていれば loss は成立せず、この試験は欠陥を検出したことにならない。",
+          "expected_safe_behavior の第二選択肢『注入テキストが台帳未参照であると明示する』は現実には常に偽であり、設計が台帳非参照である限り結果が事前に確定する。欠陥検出ではなく設計方針の追認になりうる。",
+          "precondition『未適用の是正項目が一件以上存在する』を満たす固定具（fixture）の作り方が指定されておらず、実行時に該当0件だと試験が空振りする。再現可能な最小固定具を scenario 側で規定すべき。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-F02-accepted-doc-birth-write-unguarded",
+        "verdict": "ACCEPT",
+        "reasons": [
+          "oracle が終了コードという完全に観測可能な出力に還元されており、初回 Write と後続 Edit の二点測定で『入口無検査 かつ 出口凍結』の結合を直接判定できる。falsification_signal も三通りに具体化されていて、反証で scenario が確実に死ぬ。",
+          "injection point（新規ファイル判定の分岐）が特定されており、模擬ホストではなく実 hook の終了コードを観測するため、実 Claude と模擬の混同が無い。",
+          "留意点として BANNED_SYNONYM の具体語と ADR の最小テンプレート（front matter の必須項目）を固定具として明記すること。語が未固定だとリンタ側の検出可否が交絡し、ガードの無検査を誤って検出したことになる。",
+          "SCN-F03 とは包含関係にあるが、本 scenario は ADR 単体の実行可能な最小再現であり、族全体の表を作る F03 とは粒度が異なるため独立に保持してよい。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-F03-frozen-doc-family-born-red-unfixable",
+        "verdict": "ACCEPT",
+        "reasons": [
+          "『凍結対象と宣言された全文書種 × (入口拒否 / 出口 carve-out)』の2値表という oracle は列挙可能かつ機械実行可能で、体系的要因（非対称の共通性）を件数として観測できる。単一コンポーネント集中の回避という規範への接続も妥当。",
+          "ただし母集団を『宣言された凍結対象』に取ると、宣言漏れの文書種が測定から落ちる。residual_risk として自認はされているが、母集団をガードのパス判定表（実装側）と宣言（統治木側）の両方から取り、両者の差分自体を finding として数える手順に補強すべき。",
+          "SCN-F02 と ADR 行が重複する。ADR 行は F02 の結果を再利用し、本 scenario は非 ADR 行だけを実行する形に切り分けないと、同一測定の二重計上になる。",
+          "precondition『ADR 以外の凍結対象が存在する』が偽なら scenario は空虚に成立する。件数0の場合は ACCEPT ではなく『測定不能』として記帳する停止条件を明記すること。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-F04-audit-blind-to-accepted-plus-lint-error",
+        "verdict": "ACCEPT",
+        "reasons": [
+          "last-audit.json の findings という永続化された観測物を検査するため、oracle は再現可能で第三者が追試できる。『文書識別子・status・違反種を同時に持つ項目』という判定条件も曖昧さが少ない。",
+          "loss の記述『一度も報告されない』は過大。lint ERROR 自体は報告されるはずで、実際に欠けているのは『是正不能である』という性質の可観測性である。loss を『修復可能な赤と修復不能な赤が所有者から区別できない』へ書き直すべき。",
+          "本 scenario の hazard 成立は SCN-F02/F03 の結論（carve-out が存在しない）に依存する。carve-out が実在した場合、結合 finding の要求は単なる様式の好みに退化するため、F02 の測定結果を前提条件として明示的に結線すること。",
+          "監査の検出力評価という規範に照らせば、既知の是正不能状態を仕込んで検出されるかを見る形は spike-in 試験として妥当であり、AI に都合のよい停止条件は見当たらない。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-F05-audit-degradation-modes-render-unknown-as-warn",
+        "verdict": "UNKNOWN",
+        "reasons": [
+          "候補自身が citation_defect: true と unresolved_refs（hook-crash-indistinguishable-from-success）を掲げており、規範参照が未解決のまま提出されている。参照が解決するまで規範適合性を判定できない。",
+          "縮退経路の再現方法が実機序と一致する保証が無い。実際に観測された事象は safe.directory 起因の git の『エラー応答』であり、PATH からの git 除去は例外種別が異なり、監査が縮退せず全体クラッシュする別経路に落ちる可能性がある。三条件のうち『エラー応答を返すが判定できない』条件（所有 uid 不一致）を明示的に加えないと、狙った経路を踏まない。",
+          "SCN-D07（母数汚染）との重複可能性を候補自身が認めているが、D07 の内容が本批判の入力に含まれておらず、独立に重複判定ができない。重複が成立する場合に残す部分（三条件比較）を scenario 本体の oracle として書き直した版で再提出されたい。",
+          "totals の三者比較という観測自体は良く、--today 固定で決定性も確保されている。欠けているのは機序の同定であって観測可能性ではない。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-F06-safe-directory-loss-recurs-on-rebuild",
+        "verdict": "UNKNOWN",
+        "missing_oracle": true,
+        "reasons": [
+          "oracle が devcontainer の再作成を要求しており、セッション内・CI 内での自動実行手段が示されていない。『再作成前の値と比較』も事前記録の存在に依存し、手順として再現可能性が担保されていない。実行主体と実行方法を明記しない限り、実測されず宣言だけが残る危険が高い。",
+          "expected_safe_behavior の第二肢『監査が判定不能を明示する』は SCN-F05 の主張そのものであり、本 scenario の独自部分は『環境再生成手順に是正が取り込まれていない』の一点に縮む。この一点は再作成を伴わずとも、devcontainer 定義に当該設定が含まれるかの静的検査で判定でき、oracle を安価な形に置換すべき。",
+          "システム境界に PLUGIN_DISTRIBUTION／運用手順を含めているが、devcontainer 定義が統治対象（配布物）に属するのか実行者の私的環境に属するのかが未確定で、境界の漏れがある。前者でなければ UCA の主体（環境構築のコントロールアクション）が統治システム外になる。",
+          "損失の主張『偽の警告が周期的に再発』は妥当だが、周期性（再作成の頻度）を観測する手段が無く、severity P1 の根拠が申告に留まっている。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-F07-self-reported-marks-do-not-identify-copy",
+        "verdict": "UNKNOWN",
+        "missing_oracle": true,
+        "reasons": [
+          "oracle が『版番号または複製側の印にのみ依拠する結論』の分類に依存するが、依拠の有無を判定する規則が与えられておらず、分類者の裁量で件数が動く。非観測的な oracle である。",
+          "falsification_signal が『INC-001 の一件のみで他に0件』という恣意的な閾値になっている。2件だった場合に scenario が生きるのか死ぬのかが定義されず、AI に都合のよい停止条件になりうる。",
+          "主張の核（自己申告の印は動作中の複製を同定しない）は、二つの複製を配置して片方だけを改変し、観測が両者を区別できるかを見る差分試験でこそ検出できる。現行 oracle は過去台帳の文献調査に留まり、識別性の欠如そのものを検出しない。",
+          "不安全制御動作は ASSURANCE_LANE の記帳行為に置かれているが、観測経路の設計は PLUGIN_DISTRIBUTION 側の問題でもあり、配置先実体照合点（インストール先パス・ハッシュ）を観測に加える形へ境界を書き直すべき。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-F08-sessionend-nonfire-aliases-unmarked-legacy-copy",
+        "verdict": "ACCEPT",
+        "reasons": [
+          "エイリアシング（異なる故障が同一の像を返す）という観測空間の欠陥を対象にしており、oracle も『存在・更新時刻・スキーマ・印の有無』という項目ごとの一致比較として具体化されている。反証されれば即座に死ぬ形で良い。",
+          "precondition が欠けている。『印を持たない版の複製を構成できる』ことが実行の前提であり、旧版の取得手段（git の版指定など）を明記しないと再現できない。",
+          "更新時刻は二セッション間で必ず異なるため、一致比較の項目としては情報を持たない。比較対象は『前回値からの更新有無』という導出量に置換すべきで、そのままだと常に区別可能と誤判定しうる。",
+          "SCN-D01（非発火そのもの）との差分は候補自身が述べる通り明確で、本 scenario は弁別可能性を測る側として独立に価値がある。ただし D01 の実測結果を入力として共有し、二重に強制終了を実行しない設計にすること。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-F09-unverified-evaluator-fields-drive-disposition",
+        "verdict": "ACCEPT",
+        "reasons": [
+          "『下流の分岐に使われる かつ（憲章に定義が無い または 申告以外の照合が無い）』という判定は、フィールド単位の列挙として実行でき、該当0件という falsification も明確。verification-requires-objective-evidence への接続も妥当。",
+          "(c)『分岐が申告以外の照合を伴うか』は機械照合ではなく解釈判断である。oracle が『機械照合』を僭称している点は分析出力の客観性を僭称しないという規範に自ら反する。照合点の定義（観測ログ・実行結果・第三者出力のいずれかを参照しているか）を先に固定すること。",
+          "『下流の処遇分岐』が実装（コード）なのか人／LLM の読み替えなのかが未確定。後者ならば分岐の列挙可能性そのものが崩れるため、分岐の所在をまず同定する前段を oracle に足す必要がある。",
+          "confidence: high の申告は、本 scenario 自身が批判する『申告値が下流を駆動する』構図と同型である点は皮肉だが、oracle が観測に還元されているため判定には影響しない。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-F10-decided-facts-anchor-evaluator",
+        "verdict": "UNKNOWN",
+        "missing_oracle": true,
+        "reasons": [
+          "oracle が『指摘率』の比較を要求しながら、事象数・試行回数・有意と見なす差の大きさ・停止条件を一切定めていない。LLM 評価者の出力は非決定的であり、この状態では都合のよい時点で打ち切れる。閾値と N を事前登録しない限り観測とは言えない。",
+          "falsification_signal『既決ありで指摘率が同等以上に保たれる』の『同等』が未定義。差が小さいときに scenario が生き残る側に倒れる非対称な停止条件になっている。",
+          "仕込んだ誤りの作為性（候補自身が residual_risk として認める）に加え、仕込みの検出しやすさが条件間で交絡する。誤りの種類（事実誤り／推論誤り／範囲誤り）を層化し、層ごとに件数を報告する設計が要る。",
+          "共通原因（入力共有による独立性の毀損）という着眼と assessor-third-party-independence への接続は妥当であり、oracle を統計設計として書き直せば ACCEPT に転じうる。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-F11-shelf-backlog-contaminated-by-same-default",
+        "verdict": "UNKNOWN",
+        "missing_oracle": true,
+        "reasons": [
+          "hazard は『既定の誤り判明後も再裁定経路が無いまま 45 件を有効な結論として保持している』であり、これは経路の有無の静的観測で判定できる。45 件全件の再裁定という高コストな oracle は hazard ではなく誤り率を測っており、hazard と oracle が対応していない。",
+          "falsification_signal『過半（23 件以上）が真に所有者に残る』の閾値に根拠が無い。22 件残った場合でも scenario は成立と読まれ、恣意的な線引きが結論を決めてしまう。",
+          "再裁定を行う主体が同じ既定に汚染されている場合、四分分類の結果は無情報になる（候補自身が SCN-F10 との共通原因として自認）。再裁定者の独立性確保（既決を伏せる条件を含む）が oracle に組み込まれていない限り、この試験は欠陥を検出しない。",
+          "3 件の実測から 45 件へ外挿する根拠が示されておらず、confidence: low という自己申告とも整合する。まず経路欠如の静的確認＋層化抽出10件程度の再裁定に縮小し、全件再裁定は結果次第で起動する二段構えにすべき。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-P02-binary-gate-clause-lacks-unassessed-branch",
+        "verdict": "UNKNOWN",
+        "missing_oracle": true,
+        "reasons": [
+          "ハザード（実行不能を検査結果として読む）自体は実在し、CI スクリプトを成果物・認証なしで起動して終了コードを観測する部分は決定論的に再現できる。",
+          "しかし前提条件が「条項は自然言語または単純な真偽式」であり、自然言語条項には「返り値」が無い。『前提を欠いた入力を与え PASS/FAIL のどちらへ倒れるかを記録する』は、条項を解釈する主体（実 Claude か固定ホストか）が特定されておらず、解釈依存で再現不能になる。",
+          "falsification_signal の『条項 3 以外は一つも PASS/FAIL へ倒れない』が参照する「条項 3」が本成果物のどこにも定義されておらず、単体では合否判定が読めない。停止条件が未定義。",
+          "静的側（三値分岐の有無の抽出）は、そもそも評価不能を表す語彙が存在しないという前提を置いているため、ほぼ確実に「全条項が二値」を返す自明な試験になりうる。何をもって欠陥ありとするかの事前基準が無い。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-P03-governance-vocabulary-not-inherited-by-procedures",
+        "verdict": "REJECT",
+        "missing_oracle": true,
+        "normative_misreading": true,
+        "reasons": [
+          "injection_point が『統治木に試験用の語を 1 つ追加し、どの運転経路の条文にも自動では現れないことを観測する』であり、これは同義反復。ファイル A に語を書いてもファイル B に現れないのは自明で、系の欠陥の有無に関係なく必ず成立する。試験が欠陥を弁別しない。",
+          "oracle が「語彙 × 経路の本文出現有無」という文字列出現を指標にしているが、出現は継承・強制の代理指標にすぎない。ある経路がある状態語を扱う必要が無い場合（正当な非該当）と、扱うべきなのに未反映の場合を区別できず、未出現セル数は欠陥件数として読めない。",
+          "normative_refs の traceability 系は「定義された上位下位対応の維持」を求めるものであって、全語彙が全下位文書に文字列として現れることを求めてはいない。要求すべき語彙×経路の対応表が存在しないこと（fault 自身が述べる）を、全セル充填の要求へすり替えている。",
+          "falsification_signal（UNASSESSED 以外の全語彙が全経路に出現）は現実にはまず成立せず、シナリオが事実上反証不能。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-P04-order-comparison-precision-mismatch-beyond-freshness",
+        "verdict": "ACCEPT",
+        "reasons": [
+          "注入（片辺が日付止まり／短縮版、他辺が秒精度／完全版の入力対）と観測（比較箇所ごとの型・精度の記録、日付止まり比較の件数と発生箇所）がいずれも機械観測可能で、実 Claude の解釈に依存せず再現できる。",
+          "静的抽出＋実行時計器という二重の観測系を持ち、鮮度判定に限定されるという対立仮説を falsification_signal で明示的に潰しにいっている。",
+          "留保: expected_safe_behavior の『精度が異なる比較は一律 UNASSESSED』は過剰に強い。異日・異メジャー版のように切り捨てても順序が確定する場合まで未確定にする規範根拠は示されていない。ハザードは「切り捨てにより順序が不定になる場合」に限定して条件化すべき。",
+          "留保: 両辺とも日付止まり（精度は一致するが情報が失われている）という、より頻度の高い事例は『精度の不一致』指標では拾えない。oracle 後段の『どちらかが日付止まり』の計数に依存するので、こちらを主指標に格上げしないと偽陰性が残る。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-P05-attack-coverage-claimed-at-evaluator-granularity",
+        "verdict": "ACCEPT",
+        "reasons": [
+          "注入（経路 A4 を追加し A4 には注入せず攻撃試験を実行）に対する観測（台帳が評価器全体を攻撃済みと表示し続けるか、差集合が {A4} を含むか）が具体的で、正常系ではなく未注入経路という異常系を狙っている。粒度不一致という欠陥に対し試験が実際に反応する。",
+          "部分検証を全体検証済みとして保持するハザード定義は、証拠の粒度と主張の粒度の乖離という規範上の論点と整合している。",
+          "留保: 『評価器の経路一覧』の権威ある定義（分岐単位か判定関数単位か）が示されていない。粒度の定義が採点者依存だと差集合の件数が再現しない。normative_refs に C0/C1/MC-DC を挙げるなら、経路の数え方をどの規準で固定するかを事前に明記すべき。",
+          "留保: oracle が『証拠に経路 id を持たせ』と、是正策そのものを前提にしている。現行系での初回検出は「経路 id が証拠に存在しない＝差集合が計算不能」という形で記録される必要があり、その場合の判定（欠陥ありと読むか）を事前に定義しておくこと。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-P06-rubric-boundary-undecided-across-all-boundaries",
+        "verdict": "UNKNOWN",
+        "missing_oracle": true,
+        "reasons": [
+          "oracle に標本数 n が入っておらず、また『不一致率がいくつを超えたら規準は境界未決と判定するか』の合否閾値が事前に定義されていない。pass-criteria-defined-in-advance を引用しながら、試験自身がその要件を満たしていない。",
+          "『独立再判定』の独立性が定義されていない。同一モデル・同一プロンプトによる再採点は誤差が相関するため、自己一致率の過大評価になる。判定主体（別セッションの実 Claude か、人か、別モデルか）を固定しないと再現不能。",
+          "層化標本を『各境界に触れる項目を意図的に等数用意する』とあるが、境界に触れるか否かの判定自体が未決の規準に依存する循環がある。標本構成が採点者依存になりうる。",
+          "欠陥（境界の帰属規則が条文に無い）自体は条文の静的検査で安価に確定できるのに、oracle が高価で確率的な標本調査に寄っている。安価な決定論的検査を主、標本調査を従にすれば ACCEPT 可能。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-P07-historical-green-verdicts-carry-undeclared-width",
+        "verdict": "UNKNOWN",
+        "missing_oracle": true,
+        "duplicate_of": "SCN-P06",
+        "reasons": [
+          "fault は『判定に適用規準の版が紐づいていない』という静的・決定論的に確認できる構造欠陥だが、oracle はそれを直接確認せず、過去緑の再判定という標本調査に置き換えている。fault と oracle が対応していない。",
+          "不一致率は「規準の改訂による意味の変化」と「採点そのものの揺れ」を分離できない。今回反復の標本との比較は部分的な統制にしかならず、交絡が残る。",
+          "標本数 n と有意差の判定基準が未定義で、合否が事後解釈になる。",
+          "計測手段（同一規準での再判定不一致率の標本調査）が SCN-P06 と実質同一であり、標本枠（過去緑 vs 現行の境界層化）が違うだけ。統合しないと同じ再判定コストを二重に払い、既存試験との重複になる。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-P08-lane-verdicts-lack-reproducibility-measure",
+        "verdict": "UNKNOWN",
+        "missing_oracle": true,
+        "normative_misreading": true,
+        "reasons": [
+          "falsification_signal が『五値採点以外の判定種別の自己一致率がいずれも 100% に達する』。確率的な判定器では 100% はまず達成されないため、系の状態にかかわらずシナリオは常に肯定される。反証されえない停止条件であり、試験として弁別力が無い。",
+          "expected_safe_behavior が参照する『一致率の閾値』も、oracle の再判定回数 n も未定義。何をもって幅つき記帳へ落とすかが事前に決まっていない。",
+          "normative_refs の ivv-organizational-independence／config-audit-third-party は、判定主体から独立した検証者による確認を求める規範であり、同一主体の自己一致率測定はこれを満たさない。独立性の規範を自己再現性の測定根拠として引いているのは読み替えである。",
+          "一方で『判定種別の一覧と再現性計測計画が存在しない』という欠陥自体は、計画文書の有無という決定論的観測で確定できる。oracle をそこに置き換えれば ACCEPT 可能。現状は SCN-P06／SCN-P07 の測定を包含しており、三者の統合も要る。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-P09-index-fingerprint-false-negative-on-in-scope-evidence-edit",
+        "verdict": "ACCEPT",
+        "reasons": [
+          "注入（assurance/ 配下のみを触る反復で evidence_refs の指す内容を書き換える）と観測（stale_open 件数と対象判定の古び状態）が完全に決定論的で、実 Claude の判断を介さずに偽陰性の成立／不成立が確定する。",
+          "代理指標（全体指紋）と本来の観測対象（証拠実体の内容）の乖離という因果が明示され、falsification_signal（実体ハッシュ等の別経路が存在すれば古びに転じる）も同一の実行で確認できる。",
+          "前提（古び判定が索引の全体指紋比較で実装されている）が事実確認可能な形で書かれており、前提が崩れれば試験が自動的に反証側へ倒れる構造になっている。",
+          "residual_risk（リポジトリ外の証拠は依然として観測不能）が宣言されており、試験の到達範囲を過大に主張していない。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-P10-map-coverage-starves-other-next-action-types",
+        "verdict": "UNKNOWN",
+        "missing_oracle": true,
+        "reasons": [
+          "oracle が観察的な前後比較で、注入試験になっていない。反復間には ADR-130 以外の変更も入るため、実行率の差を当該実装へ帰属できない（交絡）。",
+          "N が未定義、かつ『実行率の下限』という肝心の閾値が事前に決まっていない。代替案の『実装を無効化した反復を 1 つ走らせる』は n=1 で、区間推定を語れる標本ではない。",
+          "反復数が小さい場合、『差と区間』の出力は統計的にほぼ無意味になる。標本規模の下限と、それを満たせないときの扱い（UNASSESSED として記帳する等）が規定されていない。",
+          "ただし『直近 N 反復で MAP_COVERAGE 以外の種別が一度も実行されていない』という飢餓の直接観測は安価かつ決定論的に可能。帰属（ADR-130 起因か）を主張から外し、飢餓の有無だけを oracle にすれば ACCEPT 可能。前提の『実行履歴が種別つきで残っている』が偽なら oracle 自体が走らない点も先に確認が要る。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-P11-rejected-adr-options-unchecked-across-decisions",
+        "verdict": "ACCEPT",
+        "reasons": [
+          "injection_point（任意の ADR の却下項に相当する構造を実装側へ 1 つ導入し、リンタ・CI を走らせる）に対する観測が『指摘が出るか出ないか』の二値で、決定論的かつ再現可能。否定形が照合対象に無いという欠陥に試験が直接反応する。",
+          "採用案の実装有無しか見ない照合と、却下案の再導入という異常系のギャップを突いており、正常系のみの試験になっていない。",
+          "falsification_signal（該当ありが ADR-130 の 1 件のみなら単独事例）が、構造的欠落と単発事例を弁別する形で書かれている。",
+          "留保: oracle 後段の全 ADR 却下項の該当有無判定は人手・モデル判断に依存し再現性が落ちる（residual_risk として自認済み）。この部分の件数は指標として扱わず、決定論的な注入試験を主証拠とすべき。また注入は隔離環境（作業ブランチ／worktree）で行い、却下構造を本番構成へ残さない手順が必要。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-P12-invariant-target-without-sanctioned-repair-path",
+        "verdict": "ACCEPT",
+        "reasons": [
+          "禁止集合（不変規則）と検査規則の交差で許可操作が空になる、という欠陥が構造的で、規則の列挙と突き合わせにより決定論的に判定できる。空セル数という観測量が明確。",
+          "injection_point が『実際に ERROR/WARN が出る状態を作り、許可操作のみで解消できるかを試み、リンタを再実行する』となっており、机上の表だけでなく実行による確認へ落ちている。表の各セルの判断が主観に流れるのを防いでいる。",
+          "袋小路（指摘が閉じられない／禁止を迂回して閉じられる）は、audit-findings-must-be-closed と問題報告経路の可用性の双方から支持され、規範の読みに無理が無い。falsification_signal（空セル 0 なら当該 ADR 固有）も明確。",
+          "留保: 『訂正 ADR の発行』『追補』が当該リンタ規則を実際に解消するかは、規則実装に依存する。解消の定義を「再実行で当該 ERROR/WARN が消えること」に固定し、消えないなら許可操作なしと数える旨を明記すること。注入は隔離環境で行い、不変文書に違反状態を残さない手順が必要。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-N13-guard-denial-without-sanctioned-path-drives-bypass",
+        "verdict": "UNKNOWN",
+        "missing_oracle": true,
+        "normative_misreading": false,
+        "reasons": [
+          "合否閾値が存在しない。hazard は「一定割合以上」と書くが、その割合は本文のどこにも定義されない。oracle は (a)(b)(c) の集計表を作るだけで、(b) が何件・何％なら hazard 到達と判定するのかを規定していない。判定可能なのは falsification 側の「全件 (a)」という極端枝のみで、支持側は「(b) が 1 件でもあれば支持」とも読めてしまう。これは検出力の問題ではなく判定規則の欠落であり、このままでは試験結果が主張の裏付けに読み替えられる余地が大きい。",
+          "仮説の因果（正規の修復経路が提示されないから迂回が起きる）を検証する対照が設計に無い。層別は「拒否理由の種別ごと」であって「代替経路の提示あり/なし」ではない。代替を提示した拒否でも同率で (b) が出るなら、原因は提示欠如ではなく拒否そのもの（あるいは編集者の作業習慣）であるのに、現行の集計表ではその交絡を切り分けられない。UCA の核心変数で層別していないのは設計上の欠陥。",
+          "oracle の実行可能性が未検証の前提に依存している。preconditions は「拒否イベントが時刻と対象パスを伴って記録されている」ことを要求するが、fault は「拒否イベントの直後の帰結がどのコントローラのプロセスモデルにも入力されない」＝記録経路の欠落を主張している。両者は厳密には矛盾しないが、記録が実在するかの確認手段が示されておらず、実行時に falsification_signal の「オラクル実行不能」枝へ落ちる蓋然性が高い。実行不能を仮説の裏付けに読み替えない旨の記載は妥当だが、その場合これは試験ではなく「記録欠落の指摘」に縮退する。",
+          "(b) の判定規則が、実際の実行主体を取り違えている。事象列は「編集者が別エディタ・別プロセスで書く」という人間コントローラ像で書かれているが、この系で実際に編集を発行する主体は同一セッション内の AI コントローラであり、その主要な迂回路は Bash/シェル経由の書き込み（sed・heredoc・git 操作）である。これらは Hook から見ればツール呼び出しとして観測される一方、「Hook が観測した編集イベント列」には現れない。突合ルールが編集イベント列のみを参照する限り、同一セッション内の迂回が「Hook 外経路」と過大計数されるか、逆に観測済みとして取りこぼされるかが決まらない。実 Claude の実行経路と人間編集者の想定が混在している。",
+          "environments に挙げた「Hook が有効でない環境（別エディタ・別プロセスからの直接編集）」は観測系の外側であり、そこで何を能動的に再現・惹起するのかが書かれていない。事後の版管理突合しか手段がないため、この環境は試験環境ではなく事後観測の対象にすぎず、再現手順として成立していない。residual_risk が (b) を下限値と認めていることと合わせ、迂回率は原理的に過小評価される。",
+          "UCA が単一の制御アクションになっていない。「代替経路を提示せず拒否する」（制御アルゴリズムの欠陥）と「拒否後の帰結を記録しないまま終える」（フィードバック経路の欠落）が一文に混載され、injection_point も拒否ハンドラと記録経路の二箇所に分裂している。この状態では試験が陽性でも、どちらの欠陥が寄与したかを結論できず、change-system-to-change-behavior に基づく是正先を特定できない。二つの scenario に分割すべき。",
+          "仮説の機構自体（迂回行動からの学習、手順と実務の乖離監視）は規範参照と整合しており、統治木の記載と実適用の乖離という loss も系の関心事として妥当である。REJECT ではなく、閾値・対照・実行可能性の三点を補えば試験化しうる候補として UNKNOWN に留める。"
+        ]
+      },
+      {
+        "scenario_id": "SCN-N14-immutability-nullified-by-status-roundtrip",
+        "verdict": "ACCEPT",
+        "missing_oracle": false,
+        "normative_misreading": false,
+        "reasons": [
+          "oracle が実行可能かつ客観証拠に基づく。4 点判定表の各項目が Hook の許否出力と監査出力という、AI の自己申告ではない外部成果物として記録される。実 Claude を使う場合でも判定の根拠が模擬ホストの想定ではなく実 Hook の応答である点で、verification-objective-evidence の要求を満たす。",
+          "停止条件が AI に都合よくない。falsification_signal が (1) 拒否 / (2) 拒否 / (4) 検出・記帳 の三つの選言として書かれており、いずれか一つでも成立すれば棄却される。「安全を立証する」形ではなく「往復遷移で不変性が無効化される非安全状態を探す」形になっており、探索方向として正しい。",
+          "precondition 2 が oracle 項目 (1) を循環的に先取りしている。「status 遷移の許可規則が承認済み→未承認の差し戻しを含むこと」を前提に置くと、その規則が存在しない系では試験が実行不能として飛ばされ、本来なら棄却（不変性が守られている）と記帳すべき結果が「未実施」に化ける。これは前提ではなく観測項目へ降格させるべきで、採用時の必須修正とする。",
+          "試験用の使い捨て文書が、ガードの不変性判定の適用範囲に実際に入っていることの確認手続きが欠けている。ガードの適用条件がパス・登録簿・OWNER 割当のいずれかに依存する実装であれば、使い捨て文書は不変条件の対象外として素通りするか、逆に別理由で拒否される。どちらの場合も判定表は「不変性が守られている/いない」と誤読される。各項目の記録に「ガードが不変性判定を実際に評価した証跡」を添える条件を追加すべき。residual_risk は本番文書との差異に触れているが、この誤読方向は覆えていない。",
+          "項目 (4) の「検出し記帳するか」の判定基準が未定義。監査出力の何をもって往復遷移の検出とみなすか（差分列への言及か、警告の発火か、単なるログ行か）が書かれていない。しかも event_sequence 自身が「監査は最終状態のみを検査する」と述べており、(4) の結果は設計上ほぼ既定である。既定であること自体は欠陥の証拠として有効だが、記帳の粒度合意がないと「検出済み」と主張する余地が残る。",
+          "Edit 系以外の書き込み経路（Bash・外部プロセス）で status 行を書き換えた場合の扱いが規定されていない。その経路で拒否されなかった事実を (1) の結果に混ぜると、遷移許可規則の欠陥と経路網羅の欠陥が同一視される。本 scenario は Hook 経由の遷移要求に限定する旨を明記すれば足りる。",
+          "SCN-N13 との重複はない。fault が異なり（拒否に対する正規経路の不在＋フィードバック欠落 対 不変条件が可変属性のみに依存し遷移履歴を保持しない）、oracle の様式も現場データの事後集計と使い捨て文書による能動試験で分離している。同一インシデント由来だが検査対象は別の制御欠陥である。",
+          "「制御は遵守を意味しない」「セーフガード理由の省略禁止」との対応も妥当。ガードが強制しているのが不変性ではなく編集の手数である、という結論命題は判定表から直接導かれ、実装詳細への過剰適合（status 属性への依存）も、その属性依存こそが検査対象である以上は正当化される。"
+        ]
+      }
+    ],
+    "missing": [],
+    "unrequested": []
+  },
+  "batches": [
+    {
+      "batch": [
+        "INC-001-sessionend-audit-gap#0",
+        "INC-003-sdk-error-opacity#0",
+        "INC-005-installed-plugin-version-lag#0",
+        "INC-005-installed-plugin-version-lag#1",
+        "INC-007-linter-nameerror-field-report#1",
+        "INC-007-linter-nameerror-field-report#2",
+        "INC-008-ledger-write-back-clobber#1",
+        "INC-013-cast-analysis-accepts-fabricated-incident#0",
+        "INC-014-evaluation-max-turns-marginal#4",
+        "INC-020-evaluator-blindness-read-as-owner-authority#2",
+        "INC-022-ci-that-cannot-run-is-read-as-red#0",
+        "INC-023-attack-freshness-truncated-to-the-day#4"
+      ],
+      "formulation": {
+        "status": "PASS",
+        "prompt_sha256": "5e335ccb3d0ff3b367c9f28a10267d7c827ee3106963f843cc16b5c10f89427a",
+        "model": "claude-opus-5",
+        "effort": "high",
+        "cost_usd": 1.4495170000000002,
+        "produced": 12,
+        "accepted": 12,
+        "rejected": [],
+        "invented_discarded": []
+      },
+      "challenge_status": "PASS",
+      "challenge_cost_usd": 0.706708,
+      "challenge_missing": [],
+      "unrequested": []
+    },
+    {
+      "batch": [
+        "INC-001-sessionend-audit-gap#1",
+        "INC-001-sessionend-audit-gap#2",
+        "INC-002-termcheck-ascii-substring#0",
+        "INC-002-termcheck-ascii-substring#1",
+        "INC-003-sdk-error-opacity#1",
+        "INC-003-sdk-error-opacity#2",
+        "INC-004-hyphen-token-undefined-term#1",
+        "INC-004-hyphen-token-undefined-term#3",
+        "INC-005-installed-plugin-version-lag#2",
+        "INC-005-installed-plugin-version-lag#3",
+        "INC-006-next-actions-silently-empty#0",
+        "INC-006-next-actions-silently-empty#1"
+      ],
+      "formulation": {
+        "status": "PASS",
+        "prompt_sha256": "3bf886055415286f575cc1f6b4cbea81b3b47091f56f9c38eaaec9121d5cc0af",
+        "model": "claude-opus-5",
+        "effort": "high",
+        "cost_usd": 1.2244599999999999,
+        "produced": 12,
+        "accepted": 12,
+        "rejected": [],
+        "invented_discarded": []
+      },
+      "challenge_status": "PASS",
+      "challenge_cost_usd": 0.6327965,
+      "challenge_missing": [],
+      "unrequested": []
+    },
+    {
+      "batch": [
+        "INC-006-next-actions-silently-empty#4",
+        "INC-007-linter-nameerror-field-report#0",
+        "INC-007-linter-nameerror-field-report#3",
+        "INC-008-ledger-write-back-clobber#0",
+        "INC-008-ledger-write-back-clobber#2",
+        "INC-008-ledger-write-back-clobber#4",
+        "INC-009-sessionend-audit-unobservable#0",
+        "INC-009-sessionend-audit-unobservable#1",
+        "INC-009-sessionend-audit-unobservable#2",
+        "INC-010-evaluated-unknown-relisted#0",
+        "INC-010-evaluated-unknown-relisted#1",
+        "INC-011-dot-joined-token-undefined-term#0"
+      ],
+      "formulation": {
+        "status": "PASS",
+        "prompt_sha256": "31769fb60b530879e095099294128a2db4d57e5cf14e936ac1cb03cf2fb21891",
+        "model": "claude-opus-5",
+        "effort": "high",
+        "cost_usd": 1.2481379999999997,
+        "produced": 12,
+        "accepted": 12,
+        "rejected": [],
+        "invented_discarded": []
+      },
+      "challenge_status": "PASS",
+      "challenge_cost_usd": 0.4924720000000001,
+      "challenge_missing": [],
+      "unrequested": []
+    },
+    {
+      "batch": [
+        "INC-011-dot-joined-token-undefined-term#2",
+        "INC-012-states-unnameable-by-canon#0",
+        "INC-012-states-unnameable-by-canon#1",
+        "INC-013-cast-analysis-accepts-fabricated-incident#1",
+        "INC-013-cast-analysis-accepts-fabricated-incident#2",
+        "INC-014-evaluation-max-turns-marginal#0",
+        "INC-014-evaluation-max-turns-marginal#1",
+        "INC-015-discover-output-invisible-to-canon#0",
+        "INC-015-discover-output-invisible-to-canon#1",
+        "INC-015-discover-output-invisible-to-canon#2",
+        "INC-016-cast-analysis-content-unread-by-canon#0",
+        "INC-016-cast-analysis-content-unread-by-canon#1"
+      ],
+      "formulation": {
+        "status": "PASS",
+        "prompt_sha256": "86295f6fa2bbb51b575ebeac0cfc79d0088b6e1fe7b2d03a34959b8fbe5b13af",
+        "model": "claude-opus-5",
+        "effort": "high",
+        "cost_usd": 1.1355469999999999,
+        "produced": 12,
+        "accepted": 12,
+        "rejected": [],
+        "invented_discarded": []
+      },
+      "challenge_status": "PASS",
+      "challenge_cost_usd": 0.5055425,
+      "challenge_missing": [],
+      "unrequested": []
+    },
+    {
+      "batch": [
+        "INC-016-cast-analysis-content-unread-by-canon#2",
+        "INC-017-accepted-adr-born-red-is-unfixable#0",
+        "INC-017-accepted-adr-born-red-is-unfixable#1",
+        "INC-017-accepted-adr-born-red-is-unfixable#2",
+        "INC-018-audit-degrades-into-a-tree-finding#0",
+        "INC-018-audit-degrades-into-a-tree-finding#3",
+        "INC-019-version-string-does-not-identify-the-copy#0",
+        "INC-019-version-string-does-not-identify-the-copy#1",
+        "INC-020-evaluator-blindness-read-as-owner-authority#0",
+        "INC-020-evaluator-blindness-read-as-owner-authority#1",
+        "INC-020-evaluator-blindness-read-as-owner-authority#3",
+        "INC-021-lane-fires-on-declared-without-a-runner#0"
+      ],
+      "formulation": {
+        "status": "PASS",
+        "prompt_sha256": "e01348e9803934ab8d29f3f66e337a5218ae6a6677f8e69c436d7740de2efa17",
+        "model": "claude-opus-5",
+        "effort": "high",
+        "cost_usd": 1.145349,
+        "produced": 12,
+        "accepted": 12,
+        "rejected": [],
+        "invented_discarded": []
+      },
+      "challenge_status": "PASS",
+      "challenge_cost_usd": 0.448923,
+      "challenge_missing": [],
+      "unrequested": []
+    },
+    {
+      "batch": [
+        "INC-021-lane-fires-on-declared-without-a-runner#1",
+        "INC-022-ci-that-cannot-run-is-read-as-red#1",
+        "INC-022-ci-that-cannot-run-is-read-as-red#4",
+        "INC-023-attack-freshness-truncated-to-the-day#0",
+        "INC-023-attack-freshness-truncated-to-the-day#1",
+        "INC-024-coverage-rubric-undecided-at-its-busiest-boundary#0",
+        "INC-024-coverage-rubric-undecided-at-its-busiest-boundary#1",
+        "INC-024-coverage-rubric-undecided-at-its-busiest-boundary#4",
+        "INC-025-adr-130-implemented-the-option-it-rejected#0",
+        "INC-025-adr-130-implemented-the-option-it-rejected#2",
+        "INC-025-adr-130-implemented-the-option-it-rejected#3",
+        "INC-026-accepted-adr-has-no-sanctioned-repair-path#0"
+      ],
+      "formulation": {
+        "status": "PASS",
+        "prompt_sha256": "0cc516d7fb70532a124b2e046dbd6709bab194cf248f51c0e94b368de15c8d68",
+        "model": "claude-opus-5",
+        "effort": "high",
+        "cost_usd": 1.2514669999999999,
+        "produced": 12,
+        "accepted": 12,
+        "rejected": [],
+        "invented_discarded": []
+      },
+      "challenge_status": "PASS",
+      "challenge_cost_usd": 0.514167,
+      "challenge_missing": [],
+      "unrequested": []
+    },
+    {
+      "batch": [
+        "INC-026-accepted-adr-has-no-sanctioned-repair-path#1",
+        "INC-026-accepted-adr-has-no-sanctioned-repair-path#2"
+      ],
+      "formulation": {
+        "status": "PASS",
+        "prompt_sha256": "49ec8991d79734550f162b8ea38a99a38b78bda32ee68973bd7a8b429736d71e",
+        "model": "claude-opus-5",
+        "effort": "high",
+        "cost_usd": 0.879302,
+        "produced": 2,
+        "accepted": 2,
+        "rejected": [],
+        "invented_discarded": []
+      },
+      "challenge_status": "PASS",
+      "challenge_cost_usd": 0.323612,
+      "challenge_missing": [],
+      "unrequested": []
+    }
+  ]
+}

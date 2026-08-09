@@ -6,8 +6,9 @@ domain: graph
 status: draft
 owner: doctrine-maintainers
 created: 2026-07-27
-updated: 2026-07-27
+updated: 2026-08-09
 sources: [https://pypi.org/project/tree-sitter/, https://github.com/tree-sitter/py-tree-sitter/releases/tag/v0.22.0, https://bugzilla.redhat.com/show_bug.cgi?id=2438161, https://github.com/doomemacs/doomemacs/issues/8503, https://github.com/grantjenks/py-tree-sitter-languages, https://pypi.org/project/tree-sitter-language-pack/]
+review_by: 2026-11-09
 llm_context: never
 ---
 

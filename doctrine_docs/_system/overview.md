@@ -5,7 +5,7 @@ type: OVERVIEW
 domain: _system
 status: current
 owner: render-projection
-updated: 2026-08-07
+updated: 2026-08-09
 llm_context: always
 sources: []
 ---

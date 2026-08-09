@@ -6,8 +6,9 @@ domain: graph
 status: draft
 owner: doctrine-maintainers
 created: 2026-07-27
-updated: 2026-07-27
+updated: 2026-08-09
 sources: [https://github.com/itsallcode/openfasttrace/issues/204, https://github.com/doorstop-dev/doorstop/issues/84, https://github.com/strictdoc-project/strictdoc/issues/1360, https://github.com/useblocks/sphinx-needs/issues/685, https://github.com/github/spec-kit/issues/620, https://github.com/Fission-AI/OpenSpec/issues/1139, https://github.com/anthropics/claude-code/issues/19471, https://swimm.io/blog/how-does-swimm-s-auto-sync-feature-work, https://github.com/apiaryio/dredd, https://www.ibm.com/docs/en/engineering-lifecycle-management-suite/doors/9.7.1?topic=objects-clearing-suspect-links, https://link.springer.com/article/10.1007/s10664-014-9314-z, https://link.springer.com/article/10.1007/s00766-023-00408-9]
+review_by: 2026-11-09
 llm_context: never
 ---
 
