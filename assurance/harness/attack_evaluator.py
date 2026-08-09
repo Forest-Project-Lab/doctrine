@@ -35,7 +35,8 @@ import tempfile
 sys.dont_write_bytecode = True
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from harness import (control_structure, model_policy, prompts,  # noqa: E402
+from harness import (control_structure, ledger_io, model_policy,  # noqa: E402
+                     prompts,
                      schemas, sdk_lane, system_index)
 
 LANE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -438,9 +439,7 @@ def main(argv=None):
                          git_dirty=bool(_git(["status", "--porcelain"])),
                          generated_at=generated_at)
     path = os.path.join(LEDGER_DIR, "mutations-%s.json" % today)
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(doc, f, ensure_ascii=False, indent=2)
-        f.write("\n")
+    ledger_io.write_json(path, doc)
 
     print(json.dumps({"written": os.path.relpath(path, REPO_DIR),
                       "results": [{"id": r["id"], "status": r.get("status"),

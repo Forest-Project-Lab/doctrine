@@ -36,7 +36,7 @@ import tempfile
 sys.dont_write_bytecode = True
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from harness import model_policy, prompts, schemas, sdk_lane  # noqa: E402
+from harness import ledger_io, model_policy, prompts, schemas, sdk_lane  # noqa: E402
 
 LANE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REPO_DIR = os.path.dirname(LANE_DIR)
@@ -104,9 +104,7 @@ def build_record(target_id, *, diff_range=None, diff_sha256=None,
 def _write(doc):
     os.makedirs(VERIFY_DIR, exist_ok=True)
     path = os.path.join(VERIFY_DIR, "%s.json" % doc["target_id"])
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(doc, f, ensure_ascii=False, indent=2)
-        f.write("\n")
+    ledger_io.write_json(path, doc)
     return path
 
 

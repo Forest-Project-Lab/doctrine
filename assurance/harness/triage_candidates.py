@@ -34,7 +34,8 @@ import tempfile
 sys.dont_write_bytecode = True
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from harness import (control_structure, discover, model_policy,  # noqa: E402
+from harness import (control_structure, discover, ledger_io,  # noqa: E402
+                     model_policy,
                      orchestrator, prompts, schemas)
 
 LANE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -191,9 +192,7 @@ def merge_batch(doc, batch, to_challenge, duplicates, dropped, verdicts,
 
 def write_doc(path, doc):
     os.makedirs(SCENARIO_DIR, exist_ok=True)
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(doc, f, ensure_ascii=False, indent=2)
-        f.write("\n")
+    ledger_io.write_json(path, doc)
 
 
 def main(argv=None):

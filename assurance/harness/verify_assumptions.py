@@ -18,7 +18,8 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from harness import model_policy, observe_assumptions, prompts, schemas, sdk_lane  # noqa: E402
+from harness import (ledger_io, model_policy, observe_assumptions,  # noqa: E402
+                     prompts, schemas, sdk_lane)
 
 ASSUMPTIONS_PATH = observe_assumptions.ASSUMPTIONS_PATH
 
@@ -91,9 +92,7 @@ def main(argv=None):
         results.append({"asm_id": row.get("id"), "holds": verdict,
                         "cost_usd": rec.get("cost_usd")})
     if not opts.dry_run:
-        with open(opts.ledger, "w", encoding="utf-8") as f:
-            json.dump(ledger, f, ensure_ascii=False, indent=2)
-            f.write("\n")
+        ledger_io.write_json(opts.ledger, ledger)
     print(json.dumps({"results": results}, ensure_ascii=False, indent=2))
     return 0
 

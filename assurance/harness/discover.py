@@ -27,7 +27,8 @@ import tempfile
 sys.dont_write_bytecode = True
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from harness import (books, control_structure, model_policy,  # noqa: E402
+from harness import (books, control_structure, ledger_io,  # noqa: E402
+                     model_policy,
                      prompts, schemas, sdk_lane)
 
 LANE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -226,9 +227,7 @@ def main(argv=None):
         "survivors": [s["scenario_id"] for s in survivors],
     }
     path = os.path.join(SCENARIO_DIR, "%s.json" % today)
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(doc, f, ensure_ascii=False, indent=2)
-        f.write("\n")
+    ledger_io.write_json(path, doc)
 
     print(json.dumps({
         "written": os.path.relpath(path, REPO_DIR),

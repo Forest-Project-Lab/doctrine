@@ -40,7 +40,8 @@ import tempfile
 sys.dont_write_bytecode = True
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from harness import (books, map_coverage, model_policy, prompts,  # noqa: E402
+from harness import (books, ledger_io, map_coverage, model_policy,  # noqa: E402
+                     prompts,
                      schemas, sdk_lane, system_index)
 
 LANE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -276,9 +277,7 @@ def main(argv=None):
         "rows": rows,
     })
     path = os.path.join(LEDGER_DIR, "recheck-%s-%s.json" % (args.book, args.today))
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(summary, f, ensure_ascii=False, indent=2)
-        f.write("\n")
+    ledger_io.write_json(path, summary)
     print(json.dumps({k: summary[k] for k in
                       ("sampled", "disagreements", "cost_usd")},
                      ensure_ascii=False))

@@ -20,7 +20,8 @@ import sys
 sys.dont_write_bytecode = True
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from harness import books, model_policy, prompts, schemas, sdk_lane  # noqa: E402
+from harness import (books, ledger_io, model_policy, prompts,  # noqa: E402
+                     schemas, sdk_lane)
 
 LANE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CATALOG_DIR = os.path.join(LANE_DIR, "ledger", "catalogs")
@@ -57,9 +58,7 @@ def load_catalog(book_id, book):
 
 def save_catalog(cat):
     os.makedirs(CATALOG_DIR, exist_ok=True)
-    with open(catalog_path(cat["book_id"]), "w", encoding="utf-8") as f:
-        json.dump(cat, f, ensure_ascii=False, indent=2)
-        f.write("\n")
+    ledger_io.write_json(catalog_path(cat["book_id"]), cat)
 
 
 def main(argv=None):
