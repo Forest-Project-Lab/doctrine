@@ -565,6 +565,23 @@
         "assurance/harness/system_index.py",
         "assurance/tests/test_system_index_counts.py"
       ]
+    },
+    {
+      "id": "INC-030-assurance-lane-not-gated-by-ci",
+      "date": "2026-08-09",
+      "summary": "配布物を監査するレーンが、自分自身は門に入っていなかった。assurance/tests の 426 件と scripts/consistency-check.py は CI のどの段にも無く、開発機でしか走らない。本体側 1267 件だけが接続されていた",
+      "detected_by": "独立再監査 2026-08-09 の Phase A。.github/workflows/checks.yml の 8 段を数え、assurance/tests・consistency-check.py・map-draft-check.py がどこにも現れないことを確認した",
+      "impact": "レーンの退行が main へ届いても誰も気づかない。実害の形も在る —— 推奨の処遇 landed のうち少なくとも 4 件が『assurance の試験が在ること』を着地の証拠に挙げているが、その試験は門に入っていないので、消えても壊れても landed の主張は緑のまま残る。本反復の PR #267/#268 も、レーンが赤でも CI は通っていた",
+      "fixed": false,
+      "fix_note": "checks.yml へ二段を追加した（レーン試験 約37秒・consistency-check 約11秒）。いずれも標準ライブラリだけで動き venv を要さない（SDK は呼び口の中で遅延 import されるので、通信も API も触らない）。clean env での実行を実測して確かめた。独立検証（ADR-139）は未実施のため fixed:true とは書かない",
+      "residual": "map-draft-check.py は依然として CI に無い。これは対象となる下書き（.claude/system-map/ 配下・gitignore 済み）が CI のチェックアウトに存在しないためで、接続するなら fixture を置く設計が要る。別主題として残す",
+      "cast_analysis": "pending",
+      "evidence_kind": "measurement",
+      "evidence_refs": [
+        ".github/workflows/checks.yml",
+        "assurance/tests",
+        "scripts/consistency-check.py"
+      ]
     }
   ]
 }

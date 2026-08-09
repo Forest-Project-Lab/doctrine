@@ -30,6 +30,22 @@ jobs:
       - name: Unit tests (plugin)
         run: python3 plugin/run_tests.py
 
+      # Assurance lane deterministic tests (INC-030). The lane that audits the
+      # plugin was not itself gated: 426 test methods under assurance/tests ran
+      # only on a developer's machine, so a lane regression reached main
+      # unnoticed. These are stdlib-only and need no venv — the SDK is imported
+      # lazily inside the functions that call it, so nothing here touches the
+      # network or the API. ~37 s.
+      - name: Unit tests (assurance lane)
+        run: python3 -m unittest discover -s assurance/tests
+
+      # linter ⇔ audit agreement (INC-030). The audit registers files as
+      # 非文書/投影/ビュー; the linter must not emit schema ERRORs for those
+      # (WATCH-001 item 5). Nothing checked that the two agree except a local
+      # slash command, so a divergence could land. ~11 s.
+      - name: Consistency (linter ⇔ audit)
+        run: python3 scripts/consistency-check.py
+
       - name: Docs audit (doctrine_docs/ corpus)
         run: CLAUDE_PLUGIN_ROOT="$PWD/plugin" python3 plugin/scripts/docs-audit.py --root doctrine_docs --fail-on error
 
