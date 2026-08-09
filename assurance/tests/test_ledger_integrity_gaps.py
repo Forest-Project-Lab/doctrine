@@ -93,9 +93,28 @@ class UnassessedIsCountedTest(unittest.TestCase):
 
 
 class ShippedConditionsAreCheckedTest(unittest.TestCase):
-    """ADR-144 の三条件を機械が検める（INC-036）。"""
+    """ADR-144 の三条件を機械が検める（INC-036）。
+
+    合成の記録に対する判定は、環境の git の深さに依らせない —— 浅い複製
+    （CI の既定）では検算そのものを見送るので、実環境に依ると論理が試験
+    されないまま緑になる。継ぎ目を差し替えて論理だけを見る。
+    """
+
+    def _pin_git(self, available=True, reachable=(), ancestor=True):
+        real = (orchestrator._git_available, orchestrator._git_has_commit,
+                orchestrator._git_is_ancestor)
+
+        def restore():
+            (orchestrator._git_available, orchestrator._git_has_commit,
+             orchestrator._git_is_ancestor) = real
+
+        self.addCleanup(restore)
+        orchestrator._git_available = lambda: available
+        orchestrator._git_has_commit = lambda rev: rev in reachable
+        orchestrator._git_is_ancestor = lambda rev, ref: ancestor
 
     def test_a_shipped_incident_without_a_fix_commit_is_a_problem(self):
+        self._pin_git()
         incidents = [{"id": "INC-900-x", "date": "2026-08-09", "summary": "s",
                       "fixed": True, "shipped": True, "ship_ref": "v0.11.0",
                       "cast_analysis": "done", "evidence_kind": "measurement"}]
@@ -103,6 +122,7 @@ class ShippedConditionsAreCheckedTest(unittest.TestCase):
         self.assertTrue(problems, "fix_commit の無い shipped を咎めない")
 
     def test_a_shipped_incident_with_an_unreachable_commit_is_a_problem(self):
+        self._pin_git(reachable=())
         incidents = [{"id": "INC-901-x", "date": "2026-08-09", "summary": "s",
                       "fixed": True, "shipped": True, "ship_ref": "v0.11.0",
                       "fix_commit": "0123456789abcdef0123456789abcdef01234567",
@@ -117,6 +137,25 @@ class ShippedConditionsAreCheckedTest(unittest.TestCase):
         problems = orchestrator._validate_shipped_conditions()
         self.assertEqual(problems, [])
 
+    def test_a_shipped_incident_with_a_reachable_ancestor_commit_passes(self):
+        self._pin_git(reachable={"abc1234"}, ancestor=True)
+        incidents = [{"id": "INC-906-x", "shipped": True,
+                      "ship_ref": "v0.11.0", "fix_commit": "abc1234"}]
+        self.assertEqual(orchestrator._validate_shipped_conditions(incidents), [])
+
+    def test_a_commit_that_is_not_an_ancestor_of_the_tag_is_a_problem(self):
+        self._pin_git(reachable={"abc1234"}, ancestor=False)
+        incidents = [{"id": "INC-907-x", "shipped": True,
+                      "ship_ref": "v0.11.0", "fix_commit": "abc1234"}]
+        self.assertTrue(orchestrator._validate_shipped_conditions(incidents))
+
+    def test_a_shallow_clone_reports_nothing(self):
+        """前提が欠けたら見送る（偽の赤を出さない）。"""
+        self._pin_git(available=False)
+        incidents = [{"id": "INC-908-x", "shipped": True,
+                      "ship_ref": "v0.11.0"}]
+        self.assertEqual(orchestrator._validate_shipped_conditions(incidents), [])
+
     def test_the_grandfather_list_is_frozen_and_justified(self):
         """祖父条項は増やさない（増やすのは保証範囲の変更＝所有者判断）。"""
         self.assertEqual(len(orchestrator.SHIPPED_GRANDFATHERED), 8)
@@ -127,6 +166,7 @@ class ShippedConditionsAreCheckedTest(unittest.TestCase):
                          "出荷でない id が祖父条項に残っている: %r" % (stale,))
 
     def test_a_new_shipped_incident_is_not_grandfathered(self):
+        self._pin_git()
         incidents = [{"id": "INC-999-new", "shipped": True,
                       "ship_ref": "v0.11.0"}]
         self.assertTrue(orchestrator._validate_shipped_conditions(incidents),
