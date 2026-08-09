@@ -1,0 +1,828 @@
+{
+  "accepted_flaws": [
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "orchestrator は assurance/ledger/ を手掛かりとして持つが、承認済み計画と赤の記録の積（未再現の集合）を算出する読み口を持たず、REPRODUCE_RED を next_actions に挙げる経路が一行も存在しない。台帳に記録は積まれているが、正本のプロセスモデルにはその残高が入力されないため、コントローラは『残っている義務が無い』状態と区別できない。",
+      "evidence_ref": "assurance/harness/orchestrator.py",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "全コントロールループにフィードバック必須",
+        "control-action-requires-feedback",
+        "プロセスモデルと実状態の不整合"
+      ],
+      "why_it_seemed_adequate": "台帳は書き込み先としては完備しており、記録が残っていること自体が追跡可能性の担保に見えた。読む側の経路は、記録が存在すれば後から誰か（または別の段）が拾えるという前提の下で、独立に足す必要のない作業と見なされていた。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "FORMALIZE は判定（APPROVE）が付いたことを消化として数える。承認は次段の義務を発生させる事象であるにもかかわらず、承認の直後に遷移先の実行を要求する制御動作が生成されない。結果として、義務の発生と義務の閉鎖が同じ一つの記録で同時に成立してしまう。",
+      "evidence_ref": "assurance/ledger/formalize/2026-08-09.json",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "accidents-from-inadequate-constraint-enforcement",
+        "audit-findings-must-be-closed",
+        "指摘欠点の是正完了追跡"
+      ],
+      "why_it_seemed_adequate": "判定が付くことは段としての作業完了であり、判定の記録を消化と数えるのは各段を局所的に見れば整合していた。段ごとに完了条件を閉じる設計は、進行を単純に保つうえで妥当な判断に見えた。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "LEDGER_KINDS の red/ は read_by を伴わない種別として定義され、実際に積まれた 16 件はすべて INC・ADR を対象としており、scenario id との積は空だった。『赤の台帳がある』という構造上の外形と、『承認済み scenario の再現が記録されている』という想定された内容が食い違っており、その食い違いを検める段が正本側に無い。",
+      "evidence_ref": "独立再監査 2026-08-09 Phase A（red/ 16 件と scenario id の積が空）",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "宣言された設計と実動作の突合",
+        "公式設計と実動作の二重評価",
+        "設計上と実際の伝達経路の照合"
+      ],
+      "why_it_seemed_adequate": "red/ という種別が存在し件数も 0 でないため、外形からは赤の記録が機能しているように読めた。種別ごとに対象の型を照合する規則は、当時どの段の責務としても割り当てられていなかった。"
+    },
+    {
+      "control_element_id": "OWNER",
+      "description": "所有者に届く手掛かり（進捗報告・台帳・PR の diff）では、APPROVE 30 件が進捗の量として現れ、その 30 件が未実行の債務であることは現れない。所有者のプロセスモデルには『30 件処理済み』が映り、実状態である『30 件の義務が未着手』とは逆向きになる。安全上の残高が業務上の進捗に丸め込まれ、識別不能になっている。",
+      "evidence_ref": "assurance/ledger/formalize/2026-08-09.json",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "リスク情報の不透明な集約禁止",
+        "controller-needs-concrete-feedback-channels",
+        "先行指標の妥当性・代理指標の禁止"
+      ],
+      "why_it_seemed_adequate": "判定件数は最も入手しやすく形式も安定した進捗量であり、報告の指標として自然だった。既知の穴として『報告が意図を書いても人からは見分けにくい』ことは認識されていたが、その穴は文章の書き方の問題として理解されており、件数という数値の側にも同じ穴があるとは見えていなかった。"
+    },
+    {
+      "control_element_id": "CI_RELEASE_CHECK",
+      "description": "CI は merge 前に赤で止める権限を持つが、承認済み義務の滞留を赤にする判定材料を持たない。名指しの二分と優先順の表の整合という規則は試験の側（test_approved_plan_pressure.py）だけが保持しており、正本の validate は同じ規則を持っていなかった。したがって、規則を持つ試験が書かれるまで、この不整合は CI にとって存在しない事象だった。",
+      "evidence_ref": "assurance/tests/test_approved_plan_pressure.py",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "監査の検出力評価",
+        "検出失敗の原因調査",
+        "監査のすり抜け時に監査手順を是正"
+      ],
+      "why_it_seemed_adequate": "整合の検査を試験に置くことは通常の分担であり、試験が緑であれば構造も整合しているように読める。規則が試験の側にしか無いことは、規則が二重に書かれていない綺麗な状態としても解釈できた。"
+    },
+    {
+      "control_element_id": "SESSION_END_AUDIT",
+      "description": "『全件監査』は統治木（doctrine_docs 配下）を全件走査するものであり、assurance/ledger/ の未消化残高は走査対象に入らない。名称と要約の形式は網羅を示唆するが、保証レーンの帳簿はその境界の外にある。結果、統治木が緑である状態と台帳に 30 件が滞留する状態が矛盾なく同時に成立した。",
+      "evidence_ref": ".claude/.cache/last-audit.json（走査対象は統治木）",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "do-not-start-too-narrow",
+        "全体健全性と部分健全性の分離評価",
+        "監視責任の空白排除"
+      ],
+      "why_it_seemed_adequate": "監査は統治文書の整合を守る器として設計されており、台帳は別レーンの管理物として扱うのが責務分離として自然だった。二つが別々に健全であれば全体も健全だという前提が置かれていた。"
+    },
+    {
+      "control_element_id": "GOVERNANCE_TREE",
+      "description": "ADR-115（手で選ばない規律）と ADR-120（REPRODUCE_RED を名指しされない状態に置く）は、それぞれ単独では筋の通った決定である。しかし両者が同時に効くと、名指しされない状態は自動選択の母集団から外れ、かつ人が補うことも規律で禁じられるため、義務が二重に不可視になる。二つの決定の積を検める段は統治木のどこにも置かれていない。",
+      "evidence_ref": "ADR-115 / ADR-120（doctrine_docs 配下）",
+      "flaw_type": "統制どうしの調整の欠如",
+      "normative_refs": [
+        "共通の体系的要因による多重防護の無効化",
+        "verify-decomposition-assumptions",
+        "control-both-behavior-and-interaction"
+      ],
+      "why_it_seemed_adequate": "手で選ばない規律は恣意的な選択を排除する強化策として、名指ししない状態の設定は状態集合を小さく保つ整理として、それぞれ独立に安全側の変更に見えた。決定どうしの相互作用を評価する手順が無かったため、積を見る機会自体が発生しなかった。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "『走らせ手（実行経路）を足したのに、正本が読む段を足さなかった』という同型が INC-012・INC-015 に続いて三度目である。過去二件の是正は個々の読み口を足すところで閉じており、同型が再び作られうる構造（実行経路の追加と読み口の追加が別作業で、前者だけで通る）は変更されていない。同型の再発を発生前に検出する仕組みが統制側に無い。",
+      "evidence_ref": "INC-012 / INC-015 / INC-033 の同型",
+      "flaw_type": "統制自身の劣化を検出できない",
+      "normative_refs": [
+        "symptom-vs-systemic-cause",
+        "systemic-cause-across-all-events",
+        "教訓の反映手順の確立"
+      ],
+      "why_it_seemed_adequate": "過去二件はいずれも具体的な読み口の欠落として現れ、その読み口を足せば当該事象は解消した。症状が解消した以上、是正は完了したものとして扱うのが自然であり、同じ形が三度目に現れる可能性は、二件目の時点ではまだ型として抽出できていなかった。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "手で選ばない規律の採用により、それまで人が担っていた『帳簿を見て残っているものを拾う』というコントロールが自動選択へ移されたが、自動化後の側にその機能（母集団の網羅性を検める段）が実装されなかった。自動化の際に既存のコントロールを引き継ぐ確認が、移行時の要件として置かれていない。",
+      "evidence_ref": "ADR-115 / assurance/harness/orchestrator.py",
+      "flaw_type": "統制どうしの調整の欠如",
+      "normative_refs": [
+        "自動化時の既存安全コントロール継承",
+        "責任の空白は構造再設計",
+        "change-system-to-change-behavior"
+      ],
+      "why_it_seemed_adequate": "自動選択は恣意性の排除という明確な利得を持ち、決定論であること自体が網羅性を含意するように見えた。人が拾っていた振る舞いは規律違反として排除すべき対象に分類されたため、引き継ぐべき機能としては認識されなかった。"
+    },
+    {
+      "control_element_id": "OWNER",
+      "description": "ADR-148 による是正は書かれているが、優先順の表への配置（ATTACK_EVALUATOR の後・FORMALIZE の前）は ADR-131 決定2 により所有者裁定を要し、裁定が出るまで merge されない。この間、未消化の 30 件は正本から名指しされない状態に留まる。是正の実施状況と滞留残高を裁定待ちの間も所有者に見せ続ける経路は用意されていない。",
+      "evidence_ref": "next_step（ADR-131 決定2 による所有者裁定待ち）",
+      "flaw_type": "制御動作が遅い",
+      "normative_refs": [
+        "是正措置の責任割当と追跡",
+        "安全と納期の対立裁定手順",
+        "推奨事項の責任割当実施検査フィードバック"
+      ],
+      "why_it_seemed_adequate": "優先順の配置は他の全段の実行順序に影響するため、所有者判断へ留保するのは統制設計として妥当である。留保そのものは正しく、欠けているのは留保中の残高を可視に保つ手当ての方である。"
+    }
+  ],
+  "analysis": {
+    "confidence": "medium",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "orchestrator は assurance/ledger/ を手掛かりとして持つが、承認済み計画と赤の記録の積（未再現の集合）を算出する読み口を持たず、REPRODUCE_RED を next_actions に挙げる経路が一行も存在しない。台帳に記録は積まれているが、正本のプロセスモデルにはその残高が入力されないため、コントローラは『残っている義務が無い』状態と区別できない。",
+        "evidence_ref": "assurance/harness/orchestrator.py",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "全コントロールループにフィードバック必須",
+          "control-action-requires-feedback",
+          "プロセスモデルと実状態の不整合"
+        ],
+        "why_it_seemed_adequate": "台帳は書き込み先としては完備しており、記録が残っていること自体が追跡可能性の担保に見えた。読む側の経路は、記録が存在すれば後から誰か（または別の段）が拾えるという前提の下で、独立に足す必要のない作業と見なされていた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "FORMALIZE は判定（APPROVE）が付いたことを消化として数える。承認は次段の義務を発生させる事象であるにもかかわらず、承認の直後に遷移先の実行を要求する制御動作が生成されない。結果として、義務の発生と義務の閉鎖が同じ一つの記録で同時に成立してしまう。",
+        "evidence_ref": "assurance/ledger/formalize/2026-08-09.json",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "accidents-from-inadequate-constraint-enforcement",
+          "audit-findings-must-be-closed",
+          "指摘欠点の是正完了追跡"
+        ],
+        "why_it_seemed_adequate": "判定が付くことは段としての作業完了であり、判定の記録を消化と数えるのは各段を局所的に見れば整合していた。段ごとに完了条件を閉じる設計は、進行を単純に保つうえで妥当な判断に見えた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "LEDGER_KINDS の red/ は read_by を伴わない種別として定義され、実際に積まれた 16 件はすべて INC・ADR を対象としており、scenario id との積は空だった。『赤の台帳がある』という構造上の外形と、『承認済み scenario の再現が記録されている』という想定された内容が食い違っており、その食い違いを検める段が正本側に無い。",
+        "evidence_ref": "独立再監査 2026-08-09 Phase A（red/ 16 件と scenario id の積が空）",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "宣言された設計と実動作の突合",
+          "公式設計と実動作の二重評価",
+          "設計上と実際の伝達経路の照合"
+        ],
+        "why_it_seemed_adequate": "red/ という種別が存在し件数も 0 でないため、外形からは赤の記録が機能しているように読めた。種別ごとに対象の型を照合する規則は、当時どの段の責務としても割り当てられていなかった。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者に届く手掛かり（進捗報告・台帳・PR の diff）では、APPROVE 30 件が進捗の量として現れ、その 30 件が未実行の債務であることは現れない。所有者のプロセスモデルには『30 件処理済み』が映り、実状態である『30 件の義務が未着手』とは逆向きになる。安全上の残高が業務上の進捗に丸め込まれ、識別不能になっている。",
+        "evidence_ref": "assurance/ledger/formalize/2026-08-09.json",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "リスク情報の不透明な集約禁止",
+          "controller-needs-concrete-feedback-channels",
+          "先行指標の妥当性・代理指標の禁止"
+        ],
+        "why_it_seemed_adequate": "判定件数は最も入手しやすく形式も安定した進捗量であり、報告の指標として自然だった。既知の穴として『報告が意図を書いても人からは見分けにくい』ことは認識されていたが、その穴は文章の書き方の問題として理解されており、件数という数値の側にも同じ穴があるとは見えていなかった。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "CI は merge 前に赤で止める権限を持つが、承認済み義務の滞留を赤にする判定材料を持たない。名指しの二分と優先順の表の整合という規則は試験の側（test_approved_plan_pressure.py）だけが保持しており、正本の validate は同じ規則を持っていなかった。したがって、規則を持つ試験が書かれるまで、この不整合は CI にとって存在しない事象だった。",
+        "evidence_ref": "assurance/tests/test_approved_plan_pressure.py",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "監査の検出力評価",
+          "検出失敗の原因調査",
+          "監査のすり抜け時に監査手順を是正"
+        ],
+        "why_it_seemed_adequate": "整合の検査を試験に置くことは通常の分担であり、試験が緑であれば構造も整合しているように読める。規則が試験の側にしか無いことは、規則が二重に書かれていない綺麗な状態としても解釈できた。"
+      },
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "『全件監査』は統治木（doctrine_docs 配下）を全件走査するものであり、assurance/ledger/ の未消化残高は走査対象に入らない。名称と要約の形式は網羅を示唆するが、保証レーンの帳簿はその境界の外にある。結果、統治木が緑である状態と台帳に 30 件が滞留する状態が矛盾なく同時に成立した。",
+        "evidence_ref": ".claude/.cache/last-audit.json（走査対象は統治木）",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "do-not-start-too-narrow",
+          "全体健全性と部分健全性の分離評価",
+          "監視責任の空白排除"
+        ],
+        "why_it_seemed_adequate": "監査は統治文書の整合を守る器として設計されており、台帳は別レーンの管理物として扱うのが責務分離として自然だった。二つが別々に健全であれば全体も健全だという前提が置かれていた。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "ADR-115（手で選ばない規律）と ADR-120（REPRODUCE_RED を名指しされない状態に置く）は、それぞれ単独では筋の通った決定である。しかし両者が同時に効くと、名指しされない状態は自動選択の母集団から外れ、かつ人が補うことも規律で禁じられるため、義務が二重に不可視になる。二つの決定の積を検める段は統治木のどこにも置かれていない。",
+        "evidence_ref": "ADR-115 / ADR-120（doctrine_docs 配下）",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "共通の体系的要因による多重防護の無効化",
+          "verify-decomposition-assumptions",
+          "control-both-behavior-and-interaction"
+        ],
+        "why_it_seemed_adequate": "手で選ばない規律は恣意的な選択を排除する強化策として、名指ししない状態の設定は状態集合を小さく保つ整理として、それぞれ独立に安全側の変更に見えた。決定どうしの相互作用を評価する手順が無かったため、積を見る機会自体が発生しなかった。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "『走らせ手（実行経路）を足したのに、正本が読む段を足さなかった』という同型が INC-012・INC-015 に続いて三度目である。過去二件の是正は個々の読み口を足すところで閉じており、同型が再び作られうる構造（実行経路の追加と読み口の追加が別作業で、前者だけで通る）は変更されていない。同型の再発を発生前に検出する仕組みが統制側に無い。",
+        "evidence_ref": "INC-012 / INC-015 / INC-033 の同型",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "symptom-vs-systemic-cause",
+          "systemic-cause-across-all-events",
+          "教訓の反映手順の確立"
+        ],
+        "why_it_seemed_adequate": "過去二件はいずれも具体的な読み口の欠落として現れ、その読み口を足せば当該事象は解消した。症状が解消した以上、是正は完了したものとして扱うのが自然であり、同じ形が三度目に現れる可能性は、二件目の時点ではまだ型として抽出できていなかった。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "手で選ばない規律の採用により、それまで人が担っていた『帳簿を見て残っているものを拾う』というコントロールが自動選択へ移されたが、自動化後の側にその機能（母集団の網羅性を検める段）が実装されなかった。自動化の際に既存のコントロールを引き継ぐ確認が、移行時の要件として置かれていない。",
+        "evidence_ref": "ADR-115 / assurance/harness/orchestrator.py",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "自動化時の既存安全コントロール継承",
+          "責任の空白は構造再設計",
+          "change-system-to-change-behavior"
+        ],
+        "why_it_seemed_adequate": "自動選択は恣意性の排除という明確な利得を持ち、決定論であること自体が網羅性を含意するように見えた。人が拾っていた振る舞いは規律違反として排除すべき対象に分類されたため、引き継ぐべき機能としては認識されなかった。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "ADR-148 による是正は書かれているが、優先順の表への配置（ATTACK_EVALUATOR の後・FORMALIZE の前）は ADR-131 決定2 により所有者裁定を要し、裁定が出るまで merge されない。この間、未消化の 30 件は正本から名指しされない状態に留まる。是正の実施状況と滞留残高を裁定待ちの間も所有者に見せ続ける経路は用意されていない。",
+        "evidence_ref": "next_step（ADR-131 決定2 による所有者裁定待ち）",
+        "flaw_type": "制御動作が遅い",
+        "normative_refs": [
+          "是正措置の責任割当と追跡",
+          "安全と納期の対立裁定手順",
+          "推奨事項の責任割当実施検査フィードバック"
+        ],
+        "why_it_seemed_adequate": "優先順の配置は他の全段の実行順序に影響するため、所有者判断へ留保するのは統制設計として妥当である。留保そのものは正しく、欠けているのは留保中の残高を可視に保つ手当ての方である。"
+      }
+    ],
+    "hazard": "自らの統制下にあるシステム状態として：次の行動を決定論で選ぶ正本（orchestrator の next_actions と status 要約）の視野に、承認済みで未消化の義務が一件も入らない状態。手で選ばない規律の下では、正本が名指ししない対象は選択の母集団から外れるため、この状態が続く限り義務は原理的に選ばれない。",
+    "incident_id": "INC-033-approved-plans-have-no-canonical-pressure",
+    "leading_indicators": [
+      {
+        "indicator": "承認済みだが赤も再現不能記録も対応しない計画の件数（未消化残高）",
+        "observable": "formalize の APPROVE 集合と red/ の scenario id 集合の差集合の大きさ",
+        "threshold": "1 件でも 2 回連続の next_actions 生成をまたいで残れば異常。残高が前回観測より増加したら即時に扱う",
+        "version_independent": true,
+        "where": "orchestrator の status 要約および next_actions（ADR-148 の unreproduced_plans 読み口）",
+        "why_version_independent": "リポジトリ正本の台帳ファイルだけで算定でき、利用者環境の導入複製の版に依存しない"
+      },
+      {
+        "indicator": "読み口を持たない台帳種別の数",
+        "observable": "LEDGER_KINDS の各種別に read_by が定義され、かつその読み口が orchestrator から実際に呼ばれている本数",
+        "threshold": "read_by を持たない種別、または read_by は宣言されているが呼び出し本数が 0 の種別が 1 つでもあれば赤",
+        "version_independent": true,
+        "where": "validate（assurance/harness/ の静的検査）",
+        "why_version_independent": "リポジトリ側の定義と呼び出しの静的照合のみで判定する"
+      },
+      {
+        "indicator": "状態集合・名指しの二分・優先順の表の三者の差集合",
+        "observable": "orchestrator が next_actions に挙げうる状態、名指し可能と宣言された状態、優先順表に配置された状態の三集合の対称差",
+        "threshold": "対称差が非空なら赤。差の要素名を必ず出力する",
+        "version_independent": true,
+        "where": "validate（従来は試験側だけが持っていた規則を正本へ移した後の検査点）",
+        "why_version_independent": "正本の定義同士の照合であり導入複製を参照しない"
+      },
+      {
+        "indicator": "承認から次段の記録が付くまでの滞留の最大値",
+        "observable": "各 APPROVE の日付と、対応する赤／再現不能記録の日付の差の最大値（未記録は現在日で算定）",
+        "threshold": "最大値が 2 セッション相当を超えたら異常。中央値ではなく最大値で判定する（中央値は少数の滞留を隠す）",
+        "version_independent": true,
+        "where": "assurance/ledger/（formalize と red/ の突合）",
+        "why_version_independent": "台帳の日付のみで算定できる"
+      },
+      {
+        "indicator": "実行経路の追加に読み口の追加が伴わない変更の件数",
+        "observable": "PR の diff で新しい状態・実行経路・台帳種別が追加された際に、同一 diff 内に正本側の読み口（next_actions もしくは status 要約への配線）の追加が含まれているか",
+        "threshold": "伴っていない diff が 1 件でもあれば赤で止める。これが INC-012・INC-015・INC-033 に共通する型そのものの先行検出点である",
+        "version_independent": true,
+        "where": "CI_RELEASE_CHECK（release-check ジョブ）",
+        "why_version_independent": "リポジトリ正本の diff に対する検査であり、利用者環境へ配られた複製の版と無関係"
+      },
+      {
+        "indicator": "台帳残高に由来する監査 findings の有無",
+        "observable": "last-audit.json の findings に、統治木以外（保証台帳）を出所とする項目が含まれているか",
+        "threshold": "台帳を走査対象に含めた後、台帳由来の findings が構造上一件も生じ得ない状態（走査対象に台帳が入っていない状態）が続けば、監査の範囲欠落として扱う",
+        "version_independent": false,
+        "where": ".claude/.cache/last-audit.json および docs-audit の走査対象定義",
+        "why_version_independent": "docs-audit と last-audit.json は導入複製の側で動くため、複製の版が遅れると走査範囲の更新も遅れ、範囲が広がったつもりで実際は旧範囲のまま走り続ける。HEARTBEAT による古び警告も同じ複製上で動くため、同一の共通原因（INC-005）で同時に遅れる"
+      },
+      {
+        "indicator": "消化と認める条件の定義が『判定が付いた』形になっている段の数",
+        "observable": "各段の完了条件が、判定の記録のみで閉じるか、遷移先の記録の存在を要求するかの分類",
+        "threshold": "判定のみで閉じる段が 1 つでも残っていれば、その段名を出力して所有者判断へ回す",
+        "version_independent": true,
+        "where": "validate（段の定義に対する静的検査）および統治木の該当 ADR",
+        "why_version_independent": "正本の段定義に対する検査であり導入複製を参照しない"
+      }
+    ],
+    "loss": "承認された検証計画 30 件分の義務が、承認が付いた時点から実行されないまま滞留し、保証キャンペーンが「30 件を処理した」という外形を保ったまま、対応する再現（赤）も再現不能の記録も存在しない状態で進行した。買われた検証が、買われた事実だけを残して実施されない。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "対応表の差集合が空であること。差集合が非空なら仮説は支持され、要素名がそのまま次の作業になる",
+        "hypothesis": "REPRODUCE_RED 以外にも、正本の読み口を持たない状態・台帳種別が残っている",
+        "oracle": "状態集合・台帳種別の全体と、orchestrator の読み口および next_actions への配線の全対応表を作り、読まれない要素が 0 であることを validate が示す",
+        "severity": "P0"
+      },
+      {
+        "falsification_signal": "差分が空であること",
+        "hypothesis": "正本の validate に無く試験側だけが保持している整合規則が、今回の一件以外にも存在する",
+        "oracle": "assurance/tests/ の assert 群が表現する不変条件と、validate が検める不変条件の差分を列挙する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "判定のみで閉じる段が FORMALIZE ただ一つであること",
+        "hypothesis": "『判定が付いたことを消化と数える』形の段が、FORMALIZE 以外にも存在する",
+        "oracle": "各段の完了条件を、判定のみで閉じる型と遷移先の記録を要求する型に分類する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "台帳を出所とする findings が既に発生していること",
+        "hypothesis": "統治木が緑で保証台帳が滞留する状態は恒常的に成立しうる（監査の範囲空白が構造的である）",
+        "oracle": "last-audit.json の findings の出所を分類し、台帳を出所とする項目が構造上生じうるかを走査対象定義から確認する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "積を取っても視野から外れる対象が生じない組合せしか存在しないこと",
+        "hypothesis": "個別には妥当な二つの ADR の積が視野の穴を作る組合せが、ADR-115×ADR-120 以外にも存在する",
+        "oracle": "『対象を名指ししない／範囲を狭める』決定と『自動選択・人手を禁じる』決定を統治木から抽出し、その積を列挙して視野に入らない対象を洗う",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "複製の版差が常に 0 世代であること",
+        "hypothesis": "導入複製側で動く検出器（heartbeat・docs-audit）に載せた新しい検査は、版遅れによって導入直後から実効を持たない期間を持つ",
+        "oracle": "リポジトリ正本の版と、利用者環境の複製の版の差を、新しい検査の導入日から追跡する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "formalize 以外の全種別で差が 0 であること",
+        "hypothesis": "未消化残高は他のレーン（承認と実行が分かれる全ての箇所）にも存在し、30 件は総量の一部にすぎない",
+        "oracle": "台帳の全種別について、発生した義務と閉じた義務の差を種別ごとに集計する",
+        "severity": "P1"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "台帳の全種別に read_by を必須とし、読み口を持たない種別、または宣言はあるが呼び出しが 0 本の種別の存在を validate が赤にする。ADR-148 が red/ に対して行った修正を、種別一般の不変条件へ一般化する。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "消化の定義を『判定が付いた』から『遷移先の義務が記録された』へ移す。承認は債務の発生であって消化ではないことを段の完了条件の水準で表現し、判定のみで閉じる段が他に残っていないかを validate で列挙する。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "未消化残高（承認済みかつ赤も再現不能記録も無い件数）を status 要約と next_actions の双方へ常時掲出し、0 でない限りキャンペーンを閉じられないようにする。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "新しい状態・実行経路・台帳種別を追加する diff に、正本側の読み口の追加が同一 diff 内で伴っているかを release-check で検める。これが INC-012・INC-015・INC-033 の同型そのものに対する検出点である。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "試験側だけが保持している整合規則を洗い出し、正本の validate へ移す。移した後も試験は残してよいが、規則の唯一の所在が試験である状態を無くす。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "INC-012・INC-015・INC-033 を『走らせ手を足したが正本が読む段を足さなかった』という一つの体系的要因として統治木に記録し、次回以降の変更レビューで参照される検査項目に変換する。記録の蓄積だけで終わらせず、参照される場所（release-check の項目）まで配線する。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "docs-audit の走査対象に保証台帳の残高を含めるか、台帳専用の全件走査を別に置くかを決める。ただし導入複製側で動く器に載せると版遅れの共通原因を継承するため、リポジトリ正本側（CI）に置くことを推奨する。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "優先順の表への REPRODUCE_RED の配置（ATTACK_EVALUATOR の後・FORMALIZE の前）を裁定する。ADR-131 決定2 により所有者判断であり、裁定を得るまで merge しない。裁定待ちの間も未消化残高が所有者の手掛かりに現れ続けるようにする。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "ADR-139 に基づく独立検証を実施し、ADR-148 の読み口が実際に next_actions の出力を変えることを観測するまで fixed とみなさない。検証は実施者自身ではなく独立した経路から行う。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "未消化の 30 件そのものを消化する経路を立て、消化の進行を残高の減少として観測する。正本が名指しするようになったことと、義務が実際に果たされたことを別々に扱う。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "独立再監査が今回この積を測った経緯（定めた検査項目か、その回の裁量か）を確認し、裁量であったなら定型の検査項目として登録する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "判定の記録（APPROVE の件数）が進捗の代理指標として用いられている。代理指標は入手しやすく安定しているが、守られるべき制約（承認された計画に対応する赤または理由つきの再現不能記録が存在すること）とは因果的に結びついていない。",
+      "『実行経路を足す』作業と『正本が読む段を足す』作業が分離しており、前者だけで変更が通る。INC-012・INC-015・INC-033 に共通する型であり、個々の読み口を足す是正では構造が変わらない。",
+      "整合を検める規則の所在が試験側に偏り、正本の validate に無い。規則が試験という可搬な場所にしか無いと、試験が書かれるまで不整合は体系にとって存在せず、試験が消えれば規則も消える。",
+      "評価者が同系 model であるという既知の共通原因により、レーンの内側からは自らの視野の穴が見えない。今回も独立再監査という外側の経路が初めて積を実測した。",
+      "自動選択（手で選ばない規律）の採用時に、人が担っていた『帳簿を見て残りを拾う』機能が自動化側へ引き継がれなかった。自動化は恣意性を除くが、母集団の網羅性を自動的には保証しない。",
+      "監査・検出の主要な器（docs-audit、heartbeat）が統治木と導入複製の版を対象としており、保証台帳の残高はどの全件走査の対象範囲にも入っていない。範囲の空白は、各器が個別には正しく動いている限り現れない。",
+      "個別に妥当な決定（ADR-115 と ADR-120）の積が穴を作る形になっており、決定どうしの相互作用を評価する段が統治木に置かれていない。"
+    ],
+    "unknowns": [
+      "【実在の未確認】事象が名指しする FORMALIZE・REPRODUCE_RED・ADR-120・ADR-148・ADR-115・ADR-131・ADR-139・ATTACK_EVALUATOR は、与えられた統制構造の要素として単独では現れない。本分析はこれらを ASSURANCE_LANE（assurance/harness/orchestrator.py）の内部状態および GOVERNANCE_TREE（doctrine_docs 配下）の文書として在ると推定し、その推定の上に統制欠陥を組み立てている。親となる要素（orchestrator と台帳、統治木）は構造上実在するが、名指しされた個々の段・ADR の実在は本入力からは確認していない。この推定が誤りであれば、下記の欠陥のうち段や ADR に依存する記述は再検討を要する。confidence を medium に留めたのはこの理由による。",
+      "30 件の APPROVE が単一の scenario 母集団に属するのか、撤回・重複・再承認を含むのかが入力から判らない。含む場合、実際の未消化残高は 30 と異なる。",
+      "red/ の 16 件が INC・ADR を対象としていたのは、当初からそういう設計だったのか、scenario を対象にする用途が後から流用で失われたのかが判らない。前者なら欠陥は種別の設計、後者なら経時的な意味の漂流であり、必要な是正が異なる。",
+      "ADR-148 が足した読み口が実際に next_actions の出力を変えるかは未観測である（ADR-139 の独立検証が未実施のため fixed:true とされていない）。是正の有効性は現時点で証拠を持たない。",
+      "INC-012・INC-015 の是正が今回の同型を止められなかった理由が入力から判らない。是正が当該事象の読み口だけを足す形で閉じたのか、型としての検査は置かれたが適用範囲が狭かったのかを区別できていない。",
+      "所有者が APPROVE 件数を実際に進捗として読み取っていたかは未確認であり、手掛かりの形状からの推定に留まる。所有者側のプロセスモデルの実際は、本人への確認によってのみ判る。",
+      "優先順の表で REPRODUCE_RED をどこに置くのが妥当か（ATTACK_EVALUATOR の後・FORMALIZE の前という提案の是非）は所有者裁定の対象であり、本分析では判断しない。",
+      "独立再監査が今回この積を測ったのは、あらかじめ定めた検査項目によるものか、その回の裁量によるものかが判らない。後者であれば、次回同じ観測が行われる保証は無い。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は「判定が付いたか」を見る形で構成されており、「判定が付いた後に何が起きるべきか」を見る形にはなっていなかった。CI は正本の試験が赤になったときに止めるが、承認済み義務の滞留は試験の赤にならない量である。docs-audit は統治木の文書を全件走査するが台帳の残高は境界の外にあり、統治木が緑であることと台帳に 30 件が積み残ることは矛盾なく両立した。名指しの二分と優先順の表の整合という規則は試験の側だけが保持しており、正本の validate は同じ規則を持たなかったため、規則を書いた試験が存在しない限り不整合は体系にとって存在しない事象だった。加えて、消化の判定に用いる量（APPROVE 件数）と、実際に守られるべき制約（承認された計画に赤または理由つきの再現不能記録が対応すること）が別物であり、前者だけが観測経路に載っていた。結果、この事象は保証レーンの内側からは観測できず、独立再監査という別経路が積を実測して初めて現れた。ADR-148 による是正が書かれた後も、独立検証（ADR-139）は未実施であり、是正が実際に next_actions を変えることはまだ観測されていない。"
+  },
+  "control_structure_ids": [
+    "OWNER",
+    "CI_RELEASE_CHECK",
+    "SESSION_START_CONTRACT",
+    "HEARTBEAT",
+    "PRE_TOOL_GUARD",
+    "POST_TOOL_LINTER",
+    "SESSION_END_AUDIT",
+    "CAPTURE_NUDGE",
+    "PLUGIN_DISTRIBUTION",
+    "ASSURANCE_LANE",
+    "GOVERNANCE_TREE"
+  ],
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "duration_ms": 269084,
+  "errors": [],
+  "execution_kind": "real-sdk",
+  "flaws_with_citation_defect": [],
+  "generated_at": "2026-08-09T21:50:38Z",
+  "git_dirty": true,
+  "git_sha": "f0d4e8ed5d06975fe0de5822f58c74f7ae5a7226",
+  "incident_evidence": {
+    "kind": "measurement",
+    "refs": [
+      "assurance/ledger/formalize/2026-08-09.json",
+      "assurance/harness/orchestrator.py",
+      "assurance/tests/test_approved_plan_pressure.py"
+    ],
+    "resolved": [
+      "assurance/ledger/formalize/2026-08-09.json",
+      "assurance/harness/orchestrator.py",
+      "assurance/tests/test_approved_plan_pressure.py"
+    ],
+    "unresolved": [],
+    "verifiable": true
+  },
+  "incident_id": "INC-033-approved-plans-have-no-canonical-pressure",
+  "incident_sha256": "d28ff7dbee31b7024bd71a5058421d17e2a4cdb7996556b8e931b5803b815cd3",
+  "init": {
+    "claude_code_version": "2.1.221",
+    "model": "claude-opus-5",
+    "session_id": "ecc76bff-8a80-4d4c-a043-688940124319",
+    "tools_count": 27
+  },
+  "kind": "cast-analysis",
+  "leading_indicators_defined": true,
+  "options": {
+    "allowed_tools": [],
+    "cwd": "/tmp/assurance-cast-0yv5l2es",
+    "effort": "high",
+    "max_budget_usd": 4.0,
+    "max_turns": 8,
+    "model": "claude-opus-5",
+    "setting_sources": [],
+    "timeout_s": 900
+  },
+  "oracle": "structured_output がレーン側再検証にも適合",
+  "principles_offered": 337,
+  "prompt_sha256": "7ff21cdaf7762cc76ee1c7b4ae6f16e0457b67a674d33fb64133cb6c78ec9e08",
+  "rejected_flaws": [],
+  "result_meta": {
+    "duration_api_ms": 260271,
+    "is_error": false,
+    "num_turns": 2,
+    "session_id": "ecc76bff-8a80-4d4c-a043-688940124319",
+    "subtype": "success",
+    "total_cost_usd": 0.8439794999999999,
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 39671,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 39671,
+      "cache_read_input_tokens": 15963,
+      "inference_geo": "not_available",
+      "input_tokens": 2,
+      "iterations": "list",
+      "output_tokens": 16100,
+      "server_tool_use": {
+        "web_fetch_requests": 0,
+        "web_search_requests": 0
+      },
+      "service_tier": "standard",
+      "speed": "standard"
+    }
+  },
+  "schema_sha256": "0d1643d5e16353723405302c1f6ffcf753915e2a4f27a3530e8ef9a9ee45cb46",
+  "sdk_version": "0.2.129",
+  "settled": true,
+  "status": "PASS",
+  "structured_output": {
+    "confidence": "medium",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "orchestrator は assurance/ledger/ を手掛かりとして持つが、承認済み計画と赤の記録の積（未再現の集合）を算出する読み口を持たず、REPRODUCE_RED を next_actions に挙げる経路が一行も存在しない。台帳に記録は積まれているが、正本のプロセスモデルにはその残高が入力されないため、コントローラは『残っている義務が無い』状態と区別できない。",
+        "evidence_ref": "assurance/harness/orchestrator.py",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "全コントロールループにフィードバック必須",
+          "control-action-requires-feedback",
+          "プロセスモデルと実状態の不整合"
+        ],
+        "why_it_seemed_adequate": "台帳は書き込み先としては完備しており、記録が残っていること自体が追跡可能性の担保に見えた。読む側の経路は、記録が存在すれば後から誰か（または別の段）が拾えるという前提の下で、独立に足す必要のない作業と見なされていた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "FORMALIZE は判定（APPROVE）が付いたことを消化として数える。承認は次段の義務を発生させる事象であるにもかかわらず、承認の直後に遷移先の実行を要求する制御動作が生成されない。結果として、義務の発生と義務の閉鎖が同じ一つの記録で同時に成立してしまう。",
+        "evidence_ref": "assurance/ledger/formalize/2026-08-09.json",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "accidents-from-inadequate-constraint-enforcement",
+          "audit-findings-must-be-closed",
+          "指摘欠点の是正完了追跡"
+        ],
+        "why_it_seemed_adequate": "判定が付くことは段としての作業完了であり、判定の記録を消化と数えるのは各段を局所的に見れば整合していた。段ごとに完了条件を閉じる設計は、進行を単純に保つうえで妥当な判断に見えた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "LEDGER_KINDS の red/ は read_by を伴わない種別として定義され、実際に積まれた 16 件はすべて INC・ADR を対象としており、scenario id との積は空だった。『赤の台帳がある』という構造上の外形と、『承認済み scenario の再現が記録されている』という想定された内容が食い違っており、その食い違いを検める段が正本側に無い。",
+        "evidence_ref": "独立再監査 2026-08-09 Phase A（red/ 16 件と scenario id の積が空）",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "宣言された設計と実動作の突合",
+          "公式設計と実動作の二重評価",
+          "設計上と実際の伝達経路の照合"
+        ],
+        "why_it_seemed_adequate": "red/ という種別が存在し件数も 0 でないため、外形からは赤の記録が機能しているように読めた。種別ごとに対象の型を照合する規則は、当時どの段の責務としても割り当てられていなかった。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者に届く手掛かり（進捗報告・台帳・PR の diff）では、APPROVE 30 件が進捗の量として現れ、その 30 件が未実行の債務であることは現れない。所有者のプロセスモデルには『30 件処理済み』が映り、実状態である『30 件の義務が未着手』とは逆向きになる。安全上の残高が業務上の進捗に丸め込まれ、識別不能になっている。",
+        "evidence_ref": "assurance/ledger/formalize/2026-08-09.json",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "リスク情報の不透明な集約禁止",
+          "controller-needs-concrete-feedback-channels",
+          "先行指標の妥当性・代理指標の禁止"
+        ],
+        "why_it_seemed_adequate": "判定件数は最も入手しやすく形式も安定した進捗量であり、報告の指標として自然だった。既知の穴として『報告が意図を書いても人からは見分けにくい』ことは認識されていたが、その穴は文章の書き方の問題として理解されており、件数という数値の側にも同じ穴があるとは見えていなかった。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "CI は merge 前に赤で止める権限を持つが、承認済み義務の滞留を赤にする判定材料を持たない。名指しの二分と優先順の表の整合という規則は試験の側（test_approved_plan_pressure.py）だけが保持しており、正本の validate は同じ規則を持っていなかった。したがって、規則を持つ試験が書かれるまで、この不整合は CI にとって存在しない事象だった。",
+        "evidence_ref": "assurance/tests/test_approved_plan_pressure.py",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "監査の検出力評価",
+          "検出失敗の原因調査",
+          "監査のすり抜け時に監査手順を是正"
+        ],
+        "why_it_seemed_adequate": "整合の検査を試験に置くことは通常の分担であり、試験が緑であれば構造も整合しているように読める。規則が試験の側にしか無いことは、規則が二重に書かれていない綺麗な状態としても解釈できた。"
+      },
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "『全件監査』は統治木（doctrine_docs 配下）を全件走査するものであり、assurance/ledger/ の未消化残高は走査対象に入らない。名称と要約の形式は網羅を示唆するが、保証レーンの帳簿はその境界の外にある。結果、統治木が緑である状態と台帳に 30 件が滞留する状態が矛盾なく同時に成立した。",
+        "evidence_ref": ".claude/.cache/last-audit.json（走査対象は統治木）",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "do-not-start-too-narrow",
+          "全体健全性と部分健全性の分離評価",
+          "監視責任の空白排除"
+        ],
+        "why_it_seemed_adequate": "監査は統治文書の整合を守る器として設計されており、台帳は別レーンの管理物として扱うのが責務分離として自然だった。二つが別々に健全であれば全体も健全だという前提が置かれていた。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "ADR-115（手で選ばない規律）と ADR-120（REPRODUCE_RED を名指しされない状態に置く）は、それぞれ単独では筋の通った決定である。しかし両者が同時に効くと、名指しされない状態は自動選択の母集団から外れ、かつ人が補うことも規律で禁じられるため、義務が二重に不可視になる。二つの決定の積を検める段は統治木のどこにも置かれていない。",
+        "evidence_ref": "ADR-115 / ADR-120（doctrine_docs 配下）",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "共通の体系的要因による多重防護の無効化",
+          "verify-decomposition-assumptions",
+          "control-both-behavior-and-interaction"
+        ],
+        "why_it_seemed_adequate": "手で選ばない規律は恣意的な選択を排除する強化策として、名指ししない状態の設定は状態集合を小さく保つ整理として、それぞれ独立に安全側の変更に見えた。決定どうしの相互作用を評価する手順が無かったため、積を見る機会自体が発生しなかった。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "『走らせ手（実行経路）を足したのに、正本が読む段を足さなかった』という同型が INC-012・INC-015 に続いて三度目である。過去二件の是正は個々の読み口を足すところで閉じており、同型が再び作られうる構造（実行経路の追加と読み口の追加が別作業で、前者だけで通る）は変更されていない。同型の再発を発生前に検出する仕組みが統制側に無い。",
+        "evidence_ref": "INC-012 / INC-015 / INC-033 の同型",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "symptom-vs-systemic-cause",
+          "systemic-cause-across-all-events",
+          "教訓の反映手順の確立"
+        ],
+        "why_it_seemed_adequate": "過去二件はいずれも具体的な読み口の欠落として現れ、その読み口を足せば当該事象は解消した。症状が解消した以上、是正は完了したものとして扱うのが自然であり、同じ形が三度目に現れる可能性は、二件目の時点ではまだ型として抽出できていなかった。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "手で選ばない規律の採用により、それまで人が担っていた『帳簿を見て残っているものを拾う』というコントロールが自動選択へ移されたが、自動化後の側にその機能（母集団の網羅性を検める段）が実装されなかった。自動化の際に既存のコントロールを引き継ぐ確認が、移行時の要件として置かれていない。",
+        "evidence_ref": "ADR-115 / assurance/harness/orchestrator.py",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "自動化時の既存安全コントロール継承",
+          "責任の空白は構造再設計",
+          "change-system-to-change-behavior"
+        ],
+        "why_it_seemed_adequate": "自動選択は恣意性の排除という明確な利得を持ち、決定論であること自体が網羅性を含意するように見えた。人が拾っていた振る舞いは規律違反として排除すべき対象に分類されたため、引き継ぐべき機能としては認識されなかった。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "ADR-148 による是正は書かれているが、優先順の表への配置（ATTACK_EVALUATOR の後・FORMALIZE の前）は ADR-131 決定2 により所有者裁定を要し、裁定が出るまで merge されない。この間、未消化の 30 件は正本から名指しされない状態に留まる。是正の実施状況と滞留残高を裁定待ちの間も所有者に見せ続ける経路は用意されていない。",
+        "evidence_ref": "next_step（ADR-131 決定2 による所有者裁定待ち）",
+        "flaw_type": "制御動作が遅い",
+        "normative_refs": [
+          "是正措置の責任割当と追跡",
+          "安全と納期の対立裁定手順",
+          "推奨事項の責任割当実施検査フィードバック"
+        ],
+        "why_it_seemed_adequate": "優先順の配置は他の全段の実行順序に影響するため、所有者判断へ留保するのは統制設計として妥当である。留保そのものは正しく、欠けているのは留保中の残高を可視に保つ手当ての方である。"
+      }
+    ],
+    "hazard": "自らの統制下にあるシステム状態として：次の行動を決定論で選ぶ正本（orchestrator の next_actions と status 要約）の視野に、承認済みで未消化の義務が一件も入らない状態。手で選ばない規律の下では、正本が名指ししない対象は選択の母集団から外れるため、この状態が続く限り義務は原理的に選ばれない。",
+    "incident_id": "INC-033-approved-plans-have-no-canonical-pressure",
+    "leading_indicators": [
+      {
+        "indicator": "承認済みだが赤も再現不能記録も対応しない計画の件数（未消化残高）",
+        "observable": "formalize の APPROVE 集合と red/ の scenario id 集合の差集合の大きさ",
+        "threshold": "1 件でも 2 回連続の next_actions 生成をまたいで残れば異常。残高が前回観測より増加したら即時に扱う",
+        "version_independent": true,
+        "where": "orchestrator の status 要約および next_actions（ADR-148 の unreproduced_plans 読み口）",
+        "why_version_independent": "リポジトリ正本の台帳ファイルだけで算定でき、利用者環境の導入複製の版に依存しない"
+      },
+      {
+        "indicator": "読み口を持たない台帳種別の数",
+        "observable": "LEDGER_KINDS の各種別に read_by が定義され、かつその読み口が orchestrator から実際に呼ばれている本数",
+        "threshold": "read_by を持たない種別、または read_by は宣言されているが呼び出し本数が 0 の種別が 1 つでもあれば赤",
+        "version_independent": true,
+        "where": "validate（assurance/harness/ の静的検査）",
+        "why_version_independent": "リポジトリ側の定義と呼び出しの静的照合のみで判定する"
+      },
+      {
+        "indicator": "状態集合・名指しの二分・優先順の表の三者の差集合",
+        "observable": "orchestrator が next_actions に挙げうる状態、名指し可能と宣言された状態、優先順表に配置された状態の三集合の対称差",
+        "threshold": "対称差が非空なら赤。差の要素名を必ず出力する",
+        "version_independent": true,
+        "where": "validate（従来は試験側だけが持っていた規則を正本へ移した後の検査点）",
+        "why_version_independent": "正本の定義同士の照合であり導入複製を参照しない"
+      },
+      {
+        "indicator": "承認から次段の記録が付くまでの滞留の最大値",
+        "observable": "各 APPROVE の日付と、対応する赤／再現不能記録の日付の差の最大値（未記録は現在日で算定）",
+        "threshold": "最大値が 2 セッション相当を超えたら異常。中央値ではなく最大値で判定する（中央値は少数の滞留を隠す）",
+        "version_independent": true,
+        "where": "assurance/ledger/（formalize と red/ の突合）",
+        "why_version_independent": "台帳の日付のみで算定できる"
+      },
+      {
+        "indicator": "実行経路の追加に読み口の追加が伴わない変更の件数",
+        "observable": "PR の diff で新しい状態・実行経路・台帳種別が追加された際に、同一 diff 内に正本側の読み口（next_actions もしくは status 要約への配線）の追加が含まれているか",
+        "threshold": "伴っていない diff が 1 件でもあれば赤で止める。これが INC-012・INC-015・INC-033 に共通する型そのものの先行検出点である",
+        "version_independent": true,
+        "where": "CI_RELEASE_CHECK（release-check ジョブ）",
+        "why_version_independent": "リポジトリ正本の diff に対する検査であり、利用者環境へ配られた複製の版と無関係"
+      },
+      {
+        "indicator": "台帳残高に由来する監査 findings の有無",
+        "observable": "last-audit.json の findings に、統治木以外（保証台帳）を出所とする項目が含まれているか",
+        "threshold": "台帳を走査対象に含めた後、台帳由来の findings が構造上一件も生じ得ない状態（走査対象に台帳が入っていない状態）が続けば、監査の範囲欠落として扱う",
+        "version_independent": false,
+        "where": ".claude/.cache/last-audit.json および docs-audit の走査対象定義",
+        "why_version_independent": "docs-audit と last-audit.json は導入複製の側で動くため、複製の版が遅れると走査範囲の更新も遅れ、範囲が広がったつもりで実際は旧範囲のまま走り続ける。HEARTBEAT による古び警告も同じ複製上で動くため、同一の共通原因（INC-005）で同時に遅れる"
+      },
+      {
+        "indicator": "消化と認める条件の定義が『判定が付いた』形になっている段の数",
+        "observable": "各段の完了条件が、判定の記録のみで閉じるか、遷移先の記録の存在を要求するかの分類",
+        "threshold": "判定のみで閉じる段が 1 つでも残っていれば、その段名を出力して所有者判断へ回す",
+        "version_independent": true,
+        "where": "validate（段の定義に対する静的検査）および統治木の該当 ADR",
+        "why_version_independent": "正本の段定義に対する検査であり導入複製を参照しない"
+      }
+    ],
+    "loss": "承認された検証計画 30 件分の義務が、承認が付いた時点から実行されないまま滞留し、保証キャンペーンが「30 件を処理した」という外形を保ったまま、対応する再現（赤）も再現不能の記録も存在しない状態で進行した。買われた検証が、買われた事実だけを残して実施されない。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "対応表の差集合が空であること。差集合が非空なら仮説は支持され、要素名がそのまま次の作業になる",
+        "hypothesis": "REPRODUCE_RED 以外にも、正本の読み口を持たない状態・台帳種別が残っている",
+        "oracle": "状態集合・台帳種別の全体と、orchestrator の読み口および next_actions への配線の全対応表を作り、読まれない要素が 0 であることを validate が示す",
+        "severity": "P0"
+      },
+      {
+        "falsification_signal": "差分が空であること",
+        "hypothesis": "正本の validate に無く試験側だけが保持している整合規則が、今回の一件以外にも存在する",
+        "oracle": "assurance/tests/ の assert 群が表現する不変条件と、validate が検める不変条件の差分を列挙する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "判定のみで閉じる段が FORMALIZE ただ一つであること",
+        "hypothesis": "『判定が付いたことを消化と数える』形の段が、FORMALIZE 以外にも存在する",
+        "oracle": "各段の完了条件を、判定のみで閉じる型と遷移先の記録を要求する型に分類する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "台帳を出所とする findings が既に発生していること",
+        "hypothesis": "統治木が緑で保証台帳が滞留する状態は恒常的に成立しうる（監査の範囲空白が構造的である）",
+        "oracle": "last-audit.json の findings の出所を分類し、台帳を出所とする項目が構造上生じうるかを走査対象定義から確認する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "積を取っても視野から外れる対象が生じない組合せしか存在しないこと",
+        "hypothesis": "個別には妥当な二つの ADR の積が視野の穴を作る組合せが、ADR-115×ADR-120 以外にも存在する",
+        "oracle": "『対象を名指ししない／範囲を狭める』決定と『自動選択・人手を禁じる』決定を統治木から抽出し、その積を列挙して視野に入らない対象を洗う",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "複製の版差が常に 0 世代であること",
+        "hypothesis": "導入複製側で動く検出器（heartbeat・docs-audit）に載せた新しい検査は、版遅れによって導入直後から実効を持たない期間を持つ",
+        "oracle": "リポジトリ正本の版と、利用者環境の複製の版の差を、新しい検査の導入日から追跡する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "formalize 以外の全種別で差が 0 であること",
+        "hypothesis": "未消化残高は他のレーン（承認と実行が分かれる全ての箇所）にも存在し、30 件は総量の一部にすぎない",
+        "oracle": "台帳の全種別について、発生した義務と閉じた義務の差を種別ごとに集計する",
+        "severity": "P1"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "台帳の全種別に read_by を必須とし、読み口を持たない種別、または宣言はあるが呼び出しが 0 本の種別の存在を validate が赤にする。ADR-148 が red/ に対して行った修正を、種別一般の不変条件へ一般化する。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "消化の定義を『判定が付いた』から『遷移先の義務が記録された』へ移す。承認は債務の発生であって消化ではないことを段の完了条件の水準で表現し、判定のみで閉じる段が他に残っていないかを validate で列挙する。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "未消化残高（承認済みかつ赤も再現不能記録も無い件数）を status 要約と next_actions の双方へ常時掲出し、0 でない限りキャンペーンを閉じられないようにする。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "新しい状態・実行経路・台帳種別を追加する diff に、正本側の読み口の追加が同一 diff 内で伴っているかを release-check で検める。これが INC-012・INC-015・INC-033 の同型そのものに対する検出点である。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "試験側だけが保持している整合規則を洗い出し、正本の validate へ移す。移した後も試験は残してよいが、規則の唯一の所在が試験である状態を無くす。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "INC-012・INC-015・INC-033 を『走らせ手を足したが正本が読む段を足さなかった』という一つの体系的要因として統治木に記録し、次回以降の変更レビューで参照される検査項目に変換する。記録の蓄積だけで終わらせず、参照される場所（release-check の項目）まで配線する。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "docs-audit の走査対象に保証台帳の残高を含めるか、台帳専用の全件走査を別に置くかを決める。ただし導入複製側で動く器に載せると版遅れの共通原因を継承するため、リポジトリ正本側（CI）に置くことを推奨する。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "優先順の表への REPRODUCE_RED の配置（ATTACK_EVALUATOR の後・FORMALIZE の前）を裁定する。ADR-131 決定2 により所有者判断であり、裁定を得るまで merge しない。裁定待ちの間も未消化残高が所有者の手掛かりに現れ続けるようにする。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "ADR-139 に基づく独立検証を実施し、ADR-148 の読み口が実際に next_actions の出力を変えることを観測するまで fixed とみなさない。検証は実施者自身ではなく独立した経路から行う。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "未消化の 30 件そのものを消化する経路を立て、消化の進行を残高の減少として観測する。正本が名指しするようになったことと、義務が実際に果たされたことを別々に扱う。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "独立再監査が今回この積を測った経緯（定めた検査項目か、その回の裁量か）を確認し、裁量であったなら定型の検査項目として登録する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "判定の記録（APPROVE の件数）が進捗の代理指標として用いられている。代理指標は入手しやすく安定しているが、守られるべき制約（承認された計画に対応する赤または理由つきの再現不能記録が存在すること）とは因果的に結びついていない。",
+      "『実行経路を足す』作業と『正本が読む段を足す』作業が分離しており、前者だけで変更が通る。INC-012・INC-015・INC-033 に共通する型であり、個々の読み口を足す是正では構造が変わらない。",
+      "整合を検める規則の所在が試験側に偏り、正本の validate に無い。規則が試験という可搬な場所にしか無いと、試験が書かれるまで不整合は体系にとって存在せず、試験が消えれば規則も消える。",
+      "評価者が同系 model であるという既知の共通原因により、レーンの内側からは自らの視野の穴が見えない。今回も独立再監査という外側の経路が初めて積を実測した。",
+      "自動選択（手で選ばない規律）の採用時に、人が担っていた『帳簿を見て残りを拾う』機能が自動化側へ引き継がれなかった。自動化は恣意性を除くが、母集団の網羅性を自動的には保証しない。",
+      "監査・検出の主要な器（docs-audit、heartbeat）が統治木と導入複製の版を対象としており、保証台帳の残高はどの全件走査の対象範囲にも入っていない。範囲の空白は、各器が個別には正しく動いている限り現れない。",
+      "個別に妥当な決定（ADR-115 と ADR-120）の積が穴を作る形になっており、決定どうしの相互作用を評価する段が統治木に置かれていない。"
+    ],
+    "unknowns": [
+      "【実在の未確認】事象が名指しする FORMALIZE・REPRODUCE_RED・ADR-120・ADR-148・ADR-115・ADR-131・ADR-139・ATTACK_EVALUATOR は、与えられた統制構造の要素として単独では現れない。本分析はこれらを ASSURANCE_LANE（assurance/harness/orchestrator.py）の内部状態および GOVERNANCE_TREE（doctrine_docs 配下）の文書として在ると推定し、その推定の上に統制欠陥を組み立てている。親となる要素（orchestrator と台帳、統治木）は構造上実在するが、名指しされた個々の段・ADR の実在は本入力からは確認していない。この推定が誤りであれば、下記の欠陥のうち段や ADR に依存する記述は再検討を要する。confidence を medium に留めたのはこの理由による。",
+      "30 件の APPROVE が単一の scenario 母集団に属するのか、撤回・重複・再承認を含むのかが入力から判らない。含む場合、実際の未消化残高は 30 と異なる。",
+      "red/ の 16 件が INC・ADR を対象としていたのは、当初からそういう設計だったのか、scenario を対象にする用途が後から流用で失われたのかが判らない。前者なら欠陥は種別の設計、後者なら経時的な意味の漂流であり、必要な是正が異なる。",
+      "ADR-148 が足した読み口が実際に next_actions の出力を変えるかは未観測である（ADR-139 の独立検証が未実施のため fixed:true とされていない）。是正の有効性は現時点で証拠を持たない。",
+      "INC-012・INC-015 の是正が今回の同型を止められなかった理由が入力から判らない。是正が当該事象の読み口だけを足す形で閉じたのか、型としての検査は置かれたが適用範囲が狭かったのかを区別できていない。",
+      "所有者が APPROVE 件数を実際に進捗として読み取っていたかは未確認であり、手掛かりの形状からの推定に留まる。所有者側のプロセスモデルの実際は、本人への確認によってのみ判る。",
+      "優先順の表で REPRODUCE_RED をどこに置くのが妥当か（ATTACK_EVALUATOR の後・FORMALIZE の前という提案の是非）は所有者裁定の対象であり、本分析では判断しない。",
+      "独立再監査が今回この積を測ったのは、あらかじめ定めた検査項目によるものか、その回の裁量によるものかが判らない。後者であれば、次回同じ観測が行われる保証は無い。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は「判定が付いたか」を見る形で構成されており、「判定が付いた後に何が起きるべきか」を見る形にはなっていなかった。CI は正本の試験が赤になったときに止めるが、承認済み義務の滞留は試験の赤にならない量である。docs-audit は統治木の文書を全件走査するが台帳の残高は境界の外にあり、統治木が緑であることと台帳に 30 件が積み残ることは矛盾なく両立した。名指しの二分と優先順の表の整合という規則は試験の側だけが保持しており、正本の validate は同じ規則を持たなかったため、規則を書いた試験が存在しない限り不整合は体系にとって存在しない事象だった。加えて、消化の判定に用いる量（APPROVE 件数）と、実際に守られるべき制約（承認された計画に赤または理由つきの再現不能記録が対応すること）が別物であり、前者だけが観測経路に載っていた。結果、この事象は保証レーンの内側からは観測できず、独立再監査という別経路が積を実測して初めて現れた。ADR-148 による是正が書かれた後も、独立検証（ADR-139）は未実施であり、是正が実際に next_actions を変えることはまだ観測されていない。"
+  }
+}

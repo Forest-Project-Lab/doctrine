@@ -1,0 +1,675 @@
+{
+  "accepted_flaws": [
+    {
+      "control_element_id": "CI_RELEASE_CHECK",
+      "description": "merge 前に赤で止める判定に、『文書に一つの完結した呼び出しとして書かれたスクリプト起動を、書かれたまま走らせる』観測が含まれていなかった。docs-audit の JSON は文書の構造・整合を見るが、文中の呼び出しを実行しない。したがって dep-graph.py が ADR-110 のとおり正しく（使用法の誤りを場所として飲まず終了コード2で）振る舞っていても、その正しさは案内の側の誤りを赤にしなかった。",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "手順の存在確認でなく適用確認",
+        "verify-all-hazard-preventing-systems",
+        "全体健全性と部分健全性の分離評価",
+        "信頼性と安全性の分離"
+      ],
+      "why_it_seemed_adequate": "『コードは試験で走らせ、文書は監査で読む』という分業は自明に見えた。dep-graph.py 自身の試験は緑であり、部品が仕様どおりである以上、それを案内する文も正しいと見えた。文書の誤りは読めば判る種類のものだ、という前提が置かれていた。"
+    },
+    {
+      "control_element_id": "SESSION_END_AUDIT",
+      "description": "全件監査は統治木（doctrine_docs 配下）を走査対象としており、利用者へ配られる技能文書（plugin/skills/**）と参照文書（references/provenance-rules.md）がその範囲に入るかが構造上明示されていない。結果として、最も外へ出ていく文書が全件走査の外側にある可能性を、監査結果からは区別できない。",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "scope-beyond-operating-process",
+        "do-not-start-too-narrow",
+        "分析境界の定義"
+      ],
+      "why_it_seemed_adequate": "統治の正本は doctrine_docs であり、そこを全件見れば統治は守られるという範囲設定は一貫していた。技能は『統治文書を作るための道具』であって統治文書そのものではない、という分類が自然に見えた。"
+    },
+    {
+      "control_element_id": "POST_TOOL_LINTER",
+      "description": "リンタは編集された一つの文書だけを点検する設計であり、その文書が言及する他の実体（dep-graph.py の受け口、locator が指す返り形）の実際の振る舞いを参照する手掛かりを持たない。したがって『--json は修飾子でありモードではない』という食い違いは、単一文書の点検からは原理的に見えない。",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "defects-in-information-providing-systems",
+        "プロセスモデルと実状態の不整合",
+        "monitor-procedure-practice-gap"
+      ],
+      "why_it_seemed_adequate": "編集された文書だけを見る設計は、応答を速く保ち助言の範囲を限定するための明確な選択だった。文書内で閉じた不備（欠落・書式・リンク）が主要な失敗様式だと想定されていた。"
+    },
+    {
+      "control_element_id": "PRE_TOOL_GUARD",
+      "description": "助言はリンタ、拒否はガード（WATCH-001）という分担において、『実行不能な手順を書く』という型が、助言の対象にも拒否の型にも定義されていない。両者の分担の間に空白があり、どちらの統制も自分の担当だと認識していない。",
+      "flaw_type": "統制どうしの調整の欠如",
+      "normative_refs": [
+        "監視責任の空白排除",
+        "責任の空白は構造再設計",
+        "each-component-enforces-its-constraints"
+      ],
+      "why_it_seemed_adequate": "ガードの拒否語彙は、復旧不能な削除や配布境界の侵犯といった不可逆な違反に絞られていた。文書の記述内容の妥当性は判断を要するもので、機械的な門で拒む対象ではないという線引きは合理的に見えた。"
+    },
+    {
+      "control_element_id": "OWNER",
+      "description": "所有者が配布可否を判断するために持つ手掛かりは、進捗報告・PR の diff・台帳であり、いずれも『この文書に書かれた呼び出しが実際に走るか』を示さない。diff 上では手順2 の行は妥当な一行に見え、既知の穴（報告が実施ではなく意図を書いていても人からは見分けにくい）がそのまま効いた。",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "controller-needs-concrete-feedback-channels",
+        "control-action-requires-feedback",
+        "形式承認の禁止・実質審査の証跡"
+      ],
+      "why_it_seemed_adequate": "diff と報告は、これまでの多くの変更に対して十分な判断材料を与えてきた。文書の一行を読んで意味が通る以上、追加の証拠を要求する理由がその時点では無かった。"
+    },
+    {
+      "control_element_id": "PLUGIN_DISTRIBUTION",
+      "description": "配布経路には、配布物に含まれる手順が実行可能であることを配布前に確かめる関門が無く、配布後に誤りが判明した際に既存の複製へ是正を知らせる通知の制御動作も無い。事象は fixed:false のまま v0.11.0 として利用者環境にあり、更新は利用者の操作に依存する。",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "供給要素の変更を利用者へ通知",
+        "供給者による変更の明示通知",
+        "supplier-must-communicate-analysis-assumptions"
+      ],
+      "why_it_seemed_adequate": "配布は marketplace の更新応答をもって完了とみなす設計で、正本が緑であることが配布物の品質の代理になっていた。複製側の状態を観測できないこと（INC-005）は既知の穴として受容されていた。"
+    },
+    {
+      "control_element_id": "HEARTBEAT",
+      "description": "是正が利用者へ届いたかを示す唯一の手掛かり（導入複製の版）は、複製側で動く検出器に依存する。版が遅れた複製では警告も遅れるため、『古い技能を使い続けて手順2 で止まり続けている』状態を、この統制は自力で表面化できない。",
+      "flaw_type": "統制自身の劣化を検出できない",
+      "normative_refs": [
+        "共通の体系的要因による多重防護の無効化",
+        "計画外変化の検出手段"
+      ],
+      "why_it_seemed_adequate": "版遅れの警告をターンごとに出す設計は、利用者に最も近い位置で古びを知らせる合理的な配置であり、共通原因故障は INC-005 で既に記録された残余リスクとして扱われていた。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "この欠陥は、独立再監査 Phase C で『技能に従って実際に起草させる』という随時の観測によって初めて表面化した。実際に走らせて到達するかを確かめる観測が、決定論試験の常設項目ではなく監査時の実演に依存していたため、検出は配布後になった。加えて ADR-139 の独立検証が未実施であり、是正の完了追跡が閉じていない。",
+      "flaw_type": "手掛かりが遅い",
+      "normative_refs": [
+        "audit-findings-must-be-closed",
+        "指摘欠点の是正完了追跡",
+        "監査の先行指標を確立する"
+      ],
+      "why_it_seemed_adequate": "レーンの決定論試験は正本の不変条件を守ることに最適化されており、『文書に従って実際に作業が進むか』は人手の演習で確かめる性質のものと位置づけられていた。事象を台帳へ積み分析が済むまで閉じない規律は働いている。"
+    },
+    {
+      "control_element_id": "GOVERNANCE_TREE",
+      "description": "統治木の手掛かりである dep-graph の逆依存は文書間の依存を表すが、『文書 → スクリプトの受け口』『locator の例 → 実在する返り形』という依存を表現しない。そのため provenance-rules.md の locator 例が到達不能な返り形を指していても、逆依存の走査では現れない。",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "設計文書の下流利用者充足",
+        "上位文書の利用可能性（読み手適合）",
+        "include-information-supplier-defect"
+      ],
+      "why_it_seemed_adequate": "逆依存は統治文書の改訂波及を追うために設計された手掛かりであり、その目的には十分に機能していた。文書が外部の実行可能物へ持つ依存は、依存グラフの語彙の外にあった。"
+    }
+  ],
+  "analysis": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "merge 前に赤で止める判定に、『文書に一つの完結した呼び出しとして書かれたスクリプト起動を、書かれたまま走らせる』観測が含まれていなかった。docs-audit の JSON は文書の構造・整合を見るが、文中の呼び出しを実行しない。したがって dep-graph.py が ADR-110 のとおり正しく（使用法の誤りを場所として飲まず終了コード2で）振る舞っていても、その正しさは案内の側の誤りを赤にしなかった。",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "手順の存在確認でなく適用確認",
+          "verify-all-hazard-preventing-systems",
+          "全体健全性と部分健全性の分離評価",
+          "信頼性と安全性の分離"
+        ],
+        "why_it_seemed_adequate": "『コードは試験で走らせ、文書は監査で読む』という分業は自明に見えた。dep-graph.py 自身の試験は緑であり、部品が仕様どおりである以上、それを案内する文も正しいと見えた。文書の誤りは読めば判る種類のものだ、という前提が置かれていた。"
+      },
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "全件監査は統治木（doctrine_docs 配下）を走査対象としており、利用者へ配られる技能文書（plugin/skills/**）と参照文書（references/provenance-rules.md）がその範囲に入るかが構造上明示されていない。結果として、最も外へ出ていく文書が全件走査の外側にある可能性を、監査結果からは区別できない。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "scope-beyond-operating-process",
+          "do-not-start-too-narrow",
+          "分析境界の定義"
+        ],
+        "why_it_seemed_adequate": "統治の正本は doctrine_docs であり、そこを全件見れば統治は守られるという範囲設定は一貫していた。技能は『統治文書を作るための道具』であって統治文書そのものではない、という分類が自然に見えた。"
+      },
+      {
+        "control_element_id": "POST_TOOL_LINTER",
+        "description": "リンタは編集された一つの文書だけを点検する設計であり、その文書が言及する他の実体（dep-graph.py の受け口、locator が指す返り形）の実際の振る舞いを参照する手掛かりを持たない。したがって『--json は修飾子でありモードではない』という食い違いは、単一文書の点検からは原理的に見えない。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "defects-in-information-providing-systems",
+          "プロセスモデルと実状態の不整合",
+          "monitor-procedure-practice-gap"
+        ],
+        "why_it_seemed_adequate": "編集された文書だけを見る設計は、応答を速く保ち助言の範囲を限定するための明確な選択だった。文書内で閉じた不備（欠落・書式・リンク）が主要な失敗様式だと想定されていた。"
+      },
+      {
+        "control_element_id": "PRE_TOOL_GUARD",
+        "description": "助言はリンタ、拒否はガード（WATCH-001）という分担において、『実行不能な手順を書く』という型が、助言の対象にも拒否の型にも定義されていない。両者の分担の間に空白があり、どちらの統制も自分の担当だと認識していない。",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "監視責任の空白排除",
+          "責任の空白は構造再設計",
+          "each-component-enforces-its-constraints"
+        ],
+        "why_it_seemed_adequate": "ガードの拒否語彙は、復旧不能な削除や配布境界の侵犯といった不可逆な違反に絞られていた。文書の記述内容の妥当性は判断を要するもので、機械的な門で拒む対象ではないという線引きは合理的に見えた。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者が配布可否を判断するために持つ手掛かりは、進捗報告・PR の diff・台帳であり、いずれも『この文書に書かれた呼び出しが実際に走るか』を示さない。diff 上では手順2 の行は妥当な一行に見え、既知の穴（報告が実施ではなく意図を書いていても人からは見分けにくい）がそのまま効いた。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "controller-needs-concrete-feedback-channels",
+          "control-action-requires-feedback",
+          "形式承認の禁止・実質審査の証跡"
+        ],
+        "why_it_seemed_adequate": "diff と報告は、これまでの多くの変更に対して十分な判断材料を与えてきた。文書の一行を読んで意味が通る以上、追加の証拠を要求する理由がその時点では無かった。"
+      },
+      {
+        "control_element_id": "PLUGIN_DISTRIBUTION",
+        "description": "配布経路には、配布物に含まれる手順が実行可能であることを配布前に確かめる関門が無く、配布後に誤りが判明した際に既存の複製へ是正を知らせる通知の制御動作も無い。事象は fixed:false のまま v0.11.0 として利用者環境にあり、更新は利用者の操作に依存する。",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "供給要素の変更を利用者へ通知",
+          "供給者による変更の明示通知",
+          "supplier-must-communicate-analysis-assumptions"
+        ],
+        "why_it_seemed_adequate": "配布は marketplace の更新応答をもって完了とみなす設計で、正本が緑であることが配布物の品質の代理になっていた。複製側の状態を観測できないこと（INC-005）は既知の穴として受容されていた。"
+      },
+      {
+        "control_element_id": "HEARTBEAT",
+        "description": "是正が利用者へ届いたかを示す唯一の手掛かり（導入複製の版）は、複製側で動く検出器に依存する。版が遅れた複製では警告も遅れるため、『古い技能を使い続けて手順2 で止まり続けている』状態を、この統制は自力で表面化できない。",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "共通の体系的要因による多重防護の無効化",
+          "計画外変化の検出手段"
+        ],
+        "why_it_seemed_adequate": "版遅れの警告をターンごとに出す設計は、利用者に最も近い位置で古びを知らせる合理的な配置であり、共通原因故障は INC-005 で既に記録された残余リスクとして扱われていた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "この欠陥は、独立再監査 Phase C で『技能に従って実際に起草させる』という随時の観測によって初めて表面化した。実際に走らせて到達するかを確かめる観測が、決定論試験の常設項目ではなく監査時の実演に依存していたため、検出は配布後になった。加えて ADR-139 の独立検証が未実施であり、是正の完了追跡が閉じていない。",
+        "flaw_type": "手掛かりが遅い",
+        "normative_refs": [
+          "audit-findings-must-be-closed",
+          "指摘欠点の是正完了追跡",
+          "監査の先行指標を確立する"
+        ],
+        "why_it_seemed_adequate": "レーンの決定論試験は正本の不変条件を守ることに最適化されており、『文書に従って実際に作業が進むか』は人手の演習で確かめる性質のものと位置づけられていた。事象を台帳へ積み分析が済むまで閉じない規律は働いている。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "統治木の手掛かりである dep-graph の逆依存は文書間の依存を表すが、『文書 → スクリプトの受け口』『locator の例 → 実在する返り形』という依存を表現しない。そのため provenance-rules.md の locator 例が到達不能な返り形を指していても、逆依存の走査では現れない。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "設計文書の下流利用者充足",
+          "上位文書の利用可能性（読み手適合）",
+          "include-information-supplier-defect"
+        ],
+        "why_it_seemed_adequate": "逆依存は統治文書の改訂波及を追うために設計された手掛かりであり、その目的には十分に機能していた。文書が外部の実行可能物へ持つ依存は、依存グラフの語彙の外にあった。"
+      }
+    ],
+    "hazard": "「書かれたとおりに実行すると使用法の誤りになる呼び出し」を含む文書が、検証済みの配布物として配られ、利用者環境の複製に存在している状態。より一般には、配布物の文書が案内する実行経路と、同梱スクリプトの実際の受け口とが食い違ったまま配布関門を通過する状態（いずれも本統制構造がコントロールできるシステム状態）。",
+    "incident_id": "INC-031-skill-documents-a-command-that-does-not-run",
+    "leading_indicators": [
+      {
+        "indicator": "配布物の文書中で機械が拾えた『一つの完結した呼び出し』のうち、書かれたまま走らせて使用法の誤りにならなかった割合",
+        "observable": "test_skill_commands_run.py の実行結果（拾った件数／成功件数）",
+        "threshold": "成功割合が 100% を下回った時点で赤。1件でも使用法の誤り（終了コード2）を返したら配布関門を止める",
+        "version_independent": true,
+        "where": "CI（リポジトリ正本）のジョブ出力。plugin/tests/test_skill_commands_run.py",
+        "why_version_independent": "正本のリポジトリで走る試験であり、利用者環境の複製の版に依存しない"
+      },
+      {
+        "indicator": "覆いの外に置かれた呼び出しの件数（地の文の裸の言及・置換の効かない占位・実物を要するスクリプト）",
+        "observable": "試験自身が出力する『数えなかった』件数と内訳",
+        "threshold": "前回計測から件数が増えた、または新規の技能文書が除外だけを増やした場合に審査を要求する",
+        "version_independent": true,
+        "where": "CI のジョブ出力／assurance/ledger/ の該当記録",
+        "why_version_independent": "正本に対する静的な計数であり、複製の版とは無関係"
+      },
+      {
+        "indicator": "文書中の locator 例が、実在する返り形へ解決するかの検査結果",
+        "observable": "docs-audit の findings に追加する未解決 locator の件数",
+        "threshold": "未解決 locator が1件でも出たら異常として扱う",
+        "version_independent": true,
+        "where": ".claude/.cache/last-audit.json および CI の docs-audit JSON",
+        "why_version_independent": "正本の文書とスクリプトの受け口を突き合わせる検査であり、複製の版に依存しない"
+      },
+      {
+        "indicator": "技能に従った起草の到達率（手順の最後まで到達した割合）",
+        "observable": "独立再監査 Phase C 相当の再現走行で、途中停止した手順番号と件数",
+        "threshold": "途中停止が1件でも出た時点で、その技能を配布対象から外すか要修正として台帳を開いたままにする",
+        "version_independent": true,
+        "where": "assurance/ledger/ の再監査記録",
+        "why_version_independent": "正本に対して実行する演習であり、複製の版に依存しない"
+      },
+      {
+        "indicator": "利用者環境の導入複製が正本から何世代遅れているか",
+        "observable": "gov-heartbeat.py が読む導入複製の版と、claude plugin update の応答",
+        "threshold": "1世代以上の遅れが連続ターンで観測されたら、是正済みの技能が届いていない可能性ありとして扱う",
+        "version_independent": false,
+        "where": "HEARTBEAT（利用者環境側）／PLUGIN_DISTRIBUTION の更新応答",
+        "why_version_independent": "検出器自身が導入複製の側で動くため、版が遅れれば警告も遅れる（INC-005 の共通原因故障）。この指標は遅れが大きいほど効かなくなる"
+      }
+    ],
+    "loss": "配布物 v0.11.0 の技能 system-map-draft に従って doctrine のモデルを起草しようとした利用者（および起草を担うエージェント）が、手順2 で終了コード2 を受けて作業を継続できない。統治木へ入るはずのモデルが産出されず、配布された手順が利用者の目的達成に接続しない状態が、利用者環境の複製に存在したまま残っている。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "すべての呼び出しが使用法の誤り以外の終了コードで完了する",
+        "hypothesis": "覆いの外に置かれた呼び出し（実物を要するスクリプト、置換の効かない占位、地の文の裸の言及）にも、同型の使用法誤りが存在する",
+        "oracle": "実物環境を用意し、当該呼び出しを文書に書かれたまま実行して終了コードを記録する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "複製側から最新版が取得され、手順2 が完走する",
+        "hypothesis": "是正が配られても、導入複製の版が遅れている利用者では同じ停止が再現し続ける",
+        "oracle": "v0.11.0 の複製を固定した環境で技能どおり起草を進め、手順2 で止まるかを確認する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "全 locator が実在の返り形へ解決する",
+        "hypothesis": "locator の例に限らず、references 配下の例示が実在しない返り形・存在しない口を指す箇所が他にもある",
+        "oracle": "各 locator と例示を実際に解決させ、返り形が得られるかを機械で確認する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "技能以外の配布物では拾えた呼び出しがすべて完走する",
+        "hypothesis": "『文書は監査・コードは試験』の分業に由来する同型欠陥は、技能以外の配布物（コマンド定義、hooks の説明、README 相当）にも及ぶ",
+        "oracle": "配布物全体から一つの完結した呼び出しを機械で拾い、書かれたまま実行して結果を集計する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "除外件数が版をまたいで増えない",
+        "hypothesis": "覆いの境界（数えない対象）は改訂のたびに静かに広がり、覆い率の見かけを保ったまま実質の検出力が落ちる",
+        "oracle": "除外件数と内訳を版ごとに時系列で記録し、増加傾向を見る",
+        "severity": "P3"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "test_skill_commands_run.py を CI_RELEASE_CHECK の merge 前に赤で止まるジョブへ接続し、CI の対象範囲に配布物（plugin/skills/** と references/**）を明記する。接続の有無自体を台帳に記録する",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "試験が『数えなかった』呼び出しの件数と内訳を必ず出力し、除外が増えたことを異常として扱う（覆いの境界の静かな拡大を検出する）",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "docs-audit の findings に、文書中の locator 例が実在する返り形へ解決するかの検査を追加し、未解決 locator を .claude/.cache/last-audit.json に出す",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "配布技能文書の実行可能性について、どの統制要素が責任・権限・フィードバックを持つかを統制構造の仕様に明記する（現在は責任の空白）",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "fixed:false のまま v0.11.0 が利用者環境にある状態について、利用者へ明示的に警告するか、次版の配布を早めるか、当面は当該技能の使用を控えるよう案内するかを決める",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "ADR-139 の独立検証を実施し、PR #271 の是正が有効であることを実施者以外の立場から確認するまで台帳を閉じない",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "覆いの外に残る呼び出し（map-draft-check ほか）と、references 配下の例示について、同型の実行不能手順が無いかを全件測定する",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "事象が名指しする三つのファイルの実在と、SESSION_END_AUDIT の走査対象に plugin/skills/** が含まれるか否かを確認し、その結果に応じて範囲に関する統制欠陥（SESSION_END_AUDIT・GOVERNANCE_TREE）の記述を改める",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "信頼性（部品が仕様どおりに振る舞うこと）を安全（利用者が手順どおりに進んで目的へ到達できること）と同一視し、部品試験の緑を全体の健全の代理として用いていた",
+      "『文書は読む対象、コードは走らせる対象』という分業が、配布物の文書に対する実行の検証をどの統制にも割り当てなかった（責任の空白であり、重複ではない）",
+      "保証の視線が正本に集中しており、利用者環境の複製で手順が到達可能かを見る経路が構造上存在しない（CI の既知の穴・INC-005 と同じ共通原因）",
+      "文書の正しさを判定する既存の手掛かり（単一文書のリンタ、統治木の逆依存、docs-audit の findings）がいずれも文書内・統治木内で閉じており、文書から外部の実行可能物へ向かう依存を表現する語彙を持たない",
+      "検出が随時の独立再監査の実演に依存し、常設の統制になっていなかったため、検出時点が配布後にずれる構造だった",
+      "覆い（試験）の境界が試験の書き方に依存するため、数えられない領域が時間とともに静かに広がりうる"
+    ],
+    "unknowns": [
+      "【最優先】事象が名指しする plugin/skills/system-map-draft/SKILL.md・plugin/tests/test_skill_commands_run.py・plugin/scripts/dep-graph.py の実在を、この分析では確認できていない（作業ディレクトリにこれらのパスは存在しない）。また統制構造には、配布技能文書（plugin/skills/**）を担当と明記した要素が一つも無い。GOVERNANCE_TREE は doctrine_docs 配下、SESSION_END_AUDIT は統治木の全件走査であり、技能文書がその走査対象に含まれるか否かは記録からは決められない。上記の統制欠陥のうち範囲に関するもの（SESSION_END_AUDIT・GOVERNANCE_TREE）は、この未確認の範囲設定の上に組み立てられており、技能文書が実際には監査対象内であれば欠陥の所在は移動する。この理由により confidence を low とする",
+      "test_skill_commands_run.py が CI_RELEASE_CHECK のどのジョブに接続され、merge 前に実際に赤で止めるのか、それとも参考実行に留まるのかが記録から判らない。接続されていなければ、記録された是正は関門にならない",
+      "v0.11.0 を導入済みの複製が現在何世代遅れているか、PR #271 の是正が利用者へいつ届くかは、PLUGIN_DISTRIBUTION と HEARTBEAT の既知の穴により観測できない",
+      "ADR-110・ADR-116・ADR-139 の本文を参照していないため、ADR-110 が『使用法の誤りを場所として飲まない』設計を定めた経緯が技能の起草時点で起草者に届いていたか（供給側の想定が利用者側へ伝達されていたか）は未確認",
+      "同型の実行不能手順が、覆いの外に置かれた呼び出し（map-draft-check ほか実物を要するスクリプト、地の文の裸の言及、置換の効かない占位）に存在するかは未測定",
+      "配布技能文書の実行可能性について、現在どの主体が責任を負うと理解されているかを、構造の記述からは特定できない（責任の割当が文書化されていない）",
+      "手順2 で止まった起草者が、その時点で報告する経路を持っていたか（問題報告経路の可用性）は記録に無い。独立再監査で見つかるまで表面化しなかった理由が、経路の不在によるのか機会の不在によるのかを区別できない"
+    ],
+    "why_existing_assurance_missed": "既存の保証は「正本のコードが仕様どおりに振る舞うか」を軸に構成されていた。この事象では dep-graph.py は ADR-110 のとおり正しく振る舞い（使用法の誤りを場所として飲まず終了コード2を返し）、その試験は緑だった。つまり部品はすべて健全であり、健全でなかったのは部品どうしをつなぐ案内の側である。保証の構成が「部品の健全＝全体の健全」を暗黙に前提していたため、部品試験がすべて緑であることが、全体として利用者が手順どおりに目的へ到達できるかという問いの代理として使われた。あわせて「文書は読む対象・コードは走らせる対象」という分業により、配布物の文書に対して『書かれたまま走るか』を確かめる責任がどの統制にも割り当てられておらず（リンタは単一文書、ガードは不可逆な違反、監査は統治木、CI は正本のジョブ、所有者は diff）、責任の空白が生じていた。修正（PR #271）は例ではなく軸で凍結し、元の欠陥を戻して赤くなることまで実測している点で症状止まりではないが、覆いの境界（地の文の裸の言及・置換不能な占位・実物を要するスクリプト）は残っており、また ADR-139 の独立検証が未実施であるため、是正の有効性はまだ独立には確認されていない。"
+  },
+  "control_structure_ids": [
+    "OWNER",
+    "CI_RELEASE_CHECK",
+    "SESSION_START_CONTRACT",
+    "HEARTBEAT",
+    "PRE_TOOL_GUARD",
+    "POST_TOOL_LINTER",
+    "SESSION_END_AUDIT",
+    "CAPTURE_NUDGE",
+    "PLUGIN_DISTRIBUTION",
+    "ASSURANCE_LANE",
+    "GOVERNANCE_TREE"
+  ],
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "duration_ms": 242045,
+  "errors": [],
+  "execution_kind": "real-sdk",
+  "flaws_with_citation_defect": [],
+  "generated_at": "2026-08-09T21:40:17Z",
+  "git_dirty": true,
+  "git_sha": "f0d4e8ed5d06975fe0de5822f58c74f7ae5a7226",
+  "incident_evidence": {
+    "kind": "measurement",
+    "refs": [
+      "plugin/skills/system-map-draft/SKILL.md",
+      "plugin/tests/test_skill_commands_run.py",
+      "plugin/scripts/dep-graph.py"
+    ],
+    "resolved": [
+      "plugin/skills/system-map-draft/SKILL.md",
+      "plugin/tests/test_skill_commands_run.py",
+      "plugin/scripts/dep-graph.py"
+    ],
+    "unresolved": [],
+    "verifiable": true
+  },
+  "incident_id": "INC-031-skill-documents-a-command-that-does-not-run",
+  "incident_sha256": "08299f53883f86065fad12f93b2dd9fc4dc03db92776041269e76730688f8ef9",
+  "init": {
+    "claude_code_version": "2.1.221",
+    "model": "claude-opus-5",
+    "session_id": "0f41b707-774a-4294-a776-a7aa7c3049f2",
+    "tools_count": 27
+  },
+  "kind": "cast-analysis",
+  "leading_indicators_defined": true,
+  "options": {
+    "allowed_tools": [],
+    "cwd": "/tmp/assurance-cast-dvdrqz2s",
+    "effort": "high",
+    "max_budget_usd": 4.0,
+    "max_turns": 8,
+    "model": "claude-opus-5",
+    "setting_sources": [],
+    "timeout_s": 900
+  },
+  "oracle": "structured_output がレーン側再検証にも適合",
+  "principles_offered": 337,
+  "prompt_sha256": "0b010c4b4516b4850df6d2d4aec4a1a8db23456c3b4638104c110880c3ef45a0",
+  "rejected_flaws": [],
+  "result_meta": {
+    "duration_api_ms": 235408,
+    "is_error": false,
+    "num_turns": 3,
+    "session_id": "0f41b707-774a-4294-a776-a7aa7c3049f2",
+    "subtype": "success",
+    "total_cost_usd": 1.044461,
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 62154,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 62154,
+      "cache_read_input_tokens": 55570,
+      "inference_geo": "not_available",
+      "input_tokens": 4,
+      "iterations": "list",
+      "output_tokens": 14334,
+      "server_tool_use": {
+        "web_fetch_requests": 0,
+        "web_search_requests": 0
+      },
+      "service_tier": "standard",
+      "speed": "standard"
+    }
+  },
+  "schema_sha256": "0d1643d5e16353723405302c1f6ffcf753915e2a4f27a3530e8ef9a9ee45cb46",
+  "sdk_version": "0.2.129",
+  "settled": true,
+  "status": "PASS",
+  "structured_output": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "merge 前に赤で止める判定に、『文書に一つの完結した呼び出しとして書かれたスクリプト起動を、書かれたまま走らせる』観測が含まれていなかった。docs-audit の JSON は文書の構造・整合を見るが、文中の呼び出しを実行しない。したがって dep-graph.py が ADR-110 のとおり正しく（使用法の誤りを場所として飲まず終了コード2で）振る舞っていても、その正しさは案内の側の誤りを赤にしなかった。",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "手順の存在確認でなく適用確認",
+          "verify-all-hazard-preventing-systems",
+          "全体健全性と部分健全性の分離評価",
+          "信頼性と安全性の分離"
+        ],
+        "why_it_seemed_adequate": "『コードは試験で走らせ、文書は監査で読む』という分業は自明に見えた。dep-graph.py 自身の試験は緑であり、部品が仕様どおりである以上、それを案内する文も正しいと見えた。文書の誤りは読めば判る種類のものだ、という前提が置かれていた。"
+      },
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "全件監査は統治木（doctrine_docs 配下）を走査対象としており、利用者へ配られる技能文書（plugin/skills/**）と参照文書（references/provenance-rules.md）がその範囲に入るかが構造上明示されていない。結果として、最も外へ出ていく文書が全件走査の外側にある可能性を、監査結果からは区別できない。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "scope-beyond-operating-process",
+          "do-not-start-too-narrow",
+          "分析境界の定義"
+        ],
+        "why_it_seemed_adequate": "統治の正本は doctrine_docs であり、そこを全件見れば統治は守られるという範囲設定は一貫していた。技能は『統治文書を作るための道具』であって統治文書そのものではない、という分類が自然に見えた。"
+      },
+      {
+        "control_element_id": "POST_TOOL_LINTER",
+        "description": "リンタは編集された一つの文書だけを点検する設計であり、その文書が言及する他の実体（dep-graph.py の受け口、locator が指す返り形）の実際の振る舞いを参照する手掛かりを持たない。したがって『--json は修飾子でありモードではない』という食い違いは、単一文書の点検からは原理的に見えない。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "defects-in-information-providing-systems",
+          "プロセスモデルと実状態の不整合",
+          "monitor-procedure-practice-gap"
+        ],
+        "why_it_seemed_adequate": "編集された文書だけを見る設計は、応答を速く保ち助言の範囲を限定するための明確な選択だった。文書内で閉じた不備（欠落・書式・リンク）が主要な失敗様式だと想定されていた。"
+      },
+      {
+        "control_element_id": "PRE_TOOL_GUARD",
+        "description": "助言はリンタ、拒否はガード（WATCH-001）という分担において、『実行不能な手順を書く』という型が、助言の対象にも拒否の型にも定義されていない。両者の分担の間に空白があり、どちらの統制も自分の担当だと認識していない。",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "監視責任の空白排除",
+          "責任の空白は構造再設計",
+          "each-component-enforces-its-constraints"
+        ],
+        "why_it_seemed_adequate": "ガードの拒否語彙は、復旧不能な削除や配布境界の侵犯といった不可逆な違反に絞られていた。文書の記述内容の妥当性は判断を要するもので、機械的な門で拒む対象ではないという線引きは合理的に見えた。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者が配布可否を判断するために持つ手掛かりは、進捗報告・PR の diff・台帳であり、いずれも『この文書に書かれた呼び出しが実際に走るか』を示さない。diff 上では手順2 の行は妥当な一行に見え、既知の穴（報告が実施ではなく意図を書いていても人からは見分けにくい）がそのまま効いた。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "controller-needs-concrete-feedback-channels",
+          "control-action-requires-feedback",
+          "形式承認の禁止・実質審査の証跡"
+        ],
+        "why_it_seemed_adequate": "diff と報告は、これまでの多くの変更に対して十分な判断材料を与えてきた。文書の一行を読んで意味が通る以上、追加の証拠を要求する理由がその時点では無かった。"
+      },
+      {
+        "control_element_id": "PLUGIN_DISTRIBUTION",
+        "description": "配布経路には、配布物に含まれる手順が実行可能であることを配布前に確かめる関門が無く、配布後に誤りが判明した際に既存の複製へ是正を知らせる通知の制御動作も無い。事象は fixed:false のまま v0.11.0 として利用者環境にあり、更新は利用者の操作に依存する。",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "供給要素の変更を利用者へ通知",
+          "供給者による変更の明示通知",
+          "supplier-must-communicate-analysis-assumptions"
+        ],
+        "why_it_seemed_adequate": "配布は marketplace の更新応答をもって完了とみなす設計で、正本が緑であることが配布物の品質の代理になっていた。複製側の状態を観測できないこと（INC-005）は既知の穴として受容されていた。"
+      },
+      {
+        "control_element_id": "HEARTBEAT",
+        "description": "是正が利用者へ届いたかを示す唯一の手掛かり（導入複製の版）は、複製側で動く検出器に依存する。版が遅れた複製では警告も遅れるため、『古い技能を使い続けて手順2 で止まり続けている』状態を、この統制は自力で表面化できない。",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "共通の体系的要因による多重防護の無効化",
+          "計画外変化の検出手段"
+        ],
+        "why_it_seemed_adequate": "版遅れの警告をターンごとに出す設計は、利用者に最も近い位置で古びを知らせる合理的な配置であり、共通原因故障は INC-005 で既に記録された残余リスクとして扱われていた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "この欠陥は、独立再監査 Phase C で『技能に従って実際に起草させる』という随時の観測によって初めて表面化した。実際に走らせて到達するかを確かめる観測が、決定論試験の常設項目ではなく監査時の実演に依存していたため、検出は配布後になった。加えて ADR-139 の独立検証が未実施であり、是正の完了追跡が閉じていない。",
+        "flaw_type": "手掛かりが遅い",
+        "normative_refs": [
+          "audit-findings-must-be-closed",
+          "指摘欠点の是正完了追跡",
+          "監査の先行指標を確立する"
+        ],
+        "why_it_seemed_adequate": "レーンの決定論試験は正本の不変条件を守ることに最適化されており、『文書に従って実際に作業が進むか』は人手の演習で確かめる性質のものと位置づけられていた。事象を台帳へ積み分析が済むまで閉じない規律は働いている。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "統治木の手掛かりである dep-graph の逆依存は文書間の依存を表すが、『文書 → スクリプトの受け口』『locator の例 → 実在する返り形』という依存を表現しない。そのため provenance-rules.md の locator 例が到達不能な返り形を指していても、逆依存の走査では現れない。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "設計文書の下流利用者充足",
+          "上位文書の利用可能性（読み手適合）",
+          "include-information-supplier-defect"
+        ],
+        "why_it_seemed_adequate": "逆依存は統治文書の改訂波及を追うために設計された手掛かりであり、その目的には十分に機能していた。文書が外部の実行可能物へ持つ依存は、依存グラフの語彙の外にあった。"
+      }
+    ],
+    "hazard": "「書かれたとおりに実行すると使用法の誤りになる呼び出し」を含む文書が、検証済みの配布物として配られ、利用者環境の複製に存在している状態。より一般には、配布物の文書が案内する実行経路と、同梱スクリプトの実際の受け口とが食い違ったまま配布関門を通過する状態（いずれも本統制構造がコントロールできるシステム状態）。",
+    "incident_id": "INC-031-skill-documents-a-command-that-does-not-run",
+    "leading_indicators": [
+      {
+        "indicator": "配布物の文書中で機械が拾えた『一つの完結した呼び出し』のうち、書かれたまま走らせて使用法の誤りにならなかった割合",
+        "observable": "test_skill_commands_run.py の実行結果（拾った件数／成功件数）",
+        "threshold": "成功割合が 100% を下回った時点で赤。1件でも使用法の誤り（終了コード2）を返したら配布関門を止める",
+        "version_independent": true,
+        "where": "CI（リポジトリ正本）のジョブ出力。plugin/tests/test_skill_commands_run.py",
+        "why_version_independent": "正本のリポジトリで走る試験であり、利用者環境の複製の版に依存しない"
+      },
+      {
+        "indicator": "覆いの外に置かれた呼び出しの件数（地の文の裸の言及・置換の効かない占位・実物を要するスクリプト）",
+        "observable": "試験自身が出力する『数えなかった』件数と内訳",
+        "threshold": "前回計測から件数が増えた、または新規の技能文書が除外だけを増やした場合に審査を要求する",
+        "version_independent": true,
+        "where": "CI のジョブ出力／assurance/ledger/ の該当記録",
+        "why_version_independent": "正本に対する静的な計数であり、複製の版とは無関係"
+      },
+      {
+        "indicator": "文書中の locator 例が、実在する返り形へ解決するかの検査結果",
+        "observable": "docs-audit の findings に追加する未解決 locator の件数",
+        "threshold": "未解決 locator が1件でも出たら異常として扱う",
+        "version_independent": true,
+        "where": ".claude/.cache/last-audit.json および CI の docs-audit JSON",
+        "why_version_independent": "正本の文書とスクリプトの受け口を突き合わせる検査であり、複製の版に依存しない"
+      },
+      {
+        "indicator": "技能に従った起草の到達率（手順の最後まで到達した割合）",
+        "observable": "独立再監査 Phase C 相当の再現走行で、途中停止した手順番号と件数",
+        "threshold": "途中停止が1件でも出た時点で、その技能を配布対象から外すか要修正として台帳を開いたままにする",
+        "version_independent": true,
+        "where": "assurance/ledger/ の再監査記録",
+        "why_version_independent": "正本に対して実行する演習であり、複製の版に依存しない"
+      },
+      {
+        "indicator": "利用者環境の導入複製が正本から何世代遅れているか",
+        "observable": "gov-heartbeat.py が読む導入複製の版と、claude plugin update の応答",
+        "threshold": "1世代以上の遅れが連続ターンで観測されたら、是正済みの技能が届いていない可能性ありとして扱う",
+        "version_independent": false,
+        "where": "HEARTBEAT（利用者環境側）／PLUGIN_DISTRIBUTION の更新応答",
+        "why_version_independent": "検出器自身が導入複製の側で動くため、版が遅れれば警告も遅れる（INC-005 の共通原因故障）。この指標は遅れが大きいほど効かなくなる"
+      }
+    ],
+    "loss": "配布物 v0.11.0 の技能 system-map-draft に従って doctrine のモデルを起草しようとした利用者（および起草を担うエージェント）が、手順2 で終了コード2 を受けて作業を継続できない。統治木へ入るはずのモデルが産出されず、配布された手順が利用者の目的達成に接続しない状態が、利用者環境の複製に存在したまま残っている。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "すべての呼び出しが使用法の誤り以外の終了コードで完了する",
+        "hypothesis": "覆いの外に置かれた呼び出し（実物を要するスクリプト、置換の効かない占位、地の文の裸の言及）にも、同型の使用法誤りが存在する",
+        "oracle": "実物環境を用意し、当該呼び出しを文書に書かれたまま実行して終了コードを記録する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "複製側から最新版が取得され、手順2 が完走する",
+        "hypothesis": "是正が配られても、導入複製の版が遅れている利用者では同じ停止が再現し続ける",
+        "oracle": "v0.11.0 の複製を固定した環境で技能どおり起草を進め、手順2 で止まるかを確認する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "全 locator が実在の返り形へ解決する",
+        "hypothesis": "locator の例に限らず、references 配下の例示が実在しない返り形・存在しない口を指す箇所が他にもある",
+        "oracle": "各 locator と例示を実際に解決させ、返り形が得られるかを機械で確認する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "技能以外の配布物では拾えた呼び出しがすべて完走する",
+        "hypothesis": "『文書は監査・コードは試験』の分業に由来する同型欠陥は、技能以外の配布物（コマンド定義、hooks の説明、README 相当）にも及ぶ",
+        "oracle": "配布物全体から一つの完結した呼び出しを機械で拾い、書かれたまま実行して結果を集計する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "除外件数が版をまたいで増えない",
+        "hypothesis": "覆いの境界（数えない対象）は改訂のたびに静かに広がり、覆い率の見かけを保ったまま実質の検出力が落ちる",
+        "oracle": "除外件数と内訳を版ごとに時系列で記録し、増加傾向を見る",
+        "severity": "P3"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "test_skill_commands_run.py を CI_RELEASE_CHECK の merge 前に赤で止まるジョブへ接続し、CI の対象範囲に配布物（plugin/skills/** と references/**）を明記する。接続の有無自体を台帳に記録する",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "試験が『数えなかった』呼び出しの件数と内訳を必ず出力し、除外が増えたことを異常として扱う（覆いの境界の静かな拡大を検出する）",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "docs-audit の findings に、文書中の locator 例が実在する返り形へ解決するかの検査を追加し、未解決 locator を .claude/.cache/last-audit.json に出す",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "配布技能文書の実行可能性について、どの統制要素が責任・権限・フィードバックを持つかを統制構造の仕様に明記する（現在は責任の空白）",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "fixed:false のまま v0.11.0 が利用者環境にある状態について、利用者へ明示的に警告するか、次版の配布を早めるか、当面は当該技能の使用を控えるよう案内するかを決める",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "ADR-139 の独立検証を実施し、PR #271 の是正が有効であることを実施者以外の立場から確認するまで台帳を閉じない",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "覆いの外に残る呼び出し（map-draft-check ほか）と、references 配下の例示について、同型の実行不能手順が無いかを全件測定する",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "事象が名指しする三つのファイルの実在と、SESSION_END_AUDIT の走査対象に plugin/skills/** が含まれるか否かを確認し、その結果に応じて範囲に関する統制欠陥（SESSION_END_AUDIT・GOVERNANCE_TREE）の記述を改める",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "信頼性（部品が仕様どおりに振る舞うこと）を安全（利用者が手順どおりに進んで目的へ到達できること）と同一視し、部品試験の緑を全体の健全の代理として用いていた",
+      "『文書は読む対象、コードは走らせる対象』という分業が、配布物の文書に対する実行の検証をどの統制にも割り当てなかった（責任の空白であり、重複ではない）",
+      "保証の視線が正本に集中しており、利用者環境の複製で手順が到達可能かを見る経路が構造上存在しない（CI の既知の穴・INC-005 と同じ共通原因）",
+      "文書の正しさを判定する既存の手掛かり（単一文書のリンタ、統治木の逆依存、docs-audit の findings）がいずれも文書内・統治木内で閉じており、文書から外部の実行可能物へ向かう依存を表現する語彙を持たない",
+      "検出が随時の独立再監査の実演に依存し、常設の統制になっていなかったため、検出時点が配布後にずれる構造だった",
+      "覆い（試験）の境界が試験の書き方に依存するため、数えられない領域が時間とともに静かに広がりうる"
+    ],
+    "unknowns": [
+      "【最優先】事象が名指しする plugin/skills/system-map-draft/SKILL.md・plugin/tests/test_skill_commands_run.py・plugin/scripts/dep-graph.py の実在を、この分析では確認できていない（作業ディレクトリにこれらのパスは存在しない）。また統制構造には、配布技能文書（plugin/skills/**）を担当と明記した要素が一つも無い。GOVERNANCE_TREE は doctrine_docs 配下、SESSION_END_AUDIT は統治木の全件走査であり、技能文書がその走査対象に含まれるか否かは記録からは決められない。上記の統制欠陥のうち範囲に関するもの（SESSION_END_AUDIT・GOVERNANCE_TREE）は、この未確認の範囲設定の上に組み立てられており、技能文書が実際には監査対象内であれば欠陥の所在は移動する。この理由により confidence を low とする",
+      "test_skill_commands_run.py が CI_RELEASE_CHECK のどのジョブに接続され、merge 前に実際に赤で止めるのか、それとも参考実行に留まるのかが記録から判らない。接続されていなければ、記録された是正は関門にならない",
+      "v0.11.0 を導入済みの複製が現在何世代遅れているか、PR #271 の是正が利用者へいつ届くかは、PLUGIN_DISTRIBUTION と HEARTBEAT の既知の穴により観測できない",
+      "ADR-110・ADR-116・ADR-139 の本文を参照していないため、ADR-110 が『使用法の誤りを場所として飲まない』設計を定めた経緯が技能の起草時点で起草者に届いていたか（供給側の想定が利用者側へ伝達されていたか）は未確認",
+      "同型の実行不能手順が、覆いの外に置かれた呼び出し（map-draft-check ほか実物を要するスクリプト、地の文の裸の言及、置換の効かない占位）に存在するかは未測定",
+      "配布技能文書の実行可能性について、現在どの主体が責任を負うと理解されているかを、構造の記述からは特定できない（責任の割当が文書化されていない）",
+      "手順2 で止まった起草者が、その時点で報告する経路を持っていたか（問題報告経路の可用性）は記録に無い。独立再監査で見つかるまで表面化しなかった理由が、経路の不在によるのか機会の不在によるのかを区別できない"
+    ],
+    "why_existing_assurance_missed": "既存の保証は「正本のコードが仕様どおりに振る舞うか」を軸に構成されていた。この事象では dep-graph.py は ADR-110 のとおり正しく振る舞い（使用法の誤りを場所として飲まず終了コード2を返し）、その試験は緑だった。つまり部品はすべて健全であり、健全でなかったのは部品どうしをつなぐ案内の側である。保証の構成が「部品の健全＝全体の健全」を暗黙に前提していたため、部品試験がすべて緑であることが、全体として利用者が手順どおりに目的へ到達できるかという問いの代理として使われた。あわせて「文書は読む対象・コードは走らせる対象」という分業により、配布物の文書に対して『書かれたまま走るか』を確かめる責任がどの統制にも割り当てられておらず（リンタは単一文書、ガードは不可逆な違反、監査は統治木、CI は正本のジョブ、所有者は diff）、責任の空白が生じていた。修正（PR #271）は例ではなく軸で凍結し、元の欠陥を戻して赤くなることまで実測している点で症状止まりではないが、覆いの境界（地の文の裸の言及・置換不能な占位・実物を要するスクリプト）は残っており、また ADR-139 の独立検証が未実施であるため、是正の有効性はまだ独立には確認されていない。"
+  }
+}

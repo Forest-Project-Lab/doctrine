@@ -1,0 +1,677 @@
+{
+  "accepted_flaws": [
+    {
+      "control_element_id": "CI_RELEASE_CHECK",
+      "description": "CI は docs-audit を起動する際に --today を渡さないため、監査は実行時の壁時計を読む。門は「この変更を通してよいか」を判ずる装置として設計されているが、実際の入力集合には暦の経過が含まれており、リポジトリの状態が同一でも実行日が変われば判定が変わる。2026-11-09 は error 0、2026-11-10 は error 2 という掃引結果は、門の判定関数が正本の内容の関数ではないことの直接の測定である。",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "accidents-from-inadequate-constraint-enforcement",
+        "信頼性と安全性の分離",
+        "ハザードはコントロール下の状態"
+      ],
+      "why_it_seemed_adequate": "監査ツールに日付を渡さない既定は最も素直な呼び出しであり、『今日の木を今日の基準で見る』という意味になる。同一日内では何度回しても同じ結果が返るため、日次の観測の範囲では完全に決定論的に見えた。壁時計依存が観測されるには、実行を跨いで日付を変える掃引という、通常の CI 運用には存在しない操作が要る。"
+    },
+    {
+      "control_element_id": "SESSION_END_AUDIT",
+      "description": "docs-audit の孤児（orphan）判定が三条件のひとつに review_by を含めており、暦の出来事（期限の到来）を、放置という状態を表す error へ昇格させていた。同じ事実に対して review_by_overrun(warn) と orphan(error) の二つの findings が立ち、重大度の高い側が『放置』と読める語で提示されるため、この手掛かりを読む CI・所有者・次セッションの注入は、状態が悪化したという誤った像を受け取る。review_by は暦の出来事、孤児は放置という状態であり、測っている対象が異なる。",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "defects-in-information-providing-systems",
+        "software-does-not-fail-requirements-defect",
+        "リスク情報の不透明な集約禁止"
+      ],
+      "why_it_seemed_adequate": "『レビュー期限を過ぎ、かつ誰からも参照されていない文書』は直感的に最も強い陳腐化の候補であり、三条件の合成は覆いを厚くする設計に見えた。二重計上は、両検査の出力を並べて読まない限り可視化されない。所有者が当初『証拠庫を三条件から外す』を選んだのも同じ直感の延長であり、実装して測るまでは覆いが 0 件になることが判らなかった。"
+    },
+    {
+      "control_element_id": "CI_RELEASE_CHECK",
+      "description": "門は、将来のある日に自分が赤くなることを、その日が来る前に検出する手段を持たない。定常の検査は常に『今日』でしか回らないため、木の中に置かれた時限（review_by を持つ 14 文書）が、いつ・どの条件で error へ遷移するかは、独立再監査が --today を掃引して二分探索するまで誰にも見えなかった。時限の存在は事象の記録ではなく、掃引という一回限りの調査行為によってのみ観測されている。",
+      "flaw_type": "統制自身の劣化を検出できない",
+      "normative_refs": [
+        "計画外変化の検出手段",
+        "設計時想定の運用中再検査",
+        "自己満足への構造的対策"
+      ],
+      "why_it_seemed_adequate": "門の役割は現在の正本を判ずることであり、未来日の仮想実行は門の職掌の外に見える。緑が続いている限り、門が将来赤くなる可能性を問う理由が生じない（損失が起きない期間が自己満足を生む構造）。"
+    },
+    {
+      "control_element_id": "OWNER",
+      "description": "所有者が持つ手掛かりは PR の diff と進捗報告と台帳である。PR #263 の diff には review_by: 2026-11-09 を三件へ付与した行が現れるが、『この行が 2026-11-10 に error 2 を発生させる』という帰結は diff からは読めない。帰結を知るには、当該文書の逆参照が 0 件であること、reproducible が true であること、孤児判定が三条件合成であることを同時に保持していなければならず、これらはどの手掛かりにも提示されない。",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "include-information-supplier-defect",
+        "why-it-made-sense-at-the-time",
+        "assume-good-faith-of-actor"
+      ],
+      "why_it_seemed_adequate": "review_by の付与は curation を促す善意の措置であり、しかも WATCH-001 family を直す作業の一部として行われた。レビュー期限を明示することは統治木の健全化そのものに見え、期限の付与が門を将来赤くする経路は、判定式の合成を知る者以外には存在しないに等しい。"
+    },
+    {
+      "control_element_id": "POST_TOOL_LINTER",
+      "description": "リンタは編集された一つの文書だけを点検する。review_by の付与が問題になるのは、その文書の逆参照が木全体で 0 件であるという関係の性質によってであり、単一文書の内部を見ても検出できない。したがって三件への review_by 付与は、リンタの助言を一切起こさずに通過する。",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "verify-decomposition-assumptions",
+        "control-both-behavior-and-interaction",
+        "単一コンポーネント集中の回避"
+      ],
+      "why_it_seemed_adequate": "編集された文書だけを見る設計は、PostToolUse の応答性と決定を出さない方針（WATCH-001）から導かれた合理的な範囲設定であり、木全体の走査は SessionEnd の全件監査が担う分業になっている。分業が成立するのは、SessionEnd 側が『今日』しか見ないという制約を持たない場合に限られるが、その前提は明示されていない。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "WATCH-001 第11項として同型事象（2026-08-03 に誰も何も変えずに main が赤くなった）が既に凍結されていたが、そこから『門の判定は壁時計に依存してはならない』という一般化された制約は導出されず、他の検査へ適用されなかった。結果として、その family を是正する作業（PR #263）自体が同じ family の新しい火種を置いた。是正作業に対して、既存の凍結事象が示す制約への適合を問う工程が統制の中に無い。",
+      "flaw_type": "統制どうしの調整の欠如",
+      "normative_refs": [
+        "symptom-vs-systemic-cause",
+        "教訓を適用する手順の確立",
+        "変更後に事故が起きる前提の変更管理",
+        "audit-findings-must-be-closed"
+      ],
+      "why_it_seemed_adequate": "個別事象の凍結は台帳の設計どおりの完了形であり、閉じた事象は片付いたものとして扱われる。凍結が『症状の停止』であって『体系的原因の是正』ではないことは、同型の第二例が現れるまで区別がつかない。また是正作業は定義上リスクを下げる作業と見なされるため、変更管理やハザード分析の対象として意識されにくい。"
+    },
+    {
+      "control_element_id": "PLUGIN_DISTRIBUTION",
+      "description": "ADR-149 による是正はリポジトリ正本に入るが、利用者環境の導入複製へ届くのは利用者が更新操作を行った時点であり、リポジトリ側からは複製が何世代遅れているかを観測できない。したがって 2026-11-10 の時限は、正本では解除されても、更新していない複製の側では解除されないまま残りうる。是正の到達を確認する制御ループが閉じていない。",
+      "flaw_type": "制御動作が遅い",
+      "normative_refs": [
+        "供給要素の変更を利用者へ通知",
+        "重要変更の明示的通知",
+        "是正措置の有効性証拠の収集"
+      ],
+      "why_it_seemed_adequate": "marketplace 経由の更新は利用者の主権を尊重する配布設計であり、強制更新を避けるのは正当な選択である。是正が正本にマージされた時点をもって『直った』と数える台帳の慣行は、正本と複製の差を問題として立ち上げない。"
+    },
+    {
+      "control_element_id": "GOVERNANCE_TREE",
+      "description": "文書のメタデータ（review_by、reproducible）と逆参照の数の組み合わせが、いつ error を生むかという情報は、木の側からは提示されない。dep-graph --reverse-refs は問われれば答えるが（RESEARCH-002: 0、RESEARCH-003: 0、RESEARCH-004: 1）、文書を書く時点でその値が判定に効くことは示されない。判定に効く事実が、判定が起きる何か月も後にしか観測されない。",
+      "flaw_type": "手掛かりが遅い",
+      "normative_refs": [
+        "control-action-requires-feedback",
+        "全コントロールループにフィードバック必須",
+        "モデル一致のためのフィードバック提供"
+      ],
+      "why_it_seemed_adequate": "逆参照は木の成長に伴って後から増えるのが自然であり、執筆時点で 0 件であることは異常ではない。将来 ADR から参照される見込みのある研究文書に期限を付けることは、むしろ参照を促す働きかけとして筋が通っている（実際 RESEARCH-004 は ADR-081 から参照されている）。"
+    }
+  ],
+  "analysis": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "CI は docs-audit を起動する際に --today を渡さないため、監査は実行時の壁時計を読む。門は「この変更を通してよいか」を判ずる装置として設計されているが、実際の入力集合には暦の経過が含まれており、リポジトリの状態が同一でも実行日が変われば判定が変わる。2026-11-09 は error 0、2026-11-10 は error 2 という掃引結果は、門の判定関数が正本の内容の関数ではないことの直接の測定である。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "accidents-from-inadequate-constraint-enforcement",
+          "信頼性と安全性の分離",
+          "ハザードはコントロール下の状態"
+        ],
+        "why_it_seemed_adequate": "監査ツールに日付を渡さない既定は最も素直な呼び出しであり、『今日の木を今日の基準で見る』という意味になる。同一日内では何度回しても同じ結果が返るため、日次の観測の範囲では完全に決定論的に見えた。壁時計依存が観測されるには、実行を跨いで日付を変える掃引という、通常の CI 運用には存在しない操作が要る。"
+      },
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "docs-audit の孤児（orphan）判定が三条件のひとつに review_by を含めており、暦の出来事（期限の到来）を、放置という状態を表す error へ昇格させていた。同じ事実に対して review_by_overrun(warn) と orphan(error) の二つの findings が立ち、重大度の高い側が『放置』と読める語で提示されるため、この手掛かりを読む CI・所有者・次セッションの注入は、状態が悪化したという誤った像を受け取る。review_by は暦の出来事、孤児は放置という状態であり、測っている対象が異なる。",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "defects-in-information-providing-systems",
+          "software-does-not-fail-requirements-defect",
+          "リスク情報の不透明な集約禁止"
+        ],
+        "why_it_seemed_adequate": "『レビュー期限を過ぎ、かつ誰からも参照されていない文書』は直感的に最も強い陳腐化の候補であり、三条件の合成は覆いを厚くする設計に見えた。二重計上は、両検査の出力を並べて読まない限り可視化されない。所有者が当初『証拠庫を三条件から外す』を選んだのも同じ直感の延長であり、実装して測るまでは覆いが 0 件になることが判らなかった。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "門は、将来のある日に自分が赤くなることを、その日が来る前に検出する手段を持たない。定常の検査は常に『今日』でしか回らないため、木の中に置かれた時限（review_by を持つ 14 文書）が、いつ・どの条件で error へ遷移するかは、独立再監査が --today を掃引して二分探索するまで誰にも見えなかった。時限の存在は事象の記録ではなく、掃引という一回限りの調査行為によってのみ観測されている。",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "計画外変化の検出手段",
+          "設計時想定の運用中再検査",
+          "自己満足への構造的対策"
+        ],
+        "why_it_seemed_adequate": "門の役割は現在の正本を判ずることであり、未来日の仮想実行は門の職掌の外に見える。緑が続いている限り、門が将来赤くなる可能性を問う理由が生じない（損失が起きない期間が自己満足を生む構造）。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者が持つ手掛かりは PR の diff と進捗報告と台帳である。PR #263 の diff には review_by: 2026-11-09 を三件へ付与した行が現れるが、『この行が 2026-11-10 に error 2 を発生させる』という帰結は diff からは読めない。帰結を知るには、当該文書の逆参照が 0 件であること、reproducible が true であること、孤児判定が三条件合成であることを同時に保持していなければならず、これらはどの手掛かりにも提示されない。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "include-information-supplier-defect",
+          "why-it-made-sense-at-the-time",
+          "assume-good-faith-of-actor"
+        ],
+        "why_it_seemed_adequate": "review_by の付与は curation を促す善意の措置であり、しかも WATCH-001 family を直す作業の一部として行われた。レビュー期限を明示することは統治木の健全化そのものに見え、期限の付与が門を将来赤くする経路は、判定式の合成を知る者以外には存在しないに等しい。"
+      },
+      {
+        "control_element_id": "POST_TOOL_LINTER",
+        "description": "リンタは編集された一つの文書だけを点検する。review_by の付与が問題になるのは、その文書の逆参照が木全体で 0 件であるという関係の性質によってであり、単一文書の内部を見ても検出できない。したがって三件への review_by 付与は、リンタの助言を一切起こさずに通過する。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "verify-decomposition-assumptions",
+          "control-both-behavior-and-interaction",
+          "単一コンポーネント集中の回避"
+        ],
+        "why_it_seemed_adequate": "編集された文書だけを見る設計は、PostToolUse の応答性と決定を出さない方針（WATCH-001）から導かれた合理的な範囲設定であり、木全体の走査は SessionEnd の全件監査が担う分業になっている。分業が成立するのは、SessionEnd 側が『今日』しか見ないという制約を持たない場合に限られるが、その前提は明示されていない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "WATCH-001 第11項として同型事象（2026-08-03 に誰も何も変えずに main が赤くなった）が既に凍結されていたが、そこから『門の判定は壁時計に依存してはならない』という一般化された制約は導出されず、他の検査へ適用されなかった。結果として、その family を是正する作業（PR #263）自体が同じ family の新しい火種を置いた。是正作業に対して、既存の凍結事象が示す制約への適合を問う工程が統制の中に無い。",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "symptom-vs-systemic-cause",
+          "教訓を適用する手順の確立",
+          "変更後に事故が起きる前提の変更管理",
+          "audit-findings-must-be-closed"
+        ],
+        "why_it_seemed_adequate": "個別事象の凍結は台帳の設計どおりの完了形であり、閉じた事象は片付いたものとして扱われる。凍結が『症状の停止』であって『体系的原因の是正』ではないことは、同型の第二例が現れるまで区別がつかない。また是正作業は定義上リスクを下げる作業と見なされるため、変更管理やハザード分析の対象として意識されにくい。"
+      },
+      {
+        "control_element_id": "PLUGIN_DISTRIBUTION",
+        "description": "ADR-149 による是正はリポジトリ正本に入るが、利用者環境の導入複製へ届くのは利用者が更新操作を行った時点であり、リポジトリ側からは複製が何世代遅れているかを観測できない。したがって 2026-11-10 の時限は、正本では解除されても、更新していない複製の側では解除されないまま残りうる。是正の到達を確認する制御ループが閉じていない。",
+        "flaw_type": "制御動作が遅い",
+        "normative_refs": [
+          "供給要素の変更を利用者へ通知",
+          "重要変更の明示的通知",
+          "是正措置の有効性証拠の収集"
+        ],
+        "why_it_seemed_adequate": "marketplace 経由の更新は利用者の主権を尊重する配布設計であり、強制更新を避けるのは正当な選択である。是正が正本にマージされた時点をもって『直った』と数える台帳の慣行は、正本と複製の差を問題として立ち上げない。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "文書のメタデータ（review_by、reproducible）と逆参照の数の組み合わせが、いつ error を生むかという情報は、木の側からは提示されない。dep-graph --reverse-refs は問われれば答えるが（RESEARCH-002: 0、RESEARCH-003: 0、RESEARCH-004: 1）、文書を書く時点でその値が判定に効くことは示されない。判定に効く事実が、判定が起きる何か月も後にしか観測されない。",
+        "flaw_type": "手掛かりが遅い",
+        "normative_refs": [
+          "control-action-requires-feedback",
+          "全コントロールループにフィードバック必須",
+          "モデル一致のためのフィードバック提供"
+        ],
+        "why_it_seemed_adequate": "逆参照は木の成長に伴って後から増えるのが自然であり、執筆時点で 0 件であることは異常ではない。将来 ADR から参照される見込みのある研究文書に期限を付けることは、むしろ参照を促す働きかけとして筋が通っている（実際 RESEARCH-004 は ADR-081 から参照されている）。"
+      }
+    ],
+    "hazard": "変更の可否を判ずる門（CI_RELEASE_CHECK の error 判定）の出力が、リポジトリ正本の内容だけでなく実行時の壁時計に依存する状態。すなわち「同一入力・同一結果」ではなく「同一日・同一結果」しか保証されていない状態にあり、入力の変化を伴わずに阻止側へ遷移しうる。導出される安全制約: 門の error 判定は、リポジトリ正本の内容から決まる入力のみの関数でなければならない。暦の経過に由来する事実（review_by の超過など）は、門を赤にしない重大度（warn）でのみ表現する。",
+    "incident_id": "INC-034-ci-turns-red-on-a-date-with-no-change",
+    "leading_indicators": [
+      {
+        "indicator": "未来日掃引での error 集合の差分（門の時限の存在）",
+        "observable": "docs-audit を --today = 今日 / +30 / +90 / +180 / +365 で実行したときの error findings の集合",
+        "threshold": "今日の error 集合と、いずれかの未来日の error 集合が一致しない場合に異常。差分が 1 件でも出た日付とその原因文書を報告する（門は赤にしない）",
+        "version_independent": true,
+        "where": "CI_RELEASE_CHECK の定期ジョブ（.github/workflows、リポジトリ正本に対して実行）",
+        "why_version_independent": "リポジトリ正本と正本側の docs-audit だけで完結し、利用者環境の導入複製の版を参照しない"
+      },
+      {
+        "indicator": "暦由来の入力を error 重大度へ昇格させる検査の数",
+        "observable": "docs-audit の各検査について「判定式が日付/時刻を読むか」と「出力する重大度」の対応表を機械生成した結果",
+        "threshold": "日付を読む検査のうち error を出しうるものが 1 件でも存在すれば異常（設計規約上は 0 でなければならない）",
+        "version_independent": true,
+        "where": "SESSION_END_AUDIT の実体（plugin/scripts/docs-audit.py）に対する静的走査。CI の定期ジョブで生成",
+        "why_version_independent": "正本のソースに対する静的走査であり、導入複製の版に依存しない"
+      },
+      {
+        "indicator": "時限の火種となる文書の在庫（review_by × 逆参照ゼロ × reproducible:true）",
+        "observable": "review_by を持つ文書（現在 14 件）を、dep-graph --reverse-refs の件数と reproducible フラグで分類した表",
+        "threshold": "reproducible:true かつ逆参照 0 件かつ review_by を持つ文書が 1 件でも生じたら異常（現時点では 0 件のはずだが、ADR-149 前の判定式では 2 件が該当していた）",
+        "version_independent": true,
+        "where": "GOVERNANCE_TREE に対する定期集計。CI の定期ジョブ、および PR の diff に review_by 行が現れたときの追加検査",
+        "why_version_independent": "木の内容と正本側の dep-graph から算出でき、導入複製の版に依存しない"
+      },
+      {
+        "indicator": "同一入力の再評価で findings が変わる回数（決定論の定義のずれ）",
+        "observable": "前日と同一のコミットに対して監査を再実行し、findings（error/warn の両方）の集合を前日の記録と比較した結果",
+        "threshold": "入力コミットが同一で findings 集合が変化したら異常。warn 段階の変化でも記録する（error になる前に family を捉えるため）",
+        "version_independent": true,
+        "where": "CI_RELEASE_CHECK の夜間ジョブと .claude/.cache/last-audit.json の履歴",
+        "why_version_independent": "正本側の CI で完結する"
+      },
+      {
+        "indicator": "導入複製の docs-audit の版と正本の版の乖離（是正の未到達）",
+        "observable": "HEARTBEAT が読む導入複製の版と、marketplace が配っている最新版の差",
+        "threshold": "ADR-149 を含む版に達していない複製が観測されたら異常。世代差 1 でも報告する",
+        "version_independent": false,
+        "where": "HEARTBEAT（plugin/scripts/gov-heartbeat.py）と PLUGIN_DISTRIBUTION（.claude-plugin/marketplace.json）",
+        "why_version_independent": "検出器自身が導入複製の側で動くため、複製の版が遅れれば検出器も同じだけ遅れる（INC-005 の共通原因故障）。この指標は『遅れていない複製』からしか届かず、最も遅れている複製ほど沈黙する"
+      }
+    ],
+    "loss": "リポジトリ正本の内容が一切変わっていないのに、暦が 2026-11-10 に進んだという理由だけで main の門（CI）が拒否状態へ遷移し、その日以降のすべての変更（是正・保証作業を含む）が阻止される。門の判定が「変更の可否」ではなく「今日が何日か」を表すようになるため、赤の意味が読み手に伝わらなくなり、赤を無視する運用（門の実効的な無効化）へ傾く圧力が生まれる。WATCH-001 第11項が凍結した 2026-08-03 の事象と同じ family の再来であり、しかも火種を置いたのはその family を直す作業（PR #263）そのものである。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "日付を読む検査が review_by 系のみであり、ADR-149 後はいずれも warn 止まりであることが表から示されれば反証。",
+        "hypothesis": "docs-audit には review_by 以外にも壁時計を読む検査があり、そのいずれかが error を出しうる経路を持つ。ADR-149 は review_by 由来の一経路だけを塞いだ。",
+        "oracle": "docs-audit の全検査の判定式を走査し、日付/時刻を読む検査と、その検査が出力しうる重大度の対応表を作る。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "180 日を待たずに別の検査（review_by_overrun など）が warn で捉え、所有者へ届く経路が示されれば反証。",
+        "hypothesis": "ADR-149 により孤児の error が review_by から 180 日の放置基準へ移った結果、逆参照ゼロの放置が最長 180 日間 error として現れない窓が生まれ、覆いが実質的に痩せている。",
+        "oracle": "reproducible:true かつ逆参照 0 件の文書を試験用に置き、--today を掃引して何日目に error になるかを測る。同時に warn 側でいつ捉えられるかも測る。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "旧版でも error が立たない、または複製側の監査が門の判定に影響しない（利用者環境の赤は main を止めない）ことが示されれば反証。",
+        "hypothesis": "ADR-149 前の docs-audit を積んだ導入複製が利用者環境に残っており、2026-11-10 に正本は緑のまま複製側だけが error 2 を出す。",
+        "oracle": "ADR-149 前の版の docs-audit を --today=2026-11-10 で回し、error 2（orphan × 2）が再現することを確認する。あわせて複製側の監査結果が門を赤にする経路の有無を確かめる。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "2027-02-05 の 2 件以外に error 集合が変化する日付が無ければ反証。",
+        "hypothesis": "修正後に残った warn 16 件の中に、さらに先の日付で error へ遷移する別の時限が含まれている。",
+        "oracle": "--today を +365 日まで日次で掃引し、error 件数が増加する日付を全列挙する。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "全ジョブで同一コミット・異なる日付の結果が一致すれば反証。",
+        "hypothesis": "門の判定に壁時計が入る経路は docs-audit だけでなく、CI の他のジョブ（release-check、本体試験）にも存在する。",
+        "oracle": "CI の各ジョブについて、同一コミットを異なる日付で再実行し、結果が一致するかを測る。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "逆参照件数を入力に取る検査が孤児のみであれば反証。",
+        "hypothesis": "逆参照ゼロが判定に効く検査は孤児以外にもあり、木の成長に伴って参照が付いたり外れたりするたびに、変更を伴わない判定変化が起きる。",
+        "oracle": "逆参照件数を人工的に 0↔1 で変化させたときに findings がどう動くかを、検査ごとに測る。",
+        "severity": "P3"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "CI から docs-audit を起動する際、リポジトリ正本の内容から決まる値（対象コミットの committer date など）を --today として明示的に渡し、門の判定を実行時の壁時計から切り離す。同じコミットを何日後に再評価しても同じ findings が返ることを、決定論試験の合格条件に加える。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "docs-audit の各検査に「判定式が日付/時刻を読むか」の属性を持たせ、その属性が真である検査は error を出せない（warn が上限）ことを機械的に強制する。ADR-149 の個別是正を、判定式一般に効く規約へ引き上げる。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "未来日掃引（今日 / +30 / +90 / +180 / +365）を定期ジョブとして常設し、今日と error 集合が異なる最初の日付と原因文書を warn として報告する。門は赤にしない。今回の独立再監査が手作業で行った二分探索を、常設の観測へ移す。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "review_by を持つ全文書（現在 14 件）について、逆参照件数と reproducible フラグの棚卸しを行い、時限の火種となる組み合わせの在庫をゼロで維持する検査を置く。PR の diff に review_by 行が現れたときは、その文書の逆参照件数と将来の判定結果を PR 上へ提示する。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "WATCH-001 第11項として凍結した事象から導かれる制約（門の判定は暦に依存しない）を、凍結事象の記述とは別に、検査可能な制約として文書化する。凍結事象を閉じる条件に「導かれた制約を検査へ変換したか」を含める。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "是正作業（過去事象の family を直す変更）を変更管理の対象に含め、既存の凍結事象が示す制約への適合を審査する工程を置く。今回の火種は是正作業の中で置かれており、この工程が無いことが最後の一歩になっている。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "residual の根の問い —— 時で起きる curation の促しを、変更の門で届けてよいか（INC-018#6 の warn の意味論と重なる）—— について所有者の判断を得る。判断が出るまで、暦由来の findings は門を赤にしない側へ倒しておく。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "ADR-149 の独立検証（ADR-139）を実施し、修正後の掃引結果（2026-11-10 で error 0・warn 16、2027-02-05 で error 2）を第三者が再現してから fixed へ移す。自己申告のまま閉じない。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "evidence_refs の四ファイルの実在と、事象が名指す下位機構（--today、review_by、orphan の三条件、review_by_overrun、reproducible、dep-graph --reverse-refs）の実在を確認し、本分析の前提を検証する。確認が取れた時点で control_flaws と confidence を改訂する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "変更の可否を判ずる門（内容の関数）と、暦の経過を伝える促し（時刻の関数）という、目的も時間軸も異なる二種類の統制が、CI の赤という単一の出力へ合流している。合流点で両者の区別が失われるため、赤の意味が読み手に決められない。",
+      "この体系の「決定論」が『同一日に回せば同一結果』として運用され、『同一入力なら同一結果』としては検証されていなかった。プロセスモデル（門は内容だけを見る）と実状態（門は暦も見る）の不一致が、日次運用では原理的に観測されない。",
+      "すべての検査層（リンタ・ガード・SessionEnd 監査・CI）が同一の壁時計を暗黙の入力として共有している。独立に配置された多重の防護が、この共通原因により同時に盲目になる。",
+      "同型事象の凍結が症状の停止で完了と数えられ、そこから一般化された制約（門の判定は暦に依存しない）を検査へ変換する工程が統制の中に無い。凍結された事象は、次の同型例を止める力を持たないまま台帳に積まれる。",
+      "是正作業そのものが変更管理・ハザード分析の対象になっていない。リスクを下げる意図の作業は安全側の作業と見なされ、新たな時限を置いても審査の網に掛からない。",
+      "文書のメタデータ（review_by）が、それを書いた時点では見えない関係の性質（逆参照の数）と合成されて重大度を決める。合成の結果が執筆者にも所有者にも提示されないため、書く行為と判定される行為の間に、誰も持っていないモデルが必要になる。",
+      "是正の到達が利用者の更新操作に依存し、到達したかどうかをリポジトリ側から観測できない。正本のマージをもって『直った』と数える慣行が、複製側に残る時限を統制の視界から消す。",
+      "覆いの評価が実装して測るまで判らない構造になっている（所有者が当初選んだ案は、実装後の測定で孤児の覆いが 0 件になると判明して選び直された）。設計案の安全上の帰結を事前に見積もる手段が無く、測定が唯一の判断材料になっている。"
+    ],
+    "unknowns": [
+      "【実在の未確認・最優先】本分析の作業ディレクトリは空であり、事象が名指す下位機構をこちらで一つも確認できていない。統制構造には CI_RELEASE_CHECK（.github/workflows）と SESSION_END_AUDIT（plugin/scripts/docs-audit.py）という上位要素は実在するが、事象の主張が乗っている下位機構 —— docs-audit の --today 引数、review_by フィールド、orphan の三条件判定、review_by_overrun(warn) 検査、reproducible フラグ、dep-graph --reverse-refs —— はいずれも統制構造の記述に現れず、evidence_refs のファイルも参照できない。したがって本分析は事象の記録を唯一の出典として組み立てており、記録が実在の証明でない以上、confidence は low とする。まず evidence_refs の四ファイルの実在と該当判定式の存在を独立に確認すること。",
+      "ADR-149 と PR #263、WATCH-001 第11項、INC-018#6、INC-005、ADR-139、ADR-081 の実在と内容も未確認である。",
+      "修正後の実測値（2026-11-10 で error 0・warn 16、2027-02-05 で error 2）は自己申告であり、独立検証（ADR-139）が未実施のため、覆いが失われていないという結論はまだ証拠を伴っていない。",
+      "review_by を持つ 14 文書のうち、今後 reproducible:true へ変わりうる、または逆参照が 0 件へ戻りうる文書が何件あるかは判っていない。",
+      "EXT 系の文書が逆参照ゼロでも orphan にならない条件（reproducible が false であること）が、どの決定に由来する設計意図なのかは事象の記録からは追えない。",
+      "2026-08-03 の同型事象（WATCH-001 第11項）に対して当時どの是正が行われ、その是正がなぜ判定式一般へ波及しなかったのかは判らない。凍結の内容を読まないと、今回の再発が是正の不足か適用範囲の不足かを区別できない。",
+      "利用者環境の導入複製が現在何世代遅れているかは、統制構造の既知の穴（INC-005）により観測できない。したがって ADR-149 の是正が複製側で有効になった時点も判定できない。",
+      "residual に置かれた根の問い（時で起きる curation の促しを、変更の門で届けてよいか）に対する所有者の判断はまだ下されていない。本分析はこの問いに答えていない。",
+      "docs-audit の他の検査に壁時計依存が残っているかどうかは、判定式を走査していないため未確認である。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は、すべて『今日のリポジトリ正本』を対象に走る。リンタ（単一文書）、ガード（編集の可否）、SessionEnd の全件監査（今日の木）、CI（今日の判定）は、対象範囲は異なるが実行時刻の扱いは共通で、いずれも壁時計を暗黙の入力として共有している。この共通原因により、独立に見える多重の防護が同じ軸（暦の経過）に対して同時に盲目になる。加えて、この体系での「決定論」は事実上『同一日に回せば同一結果』として運用されており、『同一入力なら同一結果』とは検証されていなかった。この二つの定義は日次運用では区別がつかず、日付を跨いで同じ入力を再評価する検査が存在しないため、区別が現れる機会が構造上なかった。WATCH-001 第11項の凍結は同型事象を記録したが、そこから導かれるべき制約（門の判定を暦から切り離す）が検査へ変換されなかったため、次の同型例を止める力を持たなかった。さらに今回の火種は是正作業の中で置かれており、是正作業に対するハザード分析が統制に無いことが、保証の網の外側に置かれた最後の一歩になった。なお ADR-149 による修正後の実測（2026-11-10 で error 0・warn 16、2027-02-05 で error 2）は自己申告であり、独立検証（ADR-139）が未実施であるため、修正が保証を回復させたことの証拠はまだ揃っていない。"
+  },
+  "control_structure_ids": [
+    "OWNER",
+    "CI_RELEASE_CHECK",
+    "SESSION_START_CONTRACT",
+    "HEARTBEAT",
+    "PRE_TOOL_GUARD",
+    "POST_TOOL_LINTER",
+    "SESSION_END_AUDIT",
+    "CAPTURE_NUDGE",
+    "PLUGIN_DISTRIBUTION",
+    "ASSURANCE_LANE",
+    "GOVERNANCE_TREE"
+  ],
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "duration_ms": 279772,
+  "errors": [],
+  "execution_kind": "real-sdk",
+  "flaws_with_citation_defect": [],
+  "generated_at": "2026-08-09T21:55:21Z",
+  "git_dirty": true,
+  "git_sha": "f0d4e8ed5d06975fe0de5822f58c74f7ae5a7226",
+  "incident_evidence": {
+    "kind": "measurement",
+    "refs": [
+      ".github/workflows/checks.yml",
+      "doctrine_docs/graph/research/RESEARCH-002-external-parser-dependency.md",
+      "doctrine_docs/graph/research/RESEARCH-003-prior-art-failure-survey.md",
+      "plugin/scripts/docs-audit.py"
+    ],
+    "resolved": [
+      ".github/workflows/checks.yml",
+      "doctrine_docs/graph/research/RESEARCH-002-external-parser-dependency.md",
+      "doctrine_docs/graph/research/RESEARCH-003-prior-art-failure-survey.md",
+      "plugin/scripts/docs-audit.py"
+    ],
+    "unresolved": [],
+    "verifiable": true
+  },
+  "incident_id": "INC-034-ci-turns-red-on-a-date-with-no-change",
+  "incident_sha256": "741a80f4e83b93e13ac8b02beac5513c0f197b72968588a17e66aa9555f1f8f2",
+  "init": {
+    "claude_code_version": "2.1.221",
+    "model": "claude-opus-5",
+    "session_id": "7bf9bc0f-49b9-4ebd-8001-2e218f04d3e2",
+    "tools_count": 27
+  },
+  "kind": "cast-analysis",
+  "leading_indicators_defined": true,
+  "options": {
+    "allowed_tools": [],
+    "cwd": "/tmp/assurance-cast-b_hjrw72",
+    "effort": "high",
+    "max_budget_usd": 4.0,
+    "max_turns": 8,
+    "model": "claude-opus-5",
+    "setting_sources": [],
+    "timeout_s": 900
+  },
+  "oracle": "structured_output がレーン側再検証にも適合",
+  "principles_offered": 337,
+  "prompt_sha256": "1edb93fcd924d636d7977e878c3e23874cb01cbf6201d2f7f66edbded1511d71",
+  "rejected_flaws": [],
+  "result_meta": {
+    "duration_api_ms": 273501,
+    "is_error": false,
+    "num_turns": 3,
+    "session_id": "7bf9bc0f-49b9-4ebd-8001-2e218f04d3e2",
+    "subtype": "success",
+    "total_cost_usd": 0.9305039999999999,
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 45180,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 45180,
+      "cache_read_input_tokens": 71880,
+      "inference_geo": "not_available",
+      "input_tokens": 4,
+      "iterations": "list",
+      "output_tokens": 16228,
+      "server_tool_use": {
+        "web_fetch_requests": 0,
+        "web_search_requests": 0
+      },
+      "service_tier": "standard",
+      "speed": "standard"
+    }
+  },
+  "schema_sha256": "0d1643d5e16353723405302c1f6ffcf753915e2a4f27a3530e8ef9a9ee45cb46",
+  "sdk_version": "0.2.129",
+  "settled": true,
+  "status": "PASS",
+  "structured_output": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "CI は docs-audit を起動する際に --today を渡さないため、監査は実行時の壁時計を読む。門は「この変更を通してよいか」を判ずる装置として設計されているが、実際の入力集合には暦の経過が含まれており、リポジトリの状態が同一でも実行日が変われば判定が変わる。2026-11-09 は error 0、2026-11-10 は error 2 という掃引結果は、門の判定関数が正本の内容の関数ではないことの直接の測定である。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "accidents-from-inadequate-constraint-enforcement",
+          "信頼性と安全性の分離",
+          "ハザードはコントロール下の状態"
+        ],
+        "why_it_seemed_adequate": "監査ツールに日付を渡さない既定は最も素直な呼び出しであり、『今日の木を今日の基準で見る』という意味になる。同一日内では何度回しても同じ結果が返るため、日次の観測の範囲では完全に決定論的に見えた。壁時計依存が観測されるには、実行を跨いで日付を変える掃引という、通常の CI 運用には存在しない操作が要る。"
+      },
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "docs-audit の孤児（orphan）判定が三条件のひとつに review_by を含めており、暦の出来事（期限の到来）を、放置という状態を表す error へ昇格させていた。同じ事実に対して review_by_overrun(warn) と orphan(error) の二つの findings が立ち、重大度の高い側が『放置』と読める語で提示されるため、この手掛かりを読む CI・所有者・次セッションの注入は、状態が悪化したという誤った像を受け取る。review_by は暦の出来事、孤児は放置という状態であり、測っている対象が異なる。",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "defects-in-information-providing-systems",
+          "software-does-not-fail-requirements-defect",
+          "リスク情報の不透明な集約禁止"
+        ],
+        "why_it_seemed_adequate": "『レビュー期限を過ぎ、かつ誰からも参照されていない文書』は直感的に最も強い陳腐化の候補であり、三条件の合成は覆いを厚くする設計に見えた。二重計上は、両検査の出力を並べて読まない限り可視化されない。所有者が当初『証拠庫を三条件から外す』を選んだのも同じ直感の延長であり、実装して測るまでは覆いが 0 件になることが判らなかった。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "門は、将来のある日に自分が赤くなることを、その日が来る前に検出する手段を持たない。定常の検査は常に『今日』でしか回らないため、木の中に置かれた時限（review_by を持つ 14 文書）が、いつ・どの条件で error へ遷移するかは、独立再監査が --today を掃引して二分探索するまで誰にも見えなかった。時限の存在は事象の記録ではなく、掃引という一回限りの調査行為によってのみ観測されている。",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "計画外変化の検出手段",
+          "設計時想定の運用中再検査",
+          "自己満足への構造的対策"
+        ],
+        "why_it_seemed_adequate": "門の役割は現在の正本を判ずることであり、未来日の仮想実行は門の職掌の外に見える。緑が続いている限り、門が将来赤くなる可能性を問う理由が生じない（損失が起きない期間が自己満足を生む構造）。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者が持つ手掛かりは PR の diff と進捗報告と台帳である。PR #263 の diff には review_by: 2026-11-09 を三件へ付与した行が現れるが、『この行が 2026-11-10 に error 2 を発生させる』という帰結は diff からは読めない。帰結を知るには、当該文書の逆参照が 0 件であること、reproducible が true であること、孤児判定が三条件合成であることを同時に保持していなければならず、これらはどの手掛かりにも提示されない。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "include-information-supplier-defect",
+          "why-it-made-sense-at-the-time",
+          "assume-good-faith-of-actor"
+        ],
+        "why_it_seemed_adequate": "review_by の付与は curation を促す善意の措置であり、しかも WATCH-001 family を直す作業の一部として行われた。レビュー期限を明示することは統治木の健全化そのものに見え、期限の付与が門を将来赤くする経路は、判定式の合成を知る者以外には存在しないに等しい。"
+      },
+      {
+        "control_element_id": "POST_TOOL_LINTER",
+        "description": "リンタは編集された一つの文書だけを点検する。review_by の付与が問題になるのは、その文書の逆参照が木全体で 0 件であるという関係の性質によってであり、単一文書の内部を見ても検出できない。したがって三件への review_by 付与は、リンタの助言を一切起こさずに通過する。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "verify-decomposition-assumptions",
+          "control-both-behavior-and-interaction",
+          "単一コンポーネント集中の回避"
+        ],
+        "why_it_seemed_adequate": "編集された文書だけを見る設計は、PostToolUse の応答性と決定を出さない方針（WATCH-001）から導かれた合理的な範囲設定であり、木全体の走査は SessionEnd の全件監査が担う分業になっている。分業が成立するのは、SessionEnd 側が『今日』しか見ないという制約を持たない場合に限られるが、その前提は明示されていない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "WATCH-001 第11項として同型事象（2026-08-03 に誰も何も変えずに main が赤くなった）が既に凍結されていたが、そこから『門の判定は壁時計に依存してはならない』という一般化された制約は導出されず、他の検査へ適用されなかった。結果として、その family を是正する作業（PR #263）自体が同じ family の新しい火種を置いた。是正作業に対して、既存の凍結事象が示す制約への適合を問う工程が統制の中に無い。",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "symptom-vs-systemic-cause",
+          "教訓を適用する手順の確立",
+          "変更後に事故が起きる前提の変更管理",
+          "audit-findings-must-be-closed"
+        ],
+        "why_it_seemed_adequate": "個別事象の凍結は台帳の設計どおりの完了形であり、閉じた事象は片付いたものとして扱われる。凍結が『症状の停止』であって『体系的原因の是正』ではないことは、同型の第二例が現れるまで区別がつかない。また是正作業は定義上リスクを下げる作業と見なされるため、変更管理やハザード分析の対象として意識されにくい。"
+      },
+      {
+        "control_element_id": "PLUGIN_DISTRIBUTION",
+        "description": "ADR-149 による是正はリポジトリ正本に入るが、利用者環境の導入複製へ届くのは利用者が更新操作を行った時点であり、リポジトリ側からは複製が何世代遅れているかを観測できない。したがって 2026-11-10 の時限は、正本では解除されても、更新していない複製の側では解除されないまま残りうる。是正の到達を確認する制御ループが閉じていない。",
+        "flaw_type": "制御動作が遅い",
+        "normative_refs": [
+          "供給要素の変更を利用者へ通知",
+          "重要変更の明示的通知",
+          "是正措置の有効性証拠の収集"
+        ],
+        "why_it_seemed_adequate": "marketplace 経由の更新は利用者の主権を尊重する配布設計であり、強制更新を避けるのは正当な選択である。是正が正本にマージされた時点をもって『直った』と数える台帳の慣行は、正本と複製の差を問題として立ち上げない。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "文書のメタデータ（review_by、reproducible）と逆参照の数の組み合わせが、いつ error を生むかという情報は、木の側からは提示されない。dep-graph --reverse-refs は問われれば答えるが（RESEARCH-002: 0、RESEARCH-003: 0、RESEARCH-004: 1）、文書を書く時点でその値が判定に効くことは示されない。判定に効く事実が、判定が起きる何か月も後にしか観測されない。",
+        "flaw_type": "手掛かりが遅い",
+        "normative_refs": [
+          "control-action-requires-feedback",
+          "全コントロールループにフィードバック必須",
+          "モデル一致のためのフィードバック提供"
+        ],
+        "why_it_seemed_adequate": "逆参照は木の成長に伴って後から増えるのが自然であり、執筆時点で 0 件であることは異常ではない。将来 ADR から参照される見込みのある研究文書に期限を付けることは、むしろ参照を促す働きかけとして筋が通っている（実際 RESEARCH-004 は ADR-081 から参照されている）。"
+      }
+    ],
+    "hazard": "変更の可否を判ずる門（CI_RELEASE_CHECK の error 判定）の出力が、リポジトリ正本の内容だけでなく実行時の壁時計に依存する状態。すなわち「同一入力・同一結果」ではなく「同一日・同一結果」しか保証されていない状態にあり、入力の変化を伴わずに阻止側へ遷移しうる。導出される安全制約: 門の error 判定は、リポジトリ正本の内容から決まる入力のみの関数でなければならない。暦の経過に由来する事実（review_by の超過など）は、門を赤にしない重大度（warn）でのみ表現する。",
+    "incident_id": "INC-034-ci-turns-red-on-a-date-with-no-change",
+    "leading_indicators": [
+      {
+        "indicator": "未来日掃引での error 集合の差分（門の時限の存在）",
+        "observable": "docs-audit を --today = 今日 / +30 / +90 / +180 / +365 で実行したときの error findings の集合",
+        "threshold": "今日の error 集合と、いずれかの未来日の error 集合が一致しない場合に異常。差分が 1 件でも出た日付とその原因文書を報告する（門は赤にしない）",
+        "version_independent": true,
+        "where": "CI_RELEASE_CHECK の定期ジョブ（.github/workflows、リポジトリ正本に対して実行）",
+        "why_version_independent": "リポジトリ正本と正本側の docs-audit だけで完結し、利用者環境の導入複製の版を参照しない"
+      },
+      {
+        "indicator": "暦由来の入力を error 重大度へ昇格させる検査の数",
+        "observable": "docs-audit の各検査について「判定式が日付/時刻を読むか」と「出力する重大度」の対応表を機械生成した結果",
+        "threshold": "日付を読む検査のうち error を出しうるものが 1 件でも存在すれば異常（設計規約上は 0 でなければならない）",
+        "version_independent": true,
+        "where": "SESSION_END_AUDIT の実体（plugin/scripts/docs-audit.py）に対する静的走査。CI の定期ジョブで生成",
+        "why_version_independent": "正本のソースに対する静的走査であり、導入複製の版に依存しない"
+      },
+      {
+        "indicator": "時限の火種となる文書の在庫（review_by × 逆参照ゼロ × reproducible:true）",
+        "observable": "review_by を持つ文書（現在 14 件）を、dep-graph --reverse-refs の件数と reproducible フラグで分類した表",
+        "threshold": "reproducible:true かつ逆参照 0 件かつ review_by を持つ文書が 1 件でも生じたら異常（現時点では 0 件のはずだが、ADR-149 前の判定式では 2 件が該当していた）",
+        "version_independent": true,
+        "where": "GOVERNANCE_TREE に対する定期集計。CI の定期ジョブ、および PR の diff に review_by 行が現れたときの追加検査",
+        "why_version_independent": "木の内容と正本側の dep-graph から算出でき、導入複製の版に依存しない"
+      },
+      {
+        "indicator": "同一入力の再評価で findings が変わる回数（決定論の定義のずれ）",
+        "observable": "前日と同一のコミットに対して監査を再実行し、findings（error/warn の両方）の集合を前日の記録と比較した結果",
+        "threshold": "入力コミットが同一で findings 集合が変化したら異常。warn 段階の変化でも記録する（error になる前に family を捉えるため）",
+        "version_independent": true,
+        "where": "CI_RELEASE_CHECK の夜間ジョブと .claude/.cache/last-audit.json の履歴",
+        "why_version_independent": "正本側の CI で完結する"
+      },
+      {
+        "indicator": "導入複製の docs-audit の版と正本の版の乖離（是正の未到達）",
+        "observable": "HEARTBEAT が読む導入複製の版と、marketplace が配っている最新版の差",
+        "threshold": "ADR-149 を含む版に達していない複製が観測されたら異常。世代差 1 でも報告する",
+        "version_independent": false,
+        "where": "HEARTBEAT（plugin/scripts/gov-heartbeat.py）と PLUGIN_DISTRIBUTION（.claude-plugin/marketplace.json）",
+        "why_version_independent": "検出器自身が導入複製の側で動くため、複製の版が遅れれば検出器も同じだけ遅れる（INC-005 の共通原因故障）。この指標は『遅れていない複製』からしか届かず、最も遅れている複製ほど沈黙する"
+      }
+    ],
+    "loss": "リポジトリ正本の内容が一切変わっていないのに、暦が 2026-11-10 に進んだという理由だけで main の門（CI）が拒否状態へ遷移し、その日以降のすべての変更（是正・保証作業を含む）が阻止される。門の判定が「変更の可否」ではなく「今日が何日か」を表すようになるため、赤の意味が読み手に伝わらなくなり、赤を無視する運用（門の実効的な無効化）へ傾く圧力が生まれる。WATCH-001 第11項が凍結した 2026-08-03 の事象と同じ family の再来であり、しかも火種を置いたのはその family を直す作業（PR #263）そのものである。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "日付を読む検査が review_by 系のみであり、ADR-149 後はいずれも warn 止まりであることが表から示されれば反証。",
+        "hypothesis": "docs-audit には review_by 以外にも壁時計を読む検査があり、そのいずれかが error を出しうる経路を持つ。ADR-149 は review_by 由来の一経路だけを塞いだ。",
+        "oracle": "docs-audit の全検査の判定式を走査し、日付/時刻を読む検査と、その検査が出力しうる重大度の対応表を作る。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "180 日を待たずに別の検査（review_by_overrun など）が warn で捉え、所有者へ届く経路が示されれば反証。",
+        "hypothesis": "ADR-149 により孤児の error が review_by から 180 日の放置基準へ移った結果、逆参照ゼロの放置が最長 180 日間 error として現れない窓が生まれ、覆いが実質的に痩せている。",
+        "oracle": "reproducible:true かつ逆参照 0 件の文書を試験用に置き、--today を掃引して何日目に error になるかを測る。同時に warn 側でいつ捉えられるかも測る。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "旧版でも error が立たない、または複製側の監査が門の判定に影響しない（利用者環境の赤は main を止めない）ことが示されれば反証。",
+        "hypothesis": "ADR-149 前の docs-audit を積んだ導入複製が利用者環境に残っており、2026-11-10 に正本は緑のまま複製側だけが error 2 を出す。",
+        "oracle": "ADR-149 前の版の docs-audit を --today=2026-11-10 で回し、error 2（orphan × 2）が再現することを確認する。あわせて複製側の監査結果が門を赤にする経路の有無を確かめる。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "2027-02-05 の 2 件以外に error 集合が変化する日付が無ければ反証。",
+        "hypothesis": "修正後に残った warn 16 件の中に、さらに先の日付で error へ遷移する別の時限が含まれている。",
+        "oracle": "--today を +365 日まで日次で掃引し、error 件数が増加する日付を全列挙する。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "全ジョブで同一コミット・異なる日付の結果が一致すれば反証。",
+        "hypothesis": "門の判定に壁時計が入る経路は docs-audit だけでなく、CI の他のジョブ（release-check、本体試験）にも存在する。",
+        "oracle": "CI の各ジョブについて、同一コミットを異なる日付で再実行し、結果が一致するかを測る。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "逆参照件数を入力に取る検査が孤児のみであれば反証。",
+        "hypothesis": "逆参照ゼロが判定に効く検査は孤児以外にもあり、木の成長に伴って参照が付いたり外れたりするたびに、変更を伴わない判定変化が起きる。",
+        "oracle": "逆参照件数を人工的に 0↔1 で変化させたときに findings がどう動くかを、検査ごとに測る。",
+        "severity": "P3"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "CI から docs-audit を起動する際、リポジトリ正本の内容から決まる値（対象コミットの committer date など）を --today として明示的に渡し、門の判定を実行時の壁時計から切り離す。同じコミットを何日後に再評価しても同じ findings が返ることを、決定論試験の合格条件に加える。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "docs-audit の各検査に「判定式が日付/時刻を読むか」の属性を持たせ、その属性が真である検査は error を出せない（warn が上限）ことを機械的に強制する。ADR-149 の個別是正を、判定式一般に効く規約へ引き上げる。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "未来日掃引（今日 / +30 / +90 / +180 / +365）を定期ジョブとして常設し、今日と error 集合が異なる最初の日付と原因文書を warn として報告する。門は赤にしない。今回の独立再監査が手作業で行った二分探索を、常設の観測へ移す。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "review_by を持つ全文書（現在 14 件）について、逆参照件数と reproducible フラグの棚卸しを行い、時限の火種となる組み合わせの在庫をゼロで維持する検査を置く。PR の diff に review_by 行が現れたときは、その文書の逆参照件数と将来の判定結果を PR 上へ提示する。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "WATCH-001 第11項として凍結した事象から導かれる制約（門の判定は暦に依存しない）を、凍結事象の記述とは別に、検査可能な制約として文書化する。凍結事象を閉じる条件に「導かれた制約を検査へ変換したか」を含める。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "是正作業（過去事象の family を直す変更）を変更管理の対象に含め、既存の凍結事象が示す制約への適合を審査する工程を置く。今回の火種は是正作業の中で置かれており、この工程が無いことが最後の一歩になっている。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "residual の根の問い —— 時で起きる curation の促しを、変更の門で届けてよいか（INC-018#6 の warn の意味論と重なる）—— について所有者の判断を得る。判断が出るまで、暦由来の findings は門を赤にしない側へ倒しておく。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "ADR-149 の独立検証（ADR-139）を実施し、修正後の掃引結果（2026-11-10 で error 0・warn 16、2027-02-05 で error 2）を第三者が再現してから fixed へ移す。自己申告のまま閉じない。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "evidence_refs の四ファイルの実在と、事象が名指す下位機構（--today、review_by、orphan の三条件、review_by_overrun、reproducible、dep-graph --reverse-refs）の実在を確認し、本分析の前提を検証する。確認が取れた時点で control_flaws と confidence を改訂する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "変更の可否を判ずる門（内容の関数）と、暦の経過を伝える促し（時刻の関数）という、目的も時間軸も異なる二種類の統制が、CI の赤という単一の出力へ合流している。合流点で両者の区別が失われるため、赤の意味が読み手に決められない。",
+      "この体系の「決定論」が『同一日に回せば同一結果』として運用され、『同一入力なら同一結果』としては検証されていなかった。プロセスモデル（門は内容だけを見る）と実状態（門は暦も見る）の不一致が、日次運用では原理的に観測されない。",
+      "すべての検査層（リンタ・ガード・SessionEnd 監査・CI）が同一の壁時計を暗黙の入力として共有している。独立に配置された多重の防護が、この共通原因により同時に盲目になる。",
+      "同型事象の凍結が症状の停止で完了と数えられ、そこから一般化された制約（門の判定は暦に依存しない）を検査へ変換する工程が統制の中に無い。凍結された事象は、次の同型例を止める力を持たないまま台帳に積まれる。",
+      "是正作業そのものが変更管理・ハザード分析の対象になっていない。リスクを下げる意図の作業は安全側の作業と見なされ、新たな時限を置いても審査の網に掛からない。",
+      "文書のメタデータ（review_by）が、それを書いた時点では見えない関係の性質（逆参照の数）と合成されて重大度を決める。合成の結果が執筆者にも所有者にも提示されないため、書く行為と判定される行為の間に、誰も持っていないモデルが必要になる。",
+      "是正の到達が利用者の更新操作に依存し、到達したかどうかをリポジトリ側から観測できない。正本のマージをもって『直った』と数える慣行が、複製側に残る時限を統制の視界から消す。",
+      "覆いの評価が実装して測るまで判らない構造になっている（所有者が当初選んだ案は、実装後の測定で孤児の覆いが 0 件になると判明して選び直された）。設計案の安全上の帰結を事前に見積もる手段が無く、測定が唯一の判断材料になっている。"
+    ],
+    "unknowns": [
+      "【実在の未確認・最優先】本分析の作業ディレクトリは空であり、事象が名指す下位機構をこちらで一つも確認できていない。統制構造には CI_RELEASE_CHECK（.github/workflows）と SESSION_END_AUDIT（plugin/scripts/docs-audit.py）という上位要素は実在するが、事象の主張が乗っている下位機構 —— docs-audit の --today 引数、review_by フィールド、orphan の三条件判定、review_by_overrun(warn) 検査、reproducible フラグ、dep-graph --reverse-refs —— はいずれも統制構造の記述に現れず、evidence_refs のファイルも参照できない。したがって本分析は事象の記録を唯一の出典として組み立てており、記録が実在の証明でない以上、confidence は low とする。まず evidence_refs の四ファイルの実在と該当判定式の存在を独立に確認すること。",
+      "ADR-149 と PR #263、WATCH-001 第11項、INC-018#6、INC-005、ADR-139、ADR-081 の実在と内容も未確認である。",
+      "修正後の実測値（2026-11-10 で error 0・warn 16、2027-02-05 で error 2）は自己申告であり、独立検証（ADR-139）が未実施のため、覆いが失われていないという結論はまだ証拠を伴っていない。",
+      "review_by を持つ 14 文書のうち、今後 reproducible:true へ変わりうる、または逆参照が 0 件へ戻りうる文書が何件あるかは判っていない。",
+      "EXT 系の文書が逆参照ゼロでも orphan にならない条件（reproducible が false であること）が、どの決定に由来する設計意図なのかは事象の記録からは追えない。",
+      "2026-08-03 の同型事象（WATCH-001 第11項）に対して当時どの是正が行われ、その是正がなぜ判定式一般へ波及しなかったのかは判らない。凍結の内容を読まないと、今回の再発が是正の不足か適用範囲の不足かを区別できない。",
+      "利用者環境の導入複製が現在何世代遅れているかは、統制構造の既知の穴（INC-005）により観測できない。したがって ADR-149 の是正が複製側で有効になった時点も判定できない。",
+      "residual に置かれた根の問い（時で起きる curation の促しを、変更の門で届けてよいか）に対する所有者の判断はまだ下されていない。本分析はこの問いに答えていない。",
+      "docs-audit の他の検査に壁時計依存が残っているかどうかは、判定式を走査していないため未確認である。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は、すべて『今日のリポジトリ正本』を対象に走る。リンタ（単一文書）、ガード（編集の可否）、SessionEnd の全件監査（今日の木）、CI（今日の判定）は、対象範囲は異なるが実行時刻の扱いは共通で、いずれも壁時計を暗黙の入力として共有している。この共通原因により、独立に見える多重の防護が同じ軸（暦の経過）に対して同時に盲目になる。加えて、この体系での「決定論」は事実上『同一日に回せば同一結果』として運用されており、『同一入力なら同一結果』とは検証されていなかった。この二つの定義は日次運用では区別がつかず、日付を跨いで同じ入力を再評価する検査が存在しないため、区別が現れる機会が構造上なかった。WATCH-001 第11項の凍結は同型事象を記録したが、そこから導かれるべき制約（門の判定を暦から切り離す）が検査へ変換されなかったため、次の同型例を止める力を持たなかった。さらに今回の火種は是正作業の中で置かれており、是正作業に対するハザード分析が統制に無いことが、保証の網の外側に置かれた最後の一歩になった。なお ADR-149 による修正後の実測（2026-11-10 で error 0・warn 16、2027-02-05 で error 2）は自己申告であり、独立検証（ADR-139）が未実施であるため、修正が保証を回復させたことの証拠はまだ揃っていない。"
+  }
+}
