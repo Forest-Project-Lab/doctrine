@@ -158,14 +158,15 @@
       "summary": "INC-006 の修正の直後に、同型の『消えない行動』を持ち込みかけた。評価の結果としての UNKNOWN(判定不能)と未評価の UNKNOWN を区別せず数えたため、判定不能と結論した 8 件を永久に引き直す next_actions になっていた",
       "detected_by": "jerg の割当完了後に next_actions が『未割当 8/158 件』を出し続けたのを実測(2026-08-05、merge 前)",
       "fixed": true,
-      "shipped": false,
+      "shipped": true,
       "fix_note": "coverage_status が unassessed(assigned_at 無し)と unknown を分けて数え、map_coverage も未評価だけを引く。受入は test_evaluated_unknown_is_not_re_listed ほか1件",
       "cast_analysis": "done",
       "pattern_note": "同一キャンペーン内で『状態を一つの値で表し、由来の違う二つを混ぜる』取り違えが二度起きた(INC-006 は骨組みの存在と割当完了、本件は判定不能と未評価)。WATCH-001 の『照合が意図より広い』類型と隣接する",
       "evidence": "本会話中の実測。修正前に FAIL する試験を先に置いた",
       "cast_analysis_ref": "assurance/ledger/cast/INC-010-evaluated-unknown-relisted.json",
       "cast_analyzed_at": "2026-08-05T09:13:21Z",
-      "evidence_kind": "measurement"
+      "evidence_kind": "measurement",
+      "ship_ref": "v0.11.0"
     },
     {
       "id": "INC-011-dot-joined-token-undefined-term",
@@ -248,7 +249,7 @@
       "detected_by": "DISCOVER を初めて走らせた直後に status を見て気づいた（2026-08-06、merge 前）",
       "root_cause_observed": "ADR-120 で『状態は名指しできるか、できないと明記されるか』を決めたが、成果物が生まれて名指しできるようになった状態を移す段が無かった。FORMALIZE は『帳簿だけからは指せない』側に置いたまま、指せる材料（生き残った候補）が台帳にできていた",
       "fixed": true,
-      "shipped": false,
+      "shipped": true,
       "fix_note": "latest_scenarios() を足し、生き残りが在れば FORMALIZE を、無ければ DISCOVER を挙げる。FORMALIZE を NAMEABLE_STATES へ移した。受入は test_formalize_is_named_when_survivors_exist ほか1件",
       "pattern_note": "INC-012（状態が名指しできない）と同型の三度目。走らせ手を足すときは、その成果を正本が読む段も同時に足す",
       "cast_analysis": "done",
@@ -257,7 +258,8 @@
         "ADR-120"
       ],
       "cast_analysis_ref": "assurance/ledger/cast/INC-015-discover-output-invisible-to-canon.json",
-      "cast_analyzed_at": "2026-08-06T06:57:28Z"
+      "cast_analyzed_at": "2026-08-06T06:57:28Z",
+      "ship_ref": "v0.11.0"
     },
     {
       "id": "INC-016-cast-analysis-content-unread-by-canon",
@@ -266,7 +268,7 @@
       "detected_by": "ADR-124 の不変条件（台帳の種別ごとに読取経路か理由か）を実装した直後、その検査の限界を測って見つけた（2026-08-06）。種別の粒度では緑になるが、中身の粒度では未接続が残る",
       "impact": "CAST の推奨のうち機構化が要る6件と、P1 の新規仮説3件が、人が読んで手で拾わない限り死ぬ。INC-015 の分析が名指しした『記録は在り、伝達と適用が無い』が、事故分析の成果そのものについても成り立っている",
       "fixed": true,
-      "shipped": false,
+      "shipped": true,
       "pattern_note": "INC-012・INC-015・ADR-124 と同型の四度目。ただし粒度が一段深い —— ファイルは読まれており、読まれていないのは中身である。ADR-124 の検査はこの形を赤にできない（同 ADR の帰結に明記）",
       "cast_analysis": "done",
       "evidence_kind": "measurement",
@@ -281,7 +283,8 @@
       "cast_analysis_ref": "assurance/ledger/cast/INC-016-cast-analysis-content-unread-by-canon.json",
       "cast_analyzed_at": "2026-08-06T08:59:58Z",
       "fix_note": "ADR-125（推奨の処遇と読み道）+ ADR-140（新規仮説の取り込み口。PR #260）+ 欠陥・指標の計数を status へ。事故分析の四種（推奨・仮説・欠陥・指標）すべてに正本の読み道が立った",
-      "next_step": "CLOSE。shipped はリリース 0.11.0 の tag 後に ship_ref を付けて立てる（ADR-144）"
+      "next_step": "CLOSE。shipped はリリース 0.11.0 の tag 後に ship_ref を付けて立てる（ADR-144）",
+      "ship_ref": "v0.11.0"
     },
     {
       "id": "INC-017-accepted-adr-born-red-is-unfixable",
@@ -305,7 +308,8 @@
       "cost_accepted_by": "所有者裁定 2026-08-07（会話。WATCH-001 第13項に恒久記録）",
       "owner_decision_2026-08-07": "所有者裁定 2026-08-07（会話）: 修復路は後継 ADR のみ（ADR-044 維持）。ガードの緩和・carve-out の拡張・accepted→proposed の差し戻しは作らない。誤字一つに後継 ADR を要する対価は費用として受理",
       "next_step": "CLOSE（費用受理）。再開条件: 統制外経路（未追跡下書きの破棄）の使用が観測で増えること（推奨#8 の調査が持つ）",
-      "repair_path": "後継 ADR のみ（予防は PROC-001「proposed で起こす」と ADR-135 が持つ）"
+      "repair_path": "後継 ADR のみ（予防は PROC-001「proposed で起こす」と ADR-135 が持つ）",
+      "ship_note": "未修正（または代償受容）のため出荷対象の修正が無い"
     },
     {
       "id": "INC-018-audit-degrades-into-a-tree-finding",
@@ -326,7 +330,8 @@
       "measured_2026-08-06": "壊れた状態: totals={'error':0,'warn':1,'advisory':0}・trace_coverage.gitignore='error'・unmarked=assurance/ledger/runs/smoke-20260804T150058Z.json。git config --global --add safe.directory /workspaces/doctrine を入れた後、同じ --today で totals={'error':0,'warn':0,'advisory':0}・gitignore='read'。因果は往復で確かめた",
       "residual": "gitignore の状態は JSON の trace_coverage に載るので完全な沈黙ではない。だが totals にも findings にも現れず、人が読む文言も『悉皆モード』と書くだけで、前提が欠けたことは告げない",
       "cast_analysis_ref": "assurance/ledger/cast/INC-018-audit-degrades-into-a-tree-finding.json",
-      "cast_analyzed_at": "2026-08-06T11:56:03Z"
+      "cast_analyzed_at": "2026-08-06T11:56:03Z",
+      "ship_note": "未修正（または代償受容）のため出荷対象の修正が無い"
     },
     {
       "id": "INC-019-version-string-does-not-identify-the-copy",
@@ -346,7 +351,8 @@
       "evidence": "~/.claude/plugins/installed_plugins.json: installPath .../doctrine/0.10.0・version 0.10.0・gitCommitSha 67475de7fddf174b43d6a4dc79cb899dcd24cfc5・lastUpdated 2026-08-05T05:02:48Z。git rev-list --count 67475de..HEAD = 15。git log 67475de..HEAD -- plugin/.claude-plugin/plugin.json は空（版は動いていない）。導入複製の scripts/docs-audit.py に hook_session_end_audit は 0 件、リポジトリ側は 1 件",
       "residual": "版番号を毎コミット動かす案は配布物の版番号の変更に当たり所有者判断（ADR-116 と同じ区分）。gitCommitSha は installed_plugins.json に在るので、複製の同一性を SHA で見る経路は作りうるが、それが配布境界の観測に当たるかは INC-001 推奨#3（所有者判断）と重なる",
       "cast_analysis_ref": "assurance/ledger/cast/INC-019-version-string-does-not-identify-the-copy.json",
-      "cast_analyzed_at": "2026-08-06T14:21:01Z"
+      "cast_analyzed_at": "2026-08-06T14:21:01Z",
+      "ship_note": "未修正（または代償受容）のため出荷対象の修正が無い"
     },
     {
       "id": "INC-020-evaluator-blindness-read-as-owner-authority",
@@ -355,7 +361,7 @@
       "detected_by": "所有者からの問い『これは本当に人間が判断しないといけないものなの？構造的に導けないのか』（2026-08-06）。読み直すと、私が前段で『真に所有者』と分類した 12 件も木を当てると消えた",
       "impact": "45 件のうち、統治木を当てて実際に裁いた 3 件はいずれも既決か観測で消えた（INC-001#3・INC-007#3・INC-008#8）。棚は判断待ちではなく、材料が届いていない未処理の山だった。所有者は意思決定者ではなく、構造の欠損の受け皿にされていた",
       "fixed": true,
-      "shipped": false,
+      "shipped": true,
       "fix_note": "owner の既定を廃し、明示の処遇行が六類型のどれかを名指すときだけ owner とした（ADR-127）。申告の件数と成立の件数を status が別々に出す。ただし本体は『評価者へ統治木の既決を渡す』ことで、そちらは未実施",
       "cast_analysis": "done",
       "evidence_kind": "measurement",
@@ -368,7 +374,8 @@
       "residual": "本修正は申告の読み替えを止めるだけで、評価者の視野そのものは狭いまま。既決を評価者へ渡す設計（独立性の規律を壊さない形で —— 既決は構造化された正本であって実装者の弁明ではない）は次の反復。渡した後に『既決に寄りかかりすぎて既決自体の誤りを指摘できなくなる』共通原因故障が新たに立つ",
       "family": "検証できない申告を信じる形の四度目（ADR-050／NONGOAL-001 第9・14・16項／INC-013 の捏造事象。今回の申告は評価者自身の owner_decision_required）",
       "cast_analysis_ref": "assurance/ledger/cast/INC-020-evaluator-blindness-read-as-owner-authority.json",
-      "cast_analyzed_at": "2026-08-06T14:26:57Z"
+      "cast_analyzed_at": "2026-08-06T14:26:57Z",
+      "ship_ref": "v0.11.0"
     },
     {
       "id": "INC-021-lane-fires-on-declared-without-a-runner",
@@ -377,7 +384,7 @@
       "detected_by": "所有者の問い『今の流れはどうなっているのか。宇宙工学の観点で独立検証 —— その結果をそのまま正本にしようとしているのか』を受けて、状態機械と実行器の対応を実測したとき（2026-08-06）",
       "impact": "状態機械は FIX_APPLIED → VERIFY → ATTACK_EVALUATOR の遷移を持ち、運転手順 §2 は VERIFY を『名指しされないが反復の中で順に踏む』側に置く。だが踏む先の実体が無いので、実際には FIX の後に独立検証を経ずに RECORD へ抜けている。ADR-120 の二分（状態）と ADR-124 の二分（台帳の成果物）はどちらもこの面を見ておらず、赤にならない —— 成果物が生まれないので『未宣言のファイル』も出ない。宣言と実装の乖離が沈黙する三つ目の面である",
       "fixed": true,
-      "shipped": false,
+      "shipped": true,
       "cast_analysis": "done",
       "evidence_kind": "measurement",
       "evidence_refs": [
@@ -390,7 +397,8 @@
       "family": "宣言と実装の乖離が沈黙する形。control_structure が .claude/.cache/last-audit.json を feedback と宣言しながら stat する経路が無い件（INC-001 推奨#2 の処遇 note）と同型で、粒度が状態機械の側に在る",
       "cast_analysis_ref": "assurance/ledger/cast/INC-021-lane-fires-on-declared-without-a-runner.json",
       "cast_analyzed_at": "2026-08-06T16:28:13Z",
-      "fix_note": "ADR-128 で三面目の不変条件を置いた。発火点は走らせ手の三点を持つか未実装と明記されるかのちょうど一方に属し、表の鍵集合はレーンの fires_on の合併と一致する（両方向の差集合が空）。FORMALIZE・VERIFY は未実装と明記された状態で緑になり、status が理由つきで出し続ける。逆向きの穴（INGEST_NORMS が実行器を持つのにどの fires_on にも無かった）も同じ差分で塞いだ。**走らせ手そのものは作っていない** —— 独立検証の段は依然として存在せず、是正は本事象の推奨（8件）が持つ。"
+      "fix_note": "ADR-128 で三面目の不変条件を置いた。発火点は走らせ手の三点を持つか未実装と明記されるかのちょうど一方に属し、表の鍵集合はレーンの fires_on の合併と一致する（両方向の差集合が空）。FORMALIZE・VERIFY は未実装と明記された状態で緑になり、status が理由つきで出し続ける。逆向きの穴（INGEST_NORMS が実行器を持つのにどの fires_on にも無かった）も同じ差分で塞いだ。**走らせ手そのものは作っていない** —— 独立検証の段は依然として存在せず、是正は本事象の推奨（8件）が持つ。",
+      "ship_ref": "v0.11.0"
     },
     {
       "id": "INC-022-ci-that-cannot-run-is-read-as-red",
@@ -399,7 +407,7 @@
       "detected_by": "2026-08-06 の GitHub Actions 障害（incident qcvjkzcs7j74・impact critical・15:22:49Z 開始）で PR #233 の CI が二度連続して失敗し、注記が両方とも『The job was not acquired by Runner of type hosted even after multiple attempts』だった。ジョブは一度も実行されていない",
       "impact": "運転者は『赤いまま merge しない』の条項だけを手掛かりに判断する。走らなかった CI を赤と読めば、実行された不適合と実行そのものが成立しなかった状態が同じ顔になる。逆に『実質は緑だから』と読めば門を緩める。どちらへ倒すかの規律が無く、判断が運転者の裁量に落ちる。実際に手元の全門が緑であったため merge への圧力が生じた（merge はしていない）",
       "fixed": true,
-      "shipped": false,
+      "shipped": true,
       "cast_analysis": "done",
       "evidence_kind": "measurement",
       "evidence_refs": [
@@ -413,7 +421,8 @@
       "cast_analysis_ref": "assurance/ledger/cast/INC-022-ci-that-cannot-run-is-read-as-red.json",
       "cast_analyzed_at": "2026-08-06T23:50:11Z",
       "fix_note": "ADR-129 merge_gate.py の三値（test_merge_gate 13 試験）+ SHA 一致検査（merge_gate.py:85-92）+ SKILL §7.1-3 の文言を三値へ更新（2026-08-08）",
-      "next_step": "CLOSE。shipped はリリース 0.11.0 の tag 後に ship_ref を付けて立てる（ADR-144）"
+      "next_step": "CLOSE。shipped はリリース 0.11.0 の tag 後に ship_ref を付けて立てる（ADR-144）",
+      "ship_ref": "v0.11.0"
     },
     {
       "id": "INC-023-attack-freshness-truncated-to-the-day",
@@ -422,7 +431,7 @@
       "detected_by": "反復9の §0 で、ATTACK_EVALUATOR が五反復連続で next_actions に現れないことを不審に思い、evaluator_outputs_latest と attack_evidence_latest を直に呼んで両方 2026-08-06 を返すことを確かめたとき（2026-08-07）",
       "impact": "故障注入の証拠 mutations-2026-08-06.json は git_sha 53db6a4 で作られている。その**子孫のコミットで生まれた事故分析が 11 件**あり（INC-012〜INC-022）、いずれも攻撃を経ていないのに正本は一度も ATTACK_EVALUATOR を挙げなかった。INC-012（ATTACK_EVALUATOR が5反復飛ばされた）と同じ結果が、別の原因で再現していた —— 前回は状態が名指しできなかったこと、今回は鮮度の比較が粗いこと",
       "fixed": true,
-      "shipped": false,
+      "shipped": true,
       "fix_note": "_max_instant を足し、鮮度の判定を時点で比べるようにした。日付だけの証拠はその日の**始まり**として並ぶので、同じ日の成果物を覆わない（安全側。前提が欠けたら PASS ではなく前提欠如へ倒す ADR-129 と同じ向き）。あわせて attack_evaluator.py が generated_at を書くようにした —— 読む段だけ精密にしても、証拠の側が日付だけなら比べられない。表示用の _max_date は残し、鮮度の判定には使わないと docstring に明記した",
       "cast_analysis": "done",
       "evidence_kind": "measurement",
@@ -435,7 +444,8 @@
       "residual": "時点で比べても、**攻撃が何を覆ったか**は分からない。証拠が新しいことは、その証拠が現在の評価器に対して行われたことを意味しない（注入の対象は A1/A2/A3 の三つで、評価器の全経路ではない）。粒度をもう一段深める（どの評価器のどの経路が攻撃されたか）判断は、本事象の分析を待つ。また mutations-2026-08-04 / -08-06 は generated_at を持たないままなので、次の攻撃が走るまで ATTACK_EVALUATOR は挙がり続ける（消えない行動ではない —— 攻撃を走らせれば消える）",
       "family": "ADR-120 が決めた規則が実装の粒度で無効化される形。INC-012 と同じ症状（ATTACK_EVALUATOR が挙がらない）を別の原因で再現した二度目であり、症状に対する修正が原因の族を覆っていなかったことを示す",
       "cast_analysis_ref": "assurance/ledger/cast/INC-023-attack-freshness-truncated-to-the-day.json",
-      "cast_analyzed_at": "2026-08-07T04:20:16Z"
+      "cast_analyzed_at": "2026-08-07T04:20:16Z",
+      "ship_ref": "v0.11.0"
     },
     {
       "id": "INC-024-coverage-rubric-undecided-at-its-busiest-boundary",
@@ -455,7 +465,8 @@
         "assurance/harness/prompts.py"
       ],
       "cast_analysis_ref": "assurance/ledger/cast/INC-024-coverage-rubric-undecided-at-its-busiest-boundary.json",
-      "cast_analyzed_at": "2026-08-07T07:38:10Z"
+      "cast_analyzed_at": "2026-08-07T07:38:10Z",
+      "ship_note": "未修正（または代償受容）のため出荷対象の修正が無い"
     },
     {
       "id": "INC-025-adr-130-implemented-the-option-it-rejected",
@@ -464,7 +475,7 @@
       "detected_by": "反復13の §1 で、直前の反復(PR #249)が plugin/tests のファイルを 1 件足しただけなのに next_actions の先頭が再び MAP_COVERAGE（jerg 76・stpa 32・cast 178＝計 286 件）になったことを不審に思い、ADR-130 の却下した選択肢と current_index_sha の実装を突き合わせたとき（2026-08-07）",
       "impact": "PR #248 直後は三冊とも stale_open が 0 だった。PR #249 が索引に足したのは test_files 1 件（25→26）だけであり、それだけで非終端の 286 件（対応計画あり 260・判定不能 26）が全件古びた。ADR-130 が却下の理由として書いた『606 件が毎コミットで古び、再判定に $12 と数時間かかる。消えない行動になる』が、そのまま現実になっている。実測の単価 $0.048 で 286 件＝約 $13.7・約 95 分が、統治木か配布物を触るあらゆる反復のたびに要求される",
       "fixed": true,
-      "shipped": false,
+      "shipped": true,
       "fix_note": "ADR-134（範囲限定の古び）+ orchestrator.is_stale（PR #251）+ 新規則での取り直し（PR #253）。選別と計数の乖離も ADR-143 で正本へ一本化（PR #259・#262）",
       "cast_analysis": "done",
       "evidence_kind": "measurement",
@@ -476,7 +487,8 @@
       ],
       "cast_analysis_ref": "assurance/ledger/cast/INC-025-adr-130-implemented-the-option-it-rejected.json",
       "cast_analyzed_at": "2026-08-07T17:05:46Z",
-      "next_step": "CLOSE。shipped はリリース 0.11.0 の tag 後に ship_ref を付けて立てる（ADR-144）"
+      "next_step": "CLOSE。shipped はリリース 0.11.0 の tag 後に ship_ref を付けて立てる（ADR-144）",
+      "ship_ref": "v0.11.0"
     },
     {
       "id": "INC-026-accepted-adr-has-no-sanctioned-repair-path",
@@ -499,7 +511,8 @@
       "cost_accepted": true,
       "cost_accepted_by": "所有者裁定 2026-08-07（会話。WATCH-001 第13項に恒久記録）",
       "owner_decision_2026-08-07": "推奨#1 の三案（下書きを別状態／機械が赤にした箇所だけ許す／何もしない）のうち「何もしない（後継 ADR の道を維持）」を所有者が選択。所有者裁定 2026-08-07（会話）: 修復路は後継 ADR のみ（ADR-044 維持）。ガードの緩和・carve-out の拡張・accepted→proposed の差し戻しは作らない。誤字一つに後継 ADR を要する対価は費用として受理",
-      "next_step": "CLOSE（費用受理）。予防は PROC-001「ADR は proposed で起こす」とADR-135（節名袋小路の解消で born-red の主因を除去）が持つ"
+      "next_step": "CLOSE（費用受理）。予防は PROC-001「ADR は proposed で起こす」とADR-135（節名袋小路の解消で born-red の主因を除去）が持つ",
+      "ship_note": "未修正（または代償受容）のため出荷対象の修正が無い"
     }
   ]
 }
