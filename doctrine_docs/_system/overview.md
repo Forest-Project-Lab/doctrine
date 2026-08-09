@@ -157,7 +157,7 @@ sources: []
 | ADR-090 | ADR | lint | 雛形が定める節を検める。全件が守っていない節は雛形を実態へ合わせる |
 | ADR-098 | ADR | lint | 雛形の指示文が残ったフロントマターを咎める。判定は形で行い、雛形を読まない |
 | ADR-110 | ADR | lint | 点検の門は、使い方の誤りを場所として飲まない。見た数を必ず言う |
-| ADR-135 | ADR | lint | 必須節の名の覆いは登録簿から導く（手写しの一覧をやめる） |
+| ADR-146 | ADR | lint | 覆いは最長の字面に譲り、門を閉じる照合すべてに掛ける（ADR-135 を置換） |
 | IMPL-007 | IMPL | lint | `docs-linter.py` の実装メモ |
 | IMPL-008 | IMPL | lint | `_termcheck.py` の実装メモ |
 | IMPL-009 | IMPL | lint | `term-check.py` の実装メモ |

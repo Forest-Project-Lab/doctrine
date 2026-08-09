@@ -3,12 +3,13 @@ id: ADR-135
 title: 必須節の名の覆いは登録簿から導く（手写しの一覧をやめる）
 type: ADR
 domain: lint
-status: accepted
+status: superseded
 owner: doctrine-maintainers
 created: 2026-08-07
-updated: 2026-08-07
+updated: 2026-08-09
 sources: ["doctrine#197", "2026-08-07 の所有者裁定（会話）"]
 depends_on: [SPEC-008]
+superseded_by: ADR-146
 llm_context: task
 ---
 
