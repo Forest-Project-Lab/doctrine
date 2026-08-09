@@ -28,20 +28,6 @@
       "next_step": "OPEN のまま。緩和は着地: 想定観測器（observe_assumptions.py が last-audit を stat・連続 N=2 の先行指標・ASM-001 に 2026-08-08 FAIL 記録）。根本原因（不発火 vs 旧版実行）の切り分けは UNKNOWN のまま —— 複製の同一性判定（INC-019）が前提"
     },
     {
-      "id": "INC-005-installed-plugin-version-lag",
-      "date": "2026-08-05",
-      "summary": "自己適用の導入複製が 0.7.0 のまま(リポジトリ正本は 0.10.0)。本キャンペーンの2セッションのフック(契約注入・ガード・リンタ・SessionEnd 監査)は3世代前のコードで走っていた。『cache だけ旧版』カオス分類の実発生",
-      "detected_by": "claude plugin update の応答『updated from 0.7.0 to 0.10.0』(2026-08-05)。鼓動の版遅れ警告(ADR-070)は2セッションを通じて一度も発火していない",
-      "leading_indicator_failure_hypothesis": "版遅れ検出が 0.7.0 より後に入った機能なら、検出器自身が旧版で欠けていた(古びの検出器が古びる共通原因故障)。ADR-070 の導入版を要確認",
-      "fixed": true,
-      "fix_note": "複製は 0.10.0 へ更新済み(新セッションで反映)。ただし『なぜ2セッション気づかれなかったか』の cast 分析と再発防止(先行指標の版非依存化)が本体",
-      "cast_analysis": "done",
-      "evidence": "plugin update 出力・鼓動警告の不在(本会話ログ)・INC-001 の旧世代 checks_run",
-      "cast_analysis_ref": "assurance/ledger/cast/INC-005-installed-plugin-version-lag.json",
-      "cast_analyzed_at": "2026-08-05T05:26:14Z",
-      "evidence_kind": "conversational"
-    },
-    {
       "id": "INC-002-termcheck-ascii-substring",
       "date": "2026-08-04",
       "summary": "禁止同義語の ASCII 部分一致誤検知(VERIFY⊃IF)。WATCH-001 類型の新事例。RED→修正→全緑まで完了",
@@ -85,6 +71,20 @@
         "assurance/README.md",
         "plugin/scripts/_termcheck.py"
       ]
+    },
+    {
+      "id": "INC-005-installed-plugin-version-lag",
+      "date": "2026-08-05",
+      "summary": "自己適用の導入複製が 0.7.0 のまま(リポジトリ正本は 0.10.0)。本キャンペーンの2セッションのフック(契約注入・ガード・リンタ・SessionEnd 監査)は3世代前のコードで走っていた。『cache だけ旧版』カオス分類の実発生",
+      "detected_by": "claude plugin update の応答『updated from 0.7.0 to 0.10.0』(2026-08-05)。鼓動の版遅れ警告(ADR-070)は2セッションを通じて一度も発火していない",
+      "leading_indicator_failure_hypothesis": "版遅れ検出が 0.7.0 より後に入った機能なら、検出器自身が旧版で欠けていた(古びの検出器が古びる共通原因故障)。ADR-070 の導入版を要確認",
+      "fixed": true,
+      "fix_note": "複製は 0.10.0 へ更新済み(新セッションで反映)。ただし『なぜ2セッション気づかれなかったか』の cast 分析と再発防止(先行指標の版非依存化)が本体",
+      "cast_analysis": "done",
+      "evidence": "plugin update 出力・鼓動警告の不在(本会話ログ)・INC-001 の旧世代 checks_run",
+      "cast_analysis_ref": "assurance/ledger/cast/INC-005-installed-plugin-version-lag.json",
+      "cast_analyzed_at": "2026-08-05T05:26:14Z",
+      "evidence_kind": "conversational"
     },
     {
       "id": "INC-006-next-actions-silently-empty",
@@ -624,6 +624,24 @@
         "plugin/scripts/docs-audit.py",
         "plugin/hooks/hooks.json",
         "plugin/tests/test_hook_boundary.py"
+      ]
+    },
+    {
+      "id": "INC-033-approved-plans-have-no-canonical-pressure",
+      "date": "2026-08-09",
+      "summary": "承認された検証計画 30 件に正本の圧が一切かかっていなかった。FORMALIZE は判定が付いたことを消化と数え、遷移先の REPRODUCE_RED は ADR-120 で『名指しされない状態』に置かれていたので、APPROVE が付いた瞬間に義務が正本のどの視野からも消える",
+      "detected_by": "独立再監査 2026-08-09 の Phase A。formalize の APPROVE を数えて 30 件、red/ の 16 件はすべて別の対象（INC・ADR）で、scenario id との積が空であることを実測した。orchestrator に REPRODUCE_RED を挙げる経路が一行も無いことも確認した",
+      "impact": "買った義務が、買った瞬間に見えなくなる。手で選ばない規律（ADR-115）の下では、帳簿が指さないものは実際に選ばれない。INC-012・INC-015 と同じ『走らせ手を足したのに正本が読む段を足さなかった』型の三度目である",
+      "fixed": false,
+      "fix_note": "ADR-148 が ADR-120 を置換し、REPRODUCE_RED を名指しできる状態へ移した。読み口 load_red_records / unreproduced_plans を足し、LEDGER_KINDS の red/ を read_by つきへ改め、next_actions と status の要約へ配線した。消化と認めるのは『赤が赤だった』と『再現不能を理由つきで記録した』の二つだけで、最初から緑は再現と認めない。名指しの二分と優先順の表が食い違わないことを validate が検めるようにした（従来は試験の側だけが持っていた）。独立検証（ADR-139）は未実施のため fixed:true とは書かない",
+      "next_step": "優先順の表への配置（ATTACK_EVALUATOR の後・FORMALIZE の前）は ADR-131 決定2 により所有者判断。裁定を得るまで merge しない",
+      "residual": "未消化の 30 件そのものはまだ消化していない。正本が名指しするようになっただけである",
+      "cast_analysis": "pending",
+      "evidence_kind": "measurement",
+      "evidence_refs": [
+        "assurance/ledger/formalize/2026-08-09.json",
+        "assurance/harness/orchestrator.py",
+        "assurance/tests/test_approved_plan_pressure.py"
       ]
     },
     {
