@@ -317,7 +317,12 @@ class MapDraftCheckTest(unittest.TestCase):
         payload = json.loads(out)
         self.assertEqual(payload["schema"], "map-draft-check/1")
         self.assertEqual(payload["findings"], [])
-        self.assertEqual(payload["unverifiable"], [])
+        # INC-035: 散文の locator（「第1項」など）は、機械では位置を確かめ
+        # られない。黙って緑にせず「機械検証不能」として数える。形の試験
+        # なので、空であることではなく形が揃っていることを見る。
+        self.assertIsInstance(payload["unverifiable"], list)
+        for u in payload["unverifiable"]:
+            self.assertEqual(sorted(u), ["reason", "source", "where"])
         self.assertEqual(payload["totals"]["findings"], 0)
         self.assertEqual(payload["totals"]["sources"], 2)
 

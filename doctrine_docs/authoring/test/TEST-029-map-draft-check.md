@@ -7,7 +7,7 @@ status: current
 owner: doctrine-maintainers
 created: 2026-08-07
 updated: 2026-08-07
-sources: [plugin/tests/test_mapdraft.py]
+sources: [plugin/tests/test_mapdraft.py, plugin/tests/test_mapdraft_hardening.py]
 depends_on: [SPEC-029]
 llm_context: task
 ---
@@ -33,3 +33,13 @@ SPEC-029 の受入基準に対応する。次の各点を `plugin/tests/test_map
 `plugin/tests/test_mapdraft.py` が合格する。実行は plugin/ から `python3 -B -m unittest tests.test_mapdraft` とする。
 
 <!-- 入れない: 無関係な要求 -->
+
+## 素通りさせない形（INC-035）
+
+独立再監査 2026-08-09 の故障注入が実測した素通りの形を、一件ずつ凍結する
+（`plugin/tests/test_mapdraft_hardening.py`）。凍結するのは「所見か機械検証不能の
+どちらかへ必ず落ちる」ことであって、すべてを所見にすることではない —— 検証の道が
+無いものは、道が無いと言えばよい。
+
+正直な下書きが通り続けることも同時に見る（射程を狭めすぎない）。修正前に組んだ
+故障注入の fixture 13 種を修正後のコードへ当て、13/13 が捕捉されることを実測した。
