@@ -1,0 +1,362 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "formalize-plans",
+  "date": "2026-08-08",
+  "generated_at": "2026-08-08T06:14:28Z",
+  "git_sha": "19c0f8e7c92bc2ad980714cfe92776e70921505f",
+  "scenarios_source": "assurance/ledger/scenarios/2026-08-06.json",
+  "requested": [
+    "SCN-D01-sessionend-nondelivery-on-abnormal-exit",
+    "SCN-D03-declared-vs-registered-control-drift",
+    "SCN-D04-guard-allow-indistinguishable-from-out-of-scope",
+    "SCN-D06-remediation-closed-by-nonexistent-control-id",
+    "SCN-D07-coverage-denominator-poisoning",
+    "SCN-D08-checking-rule-self-relaxation"
+  ],
+  "plans": [
+    {
+      "scenario_id": "SCN-D01-sessionend-nondelivery-on-abnormal-exit",
+      "verdict": "APPROVE",
+      "reasons": [
+        "oracle の中核（起動したセッション数と監査実行レコード数の突合）は、実験者が分母（起動セッション数・セッション ID・終了種別）を自分で握るため、実装前に観測可能である。既存の監査 cache／stamps の増減は現在の成果物として観測できる。",
+        "oracle の (2)(3)（未監査列挙の出力・due 状態ファイル）は将来実装が生む観測であり、その『存在』を赤の根拠にはできない。ただし赤側では『未監査の事実がどこにも永続化されない』という不在の観測として使えるため、特定パスの決め打ちではなく設定ディレクトリ全体の前後スナップショット差分の全列挙で判定するよう手順を固定した。これにより実装前に観測可能な形へ落ちる。",
+        "陽性対照（正常終了で監査レコードが増えること）を必須の門にした。これが通らない場合は SessionEnd 経路そのものが未配線であり、SCN-D02 との交絡で赤が意味を持たないため、赤ではなく『切り分け不能』として記録して中止する。反証条件が空振りしないための必要条件である。",
+        "『ホスト停止』の変種は再現性と観測性を確保できないため対象外とし、SIGKILL による正常終了経路の迂回に限定した。検証の限界として明記する。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "1. 使い捨て環境を作る：対象リポジトリの git worktree を /tmp/red-d01/wt に作成し、HOME および設定ディレクトリを /tmp/red-d01/home へ隔離する環境変数一式を env.txt に記録する。以後の全操作はこの環境内に限る。",
+          "2. 事前スナップショット：隔離設定ディレクトリ配下・監査 cache・hook-stamps の全ファイルについて、相対パス／サイズ／mtime／sha256 の一覧を snapshot-0.txt に保存する。",
+          "3. 陽性対照：この環境でセッションを 1 つ起動し、セッション ID を記録して正常終了させる。snapshot-1 を取り、snapshot-0 との差分に監査実行を示すレコード（cache 更新または監査ログ行）が現れることを確認する。差分が空なら、SessionEnd 経路自体が未配線であるため本手順を中止し、『SCN-D02 と切り分け不能』として記録する（赤とは記録しない）。",
+          "4. 赤の注入：新規セッションを起動してセッション ID と pid を記録し、フック実行の猶予を与えずに kill -9 <pid> を送る。送出時刻・pid・シグナル番号を kill.log に記録する。",
+          "5. 直後に snapshot-2 を取り、snapshot-1 との差分を全件（追加・更新・削除）diff-2.txt に列挙する。",
+          "6. 差分に対して判定する：(a) 監査実行レコードが増えていないこと、(b) 当該セッション ID を含む『未監査 due』相当の新規エントリが差分全件のどこにも現れないこと。判定は特定パスの決め打ちではなく差分の全列挙に対して行う。",
+          "7. 繰越の観測：同一環境で新規セッションを起動し、SessionStart の標準出力・標準エラーを全文 start-output.txt に保存する。手順 4 のセッション ID 文字列、および未監査セッションの列挙が現れるかを grep し、コマンドと終了コードを記録する。",
+          "8. 突合表を作る：起動セッション（正常 1・異常 1）ごとに、セッション ID・終了種別・監査レコードの有無を 1 行として reconciliation.tsv にまとめる。",
+          "9. 手順 2〜8 を 3 回反復し、回ごとに全成果物を run-<n>/ 配下へ保存する。非対話実行（-p）と対話実行の双方で実施し、モードを記録する。"
+        ],
+        "injection_point": "手順 4 の kill -9 の対象は、手順 4 で起動して pid を記録した使い捨て環境上のセッションプロセス（実在の pid）である。ホスト電源断・ホスト停止の変種は再現性・観測性が確保できないため本計画の対象外とする。",
+        "isolation": "全操作を /tmp/red-d01 配下に隔離する：リポジトリは git worktree のコピー、HOME と設定ディレクトリは temp ディレクトリへ差し替え、監査 cache／stamps もその配下に閉じる。kill はスナップショットに記録した pid のみを対象とし、利用者の実設定・実セッション・リモートには一切触れない。成果物を evidence/ へ退避したのち worktree と temp ディレクトリを削除し、削除確認を記録する。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "陽性対照（手順 3）では監査レコードが 1 件増えるのに対し、異常終了（手順 4〜6）では監査レコードが 0 件増加であり、かつ snapshot 差分の全列挙に当該セッション ID を含む未監査 due 相当の新規エントリが 0 件、さらに次セッションの SessionStart 全文出力に当該セッション ID も未監査列挙も現れない（grep ヒット 0）。この 3 条件が 3 回中 3 回そろったとき赤とする。",
+        "after_fix_passes_when": "同一手順で、異常終了直後の差分に当該セッション ID を含む未監査 due エントリが 1 件以上出現し、次セッションの SessionStart 出力に当該セッション ID が未監査として列挙され、繰越監査の実行レコードが 1 件増え、due エントリが削除または解消時刻付きで更新される。これが 3 回中 3 回成立し、かつ陽性対照（正常終了のみの回）では due エントリが生成されない（偽陽性でない）。"
+      },
+      "evidence_spec": {
+        "artifact": "evidence/SCN-D01/run-<n>/ 一式（env.txt, snapshot-0..2.txt, diff-2.txt, kill.log, start-output.txt, reconciliation.tsv, commands.log）",
+        "must_record": [
+          "worktree の commit hash と隔離環境変数一式（HOME・設定ディレクトリのパス）",
+          "起動コマンド、実行モード（対話／-p）、各セッションの ID と開始・終了時刻",
+          "kill の対象 pid・シグナル番号・送出時刻",
+          "各スナップショットのファイル一覧と sha256、および前後差分の全件列挙",
+          "陽性対照の結果（監査レコードの増分と該当エントリ本文）。中止した場合はその判断と時点",
+          "SessionStart の標準出力・標準エラー全文、grep のコマンド文字列と終了コード",
+          "反復 3 回それぞれの判定と、突合表（セッション ID×終了種別×監査レコード有無）"
+        ]
+      },
+      "normative_refs": [
+        "problem-reproduction-confirmed",
+        "test-spec-unambiguous",
+        "試験条件の記録と再現性",
+        "test-records-in-verdict-decidable-form",
+        "pass-criteria-defined-in-advance",
+        "verification-constraints-and-limits"
+      ],
+      "risks": [
+        "陽性対照が通らない場合、赤は SCN-D02（正常終了でも走らない別経路）と交絡し切り分け不能になる。中止条件として明示済み。",
+        "非対話実行（-p）と対話セッションで SessionEnd の配送挙動が異なる可能性があるため、両モードで実施しない限り結論を一般化できない。",
+        "kill のタイミング（フック起動直前／実行中）によって結果が変わりうるため、送出時刻とセッション経過時間の記録が必須。",
+        "『due が無いこと』は不在の観測であり、差分の全列挙という手続きに依存する。列挙範囲外に状態が置かれている可能性は残余リスクとして記録する。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-D03-declared-vs-registered-control-drift",
+      "verdict": "APPROVE",
+      "reasons": [
+        "oracle（宣言された統制 id 集合 − 実行時に列挙された登録フック id 集合）は両辺とも実装前に観測可能である。宣言側は GOVERNANCE_TREE 文書からの機械抽出、実測側はユーザ／プロジェクト／プラグイン設定をマージした有効設定からのフック登録名の列挙で得られる。",
+        "赤の判定は『差集合が非空であるのに SESSION_START_CONTRACT の出力に当該 id が現れず run が合格のまま』という現在の観測で閉じており、将来実装が生む出力の存在に依存しない。",
+        "matcher の綴り誤り変種は、発火印を持つ 3 統制（inject_contract / docs_linter / policy_guard_pre）についてのみ発火の有無が観測可能である。印を持たない統制の matcher 変種は実装前に発火が観測できないため対象外とし、除外した統制 id と理由を成果物に残すことを必須にした（検証の限界の明示）。",
+        "注入は 1 件ずつ独立に行い毎回原状復帰させるため、差集合の非空と出力の対応関係が一意に帰属できる。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "1. 宣言集合の取得：GOVERNANCE_TREE 文書から統制 id を機械抽出して declared.txt に保存する。抽出コマンド、出典ファイルパス、該当行番号付きの引用を残す。11 要素の内訳を明示する。",
+          "2. 実測集合の取得手段を先に固定する：ユーザ／プロジェクト／プラグイン／marketplace 配布物の各設定をマージした有効設定から、フック登録名と matcher 文字列を列挙するコマンドを定義し、その生出力を registered-0.txt に保存する。列挙手段が存在しない統制はその id を unobservable.txt に分離し、以後の判定母集団から除外して除外理由を記す。",
+          "3. 基準線：未改変の使い捨て環境でセッションを起動し、SESSION_START_CONTRACT の出力全文を baseline-start.txt に、run の合否（終了コードまたは明示の判定行）を verdict-baseline.txt に保存する。",
+          "4. 注入（削除変種）：使い捨て環境の有効設定から、registered-0.txt に現れた 1 フックの登録ブロックを削除する。対象 id と設定ファイルの前後差分を settings.diff に保存する。",
+          "5. 再列挙：registered-1.txt を取得し、declared.txt − registered-1.txt の差集合を diff-set.txt に出力し、当該 id が含まれることを確認する。",
+          "6. 観測：セッションを起動して SESSION_START_CONTRACT の出力全文を after-start.txt に保存し、当該 id および『未登録』相当語の grep 結果（コマンドと終了コード）と run の合否を記録する。",
+          "7. 原状復帰：設定を復元し、registered-0.txt と一致することを確認して記録する。列挙可能な全フックについて 4〜7 を 1 件ずつ独立に繰り返す。",
+          "8. 注入（matcher 変種）：発火印を持つ 3 統制のいずれか 1 件について matcher を一致しない綴りへ変更し、対応するツール呼び出しを実行して stamp が付かないことを確認したうえで 5〜7 を実施する。印を持たない統制の matcher 変種は発火が観測できないため実施せず、その旨を limitations.txt に記録する。"
+        ],
+        "injection_point": "手順 2 で実パスを特定して記録した、使い捨て環境側の有効設定ファイル内の hooks 登録ブロック（および matcher 文字列）。利用者の実設定ファイルには一切触れない。",
+        "isolation": "リポジトリは git worktree、HOME と設定ディレクトリは /tmp/red-d03/home へ隔離し、設定改変はこのコピーに対してのみ行う。各注入の後に必ずファイル復元で原状復帰し、復帰を registered-*.txt の一致で確認する。変更はコミットせず、リモートへ push しない。終了時に worktree と temp を削除し、実リポジトリの git status が無改変であることを記録する。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "diff-set.txt が非空（削除した統制 id を含む）であるにもかかわらず、after-start.txt に当該 id も『未登録』相当の記述も現れず（grep ヒット 0）、run の合否が baseline と同じ合格である。これが列挙可能な全フックそれぞれの単独注入で成立し、matcher 変種（印を持つ 1 統制）でも stamp 不在のまま同様に成立する。",
+        "after_fix_passes_when": "同一注入で SESSION_START_CONTRACT の出力に当該統制 id が未登録として名指しで列挙され、run が非合格（終了コード非 0 または明示の fail 記録）になる。かつ原状復帰後の同一手順では合格に戻り、無改変時に非合格が出ない（偽陽性でない）。"
+      },
+      "evidence_spec": {
+        "artifact": "evidence/SCN-D03/<hook-id>/ 一式（declared.txt, registered-0.txt, registered-1.txt, diff-set.txt, settings.diff, baseline-start.txt, after-start.txt, verdict-*.txt, commands.log）および共通の unobservable.txt / limitations.txt",
+        "must_record": [
+          "宣言集合の抽出コマンドと、出典ファイルパス・行番号付き引用",
+          "実測集合の列挙コマンドとその生出力（マージ元の各設定ファイルパスを含む）",
+          "差集合の全要素と、注入対象 id",
+          "設定ファイルの前後差分（unified diff）",
+          "SESSION_START_CONTRACT の出力全文（基準線・注入後）と run の合否・終了コード",
+          "grep のコマンド文字列と終了コード、ヒット行",
+          "列挙不能として母集団から除外した統制 id と除外理由、matcher 変種を実施しなかった統制の一覧",
+          "原状復帰の確認結果、worktree の commit hash、実リポジトリの git status"
+        ]
+      },
+      "normative_refs": [
+        "item-set-completeness-and-version-check",
+        "completeness-presence-and-version",
+        "configuration-audit-against-plan",
+        "verification-requires-objective-evidence",
+        "試験条件の記録と再現性",
+        "verification-constraints-and-limits"
+      ],
+      "risks": [
+        "有効設定のマージ結果を列挙する手段が実在しない場合、実測集合が設定ファイルの静的読み取りに退化し、matcher 不一致による実質未配線を検出できない。手順 2 の除外記録でこの限界を可視化する。",
+        "発火印を持たない統制については matcher 変種の赤が作れないため、本計画の結論は削除変種と印を持つ 3 統制に限定される。",
+        "marketplace 経由の利用者環境と開発リポジトリ環境で設定のマージ順が異なる可能性があり、片方の環境だけの結果を一般化できない。両環境で実施し環境差を記録する。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-D04-guard-allow-indistinguishable-from-out-of-scope",
+      "verdict": "APPROVE",
+      "reasons": [
+        "oracle の (1)（総ツール呼び出し数とガード判定レコード数の差）は、実験者が台本化した呼び出し列を実行して分母を自分で確定させることで、実装前に観測可能になる。分子側の policy_guard_pre 系レコードは INC-009 が示すとおり現存する成果物である。",
+        "oracle の (2)（カナリアの deny レコード）は未実装機能が生む観測であり、その不在は反証力を持たないため oracle から除外した。除外しても (1) だけで赤／緑の判定が閉じる。",
+        "『許可』と『対象外』が同一観測になるという主張は、記録シンクを事前に全列挙し、その差分に対して呼び出し単位の対応付けが復元できるかを判定することで、客観的に示せる。判定はレコード内容の有無ではなく『呼び出し識別子と判定値を復元できるか』という決定可能な条件に落としてある。",
+        "matcher の実パターンをソースから引用し、対象外群の呼び出し名がそれに一致しないことを事前に静的照合するため、注入が意図どおり『対象外』になっていることを証拠として示せる。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "1. 記録シンクを先に全列挙する：ガード判定が残りうる場所（hook-stamps ディレクトリ、ログファイル、セッション transcript、その他書き込み先）を列挙して sinks.txt に保存する。以後『記録なし』の判定は、この全シンクの前後差分に対して行う。",
+          "2. matcher の実パターンをソースから引用し、ファイルパス・行番号付きで matcher-source-quote.txt に保存する。",
+          "3. 使い捨て環境で新規セッションを開始し、セッション ID と開始時刻を記録する。全シンクの事前スナップショット（パス・サイズ・sha256）を取る。",
+          "4. 台本化した呼び出し列を実行する：matcher に一致する呼び出しを A 回（うち少なくとも 1 回は許可されるもの、1 回は拒否されるべきもの）、matcher に一致しない呼び出しを B 回（新規ツール名・別名・大文字小文字違い）。各呼び出しの名称・引数・実行順・時刻・期待区分（in-scope/out-of-scope、allow/deny 期待）を calls.tsv に記録する。手順 2 の引用パターンと B 群の名称を静的に照合し、不一致であることを記録する。",
+          "5. 事後スナップショットを取り、全シンクの差分を diff.txt に全件出力する。差分からガード判定に帰属できるレコードを抽出して records.tsv にする。",
+          "6. 各レコードについて、(a) どの呼び出しに対応するか（呼び出し識別子・順序）、(b) 判定値（allow か deny か）が復元できるかを判定し、復元可否を records.tsv の列として記録する。",
+          "7. 突合：台本総数 A+B と、呼び出し単位で対応付け可能な判定レコード数を比較して reconciliation.txt にまとめる。B 群についてレコードが 0 件であること、A 群について対応付け可能数が A 未満であることを別々に判定する。",
+          "8. 発火印が呼び出し単位ではなくセッション単位（1 セッション 1 印）である場合、印ファイルの件数・内容・更新時刻を根拠として示す。",
+          "9. 3 セッション反復し、セッションごとに成果物一式を保存する。"
+        ],
+        "injection_point": "手順 4 の B 群、すなわち手順 2 で引用した matcher の実パターンに一致しないツール名での呼び出し（新規名・別名・大文字小文字違い）。注入対象は使い捨て環境上のセッションに限る。",
+        "isolation": "リポジトリは git worktree、HOME と設定ディレクトリは /tmp/red-d04/home に隔離する。拒否されるべき呼び出しの対象は /tmp/red-d04/fixture/ 配下の使い捨てファイルに限定し、利用者の実ファイル・リポジトリ本体・ネットワーク・リモートには一切作用させない。実行後は fixture ごと削除し、実リポジトリの git status が無改変であることを記録する。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "B 群 B 回の呼び出しに対して全シンク差分に帰属できるレコードが 0 件であり、かつ A 群についても呼び出し単位で判定値（allow/deny）を復元できるレコードが A 件未満（典型的にはセッション単位の印 1 件のみ）である。すなわち台本総数 A+B と復元可能判定数の差が 0 でない。これが 3 セッション中 3 回成立する。",
+        "after_fix_passes_when": "同一台本で、A+B の全呼び出しに 1 対 1 で対応する判定レコードが得られ、各レコードが allow / deny / out-of-scope の三値と呼び出し識別子を持ち、B 群が out-of-scope として記録される。台本総数と復元可能判定数の差が 0 になり、呼び出しを行わないセッションでは余分なレコードが生じない（偽陽性でない）。"
+      },
+      "evidence_spec": {
+        "artifact": "evidence/SCN-D04/session-<id>/ 一式（sinks.txt, matcher-source-quote.txt, snapshot-before.txt, snapshot-after.txt, diff.txt, calls.tsv, records.tsv, reconciliation.txt, commands.log）",
+        "must_record": [
+          "記録シンクの全列挙（パスと種別）と、その列挙手順",
+          "matcher パターンのソース引用（ファイルパス・行番号・原文）と B 群名称との静的照合結果",
+          "台本の全呼び出し（名称・引数・実行順・時刻・期待区分）",
+          "全シンクの事前・事後スナップショット（sha256 付き）と差分全件",
+          "帰属できたレコードと、呼び出し識別子／判定値の復元可否",
+          "印が呼び出し単位かセッション単位かを示す根拠（印ファイル件数・内容・更新時刻）",
+          "セッションごとの台本総数 A+B と復元可能判定数、およびその差",
+          "カナリアの脚を oracle から除外した旨と理由"
+        ]
+      },
+      "normative_refs": [
+        "verification-procedure-includes-recording",
+        "test-records-in-verdict-decidable-form",
+        "verification-plan-coverage-evaluated",
+        "problem-reproduction-confirmed",
+        "試験条件の記録と再現性",
+        "test-spec-unambiguous"
+      ],
+      "risks": [
+        "セッション transcript が呼び出し自体を記録している場合、『呼び出しの存在』は事後復元できる。本計画の主張は『ガード判定の帰属が復元できない』ことに限定されるため、両者を混同しないよう records.tsv で区別する必要がある。",
+        "matcher に一致しない呼び出しが、そもそもツールとして実行できず注入が成立しない可能性がある。その場合は注入不成立として記録し、赤とはしない。",
+        "残余リスクとして挙げられたカナリアのホワイトリスト化は本計画では検証対象外であり、修正実装後の別計画が必要。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-D06-remediation-closed-by-nonexistent-control-id",
+      "verdict": "APPROVE",
+      "reasons": [
+        "oracle の両辺（是正項目の紐づけ id 集合、実行時に列挙できる統制 id 集合）は実装前に列挙可能である。後者は登録フック名・リンタ検査コード表・CI ジョブ名・監査検査 id の機械抽出で得られ、SCN-D03 の列挙器と同一手続きを共有できる。",
+        "赤は『捏造 id を含む是正項目が現行の全自動ゲートを素通りし、done へ遷移できる』という現在の観測で閉じる。将来実装される検査の出力に依存しない。",
+        "『計画中の紐づけ検査が文字列の非空・書式一致として実装される』という部分は将来実装の性質に関する予測であり、実装前には観測不能であるため oracle から除外した。除外しても、ハザード（実体なき id でクローズが成立する状態）の赤は現在の観測だけで作れる。検査実装時に recheck する。",
+        "実在 id を書いた同型項目を対照として同時に投入するため、ゲート出力の無差別性（捏造 id と実在 id が区別されないこと）を差分ゼロという決定可能な形で示せる。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "1. 実在集合の列挙手続きを先に固定する：登録フック名（有効設定からの実測列挙）、リンタ検査コード表（ソースからの抽出）、CI ジョブ名（ワークフロー定義）、監査検査 id を機械抽出し registry.txt に統合する。抽出コマンドと出典（パス・行）を記録し、件数を明示する。",
+          "2. 現行ゲートの列挙：是正・所見に対して実行される自動ゲート（CI ジョブ、リンタ、監査検査）を全列挙し、実行コマンドとともに gates.txt に記録する。",
+          "3. 基準線：未改変の台帳に対し全ゲートを実行し、各ゲートの終了コードと出力全文を baseline/ に保存する。",
+          "4. 注入：使い捨て worktree の是正台帳に、紐づけ欄へ実在しない統制 id（固定文字列 FIXTURE-NONEXISTENT-HOOK-D06）を書いた是正項目を 1 件追加する。既存項目は一切改変しない。追加した項目の全文を injection.txt に保存する。",
+          "5. 当該 id が registry.txt に存在しないことを grep で示し（終了コード 1 を記録）、差集合 unresolved.txt を出力する。",
+          "6. 全ゲートを再実行し、終了コードと出力全文を after/ に保存する。いずれかの出力に当該 id への未解決警告・失敗が現れるかを grep で判定し、コマンドと終了コードを記録する。",
+          "7. クローズ判定の観測：当該項目のステータスを done に設定し、再度全ゲートを実行して合否を記録する。done への遷移を阻止する機械的ゲートが 1 件でも存在するかを判定する。",
+          "8. 対照：実在する統制 id（registry.txt に存在する id）を紐づけ欄に書いた同型の是正項目を 1 件投入し、3〜7 と同じ手順を実施して control-case/ に保存する。捏造 id の場合とゲート出力に差分があるかを diff で判定する。",
+          "9. fixture 項目を固定識別子で全文検索して削除し、worktree を破棄して実リポジトリの git status が無改変であることを記録する。"
+        ],
+        "injection_point": "手順 2 で実パスを特定して記録した、使い捨て worktree 内の是正・推奨事項台帳ファイルの紐づけ欄（1 項目分の追記）。実リポジトリ側の台帳には触れない。",
+        "isolation": "/tmp/red-d06/wt に作成した git worktree 上でのみ台帳を改変する。変更はコミットせず、リモートへ push せず、既定ブランチには一切触れない。投入する項目は固定識別子 FIXTURE-NONEXISTENT-HOOK-D06 を含めて全件回収可能にし、終了時に worktree を削除して実リポジトリの無改変を git status で確認・記録する。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "捏造 id が registry.txt に存在しない（grep 終了コード 1）にもかかわらず、gates.txt の全ゲートの終了コードが基準線と同じ成功であり、いずれの出力にも当該 id を名指しした未解決警告が現れず（grep ヒット 0）、ステータスを done に設定しても阻止するゲートが 0 件である。かつ対照（実在 id）の項目とゲート出力の差分が空である。",
+        "after_fix_passes_when": "同一注入で、少なくとも 1 つのゲートが非 0 終了し、その出力に当該 id が『未解決の統制 id』として名指しで列挙され、done への遷移が拒否される。同時に、対照（実在 id を紐づけた項目）は同じゲートを通過し done にできる（偽陽性でない）。"
+      },
+      "evidence_spec": {
+        "artifact": "evidence/SCN-D06/ 一式（registry.txt, gates.txt, baseline/, after/, ledger.diff, injection.txt, unresolved.txt, control-case/, grep-log.txt, git-status.txt, commands.log）",
+        "must_record": [
+          "実在集合の抽出コマンド・出典・生出力・件数（フック名／リンタ検査コード／CI ジョブ名／監査検査 id の内訳）",
+          "自動ゲートの一覧と実行コマンド、および基準線・注入後それぞれの終了コードと出力全文",
+          "注入した是正項目の全文と固定 fixture 識別子、台帳の unified diff",
+          "捏造 id に対する grep のコマンドと終了コード、差集合 unresolved.txt の内容",
+          "done へのステータス遷移操作と、その後の各ゲートの合否",
+          "対照（実在 id）ケースの出力と、捏造 id ケースとの差分結果",
+          "worktree の commit hash、fixture の削除確認、実リポジトリの git status"
+        ]
+      },
+      "normative_refs": [
+        "approved-change-closure-verified",
+        "verification-requires-objective-evidence",
+        "identifier-per-item",
+        "traceability-analyzed-documented-maintained",
+        "test-records-in-verdict-decidable-form",
+        "tooling-qualified-for-process"
+      ],
+      "risks": [
+        "紐づけ検査が現時点で未実装のため、本計画の赤は『現行ゲート群が捏造 id を素通しする』という現在の観測に限定される。検査実装後は同一手順で再実施し、実装形態（文字列検査か id 解決か）を改めて評価する必要がある。",
+        "クローズ判定が機械ゲートではなく人手・文書上の記述のみで行われている場合、『done が成立する』の観測はゲート全緑の提示に退化する。その場合は判定を『阻止するゲートが 0 件』として記録し、限界として明示する。",
+        "実在集合の列挙が SCN-D03 の列挙手段に依存するため、D03 側で列挙不能と判定された統制は本計画でも解決先として扱えない。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-D07-coverage-denominator-poisoning",
+      "verdict": "UNKNOWN",
+      "reasons": [
+        "oracle が依拠する『run ごとの被覆率と、その分母（規範集合）の識別情報』が現時点で成果物として公表されているかを、事前に確認できていない。公表箇所が存在しなければ被覆率という参照先そのものが無く、oracle は観測不能になる。",
+        "被覆計算が決定的に再実行できるかも未確認である。レーンの実行が非決定なら、注入後の被覆率上昇を注入に帰属できず、数値差分は証拠にならない（もっともらしさの提示に退化する）。",
+        "上記 2 点は、下記手順 1（公表箇所の特定）と手順 2（無改変 3 回反復による再現性ゲート）で事前に決着できる性質のものであり、原理的な観測不能ではない。したがって REJECT ではなく UNKNOWN とし、両ゲートを通過した時点で APPROVE 判断へ再審査する。",
+        "ゲート不通過時の扱いを先に固定した：公表箇所が無い／被覆率が無改変でも回ごとに揺れる場合は『参照先不在』『指標非決定』として記録し、赤とは記録しない。この規定が無いと、観測できないことが暗黙に赤として扱われる。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "1. 参照先の特定（第 1 ゲート）：被覆率が公表される成果物を全列挙し、所在（ファイルパス・行）と、その数値に分母の識別情報（鍵件数・ハッシュ・鍵一覧）が併記されているかを coverage-sites.txt に記録する。公表箇所が 1 件も無ければここで中止し『参照先不在＝本シナリオは検証不能』として記録する（赤とはしない）。",
+          "2. 再現性ゲート（第 2 ゲート）：規範カタログを一切改変しない状態で被覆計算を 3 回実行し、被覆率・分子件数・分母件数を baseline-1..3/ に記録する。3 回の値が一致しない場合、被覆率の数値差分に依拠する脚を無効化し、以後は『分母同一性の記録が成果物に無いこと』の脚のみで判定する旨を記録する。",
+          "3. 版付け基準：改変前カタログの鍵一覧・件数・sha256 を catalog-before.txt に保存する。",
+          "4. 注入：使い捨て worktree のカタログに、既存文書で自明に充足される鍵を 10 件（固定接頭辞 FIXTURE- を付与）追加し、未被覆であった鍵を 1 件削除する。追加 10 鍵と削除 1 鍵の id を injection.txt に明記する。改変後の鍵一覧・件数・sha256 を catalog-after.txt に保存する。",
+          "5. 再実行：レーンの被覆計算を 3 回実行し、被覆率・分子件数・分母件数を after-1..3/ に記録する。",
+          "6. 判定材料の収集：成果物中に (a) カタログのハッシュまたは件数、(b) 前 run との追加・削除鍵の差分、(c) 集合変化を理由とする比較保留の記述、のいずれかが現れるかを grep で判定し、各コマンドと終了コード・ヒット行を grep-log.txt に記録する。",
+          "7. 削除鍵の追跡：削除した 1 鍵が成果物のどこにも未被覆として現れなくなることを grep で確認し記録する。",
+          "8. worktree を破棄し、実カタログが無改変であることを git status で確認して記録する。"
+        ],
+        "injection_point": "手順 1 で所在を確定して記録した、使い捨て worktree 内の規範カタログ実ファイルの鍵定義部（追加 10 件・削除 1 件）。実リポジトリのカタログには触れない。",
+        "isolation": "/tmp/red-d07/wt に作成した git worktree 上でのみカタログを改変する。追加する鍵は固定接頭辞 FIXTURE- を付けて全件回収可能にし、削除した鍵は catalog-before.txt から復元可能にする。コミット・push を行わず、終了時に worktree を削除して実リポジトリの git status による無改変を記録する。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "手順 1 で被覆率の公表箇所が特定でき、注入後の run が (a) カタログ件数・ハッシュ、(b) 追加削除鍵の差分、(c) 集合変化による比較保留、のいずれも出力せず（grep ヒット 0）、被覆率が前 run の値と並置もしくは上書きで提示される。再現性ゲートを通過した場合は、加えて被覆率が baseline の 3 回の値のいずれよりも高い。",
+        "after_fix_passes_when": "注入後の run が規範集合の件数・ハッシュ変化を検出し、追加 10 鍵と削除 1 鍵を差分として名指しで列挙し、集合が変化した run 間の被覆率比較を保留する（または削除に承認記録が無いことを理由に非合格にする）。同時に、カタログ無改変の run では比較が通常どおり行われ保留が出ない（偽陽性でない）。"
+      },
+      "evidence_spec": {
+        "artifact": "evidence/SCN-D07/ 一式（coverage-sites.txt, baseline-1..3/, catalog-before.txt, catalog-after.txt, sha256.txt, injection.txt, after-1..3/, grep-log.txt, git-status.txt, gate-decision.txt）",
+        "must_record": [
+          "被覆率の公表箇所（ファイルパス・行）と、分母識別情報（件数・ハッシュ・鍵一覧）の併記有無",
+          "第 1 ゲート・第 2 ゲートの通過可否と、中止した場合はその理由・時点（gate-decision.txt）",
+          "無改変 3 回反復の被覆率・分子件数・分母件数（再現性の実測値）",
+          "カタログの鍵一覧・件数・sha256（注入前後の双方）",
+          "追加した 10 鍵と削除した 1 鍵の id の全列挙",
+          "注入後 3 回の被覆率・分子件数・分母件数",
+          "各 grep のコマンド文字列・終了コード・ヒット行",
+          "worktree の commit hash、fixture 鍵の回収確認、実リポジトリの git status"
+        ]
+      },
+      "normative_refs": [
+        "coverage-metrics-c0-c1-mcdc",
+        "baseline-identifies-items-and-versions",
+        "item-set-completeness-and-version-check",
+        "measurement-data-defined-planned-recorded",
+        "試験条件の記録と再現性",
+        "verification-constraints-and-limits"
+      ],
+      "risks": [
+        "被覆計算がモデル駆動で非決定な場合、被覆率の上昇を注入に帰属できず、赤の主脚が失われる。第 2 ゲートで先に決着させる。",
+        "被覆率が成果物に永続化されず対話出力のみで提示される場合、run 間比較の観測自体が成立しない。第 1 ゲートで中止条件として扱う。",
+        "『自明に充足される鍵』の選定に実施者の判断が入るため、選定根拠（どの既存文書のどの記述で充足と判断したか）を記録しないと注入の性質が再現できない。",
+        "注入した鍵がカタログの機械照合（規範鍵の一覧照合）で弾かれる可能性があり、その場合は注入不成立として記録し赤とはしない。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-D08-checking-rule-self-relaxation",
+      "verdict": "APPROVE",
+      "reasons": [
+        "oracle（run ごとの有効な検査 id 集合のスナップショット）は実装前に観測可能である。リンタ検査コード・監査検査 id・必須欄スキーマのキー・CI ジョブ名はいずれも現存するソースまたは定義ファイルから機械抽出でき、件数と id の増減が決定的に比較できる。",
+        "赤は『検査集合が 1 件縮小したのに全ゲートが緑で、削除 id も集合縮小も出力に現れず、独立承認の要求も設定上存在しない』という現在の観測で閉じており、将来実装の出力に依存しない。",
+        "削除対象の必須欄は『基準線で実際に文書を落としている欄』から選ぶことを手順に固定した。効いていない欄を選ぶと緑が緩和によるものか元から無効だったのか区別できず、赤が空振りするためである。",
+        "独立承認経路の有無は、リモートを改変せずブランチ保護・必須レビュア・CODEOWNERS の設定読み取りだけで判定できる。破壊的操作（push・PR 作成・マージ）を含めずに oracle が閉じる点を確認した。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "1. 検査集合のスナップショット手続きを定義する：リンタ検査コード、監査検査 id、必須欄スキーマのキー、CI ジョブ名を機械抽出し、id 一覧・件数・sha256 を checks-before.txt に保存する。想定件数（リンタ 23・監査 40）と実測が異なる場合は実測値を採用し、差異を記録する。",
+          "2. 基準線：CI が実行するのと同一のコマンド列をワークフロー定義から抜き出して workflow-commands.txt に記録し、未改変の worktree でローカル実行して各終了コードと出力全文を baseline/ に保存する。",
+          "3. 削除対象の選定：基準線の出力から、ある必須欄の欠落を理由に実際に落ちている文書を特定し、その文書名と検査結果を target-selection.txt に記録する（効いている欄であることの証拠）。",
+          "4. 注入 A：手順 3 で選んだ必須キーをスキーマ定義から 1 件削除する。前後差分を schema.diff に保存する。",
+          "5. 再実行：手順 2 と同一コマンド列を実行し、checks-after.txt を再取得する。件数が 1 件減っていること、削除 id を明示できること、全ゲートの終了コードを記録する。出力に削除された検査 id や『検査集合の縮小』に相当する記述が現れるかを grep し、コマンドと終了コードを記録する。",
+          "6. 注入 B：worktree を原状復帰したうえで、リンタ検査コードを 1 件無効化する変更に対して手順 3〜5 を繰り返し、成果物を B/ に保存する。",
+          "7. 独立承認経路の観測：当該変更が通常経路で合格しうるかを、(a) ローカルゲート全緑の事実、(b) ブランチ保護設定・必須レビュア・CODEOWNERS の実測（API 参照または定義ファイル読み取り）で判定し、検査基準ファイルを対象に被監査側でない主体の承認が要求されるかを protection.json / codeowners.txt に記録する。push・PR 作成・マージは行わない。",
+          "8. 対照：検査集合を変えず成果物側だけを直す変更を 1 件行い、同一コマンド列で全ゲートが緑になることを control-case/ に記録する（赤の識別性の確認）。",
+          "9. worktree を破棄し、実リポジトリの git status が無改変であることを記録する。"
+        ],
+        "injection_point": "手順 1 で実パスを特定して記録した、使い捨て worktree 内の必須欄スキーマ定義ファイル（注入 A）およびリンタ検査コード定義ファイル（注入 B）。実リポジトリ・既定ブランチ・リモートには一切触れない。",
+        "isolation": "/tmp/red-d08/wt に作成した git worktree 上の作業ブランチでのみ改変する。コミットしても push せず、PR 作成・マージ・既定ブランチへの操作は行わない。CI 実環境の代わりにワークフロー定義から抽出したコマンド列をローカル実行し、実行環境（OS・ランタイム版・依存版）と CI 実環境の差異を env-delta.txt に記録する。終了時に worktree を削除し、実リポジトリの git status による無改変を記録する。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "checks-after.txt の件数が checks-before.txt より 1 件少なく削除 id を明示できるにもかかわらず、全ゲートの終了コードが 0（緑）であり、いずれの出力にも削除された検査 id も集合縮小の記述も現れず（grep ヒット 0）、かつブランチ保護・必須レビュア・CODEOWNERS の実測に検査基準ファイルを対象とする独立承認の要求が存在しない。注入 A・B の双方で成立する。",
+        "after_fix_passes_when": "同一注入で、少なくとも 1 つのゲートが非 0 終了し、その出力に削除された検査 id と『検査集合の縮小』が名指しで現れ、被監査側でない主体の承認記録が無い限り合格しない。同時に、対照（検査集合が不変で成果物のみを直す変更）では全ゲートが緑のままである（偽陽性でない）。"
+      },
+      "evidence_spec": {
+        "artifact": "evidence/SCN-D08/{A,B}/ 一式（checks-before.txt, checks-after.txt, counts.txt, sha256.txt, schema.diff, workflow-commands.txt, baseline/, after/, target-selection.txt, protection.json, codeowners.txt, grep-log.txt, env-delta.txt, git-status.txt）および control-case/",
+        "must_record": [
+          "検査 id の全一覧と件数（注入前後）、および差分 id（リンタ／監査／必須欄／CI ジョブの内訳ごと）",
+          "CI 相当コマンド列とその出典（ワークフロー定義のパス・行）",
+          "基準線と注入後の各ゲートの終了コードと出力全文",
+          "削除した必須欄が基準線で実際に落としていた文書名と、その検査結果（効いている欄であることの証拠）",
+          "スキーマ／検査コード定義の unified diff",
+          "ブランチ保護・必須レビュア・CODEOWNERS の生データと取得方法",
+          "ローカル実行環境と CI 実環境の差異",
+          "対照ケースの結果、worktree の commit hash、実リポジトリの git status"
+        ]
+      },
+      "normative_refs": [
+        "config-audit-third-party",
+        "ivv-organizational-independence",
+        "変更承認時のリスク・影響評価",
+        "change-approval-decision-recorded",
+        "version-control-history-traceable",
+        "assessor-third-party-independence",
+        "simulated-vs-real-environment-delta"
+      ],
+      "risks": [
+        "CI をローカル実行で代替するため、実環境でのみ動く検査（外部サービス依存・シークレット依存）が抜ける。差異を env-delta.txt に記録し、限界として明示する必要がある。",
+        "選んだ必須欄が基準線で誰も落としていない場合、緩和しても緑のままとなり赤が空振りする。手順 3 の選定証拠が必須。",
+        "ブランチ保護設定の読み取り権限が無い環境では独立承認経路の脚が欠ける。その場合は当該脚を『観測不能』として記録し、集合縮小の無検出のみで判定する。",
+        "検査 id の抽出が定義ファイルの書式に依存するため、書式変更時は抽出器ごと再検証が必要（統制 id 命名規約変更時の recheck に相当）。"
+      ]
+    }
+  ],
+  "missing": [],
+  "unrequested": [],
+  "citation_defects": [],
+  "prompt_sha256": "9f1b42a023a69c275df3dee99c948e02f9388f7898283d5a2acba304f2b34d54",
+  "model": "claude-opus-5",
+  "effort": "high",
+  "cost_usd": 1.2653,
+  "approved": [
+    "SCN-D01-sessionend-nondelivery-on-abnormal-exit",
+    "SCN-D03-declared-vs-registered-control-drift",
+    "SCN-D04-guard-allow-indistinguishable-from-out-of-scope",
+    "SCN-D06-remediation-closed-by-nonexistent-control-id",
+    "SCN-D08-checking-rule-self-relaxation"
+  ]
+}

@@ -1975,7 +1975,9 @@
       "dedupe_key": "修正方法の複数案検討",
       "book": "jerg",
       "chunk_index": 4,
-      "chunk_sha256": "8cb7eed26645841bfb30a125ca95514679f50eb9982e9f5466a97dc29d4612d0"
+      "chunk_sha256": "8cb7eed26645841bfb30a125ca95514679f50eb9982e9f5466a97dc29d4612d0",
+      "duplicate_of": "multiple-fix-options-considered",
+      "duplicate_note": "2026-08-08 CURATE: 同一出典行の二重抽出。網羅の正本は coverage の merged_into が持つ"
     },
     {
       "title": "問題報告・変更要求・分析結果の対応付け",

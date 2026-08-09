@@ -1,0 +1,83 @@
+{
+  "sampled": 3,
+  "disagreements": 3,
+  "disagreement_detail": [
+    {
+      "key": "JERG:generated-artifact-equivalence-to-source",
+      "before": "実装・試験・証拠あり",
+      "after": "対応計画あり",
+      "reason": "この体系で「生成元から自動生成される成果物」に当たるのは投影（OVERVIEW-001／OVERVIEW-002／CTXMAP-001）であり、正本から決定論で描き直す規約（ADR-016・SPEC-014・REQ-009）と描画器（plugin/scripts/render-projection.py, IMPL-014）、および乖離を挙げる監査検査 projection_drift が現に在る。ただし ADR-113 が定めるとおり照合は各行の最初の id だけを採る列挙水準の比較であり、生成物の本文全体が生成元と等価であることまでは評価していない。加えて、当てはめ仮説が挙げる Hook 定義・CI 設定については、索引に「統治木の Markdown から生成する」機構が無く（SPEC-019・SPEC-020 は配布物としての配線を定める）、照合すべき生成関係自体が存在しない。よって機構は原則の求めることの一部のみを果たす。"
+    },
+    {
+      "key": "JERG:生成元と生成物の等価性検査",
+      "before": "実装・試験・証拠あり",
+      "after": "対応計画あり",
+      "reason": "生成元（正本のフロントマター群）から Markdown を描き直す経路は SPEC-014／plugin/scripts/render-projection.py として在り、その試験計画 TEST-014 と試験ファイル plugin/tests/test_render.py、監査検査群の計画 TEST-011 と plugin/tests/test_audit.py が索引に在る。したがって「描画が決定論であること」と「投影の乖離を挙げること（projection_drift）」は試験観点として存在する。しかし原則が求める『生成物が生成元と一致すること』＝再生成差分ゼロを試験観点として名指す記述は索引から確認できず、確認できる照合水準は ADR-113 の定める id 列挙のみである。索引の試験ファイルはいずれも件数 0 で、等価性を検める個別の試験名（plugin/tests/test_render.py::test_… の形）を指せない。よって試験観点としては部分的にしか立っていない。"
+    },
+    {
+      "key": "JERG:generated-artifact-equivalence-check",
+      "before": "実装・試験・証拠あり",
+      "after": "対応計画あり",
+      "reason": "CI 側の受け皿は在る — 全件検査を CI に委ねる決定（ADR-046）、CI 定義への外部アンカー EXT-004、CI／SessionEnd で走る plugin/scripts/docs-audit.py（SPEC-011）、そこに含まれる projection_drift。だが当てはめ仮説が求めるのは『生成コマンドを再実行して差分ゼロ』という冪等性の門であり、索引にあるのは監査が投影の列挙の食い違いを事後に挙げる検査までで、再生成して突き合わせる工程も、差分があれば CI を落とす門も索引に無い（門として明記されているのは SPEC-027 のリリース整合であり、対象は版と変更履歴で生成物の等価性ではない）。照合水準も ADR-113 により各行の先頭 id に限られる。決定と検出は在るが、原則が求める冪等性の評価そのものは立っていない。"
+    }
+  ],
+  "note": "一致率は持たない。AI の一致は客観的証拠でない（運転手順 §4）。読むのは不一致の中身であり、割れた項は判定を取り下げて未割当へ戻した。",
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "independent-recheck",
+  "book": "jerg",
+  "date": "2026-08-09",
+  "generated_at": "2026-08-09T00:00:00Z",
+  "seed": null,
+  "keys": [
+    "JERG:generated-artifact-equivalence-to-source",
+    "JERG:生成元と生成物の等価性検査",
+    "JERG:generated-artifact-equivalence-check"
+  ],
+  "cost_usd": 0.4409,
+  "git_sha": "19c0f8e",
+  "index_sha256": "aee90b74b2b03ccf9d9915ea4c97216dfe1017eae8b3fe73d000681abd2467fc",
+  "rubric_sha256": "fb7c0460fb2196f9055606658758776c6590e69c966c7cea817078669d858528",
+  "category_sha256": {
+    "documents": "033e88a732516b9a45ee68e41d284ae7fc9087fd5968f3b99c93e72b7bfebcd1",
+    "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+    "linter_codes": "fab9c7eb6879de42edd38eca532df4187dfec18db5174c8c84f4947379df92bc",
+    "scripts": "961bfa4b7121869ad5da82b489fccc0a212bf88c1cb721a71a6c961abe9f67ba",
+    "test_files": "517b2f55367d7525870d8e5c366cd73e1f30856d4193febb51f035865cb873e8",
+    "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+    "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
+  },
+  "category_counts": {
+    "documents": 274,
+    "audit_checks": 40,
+    "linter_codes": 23,
+    "scripts": 29,
+    "test_files": 27,
+    "hooks": 7,
+    "skills": 8
+  },
+  "model": "claude-opus-5",
+  "effort": "high",
+  "rows": [
+    {
+      "key": "JERG:generated-artifact-equivalence-to-source",
+      "before": "実装・試験・証拠あり",
+      "after": "対応計画あり",
+      "agreed": false,
+      "reason": "この体系で「生成元から自動生成される成果物」に当たるのは投影（OVERVIEW-001／OVERVIEW-002／CTXMAP-001）であり、正本から決定論で描き直す規約（ADR-016・SPEC-014・REQ-009）と描画器（plugin/scripts/render-projection.py, IMPL-014）、および乖離を挙げる監査検査 projection_drift が現に在る。ただし ADR-113 が定めるとおり照合は各行の最初の id だけを採る列挙水準の比較であり、生成物の本文全体が生成元と等価であることまでは評価していない。加えて、当てはめ仮説が挙げる Hook 定義・CI 設定については、索引に「統治木の Markdown から生成する」機構が無く（SPEC-019・SPEC-020 は配布物としての配線を定める）、照合すべき生成関係自体が存在しない。よって機構は原則の求めることの一部のみを果たす。"
+    },
+    {
+      "key": "JERG:生成元と生成物の等価性検査",
+      "before": "実装・試験・証拠あり",
+      "after": "対応計画あり",
+      "agreed": false,
+      "reason": "生成元（正本のフロントマター群）から Markdown を描き直す経路は SPEC-014／plugin/scripts/render-projection.py として在り、その試験計画 TEST-014 と試験ファイル plugin/tests/test_render.py、監査検査群の計画 TEST-011 と plugin/tests/test_audit.py が索引に在る。したがって「描画が決定論であること」と「投影の乖離を挙げること（projection_drift）」は試験観点として存在する。しかし原則が求める『生成物が生成元と一致すること』＝再生成差分ゼロを試験観点として名指す記述は索引から確認できず、確認できる照合水準は ADR-113 の定める id 列挙のみである。索引の試験ファイルはいずれも件数 0 で、等価性を検める個別の試験名（plugin/tests/test_render.py::test_… の形）を指せない。よって試験観点としては部分的にしか立っていない。"
+    },
+    {
+      "key": "JERG:generated-artifact-equivalence-check",
+      "before": "実装・試験・証拠あり",
+      "after": "対応計画あり",
+      "agreed": false,
+      "reason": "CI 側の受け皿は在る — 全件検査を CI に委ねる決定（ADR-046）、CI 定義への外部アンカー EXT-004、CI／SessionEnd で走る plugin/scripts/docs-audit.py（SPEC-011）、そこに含まれる projection_drift。だが当てはめ仮説が求めるのは『生成コマンドを再実行して差分ゼロ』という冪等性の門であり、索引にあるのは監査が投影の列挙の食い違いを事後に挙げる検査までで、再生成して突き合わせる工程も、差分があれば CI を落とす門も索引に無い（門として明記されているのは SPEC-027 のリリース整合であり、対象は版と変更履歴で生成物の等価性ではない）。照合水準も ADR-113 により各行の先頭 id に限られる。決定と検出は在るが、原則が求める冪等性の評価そのものは立っていない。"
+    }
+  ]
+}

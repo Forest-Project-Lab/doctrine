@@ -12,7 +12,7 @@
         "鼓動が出す鮮度の警告（R11）が症状を捉えられること"
       ],
       "if_false": "監査は走らず、要約は前の内容のまま残る。外から見た形は『走ったが変化が無かった』と区別できず、古い健全信号（error 0）が正の安心として注入され続ける。",
-      "verified_by": null,
+      "verified_by": "独立の評価セッション claude-opus-5×high（2026-08-08。verify_assumptions.py が観測を渡し、判定 FAIL を observation_history へ追記）",
       "sources": [
         "doctrine_docs/packaging/decisions/ADR-119-audit-execution-stamp.md",
         "plugin/hooks/hooks.json",
@@ -44,6 +44,31 @@
           "candidate": "hook と同一のコマンドを手で走らせて失敗するかを見る",
           "why_rejected": "導入複製の docs-audit.py を hook と同一の引数で走らせると exit 0 で要約を書く（2026-08-06 に一時領域へ再実測）。コマンドの失敗説は二度反証されており、指標として働かない。"
         }
+      ],
+      "observation_history": [
+        {
+          "date": "2026-08-08",
+          "state": "FAIL",
+          "observed": [
+            "last-audit.json: generated_at 2026-08-04T00:00:00Z・mtime 2026-08-04T17:27:07Z",
+            "hook-stamps に hook_session_end_* の印は無い（不在は不実行の証明ではない。ADR-119 の前方寛容）",
+            "要約より新しいセッションの印 7 件（edits-168ee7ab-d29e-4205-8f39-e43a259117cc・edits-271789d6-e7df-4ae9-a953-512ce88b0668・edits-927cceec-a1d2-4a09-a54e-ce537eb50dad・edits-a43df44d-2988-48b8-9d70-4584ad0adef6・edits-aa85d1cf-59ec-4750-bbe1-d67403749025・edits-e6ca0c72-4176-4aa1-ae0f-302f6d410f02・edits-f431ce81-4d49-42f8-b0c6-85a848be2b63）。閾値 N=2 —— 連続 2 セッションにわたって監査の記録が無ければ先行指標が立つ（INC-001 推奨#8。一つなら現行セッションで説明がつく）"
+          ],
+          "observed_by": "observe_assumptions.py (決定論)"
+        },
+        {
+          "date": "2026-08-08",
+          "observed": [
+            "独立検証の判定: FAIL",
+            "先行指標①（last-audit.json の generated_at と session-flags の日付比較）は登記された閾値 N=2 を明確に超えている。2026-08-08 の観測で、要約は generated_at 2026-08-04T00:00:00Z・mtime 2026-08-04T17:27:07Z のまま動かず、それより新しいセッションの印が 7 件（edits-168e",
+            "この観測は 2026-08-08 付、すなわち本日の決定論的採取（observe_observations は observe_assumptions.py）であり、古びていない。08-06 の先行指標①（当時 3 件）から 08-08（7 件）へと乖離が拡大しており、単発の揺らぎではなく継続している。",
+            "先行指標②（hook_session_end_audit / hook_session_end_write の印）は UNKNOWN のままで、PASS 側の反証を与えない。印の不在は不実行の証明ではない（ADR-119 の前方寛容）が、同時に実行の証明でもない。印が観測できない理由は導入複製 67475de に印を書くコードが無いことであり、これは ASM-003 が持つ論点で、①の FAIL ",
+            "以上より、観測は「SessionEnd は必ず発火する」に反する側へ揃っている。よって FAIL。",
+            "解釈上の留保（観測の範囲外・補完はしない）：観測が直接示すのは『セッション終了後に last-audit.json が更新されていない』という事実であって、フックの起動そのものを直接見た記録ではない。導入複製に印を書くコードが欠けている（grep 0 件／リポジトリ側は 1 件）という観測を踏まえると、原因が『SessionEnd が発火しない』のか『発火しても導入複製側に監査を書く経路が無い』の"
+          ],
+          "observed_by": "verify_assumptions.py 経由の独立評価セッション（claude-opus-5×high）",
+          "state": "FAIL"
+        }
       ]
     },
     {
@@ -54,7 +79,7 @@
         "鼓動の鮮度判定が、要約の更新を『監査が走った』と読み替えていること"
       ],
       "if_false": "監査以外の書き手が鮮度を偽ってリセットでき、一度も監査していない状態に正の健全信号が付く。ADR-053 が世代の照合で塞いだのは『前の世代の要約が残る』形だけで、同じ世代に別の書き手が居る形は塞いでいない。",
-      "verified_by": null,
+      "verified_by": "独立の評価セッション claude-opus-5×high（2026-08-08。verify_assumptions.py が観測を渡し、判定 UNKNOWN を observation_history へ追記）",
       "sources": [
         "doctrine_docs/context/decisions/ADR-053-audit-cache-single-reader.md",
         "doctrine_docs/context/decisions/ADR-037-audit-cache-read-order.md",
@@ -75,6 +100,28 @@
           "candidate": "ファイルの mtime が中の generated_at より新しければ、監査以外が触ったと見る",
           "why_rejected": "測定で反証。generated_at は --today 由来の当日 0 時であって書き込み時刻ではない（実時計を読まない規律の帰結）。当日中に書けば必ず mtime > generated_at になり、実測でも 17 時間の差が出た（2026-08-04T00:00:00Z と 2026-08-04T17:27:07Z）。この差は正常であって異常ではない。"
         }
+      ],
+      "observation_history": [
+        {
+          "date": "2026-08-08",
+          "state": "PASS",
+          "observed": [
+            "checks_run 40 件は現行 AUDIT_CHECKS 40 件と集合として完全一致（差集合は両方向とも空）"
+          ],
+          "observed_by": "observe_assumptions.py (決定論)"
+        },
+        {
+          "date": "2026-08-08",
+          "observed": [
+            "独立検証の判定: UNKNOWN",
+            "観測は 2026-08-08 付で新しく（本日）、内容自体は成立している：要約の checks_run 40 件と現行 AUDIT_CHECKS 40 件が集合として完全一致（差集合は両方向とも空）。この点に反証となる観測は登記内に一つも無い。",
+            "しかしこの一致が支えるのは「last-audit.json の内容が現行監査の検査集合と整合している」ことだけで、想定が主張する「書き手が監査に限られる」ことではない。指標の記述自身が「監査の出力をそのまま写した書き手は通り抜ける」と認めており、監査以外の書き手が存在する世界でも同じ PASS が観測されうる。よって観測は想定と両立するが、想定を支持する証拠にはなっていない。",
+            "書き手の同一性を直接示す観測（生成元の署名・書き込みプロセスの記録・ファイル更新の出所ログ等）は observations にも observation_history にも一件も無い。observations は空で、履歴も同一の弱い指標一件のみ。強い区別に必要な信頼根を体系が持たないことも登記に明記されている（NONGOAL-001 第18項）。",
+            "反証も無いが裏付けも無い状態であり、規律「迷ったら PASS ではなく UNKNOWN」に従い UNKNOWN と判じる。PASS に上げるには、書き手の同一性を弁別できる観測点（例：監査プロセスのみが持てる痕跡と、その痕跡が欠けたときの異常判定）を leading_indicators に追加する必要がある。"
+          ],
+          "observed_by": "verify_assumptions.py 経由の独立評価セッション（claude-opus-5×high）",
+          "state": "UNKNOWN"
+        }
       ]
     },
     {
@@ -86,7 +133,7 @@
         "INC-001 の 2026-08-05 の結論『導入複製は 0.10.0 に追いついているので、版とは無関係に空いている』"
       ],
       "if_false": "版番号が同じまま中身が進み、版遅れの検出は黙る。新しく入れた検出器（印・指標）は現場に存在しないのに、不在が『異常なし』とも『前方寛容』とも読めてしまい、検出器の有無そのものが観測できなくなる。",
-      "verified_by": null,
+      "verified_by": "独立の評価セッション claude-opus-5×high（2026-08-08。verify_assumptions.py が観測を渡し、判定 FAIL を observation_history へ追記）",
       "sources": [
         "doctrine_docs/packaging/decisions/ADR-070-version-lag-detection.md",
         "doctrine_docs/packaging/decisions/ADR-119-audit-execution-stamp.md",
@@ -107,6 +154,32 @@
           "candidate": "hook-stamps の hook_inject_version を見て複製の版を判ずる",
           "why_rejected": "測定で反証。この値は 0.10.0 を正しく報告するが、0.10.0 という版番号が 15 コミットにわたって同じであるため、複製がどの世代かを一切区別しない。INC-001 の 2026-08-05 の結論はこの値に寄りかかっており、その結論は成り立たない。"
         }
+      ],
+      "observation_history": [
+        {
+          "date": "2026-08-08",
+          "state": "FAIL",
+          "observed": [
+            "導入複製: gitCommitSha 67475de7fddf174b43d6a4dc79cb899dcd24cfc5・version 0.10.0 ／ リポジトリ: HEAD 19c0f8e7c92bc2ad980714cfe92776e70921505f・version 0.10.0",
+            "版番号が等しいまま commit が違う —— 版番号は複製の同一性を判定していない（ASM-003 の abnormal_when そのもの）"
+          ],
+          "observed_by": "observe_assumptions.py (決定論)"
+        },
+        {
+          "date": "2026-08-08",
+          "observed": [
+            "独立検証の判定: FAIL",
+            "観測は想定の反例そのものである。2026-08-08 の決定論的観測で、導入複製は gitCommitSha 67475de7…・version 0.10.0、リポジトリは HEAD 19c0f8e7…・version 0.10.0。版番号が等しいのに commit が異なる以上、版番号は複製の同一性（どの中身が入っているか）を判定していない。",
+            "この状態は leading_indicators の abnormal_when（gitCommitSha が HEAD より前で、かつ version が両者で等しい）に文字どおり合致し、当該指標の state も FAIL である。",
+            "2026-08-06 の観測は同じ形の反例を独立に示す（複製 67475de・0.10.0 対 リポジトリ HEAD b00e085・0.10.0、間に 15 コミット、plugin/.claude-plugin/plugin.json はその範囲で一度も変更なし）。版番号が動かないまま中身が進む経路が観測されている。",
+            "2 回の観測（08-06 の HEAD b00e085、08-08 の HEAD 19c0f8e）で HEAD は進んでいるが、複製の gitCommitSha は 67475de のまま、version は両側 0.10.0 のまま。乖離は一時的な取り違えではなく持続している。",
+            "観測は最新（最終観測 2026-08-08＝本日）で、判定を古さで留保する理由はない。",
+            "留意点として observations[] は空であり、証拠は observation_history と leading_indicators の記録に依る。ただし両者は同一の結論を示し、想定を支える観測は一つも無い。",
+            "観測が示すのは「版番号が等しいこと」が同一性を保証しないという反証である。逆向き（版番号が異なれば中身も異なる）は観測されておらず、この判定はその点に及ばない。"
+          ],
+          "observed_by": "verify_assumptions.py 経由の独立評価セッション（claude-opus-5×high）",
+          "state": "FAIL"
+        }
       ]
     },
     {
@@ -118,7 +191,7 @@
         "前提が欠けたときに、何の前提が欠けたかを運転者が選べること（復旧手順の選択）"
       ],
       "if_false": "認証の遮断も不正な model 指定も同じ UNKNOWN になり、前提欠如の**種類**が判らないまま反復が進む。運転者は何を直せばよいか選べず、UNKNOWN が『よく判らないが動かない』の総称語として肥大する。分類できない失敗は台帳から集計もできない。",
-      "verified_by": null,
+      "verified_by": "独立の評価セッション claude-opus-5×high（2026-08-08。verify_assumptions.py が観測を渡し、判定 FAIL を observation_history へ追記）",
       "sources": [
         "assurance/harness/sdk_lane.py",
         "assurance/ledger/mutations-2026-08-04.json",
@@ -145,6 +218,28 @@
         {
           "candidate": "UNKNOWN 分類の件数がゼロであることを見る",
           "why_rejected": "指標として成り立たない。UNKNOWN は前提が本当に欠けたときの**正しい結論**でもありうるので、件数ゼロを健全さと読むと、判定不能を隠す圧力になる。見るべきは『族が違うのに同じ分類になる』ことであって『UNKNOWN が出る』ことではない。"
+        }
+      ],
+      "observation_history": [
+        {
+          "date": "2026-08-08",
+          "state": "FAIL",
+          "observed": [
+            "認証の判定は文言の部分一致のまま（_AUTH_MARKERS 7 語）。それ以外の族は UNKNOWN へ落ちる —— 型に基づく分岐は認証の族へ届いていない"
+          ],
+          "observed_by": "observe_assumptions.py (決定論)"
+        },
+        {
+          "date": "2026-08-08",
+          "observed": [
+            "独立検証の判定: FAIL",
+            "想定は『SDK の例外表面が故障族を区別できる』だが、故障注入の記録（2026-08-04）は逆を示している —— 認証喪失と不正 model という異なる二つの族が、いずれも「error result: success」という同一文言に潰れ、classify_error で区別できていない。これは指標1の abnormal_when（族の数より分類の数が少ない）にそのまま該当する。",
+            "指標2（2026-08-07）も独立に反証している。sdk_lane.py:29 の _AUTH_MARKERS は authentication / unauthorized / login / api key ほか 7 語の文言部分一致で認証を判じ、それ以外は :41-42 で二重に UNKNOWN へ落ちる。族の identity が例外の型ではなく供給側の都合で変わる文言に依存しており、a",
+            "最新の観測（observation_history 2026-08-08、observe_assumptions.py の決定論的観測）も state=FAIL で、『認証の判定は文言の部分一致のまま、それ以外の族は UNKNOWN へ落ちる、型に基づく分岐は認証の族へ届いていない』と記録している。観測は古くなく、二つの指標と最新履歴が同じ向きで一致するため UNKNOWN ではなく FAIL と",
+            "ただし観測範囲の限界を付記する：observations は空で、直近 2026-08-08 の記録が裏づけているのは指標2（分類が寄りかかる手掛かりの種類）のみである。指標1の故障注入の証拠は 2026-08-04 付で 4 日古く、その後に mutations ファイルが更新されたかは与えられた観測からは分からない。また、注入された故障族は認証遮断と不正 model の二つに限られ、それ以外の"
+          ],
+          "observed_by": "verify_assumptions.py 経由の独立評価セッション（claude-opus-5×high）",
+          "state": "FAIL"
         }
       ]
     }

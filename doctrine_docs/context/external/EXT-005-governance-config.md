@@ -6,7 +6,7 @@ domain: context
 status: current
 owner: doctrine-maintainers
 created: 2026-08-03
-updated: 2026-08-03
+updated: 2026-08-09
 review_by: 2027-01-30
 sources: [ADR-096]
 llm_context: task
@@ -39,7 +39,7 @@ llm_context: task
 
 - 対象: `doctrine_docs/_system/.context-config.json`
 - 検査: hash(内容の指紋)
-- 指紋: sha256:eaff66f913460458a3740b8380b08f0b8ee574dd18c3ecdc02d1fee80a8fb72a
+- 指紋: sha256:5297171ca75ae7cdb09ac84603c76e8bd9fede8a133daf7050802dde5b2df50e
 - 期待する状態: 在ること。加えて、この一枚を変えるときは、変えた内容を確かめてから上の
   指紋を打ち直す（打ち直しは差分に現れる）。
 

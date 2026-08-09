@@ -1,0 +1,1819 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "formalize-plans",
+  "date": "2026-08-09",
+  "generated_at": "2026-08-09T06:35:27Z",
+  "git_sha": "19c0f8e7c92bc2ad980714cfe92776e70921505f",
+  "scenarios_source": "assurance/ledger/scenarios/2026-08-08.json",
+  "requested": [
+    "SCN-F01-shared-tokenizer-common-cause-across-checks",
+    "SCN-F02-accepted-doc-birth-write-unguarded",
+    "SCN-F02-latent-undefined-name-in-unreached-branches",
+    "SCN-F02-manual-state-partition-misclassification-passes-tests",
+    "SCN-F03-frozen-doc-family-born-red-unfixable",
+    "SCN-F04-audit-blind-to-accepted-plus-lint-error",
+    "SCN-F04-cache-summary-lost-update-poisons-next-session",
+    "SCN-F07-terminal-hooks-without-firing-stamps",
+    "SCN-F08-exit-zero-without-completion-branches",
+    "SCN-F08-ledger-record-types-unread-by-canon",
+    "SCN-F08-sessionend-nonfire-aliases-unmarked-legacy-copy",
+    "SCN-F09-stderr-diagnostic-not-persisted-anywhere",
+    "SCN-F09-unverified-evaluator-fields-drive-disposition",
+    "SCN-F11-field-granularity-unread-across-record-types",
+    "SCN-N02-unknown-classification-closes-ledger-entry",
+    "SCN-N03-legacy-schema-silently-disables-staleness-check",
+    "SCN-N04-detector-and-detected-share-version-common-cause",
+    "SCN-N07-whole-file-writeback-lost-update",
+    "SCN-N14-immutability-nullified-by-status-roundtrip",
+    "SCN-P02-version-lag-extends-to-guard-and-linter",
+    "SCN-P03-substring-false-positive-across-term-table",
+    "SCN-P04-order-comparison-precision-mismatch-beyond-freshness",
+    "SCN-P04-pointfix-without-word-boundary-rule",
+    "SCN-P05-attack-coverage-claimed-at-evaluator-granularity",
+    "SCN-P05-failure-families-collapse-to-one-exception-surface",
+    "SCN-P09-dual-silence-of-staleness-and-version-warnings",
+    "SCN-P09-index-fingerprint-false-negative-on-in-scope-evidence-edit",
+    "SCN-P11-existence-based-completion-in-action-conditions",
+    "SCN-P11-rejected-adr-options-unchecked-across-decisions",
+    "SCN-P12-campaign-closes-with-pending-analysis",
+    "SCN-P12-invariant-target-without-sanctioned-repair-path"
+  ],
+  "plans": [
+    {
+      "scenario_id": "SCN-F01-shared-tokenizer-common-cause-across-checks",
+      "verdict": "UNKNOWN",
+      "reasons": [
+        "共通原因の主張は「単一の語切り出し実装が存在し、用語検査以外に2つ以上の呼び出し元を持つ」という静的事実に全面的に依存するが、その事実は未確認（confidence: medium）であり、確認前に赤の意味づけができない。呼び出し元が用語検査のみなら本 scenario は INC-011 の再掲であって新たな失敗仮説ではない。",
+        "oracle が『誤判定（偽陰性・偽陽性）の有無』と書かれているが、リンク検査・dep-graph 逆依存解決について『正しい判定単位』を定める正本が存在するかが未確認である。正本が無ければ期待値は観測ではなく審査者による仕様策定となり、赤／緑の判定が主観化する（客観的証拠の要件を満たさない）。",
+        "ただし oracle 自体は実装前に観測可能な要素（静的な呼び出し元列挙、構成により正解が一意に決まる fixture への現行実装の応答）へ分解できるため、REJECT ではなく UNKNOWN とする。下記ゲート G1・G2 の観測結果が evidence として提出された時点で再審査すれば APPROVE/REJECT を決定できる。",
+        "v0.7.0 相当の入力再構成は precondition に挙がっているだけで到達可能性が未確認。正本（0.10.0）でも赤が出るのか、v0.7.0 タグでしか出ないのかを記録しないと、修正効果の測定基準が定まらない。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "G0（固定）: 対象リポジトリの HEAD コミット SHA とプラグイン版（正本 0.10.0）を記録する。`git rev-parse HEAD`、`git status --porcelain`（空であること）を証拠に残す。作業は `git worktree add <tmp>/wt-f01 <SHA>` で作った使い捨て worktree 上でのみ行う。",
+          "G1（呼び出し元の静的列挙）: 語切り出し（分割）関数の定義を `grep -rn 'def .*split\\|def .*token\\|def .*words' <plugin_root>` 等で特定し、定義の file:line を記録する。続いて当該識別子の参照を `grep -rn '<関数名>' <plugin_root>` で全件列挙し、呼び出し元を (a) 用語検査 (b) リンク検査 (c) dep-graph 逆依存解決 (d) その他 に分類した一覧（file:line 付き）を callers.txt に保存する。用語検査以外の呼び出し元が0件なら、その時点で仮説は偽として記録し終了する（falsification 記録も証拠として残す）。",
+          "G2（判定単位の正本確認）: 呼び出し元ごとに『何を1語とみなすか』を定める記述（仕様文書・docstring・既存試験の期待値）を検索し、存在すれば file:line を、存在しなければ『正本なし』を明記して judgment-units.md に記録する。正本が無い呼び出し元については、次項の構成による正解（ground truth by construction）でのみ判定し、その旨を証拠に明記する。",
+          "F1（構成により正解が一意に決まる fixture の作成）: `mktemp -d` 配下に使い捨ての最小統治木を作り、以下を配置する。(i) 用語検査用: 見出しで用語 `a.b` を定義し本文から `a.b` を参照する文書（未定義指摘が出てはならない）と、定義の無い `a.c` を参照する文書（未定義指摘が出なければならない）。(ii) リンク検査用: 実在するファイルへのドット結合名を含むリンク（壊れリンク指摘が出てはならない）と、実在しないファイルへの同形式リンク（指摘が出なければならない）。(iii) dep-graph 用: ノード `x.y` が `z` に依存すると宣言した入力（`z` の逆依存に `x.y` が含まれなければならない）と、依存を宣言しないノード `w`（`z` の逆依存に `w` が含まれてはならない）。各 fixture の期待値を fixture ごとに expected.json として先に書き出す（実行前に確定させる）。",
+          "F2（正本 0.10.0 での実行）: G1 で列挙した各呼び出し元を、可能な限り単体の入口（関数直接呼び出し用の薄いドライバ、または該当フックスクリプトへの合成 payload）で fixture に対して実行し、標準出力・標準エラー・終了コードを呼び出し元ごとに個別ログへ tee する。実行コマンド行をそのまま記録する。",
+          "F3（v0.7.0 での実行、可能な場合のみ）: `git worktree add <tmp>/wt-v070 v0.7.0`（タグが解決できる場合）で同じ fixture を実行する。タグが解決できない場合は『再構成不能』と記録し、以後の判定は 0.10.0 のみを対象とする。",
+          "F4（表化）: 呼び出し元 × fixture の表を作り、各セルに expected / actual / 一致・不一致を書く。不一致が1件でもある呼び出し元を『赤』とし、赤の呼び出し元が用語検査以外に1つ以上あるかを判定する。",
+          "F5（後始末）: `git worktree remove --force` と使い捨てディレクトリの削除を実行し、実リポジトリの `git status --porcelain` が空であることを再確認して記録する。"
+        ],
+        "injection_point": "G1 で特定した語切り出し関数の定義箇所（file:line）と、そこから列挙された各呼び出し元（用語検査／リンク検査／dep-graph 逆依存解決）の呼び出し行。入力の注入は各呼び出し元の入口に対して、ドット結合トークンを含む使い捨て統治木 fixture を渡す形で行う。定義箇所・呼び出し行が実在として記録できない場合、本計画は実行不能として UNKNOWN のまま差し戻す。",
+        "isolation": "破壊的操作・書き込みは一切実リポジトリへ行わない。静的解析と実行は `git worktree add` で作成した使い捨て worktree（<tmp>/wt-f01, <tmp>/wt-v070）に限定し、入力 fixture は `mktemp -d` 配下の使い捨て統治木に置く。CI_RELEASE_CHECK は起動しない（配布物を作らない）。終了時に worktree 削除と一時ディレクトリ削除を行い、実リポジトリの作業ツリーが無変更であることを前後の `git status --porcelain` で証明する。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "(1) callers.txt に、単一の語切り出し実装に対する用語検査以外の呼び出し元が2件以上、file:line 付きで記録されている。かつ (2) F4 の表で、用語検査以外の呼び出し元のうち少なくとも1つが、実行前に確定させた expected.json と食い違う出力を返す（例: 実在ファイルへのドット結合リンクを壊れリンクとして指摘する、または `z` の逆依存に `x.y` が現れない）。この2条件が同時に成立した時点で『共通原因あり』の赤が成立し、両条件のいずれかが崩れた場合は falsification_signal に従い仮説を偽として記録する。",
+        "after_fix_passes_when": "同一の fixture と同一の実行コマンドで、全呼び出し元の actual が expected.json と完全一致し（不一致0件）、かつ F1 の fixture が回帰試験として試験一式に組み込まれ、修正コミットを revert した状態でその回帰試験が非0終了で赤になることが実測で示され、かつ呼び出し元ごとの判定単位が judgment-units.md 相当の正本に文書化されている。"
+      },
+      "evidence_spec": {
+        "artifact": "evidence/SCN-F01-shared-tokenizer-common-cause-across-checks/ 配下に red-report.md（主成果物）、callers.txt、judgment-units.md、fixtures/（入力一式と expected.json）、runs/<caller>.stdout/.stderr/.exit、matrix.csv（呼び出し元×fixture の expected/actual 表）を置く。",
+        "must_record": [
+          "リポジトリの HEAD SHA、プラグイン版、v0.7.0 タグの解決可否（不能な場合はその旨）",
+          "語切り出し関数の定義 file:line と、全呼び出し元の file:line 一覧および分類（用語検査／リンク検査／dep-graph／その他）",
+          "各 fixture の内容全文と、実行前に確定させた expected.json（作成時刻と実行時刻の前後関係が分かる形で）",
+          "各呼び出し元の実行コマンド行、標準出力・標準エラー全文、終了コード",
+          "matrix.csv の全セル（expected / actual / 一致判定）と、不一致件数の集計",
+          "判定単位の正本の有無（file:line または『正本なし』）",
+          "隔離の証明: 使用した worktree パス・一時ディレクトリパス、実行前後の `git status --porcelain` 出力、後始末コマンドの実行結果",
+          "falsification に至った場合はその条件（呼び出し元1件のみ／不一致0件）と根拠ログ"
+        ]
+      },
+      "normative_refs": [
+        "verification-objective-evidence",
+        "test-spec-unambiguous",
+        "verifiability-evaluated-per-item",
+        "verification-constraints-and-limits",
+        "problem-reproduction-confirmed",
+        "root-cause-analysis-required",
+        "試験条件の記録と再現性",
+        "release-follows-defined-procedure"
+      ],
+      "risks": [
+        "呼び出し元が動的解決（間接参照・プラグイン登録・getattr）である場合、静的列挙が母集団を欠き、赤が出なくても共通原因を否定できない（列挙手段の限界を verification-constraints-and-limits として明記すること）。",
+        "リンク検査・dep-graph の『正しい判定単位』の正本が無い場合、expected.json は審査者の設計物であり、正本との合意が無いまま赤を主張すると検証ではなく仕様提案になる。",
+        "v0.7.0 が再構成不能なとき、0.10.0 で赤が出なければ『既に是正済み』と『再現手順不足』を区別できない。",
+        "呼び出し元を単体で叩くドライバを新規に書くと、ドライバ側の誤りが偽の赤を生む。ドライバのコードも証拠として全文記録すること。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-F02-accepted-doc-birth-write-unguarded",
+      "verdict": "APPROVE",
+      "reasons": [
+        "oracle が終了コードという実装前から観測可能な量に還元されており、期待値の解釈に主観が入らない。新規 Write 時のガード終了コードと、その後の本文 Edit の終了コード2は、いずれも現行実装のまま今日観測できる。",
+        "赤の成立条件が『入口が開いている』と『出口が閉じている』の連言であり、片方だけでは赤にならない。falsification_signal（初回 Write が非0、または直後の Edit が通過）も終了コードで機械判定でき、反証条件が具体である。",
+        "破壊的操作（規範違反文書の作成）を使い捨て worktree の統治木へ隔離でき、実正本を汚さずに再現できる。是正不能状態を実正本に作らないことは本 scenario の loss そのものを避けるためにも必須。",
+        "BANNED_SYNONYM をガード自身の定義から引用する手順を課すことで、『違反語かどうか』の判断を審査者の創作ではなく実装内の正本参照に固定できる。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "S0（固定と隔離）: `git rev-parse HEAD` を記録し、`git worktree add <tmp>/wt-f02b <SHA>` で使い捨て worktree を作る。以後の全操作の CWD をこの worktree に固定する。実正本ディレクトリには一切書き込まない。",
+          "S1（違反語の正本参照）: PRE_TOOL_GUARD のソースから BANNED_SYNONYM の定義箇所を `grep -rn 'BANNED_SYNONYM' <plugin_root>` で特定し、file:line と語のリスト全文を記録する。以後の fixture で使う違反語はこのリストから1語を選び、選んだ語と出典 file:line を記録する。",
+          "S2（ガード入口の特定）: PRE_TOOL_GUARD の実行ファイル（フックスクリプト）のパスと、新規ファイル判定を行う分岐の file:line を `grep -n` で特定して記録する。ハーネス経由ではなくスクリプトを直接起動する方式を採り、起動に必要な hook payload（tool_name=Write, file_path, content 等）の形式を、スクリプト内の入力パース箇所を読んで確定させ、その file:line を記録する。",
+          "S3（赤の前半: 入口）: worktree 内の統治木パス（例 docs/adr/ADR-9XX-formalize-probe.md）に対し、front-matter に status: accepted を持ち本文に S1 の違反語を1回含む新規文書を作る Write 相当の payload を合成し、`echo \"$PAYLOAD\" | python3 <guard_script>; echo \"exit=$?\"` を実行して標準出力・標準エラー・終了コードを記録する。終了コード0（=通過）なら入口は開いている。ガードが通過を返した場合のみ、実際にそのファイルを worktree 内に作成する。",
+          "S4（違反の実在確認）: 作成した文書に対して POST_TOOL_LINTER（または監査）を直接起動し、当該文書について ERROR 相当の指摘が出ることを終了コードと出力で確認・記録する。ここで ERROR が出なければ『違反語を含む』という前提自体が崩れるため、S1 に戻って語を選び直す（選び直しの経緯も記録）。",
+          "S5（赤の後半: 出口）: 同一ファイルの本文から違反語を除去する Edit 相当の payload を合成し、同じくガードスクリプトへ流して終了コードを記録する。終了コード2（拒否）であれば出口は閉じている。",
+          "S6（陽性対照）: 凍結対象でない文書（例 status: draft の同種文書）に対して同じ Edit を行い、終了コードが0になることを記録する。これによりガードが常時拒否しているのではなく status に反応していることを示す。",
+          "S7（判定）: S3 の exit==0 かつ S5 の exit==2 かつ S4 の ERROR 検出、の3点が同時成立するかを判定して red-report.md に結論を書く。",
+          "S8（後始末）: `git worktree remove --force <tmp>/wt-f02b` を実行し、実リポジトリの `git status --porcelain` が空であることを前後で記録する。"
+        ],
+        "injection_point": "PRE_TOOL_GUARD のフックスクリプト本体、特に S2 で特定する Write ハンドラ内の新規ファイル判定分岐（file:line を証拠に記録する）。注入は当該スクリプトへ合成 hook payload を標準入力から与える形で行い、対象パスは使い捨て worktree 内の統治木パスに限定する。",
+        "isolation": "規範違反文書の作成・編集は `git worktree add` で作った使い捨て worktree（<tmp>/wt-f02b）内でのみ行い、実正本の GOVERNANCE_TREE には一切書き込まない。CI_RELEASE_CHECK は起動せず配布物を生成しない。実験後に worktree を削除し、実リポジトリの作業ツリー無変更を `git status --porcelain` の前後比較で証明する。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "assert(『新規 Write が拒否される（exit != 0）』or『違反是正のための本文 Edit が通過する（exit == 0）』) が FAIL する。具体的には S3 の Write payload に対するガード終了コードが 0 で記録され、同時に S5 の同一ファイル本文 Edit に対する終了コードが 2 で記録され、かつ S4 で当該文書について lint/監査の ERROR 指摘が記録されている状態。S6 の陽性対照が exit 0 を返し、ガードが無差別拒否でないことも同時に記録されていること。",
+        "after_fix_passes_when": "同一の payload・同一のコマンド行で再実行したとき、S3 の新規 Write が非0終了で拒否され違反語と理由がメッセージに現れる、または S5 の是正 Edit が exit 0 で通過する（carve-out 成立）のいずれか一方以上が観測され、かつ S6 の陽性対照が引き続き exit 0（正常な編集を巻き込み拒否していない）であり、かつ規範違反を含まない status: accepted 文書の新規 Write が exit 0 で通る（陰性対照、偽陽性なし）こと。加えて S3/S5 を回帰試験として登録し、修正を revert すると当該試験が赤になることを実測で示す。"
+      },
+      "evidence_spec": {
+        "artifact": "evidence/SCN-F02-accepted-doc-birth-write-unguarded/ 配下に red-report.md（主成果物）、payloads/（write.json, edit.json, control-*.json）、runs/（各実行の stdout/stderr/exit）、fixture-doc.md（作成した文書の全文）、guard-source-refs.md。",
+        "must_record": [
+          "HEAD SHA、プラグイン版、Python 実行系のパスと版",
+          "BANNED_SYNONYM 定義の file:line と語リスト全文、および選んだ語",
+          "PRE_TOOL_GUARD スクリプトの絶対パスと新規ファイル判定分岐の file:line",
+          "合成した hook payload の全文（Write/Edit/対照の各々）と、実行コマンド行そのまま",
+          "各実行の終了コード、標準出力・標準エラー全文（拒否メッセージ本文を含む）",
+          "S4 の lint/監査出力（ERROR 行の全文）",
+          "陽性対照（status: draft の Edit）と陰性対照（違反なし accepted の Write）の終了コード",
+          "隔離の証明: worktree パス、実行前後の `git status --porcelain`、worktree 削除コマンドの結果"
+        ]
+      },
+      "normative_refs": [
+        "verification-requires-objective-evidence",
+        "pass-criteria-defined-in-advance",
+        "test-records-in-verdict-decidable-form",
+        "problem-reproduction-confirmed",
+        "defects-identified-and-corrective-action-taken",
+        "simulated-vs-real-environment-delta",
+        "試験条件の記録と再現性"
+      ],
+      "risks": [
+        "フックスクリプトを直接起動する方式が実運用の起動経路（ハーネス経由）と差異を持つ場合、赤が経路差に由来する可能性がある。payload 形式をスクリプトの入力パース箇所から導出し、その差異を simulated-vs-real-environment-delta として明記すること。",
+        "worktree 内の相対パス解釈により、ガードが『統治木外のファイル』とみなして検査を素通りする恐れがある。S6 の陽性対照が exit 0 のままでは経路到達を証明できないため、凍結対象文書の本文 Edit が exit 2 になる（S5）ことをもって経路到達の証明とする。",
+        "ガードの終了コード規約（2=拒否）が版により異なると判定が崩れる。規約の定義箇所も file:line で記録すること。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-F02-latent-undefined-name-in-unreached-branches",
+      "verdict": "APPROVE",
+      "reasons": [
+        "oracle が (1) 静的解析の指摘件数 (2) 異常入力起動時の未捕捉例外の有無、という実装前に観測可能な2量で構成され、いずれも現行 0.10.0 正本に対して今日実行できる。未来の実装が生む観測に依存しない。",
+        "合格基準（未定義名0件かつ未捕捉例外0件）が事前に定義され、反証条件も同一の観測で機械判定できる。到達不能分岐という性質上、動的試験だけでは不十分だが、静的解析を併用することで到達を待たずに赤を出せる設計になっている。",
+        "異常入力（権限拒否・巨大ファイル・不正エンコーディング）という破壊的・環境依存な操作を、使い捨てディレクトリ配下の fixture に隔離でき、実統治木を汚さずに再現できる。",
+        "『制御された非0終了』と『未捕捉例外』の区別が曖昧なままだと偽の赤が出るため、判別子（stderr の Traceback 行）を計画側で明示すれば判定は客観化できる。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "T0（固定と隔離）: HEAD SHA と正本版 0.10.0 を記録し、`git worktree add <tmp>/wt-f02l <SHA>` を作る。全作業ディレクトリは `mktemp -d` 配下（<tmpdir>）に限定する。`id -u` を記録し、root（0）の場合は権限拒否 fixture が無効になるため非 root で再実行するか、当該ケースを『実施不能』として明示する。",
+          "T1（対象一覧の確定）: POST_TOOL_LINTER, PRE_TOOL_GUARD, SESSION_END_AUDIT, CAPTURE_NUDGE, ASSURANCE_LANE を含む全フックスクリプトを `find <plugin_root> -name '*.py'` 等で列挙し、パスと各ファイルの sha256 を hooks-inventory.txt に記録する（母集団の固定）。",
+          "T2（静的解析）: `python3 -m pyflakes <各スクリプト>` を実行し、版を `python3 -m pyflakes --version`、Python 版を `python3 -V` として記録する。出力全文を保存し、'undefined name' を含む行のみを抽出して件数を数える。件数と該当 file:line:名前 の一覧を undefined-names.txt に残す。",
+          "T3（異常入力 fixture の作成）: <tmpdir>/fixtures に (a) 空ファイル (b) 巨大ファイル（例 `head -c 50M /dev/zero | tr '\\0' 'a' > big.md`、実サイズを記録） (c) 不正エンコーディング（`printf '\\xff\\xfe\\x00invalid' > bad-enc.md`） (d) 存在しないパス（作成しない名前を用意） (e) 権限拒否（`touch denied.md && chmod 000 denied.md`）を用意する。各 fixture の実体（サイズ・先頭バイト列・パーミッション）を記録する。",
+          "T4（動的起動）: T1 の各フック × T3 の各異常入力の全組合せについて、合成 hook payload（file_path に fixture パスを入れる）を標準入力から与えて起動し、`; echo \"exit=$?\"` で終了コードを、stdout/stderr を個別ファイルへ tee する。実行コマンド行をそのまま記録する。",
+          "T5（判別）: 各実行について、stderr に 'Traceback (most recent call last)' が現れるか否かを機械判定し、現れたものを『未捕捉例外』、現れずに非0終了しているものを『制御された失敗』、0終了を『通過』と3分類して matrix.csv に記録する。NameError を含むものは例外種別も抽出する。",
+          "T6（到達性の裏付け）: T2 で未定義名が指摘された分岐について、その分岐が T4 のどの組合せでも実行されていないことを示すため、可能なら `python3 -m coverage run` で当該スクリプトのカバレッジを取得し、該当行が未実行（miss）であることを記録する。取得できない場合は『到達性未測定』と明記する。",
+          "T7（後始末）: `chmod 644 <tmpdir>/fixtures/denied.md` してから <tmpdir> を削除し、worktree を `git worktree remove --force` する。実リポジトリの `git status --porcelain` が前後とも空であることを記録する。"
+        ],
+        "injection_point": "T1 で列挙した 0.10.0 正本の各フックスクリプト（絶対パスと sha256 で同定）。静的解析はファイルそのものに対して、動的注入は各フックの標準入力（hook payload の file_path フィールド）に対して行い、値は <tmpdir>/fixtures 配下の異常入力パスとする。",
+        "isolation": "異常入力 fixture は全て `mktemp -d` 配下に作成し、実 GOVERNANCE_TREE・実プラグインディレクトリへは書き込まない。実行対象のスクリプトは使い捨て worktree 上のコピーを使う。chmod 000 の fixture は後始末で権限を戻してから削除する。巨大ファイルはディスク使用量を記録し、実験後に必ず削除する。CI_RELEASE_CHECK は起動しない。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "合格基準『undefined name 指摘 0 件 かつ 全組合せで stderr に Traceback 0 件』が FAIL する。すなわち undefined-names.txt に file:line:名前 付きで1件以上が記録される、または matrix.csv のいずれかのセルで stderr に 'Traceback (most recent call last)' が現れる（該当スタックトレース全文と終了コードを添付）。どちらも0件であれば falsification_signal に従い仮説は棄却として記録する。",
+        "after_fix_passes_when": "同一の母集団（T1 の sha256 一覧を更新した上で同じ列挙規則）に対し同一版の pyflakes で undefined name が 0 件であり、同一の異常入力全組合せで stderr に Traceback が 0 件であり、かつ検査不能ケースは非0終了と明示的な失敗メッセージ（Traceback なし）として上位へ伝わることが matrix.csv 上で確認でき、さらに静的解析と異常入力起動の両方が保証レーンの定常検査項目として登録され、意図的に未定義名を混入させた変異で当該検査が非0終了になることが実測されること。"
+      },
+      "evidence_spec": {
+        "artifact": "evidence/SCN-F02-latent-undefined-name-in-unreached-branches/ 配下に red-report.md（主成果物）、hooks-inventory.txt、undefined-names.txt、pyflakes-raw.log、fixtures-manifest.txt、runs/<hook>__<input>.stdout/.stderr/.exit、matrix.csv、coverage/（取得できた場合）。",
+        "must_record": [
+          "HEAD SHA、正本版 0.10.0、対象フックスクリプトの絶対パスと sha256 一覧",
+          "python3 の版とパス、pyflakes の版、実行コマンド行そのまま",
+          "静的解析の出力全文と 'undefined name' 抽出結果（file:line:名前）と件数",
+          "各異常入力 fixture の実体情報（サイズ、パーミッション、先頭バイト列、作成コマンド）と `id -u`",
+          "フック×異常入力の全組合せの終了コード、stdout/stderr 全文、Traceback 有無の3分類",
+          "未捕捉例外が出た場合のスタックトレース全文と例外種別",
+          "到達性の裏付け（カバレッジの miss 行、または『到達性未測定』の明記）",
+          "隔離と後始末の証明: <tmpdir> パス、chmod 復元と削除の実行結果、実行前後の `git status --porcelain`"
+        ]
+      },
+      "normative_refs": [
+        "static-analysis-and-complexity-threshold",
+        "coverage-metrics-c0-c1-mcdc",
+        "alternative-assurance-when-coverage-unmet",
+        "artifacts-conform-to-defined-coding-standard",
+        "verification-methods-not-only-test",
+        "試験の合格基準を事前定義",
+        "試験条件の記録と再現性",
+        "test-records-in-verdict-decidable-form"
+      ],
+      "risks": [
+        "pyflakes は動的属性参照（getattr・globals() 経由）の未定義名を検出しないため、0件でも潜在未定義名を否定できない。検出限界を verification-constraints-and-limits の観点で明記し、alternative-assurance-when-coverage-unmet に従い未到達分岐へのレビューを併記すること。",
+        "root で実行すると chmod 000 が読めてしまい権限拒否ケースが空振りする。`id -u` の記録を省くと偽の緑になる。",
+        "巨大ファイル fixture が実行環境のメモリ/ディスクを枯渇させ、フック以外の要因で異常終了する可能性がある。サイズと空き容量を記録し、OOM 由来の終了と NameError を区別すること。",
+        "『制御された非0終了』を Traceback の有無だけで判定するため、例外を握り潰して Traceback を自前印字する実装があると誤分類する。stderr 全文を残して事後再判定できるようにすること。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-F02-manual-state-partition-misclassification-passes-tests",
+      "verdict": "APPROVE",
+      "reasons": [
+        "oracle が変異注入後の試験・CI の終了コードという実装前に観測可能な量であり、既存の試験一式に対して今日実行できる。修正後に何が赤になるべきかも同じ観測で測れる。",
+        "『試験が緑のままであること』が赤の証拠になる型（変異が生存する）のため、判定を『変異キル検査』というメタ試験として定式化すれば、修正前 FAIL・修正後 PASS が同一の手順で測れる。基準を事前に固定できる。",
+        "変異は状態定義ファイルへの局所的な書き換えであり、使い捨て worktree に隔離して確実に巻き戻せる。正本の状態定義を汚さずに再現できる。",
+        "residual risk（変異1件では特定状態限定の保護と一般的保護を区別できない）は、複数変異＋対照変異（両集合から削除＝既存の網羅性検査で必ず殺される変異）を課すことで計画側で解消できる。対照変異は試験ハーネスが実際に変異後定義を読んでいることの証明にもなる。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "M0（固定と隔離）: HEAD SHA を記録し `git worktree add <tmp>/wt-f02p <SHA>` を作成。以後の編集・実行は worktree 内のみ。実正本には書き込まない。",
+          "M1（定義の特定）: `grep -rn 'NAMEABLE_STATES\\|WITHIN_CYCLE_STATES' <plugin_root>` で両集合の定義箇所（file:line）と要素全文を記録する。あわせて、これらを参照する決定論試験のファイルと CI_RELEASE_CHECK の起動コマンドを特定し、file:line／コマンド行を記録する。",
+          "M2（基線）: 変異なしの状態で決定論試験一式と CI チェックを実行し、終了コード0（緑）を記録する。基線が緑でなければ変異実験は成立しないため、ここで中断し『基線非緑』として報告する。",
+          "M3（対照変異 C0：ハーネス感度の証明）: NAMEABLE_STATES から状態を1つ削除し、どちらの集合にも属さない状態を作る。試験と CI を実行し、非0終了（赤）になることを記録する。緑なら試験が変異後定義を読んでいない可能性があるため、実行経路を調査して記録する（この場合は以後の緑を『生存』と解釈してはならない）。変異は `git diff` を保存後 `git checkout -- <file>` で巻き戻す。",
+          "M4（本命変異 M1..M3：誤分類）: 正本から名指しされるべき状態（NAMEABLE_STATES の要素）を3件選び、1件ずつ WITHIN_CYCLE_STATES 側へ付け替える（元集合から削除し他方へ追加。どちらにも属さない状態は作らない）。各変異について `git diff` を保存し、決定論試験一式と CI チェックを実行して終了コード・出力全文を記録し、実行後に `git checkout -- <file>` で巻き戻す。",
+          "M5（判定）: 変異ごとに『キル（非0終了）』か『生存（0終了）』を表にする。C0 がキルされ、かつ M1..M3 のうち1件以上が生存した場合、分類の正しさに対する述語が不在であることの赤が成立する。",
+          "M6（分類根拠の観測可能性の付随記録）: 各状態について、正しい所属を機械的に導けそうな観測可能属性（状態遷移定義・出力有無など）が正本に存在するかを調査し、file:line または『存在しない』を記録する（expected_safe_behavior の後段『観測可能な性質から導出』の実現可能性の証拠となる）。",
+          "M7（後始末）: worktree 内の `git status --porcelain` が空であることを確認して `git worktree remove --force`。実リポジトリの `git status --porcelain` を前後で記録する。"
+        ],
+        "injection_point": "M1 で特定した状態集合定義（NAMEABLE_STATES / WITHIN_CYCLE_STATES）のソース上の定義箇所（file:line）。変異は当該リテラル定義への要素移動として注入し、注入差分は毎回 `git diff` で保存する。",
+        "isolation": "変異の適用・試験実行は `git worktree add` で作った使い捨て worktree（<tmp>/wt-f02p）内でのみ行い、各変異は実行直後に `git checkout -- <file>` で巻き戻す。CI チェックはローカル起動に限定し、リモート CI への push・配布物の確定は行わない。実験終了時に worktree を削除し、実リポジトリ無変更を前後の `git status --porcelain` で証明する。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "メタ判定『誤分類変異は試験または CI によって必ずキルされる』が FAIL する。具体的には、基線（M2）が終了コード0、対照変異 C0 が非0（ハーネスが変異を読んでいる証明）である条件下で、M1..M3 の誤分類変異のうち1件以上が決定論試験・CI ともに終了コード0で生存し、その生存が変異差分（git diff）と実行ログとともに記録されること。",
+        "after_fix_passes_when": "同一の3変異 M1..M3 を同一手順で注入したとき、すべてが決定論試験または CI で非0終了となり、出力に誤分類された状態名が現れて原因が特定できる。かつ基線（変異なし）は引き続き終了コード0（偽の赤を出さない）。かつ新規に追加した第4の誤分類変異（M1..M3 と異なる状態）も同様にキルされる（特定状態限定の対症的保護でないことの証明）。"
+      },
+      "evidence_spec": {
+        "artifact": "evidence/SCN-F02-manual-state-partition-misclassification-passes-tests/ 配下に red-report.md（主成果物）、state-defs.md（定義 file:line と要素全文）、mutants/C0.diff, M1.diff, M2.diff, M3.diff、runs/<mutant>.test.log/.ci.log/.exit、mutation-matrix.csv、classification-basis.md。",
+        "must_record": [
+          "HEAD SHA、状態集合定義の file:line と変異前の要素全文",
+          "決定論試験・CI チェックの起動コマンド行そのままと、実行時の環境（python 版等）",
+          "基線実行の終了コードと出力全文（緑であることの証明）",
+          "対照変異 C0 の差分・終了コード・出力（ハーネス感度の証明）",
+          "各誤分類変異の `git diff` 全文、終了コード、標準出力・標準エラー全文",
+          "mutation-matrix.csv（変異ID / 変異内容 / 試験 exit / CI exit / キルor生存）",
+          "分類の観測可能属性の有無（file:line または『存在しない』）",
+          "巻き戻しの証明: 各変異後の `git checkout` 実行結果と worktree/実リポジトリの `git status --porcelain`"
+        ]
+      },
+      "normative_refs": [
+        "試験の合格基準を事前定義",
+        "仕様に対する試験網羅性",
+        "verifiability-evaluated-per-item",
+        "verification-plan-coverage-evaluated",
+        "test-spec-unambiguous",
+        "試験結果の保管と提示可能性"
+      ],
+      "risks": [
+        "対照変異 C0 がキルされない場合、以後の『生存』は保護不在ではなく試験がその定義を読んでいないことを意味する。C0 を省くと赤の解釈が誤る。",
+        "『到達すべき状態＝NAMEABLE_STATES の要素』という選び方が正本の意図と食い違うと、変異そのものが誤りになる。選定根拠（正本の記述 file:line）を必ず残すこと。",
+        "変異3件は依然として標本であり、全状態に対する保護の一般性は示せない。after_fix の第4変異でも一般性は限定的である旨を残余リスクとして明記すること。",
+        "CI チェックがネットワークや外部状態に依存する場合、非0終了が変異以外の原因で起きうる。基線緑の記録で切り分けること。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-F03-frozen-doc-family-born-red-unfixable",
+      "verdict": "APPROVE",
+      "reasons": [
+        "oracle が文書種ごとの2値（新規作成が拒否されるか／作成後の本文 Edit が通るか）であり、いずれも終了コードで機械判定できる。実装前に、現行のガード実装のまま今日観測できる。",
+        "母集団（凍結対象と宣言された文書種）の列挙がガードのパス判定表という実在の場所から機械的に取れるため、『どの文書種を調べたか』が証拠として固定でき、後から母集団を都合よく変えられない。",
+        "赤の判定が『両方偽の種の件数 ≥ 1』という数値であり、反証条件（件数0）も同じ数値で決まる。SCN-F02-accepted-doc-birth-write-unguarded の ADR 単体結果を含む形で族全体を測るため、共通の体系的要因か ADR 固有かを同一の表で切り分けられる。",
+        "破壊的操作（各文書種への違反入り新規作成）を使い捨て worktree に隔離でき、是正不能状態を実正本に作らずに再現できる。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "P0（固定と隔離）: HEAD SHA を記録し `git worktree add <tmp>/wt-f03 <SHA>` を作成。全操作を worktree 内に限定する。",
+          "P1（母集団の列挙・実装側）: PRE_TOOL_GUARD の凍結対象パス判定表／carve-out 定義を `grep -rn` で特定し、定義の file:line と表の全文（文書種→パターン→carve-out の対応）を frozen-types-impl.md に記録する。ここから凍結対象文書種の一覧 L_impl を作る。",
+          "P2（母集団の列挙・正本側）: 統治木側で『凍結対象』と宣言している記述（decided-facts.md 等の宣言箇所）を検索し、file:line 付きで一覧 L_doc を作る。L_impl と L_doc の差分（実装にあり宣言に無い／宣言にあり実装に無い）を記録し、以後の母集団は L = L_impl ∪ L_doc とする。L から ADR を除いた種が0件なら precondition 不成立として記録し終了する。",
+          "P3（違反語の正本参照）: BANNED_SYNONYM の定義 file:line と語リストを記録し、使用する違反語を1語選ぶ（SCN-F02-accepted-doc-birth-write-unguarded と同一語を用い、証拠を共有する）。",
+          "P4（種ごと試験 a: 入口）: L の各文書種 T について、その種のパスパターンに合致する新規ファイル（凍結状態を示す属性＋本文に違反語1件）を作る Write 相当 payload を合成し、ガードスクリプトへ標準入力から与えて終了コードと出力を記録する。非0なら (a)=拒否あり。",
+          "P5（種ごと試験 b: 出口）: (a) が通過した種について、実際に worktree 内へファイルを作成し、その本文から違反語を除去する Edit 相当 payload をガードへ与えて終了コードを記録する。0なら (b)=是正経路あり、非0（拒否）なら (b) 無し。拒否理由メッセージ全文を残す。",
+          "P6（違反の実在確認）: 作成した各文書に対して POST_TOOL_LINTER／監査を起動し、当該文書について ERROR 相当の指摘が出ることを種ごとに記録する（『赤で固定される』の前提の実在証明）。",
+          "P7（表化と集計）: 種 × {(a) 拒否あり?, (b) 是正 Edit 通る?, (c) lint ERROR 出る?} の表を frozen-matrix.csv に作り、(a)=false かつ (b)=false かつ (c)=true の種の件数 N を集計する。ADR 以外に N に含まれる種があるかを明記する。",
+          "P8（後始末）: `git worktree remove --force` を実行し、実リポジトリの `git status --porcelain` を前後で記録する。"
+        ],
+        "injection_point": "PRE_TOOL_GUARD の凍結対象パス判定表／carve-out 定義（P1 で file:line を確定）と、そこから導かれる各文書種のパスパターンに合致する使い捨て worktree 内のパス。注入は当該ガードスクリプトへの合成 hook payload（Write / Edit）として行う。",
+        "isolation": "各文書種の違反入り文書の作成と編集は使い捨て worktree（<tmp>/wt-f03）内でのみ行い、実正本の GOVERNANCE_TREE には一切書き込まない。特に decided-facts.md 等の実正本ファイルは触らず、worktree 内のコピーに対してのみ操作する。CI_RELEASE_CHECK は起動せず配布物を確定しない。実験後に worktree を削除し、実リポジトリ無変更を前後の `git status --porcelain` で証明する。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "assert(『L の全文書種 T について、(a) 違反を含む新規作成が拒否される、または (b) 作成後の本文 Edit が通る』) が FAIL する。具体的には frozen-matrix.csv 上で (a)=false かつ (b)=false かつ (c) lint ERROR あり、の種が N ≥ 1 件記録され、そのうち ADR 以外の種が1件以上含まれること（ADR のみなら共通要因ではなく ADR 固有として記録し、F03 は棄却）。母集団 L の列挙根拠（file:line）が同時に記録されていること。",
+        "after_fix_passes_when": "同一の母集団 L（修正後に再列挙し、L が縮んでいないことを確認）と同一 payload で再実行したとき、(a)=false かつ (b)=false の種が0件となり、各種について入口拒否メッセージまたは carve-out 通過のいずれかが出力に現れる。かつ違反を含まない文書の新規作成は全種で通る（陰性対照、偽陽性なし）。かつ P4/P5 を種ごとの回帰試験として登録し、修正を revert すると当該試験が非0終了で赤になることが実測されること。"
+      },
+      "evidence_spec": {
+        "artifact": "evidence/SCN-F03-frozen-doc-family-born-red-unfixable/ 配下に red-report.md（主成果物）、frozen-types-impl.md、frozen-types-doc.md、frozen-matrix.csv、payloads/<type>-write.json, <type>-edit.json、runs/<type>-write.{out,err,exit}, <type>-edit.{out,err,exit}、lint-runs/<type>.log。",
+        "must_record": [
+          "HEAD SHA、プラグイン版、ガードの凍結対象パス判定表の file:line と全文",
+          "母集団 L の導出過程（L_impl, L_doc, 差分）と各要素の出典 file:line",
+          "BANNED_SYNONYM の出典 file:line と使用した語",
+          "文書種ごとの Write/Edit payload 全文と実行コマンド行そのまま",
+          "文書種ごとの終了コード（Write / Edit）と標準出力・標準エラー全文（拒否理由を含む）",
+          "文書種ごとの lint/監査 ERROR 出力（『赤である』ことの実在証明）",
+          "frozen-matrix.csv の全行と N の集計、および ADR 以外の該当種の明示",
+          "隔離の証明: worktree パス、実行前後の `git status --porcelain`、後始末コマンドの結果"
+        ]
+      },
+      "normative_refs": [
+        "item-set-completeness-and-version-check",
+        "verification-plan-coverage-evaluated",
+        "pass-criteria-defined-in-advance",
+        "test-records-in-verdict-decidable-form",
+        "defects-identified-and-corrective-action-taken",
+        "simulated-vs-real-environment-delta",
+        "verification-constraints-and-limits"
+      ],
+      "risks": [
+        "『凍結対象』の宣言自体が不完全な場合、L が母集団を欠き N=0 でも安全とは言えない。L_impl と L_doc の差分記録を省くとこの限界が証拠から消える。",
+        "文書種によって『規範違反』の判定規則が異なる（ADR にしか適用されない違反語がある）場合、(c) lint ERROR が出ず赤の前提が崩れる。種ごとに (c) を必ず観測し、(c)=false の種は集計から除外して除外理由を残すこと。",
+        "worktree 内のパスがガードのパターンに合致しない（絶対パス前提など）と全種が素通りし、偽の赤になる。SCN-F02-accepted-doc-birth-write-unguarded の ADR ケースで既知の exit 2 が再現することを経路到達の対照として使うこと。",
+        "SCN-F02-accepted-doc-birth-write-unguarded と証拠が重複するため、同一の違反語・同一のガード版で実施し、両者の結果が矛盾しないことを相互参照で確認すること。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-F04-audit-blind-to-accepted-plus-lint-error",
+      "verdict": "APPROVE",
+      "reasons": [
+        "oracle が『.claude/.cache/last-audit.json の findings に当該結合を示す項目があるか』という現行成果物への述語であり、実装前に観測できる。不在（監査が出さないこと）を赤とする型だが、監査が実際に走り出力を再生成したことを陽性対照で示せば、不在は客観的に成立する。",
+        "赤の判定を将来のフィールド名に依存させず、『文書識別子・凍結状態・違反種を同時に持ち、通常の lint ERROR 項目と識別子が区別できる項目の有無』という現行スキーマ上で評価可能な述語に固定できるため、未来の実装が生む観測に依存しない。",
+        "陽性対照（通常の lint ERROR が findings に出ること）と陰性対照（違反なし accepted で当該項目が出ないこと）を課すことで、『不在』が監査未実行や検出力ゼロではないことを切り分けられる。",
+        "破壊的操作である『是正不能文書の設置』を使い捨て worktree の統治木と、そこに閉じた .claude/.cache へ隔離でき、実正本の監査キャッシュを汚さない。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "A0（固定と隔離）: HEAD SHA を記録し `git worktree add <tmp>/wt-f04 <SHA>` を作成。監査の出力先 `.claude/.cache/last-audit.json` が worktree 内へ解決されることを、監査スクリプトのパス解決箇所（file:line）を読んで確認し記録する。実正本の .claude/.cache には書き込まない（書き込む実装なら実験を中止し、その事実を報告する）。",
+          "A1（監査入口の特定）: SESSION_END_AUDIT / docs-audit の実行ファイルの絶対パスと、findings 生成部（判定述語の定義）の file:line を `grep -n` で記録する。直接起動に必要な引数・payload 形式を入力パース箇所から導出して記録する。",
+          "A2（fixture 3種の設置）: worktree 内の統治木に (X) 被験体: status: accepted かつ本文に BANNED_SYNONYM を1件含む文書、(Y) 陽性対照: status: draft（凍結対象外）かつ同じ違反語を含む文書、(Z) 陰性対照: status: accepted かつ違反語を含まない文書、を設置する。各文書の全文とパスを記録する。BANNED_SYNONYM は実装内の定義（file:line）から引用する。",
+          "A3（実行前の状態記録）: 既存の `.claude/.cache/last-audit.json` の有無・sha256・mtime を記録する（無ければ『無』と記録）。",
+          "A4（監査の起動）: A1 の手順で監査を直接起動し、実行コマンド行・終了コード・標準出力／標準エラー全文を記録する。",
+          "A5（出力の再生成証明）: 実行後の `.claude/.cache/last-audit.json` の sha256・mtime を記録し、A3 と比較して再生成されたことを示す。ファイル全文を証拠として保存する。",
+          "A6（述語 P の評価）: findings 配列に対し jq で以下を評価する。P(X) := ∃ e ∈ findings s.t. e が (X) の文書パス/識別子を参照し、かつ凍結状態（status: accepted または frozen 相当）を示す情報を持ち、かつ違反種を示す情報を持ち、かつその項目の種別コード／識別子が (Y) に対して出た通常の lint ERROR 項目の種別と異なる。使用した jq 式をそのまま記録し、真偽と該当エントリ全文（あれば）を残す。",
+          "A7（対照の評価）: (Y) について通常の lint ERROR 項目が findings に現れることを確認し記録する（監査が生きており検出力があることの証明）。(Z) について P(Z) が偽であることを確認し記録する（偽陽性の不在）。",
+          "A8（利用者視点の確認）: OWNER が読む経路（last-audit.json の要約表示があればその出力）でも当該結合が現れないことを記録する。",
+          "A9（後始末）: worktree を `git worktree remove --force` で削除し、実リポジトリの `git status --porcelain` と実 `.claude/.cache/last-audit.json` の sha256 が実験前後で不変であることを記録する。"
+        ],
+        "injection_point": "docs-audit（SESSION_END_AUDIT）の findings 生成部＝判定述語の定義箇所（A1 で file:line を確定）。入力の注入は、使い捨て worktree 内の GOVERNANCE_TREE へ A2 の 3 文書を設置する形で行う。",
+        "isolation": "文書設置と監査実行は使い捨て worktree（<tmp>/wt-f04）内に閉じ、監査キャッシュ `.claude/.cache/last-audit.json` も worktree 内のものだけを読み書きする。実正本の統治木・キャッシュには一切書き込まず、実験前後で実キャッシュの sha256 不変を証明する。CI_RELEASE_CHECK は起動しない。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "assert(P(X)) が FAIL する。すなわち、(i) A5 で last-audit.json が当該実行で再生成されたことが sha256/mtime 差で示され、(ii) A7 で陽性対照 (Y) の通常 lint ERROR 項目が findings に存在して監査の検出力が実証され、(iii) それでもなお jq 式による P(X) が false（(X) について凍結状態と違反種を同時に持つ独立項目が存在しない）である、の3点が同時に記録されること。findings に当該結合が独立項目として現れれば falsification_signal に従い仮説は偽として記録する。",
+        "after_fix_passes_when": "同一 fixture・同一起動コマンドで P(X) が true となり、該当 findings 項目が (X) の文書識別子・凍結状態・違反種を同時に持ち、その種別コードが通常の lint ERROR 項目と区別可能であること。かつ P(Z) が false（違反なし accepted で誤検出しない）、かつ (Y) の通常 lint ERROR 項目が従来どおり出力される（既存検出の退行なし）こと。かつ本手順が回帰試験として登録され、修正を revert すると P(X)=false により当該試験が非0終了になることが実測されること。"
+      },
+      "evidence_spec": {
+        "artifact": "evidence/SCN-F04-audit-blind-to-accepted-plus-lint-error/ 配下に red-report.md（主成果物）、fixtures/（X.md, Y.md, Z.md 全文）、last-audit.before.json（あれば）、last-audit.after.json、audit-run.{out,err,exit}、predicate.jq（使用した jq 式）、predicate-eval.md（P(X)/P(Y)/P(Z) の真偽と該当エントリ全文）。",
+        "must_record": [
+          "HEAD SHA、監査スクリプトの絶対パスと findings 生成部の file:line、キャッシュ出力先のパス解決根拠（file:line）",
+          "BANNED_SYNONYM の出典 file:line と使用語、fixture 3種の全文とパス",
+          "監査の実行コマンド行そのまま、終了コード、標準出力・標準エラー全文",
+          "last-audit.json の実行前後の sha256 と mtime（再生成の証明）および実行後の全文",
+          "評価に用いた jq 式そのものと、P(X)・P(Y)・P(Z) の真偽および該当エントリ全文",
+          "陽性対照 (Y) の通常 lint ERROR 項目の全文（検出力の証明）",
+          "OWNER 経路（要約表示があればその出力）に当該結合が現れないことの記録",
+          "隔離の証明: worktree パス、実正本 `.claude/.cache/last-audit.json` の実験前後 sha256 不変、`git status --porcelain` 前後"
+        ]
+      },
+      "normative_refs": [
+        "verification-requires-objective-evidence",
+        "verification-procedure-includes-recording",
+        "incidents-promptly-reported-and-received",
+        "problem-resolution-process-covers-all",
+        "measurement-data-defined-planned-recorded",
+        "試験の合格基準を事前定義",
+        "test-records-in-verdict-decidable-form",
+        "試験条件の記録と再現性"
+      ],
+      "risks": [
+        "不在を赤とする oracle のため、監査が走っていない・fixture を対象外パスとみなした等の理由でも同じ『不在』が出る。A5 の再生成証明と A7 の陽性対照を欠くと赤の主張が成立しない。",
+        "監査スクリプトが実正本の `.claude/.cache` へ絶対パスで書き込む実装だと隔離が破れる。A0 でパス解決を確認せずに実行すると実正本のキャッシュを汚染する（loss そのものの誘発）。",
+        "P(X) の定義が『凍結状態を示す情報を持つ』という解釈を含むため、findings のスキーマ次第で判定が揺れる。jq 式と findings 全文を残し、事後に第三者が再判定できる形にすること。",
+        "SESSION_END_AUDIT が実セッション終了時にしか起動できない実装であれば直接起動が実運用と乖離する。乖離があれば模擬環境と実環境の差異として明記すること。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-F04-cache-summary-lost-update-poisons-next-session",
+      "verdict": "APPROVE",
+      "reasons": [
+        "oracle の主軸（書き込み箇所の静的列挙と、再読取・排他制御・一時ファイル+rename の有無の判定）は現行コードのみで観測可能であり、実装を待たずに赤を確定できる。",
+        "反証条件が具体である。書き手が単一かつアトミック置換であることがコード上で確認できれば偽と判定できるため、判定は AI の同意ではなく行番号付きの列挙表に依拠する。",
+        "同時実行という時間依存の観測に依存しない決定論的手順へ置き換え可能である。読取後のプロセスを SIGSTOP で停止し、その間に外部から sentinel を書き込み、SIGCONT で書き戻させることで、競合ウィンドウを人為的に固定できる。したがって『たまたま再現しなかった』が緑と誤読される経路を塞げる。",
+        "注入点（docs-audit.py と gov-heartbeat.py の last-audit.json 書き込み経路）はファイル単位で特定でき、破壊的操作は一時 worktree と一時キャッシュ配下に閉じ込められる。",
+        "ただし本審査環境では対象リポジトリを参照していないため、2 ファイルの実在は手順 1 の locate ステップで確認すること。locate に失敗した場合は赤を捏造せず、その事実を証拠として残して UNKNOWN へ差し戻す。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "1. 隔離環境を作る。git worktree add /tmp/red-f04/wt <commit> で対象コミットを一時 worktree に取り出し、HOME と CLAUDE_PROJECT_DIR を /tmp/red-f04 配下へ向ける。commit hash、plugin version 文字列、python バージョン、OS を先に記録する。",
+          "2. locate する。rg -n 'last-audit' で当該ファイル名を参照する全ファイルを列挙し、docs-audit.py と gov-heartbeat.py の実パスを確定する。どちらかが存在しない場合は以降を実施せず、rg 出力を証拠として残して UNKNOWN と報告する。",
+          "3. 静的列挙を行う。両ファイル内の last-audit.json への読取箇所と書込み箇所（open(...,'w')／write_text／json.dump／Path.write_*）を行番号付きで全数列挙し、各書込み箇所について (a) 書き込み直前の再読取、(b) 排他制御（flock／O_EXCL／ロックファイル）、(c) 一時ファイル+os.replace によるアトミック置換 の有無を YES/NO の表にする。判定根拠として該当行の前後 10 行を引用して保存する。",
+          "4. fixture を用意する。一時キャッシュ配下に last-audit.json を配置し、初期内容に一意トークン BASE=<固定文字列> を含める。sha256 と mtime を記録する。",
+          "5. 決定論的な赤を作る。docs-audit.py を起動し、fixture の読取直後（手順 3 で特定した読取行の直後にブレークポイント代わりの一時 print と env 制御を置く、またはプロセスに SIGSTOP を送る）で停止させる。停止中に別プロセスから gov-heartbeat.py を完走させる（または fixture に EXTERNAL_MARK=<固定文字列> を追記する）。その後 SIGCONT で docs-audit.py を書き戻しまで完走させる。",
+          "6. 判定する。最終 last-audit.json を jq で読み、EXTERNAL_MARK の有無、監査側の新要約の有無、sha256、mtime を記録する。両プロセスの exit code と stderr 全文をファイルに保存する。",
+          "7. 逆順も同様に実施する。gov-heartbeat.py を停止させ、その間に docs-audit.py を完走させ、消失の向きが両方向で起こることを確認する。",
+          "8. 参考として非決定論版も 20 回実施する。両プロセスを同時起動し、EXTERNAL_MARK 消失の回数／20 を記録する（決定論版の裏付けとしてのみ用い、これ単独を赤の根拠にしない）。"
+        ],
+        "injection_point": "docs-audit.py と gov-heartbeat.py における .claude/.cache/last-audit.json の読取行と書き戻し行（手順 3 で確定した file:line）。注入は読取完了後・書き戻し前のプロセス停止点と、その間に行う外部からの fixture 更新。",
+        "isolation": "git worktree（/tmp/red-f04/wt）で作業コピーを分離し、HOME・CLAUDE_PROJECT_DIR・キャッシュディレクトリをすべて /tmp/red-f04 配下の使い捨てディレクトリへ向ける。実プロジェクトの .claude/.cache には一切書き込まない。実行後に worktree とテンポラリを削除し、削除前に全成果物を evidence ディレクトリへコピーする。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "手順 5〜7 の決定論手順で、最終 last-audit.json に EXTERNAL_MARK（先着プロセスの更新）が残っておらず、かつ両プロセスの exit code がともに 0 で stderr に競合検出を示す出力が無い状態が、正順・逆順の双方で 1/1 再現する。加えて手順 3 の表で、少なくとも 1 つの書込み箇所が (a)(b)(c) すべて NO である。",
+        "after_fix_passes_when": "同一手順で、最終 last-audit.json に EXTERNAL_MARK と監査側の新要約の双方が残る、または後着の書き手が非 0 終了しかつ永続保存先（台帳・キャッシュ・実行系ログのいずれか）に競合検出の記録が一意トークン付きで残る。これが正順・逆順それぞれ 5/5 再現し、手順 8 の同時起動 20 回でも消失 0/20。さらに手順 3 の表で全書込み箇所が (b) または (c) を持つ。"
+      },
+      "evidence_spec": {
+        "artifact": "evidence/SCN-F04/ 配下（write-sites.tsv、static-quotes.md、run-forward/、run-reverse/、concurrent-20/、env.json をディレクトリごと保存）",
+        "must_record": [
+          "対象 commit hash、plugin version 文字列、python バージョン、OS、実行日時",
+          "docs-audit.py と gov-heartbeat.py の実パスと、last-audit.json への読取行・書込み行の file:line 全数",
+          "各書込み箇所の (a) 直前再読取 (b) 排他制御 (c) 一時ファイル+rename の YES/NO 表と、判定根拠となるコード引用",
+          "fixture の初期内容・sha256・mtime（書換え前状態）",
+          "各実行の最終 last-audit.json の全文・sha256・mtime と、EXTERNAL_MARK／新要約の有無",
+          "両プロセスの exit code と stdout/stderr 全文",
+          "正順・逆順それぞれの再現回数と、同時起動 20 回の消失回数/20",
+          "locate に失敗した場合はその rg 出力（赤の不成立も記録対象）"
+        ]
+      },
+      "normative_refs": [
+        "verification-requires-objective-evidence",
+        "test-spec-unambiguous",
+        "試験条件の記録と再現性",
+        "書換え前バージョン・設定値の記録",
+        "problem-reproduction-confirmed",
+        "item-set-completeness-and-version-check",
+        "試験結果の保管と提示可能性"
+      ],
+      "risks": [
+        "対象 2 ファイルの実在を本審査で確認していない。locate 失敗時に手順を捻じ曲げて別ファイルで赤を作ると、別の欠陥を本 scenario の証拠と誤記帳する。",
+        "SIGSTOP による停止点が、読取後・書込み前という意図した位置に本当に入っているかは手順 3 の行番号特定に依存する。停止位置の確認（停止中のプロセスのスタックまたは一時 print 出力）を証拠に含めないと、赤が別原因になり得る。",
+        "同時起動 20 回版はマシン負荷に依存し、緑側の 0/20 が『修正が効いた』ではなく『競合が起きなかった』ことを意味し得る。緑判定は決定論手順の 5/5 を主、20 回版を従とすること。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-F07-terminal-hooks-without-firing-stamps",
+      "verdict": "APPROVE",
+      "reasons": [
+        "宣言集合（hooks 定義に列挙されたフック）と証跡集合（hook-stamps の鍵）はいずれも現行成果物から機械抽出でき、差集合の計算に将来の実装を必要としない。実装前に赤が観測できる。",
+        "反証条件が具体である。capture-nudge に対応する印が存在する、または印を書く実装がコード上で確認でき差集合が空、という条件で偽と判定できる。",
+        "ただし提示された oracle には交絡がある。『印が無い』は『フックが未実行だった』でも生じるため、観測された差集合の非空だけでは『印を書く実装が無い』ことを示せない。よって陽性対照（各ハンドラを固定 stdin ペイロードで直接起動し、確実に発火させたうえで印の有無を見る）を手順に必須として組み込む。この対照込みなら赤は交絡なく観測できる。",
+        "『Stop / PreCompact を強制的に非実行にしたセッションを 1 本走らせる』部分は、実セッションの生死に依存し別セッションが手順だけで再現できる保証が無いため、ハンドラの直接起動と、コマンドを no-op に差し替えた擬似未実行に置き換える。置換後も検出報告の不在は観測可能である。",
+        "注入点は hooks 定義ファイルとハンドラスクリプトという実在しうる位置を指すが、本審査環境では未確認である。手順 1 の locate に失敗した場合は赤を捏造せず UNKNOWN へ差し戻す。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "1. 隔離環境を作る。git worktree add /tmp/red-f07/wt <commit> で作業コピーを分離し、HOME と CLAUDE_PROJECT_DIR を /tmp/red-f07 配下へ向ける。commit hash と plugin version を記録する。",
+          "2. locate する。hooks 定義（プラグインの hooks 設定 JSON および settings.json の hooks キー）と hook-stamps の実体パスを rg -n 'hooks|hook-stamps' で特定する。いずれかが存在しない場合は以降を実施せず、探索出力を証拠に残して UNKNOWN と報告する。",
+          "3. 宣言集合 D を作る。jq で hooks 定義から (event 名, matcher, command) の組を全数抽出し、生の JSON と抽出結果を保存する。抽出はコマンドで行い、目視要約を証拠にしない。",
+          "4. 実装側の印書込みを静的に判定する。D の各 command が指すスクリプト実体を辿り、hook-stamps への書込み（stamps パス文字列、または書込みヘルパ関数の呼び出し）の有無を rg -n で判定し、file:line 付きの表 S を作る。特に CAPTURE_NUDGE 相当（Stop / PreCompact）の行を明示する。",
+          "5. 陽性対照つきの動的観測を行う。hook-stamps を空（またはファイル削除）にしてから、D の各ハンドラを、当該フックが実際に受け取る形式に合わせた固定 stdin JSON（event 名・session_id・cwd を含む）を与えて直接実行する。各実行の exit code と stdout/stderr を保存する。",
+          "6. 実行後の hook-stamps の鍵集合 K を jq で抽出し、差集合 D − K を列挙する。K は『確実に発火させた後』の集合なので、非空の差集合は未実行では説明できない。",
+          "7. 検出機構の不在を観測する。docs-audit.py と gov-heartbeat.py を実行し、その stdout/stderr・生成された要約・台帳追記に、差集合に含まれるフックの未実行を指摘する記述が現れるかを固定パターンで grep し、件数を記録する。",
+          "8. 擬似未実行を注入する。hooks 定義の 1 フックの command を no-op（true）へ差し替えた設定で同じ監査・鼓動を実行し、未実行が報告されるかを同様に grep して件数を記録する。差し替えは worktree 内の設定ファイルに対してのみ行う。"
+        ],
+        "injection_point": "hooks 定義ファイル（プラグイン hooks 設定 JSON／settings.json の hooks キー）と、そこから参照される Stop / PreCompact / SessionEnd 各ハンドラスクリプトの実体。および hook-stamps ファイルの初期化と読み出し点。注入は (i) ハンドラの直接起動、(ii) hooks 定義中 1 エントリの no-op 差し替え。",
+        "isolation": "git worktree（/tmp/red-f07/wt）で設定ファイルの改変を分離し、HOME・CLAUDE_PROJECT_DIR・hook-stamps・キャッシュを /tmp/red-f07 配下の使い捨てディレクトリへ隔離する。実利用中の hook-stamps は削除も初期化もしない。終了時に worktree を破棄し、破棄前に成果物を evidence へ複製する。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "手順 5 で確実に発火させたにもかかわらず、手順 6 の差集合 D − K が非空であり（少なくとも Stop / PreCompact 系の CAPTURE_NUDGE 相当が K に現れない）、かつ手順 4 の表 S で当該ハンドラに印書込みの file:line が 1 件も無い。加えて手順 7・8 で未実行を指摘する記述が 0 件、監査・鼓動ともに exit code 0。",
+        "after_fix_passes_when": "同一手順で D − K が空になり（D の全フックが陽性対照実行後に印を残す）、かつ手順 8 の no-op 差し替え状態で、監査または鼓動が当該フックの印欠落を機械可読な形（非 0 終了、または要約／台帳に該当フック名を含む未実行レコード）で報告する。これが D の任意の 1 フックを対象に 3/3 再現する。"
+      },
+      "evidence_spec": {
+        "artifact": "evidence/SCN-F07/ 配下（hooks-declared.json、stamp-write-sites.tsv、stamps-before.json、stamps-after.json、per-hook-runs/、audit-heartbeat-output/、diff-set.txt、env.json）",
+        "must_record": [
+          "commit hash、plugin version、hooks 定義ファイルと hook-stamps の実パス、実行日時",
+          "宣言集合 D の抽出コマンドとその生出力（event 名・matcher・command の全組）",
+          "各 command のスクリプト実体パスと、印書込みの有無を示す file:line 表（無い場合は『該当行なし』とその探索パターン）",
+          "陽性対照で与えた固定 stdin JSON 全文（フックごと）",
+          "hook-stamps の実行前後の全文と鍵集合、差集合 D − K の列挙",
+          "各ハンドラ実行の exit code と stdout/stderr 全文",
+          "監査・鼓動の実行出力全文と、未実行指摘の grep パターンおよびヒット件数",
+          "no-op 差し替えの diff と、差し替え後の報告有無"
+        ]
+      },
+      "normative_refs": [
+        "verification-objective-evidence",
+        "verification-methods-not-only-test",
+        "test-spec-unambiguous",
+        "traceability-upper-lower",
+        "code-to-design-naming-correspondence",
+        "measurement-data-defined-planned-recorded",
+        "試験条件の記録と再現性"
+      ],
+      "risks": [
+        "陽性対照を省くと、差集合の非空が『未発火』でも生じるため赤の意味が失われる。手順 5 を実施せずに手順 6 の差集合だけを証拠にしてはならない。",
+        "ハンドラへ与える固定 stdin ペイロードが実際の実行系の形式と異なると、ハンドラが早期 return し『印を書かない』ように見える。ペイロード形式の根拠（ドキュメントまたは実装の読取箇所）を証拠に残さないと赤が偽になる。",
+        "hook-stamps の書式が変わると鍵集合の抽出が壊れる。recheck_triggers どおり書式変更時は抽出コマンドごと再検証が要る。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-F08-exit-zero-without-completion-branches",
+      "verdict": "APPROVE",
+      "reasons": [
+        "oracle が現行ソース 1 ファイルの静的性質（全例外処理・早期 return と終了コードの対応）に還元されており、実装前に全数列挙できる。列挙は AST で機械的に行えるため、別セッションが同じ表を再現できる。",
+        "反証条件が件数として定義されている。0 を返しかつ観測経路を持たない分岐の件数 N が 0 なら偽、1 以上なら仮説側という判定が、主観を挟まず決まる。",
+        "動的確認の注入入力（書き込み不能な出力先、不正な設定、解析不能な文書）は一時ディレクトリと使い捨て fixture で完全に隔離でき、破壊的操作が実環境へ及ばない。",
+        "対象版が 0.10.0 と明示されており、版を記録すれば同一条件を後から再現できる。",
+        "静的表だけで赤を主張せず、少なくとも 2 分岐を実際に到達させて exit code と観測経路の不在を実測する手順を課すことで、『到達不能な分岐を数えただけ』という誤りを排除できる。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "1. 隔離環境を作る。git worktree add /tmp/red-f08e/wt <0.10.0 に対応する tag または commit> で作業コピーを分離し、HOME・CLAUDE_PROJECT_DIR・キャッシュを /tmp/red-f08e 配下へ向ける。version 文字列 0.10.0 が実ファイル上のどこに書かれているかを併せて記録する。",
+          "2. locate する。docs-audit.py の実パスを確定し、sha256 と行数を記録する。存在しない場合は以降を実施せず UNKNOWN と報告する。",
+          "3. 全終了経路を AST で列挙する。python の ast モジュールで docs-audit.py を解析し、(i) すべての except ハンドラ、(ii) 関数からの早期 return、(iii) sys.exit / SystemExit / os._exit の呼び出し を行番号付きで列挙する。各終了点について終了コードを、定数なら値、変数・呼び出し結果なら unknown として表に落とす。解析スクリプト本体も証拠として保存する。",
+          "4. 観測経路の有無を判定する。終了コード 0 で戻る各分岐について、同一分岐またはその後の経路で (a) 要約ファイルの書込み、(b) hook-stamps 等の印、(c) 台帳への追記 のいずれかが行われるかを、コード引用付きで YES/NO 判定する。判定根拠の引用を必ず残す。",
+          "5. N を数える。0 を返し、かつ (a)(b)(c) いずれの観測経路も持たない分岐の件数 N と、その file:line 一覧を出す。",
+          "6. 動的に到達させる（最低 2 分岐）。(a) 要約出力先を chmod 500 の一時ディレクトリ配下に設定して実行、(b) 構文的に解析不能な文書 fixture を使い捨てディレクトリへ置いて実行、(c) 不正な設定値（型不一致・必須キー欠落）を与えて実行。各実行前に一時領域のファイル一覧・mtime を取得しておく。",
+          "7. 各実行で exit code、stdout/stderr 全文、要約ファイルの有無と全文、hook-stamps と台帳の実行前後 diff を記録する。",
+          "8. 呼び出し側の解釈を確認する。docs-audit.py を起動する側（SessionEnd フック定義／CI 手順）が終了コードをどう分岐に使っているかを file:line で引用し、0 を『監査完了・逸脱なし』として扱う箇所を明示する。"
+        ],
+        "injection_point": "docs-audit.py の各 except ハンドラおよび早期 return（手順 3 で確定した file:line）。注入は入力側から行う：要約出力先ディレクトリの権限（chmod 500）、不正な設定ファイル、解析不能な文書 fixture。",
+        "isolation": "git worktree（/tmp/red-f08e/wt）で作業コピーを分離し、出力先・キャッシュ・台帳・hook-stamps をすべて /tmp/red-f08e 配下の使い捨てディレクトリに向ける。chmod による権限変更は一時ディレクトリのみに適用し、実プロジェクトのファイル権限には触れない。実行後に chmod を戻してから一時領域と worktree を削除し、削除前に成果物を evidence へ複製する。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "手順 5 の N が 1 以上であり（0 を返しかつ観測経路を持たない分岐が file:line 付きで列挙される）、かつ手順 6 の (a)(b)(c) のうち少なくとも 1 つの実行で exit code が 0、要約ファイルが未生成または部分的、hook-stamps・台帳の diff に未完了を示す記録が無い。加えて手順 8 で呼び出し側が 0 を完了と解釈している箇所が特定されている。",
+        "after_fix_passes_when": "同一の AST 列挙で N が 0 になり（0 を返す分岐はすべて (a)(b)(c) いずれかの観測経路を持つ）、かつ手順 6 の (a)(b)(c) 各実行で exit code が非 0 になるか、要約・印・台帳のいずれかに『未完了』を示す機械可読フィールド（分岐識別子とエラー種別を含む）が残る。3 パターンすべてで 3/3 再現する。"
+      },
+      "evidence_spec": {
+        "artifact": "evidence/SCN-F08-exit-zero/ 配下（exit-paths.tsv、ast-scan.py、code-quotes.md、run-readonly-out/、run-unparsable-doc/、run-bad-config/、caller-usage.md、env.json）",
+        "must_record": [
+          "対象 tag/commit hash、version 文字列 0.10.0 の記載位置、docs-audit.py の sha256 と行数、python バージョン、実行日時",
+          "全終了点（except／早期 return／sys.exit）の file:line と終了コード（定数値または unknown）の表",
+          "0 を返す各分岐の観測経路 (a)(b)(c) YES/NO と判定根拠のコード引用",
+          "N の値と、該当分岐の file:line 一覧",
+          "動的実行 3 パターンそれぞれの投入条件（ディレクトリ権限・fixture 内容・設定内容）の全文",
+          "各実行の exit code、stdout/stderr 全文、要約ファイルの有無と全文",
+          "実行前後の一時領域ファイル一覧・mtime と、hook-stamps／台帳の diff",
+          "呼び出し側が終了コード 0 を解釈する箇所の file:line と引用"
+        ]
+      },
+      "normative_refs": [
+        "verification-requires-objective-evidence",
+        "verification-methods-not-only-test",
+        "coverage-metrics-c0-c1-mcdc",
+        "artifacts-conform-to-defined-coding-standard",
+        "test-records-in-verdict-decidable-form",
+        "pass-criteria-defined-in-advance",
+        "試験条件の記録と再現性"
+      ],
+      "risks": [
+        "AST 列挙は静的到達可能性を保証しない。N に到達不能分岐が混ざると赤の規模を過大に見せるため、動的に到達させた分岐と、到達させていない分岐を表で区別して記録すること。",
+        "終了コードが変数経由で決まる分岐は unknown となり、静的判定だけでは 0 か否かが決まらない。unknown 分岐は必ず動的到達の対象候補に挙げ、未到達なら未判定として残す（0 とみなさない）。",
+        "『観測経路がある』ことと『呼び出し側がそれを読む』ことは別である。手順 8 を省くと、観測経路の存在だけで緑にしてしまう。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-F08-ledger-record-types-unread-by-canon",
+      "verdict": "UNKNOWN",
+      "reasons": [
+        "oracle の一方の項『正本の読取述語が参照する種別集合』を機械抽出する方法が定義されていない。正本（GOVERNANCE_TREE の次行動決定）は自然言語の規範文書であり、どの記述が『読取述語』でどの種別を『入力として取り込む』かの判定が読み手の解釈に依存する。別セッションが同じ集合を再現できる保証が無く、この項は現状観測不能である。",
+        "文字列出現による代用は成立しない。種別トークンが正本に現れることと、その種別が次行動決定の入力として読まれることは別事象であり、両者を混同すると差集合が偽陰性（言及だけで未接続）にも偽陽性（別名で参照）にもなる。どちらが起きたかを判定する手段が計画に無い。",
+        "もう一方の項『台帳に現れる記録種別の集合』は台帳の実データに依存する時変集合である。スナップショット（commit hash と台帳ファイルの sha256）を固定する手順が無く、同じ差集合を後から再現できない。",
+        "損失側の観測点も未定義である。『保証レーンが前進しない』ことをどの成果物のどの観測で判定するかが書かれておらず、差集合が非空でも損失への接続を客観的に示せない。",
+        "したがって現時点では APPROVE も REJECT もできない。正本側に read predicate → 入力 record type の機械可読な宣言（表・スキーマ・設定）が存在するかを先に確認し、存在すれば差集合は決定可能になり APPROVE へ移せる。存在しなければ本 scenario は検証可能形式に落ちておらず、検証可能性を補完する手段（正本側への機械可読な参照宣言の追加、または合意された抽出規則の文書化）を計画に載せる必要がある。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "1. 隔離環境を作る。git worktree add /tmp/red-f08l/wt <commit> でスナップショットを固定する。commit hash を記録する。本 scenario は読み取り解析のみで、対象ファイルへの書き込みは行わない。",
+          "2. 台帳と正本を locate する。台帳ファイル（記録が追記される実体）と、GOVERNANCE_TREE の次行動決定を規定する正本文書の実パスを rg -n で特定し、各ファイルの sha256 と行数を記録する。",
+          "3. ゲート判定を行う（これが本計画の主目的）。正本側に『読取述語 → 参照する record type』を機械可読に宣言した箇所（表・JSON/YAML スキーマ・設定キー・関数実装）が存在するかを探索する。探索パターンと、ヒットした／しなかった結果の生出力を必ず保存する。",
+          "4. ゲートが満たされない場合（機械可読な宣言が無い場合）は、ここで停止する。『正本の参照種別集合は機械抽出不能』という事実そのものを、探索コマンド・パターン・出力とともに証拠として記帳し、本 scenario は現状 unfalsifiable として UNKNOWN を確定する。解釈で集合を作って差集合を出してはならない。",
+          "5. ゲートが満たされる場合のみ、以下を実施する。台帳側の種別集合 T を jq 等で機械抽出する（例：全レコードの type フィールドの一意集合）。抽出コマンドと生出力、台帳の sha256 を保存する。",
+          "6. 正本側の参照種別集合 R を、手順 3 で見つかった機械可読宣言のみから抽出する。抽出コマンドと生出力を保存する。散文からの読み取りは R に含めない。",
+          "7. 差集合 T − R を全数列挙し、各要素について台帳内の実レコード例（少なくとも 1 件、識別子付き）を添える。",
+          "8. 損失側の観測点を固定する。差集合に含まれる種別のレコードを新規に 1 件、使い捨ての台帳コピーへ追記し、正本に基づく次行動決定を実行する経路（監査・鼓動・契約注入のいずれか、実パスで特定したもの）を走らせ、その出力に当該レコードが入力として現れるかを固定パターンで grep して件数を記録する。"
+        ],
+        "injection_point": "台帳ファイル（record type フィールドを持つ実体）と、GOVERNANCE_TREE の次行動決定を規定する正本文書および読取述語の実装箇所。手順 2 で file:line として確定する。損失側の注入は、使い捨て台帳コピーへの新種別レコード 1 件の追記。",
+        "isolation": "git worktree（/tmp/red-f08l/wt）でスナップショットを固定し、手順 8 の追記は台帳の複製（/tmp/red-f08l/ledger-copy）に対してのみ行う。実台帳・実キャッシュには書き込まない。解析は読み取り専用で実施し、成果物を evidence へ複製してから一時領域を削除する。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "ゲート（手順 3）が満たされたうえで、差集合 T − R が非空であり、その各要素に台帳内の実レコード例が添えられ、かつ手順 8 で当該種別のレコードを追記しても次行動決定の出力に一切現れない（grep ヒット 0 件）。ゲートが満たされない場合は赤は成立せず、UNKNOWN の根拠として『正本側に機械可読な参照宣言が無い』ことの探索証拠が残ること自体を本計画の到達点とする。",
+        "after_fix_passes_when": "T − R が空になり（台帳に現れる全種別が少なくとも一つの機械可読な読取述語宣言から参照される）、かつ新種別レコードを追記した状態で次行動決定の出力に当該レコードが入力として現れる。さらに、参照の無い種別を意図的に 1 件作った状態で被覆検査が非 0 終了または明示的な赤を返す（検査機構自体の存在確認）。"
+      },
+      "evidence_spec": {
+        "artifact": "evidence/SCN-F08-ledger/ 配下（gate-search.log、ledger-types.json、canon-refs.json、diff-set.tsv、ledger-copy-run/、env.json）",
+        "must_record": [
+          "commit hash、台帳ファイルと正本文書の実パス・sha256・行数、実行日時",
+          "ゲート探索（正本側の機械可読な参照宣言の有無）に用いた全コマンド・パターンと、その生出力（ヒット 0 件も記録）",
+          "ゲート不成立の場合はその判定と、抽出を解釈で代替しなかったことの明記",
+          "ゲート成立時：T の抽出コマンドと生出力、R の抽出コマンドと生出力",
+          "差集合 T − R の全数と、各要素に対応する台帳レコードの識別子",
+          "手順 8 で追記したレコードの全文、実行した次行動決定経路の実パス、その出力全文と grep パターン・ヒット件数",
+          "本 scenario では検出できない残存リスク（フィールド粒度の未接続）を明記した一文"
+        ]
+      },
+      "normative_refs": [
+        "requirement-verifiable-and-consistent",
+        "unverifiable-requirement-compensation",
+        "verifiability-evaluated-per-item",
+        "verification-constraints-and-limits",
+        "verification-requires-objective-evidence",
+        "test-spec-unambiguous",
+        "traceability-upper-lower"
+      ],
+      "risks": [
+        "ゲート不成立にもかかわらず散文から R を『読み取って』差集合を作ると、AI の解釈が証拠に化ける。これは本キャンペーンで最も避けるべき失敗であり、手順 4 の停止規則を必ず守ること。",
+        "台帳スナップショットを固定せずに実行すると、差集合が実行時刻に依存して変わり、赤も緑も再現しない。",
+        "種別粒度で被覆が成立してもフィールド粒度の未接続は本計画では検出できない（scenario 自身の residual_risk のとおり）。緑の意味を過大に読まないこと。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-F08-sessionend-nonfire-aliases-unmarked-legacy-copy",
+      "verdict": "UNKNOWN",
+      "reasons": [
+        "unsafe_control_action が『ASSURANCE_LANE が原因を確定として記帳する』という統制行為であるにもかかわらず、その記帳がどの成果物のどのフィールドに現れるかが指定されていない。統制行為そのものの観測点が無いため、UCA の発生を客観的に判定できない。",
+        "赤の再現が『印を持たない旧版の複製』の入手可能性に依存する。当該版が tag・リリース資産・パッケージアーカイブとして実在し取得できるかが未確認であり、取得できなければ比較対象の一方を生成できず、oracle が成立しない。",
+        "『正常終了』と『強制終了』の注入が実セッションのライフサイクル駆動に依存する。別セッションが手順だけで同一条件を再現できる保証が無く、非決定的な観測に赤の可否が左右される。",
+        "観測項目のうち『更新時刻』の一致判定基準（許容差、比較の基準時刻）が定義されていない。定義が無いと同一・相違の判定が実施者ごとに変わる。",
+        "他方、アイデアの核（二つの異なる故障が同一の観測像を返すか）は、両条件を生成できさえすれば固定スキーマのベクトル比較として決定可能である。よって REJECT ではなく UNKNOWN とし、下記のゲート（旧版の materialization と終了条件の決定論的注入、記帳先の特定）を満たせるかを先に確かめる計画とする。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "1. 隔離環境を作る。/tmp/red-f08a を作業根とし、HOME・CLAUDE_PROJECT_DIR・キャッシュをすべてその配下へ向ける。実利用中の .claude/.cache には一切触れない。",
+          "2. ゲート A（記帳先の特定）。ASSURANCE_LANE が『原因を確定として記帳する』先の成果物（台帳ファイル、incident 記録、要約）とそのフィールドを実パス・フィールド名で特定する。特定できない場合は、以降の比較を行っても UCA の発生を判定できないため、その事実を記録して UNKNOWN を確定する。",
+          "3. ゲート B（旧版の materialization）。印（stamp）を書かない旧版の複製を、git tag / リリースアーカイブ / パッケージキャッシュのいずれかから取得できるかを確認する。取得できた場合は、その版のソースに hook-stamps への書込みが存在しないことを rg -n で静的に確認し、file:line または『該当行なし』を記録する。取得できない、または静的確認で印書込みが存在した場合は、前提が崩れるためその旨を記録して停止する。",
+          "4. ゲート C（終了条件の決定論的注入）。セッション終了を (i) 正常終了、(ii) SIGKILL による強制終了 の 2 通りで再現できるか、セッションプロセスの特定方法とシグナル送出手順を含めて確認する。手順化できない場合はその旨を記録して停止する。",
+          "5. 観測ベクトルのスキーマを先に固定する。{ last-audit.json の存在有無, 更新時刻（基準はセッション開始時刻との差分、許容差は明示した秒数）, スキーマ（キー集合の一覧）, 印フィールドの有無, sha256 } を JSON スキーマとして定義し、比較は全項目の値一致で行うと宣言する。",
+          "6. 条件 X を実施する。印を持たない旧版の複製で、隔離環境上のセッションを 1 本正常終了させ、観測ベクトルを記録する。実行前に last-audit.json を削除し、初期状態も記録する。",
+          "7. 条件 Y を実施する。印を持つ現行版で、セッションを SIGKILL により強制終了させ、同じ観測ベクトルを記録する。",
+          "8. 条件 Z（対照）を実施する。印を持つ現行版で正常終了させ、観測ベクトルを記録する（区別可能性の下限を示す対照）。",
+          "9. X と Y の観測ベクトルを項目ごとに比較し、一致した項目と相違した項目を表にする。X・Y・Z の三者比較表として残す。",
+          "10. 各条件を 3 回反復し、条件内でベクトルが安定するか（非決定性の有無）を記録する。安定しない項目は比較から除外し、除外した事実を明記する。"
+        ],
+        "injection_point": "セッション終了経路（正常終了 / SIGKILL）と、プラグイン複製の版差（印書込みコードの有無）。観測点は .claude/.cache/last-audit.json（隔離環境上の複製）と、ゲート A で特定した ASSURANCE_LANE の記帳先フィールド。",
+        "isolation": "/tmp/red-f08a 配下に専用の HOME・プロジェクトディレクトリ・キャッシュを作り、旧版と現行版はそれぞれ別の使い捨てディレクトリ（または git worktree）へ展開する。SIGKILL は当該隔離環境で起動したセッションプロセスにのみ送る（PID を記録してから送出）。実プロジェクト・実キャッシュ・実台帳は読み取りも書き込みも行わない。終了後に一時領域を削除し、削除前に成果物を evidence へ複製する。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "ゲート A・B・C がすべて満たされたうえで、条件 X（印なし旧版・正常終了）と条件 Y（印あり現行版・強制終了）の観測ベクトルが、固定スキーマの全項目（安定性が確認された項目に限る）で一致し、3 回反復のすべてで一致する。すなわち二つの異なる原因が同一像を返すことが実測される。ゲートのいずれかが満たされない場合は赤は成立せず、満たせなかったゲートと探索証拠を残して UNKNOWN のままとする。",
+        "after_fix_passes_when": "同一手順で条件 X と条件 Y の観測ベクトルが少なくとも 1 項目で必ず相違し（例：版識別子フィールドや終了種別フィールドが last-audit.json 側に現れる）、その相違項目が 3/3 で安定して再現する。加えて、ゲート A で特定した記帳先に、原因を確定する記帳が『どの観測で弁別したか』を伴って残ることが確認できる。"
+      },
+      "evidence_spec": {
+        "artifact": "evidence/SCN-F08-aliases/ 配下（gate-a.log、gate-b.log、gate-c.log、vector-schema.json、cond-X/、cond-Y/、cond-Z/、comparison.tsv、env.json）",
+        "must_record": [
+          "各ゲートの判定（満たした／満たせなかった）と、その根拠となるコマンド・出力・実パス",
+          "旧版複製の取得元（tag / アーカイブ / パッケージ）とその識別子、および印書込みが存在しないことの file:line または『該当行なし』",
+          "現行版の commit hash と version 文字列、両版の sha256",
+          "観測ベクトルのスキーマ定義全文（更新時刻の基準と許容秒数を含む）",
+          "条件 X・Y・Z 各 3 回の観測ベクトル生値、last-audit.json の全文、初期状態（実行前の存在有無）",
+          "SIGKILL を送出したプロセスの PID と送出時刻、セッションの起動コマンド",
+          "項目ごとの一致／相違表と、非決定性により比較から除外した項目とその理由",
+          "ゲート未達で停止した場合は、赤を作らなかったこと自体の記録"
+        ]
+      },
+      "normative_refs": [
+        "verification-constraints-and-limits",
+        "baseline-identifies-items-and-versions",
+        "completeness-presence-and-version",
+        "version-control-history-traceable",
+        "simulated-vs-real-environment-delta",
+        "incident-correlated-with-known-problems",
+        "root-cause-analysis-required",
+        "problem-reproduction-confirmed",
+        "試験条件の記録と再現性"
+      ],
+      "risks": [
+        "隔離環境で再現したセッション終了挙動が、実運用の終了挙動と異なる可能性がある。模擬環境と実環境の差異を評価せずに『区別不能』と結論すると、原因の取り違えという本 scenario の損失を検証側が自ら犯す。",
+        "旧版複製を再構成（手作りで印書込みを削る）して代用すると、それは実在した複製ではなく作為的な検体であり、証拠価値が落ちる。取得元が本物であることの記録が必須。",
+        "SCN-D01（非発火そのもの）と対象が重なる。比較表を残さないまま結論だけを記帳すると、二つの scenario の証拠が混ざる。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-F09-stderr-diagnostic-not-persisted-anywhere",
+      "verdict": "APPROVE",
+      "reasons": [
+        "赤の注入が入力側で完結する。要約の保存先を書けない状態にするだけで失敗経路へ到達でき、将来の実装を必要とせず現行のまま観測できる。",
+        "反証条件が具体である。いずれかの保存先に当該失敗記録が残っていれば偽と判定でき、判定は残存件数という数値で決まる。",
+        "注入は一時ディレクトリの権限操作と存在しないパス指定で行えるため、破壊的操作を使い捨て領域へ完全に隔離できる。",
+        "ただし『どこにも残っていない』という不在の主張は、走査範囲と走査手法が不十分でも同じ観測を生む。したがって (i) 保存先候補集合を実パスで明示列挙すること、(ii) 各ルートに sentinel を置いて走査コマンドが実際にそれを検出できることを先に確認すること、(iii) 実行前後のファイル一覧・mtime 差分も併せて取ること を必須とする。この三点込みなら不在は客観的に示せる。",
+        "失敗時の診断文言は実装依存であるため、走査パターンは推測せず、実装中の該当出力文字列を静的に特定してから固定パターンとして用いる。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "1. 隔離環境を作る。git worktree add /tmp/red-f09/wt <commit> で作業コピーを分離し、HOME・CLAUDE_PROJECT_DIR・キャッシュ・台帳・実行系ログ出力先をすべて /tmp/red-f09 配下へ向ける。環境変数の設定内容を全文記録する。",
+          "2. 走査パターンを確定する。docs-audit.py の要約書込み失敗経路を rg -n で特定し、実際に出力される文言（'summary write failed' 相当）を file:line 付きで引用して、固定の grep パターン P を決める。推測した文言を使わない。",
+          "3. 保存先候補集合 R を明示列挙する。実行系のログディレクトリ、.claude/.cache/、台帳ファイル、プロジェクト配下の logs/ など、失敗記録が残り得る全ルートを実パスで列挙し、R をファイルに保存する。列挙の根拠（設定・ドキュメント・実装の参照箇所）も残す。",
+          "4. 走査手法の陽性対照を行う。R の各ルートに、パターン P にマッチする文字列を含む sentinel ファイルを 1 つずつ置き、走査コマンド（rg -uu --hidden -n P <各ルート>）が全ルートで検出できることを確認する。検出できないルートがあれば走査手法を修正し、修正後に再確認する。確認後 sentinel を削除し、削除を記録する。",
+          "5. 実行前の状態を取る。R 配下の全ファイル一覧・サイズ・mtime を記録する。",
+          "6. 赤を注入する。3 パターンで docs-audit.py を実行する。(a) 要約保存先の親ディレクトリを chmod 500 にする、(b) 保存先の親ディレクトリを存在させない、(c) 保存先を既存ディレクトリと同名にして書込みを失敗させる。",
+          "7. 各実行の exit code、stdout、stderr をファイルへリダイレクトして全文保存し、stderr に失敗行が実際に出ていることをパターン P で確認する（出ていなければ、注入が失敗経路に到達していないので手順 6 をやり直す）。",
+          "8. 走査する。実行後に R 全体をパターン P で走査し、残存件数を数える。併せて手順 5 との差分（新規ファイル・mtime 更新ファイル）を全数列挙し、更新された全ファイルの中身を確認して、失敗を示す記録が別表現で残っていないかも見る。",
+          "9. 3 パターンそれぞれについて 7〜8 を実施し、残存件数を表にする。"
+        ],
+        "injection_point": "docs-audit.py の要約保存先パス（環境変数または設定で指定される出力先）と、その書込み失敗を stderr へ出す実装箇所（手順 2 で確定する file:line）。注入は保存先ディレクトリの権限・不存在・型不整合。",
+        "isolation": "git worktree（/tmp/red-f09/wt）と /tmp/red-f09 配下の使い捨て HOME・キャッシュ・台帳・ログディレクトリに限定する。chmod 500 は一時ディレクトリのみに適用し、実行後に権限を戻してから削除する。実プロジェクトのキャッシュ・台帳・実行系ログには読み書きしない。sentinel ファイルは一時領域のみに作成し、手順 4 の末尾で必ず削除して削除記録を残す。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "3 つの注入パターンすべてで、stderr にはパターン P の失敗行が出力されているにもかかわらず、実行後の R 全体の残存件数が 0 であり、かつ手順 8 の実行前後差分に失敗を示す新規記録・更新記録が 1 件も無い。加えて手順 4 の陽性対照で、走査コマンドが R の全ルートで sentinel を検出できていること（走査手法の妥当性が示されていること）。",
+        "after_fix_passes_when": "同一手順で、R のうち少なくとも 1 つの永続保存先に失敗記録が残り、その記録が事後検索可能な一意トークン（タイムスタンプ、セッション識別子、書込み先パス、エラー種別）を含む。3 つの注入パターンすべてで 3/3 再現し、陽性対照も同様に成立する。"
+      },
+      "evidence_spec": {
+        "artifact": "evidence/SCN-F09/ 配下（pattern-source.md、roots.txt、sentinel-check.log、pre-state.tsv、run-a/、run-b/、run-c/、post-scan.tsv、diff.tsv、env.json）",
+        "must_record": [
+          "commit hash、plugin version、実行日時、隔離環境の環境変数全文",
+          "走査パターン P と、その根拠となる実装の file:line と引用",
+          "保存先候補集合 R の実パス全数と、その列挙根拠",
+          "陽性対照の実行ログ（各ルートでの sentinel 検出結果）と sentinel 削除の記録",
+          "実行前の R 配下ファイル一覧・サイズ・mtime",
+          "3 パターンそれぞれの注入条件（ディレクトリ権限・パス・操作）の詳細",
+          "各実行の exit code、stdout/stderr 全文（stderr に失敗行が出たことの確認を含む）",
+          "実行後の R 走査の残存件数と、ヒットした場合はその全文・ファイルパス・行番号",
+          "実行前後の差分（新規／更新ファイル）の全数と、更新ファイルの内容確認結果"
+        ]
+      },
+      "normative_refs": [
+        "incidents-promptly-reported-and-received",
+        "problem-resolution-process-covers-all",
+        "problem-reproduction-confirmed",
+        "verification-procedure-includes-recording",
+        "verification-requires-objective-evidence",
+        "試験結果の保管と提示可能性",
+        "記録の保管期間遵守",
+        "verification-findings-into-problem-resolution"
+      ],
+      "risks": [
+        "陽性対照（手順 4）を省くと、残存件数 0 が『残っていない』ではなく『走査できていない』ことを意味し得る。不在の主張は走査手法の妥当性証明とセットでのみ成立する。",
+        "隔離環境では実行系のログ保存先が実運用と異なる可能性がある。R の列挙根拠を残さないと、実運用では残っているものを『残らない』と誤断する。",
+        "sentinel を削除し損ねると、後続の走査で偽陽性を生む。削除の記録を証拠に含めること。",
+        "注入が失敗経路に到達せず別の経路で終わっている場合、stderr に失敗行が出ないまま残存 0 となる。手順 7 の到達確認を必ず先に行う。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-F09-unverified-evaluator-fields-drive-disposition",
+      "verdict": "UNKNOWN",
+      "reasons": [
+        "oracle の (a)「憲章に定義があるか」と (b)「下流の分岐に使われるか」は、テキスト照合と分岐コードの参照抽出により実装前に機械観測できる。この部分だけで赤（分岐に使われるが憲章に定義名の出現が 0 のフィールド集合）は再現可能である。",
+        "oracle の (c)「その分岐が申告以外の照合を伴うか」は観測不能である。観測できないのは『何をもって照合とみなすか』の判定規則であり、照合源の列挙（例：外部計測値・他者作成記録・再実行結果のいずれか）が憲章側に事前定義されていない。現状 (c) の真偽は読み手の解釈で決まり、AI の同意で埋めることになる。",
+        "falsification_signal（該当0件）の成立可否が (c) の解釈に依存するため、反証条件が確定しない。反証条件が確定しない計画は承認しない。",
+        "したがって現時点では APPROVE せず、(a)(b) 限定の部分赤を先に記録する計画のみ実行可とする。(c) の判定規則が憲章に明文化され機械判定可能になった時点で再審査する。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "手順0：対象リポジトリの作業コピーを使い捨て worktree に作成し（git worktree add <TMPDIR>/f09 <SHA>）、git rev-parse HEAD の出力を記録する。以降の全操作はこの worktree 内でのみ行う。",
+          "手順1：評価者出力 schema の定義ファイルと、その値で分岐する下流処遇ロジックの実装ファイルを特定し、file:line で記録する。どちらかが解決しない場合は、その事実を記録して直ちに中止し UNKNOWN のまま差し戻す（実在しない注入点で赤を作らない）。",
+          "手順2：schema 定義から全フィールド名を機械抽出する（抽出コマンドの全文と出力件数を記録）。手作業で列挙しない。",
+          "手順3：憲章（GOVERNANCE_TREE）本文に対し、各フィールド名の出現を機械照合し、出現 0 のフィールド集合 A0 を出力する。照合コマンドと対象ファイル一覧を記録する。",
+          "手順4：下流処遇ロジックのうち条件分岐を構成する行（if / match / 比較演算子 / 辞書引き）を抽出し、各フィールド名の参照有無を機械照合して、分岐で参照されるフィールド集合 B を出力する。",
+          "手順5：B ∩ A0 を『下流分岐に使われるが憲章に定義の無いフィールド』として列挙する。これが本計画で観測する赤である。",
+          "手順6：(c) については判定規則が存在しないため、B の各フィールドについて『照合有無：未判定（判定規則不在）』と明記して列挙のみ行う。AI の推測で有無を埋めない。",
+          "手順7：worktree を削除し、成果物のみ証拠ディレクトリへ退避する。"
+        ],
+        "injection_point": "評価者出力 schema の定義ファイル（手順1で file:line を確定して記録）と、その値を条件分岐に用いる下流処遇ロジックの実装箇所。注入は行わず読み取り専用の静的照合とする。",
+        "isolation": "対象リポジトリ本体を一切変更しない。git worktree を <TMPDIR>/f09 に作成して読み取り専用に扱い、抽出結果・ログは <TMPDIR>/evidence/SCN-F09/ にのみ書き出す。実行後 worktree は削除する。実台帳・実処遇決定には触れない。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "固定した SHA において、手順5の集合 B ∩ A0 が 1 件以上列挙され、その各フィールドについて分岐が存在する file:line と憲章側検索結果 0 件が証拠に残っている。",
+        "after_fix_passes_when": "同一コマンド列で B ∩ A0 が 0 件になり、かつ (c) の照合規則（照合源の列挙）が憲章に明文化されて機械判定可能になったうえで、その規則による照合で『分岐に使われ照合の無いフィールド』が 0 件になる。さらに、未定義フィールドを意図的に 1 つ追加すると当該検査が FAIL することを示す（検査自体が反証可能であることの担保）。"
+      },
+      "evidence_spec": {
+        "artifact": "<TMPDIR>/evidence/SCN-F09/ 配下：red-evidence.md（結論）、fields.json（全フィールド一覧）、charter-match.txt、branch-refs.txt、commands.log",
+        "must_record": [
+          "対象リポジトリの commit SHA と worktree 作成コマンド",
+          "schema 定義ファイルと下流分岐実装の file:line",
+          "抽出・照合に用いた全コマンドの文字列とその標準出力",
+          "全フィールド一覧と、集合 A0・B・B ∩ A0 の各内容",
+          "(c) を未判定とした理由（照合源の判定規則が憲章に不在である旨）",
+          "実行日時・実行環境（OS、言語処理系のバージョン）"
+        ]
+      },
+      "normative_refs": [
+        "verification-requires-objective-evidence",
+        "requirement-verifiable-and-consistent",
+        "verifiability-evaluated-per-item",
+        "traceability-analyzed-documented-maintained",
+        "verification-constraints-and-limits",
+        "unverifiable-requirement-compensation"
+      ],
+      "risks": [
+        "文字列一致による憲章照合は、別名・言い換えで定義されているフィールドを『定義なし』と誤判定しうる（偽陽性）。列挙結果は定義節への参照可否まで人手で確認して記録する必要がある。",
+        "審査時点で審査環境にリポジトリが存在せず、injection_point の実在は未確認である。手順1で解決しない場合は赤の再現不能として差し戻す。",
+        "(c) の判定規則を計画側で新造すると、規則の妥当性自体が未検証のまま処遇判断に持ち込まれる。規則は憲章側の変更として先に確定させること。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-F11-field-granularity-unread-across-record-types",
+      "verdict": "APPROVE",
+      "reasons": [
+        "oracle（各種別スキーマの必須フィールド名を機械生成し harness 配下へ参照照合、0 件参照の集合を出す）は実装前に完全に観測可能であり、既存コードのみで赤を再現できる。修正を要しない。",
+        "反証条件が具体である：全必須フィールドが 1 箇所以上から参照されていれば該当 0 件で仮説は偽。修正前後で同一コマンドを回して差分を取れる。",
+        "残存リスクとして申告済みの『動的キー参照による偽陰性・偽陽性』は、0 件参照フィールドごとに消費者の手検査を必須手順として追加することで、証拠側で吸収できる（検査手段の限界を計画に明示する形）。",
+        "破壊的操作を伴わない静的照合であり、隔離は worktree と一時出力先で十分に担保できる。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "手順0：git worktree add <TMPDIR>/f11 <SHA> で使い捨て作業コピーを作り、git rev-parse HEAD を記録する。",
+          "手順1：doctrine の台帳各種別のスキーマ定義ファイルを列挙し file:line を記録する。解決しなければ中止し、その事実を記録する。",
+          "手順2：各種別について必須指定のフィールド名のみを機械抽出する（required / 非 Optional などの判定条件を明文化し、抽出コマンドを記録）。種別ごとの件数を記録する。",
+          "手順3：harness 配下の全コード（テストコードを含む／除外する範囲を明記）に対し、各必須フィールド名のリテラル出現を機械照合し、ヒット件数 0 のフィールド集合 Z を出力する。",
+          "手順4：集合 Z の各フィールドについて、動的キー参照の可能性を人手で検査する。当該種別のレコード全体を受け渡す箇所（辞書そのものの引き回し、**展開、getattr/角括弧の変数添字）を grep で洗い出し、その先で当該フィールドが消費されるかを読んで判定し、判定と根拠 file:line を記録する。",
+          "手順5：手順4で消費者が見つからなかったフィールド集合 Z' を確定する。これが赤である。",
+          "手順6：対照として、確実に参照されていると分かっている必須フィールドを 1 つ選び、同一コマンドでヒット 1 件以上になることを確認する（照合手段が機能していることの担保）。",
+          "手順7：worktree を削除し、成果物のみ証拠ディレクトリへ退避する。"
+        ],
+        "injection_point": "doctrine の台帳各種別のスキーマ定義（必須フィールド指定箇所）と、harness 配下の参照コード全体。コードは改変せず、抽出・照合のみを行う。",
+        "isolation": "改変を伴わない静的照合。作業は <TMPDIR>/f11 の使い捨て worktree で行い、抽出結果は <TMPDIR>/evidence/SCN-F11/ にのみ書き出す。実台帳ファイルは読み取りのみで開き、書き込みは一切行わない。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "固定 SHA において集合 Z' が 1 件以上であり、その各フィールドについて（i）スキーマ上の必須指定 file:line、（ii）harness 配下リテラル照合 0 件のコマンド出力、（iii）動的参照経路の手検査で消費者が見つからなかった記録、の 3 点が揃っている。",
+        "after_fix_passes_when": "同一コマンド列で Z' が 0 件になる（各必須フィールドが 1 箇所以上から参照される、または必須指定から外れてスキーマ差分として提示される）。加えてフィールド粒度の被覆検査が回帰テストとして追加され、未参照の必須フィールドを 1 つ意図的に足すとそのテストが FAIL し、戻すと PASS することを示す。"
+      },
+      "evidence_spec": {
+        "artifact": "<TMPDIR>/evidence/SCN-F11/ 配下：red-evidence.md、required-fields.json（種別×必須フィールド）、refs-hits.txt、zero-ref-adjudication.md（手順4の手検査記録）、commands.log",
+        "must_record": [
+          "対象 commit SHA と worktree 作成コマンド",
+          "必須フィールドの抽出条件（何をもって必須と判定したか）と抽出コマンド全文",
+          "照合対象ディレクトリ範囲、テストコードの包含／除外の別",
+          "種別ごとの必須フィールド一覧と各フィールドのヒット件数",
+          "集合 Z と Z' の内容、および Z→Z' の各除外・残置判定の根拠 file:line",
+          "手順6 の対照フィールド名とそのヒット出力",
+          "実行日時・実行環境"
+        ]
+      },
+      "normative_refs": [
+        "verification-requires-objective-evidence",
+        "item-set-completeness-and-version-check",
+        "試験条件の記録と再現性",
+        "test-spec-unambiguous",
+        "verification-constraints-and-limits",
+        "traceability-analyzed-documented-maintained"
+      ],
+      "risks": [
+        "リテラル照合は動的キー参照で偽陰性を、コメント・文字列定数で偽陽性を生む。手順4の手検査記録が無い赤は証拠として採らない。",
+        "『参照されている』ことは『判断に使われている』ことを含意しない。参照先が単なる再直列化や転送であれば、フィードバック不在は残りうる（本計画の限界として明記する）。",
+        "審査環境にリポジトリが無く、スキーマ定義および harness の実在は未確認。手順1で解決しない場合は差し戻す。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-N02-unknown-classification-closes-ledger-entry",
+      "verdict": "APPROVE",
+      "reasons": [
+        "赤は既存実装のみで再現できる：分類器の返り値を UNKNOWN に固定する注入は、修正を前提としない外部からの故障注入であり、観測対象（台帳エントリの状態フィールド、集計の分子／分母、後続ゲートの終了コード）はいずれも実装前に観測可能な既存の出力である。",
+        "反証条件が具体である：注入後にエントリが未閉のまま残り判定不能として表示され後続が停止側に倒れれば仮説は反証される。PASS 注入・FAIL 注入を対照アームとして置けば、状態値の差分が UNKNOWN に帰属することを示せる。",
+        "破壊的操作（台帳書き込み・後続行動の許可）は台帳複製と一時ディレクトリへ隔離可能であり、実運用の台帳とリリース経路を汚さずに実行できる。",
+        "oracle の (c)『後続行動の停止／通過』は自動ゲートが実在する場合にのみ観測可能である。実在しない場合は (a)(b) に限定して赤を確定し、(c) は『観測経路なし』として記録する条件付き承認とする。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "手順0：git worktree add <TMPDIR>/n02 <SHA> で作業コピーを作り、commit SHA を記録する。",
+          "手順1：評価実行の分類段（分類器の返り値を返す関数）と、その出力を受けて台帳エントリを開閉する書き込み処理を特定し、file:line を記録する。独立した seam として注入できない場合は、その事実を記録して中止し UNKNOWN へ差し戻す。",
+          "手順2：実台帳を <TMPDIR>/n02-ledger/ へ複製し、台帳パスを指す設定／環境変数を複製側へ向ける。向け先の設定方法と、実台帳が読み取りすらされないことを確認した手段を記録する。",
+          "手順3：注入前の台帳複製の全文ハッシュと、対象エントリの状態フィールド初期値、評価済み集計値を記録する。",
+          "手順4：分類器の返り値を UNKNOWN に固定する注入（テスト用スタブ／monkeypatch／env による分類器差し替え）を行い、評価実行を 1 回走らせる。注入方法の全文をスクリプトとして証拠に残す。",
+          "手順5：実行後に (a) 当該エントリの状態フィールド値、(b) 評価済み件数の分子・分母、(c) 後続ゲートの終了コードと停止表示の有無、を観測して記録する。標準出力・標準エラーを全文保存する。",
+          "手順6：対照アーム A：同じ手順を分類器 PASS 固定で実行し、(a)(b)(c) を記録する。対照アーム B：FAIL 固定で同様に記録する。UNKNOWN の観測値が PASS のそれと一致し FAIL と異なるか、を差分で示す。",
+          "手順7：自動化された後続ゲートが存在しない場合、その探索結果（探した場所と不在の根拠）を記録し、赤の主張を (a)(b) に限定する。",
+          "手順8：台帳複製と worktree を削除し、成果物のみ証拠ディレクトリへ退避する。"
+        ],
+        "injection_point": "評価実行の分類段（分類器の出力を返す関数）と、その出力を受ける台帳エントリ開閉処理の境界。手順1で file:line を確定して記録する。",
+        "isolation": "実台帳・実リリース経路には一切触れない。git worktree <TMPDIR>/n02 と台帳複製 <TMPDIR>/n02-ledger/ を使い、台帳パスを環境変数／引数で複製側へ差し替える。ネットワーク送信と配布処理は無効化して実行する。実行後は一時ディレクトリを削除する。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "UNKNOWN 注入後、当該台帳エントリの状態フィールドが PASS 注入時と同一の『閉』値になり、かつ評価済み件数の分子および分母に計上され、かつ（自動ゲートが存在する場合）後続ゲートが終了コード 0 で通過し停止表示が出ない。この 3 点（ゲート不在時は 2 点）が対照アームとの差分表付きで記録されている。",
+        "after_fix_passes_when": "同一の UNKNOWN 注入で、エントリ状態フィールドが未閉ないし判定不能を示す値（PASS 時とは異なる値）になり、集計上は未判定として分子から除外され、後続ゲートが非ゼロ終了または明示の停止表示を行う。かつ、この 3 点を検査する回帰テストが存在し、注入を外した通常 PASS 実行ではそのテストが PASS することを示す。"
+      },
+      "evidence_spec": {
+        "artifact": "<TMPDIR>/evidence/SCN-N02/ 配下：red-evidence.md、inject-unknown.sh（注入スクリプト）、ledger-before.json / ledger-after-unknown.json / ledger-after-pass.json / ledger-after-fail.json、stdout-stderr-*.log、diff-table.md",
+        "must_record": [
+          "対象 commit SHA、worktree／台帳複製のパスと作成コマンド",
+          "分類段と台帳開閉処理の file:line",
+          "注入の実装（差し替えたシンボル名と方法）の全文",
+          "注入前後の台帳エントリ状態フィールド値と台帳全文（または diff）",
+          "評価済み件数の分子・分母の注入前後値",
+          "後続ゲートの終了コードと標準出力・標準エラー全文、またはゲート不在の探索記録",
+          "PASS／FAIL 対照アームの同一 3 点の観測値と差分表",
+          "実行日時・実行環境・台帳パスの差し替え確認手段"
+        ]
+      },
+      "normative_refs": [
+        "verification-requires-objective-evidence",
+        "problem-reproduction-confirmed",
+        "試験条件の記録と再現性",
+        "test-records-in-verdict-decidable-form",
+        "pass-criteria-defined-in-advance",
+        "verification-procedure-includes-recording"
+      ],
+      "risks": [
+        "分類段が独立した seam でない（分類と書き込みが同一関数内に埋没している）場合、注入のためにコードを変える必要が生じ、赤が実装前観測でなくなる。その場合は中止して UNKNOWN へ差し戻す。",
+        "自動化された後続ゲートが存在しない場合、oracle の (c) は観測不能である。不在の記録なしに『通過した』と書かない。",
+        "審査環境にリポジトリが無く、injection_point の実在は未確認である。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-N03-legacy-schema-silently-disables-staleness-check",
+      "verdict": "APPROVE",
+      "reasons": [
+        "赤は既存実装のみで観測できる：旧形式 last-audit.json を入力として与え、標準出力／標準エラー・終了コード・セッション開始時表示を観測するだけであり、将来の実装が生む観測に依存しない。",
+        "反証条件が具体である：旧形式入力に対して明示の警告または『判定不能』出力が現れれば反証される。現行形式・古びの対照アームを置くことで、『沈黙』が入力スキーマ差に帰属することを示せる。",
+        "入力ファイル差し替えという注入は一時ディレクトリ内の状態ファイルへ完全に隔離でき、実運用の last-audit.json を破壊しない。",
+        "版が 0.7.0／0.10.0 と特定されており、旧形式 fixture の出所を git タグから機械的に再構成でき、後続セッションが手順のみで再現できる粒度に落とせる。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "手順0：git worktree add <TMPDIR>/n03 <0.10.0 の SHA> を作り、対象 SHA とタグ名を記録する。",
+          "手順1：gov-heartbeat.py の実在と、last-audit.json を読む箇所（キー参照・既定値・早期 return）を file:line で記録する。SESSION_START_CONTRACT が heartbeat を起動する実際のコマンド行も特定して記録する。解決しなければ中止する。",
+          "手順2：タグ 0.7.0（git tag -l で存在を確認し記録）の版から last-audit.json を書き出すコードを読み、その版が生成する形式の fixture を再構成する。タグが存在しない、または書き出しコードが特定できない場合は、その事実を記録したうえで『旧形式とみなす根拠』を明記した合成 fixture を用い、合成である旨を証拠に残す。",
+          "手順3：<TMPDIR>/n03-state/ を作り、heartbeat が読む状態ディレクトリを環境変数／引数でそこへ向ける。向け先の確認方法（実ファイルが開かれないこと）を記録する。",
+          "手順4：アーム1＝旧形式 fixture を配置し、手順1で特定した実コマンドで heartbeat を実行。標準出力・標準エラー全文、終了コード、利用者向け表示の内容を記録する。",
+          "手順5：アーム2＝現行形式かつ新鮮（合格相当）の fixture で同じ 3 点を記録する。",
+          "手順6：アーム3＝現行形式かつ古び（警告が出るべき）の fixture で同じ 3 点を記録する。これは警告経路が実在し発火しうることの担保である。",
+          "手順7：アーム4＝ファイル不在、アーム5＝JSON として壊れた入力、でも同じ 3 点を記録する（沈黙が旧形式固有かどうかの切り分け）。",
+          "手順8：5 アームの 3 点を並べた差分表を作り、アーム1 がアーム2 と区別できるか否かを判定する。",
+          "手順9：一時ディレクトリと worktree を削除し、成果物のみ証拠ディレクトリへ退避する。"
+        ],
+        "injection_point": "HEARTBEAT（gov-heartbeat.py）の入力ファイル last-audit.json。手順3で作る一時状態ディレクトリに旧形式ファイルを配置することで注入する。プログラム側は改変しない。",
+        "isolation": "実運用の last-audit.json および状態ディレクトリには触れない。<TMPDIR>/n03-state/ を専用の状態ディレクトリとし、環境変数／引数で heartbeat の入力先をそこへ向ける。実行は使い捨て worktree 内で行い、終了後に一時ディレクトリごと削除する。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "アーム1（旧形式）の 3 点（標準出力／標準エラー文字列、終了コード、利用者向け表示）がアーム2（現行形式・新鮮＝合格）の 3 点と文字列比較で区別できず、かつアーム3（現行形式・古び）では警告文字列が出力される。すなわち警告経路は実在するのに旧形式では沈黙する、という差分表が記録されている。",
+        "after_fix_passes_when": "同一のアーム1 入力に対し、『判定不能』を示す明示の出力または非ゼロ終了コードが現れ、アーム2 の出力と文字列比較で区別できる。かつ旧形式 fixture が固定資産として回帰テストに組み込まれ、そのテストが修正前のコードでは FAIL し修正後は PASS することを示す。"
+      },
+      "evidence_spec": {
+        "artifact": "<TMPDIR>/evidence/SCN-N03/ 配下：red-evidence.md、fixtures/（5 アーム分の入力ファイル）、arm{1..5}-stdout.log / -stderr.log / -exitcode.txt、diff-table.md、commands.log",
+        "must_record": [
+          "対象 commit SHA とタグ（0.10.0）、および 0.7.0 タグの有無と参照した書き出しコードの file:line",
+          "gov-heartbeat.py の入力解析箇所の file:line（既定値・早期 return を含む）",
+          "SESSION_START_CONTRACT が用いる実起動コマンド行の全文",
+          "各アームの入力 fixture の全文と、その形式が旧形式である根拠（再構成元か合成かの別）",
+          "各アームの標準出力・標準エラー全文、終了コード、利用者向け表示の内容",
+          "5 アームを並べた差分表と、区別可能／不能の判定",
+          "状態ディレクトリの差し替え方法と、実ファイルが読まれていないことの確認手段",
+          "実行日時・実行環境（Python バージョンを含む）"
+        ]
+      },
+      "normative_refs": [
+        "verification-requires-objective-evidence",
+        "completeness-presence-and-version",
+        "試験条件の記録と再現性",
+        "test-spec-unambiguous",
+        "problem-reproduction-confirmed",
+        "test-records-in-verdict-decidable-form"
+      ],
+      "risks": [
+        "0.7.0 の書き出しコードが特定できず合成 fixture を用いる場合、赤は『旧形式』ではなく『任意の未知形式』に対する挙動を示すに留まる。合成である旨を記さない証拠は採らない。",
+        "利用者向け表示が heartbeat の標準出力とは別経路（別プロセスの整形）で作られている場合、3 点目は観測経路の特定が別途必要になる。特定できない場合は 2 点に限定して記録する。",
+        "SCN-D02 と結果状態が近く、差分表が『偽の合格』と『無音スキップ』を機序として分離できない場合は、統合可否を再審査する必要がある。",
+        "審査環境にリポジトリが無く、gov-heartbeat.py の実在は未確認である。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-N04-detector-and-detected-share-version-common-cause",
+      "verdict": "APPROVE",
+      "reasons": [
+        "oracle の (1)(2) は git 履歴と導入複製の実体を読むだけの検査であり、実装前に完全に観測可能である。(3) の実行観測も既存実体を隔離環境で走らせるのみで、修正を前提としない。",
+        "反証条件が具体である：0.7.0 実体に版遅れ判定コードが存在すれば機序が変わり仮説は反証される。コード有無はテキストとして観測でき、AI の解釈を要しない。",
+        "『警告が出ない』という否定的観測が単独では帰属不能であるため、同一隔離環境で 0.10.0 実体を同じ要求版設定で走らせ警告が出ることを示す対照アームを必須手順として追加する。これにより差分が版そのものに帰属する。",
+        "隔離は導入複製の複写を一時ディレクトリへ置くことで担保でき、実際の導入環境を書き換えない。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "手順0：作業用に git worktree add <TMPDIR>/n04 を作り、対象リポジトリの commit SHA と tag 一覧（0.7.0 / 0.10.0 の有無）を記録する。",
+          "手順1：git log -S で gov-heartbeat.py への版遅れ判定コードの導入コミットを特定し、そのコミットハッシュと日付、および git tag --contains <導入コミット> の出力を記録する。0.7.0 タグが含まれないことを、この出力で示す。",
+          "手順2：導入複製（インストール済みプラグイン）の実体パスと版を記録し、その gov-heartbeat.py のファイルハッシュを取る。実体が 0.7.0 でない場合は、git から 0.7.0 タグの gov-heartbeat.py を <TMPDIR>/n04-installed/ へ展開し、展開元コミットを記録する。",
+          "手順3：0.7.0 実体の gov-heartbeat.py 本文に対し、版遅れ判定に関わる識別子（要求版の読み取り、版比較、警告文字列）を機械照合し、ヒット 0 件であることをコマンド出力として記録する。ここでヒットがあれば仮説は反証であり、その旨を記録して終了する。",
+          "手順4：<TMPDIR>/n04-env/ に隔離環境を作り、要求版を 0.10.0 と宣言する構成ファイル／環境変数を置く。設定内容を全文記録する。",
+          "手順5：アーム1＝0.7.0 実体をこの隔離環境で実行し、標準出力・標準エラー全文と終了コードを記録する（版遅れ警告の有無を観測）。",
+          "手順6：アーム2（対照）＝同一の隔離環境・同一の要求版設定で 0.10.0 実体を実行し、同じ 3 点を記録する。ここで版遅れ警告が出ることを確認する。出なければ機序は『検出器の欠落』ではなく『発火条件の設計』であり、仮説は反証としてその旨を記録する。",
+          "手順7：アーム1／アーム2 の差分表を作り、差分が実体の版のみに帰属することを（環境・設定が同一である記録によって）示す。",
+          "手順8：一時ディレクトリと worktree を削除し、成果物のみ証拠ディレクトリへ退避する。"
+        ],
+        "injection_point": "導入複製の版そのもの（隔離環境 <TMPDIR>/n04-installed/ に 0.7.0 の gov-heartbeat.py 実体を配置し、要求版を 0.10.0 と宣言する構成を <TMPDIR>/n04-env/ に置く）。リポジトリ本体および実際の導入環境は変更しない。",
+        "isolation": "実際のインストール済みプラグインディレクトリを一切書き換えない（読み取りとハッシュ取得のみ）。0.7.0 実体は git tag から <TMPDIR>/n04-installed/ へ展開し、実行は要求版設定を含む <TMPDIR>/n04-env/ を指す環境変数下でのみ行う。ネットワーク経由の自動更新は無効化する。終了後に一時ディレクトリを削除する。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "手順1 で版遅れ判定コードの導入コミットが 0.7.0 タグに含まれないことが git 出力として示され、手順3 で 0.7.0 実体に版遅れ判定の識別子がヒット 0 件であり、かつアーム1（0.7.0 実体）が版遅れ警告 0 件・終了コードが正常であるのに対し、同一環境のアーム2（0.10.0 実体）は版遅れ警告を 1 件以上出力する、という差分表が記録されている。",
+        "after_fix_passes_when": "版遅れの検出が導入複製の外側（版に依存しない起動経路、または導入複製を検査する上位の経路）で行われるようになり、同じ隔離環境で 0.7.0 実体を配置しても版遅れが観測（警告出力または非ゼロ終了）できる。かつ、0.7.0 実体を fixture とする回帰試験が存在し、修正前の構成では FAIL、修正後は PASS することを示す。"
+      },
+      "evidence_spec": {
+        "artifact": "<TMPDIR>/evidence/SCN-N04/ 配下：red-evidence.md、git-archaeology.log（log -S / tag --contains の出力）、installed-0.7.0.sha256、grep-detector-absence.txt、arm1-*.log / arm2-*.log、env-config.txt、diff-table.md",
+        "must_record": [
+          "対象リポジトリ SHA、0.7.0 / 0.10.0 タグの存在確認出力",
+          "版遅れ判定コードの導入コミットハッシュと git tag --contains 出力",
+          "導入複製の実体パス・版・ファイルハッシュ、または 0.7.0 展開元コミット",
+          "0.7.0 実体に対する検出コード照合コマンドと出力（ヒット 0 件の証跡）",
+          "隔離環境の構成ファイル全文（要求版 0.10.0 の宣言箇所）",
+          "アーム1・アーム2 の実行コマンド、標準出力・標準エラー全文、終了コード",
+          "両アームで環境・設定が同一であることの記録",
+          "実行日時・実行環境"
+        ]
+      },
+      "normative_refs": [
+        "item-set-completeness-and-version-check",
+        "completeness-presence-and-version",
+        "verification-requires-objective-evidence",
+        "試験条件の記録と再現性",
+        "baseline-identifies-items-and-versions",
+        "problem-reproduction-confirmed"
+      ],
+      "risks": [
+        "『警告なし』は検出器欠落以外の理由（発火条件未成立、設定差、出力先の違い）でも生じる。アーム2 の対照なしに得た沈黙は証拠として採らない。",
+        "0.7.0 の導入複製が現存せず git から展開する場合、実際に配置された成果物と同一であることは保証されない。展開元コミットとハッシュを記録し、この差を限界として明示する。",
+        "隔離環境が実導入環境と異なるため、起動経路の差が観測に影響しうる（模擬環境と実環境の差異として記録が必要）。",
+        "審査環境にリポジトリが無く、導入複製および gov-heartbeat.py の実在は未確認である。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-N07-whole-file-writeback-lost-update",
+      "verdict": "APPROVE",
+      "reasons": [
+        "赤は既存実装のみで観測できる：最終台帳ファイルの内容と両プロセスの終了コードという既存の出力だけで判定でき、将来の実装が生む観測に依存しない。",
+        "反証条件が具体である：直列化手段（flock / O_EXCL / os.replace 等）の実装がコード上に存在し、かつ試行で欠落 0 件なら棄却。コード上の有無は file:line として観測可能である。",
+        "ただし競合は本質的に非決定であり、100 回試行という統計だけでは赤が出ないことがある（緑が反証にならない）。したがって、読取と書き戻しの間で待ち合わせる決定的インターリーブを主たる赤とし、100 回試行は補助統計に格下げする条件を付す。",
+        "破壊的操作（台帳ファイルの上書き）は台帳複製を一時ディレクトリへ置くことで完全に隔離でき、実台帳を危険に晒さない。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "手順0：git worktree add <TMPDIR>/n07 <SHA> を作り、commit SHA を記録する。",
+          "手順1：assurance/ledger/ への書き込み処理を特定し、読取 → 全体直列化 → 書き戻しの各行を file:line で記録する。あわせて flock / fcntl / O_EXCL / os.replace / tempfile+rename の出現を機械照合し、ヒット有無をコマンド出力として記録する（静的観測）。ここで直列化手段が存在すればその実装を読み、仮説の反証可否を先に判定する。",
+          "手順2：実台帳を <TMPDIR>/n07-ledger/ へ複製し、書き込み処理が参照する台帳パスを複製側へ差し替える。差し替え方法と、実台帳へ書かれないことの確認手段を記録する。複製の初期ハッシュと全文を保存する。",
+          "手順3：書き込み処理を 1 回だけ呼ぶ薄いドライバを <TMPDIR>/n07-driver.py として作る。ドライバは環境変数で指定された barrier ファイルの出現を、読取後・書き戻し前の位置で待つ。待ち位置は手順1 で記録した行の間に限る。ドライバ全文を証拠に残す。",
+          "手順4：健全性の対照＝ドライバで A（id=X）と B（id=Y）を逐次実行し、最終台帳に両更新が残ることを確認する（ドライバ自体に欠陥がないことの担保）。台帳を初期状態へ戻す。",
+          "手順5：決定的インターリーブ＝A を起動し読取後に待機させる。A 待機中に B（id=Y）を最後まで完走させる。B 完了後に barrier ファイルを作成して A を再開させ、A の書き戻しを完了させる。",
+          "手順6：最終台帳を読み、id=X と id=Y の両エントリの有無、A・B の終了コード、標準エラー出力を記録する。B の更新が消えていれば赤である。",
+          "手順7：補助統計＝待機を挟まない同時起動（異なる id）を 100 回試行し、欠落回数を数える。試行ごとの結果を CSV で記録する。この統計が 0 件でも、手順6 の赤が出ている限り反証としては扱わない。",
+          "手順8：台帳複製・ドライバ・worktree を削除し、成果物のみ証拠ディレクトリへ退避する。"
+        ],
+        "injection_point": "assurance/ledger/ への書き込み処理における『読取』行と『全体書き戻し』行の間（手順1 で file:line を確定）。ここへドライバ経由の待ち合わせを挟み、二プロセスの実行順序を決定的に固定する。製品コードは改変せず、外部ドライバから呼び出す。",
+        "isolation": "実台帳ディレクトリには書き込まない。台帳は <TMPDIR>/n07-ledger/ へ複製し、台帳パスを環境変数／引数で複製側へ差し替える。ドライバと barrier ファイルも <TMPDIR> 配下に置く。作業は使い捨て worktree 内で行い、終了後に一時ディレクトリごと削除する。並行実行は同一ホスト内に閉じ、外部への配布・通知は無効化する。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "手順5 の決定的インターリーブ実行後、最終台帳から B（または A）の更新エントリが消えており、かつ A・B の終了コードがいずれも 0 で競合を示すエラー出力が無い。あわせて手順1 の静的照合で flock / O_EXCL / os.replace のいずれもヒット 0 件であることが記録されている。",
+        "after_fix_passes_when": "同一の決定的インターリーブで、id=X と id=Y の両更新が最終台帳に残る、または少なくとも一方が非ゼロ終了かつ競合を示すエラーを返す（黙って失わない）。かつ手順1 の静的照合で直列化手段が file:line として示せ、手順7 の 100 回試行で欠落 0 件であり、この決定的インターリーブが回帰試験として組み込まれ、修正前のコードでは FAIL することを示す。"
+      },
+      "evidence_spec": {
+        "artifact": "<TMPDIR>/evidence/SCN-N07/ 配下：red-evidence.md、n07-driver.py（全文）、static-lock-scan.txt、ledger-initial.json / ledger-after-sequential.json / ledger-after-interleave.json、procA.log / procB.log（終了コードを含む）、trials-100.csv",
+        "must_record": [
+          "対象 commit SHA と台帳複製・worktree のパス",
+          "書き込み処理の読取行・直列化行・書き戻し行の file:line",
+          "直列化手段の静的照合コマンドとその出力（ヒット 0 件または該当箇所）",
+          "ドライバ全文と barrier の待ち位置（どの行の間で待つか）",
+          "逐次実行（対照）の最終台帳内容と、両更新が残ったことの記録",
+          "決定的インターリーブの実行順序（A 起動・B 完走・barrier 作成・A 再開の各時刻）と最終台帳の全文または diff",
+          "A・B の終了コードと標準エラー全文",
+          "100 回試行の試行ごと結果と欠落件数",
+          "試験環境（OS、ファイルシステム、Python バージョン）と実行日時"
+        ]
+      },
+      "normative_refs": [
+        "verification-requires-objective-evidence",
+        "試験条件の記録と再現性",
+        "problem-reproduction-confirmed",
+        "test-records-in-verdict-decidable-form",
+        "item-set-completeness-and-version-check",
+        "simulated-vs-real-environment-delta"
+      ],
+      "risks": [
+        "ドライバ経由の呼び出しは実運用の呼び出し経路（分析セッション本体）と差がある。実経路が同じ書き込み関数を通ることを file:line で示せない場合、赤は実運用へ外挿できない。",
+        "100 回試行で欠落 0 件という結果は反証ではない（競合は非決定であり、緑は不在の証拠にならない）。反証は直列化手段の実装提示と決定的インターリーブの緑の両方を要する。",
+        "読取と書き戻しの間に待ち合わせを挟める seam が無い（単一の原子的関数呼び出しに埋没している）場合、決定的赤は作れず補助統計のみとなる。その場合は本計画の限界として記録し、承認範囲を再審査する。",
+        "審査環境にリポジトリが無く、assurance/ledger/ への書き込み処理の実在は未確認である。手順1 で解決しない場合は差し戻す。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-N14-immutability-nullified-by-status-roundtrip",
+      "verdict": "APPROVE",
+      "reasons": [
+        "oracle の 4 点判定はすべて既存 Hook の許否出力（exit code / deny 理由文字列）と既存の POST_TOOL_LINTER・SESSION_END_AUDIT 出力・台帳差分に対する観測であり、修正の実装前に赤を取れる。(4) の『検出されない』は不在の観測として成立し、未来の実装が生む観測に依存しない。",
+        "反証条件が両方向に具体化できる。修正前は T2/T3/T4 が許可され監査に記録が現れないこと、修正後は差し戻し遷移の拒否か、往復＋本文改変の一事象としての記帳のいずれかが出力に現れることで判定できる。",
+        "ただし scenario の injection_point が『PRE_TOOL_GUARD の status 遷移許可規則』を含む点は採らない。ガード実装を注入対象にすると観測対象そのものが変わり、赤が現行系の性質でなくなる。注入は使い捨て文書の status 行・本文行に限定した。",
+        "試験用文書と本番統治木文書（OWNER 割当・参照関係を持つ）の差異は結論の一般化を制限するため、模擬環境と実環境の差異として証拠に明記させる。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "外部から与えた stamp を用い、使い捨て worktree を作る: git worktree add /tmp/scn-n14-<stamp> HEAD。以後の編集はこの worktree 内に限定し、本番作業ツリーとコミット履歴には触れない。",
+          "Hook 構成を記録する: PreToolUse / PostToolUse / SessionEnd に登録されたコマンド・引数・対象パス条件、プラグイン版と commit sha、設定ファイルのパスと該当行を証拠へ写す。",
+          "worktree 内の統治木ディレクトリ（ガードの対象パス条件を満たす場所）に試験用文書 DOC-SCN-N14.md を作成する。status を承認済み値に設定し、既存の承認済み文書と同じ様式の必須メタデータを与える。作成直後の全文 sha256 と status 行の値を記録する。",
+          "T1: 本文一行を書き換える Edit を発行し、PRE_TOOL_GUARD の exit code・stdout/stderr を全文記録する。ここで拒否されない場合は『不変性が当初から未強制』としてその事実を記録し、以後の手順も継続する。",
+          "T2: 本文差分を一切伴わず status 行のみを承認済み→未承認へ変更する Edit を発行し、許否と理由文字列を記録する。文書 sha256 を再取得する。",
+          "T3: T2 が許可された場合のみ、本文一行を書き換える Edit を発行し、許否と理由文字列、文書 sha256 を記録する。",
+          "T4: status 行を未承認→承認済みへ戻す Edit を発行し、許否と理由文字列、最終 sha256 を記録する。",
+          "T5: 各編集直後の POST_TOOL_LINTER 出力を全文取得し、続いて SESSION_END_AUDIT を実際に起動して出力を全文取得する。台帳ファイルの実行前後 diff を取る。判定は『出力・台帳に DOC-SCN-N14 のパスまたは文書 id を含む、status 往復もしくは承認済み内容の事後変更を指す記録が存在するか』の有無で行う（存在しなければ『差分なし』を明示的に記録）。",
+          "T2/T3/T4 の許否と T5 の検出有無からなる 4 点判定表を成果物へ書き出し、各セルに根拠となる出力行番号を添える。",
+          "git worktree remove --force で worktree を破棄し、本番ツリーが無変更であることを git status --porcelain の出力で確認・記録する。"
+        ],
+        "injection_point": "使い捨て worktree 内の試験用文書 DOC-SCN-N14.md の status 行および本文行を、Edit ツール経由の PreToolUse 経路へ投入する。PRE_TOOL_GUARD・POST_TOOL_LINTER・SESSION_END_AUDIT の実装および Hook 設定は読み取りと版記録のみで、一切改変しない。",
+        "isolation": "/tmp 配下の git worktree ＋ 使い捨て試験文書。コミットは行わず、実行後に worktree を削除して原状回復し、git status --porcelain で本番ツリー無変更を確認する。本番統治木の既存文書は読み取りのみ。失敗時も worktree 削除で復旧できるようにする。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "T2（本文差分なしの承認済み→未承認 status 単独遷移）が許可され、T3（遷移後の本文編集）が許可され、T4（未承認→承認済みの復帰）が許可され、かつ T5 で POST_TOOL_LINTER 出力・SESSION_END_AUDIT 出力・台帳 diff のいずれにも当該文書の status 往復および本文改変を指す記録が 1 件も現れない。この 4 セルが揃ったときに赤が成立する。",
+        "after_fix_passes_when": "同一手順を再実行して、(a) T2 が再承認または同等の記帳を伴わない限り拒否され、deny 理由文字列に遷移不許可の根拠が含まれる、または (b) T2〜T4 が許可される場合でも T5 の監査出力および台帳に、status 往復と本文改変が一つの改変事象として、承認済み内容の事後変更として列挙される。いずれの場合も本文 sha256 の変化が記帳と対応づけられる。"
+      },
+      "evidence_spec": {
+        "artifact": "evidence/SCN-N14/ 配下（env.json, hook-io.jsonl, run.log, judgment-table.md, linter-output.txt, audit-output.txt, ledger.diff, restore-check.txt）",
+        "must_record": [
+          "実行 stamp、プラグイン版と commit sha、Hook 設定ファイルのパスと該当行の引用",
+          "各 Edit 要求の完全な入力（対象パス・old/new 文字列）と PRE_TOOL_GUARD の exit code・stdout・stderr 全文",
+          "T1〜T4 各段階の試験用文書の sha256 と status 行の値",
+          "POST_TOOL_LINTER の各回出力全文、SESSION_END_AUDIT の起動コマンドと出力全文、台帳ファイルの diff（無変更なら『差分なし』の明示）",
+          "4 点判定表（T2/T3/T4 の許否、T5 の検出有無）と各セルの根拠出力行番号",
+          "試験用文書と本番統治木文書の差異（OWNER 割当・参照関係・追加規則の有無）の記述",
+          "worktree 削除後の git status --porcelain 出力"
+        ]
+      },
+      "normative_refs": [
+        "verification-objective-evidence",
+        "test-spec-unambiguous",
+        "test-records-in-verdict-decidable-form",
+        "試験条件の記録と再現性",
+        "試験結果の保管と提示可能性",
+        "problem-reproduction-confirmed",
+        "simulated-vs-real-environment-delta",
+        "version-control-history-traceable"
+      ],
+      "risks": [
+        "試験用文書に本番文書固有の追加規則（OWNER 検査・参照整合）が働かず、赤が本番で再現しない可能性。差異を証拠に明記し、赤成立後は OWNER 立会いのもとで実文書 1 件に対する確認を別計画に立てる必要がある。",
+        "T1 が拒否されない場合、本 scenario の前提（不変性が status 属性で強制されている）自体が崩れる。その場合は赤の意味が変わるため、判定表とともに前提不成立として記録する。",
+        "SESSION_END_AUDIT を手動起動した場合の挙動が通常セッション終了時と異なる可能性。起動方法を証拠に明記し、可能なら実セッション終了経路でも 1 回再現する。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-P02-version-lag-extends-to-guard-and-linter",
+      "verdict": "APPROVE",
+      "reasons": [
+        "赤の中核は『同一入力に対する 0.7.0 版と現行正本版の policy-guard.py / docs-linter.py の判定差』であり、両版を並置して同じ入力 JSON を流せば修正前に観測できる。判定は exit code と指摘出力という客観的証拠に落ちる。",
+        "元 scenario の falsification_signal（規則差分が 0 件で監査系のみ）も、同じ差分抽出と分類で機械的に判定できる。",
+        "一方、当該期間の統治木コミットへの遡及照合は『当時実際に 0.7.0 の複製が動作していた』ことを構成情報で裏づけられる場合にのみ主張が成立する。裏づけが無い場合は件数を上限値として UNASSESSED に落とすことを手順に固定し、承認へ倒さないようにした。",
+        "0.7.0 の規則ファイルを実体化できない場合は falsified ではなく UNASSESSED として停止する gate を手順 0 に置いた。入手不能を『差分なし』と読み替えることを禁じる。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "手順 0（gate）: 0.7.0 の policy-guard.py・docs-linter.py と付随する規則データを実体化する。導入複製ディレクトリから複写するか、正本リポジトリの tag/commit から git show <ref>:<path> で /tmp/scn-p02/v070/ へ取り出す。どちらでも取得できない場合は以後を実行せず、証拠に『0.7.0 実体化不可 → UNASSESSED』と由来調査の記録を残して終了する。",
+          "当該期間の正本 HEAD 版の同ファイル群を /tmp/scn-p02/head/ へ取り出す。両版の由来 ref・commit sha・各ファイルの sha256 を記録する。",
+          "両版の diff -u を取得し、変更箇所を『規則（拒否・助言の判定に到達する定数・正規表現・条件分岐）』『監査のみ』『その他』へ分類する。分類基準は実行前に文書化し、各行に判定と根拠を付す。",
+          "規則差分が 0 件（監査のみ）であれば falsification_signal 成立として記録し、以後を実行せず終了する。",
+          "規則差分ごとに、その差分でのみ判定が変わる最小入力（対象ファイルパス＋編集内容＋PreToolUse/PostToolUse と同形式の入力 JSON）を作成する。作成できない差分は『入力構成不能』として理由付きで列挙し、黙って落とさない。",
+          "各入力を両版へ同一条件（同じ Python 実行系、同じ環境変数、同じ cwd、同じ標準入力の与え方）で流し、exit code と stdout/stderr を全文記録する。判定が食い違った入力を『版差により通過し得た編集集合 D』として列挙する。",
+          "当該期間の統治木コミットの diff を両版の判定器へ流し、旧版で通過し現行版で拒否／指摘となる編集を commit sha 付きで列挙して件数を出す。",
+          "当時 0.7.0 が実際に動作していたことを裏づける構成情報（導入複製の版記録、lockfile、セッションログ等）を探索する。特定できた範囲を明記し、特定できない場合は前手順の件数を『上限値（旧規則が実際に適用された保証なし）』として記帳し、当該主張を UNASSESSED に落とす。",
+          "すべての実行を /tmp 配下の複製に対して行い、導入複製・統治木・Hook 設定は書き換えない。実験のために導入複製を更新した場合は、書換え前の版と設定値を記録し、実験後に復旧して差異が無いことを確認する。"
+        ],
+        "injection_point": "/tmp/scn-p02/v070/ と /tmp/scn-p02/head/ に取り出した policy-guard.py・docs-linter.py の実行経路（PreToolUse・PostToolUse と同形式の入力 JSON を標準入力から与える）。実運用の導入複製・Hook 設定・統治木は改変しない。",
+        "isolation": "/tmp/scn-p02 配下の使い捨て複製ディレクトリ二つ（v070 / head）と使い捨て入力 fixture。統治木への書き込みは行わず、判定器は読み取り専用の入力に対してのみ実行する。導入複製を触る必要が生じた場合は書換え前の版・設定値を記録し、復旧手順を実行して原状回復を確認する。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "手順 3 で監査以外の規則差分が 1 件以上あり、手順 6 で同一入力に対する 0.7.0 版と現行版の判定（exit code または指摘の有無）が食い違う入力が 1 件以上得られ、かつ両版いずれの実行出力にも版不一致を検出した旨の記録が現れない。",
+        "after_fix_passes_when": "同じ入力集合を再実行したとき、複製側の規則版が正本と異なる状況で拒否系・助言系が動作前に版不一致を検出し、(a) 動作を保留する、または (b) 旧規則で通過させた事実を版識別子付きで記録に残す。集合 D の各入力についてその検出・記録が exit code か記録ファイルの行として確認できる。"
+      },
+      "evidence_spec": {
+        "artifact": "evidence/SCN-P02/（version-provenance.json, rules.diff, classification.md, cases/<id>/input.json, matrix.csv, commit-scan.csv, run.log）",
+        "must_record": [
+          "0.7.0 と現行 HEAD の由来 ref・commit sha・取得コマンド・各ファイルの sha256",
+          "差分の分類基準と分類結果（規則差分件数・監査のみ差分件数・その他件数）",
+          "入力ケースごとの完全な入力 JSON と両版の exit code・stdout・stderr 全文",
+          "判定不一致ケースの一覧（集合 D）と、入力を構成できなかった差分の一覧・件数・理由",
+          "当該期間の導入複製の版を裏づける構成情報の所在。存在しない場合は『版稼働の裏づけなし → 件数は上限値・UNASSESSED』の明示",
+          "実行環境（Python 版、OS、cwd、関連環境変数）と、手順 0 の gate 判定結果"
+        ]
+      },
+      "normative_refs": [
+        "completeness-presence-and-version",
+        "item-set-completeness-and-version-check",
+        "無許可コンポーネントの混入防止",
+        "verification-objective-evidence",
+        "test-records-in-verdict-decidable-form",
+        "試験条件の記録と再現性",
+        "version-control-history-traceable",
+        "書換え前バージョン・設定値の記録"
+      ],
+      "risks": [
+        "0.7.0 の規則データが導入複製にも tag にも残っていない場合、赤自体が取れず UNASSESSED で止まる。停止条件を gate として明示済み。",
+        "規則差分に対する『判定が変わる最小入力』の構成が難しい差分があり、集合 D が過小になる恐れ。入力構成不能の件数を記録し、網羅の限界として扱う。",
+        "遡及件数は、当時の実行版が裏づけられない限り上限値にとどまる。件数を確定値として読ませないための表記規則を証拠に固定する必要がある。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-P03-substring-false-positive-across-term-table",
+      "verdict": "APPROVE",
+      "reasons": [
+        "反例集合を termcheck へ通したときの検出有無は、修正前に観測可能な客観的証拠であり、語ごとの誤検出件数表として合否判定可能な形式に落ちる。",
+        "ただし oracle に『誤検出』の判定述語が無いままでは合否が曖昧になるため、実行前に述語（一致範囲が抽出元正当語の真部分文字列で、かつ語境界で区切られていないこと）とケースごとの期待結果を登録することを必須手順にした。",
+        "語境界を定義できない語（非 ASCII の連続文字列など）は誤検出件数に算入せず UNASSESSED 列へ隔離する。source_candidate が示す ASCII 部分文字列の範囲を超えて主張しない。",
+        "偽陽性が消えるだけでは修正として不十分なので、真陽性の対照 fixture を after 側の合格条件へ組み込み、偽陰性化を同じ表で検出できるようにした。",
+        "反例が実在語彙由来に限られる制約は網羅の限界として証拠に明記させ、将来語彙に対する主張はしない。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "外部から与えた stamp で使い捨て worktree /tmp/scn-p03-<stamp> を作り、生成物をすべてその中へ置く。統治木・語彙表は読み取りのみ。",
+          "禁止同義語表の所在を特定し、全エントリを機械抽出する。エントリ数・各語・表ファイルの sha256 を記録する。",
+          "判定述語を実行前に文書化して固定する: 『検出 hit が誤検出であるとは、hit の一致範囲が抽出元の正当語の真部分文字列であり、かつ一致範囲の直前直後が語境界でない（ASCII の場合、隣接文字が [A-Za-z0-9_] である）こと』。算入対象は語境界が定義できる ASCII 語に限り、それ以外は UNASSESSED として別列に置く。",
+          "統治木の全文書からトークンを機械抽出する（抽出コマンドと対象文書一覧を記録）。各禁止語 t について、t を真部分文字列に含む実在正当語の集合 C(t) を作る。C(t) が空の語は『反例なし』として列挙する。",
+          "各 c ∈ C(t) について、c のみを 1 行に含む使い捨て fixture 文書を /tmp 側に生成する（fixture 全文を証拠へ添付）。",
+          "各 fixture を termcheck へ与える。呼び出しは POST_TOOL_LINTER と同じ入り口・同じ設定を用い、実行コマンドと出力全文・exit code を記録する。",
+          "対照として、各禁止語 t が語境界を伴って単独出現する fixture も同様に実行し、真陽性が出ることを記録する。",
+          "(禁止語, 反例語, 検出有無, 事前登録した期待結果, 誤検出か, 算入/UNASSESSED) の表を出力し、語ごとの誤検出件数を集計する。",
+          "誤検出 1 件以上で赤成立。0 件なら falsification として記録し、反例が実在語彙由来に限られる旨を併記する。",
+          "worktree を破棄し、git status --porcelain で本番ツリー無変更を確認・記録する。"
+        ],
+        "injection_point": "/tmp 配下の使い捨て fixture 文書（実在正当語 c を 1 行に含む）を、POST_TOOL_LINTER 内 termcheck の照合器入口へ与える。禁止同義語表と照合器の実装は改変しない。",
+        "isolation": "/tmp 配下の git worktree ＋ 使い捨て fixture。統治木の実文書へは書き込まず、語彙表は読み取りのみ。実行後に worktree を削除し、git status --porcelain で原状回復を確認する。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "事前登録した判定述語の下で、少なくとも 1 組の (禁止語 t, 実在正当語 c) について、c のみを含む fixture が termcheck によって違反として指摘される（出力に t の指摘行が現れる）。語ごとの誤検出件数表に非零のセルが 1 つ以上存在する。",
+        "after_fix_passes_when": "同一の反例集合を再実行して、算入対象（ASCII 語境界が定義可能）の全ケースで指摘が 0 件になり、かつ各禁止語について語境界を伴う出現を含む対照 fixture では従来どおり指摘が出る。偽陽性 0・真陽性維持が同一の表で確認できる。"
+      },
+      "evidence_spec": {
+        "artifact": "evidence/SCN-P03/（predicate.md, term-table.snapshot, counterexamples.csv, fixtures/, results.csv, control-results.csv, run.log）",
+        "must_record": [
+          "禁止同義語表のファイルパス・sha256・全エントリと語数",
+          "事前登録した判定述語の全文と登録時点（stamp・commit sha）",
+          "語彙抽出に用いたコマンド、対象文書一覧、生成した反例集合 C(t) の全件と生成規則",
+          "各ケースの fixture 全文、termcheck 呼び出しコマンド、出力全文、exit code",
+          "語ごとの誤検出件数表、算入外（UNASSESSED）件数とその理由、C(t) が空だった語の一覧",
+          "対照 fixture（真陽性）の結果一覧",
+          "反例が実在語彙由来に限られるという網羅の限界の記述と、worktree 破棄後の git status 出力"
+        ]
+      },
+      "normative_refs": [
+        "test-spec-unambiguous",
+        "pass-criteria-defined-in-advance",
+        "verification-objective-evidence",
+        "test-records-in-verdict-decidable-form",
+        "verification-plan-coverage-evaluated",
+        "alternative-assurance-when-coverage-unmet",
+        "試験条件の記録と再現性",
+        "試験結果の保管と提示可能性"
+      ],
+      "risks": [
+        "日本語など語境界の定義が困難な語が語彙表の多数を占める場合、算入対象が小さくなり赤の意味が限定される。UNASSESSED 件数を必ず併記して読み替えを防ぐ。",
+        "termcheck を POST_TOOL_LINTER 経由でなく直接呼ぶと前処理（正規化・除外パス）が省かれ、実運用と挙動が乖離する恐れ。呼び出し入口を証拠へ明記し、可能なら PostToolUse 経路でも 1 件再現する。",
+        "反例生成の抽出規則がトークン境界に依存するため、抽出漏れによる過小評価が起こりうる。抽出コマンドを証拠に残し再現可能にする。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-P04-order-comparison-precision-mismatch-beyond-freshness",
+      "verdict": "APPROVE",
+      "reasons": [
+        "主たる赤は黒箱で観測できる。既存の順序比較を通る実行経路へ、片辺が日付止まり／短縮版・他辺が秒精度／完全版という入力対を与え、出力が『等価／新しい／更新なし』に確定し、精度不一致の記録が残らないことを修正前に観測できる。",
+        "oracle の『計器を入れる』部分は SUT の改変を伴うため主証拠にはしない。使い捨て worktree 内に限り、比較の意味論を変えない読み取り専用ログとして補助的に用い、実行後に破棄する設計へ限定した。",
+        "『順序比較を行う全箇所を静的抽出』は網羅の主張を含むため、抽出に用いた検索式と到達できなかった呼び出し（動的・間接）を証拠に列挙させ、未到達分は代替確認（レビュー）へ回す。",
+        "expected_safe_behavior の UNASSESSED 出力は未実装の観測であるため、after 側の合格条件にのみ置き、before 側の赤には含めていない。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "stamp を用いて使い捨て worktree /tmp/scn-p04-ord-<stamp> を作成する。",
+          "順序比較箇所を列挙する。鮮度判定・版比較・監査の古び判定・台帳／索引の読み出しに関わるソースを対象に、比較演算子と比較関数呼び出しを検索式（証拠へ記録）で抽出し、site id・ファイル:行・比較の種類・両辺の由来からなる一覧を作る。動的・間接呼び出しで静的に到達できない箇所は別表へ列挙する。",
+          "各 site について両辺の値の生成元（台帳フィールド、索引フィールド、環境変数）を辿り、日付止まり／秒精度、短縮版／完全版が実際に発生し得るかを記録する。",
+          "黒箱赤: 各 site を通る最小の実行入口（該当コマンドまたは関数の CLI 入口）を特定し、/tmp 配下に使い捨ての台帳・索引 fixture を用意する。入力対は (A) 片辺 '2026-08-09'／他辺 '2026-08-09T12:34:56Z'、(B) 片辺 '0.7'／他辺 '0.7.1' のように片側だけ精度を落とした組とし、フォーマットは実在の記録形式に合わせる。fixture 全文を証拠へ添付する。",
+          "各 site の出力（鮮度判定・古び判定・版比較の結果文字列と exit code）と、実行後の台帳・索引の差分を取得する。判定が『等価／新しい／更新なし』に確定したか、精度不一致を示す記録や UNASSESSED が現れたかを site ごとの表にする。",
+          "対照として、両辺が同一精度（両方秒精度／両方完全版）の入力対も同じ site へ与え、正しい順序が出ることを記録する。",
+          "補助計測: worktree 内でのみ比較関数入口に読み取り専用ログ（両辺の型・文字列長・値）を追加し、実台帳のコピーを入力として 1 実行分を流す。精度不一致比較の発生箇所と件数を記録し、追加した計器はコミットせず worktree ごと破棄する。",
+          "git worktree remove --force で破棄し、git status --porcelain で本番ツリー無変更を確認・記録する。"
+        ],
+        "injection_point": "/tmp 配下の使い捨て台帳・索引 fixture の時点フィールドおよび版フィールド（片辺のみ精度を落とした値）。補助計測に限り、worktree 内の比較関数入口へ比較結果を変えない一時ログ出力を追加する。本番の台帳・索引・実装は改変しない。",
+        "isolation": "/tmp 配下の git worktree ＋ 使い捨て台帳・索引 fixture。実台帳は複製して使用し原本へは書き込まない。計器追加は worktree 限定でコミットせず、実行後に worktree を削除して原状回復を git status --porcelain で確認する。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "精度不一致の入力対を与えた site が 1 件以上あり、その site の出力が『等価』『新しい』『更新なし』のいずれかに確定し、かつ実行後の出力・台帳のどこにも精度不一致の事実（どちらの辺が日付止まり／短縮版か、比較に用いた精度）が記録されない。site ごとの表に該当セルが存在する。",
+        "after_fix_passes_when": "同一 fixture で、両辺の精度が異なる比較が順序未確定として扱われ、比較結果が UNASSESSED として出力され、精度不足の入力元（site id とフィールド名）が台帳へ記帳される。かつ同一精度の対照入力では従来どおり正しい順序が出て UNASSESSED にならない。"
+      },
+      "evidence_spec": {
+        "artifact": "evidence/SCN-P04-ord/（search-queries.md, sites.csv, unreachable-sites.md, fixtures/, results.csv, control-results.csv, instrumentation.log, run.log）",
+        "must_record": [
+          "抽出に用いた検索式・対象パス・抽出日時（stamp）と対象 commit sha",
+          "site 一覧（id, ファイル:行, 比較の種類, 両辺の由来フィールド）と、静的抽出で到達できなかった呼び出しの列挙・件数・代替確認の方法",
+          "各 site の入力 fixture 全文、実行コマンド、出力全文、exit code",
+          "精度不一致入力と同一精度入力の判定の対（site ごと）",
+          "実行前後の台帳・索引の差分（無変更なら『差分なし』の明示）",
+          "補助計測ログの生データ（両辺の型・文字列長・値）と、計器を破棄した確認",
+          "実行環境情報と worktree 破棄後の git status --porcelain 出力"
+        ]
+      },
+      "normative_refs": [
+        "test-spec-unambiguous",
+        "requirement-verifiable-and-consistent",
+        "verification-objective-evidence",
+        "verification-plan-coverage-evaluated",
+        "coverage-metrics-c0-c1-mcdc",
+        "alternative-assurance-when-coverage-unmet",
+        "completeness-presence-and-version",
+        "item-set-completeness-and-version-check",
+        "test-records-in-verdict-decidable-form"
+      ],
+      "risks": [
+        "比較箇所の静的抽出が網羅を主張できず、赤が一部 site に限定される可能性。未到達箇所の列挙と代替確認（レビュー）を必須にして、網羅未達を黙って埋めない。",
+        "fixture の精度落ち形式が実在の生成側と一致していないと、赤が人工的な入力でしか成立しない恐れ。手順 3 で生成側の実フォーマットを確認し、実データ由来の値を優先する。",
+        "補助計測の追加が比較の意味論に触れる改変になった場合、観測対象が変わる。計器は出力追加のみに限定し、diff を証拠へ添付して検証可能にする。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-P04-pointfix-without-word-boundary-rule",
+      "verdict": "APPROVE",
+      "reasons": [
+        "oracle の (b)（合成禁止語を語彙表へ追加し、例外表に触れずに実在正当語で誤検知が出るか）は、修正前の現行コードに対して観測できる決定的な赤であり、検出有無という合否判定可能な形式に落ちる。",
+        "oracle の (a)（af9c858 の diff 判読）は主観に流れうるため、分類基準を実行前に登録し、根拠行の引用を必須とし、試験によらない確認（レビュー）として位置づけて単独では合否にしない設計へ限定した。",
+        "語彙表への合成語追加は SUT のデータ改変であるため、worktree 内の複製に隔離し、書換え前の全文と sha256 を記録して復旧を確認する手順を加えた。",
+        "是正がクローズされた記録の再評価を証拠に含め、赤が成立した場合にクローズ判定そのものが誤っていたことを追跡できるようにした。",
+        "af9c858 が現リポジトリに存在しない場合は falsified ではなく UNASSESSED として停止する gate を手順 1 に置いた。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "git cat-file -e af9c858^{commit} で当該コミットの存在を確認する。存在しない場合は以後を実行せず、『af9c858 参照不能 → UNASSESSED』を記録して差し戻す。",
+          "stamp を用いて使い捨て worktree /tmp/scn-p04-pf-<stamp> を作り、af9c858 を含む HEAD を取り出す。",
+          "分類基準を実行前に文書化して固定する: 『一般規則の導入とは、照合器の一致処理そのものが語境界条件（境界メタ文字・トークン化・境界判定関数）を持つよう変更されたこと。個別除外とは、特定語リテラルまたは特定文字列パターンを例外表・allowlist へ追加したこと』。",
+          "git show af9c858 の diff 全文を取得し、変更ファイル・変更行を分類基準へ照合する。判定（一般規則／個別除外／その他）と根拠行（ファイル:行と引用）を記録する。",
+          "統治木の実在正当語 c を複数選ぶ（選定基準と一覧を記録）。各 c の真部分文字列となる合成禁止語 t' を作り、worktree 内の禁止同義語表の複製へ追加する。追加前の表の全文と sha256 を記録し、例外表・allowlist へは一切追記しない。",
+          "c のみを含む使い捨て fixture 文書を生成し、termcheck へ通す。実行コマンド・出力全文・exit code を記録する。",
+          "対照として、t' が語境界を伴って単独出現する fixture でも実行し、真陽性が出ることを記録する。",
+          "語彙表の複製を元へ戻す（または worktree ごと破棄する）。本番の語彙表・例外表が無変更であることを git status --porcelain で確認・記録する。",
+          "是正台帳の当該クローズ記録を参照し、クローズ根拠の記述を引用したうえで、手順 4 と手順 6 の結果と整合するかを再評価として併記する。"
+        ],
+        "injection_point": "worktree 内の禁止同義語表の複製へ追加する合成禁止語 t'（実在正当語 c の真部分文字列）と、c のみを含む使い捨て fixture 文書。照合器の実装および例外表・allowlist は改変しない。",
+        "isolation": "/tmp 配下の git worktree ＋ 使い捨て fixture。語彙表は worktree 内の複製のみを書き換え、書換え前の全文と sha256 を記録する。実行後は worktree を削除して原状回復し、git status --porcelain で本番ツリー無変更を確認する。失敗時も worktree 削除で復旧する。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "af9c858 を含む現行コードに対し、例外表へ何も追記しないまま合成禁止語 t' を語彙表へ追加すると、c のみを含む fixture について t' の違反指摘が出力される（誤検知の再発が 1 件以上）。かつ手順 4 の分類で af9c858 の変更が語境界の一般規則導入に該当せず個別除外に該当すると、根拠行の引用付きで判定される。",
+        "after_fix_passes_when": "同一手順で、例外表への追記なしに t' を追加しても c のみの fixture では指摘が 0 件になり、t' が語境界を伴って出現する対照 fixture では指摘が出る。加えて修正後の diff へ手順 4 の分類を適用すると、照合器の一致処理側に語境界条件が導入されたと根拠行付きで判定できる。"
+      },
+      "evidence_spec": {
+        "artifact": "evidence/SCN-P04-pf/（classification-criteria.md, af9c858.diff, review-verdict.md, term-table.before.txt+sha256, synthetic-terms.csv, fixtures/, results.csv, control-results.csv, ledger-closure.md, restore-check.txt）",
+        "must_record": [
+          "af9c858 の commit sha と diff 全文、gate（存在確認）の結果",
+          "事前登録した分類基準の全文、分類判定、根拠行（ファイル:行）の引用",
+          "合成禁止語 t' と由来正当語 c の一覧、選定基準、真部分文字列であることの確認",
+          "語彙表の書換え前後の全文 sha256 と、例外表へ追記していないことの確認",
+          "各 fixture の全文、termcheck 呼び出しコマンド、出力全文、exit code",
+          "反例（偽陽性）と対照（真陽性）の結果の対、誤検知件数",
+          "是正台帳の当該クローズ記録の引用と再評価の結論",
+          "worktree 破棄後の git status --porcelain 出力"
+        ]
+      },
+      "normative_refs": [
+        "修正時の既実施検証の再評価・再実施",
+        "root-cause-analysis-required",
+        "verification-methods-not-only-test",
+        "non-test-verification-means-justified",
+        "test-spec-unambiguous",
+        "verification-objective-evidence",
+        "test-records-in-verdict-decidable-form",
+        "再発防止と水平展開",
+        "書換え前バージョン・設定値の記録"
+      ],
+      "risks": [
+        "合成禁止語が実運用の語彙表に現れ得ない形をしていると、赤が人工的すぎるという反論を招く。実在語彙から派生させる手順と選定基準の記録で緩和するが、完全には解消しない。",
+        "語彙表がコード内定数として埋め込まれている場合、複製への追加が実装改変に近づく。その場合は追加箇所と diff を証拠へ添付し、照合処理そのものを変更していないことを示す必要がある。",
+        "分類基準の当てはめが af9c858 の実 diff で境界事例になる可能性（一般規則と個別除外の中間）。その場合は判定を UNASSESSED とし、(b) の反例結果のみで赤を主張する。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-P05-attack-coverage-claimed-at-evaluator-granularity",
+      "verdict": "UNKNOWN",
+      "reasons": [
+        "scenario の oracle 中核『証拠に注入対象の経路 id を持たせ、評価器の経路一覧との差集合を出力する』は、経路 id を証拠へ記録する仕組みが実装された後にしか観測できない。現状の証拠には差集合を計算する材料が存在せず、修正前に赤を取れないため、この oracle のままでは承認しない。",
+        "観測できないものを具体に言うと、(1) 現行の攻撃試験証拠における注入対象の経路 id、(2) 評価器の経路一覧と注入集合の差集合、(3) A4 追加後に差集合が {A4} を含むという結果——いずれも記録機構の実装後にしか現れない。",
+        "代替の赤（経路 id フィールドの不在観測＋攻撃試験実行中の評価器 C1 カバレッジによる未実行経路の提示＋台帳が評価器単位で『攻撃済み』と記帳している事実）は原理的に修正前に観測できるが、その成立可否が入力からは確認できない。具体的には (i) 攻撃試験実行中に評価器のブランチカバレッジを取得する手段が既存にあるか、(ii) 台帳に評価器単位の『攻撃済み』記録が実在しフィールドを特定できるか、(iii) 経路 A1/A2/A3 がソース上の分岐として識別でき経路 id と行範囲の対応表を作れるか、が未確認である。",
+        "scenario の injection_point『評価器に経路 A4 を追加』は SUT 本体の改変であるにもかかわらず隔離先の指定が無い。台帳へ書き込む経路がある場合の原本退避・復旧も定義されていない。",
+        "以上より承認へ倒さず UNKNOWN とする。下の precheck 三点がすべて客観的証拠付きで成立し、その記録が提出された場合に限り、示した手順で赤の再現に進んでよい。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "precheck（三点。いずれか不成立なら実行を停止し UNASSESSED を記録して差し戻す）: (i) 攻撃試験の起動方法が特定でき、その実行中に評価器のブランチカバレッジ（C1）を取得する手段が既存にあること、(ii) 台帳に『攻撃済み』を評価器単位で表す記録が実在し、そのファイルとフィールドを特定できること、(iii) 評価器の判定経路（A1/A2/A3 等）がソース上の分岐として識別でき、経路 id と行範囲の対応表を作れること。三点それぞれについてコマンドと出力を証拠へ残す。",
+          "stamp を用いて使い捨て worktree /tmp/scn-p05-<stamp> を作成する。",
+          "不在観測: 直近の攻撃試験の証拠成果物と台帳記録を機械検索し、注入対象の経路 id を表すフィールドの有無を確認する。存在しない場合は該当レコード全文を引用して『粒度＝評価器名のみ』を示す。",
+          "基準実行: 攻撃試験を無改変で実行し、評価器の C1 カバレッジを取得して、経路 id ごとの実行有無の表を作る。台帳の『攻撃済み』記録を実行前後で diff する（台帳へ書き込む設計なら、実行前に原本を sha256 付きで退避する）。",
+          "経路追加: worktree 内で評価器へ経路 A4 を追加する（既存経路と同型の分岐 1 本、判定内容は既存経路の複製で可）。追加 diff を全文記録する。攻撃試験側は一切変更しない。",
+          "再実行: 攻撃試験を無改変で再実行し、C1 カバレッジ上 A4 が未実行であることを示す。台帳の『攻撃済み』記録が基準実行時と同じ粒度・同じ値のままであることを diff で示す。",
+          "退避した台帳原本を復旧し、worktree を破棄する。git status --porcelain と原本 sha256 の一致で原状回復を確認・記録する。"
+        ],
+        "injection_point": "使い捨て worktree 内の評価器ソースへ追加する分岐 A4（既存経路と同型）と、無改変の攻撃試験実行。台帳・証拠成果物は /tmp へ複製した実行結果を用い、本番台帳へは書き込まない。書き込みを避けられない場合は実行前に原本を退避する。",
+        "isolation": "/tmp 配下の git worktree ＋ 台帳・証拠の使い捨て複製。評価器の改変はコミットせず worktree ごと削除する。台帳へ追記が発生する場合は書換え前のファイルを sha256 付きで退避し、実行後に復旧して sha256 一致と git status --porcelain 無変更を確認する。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "precheck 三点が成立した前提で、(a) 現行の攻撃試験証拠と台帳に注入対象の経路 id を表すフィールドが 1 件も存在せず、(b) A4 追加後に攻撃試験を無改変で再実行すると C1 カバレッジ上 A4 が未実行のままであり、(c) それでも台帳の当該評価器の状態が『攻撃済み』のまま基準実行と同値で記録される。この三点が同時に観測されたときに赤が成立する。",
+        "after_fix_passes_when": "同一手順で、攻撃済みの記帳が注入された経路 id の集合として残り、評価器の経路一覧との差集合が証拠へ出力される。A4 追加後の再実行でその差集合が {A4} を含み、差集合が空でない間は当該評価器が全体として『攻撃済み』と表示されない（台帳の表示値が部分状態へ変わる）。差集合の要素数と要素名が台帳に記録される。"
+      },
+      "evidence_spec": {
+        "artifact": "evidence/SCN-P05/（precheck.md, evidence-scan.md, path-id-map.csv, coverage-baseline.csv, coverage-after-a4.csv, a4.diff, ledger.before, ledger.after, restore-check.txt, run.log）",
+        "must_record": [
+          "precheck 三点それぞれの判定・実行コマンド・出力（不成立なら停止した旨と理由）",
+          "攻撃試験の起動コマンド、対象 commit sha、プラグイン版",
+          "現行の攻撃試験証拠および台帳の当該レコード全文引用と、経路 id フィールドが不在であることの確認",
+          "経路 id ↔ ソース行範囲の対応表",
+          "基準実行と A4 追加後の C1 カバレッジ生データ（経路別の実行有無）",
+          "A4 追加の diff 全文と、攻撃試験側が無改変であることの確認",
+          "台帳の before/after diff（無変更なら『差分なし』の明示）と原本 sha256 の復旧確認、git status --porcelain 出力"
+        ]
+      },
+      "normative_refs": [
+        "verification-plan-coverage-evaluated",
+        "coverage-metrics-c0-c1-mcdc",
+        "alternative-assurance-when-coverage-unmet",
+        "verification-objective-evidence",
+        "test-spec-unambiguous",
+        "item-set-completeness-and-version-check",
+        "test-records-in-verdict-decidable-form",
+        "書換え手順にリカバリを含める"
+      ],
+      "risks": [
+        "評価器の判定経路が関数分割されておらずデータ駆動である場合、経路 id と分岐の対応表が作れず precheck (iii) で停止する。",
+        "攻撃試験が外部プロセスを起動する構成だと C1 カバレッジの取得が困難で、未実行経路の提示が主観的な読みに落ちる恐れがある。その場合はログ上の経路痕跡での代替を検討するが、代替手段の妥当性を別途評価する必要がある。",
+        "A4 を評価器へ追加する行為自体が SUT の改変であり、追加の仕方によっては攻撃試験が偶然 A4 を通る可能性がある。既存経路と同型かつ既存注入入力では到達しない条件で追加し、その根拠を証拠へ残す必要がある。",
+        "台帳へ書き込む攻撃試験である場合、実験が本番台帳を汚染するリスク。原本退避と復旧確認を必須手順に含めたが、退避漏れが起きれば統治木の記録が壊れる。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-P05-failure-families-collapse-to-one-exception-surface",
+      "verdict": "APPROVE",
+      "reasons": [
+        "観測対象（注入ごとに台帳へ付与される分類ラベル）は既存の分類器の出力であり、修正前に採取できる。oracle は実装に先行して観測可能。",
+        "族→ラベル写像の単射性は集合演算で機械判定でき、合否が一意に決まる。AI の同意を必要としない。",
+        "ただし expected_safe_behavior の「区別不能であることを台帳上で明示」は、全故障族へ一律の『区別不能』ラベルを与える実装でも満たせてしまう緩い基準である。合格基準を distinct ラベル数で固定し、一律ラベルは FAIL と扱うよう締めた。",
+        "preconditions の『スタブ差し替え可能な試験経路がある』は本レーンでは未検証のため、手順の step 0 に呼び出し境界と分類器入口の存在確認を置き、不成立なら計画を実行せず UNKNOWN として差し戻す。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "使い捨て git worktree（/tmp/scn-p05-<runid>）を作成し、以後の全操作をその中だけで行う。",
+          "step 0: SDK 呼び出し層の呼び出し境界関数と、例外を分類ラベルへ写す分類器の入口を検索して特定し、ファイルパス・関数名・行番号を証拠に記録する。いずれかが特定できなければ本計画を中止し UNKNOWN として差し戻す。",
+          "3 種の注入スタブを用意する: (a) レート制限応答（429 相当）、(b) 接続断（ソケット／接続例外）、(c) 認可拒否（401/403 相当）。スタブは呼び出し境界のみを置換し、外部ネットワークへは一切出ない。",
+          "注入ごとに同一の呼び出しを 1 回実行し、台帳へ記帳される分類ラベル・例外型・例外メッセージ全文・その他記帳フィールドを採取する。台帳の書き込み先は一時ディレクトリへ差し替える。",
+          "族→ラベル対応表を作り、distinct なラベル数を数えて単射性を機械判定する（distinct==3 で injective=true）。対応表と判定を JSON で保存する。",
+          "同一手順を 3 回反復し、ラベルが毎回同一（決定論的）であることを記録する。"
+        ],
+        "injection_point": "step 0 で特定した SDK 呼び出し層の呼び出し境界関数を、試験内 monkeypatch でスタブへ置換する点。分類器および台帳記帳の本体コードは一切変更しない。",
+        "isolation": "使い捨て git worktree（/tmp/scn-p05-<runid>）＋ pytest tmp_path による一時台帳ディレクトリ。実台帳・共有設定・ネットワーク送出は禁止（スタブのみ）。採取後に worktree を破棄する。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "3 族の注入に対して台帳へ付与された distinct なラベル数が 3 未満（2 族以上が同一ラベルへ写る）となり、対応表 JSON の injective=false で試験が FAIL する。",
+        "after_fix_passes_when": "同一手順で 3 族が相異なるラベルへ写り distinct==3 かつ injective=true となり、3 回反復で結果が一致する。族に依らず一律の『区別不能』ラベルを返す実装は distinct==1 のため FAIL とする。"
+      },
+      "evidence_spec": {
+        "artifact": "assurance/evidence/SCN-P05/ 配下の run.log（コマンドと標準出力全文）、labels.json（族→ラベル対応表と単射判定）、env.json（環境・版情報）",
+        "must_record": [
+          "注入した 3 故障の具体（応答コード・例外型・生成方法）",
+          "各注入で採取した分類ラベル・例外型・例外メッセージ全文・記帳フィールド",
+          "族→ラベル対応表と distinct 数・injective 判定",
+          "SDK 呼び出し層と分類器のファイルパス・関数名・行番号",
+          "対象コミット SHA、worktree パス、実行コマンドと実行時刻",
+          "3 回反復それぞれの結果（決定論の可否）"
+        ]
+      },
+      "normative_refs": [
+        "verification-requires-objective-evidence",
+        "test-spec-unambiguous",
+        "pass-criteria-defined-in-advance",
+        "test-records-in-verdict-decidable-form",
+        "試験条件の記録と再現性",
+        "simulated-vs-real-environment-delta",
+        "problem-reproduction-confirmed"
+      ],
+      "risks": [
+        "スタブが実 SDK の例外表面を忠実に再現しない場合、観測された縮退が試験環境固有の人工物になりうる。実 SDK の例外型・メッセージ形を一次資料で確認し、スタブとの差異を証拠に記録すること。",
+        "台帳スキーマ変更でラベル欄の位置が変われば採取箇所が無効化する（recheck_triggers 該当）。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-P09-dual-silence-of-staleness-and-version-warnings",
+      "verdict": "APPROVE",
+      "reasons": [
+        "鼓動（HEARTBEAT）の出力全文は既存の観測対象であり、修正前に採取できる。三種の行（古び警告・版遅れ警告・判定不能の告知）の有無は事前固定した照合パターンでの行カウントとして機械判定できる。",
+        "『無音』という不在の観測は、対照（ベースライン）出力との差分を併記しなければ証拠にならないため、統制条件の採取を手順に必須化した。",
+        "『新セッション開始』を人手の対話起動に依存させると別セッションで再現できないため、HEARTBEAT 入口を一時 HOME 上で直接起動する形へ手順を固定した。",
+        "古び判定は現在時刻に依存するため、last-audit.json のタイムスタンプを閾値超の固定値で与え、閾値の実装値と実行時刻を記録することを必須にした。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "使い捨て git worktree と一時 HOME（/tmp/scn-p09a-<runid>/home）を作り、プラグイン設定・状態ファイルの参照先を環境変数で全てそこへ向ける。",
+          "step 0: 鼓動出力を生成する入口（スクリプト／フック）、古び判定・版遅れ判定の実装箇所、last-audit.json の読取箇所を特定し、パス・行番号・古び閾値の実装値を記録する。特定できなければ中止し UNKNOWN として差し戻す。",
+          "旧版複製を用意する: 現行より前のリリースタグ（またはコミット SHA）を一時ディレクトリへ展開し、その版文字列と期待版を記録する。",
+          "last-audit.json を『前セッションの値のまま』に固定する: 閾値超となる固定タイムスタンプ（例: 実行時刻 -14 日）を書き込み、SessionEnd 相当のフックは一切起動しない。",
+          "統制条件（ベースライン）を先に採る: 最新版・last-audit.json を実行時刻で更新した状態で HEARTBEAT 入口を起動し、stdout/stderr 全文を保存する。",
+          "注入条件（旧版複製＋据え置き last-audit.json）で HEARTBEAT 入口を起動し、stdout/stderr 全文を保存する。",
+          "両出力に対し、事前固定した照合パターンで (a) 古び警告行 (b) 版遅れ警告行 (c) 判定不能・入力欠落の告知行 を独立に数え、3 つのカウントを JSON に保存する。パターンは step 0 で読み取った実装文言から採り、証拠に列挙する。",
+          "注入条件を 3 回反復し、出力が同一であることを記録する。"
+        ],
+        "injection_point": "一時 HOME 配下にコピーした last-audit.json（SESSION_END_AUDIT の出力ファイル）の内容据え置きと、同 HOME 配下に展開したプラグイン複製の版差し替え。",
+        "isolation": "一時 HOME＋使い捨て git worktree。実ユーザの設定ディレクトリと実 last-audit.json は読み書き禁止（環境変数で参照先を差し替え、差し替え前後の環境を記録）。旧版の展開・インストールは一時ディレクトリ限定とし、採取後に破棄する。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "注入条件の鼓動出力全文において (a)(b)(c) いずれのカウントも 0 であり、かつベースライン出力との本文差分が無い（無音が正常出力と区別できない）。",
+        "after_fix_passes_when": "同一注入条件で (a)(b)(c) のうち少なくとも 1 種が 1 件以上出力され、その行に欠落／判定不能の対象（last-audit.json が未更新であること、複製版と期待版の値）が含まれる。かつベースライン条件では 3 種いずれも 0 件のまま（誤警告なし）。"
+      },
+      "evidence_spec": {
+        "artifact": "assurance/evidence/SCN-P09-dual-silence/ 配下の heartbeat-baseline.txt、heartbeat-injected.txt、counts.json、env.json",
+        "must_record": [
+          "複製の版文字列と期待版、last-audit.json の全内容と固定タイムスタンプ、実行時刻",
+          "古び閾値の実装値と、その読み取り元パス・行番号",
+          "HEARTBEAT 入口のパスと起動コマンド",
+          "両条件の出力全文（stdout/stderr）",
+          "照合パターン一覧と各パターンのヒット行・カウント 3 種",
+          "3 回反復の各結果",
+          "一時 HOME パスと差し替えた環境変数の一覧"
+        ]
+      },
+      "normative_refs": [
+        "verification-requires-objective-evidence",
+        "試験条件の記録と再現性",
+        "test-records-in-verdict-decidable-form",
+        "completeness-presence-and-version",
+        "書換え前バージョン・設定値の記録",
+        "baseline-identifies-items-and-versions",
+        "simulated-vs-real-environment-delta"
+      ],
+      "risks": [
+        "HEARTBEAT 入口の直接起動が実セッション開始と挙動差を持つ可能性がある。差異を記録し、可能なら実セッションで 1 回追試して両者の出力を併置すること。",
+        "古び閾値が長期の場合、固定タイムスタンプが閾値未満だと赤が出ない。閾値を実装から読み取って記録し、超過することを証拠で示すこと。",
+        "旧版複製の入手可否（タグ／SHA の存在）が前提。入手できない場合は版遅れ側の条件を構成できず、計画は UNKNOWN へ差し戻す。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-P09-index-fingerprint-false-negative-on-in-scope-evidence-edit",
+      "verdict": "APPROVE",
+      "reasons": [
+        "前提（古び判定が索引の全体指紋比較で実装されている）が真であれば、注入後の stale_open 件数と対象判定の古び状態は既存の評価経路から修正前に採取できる。oracle は実装に先行して観測可能。",
+        "『参照先ファイルのハッシュは変化した／索引指紋は不変／stale_open は不変』という三点同時観測により、偽陰性の因果が推測でなく記録で示せる。合否は整数と真偽値で一意に決まる。",
+        "前提自体が未検証のため、step 0 で古び判定の実装と指紋の入力集合（対象パス一覧）を読み取り証拠化することを必須にした。前提が崩れていれば仮説の土台が消えるので UNKNOWN 差し戻しとする。",
+        "対象判定の evidence_refs が assurance/ 配下を指していない場合は注入が成立しないため、対象選定条件を手順に固定した。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "使い捨て git worktree（/tmp/scn-p09b-<runid>）を作成する。",
+          "step 0: 古び判定の実装を特定し、索引指紋の計算入力集合（対象ディレクトリ／ファイル一覧）と比較ロジックを、パス・行番号付きで記録する。全体索引ベースでなければ中止し UNKNOWN として差し戻す。",
+          "対象判定の選定: coverage_status 上で有効かつ evidence_refs が assurance/ 配下の実体を指す判定を 1 件選び、判定 ID・evidence_refs・参照先ファイルの変更前 SHA256 を記録する。",
+          "変更前状態の採取: coverage_status 評価を実行し、stale_open 件数、対象判定の stale フラグ、索引指紋値を記録する。",
+          "注入: assurance/ 配下のみを触る反復として、evidence_refs が指す実体の内容を、当該判定の根拠が実際に無効化される形へ書き換える（diff 全文を証拠に残す）。索引ファイル自体は変更しない。",
+          "変更後状態の採取: 参照先の SHA256、索引指紋値、coverage_status 評価の stale_open と対象判定の stale フラグを記録する。",
+          "対照実行: 同じ worktree で evidence_refs が指す実体を一切変更しない状態でも評価を回し、stale_open が増えないことを記録する。",
+          "判定: 『参照先 SHA256 が変化』かつ『索引指紋が不変』かつ『stale_open が変更前と同値』かつ『対象判定が有効のまま』であれば偽陰性が成立。"
+        ],
+        "injection_point": "step 3 で選定した判定の evidence_refs が指す assurance/ 配下の証拠実体ファイル。古び判定・coverage_status 評価のコードは一切変更しない。",
+        "isolation": "使い捨て git worktree（/tmp/scn-p09b-<runid>）内でのみ証拠実体を書き換え、コミット・push は行わない。本体作業ツリーと共有台帳には書き込まず、採取後に worktree ごと破棄する。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "注入後、参照先ファイルの SHA256 が変化しているにもかかわらず索引指紋が不変で、stale_open が注入前と同一（対象判定の stale フラグが false のまま有効な被覆として計上される）。",
+        "after_fix_passes_when": "同一注入で対象判定の stale が true に転じ、stale_open が注入前より 1 以上増える。かつ、証拠実体を変更しない対照実行では stale_open が増えない（過検出なし）。"
+      },
+      "evidence_spec": {
+        "artifact": "assurance/evidence/SCN-P09-fingerprint/ 配下の before.json、after.json、evidence.diff、run.log",
+        "must_record": [
+          "対象判定 ID と evidence_refs の全項目",
+          "参照先ファイルの変更前後 SHA256",
+          "索引指紋値の変更前後",
+          "stale_open の変更前後と、対象判定の stale フラグの変更前後",
+          "注入 diff 全文と変更対象パス",
+          "古び判定実装のパス・行番号と、指紋計算の入力集合",
+          "対照実行（無変更）の stale_open",
+          "評価コマンド、実行時刻、対象コミット SHA、worktree パス"
+        ]
+      },
+      "normative_refs": [
+        "verification-requires-objective-evidence",
+        "item-set-completeness-and-version-check",
+        "version-control-history-traceable",
+        "test-records-in-verdict-decidable-form",
+        "試験条件の記録と再現性",
+        "pass-criteria-defined-in-advance"
+      ],
+      "risks": [
+        "residual_risk のとおり、evidence_refs がリポジトリ外を指す場合の内容変化は本手順では観測できない。対象選定を assurance/ 配下に限定した事実を証拠に明記すること。",
+        "指紋の入力集合に証拠ファイルが偶然含まれていると赤が出ない。step 0 の入力集合記録で判別できるようにしてある。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-P11-existence-based-completion-in-action-conditions",
+      "verdict": "APPROVE",
+      "reasons": [
+        "提出された oracle（各行動条件が『パス存在』か『台帳の内容状態』かを分類する試験）は静的分類であり、分類の当否そのものが読解に依存する代理指標である。これ単独を合否基準に据えることは承認しない。",
+        "代わりに振る舞い試験を主 oracle に据える。『成果物パスは存在するが内容は未処理』という fixture を与えて既存の行動条件評価を呼び、当該行動が次アクション一覧に現れるかを見る観測は、修正前に成立し、真偽が一意に決まる。",
+        "網羅性（同型の分岐が MAP_COVERAGE 以外にも残存するか）は AST による行動条件の全件列挙で担保するが、列挙は対象集合の確定にのみ用い、合否は各条件の振る舞い結果で決める。",
+        "『一覧が空になり完了と区別できない』という損失そのものも、全条件同時 fixture での一覧長として観測できるため手順に含めた。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "使い捨て git worktree ＋ pytest tmp_path を用意する。",
+          "step 0: orchestrator.py から次アクション算出に使われる行動条件（判定関数・分岐）を AST で全件列挙し、ID・関数名・行番号の一覧と件数 N を証拠に記録する。",
+          "各条件 i について fixture を構成する: 当該工程の成果物パスを空ファイル（または未処理内容）で生成し、台帳側の内容状態は未処理のまま据え置く。他条件の入力は既定値。",
+          "行動条件評価（次アクション算出の入口関数）を直接呼び、返り値の次アクション一覧を JSON で保存する。",
+          "判定: 一覧に当該工程の行動が含まれない条件を『存在ベースの偽完了』として ID を全件列挙する。",
+          "対照 1: 成果物パスを削除した fixture で同じ評価を行い、当該行動が提示されることを確認する（提示側の基準線）。",
+          "対照 2: 台帳の内容状態を処理済みにした fixture で、当該行動が提示されないことを確認する（過剰提示の検出）。",
+          "全条件を同時に『パスあり・内容未処理』にした fixture で評価し、次アクション一覧が空になるか（静かな空の再現）を記録する。",
+          "補助として、各行動条件の到達コードに存在判定（Path.exists / os.path.exists / isfile 等）が現れるかを AST で機械抽出し、5 の結果と対照表にする。合否には用いない。",
+          "全 fixture を 3 回反復し、結果が同一であることを記録する。"
+        ],
+        "injection_point": "pytest tmp_path 上に構成した台帳ファイルおよび成果物ファイル群（orchestrator が読む入力ルート）。orchestrator.py 自体は変更せず、入力ルートを引数／環境変数で tmp_path へ差し替えて評価関数を呼ぶ。",
+        "isolation": "使い捨て git worktree ＋ pytest tmp_path 上の使い捨て fixture。実台帳・実成果物ディレクトリへは読み書きしない。キャンペーン状態を書き換える副作用のある入口は呼ばず、評価関数のみを直接呼ぶ。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "『パスあり・内容未処理』fixture において、対象工程の行動が次アクション一覧から欠落する条件が 1 件以上ある（欠落 ID 一覧が非空）。かつ全条件同時 fixture で一覧長が 0 になり、完了状態と区別できない。",
+        "after_fix_passes_when": "列挙した全 N 条件について、内容が未処理である限り当該行動が一覧に提示され、欠落 ID 一覧が空になる。全条件同時 fixture でも一覧長が 1 以上。対照 2（内容が処理済み）では当該行動が提示されない。3 回反復で同一結果。"
+      },
+      "evidence_spec": {
+        "artifact": "assurance/evidence/SCN-P11-existence/ 配下の conditions.json（AST 列挙）、per-condition-results.json、next-actions-empty.json、run.log",
+        "must_record": [
+          "列挙した行動条件の ID・関数名・行番号と件数 N、および列挙方法",
+          "各条件の fixture 内容（生成したパスと台帳の状態値）",
+          "各条件の次アクション一覧の全文と、欠落 ID 一覧",
+          "全条件同時 fixture の一覧長（0 か否か）",
+          "対照 1・対照 2 の結果",
+          "AST 抽出で見つかった存在判定呼び出しの箇所一覧（参考情報である旨を明記）",
+          "対象コミット SHA、実行コマンド、実行時刻、3 回反復の各結果"
+        ]
+      },
+      "normative_refs": [
+        "test-spec-unambiguous",
+        "pass-criteria-defined-in-advance",
+        "completeness-presence-and-version",
+        "verification-requires-objective-evidence",
+        "test-records-in-verdict-decidable-form",
+        "verification-plan-coverage-evaluated"
+      ],
+      "risks": [
+        "行動条件が動的に組み立てられる場合、AST 列挙が取りこぼす可能性がある。取りこぼし可能性を証拠に明記し、手作業照合で件数 N を突き合わせること。",
+        "『内容が未処理』の定義が台帳スキーマ依存であり、スキーマ変更で fixture が無効化する（recheck_triggers 該当）。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-P11-rejected-adr-options-unchecked-across-decisions",
+      "verdict": "APPROVE",
+      "reasons": [
+        "承認する主張を、UCA（POST_TOOL_LINTER／CI_RELEASE_CHECK が決定の否定形を照合対象に含まず通す）に限定する。この主張は、却下項に該当する構造を 1 つ注入して検査を走らせ、指摘件数と終了コードを採るだけで修正前に観測でき、合否が一意に決まる。",
+        "提出 oracle のうち『全 ADR の却下項について実装側の該当有無を人手レビューで判定した表』は、判定が読解に依存し客観的証拠にならない。網羅性資料としての保存は認めるが、合否基準からは除外する。よって構造的普及度（該当件数が 1 件か複数か）の主張は本計画では未検証のままである。",
+        "注入構造が却下項に該当するかの判断も読解に依存するため、機械照合可能な具体性（ファイル・構造・API 名を含む）を持つ却下項に対象を限定し、却下項の逐語引用と注入 diff を並置して第三者が判断できる形にすることを必須にした。",
+        "リンタ・CI をローカルで無改変実行できるかは未検証のため、step 0 に基準線採取を置き、実行不能なら UNKNOWN へ差し戻す。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "使い捨て git worktree（/tmp/scn-p11-adr-<runid>）を作成する。",
+          "step 0: POST_TOOL_LINTER の起動コマンドと CI_RELEASE_CHECK のローカル実行手順を特定し、無改変状態で両者を実行して基準線（指摘件数・終了コード・出力全文）を採取する。ローカル実行不能なら中止し UNKNOWN として差し戻す。",
+          "doctrine_docs 配下の全 ADR から『却下した選択肢』節を抽出し、ADR ID と却下項の逐語を一覧化して保存する（網羅性資料。合否には用いない）。",
+          "一覧のうち、機械照合可能な具体性（具体的ファイル・構造・API 名を含む）を持つ却下項を 1 件選び、ADR ID・却下項の逐語・対応する実装側ファイルパスを記録する。該当が 0 件なら注入の同定が判断依存になるため中止し UNKNOWN として差し戻す。",
+          "注入: 選定した却下項に文言どおり該当する構造を、実装側へ最小差分で 1 つ導入する（diff 全文を証拠に残す）。ADR 文書は変更しない。",
+          "POST_TOOL_LINTER を注入ファイルに対して起動し、出力全文・指摘一覧・終了コードを記録する。",
+          "CI_RELEASE_CHECK を同一 worktree でローカル実行し、出力全文・指摘一覧・終了コードを記録する。",
+          "判定: 両者とも当該注入に対応する指摘が 0 件で、終了コードが基準線と同じく合格であれば赤が成立。"
+        ],
+        "injection_point": "step 4 で選定した却下項に対応する実装側ファイル（Hook・リンタ・監査・技能・CI のいずれか。選定時にパスを確定して記録する）。doctrine_docs 配下の ADR は変更しない。",
+        "isolation": "使い捨て git worktree（/tmp/scn-p11-adr-<runid>）内でのみ注入し、コミット・push は行わない。CI は同一スクリプトのローカル直接起動に限り、リモート CI は起動しない。採取後に worktree を破棄する。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "却下項に該当する構造を注入した状態で、POST_TOOL_LINTER と CI_RELEASE_CHECK のいずれも当該構造に関する指摘を 0 件とし、終了コードが基準線と同じ合格（0）になる。",
+        "after_fix_passes_when": "同一注入に対し、少なくとも一方の検査が ADR ID と却下項の識別子を引用した指摘を 1 件以上出し、終了コードが非 0 になる。かつ注入前の無改変状態では指摘 0 件・終了コード 0 のまま（過検出なし）。"
+      },
+      "evidence_spec": {
+        "artifact": "assurance/evidence/SCN-P11-adr-negative/ 配下の baseline.log、injected.log、injection.diff、rejected-options-inventory.md",
+        "must_record": [
+          "選定した ADR の ID と却下項の逐語引用（出典ファイルパス・行番号付き）",
+          "注入 diff 全文と対象ファイルパス",
+          "基準線の指摘件数・終了コード・出力全文",
+          "注入後の指摘件数・指摘全文・終了コード（リンタ／CI 別）",
+          "リンタ・CI の起動コマンドとローカル実行手順",
+          "抽出した全 ADR の却下項一覧（網羅性資料であり合否基準外である旨を明記）",
+          "対象コミット SHA、worktree パス、実行時刻"
+        ]
+      },
+      "normative_refs": [
+        "verification-requires-objective-evidence",
+        "evaluation-criteria-and-selection-rationale-recorded",
+        "design-traceable-to-requirements",
+        "test-records-in-verdict-decidable-form",
+        "non-test-verification-means-justified",
+        "試験条件の記録と再現性"
+      ],
+      "risks": [
+        "却下項が抽象的にしか書かれていない ADR は機械照合できず、本計画の赤は『照合規則に否定形が無い』ことしか示さない。構造的普及度の主張は未検証のまま残る。",
+        "注入構造が却下項に該当するかの判断は読解に依存する。逐語引用と diff の並置でしか担保できないため、第三者レビューを別途要する。",
+        "リンタ／CI が注入ファイルを検査対象外に置いている場合、指摘 0 件が『規則の欠落』ではなく『対象外』を意味しうる。検査対象パスの設定も証拠に記録すること。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-P12-campaign-closes-with-pending-analysis",
+      "verdict": "APPROVE",
+      "reasons": [
+        "終了判定関数の戻り値と根拠出力は既存コードの観測可能な出力であり、台帳 fixture を与えるだけで修正前に決定論的に再現できる。",
+        "提出 oracle は『真が返る』と『偽だが根拠が出ない』という 2 つの欠陥を 1 文に束ねているため、独立した 2 アサーション（A1: 戻り値、A2: 根拠に pending 項目 ID が現れるか）へ分解し、合否条件を事前固定した。",
+        "過剰ブロック（pending が無くても閉じられない）を検出する対照 fixture と、件数依存でないことを見る pending 2 件の fixture を加え、修正後の PASS が偶然でないことを担保した。",
+        "キャンペーンを実際に閉じる副作用を避けるため、判定関数のみを直接呼ぶ形へ手順を固定した。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "使い捨て git worktree ＋ pytest tmp_path を用意する。",
+          "step 0: 終了判定の関数・分岐を特定し、参照している完了条件（成果物ファイルの存在、件数条件、台帳の項目状態）をパス・行番号付きで列挙して記録する。",
+          "fixture A（赤条件）: 台帳に cast_analysis=pending の項目を厳密に 1 件残し、他の完了条件（成果物ファイルの存在、件数の充足）を全て満たす状態を一時ディレクトリに構成する。pending 項目の ID を記録する。",
+          "fixture A で終了判定を呼び、戻り値と、根拠出力（標準出力および返却理由フィールド）の全文を保存する。",
+          "アサーション A1: 戻り値が偽であること。アサーション A2: 出力に pending 項目の ID（または pending 件数と対象一覧）が含まれること。",
+          "fixture B（対照・緑条件）: 同じ台帳で cast_analysis を全件完了に変え、他条件はそのまま。終了判定が真を返すことを記録する。",
+          "fixture C: pending を 2 件にした台帳で、偽が返りかつ 2 件とも根拠出力に列挙されることを記録する。",
+          "fixture A/B/C を 3 回反復し、結果が同一であることを記録する。"
+        ],
+        "injection_point": "pytest tmp_path 上に構成した事象台帳 fixture（cast_analysis の状態値と、成果物ファイル・件数などの完了条件入力）。終了判定の実装は変更せず、台帳パスを引数／環境変数で fixture へ向ける。",
+        "isolation": "使い捨て git worktree ＋ pytest tmp_path 上の使い捨て fixture。実の事象台帳は読み書きしない。キャンペーンを実際に閉じる副作用のある入口は呼ばず、判定関数のみを直接呼ぶ。副作用のある入口しか無い場合は worktree 内の複製に対してのみ実行し、その旨を証拠に記録する。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "fixture A で終了判定が真を返す（A1 違反）か、偽を返すが根拠出力に pending 項目 ID が一切現れない（A2 違反）。いずれか一方でも成立すれば FAIL。",
+        "after_fix_passes_when": "fixture A と C で偽を返し、根拠出力に pending 項目 ID が全件列挙される。fixture B では真を返す（過剰ブロックなし）。3 回反復で同一結果。"
+      },
+      "evidence_spec": {
+        "artifact": "assurance/evidence/SCN-P12-pending-close/ 配下の fixtures/（台帳 JSON 3 種）、results.json、run.log",
+        "must_record": [
+          "各 fixture の台帳全文と、満たした完了条件の内訳",
+          "pending 項目の ID と件数",
+          "各 fixture における終了判定の戻り値",
+          "根拠出力の全文（標準出力・返却理由フィールド）",
+          "終了判定関数のパス・行番号と、参照している完了条件の一覧",
+          "実行コマンド、実行時刻、対象コミット SHA、3 回反復の各結果"
+        ]
+      },
+      "normative_refs": [
+        "pass-criteria-defined-in-advance",
+        "test-spec-unambiguous",
+        "verification-requires-objective-evidence",
+        "test-records-in-verdict-decidable-form",
+        "completeness-presence-and-version",
+        "試験結果の保管と提示可能性"
+      ],
+      "risks": [
+        "cast_analysis に pending 以外の未処理状態値が追加されると fixture が網羅性を失う（recheck_triggers 該当）。状態値の全列挙を証拠に残すこと。",
+        "終了判定が副作用付き入口経由でしか呼べない場合、判定単体の観測ができず、手順の isolation 前提が崩れる。その場合は複製上での実行に限定し差異を記録する。"
+      ]
+    },
+    {
+      "scenario_id": "SCN-P12-invariant-target-without-sanctioned-repair-path",
+      "verdict": "UNKNOWN",
+      "reasons": [
+        "赤（不変対象に ERROR/WARN が出ている状態）自体は実装前に観測可能である。既存の docs-linter / POST_TOOL_LINTER を使い捨て worktree 上の文書に対して実行すれば、規則 ID 付きの発火出力が得られる。この点で本 scenario は REJECT には当たらない。",
+        "しかし oracle の中核である「その指摘を解消できる許可操作が存在するか」は、許可操作（訂正 ADR の発行・追補・例外記帳など）が機械可読に列挙された成果物の実在に依存する。前提『許可操作の集合が定義されている』は未確認であり、本審査時点の環境（作業ディレクトリが空でリポジトリが無い）ではその成果物の所在も列挙可能性も観測できない。",
+        "「許可操作が存在しない」という主張は操作空間全体に対する全称否定であり、閉じたカタログが無いまま実施すると、探索の打ち切り（見つからなかった）が判定（存在しない）に化ける。決定論試験の要件を満たさない。カタログを成果物とパス:行で確定できたときに限り決定可能になる。",
+        "不変性の宣言（禁止集合）が規則定義ファイルとして機械抽出できるか、それとも文書の状態フィールドや運用上の了解に留まるかも未確認であり、セルの母集合（不変対象 × 検査規則）が一意に定まる保証が無い。母集合が主観で決まると空セル数は証拠にならない。",
+        "反証条件（empty_cells == 0）と赤の判定（empty_cells >= 1）は具体の観測に落ちており、計画としては実行可能な形に書ける。欠けているのは前提の実在確認のみであるため、APPROVE ではなく UNKNOWN とし、下記手順 2・3・4 が成果物パスと行番号を出せた場合に限り本計画をそのまま実行してよい、という条件付きの形で残す。"
+      ],
+      "red_reproduction_design": {
+        "procedure": [
+          "1. 対象リポジトリを使い捨て git worktree に切り出す: `git worktree add /tmp/scn-p12-<runid> <HEAD-SHA>`。以降の編集・実行はこの worktree 内でのみ行い、既定ブランチへの commit / push は一切行わない。HEAD-SHA を run.log に記録する。",
+          "2. 不変対象の列挙: 不変性を宣言している箇所（受理済み ADR・NONGOAL・decided-facts・確定済み PROC の状態フィールド、および POST_TOOL_LINTER の編集禁止規則の定義）を grep で機械抽出し、immutable_targets.tsv（文書パス / 不変性の根拠 規則ID または フィールド / 根拠のパス:行）に保存する。抽出が 0 件、または根拠行を特定できない場合はここで停止し、その grep コマンドと空結果を証拠として残したうえで scenario を検証不能として差し戻す。",
+          "3. 検査規則の列挙: docs-linter / POST_TOOL_LINTER の規則定義から、ERROR または WARN を出しうる規則 ID と発火条件を抽出し lint_rules.tsv（規則ID / 重大度 / 発火条件 / 定義元パス:行）に保存する。",
+          "4. 許可操作カタログの確定: 是正操作として許可されている操作（訂正 ADR 発行・追補・明示の例外記帳・状態遷移など）を定義した成果物を特定し、allowed_ops.tsv（操作ID / 定義元パス:行 / 適用前提 / 機械適用手順）に保存する。定義元が存在しない場合は、その不在（実行した grep とその空出力）を証拠として記録し、以降のセルは「許可操作 未定義」として空セルとは別カウントする（未定義と空は混ぜない）。",
+          "5. 母集合の確定: immutable_targets.tsv × lint_rules.tsv の直積のうち、規則の発火条件が当該文書種別に適用可能なセルのみを残し、intersection_cells.tsv として固定する。除外したセルは除外理由付きで同ファイルに残す。",
+          "6. 赤の注入: 各セルについて、その規則が実際に発火する最小状態を worktree 上の対象文書に作る（例: 必須節の欠落、参照切れ、期限超過フィールドなど、lint_rules.tsv の発火条件そのものを満たす改変）。注入 diff を injections/<cell-id>.diff に保存する。",
+          "7. 赤の確認: linter を実行し（実行コマンド行をそのまま記録）、出力を lint_before.json に保存する。当該セルの規則 ID が実際に ERROR/WARN として現れたセルのみを有効セルとし、発火しなかったセルは「注入失敗」として除外理由付きで記録する（除外を沈黙させない）。",
+          "8. 是正の試行: 有効セルごとに、allowed_ops.tsv の各操作を worktree 内の独立コピー（またはブランチ）へ機械的に適用する。適用のたびに linter を再実行し、1 試行 1 行で attempts.jsonl に記録する。記録項目は cell_id / op_id / 適用 diff / linter 終了コード / 当該規則が消えたか / 操作自体が新たな不変違反 ERROR を発火したか / linter 出力全文への参照。",
+          "9. 集計: あるセルについて、allowed_ops.tsv のすべての操作が「当該指摘が残存」または「操作自体が不変違反 ERROR を発火」で終わったとき、そのセルを空セルと判定する。ERROR 由来と WARN 由来は別カウントする。結果を intersection_matrix.csv に出力し、empty_cells_error=<N> / empty_cells_warn=<M> / undefined_ops_cells=<K> を run.log に書く。判定は出力ファイルのみから導出し、AI の所見・同意は判定に用いない。",
+          "10. 決定論の確認: 手順 6〜9 を同一 HEAD-SHA でもう一度最初から実行し、intersection_matrix.csv の SHA-256 が 1 回目と一致することを確認する。一致しない場合は非決定要因（順序・タイムスタンプ等）を特定するまで結果を証拠として採用しない。",
+          "11. 後始末: `git worktree remove --force /tmp/scn-p12-<runid>` を実行し、元の作業ツリーが手順開始前と同一（git status がクリーン）であることを確認して run.log に記録する。"
+        ],
+        "injection_point": "使い捨て worktree 内の、手順 2 で immutable_targets.tsv に抽出された不変宣言済み文書の実体ファイル（INC-026 が指す受理済み ADR のファイルを含む）と、POST_TOOL_LINTER / docs-linter が読む規則定義ファイル。注意: 本審査時点の環境にはリポジトリが存在せず、これらのパスの実在は未確認である。手順 2・3・4 はカタログ作成であると同時に injection_point の実在確認を兼ねる。実在を示すパス:行が出せない場合、本計画は実行不能として差し戻す。",
+        "isolation": "すべての破壊的操作は `git worktree add` で作った使い捨て worktree /tmp/scn-p12-<runid> の内部に閉じる。不変文書への注入・是正試行は worktree 内の独立コピーまたは使い捨てブランチ上で行い、既定ブランチへの commit / push / タグ付けは行わない。台帳・問題記録への書き込みも行わない（指摘の実クローズを副作用で起こさない）。linter の実行はこの worktree をルートとして行い、終了後に worktree を --force で削除し、元作業ツリーが無変更であることを git status で確認する。"
+      },
+      "acceptance_criteria": {
+        "before_fix_fails_when": "手順 9 の出力で empty_cells_error >= 1 であり、かつ少なくとも 1 つの cell_id について attempts.jsonl の当該セルの全行が「当該規則の ERROR/WARN が残存」または「操作自体が不変違反 ERROR を発火」で終わっていること。すなわち、その文書・その規則に対して許可操作だけでは指摘を閉じられないことが lint_before.json と attempts.jsonl の突き合わせだけで読み取れる状態。この時点で本試験は FAIL する。",
+        "after_fix_passes_when": "同一手順・同一 HEAD 相当の再実行で empty_cells_error == 0 かつ undefined_ops_cells == 0 であり、intersection_cells.tsv の全有効セルについて attempts.jsonl に「当該規則の ERROR/WARN が消え、かつ新たな不変違反 ERROR を発火しなかった」許可操作の行が最低 1 行存在すること。加えて手順 10 の 2 回実行で intersection_matrix.csv の SHA-256 が一致すること。empty_cells_warn > 0 の場合は 0 でなくてもよいが、各 WARN セルについて許可操作または明示の例外記帳のどちらが対応するかが intersection_matrix.csv 上で一意に読めること。"
+      },
+      "evidence_spec": {
+        "artifact": "evidence/SCN-P12/<runid>/ 配下一式: run.log, immutable_targets.tsv, lint_rules.tsv, allowed_ops.tsv, intersection_cells.tsv, injections/<cell-id>.diff, lint_before.json, attempts.jsonl, intersection_matrix.csv, hashes.txt（各成果物の SHA-256）。",
+        "must_record": [
+          "worktree の作成元 HEAD-SHA と worktree パス、および終了後に元作業ツリーが無変更であることを示す git status 出力",
+          "linter の実行バイナリ／スクリプトのパスとバージョン、および実行したコマンド行そのもの（2 回の実行分すべて）",
+          "immutable_targets.tsv / lint_rules.tsv / allowed_ops.tsv の各行に付す定義元パス:行（根拠行の無い行を残さない）",
+          "allowed_ops の定義元が見つからなかった場合は、実行した grep コマンドとその空出力（不在そのものを証拠として残す）",
+          "各セルの cell_id・対象文書パス・規則 ID・重大度（ERROR/WARN の別）",
+          "各セルの注入 diff と、注入後 linter 出力に当該規則 ID が現れたことを示す該当行（発火しなかったセルは注入失敗として除外理由を明記）",
+          "各是正試行 1 行分: cell_id / op_id / 適用 diff / linter 終了コード / 当該規則の消失有無 / 新規に発火した ERROR の規則 ID 一覧 / linter 出力全文への参照",
+          "空セルの判定式（全許可操作が残存または不変違反、の論理式）と、empty_cells_error / empty_cells_warn / undefined_ops_cells の各数値",
+          "母集合から除外したセルとその除外理由（適用不能・注入失敗の別）を件数付きで明示すること（沈黙による過小報告を防ぐ）",
+          "手順 10 の 2 回実行それぞれの intersection_matrix.csv の SHA-256 と、一致／不一致の判定"
+        ]
+      },
+      "normative_refs": [
+        "verification-objective-evidence",
+        "requirement-verifiable-and-consistent",
+        "verification-constraints-and-limits",
+        "unverifiable-requirement-compensation",
+        "test-spec-unambiguous",
+        "pass-criteria-defined-in-advance",
+        "試験条件の記録と再現性",
+        "試験結果の保管と提示可能性",
+        "verification-procedure-includes-recording",
+        "defects-identified-and-corrective-action-taken",
+        "multiple-fix-options-considered",
+        "problem-resolution-process-covers-all",
+        "review-action-items-followed-up",
+        "問題の終結までの追跡",
+        "verification-findings-into-problem-resolution"
+      ],
+      "risks": [
+        "許可操作カタログが成果物として存在しない場合、手順 4 で計画が停止する。この停止は失敗ではなく「前提未成立」として記録すべきで、空セル数 0 と混同してはならない（undefined_ops_cells を別カウントする理由）。",
+        "WARN のみで発火するセルを ERROR と同列に空セル扱いすると過剰検出になり、袋小路の重大度を誇張する。ERROR / WARN を別集計する設計はこのための防御であり、集計を一本化してはならない。",
+        "規則の発火条件を満たす最小状態の作り方が規則ごとに異なるため、注入そのものが主観になりうる。各注入 diff を成果物に残し、第三者が同じ diff を適用して同じ発火を再現できる形にすることで機械照合可能にする。",
+        "linter がファイル走査順やタイムスタンプに依存して非決定論的に出力する場合、手順 10 のハッシュ一致が成立せず証拠として採用できない。その場合は非決定要因の特定が先行タスクになる。",
+        "是正試行を worktree 内の独立コピーで行うため、複数操作の併用（例: 訂正 ADR 発行＋追補）で初めて解消するケースを単独操作の試行だけでは取りこぼし、空セルを過大に数える可能性がある。allowed_ops.tsv に組合せ操作を明示的な 1 エントリとして登録するか、取りこぼしの可能性を run.log に明記する。",
+        "INC-026 由来の 1 件のみが空セルであった場合、falsification_signal のとおり袋小路は当該 ADR 固有であり、規則交差の一般欠陥という主張は成立しない。この分岐の判定も intersection_matrix.csv から読めるようにしておく。"
+      ]
+    }
+  ],
+  "missing": [],
+  "unrequested": [],
+  "citation_defects": [],
+  "prompt_sha256": "b0b374a4b803dbf5e56739aad9d14091273d5c5422321526ba04683365de33c6",
+  "model": "claude-opus-5",
+  "effort": "high",
+  "cost_usd": 0.4686,
+  "approved": [
+    "SCN-F02-accepted-doc-birth-write-unguarded",
+    "SCN-F02-latent-undefined-name-in-unreached-branches",
+    "SCN-F02-manual-state-partition-misclassification-passes-tests",
+    "SCN-F03-frozen-doc-family-born-red-unfixable",
+    "SCN-F04-audit-blind-to-accepted-plus-lint-error",
+    "SCN-F04-cache-summary-lost-update-poisons-next-session",
+    "SCN-F07-terminal-hooks-without-firing-stamps",
+    "SCN-F08-exit-zero-without-completion-branches",
+    "SCN-F09-stderr-diagnostic-not-persisted-anywhere",
+    "SCN-F11-field-granularity-unread-across-record-types",
+    "SCN-N02-unknown-classification-closes-ledger-entry",
+    "SCN-N03-legacy-schema-silently-disables-staleness-check",
+    "SCN-N04-detector-and-detected-share-version-common-cause",
+    "SCN-N07-whole-file-writeback-lost-update",
+    "SCN-N14-immutability-nullified-by-status-roundtrip",
+    "SCN-P02-version-lag-extends-to-guard-and-linter",
+    "SCN-P03-substring-false-positive-across-term-table",
+    "SCN-P04-order-comparison-precision-mismatch-beyond-freshness",
+    "SCN-P04-pointfix-without-word-boundary-rule",
+    "SCN-P05-failure-families-collapse-to-one-exception-surface",
+    "SCN-P09-dual-silence-of-staleness-and-version-warnings",
+    "SCN-P09-index-fingerprint-false-negative-on-in-scope-evidence-edit",
+    "SCN-P11-existence-based-completion-in-action-conditions",
+    "SCN-P11-rejected-adr-options-unchecked-across-decisions",
+    "SCN-P12-campaign-closes-with-pending-analysis"
+  ]
+}

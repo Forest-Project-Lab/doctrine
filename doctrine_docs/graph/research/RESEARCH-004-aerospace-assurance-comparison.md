@@ -6,8 +6,9 @@ domain: graph
 status: draft
 owner: doctrine-maintainers
 created: 2026-08-02
-updated: 2026-08-02
+updated: 2026-08-09
 sources: [https://sma.jaxa.jp/TechDoc/Docs/JAXA-JERG-2-610C.pdf, https://swehb.nasa.gov/, https://ecss.nl/standard/ecss-e-st-40c-rev-1-software-30-april-2025/, https://ecss.nl/standard/ecss-q-st-80c-rev-2-software-product-assurance-30-april-2025/]
+review_by: 2026-11-09
 llm_context: never
 ---
 
