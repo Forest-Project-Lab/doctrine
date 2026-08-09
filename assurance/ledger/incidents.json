@@ -625,6 +625,24 @@
         "plugin/hooks/hooks.json",
         "plugin/tests/test_hook_boundary.py"
       ]
+    },
+    {
+      "id": "INC-034-ci-turns-red-on-a-date-with-no-change",
+      "date": "2026-08-09",
+      "summary": "CI は docs-audit へ --today を渡さないので壁時計を読む。2026-11-10 に、誰も何も変えていないのに main が赤くなる。RESEARCH-002/003 の review_by が 2026-11-09 で、両者とも逆参照ゼロのため、期限を過ぎた翌日に orphan（error）が 2 件立つ",
+      "detected_by": "独立再監査 2026-08-09 の Phase A。--today を 09-28/09-29/10-16/11-08/11-09/11-10/11-15/12-31 と掃引して二分探索し、11-09 は error 0・11-10 は error 2（orphan × 2）であることを特定した。dep-graph --reverse-refs で RESEARCH-002 が 0 件・RESEARCH-003 が 0 件・RESEARCH-004 が 1 件（ADR-081）であることも実測した",
+      "impact": "WATCH-001 第11項が凍結した事象（2026-08-03 に誰も何も変えずに main が赤くなった）と同じ family。しかも火種を置いたのは、その family を直す作業そのものである —— PR #263 が RESEARCH の current 化を巻き戻した際に review_by: 2026-11-09 を三件へ付与した。木全体で review_by を持つのは 14 文書で、最初の warn は 2026-09-01（EXT-001）だが、error になるのはこの 2 件だけである（EXT は逆参照ゼロでも『再現可能』でないため orphan にならない）",
+      "fixed": false,
+      "fix_note": "未修正。時限の性質上、2026-11-10 までに決める。直し方の候補: (a) 期限切れの curation の促しを merge の門とは別の経路で届ける（門は変更に対する判定に限る） (b) RESEARCH のような証拠庫は逆参照ゼロを正常とみなし orphan の対象から外す (c) 該当 2 件を期限前に archive する (d) CI の監査へ固定日を渡す（review_by の意味が消えるので勧めない）。(a) と (b) は監査の出力契約（ADR-137）と §0.4 の駆動条件に触れるので所有者判断に当たる",
+      "residual": "根の問いは『時で起きる curation の促しを、変更の門で届けてよいか』である。門は変更の可否を判ずる装置であって、暦の管理装置ではない。この問いは INC-018#6（warn の意味論）とも重なる",
+      "cast_analysis": "pending",
+      "evidence_kind": "measurement",
+      "evidence_refs": [
+        ".github/workflows/checks.yml",
+        "doctrine_docs/graph/research/RESEARCH-002-external-parser-dependency.md",
+        "doctrine_docs/graph/research/RESEARCH-003-prior-art-failure-survey.md",
+        "plugin/scripts/docs-audit.py"
+      ]
     }
   ]
 }
