@@ -259,6 +259,7 @@ sources: []
 | ADR-143 | ADR | packaging | 網羅台帳の決定論の運びは正本の規則へ一本化する |
 | ADR-144 | ADR | packaging | 事象のクローズの語彙 — 受容は裁定者を持ち、出荷は三条件で立て、想定の観測は機械が追記する |
 | ADR-145 | ADR | packaging | 2026-08-07 の一括是正キャンペーンの権限記録 — 誰が・何を・いつまで認めたか |
+| ADR-147 | ADR | packaging | 独立再監査 2026-08-09 の所有者裁定を恒久記録する |
 | CHANGE-001 | CHANGE | packaging | 導入済みプラグインの版の遅れを生存性として照合する |
 | CHANGE-002 | CHANGE | packaging | リリースの整合を CI の門で検める — 変更履歴の書き忘れを止める |
 | CHANGE-005 | CHANGE | packaging | 不具合の兆候を記録し、承認を経た issue 報告を促す |
