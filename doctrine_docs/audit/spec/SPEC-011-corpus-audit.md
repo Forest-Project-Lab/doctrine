@@ -18,9 +18,9 @@ llm_context: task
 
 ## 入出力
 
-- 入力: コマンドライン引数 `[--root PATH | --root-from PROJ] [--json] [--summary-out PATH] [--fail-on error|never] [--config PATH] [--today YYYY-MM-DD] [--respect-docs-level]`。`--root-from` はプロジェクト根を取り、統治木を ADR-022 の優先順で解決する（統治木が無ければ飛ばして 0）。標準入力は読まない。入力内容に結果が左右されないからであり、対話端末から起動しても入力待ちで止まらない。
+- 入力: コマンドライン引数 `[--root PATH | --root-from PROJ] [--json] [--summary-out PATH | --summary-in-project] [--fail-on error|never] [--config PATH] [--today YYYY-MM-DD] [--respect-docs-level]`。`--root-from` はプロジェクト根を取り、統治木を ADR-022 の優先順で解決する（統治木が無ければ飛ばして 0）。**`--root-from` に空の値を与えるのは使用法の誤りとして 2 へ倒す** —— 空は「与えられていない」ではなく、配線の `${CLAUDE_PROJECT_DIR}` が展開されなかった姿である。素通りさせると、告げられていない統治木を作業ディレクトリから歩いて見つけて監査してしまう（境界が沈黙して開く。確定事実12・INC-032）。`--summary-in-project` は要約の置き場を解決済みのプロジェクト根から導く（`<proj>/.claude/.cache/last-audit.json`）。配線が生の変数からパスを組むと、変数が展開されないとき根を指すため、その形を配線から無くす。標準入力は読まない。入力内容に結果が左右されないからであり、対話端末から起動しても入力待ちで止まらない。
 - 処理: 統治木のルート配下のすべての .md について、graph（ICD-002）が依存グラフを組み、登録簿（ICD-001）が各文書の型・`status`・`llm_context` を解決する。本文は一度だけ読んでノードに付ける。
-- 返す値: 要約スキーマ `docs-audit/1`。形は `{schema, generated_at, today, root, totals:{error,warn,advisory}, counts_by_check, checks_run, top_findings, findings}`。`root` は絶対パスに正規化して書く（注入側が相対 root を照合不能として捨てるため。SPEC-012）。`--json` を付けると機械向けの JSON を、付けなければ人間向けの平文を出す。`--summary-out` を指定すると、要約を一時ファイルに書いてから改名して差し替え、途中状態を残さない。
+- 返す値: 要約スキーマ `docs-audit/1`。形は `{schema, generated_at, today, root, totals:{error,warn,advisory}, counts_by_check, checks_run, top_findings, findings}`。`root` は絶対パスに正規化して書く（注入側が相対 root を照合不能として捨てるため。SPEC-012）。`--json` を付けると機械向けの JSON を、付けなければ人間向けの平文を出す。`--summary-out`（または `--summary-in-project`）を指定すると、要約を一時ファイルに書いてから改名して差し替え、途中状態を残さない。
 
 ## 制約
 
@@ -69,7 +69,7 @@ llm_context: task
 - `--respect-docs-level` 付きで、対象の `doctrine_docs/_system/.docs-level` が `level: 2` の場合: 監査を飛ばした旨を出して終了コード 0 を返し、要約は書かない（ADR-019。全件監査は Level 3 から）。この旗は SessionEnd の配線だけが付ける。CI は付けず、Level に依らず監査する。
 - 与えられた `--today` または config.today を日付として解釈できない場合: 使い方の誤りとして終了コード 2 を返す。黙ってシステム時刻に切り替えることはしない。
 - 監査本体がクラッシュした場合: stderr に記録して終了コード 0 を返し、Hook の連鎖を妨げない。**要約の書き込みに失敗した場合は 3 を返す**（ADR-121 が旧規定「0 を保つ」を置換した。統治の唯一の全体像を書けなかった実行が 0 を返すと、書けたときと外から区別がつかない。所見の重さとは分け、前提の欠如の規約へ倒す。要約そのものと画面への表示は従来どおり出す）。あわせて実行時例外の要約をエラージャーナル（書式の正本は SPEC-021。許可制で統治対象の内容は入らない）へ最善努力で残す（ADR-074）。
-- 要約の書き込みに失敗しても 0 を保つ以上、失敗は外から見えない。そこで `--summary-out` を指定された実行は、走ったこと自体の印 `hook_session_end_audit`（時刻）と、書けたかどうかの印 `hook_session_end_write`（`ok` / `failed`）を `.claude/.cache/hook-stamps` へ最善努力で残す（ADR-119）。印の書き込みが失敗しても監査の本務を妨げない。読み手は鼓動（SPEC-021）で、判定は `_auditcache.audit_write_gap` に一度だけ在る。印が無ければ何も言わない（前方寛容。不在は不実行の証明ではない）。`[R11]`
+- 要約の書き込みに失敗しても 0 を保つ以上、失敗は外から見えない。そこで要約の書き出しを指示された実行（`--summary-out` か `--summary-in-project`）は、走ったこと自体の印 `hook_session_end_audit`（時刻）と、書けたかどうかの印 `hook_session_end_write`（`ok` / `failed`）を `.claude/.cache/hook-stamps` へ最善努力で残す（ADR-119）。印の書き込みが失敗しても監査の本務を妨げない。読み手は鼓動（SPEC-021）で、判定は `_auditcache.audit_write_gap` に一度だけ在る。印が無ければ何も言わない（前方寛容。不在は不実行の証明ではない）。`[R11]`
 
 ## 受入基準
 
