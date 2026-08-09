@@ -32,7 +32,7 @@
       "date": "2026-08-04",
       "summary": "禁止同義語の ASCII 部分一致誤検知(VERIFY⊃IF)。WATCH-001 類型の新事例。RED→修正→全緑まで完了",
       "fixed": true,
-      "fix_commit": "af9c858",
+      "fix_commit": "67475de",
       "cast_analysis": "done",
       "why_missed_hypothesis": "『部分文字列の取り違え』の既知類型が CJK 事例だけで凍結され、ASCII 語境界という別の失敗様式が試験にも WATCH の文言にも一般化されていなかった",
       "evidence": "plugin/tests/test_termcheck.py の RED 証拠(修正前 FAIL)",
@@ -40,7 +40,8 @@
       "cast_analyzed_at": "2026-08-05T05:30:33Z",
       "evidence_refs": [
         "plugin/tests/test_termcheck.py"
-      ]
+      ],
+      "fix_commit_note": "旧値 af9c858 は squash merge 前の枝の commit で、どの ref からも到達できなかった（独立再監査 2026-08-09 が実測。条件(2)の検算がそこで落ちる）。実際に着地したのは 67475de（_find_ascii_word の導入。v0.11.0 の祖先であることを確認済み）。"
     },
     {
       "id": "INC-003-sdk-error-opacity",
@@ -678,6 +679,23 @@
         "plugin/scripts/map-draft-check.py",
         "plugin/tests/test_mapdraft_hardening.py",
         "doctrine_docs/authoring/spec/SPEC-029-map-draft-check.md"
+      ]
+    },
+    {
+      "id": "INC-036-ledger-integrity-gaps-the-canon-declines-to-check",
+      "date": "2026-08-09",
+      "summary": "台帳が黙って通していた四つの穴。(1) 重複統合が判定の緑さを問わず、UNKNOWN を緑の項へ吸わせられる (2) 五値のうち UNASSESSED が status のどの数にも現れない (3) 出荷の三条件(ADR-144)を機械が一つも検めていない (4) 評価者の所有者判断の印を覆すとき理由を求めていない。いずれも validate は緑のまま",
+      "detected_by": "独立再監査 2026-08-09 の Phase D。(1) は合成台帳で実証(unknown 5→4、validate は緑のまま) (2) は五値と status の鍵の突合 (3) は台帳唯一の fix_commit af9c858 がどの ref からも到達できず --is-ancestor が exit 1 を返すことを実測 (4) は evaluator_claimed_owner 67 と owner 12 の差 55 の追跡",
+      "impact": "どれも「機械が見ていない」型で、規律だけが支えていた。(3) が最も鋭い —— ADR-144 の条件(2)が実際に作用する唯一のフィールドが、その検算に落ちる。squash merge の前の枝の commit を記録したまま出荷が積まれていた",
+      "fixed": false,
+      "fix_note": "(1) 統合で判定が緑へ動くことを validate が咎める(緑さの順を一つ置き、数の付け替えで判定不能が消えるのを防ぐ。安全側=緑を判定不能へ寄せる統合は咎めない) (2) coverage_status に unassessed を足した (3) _validate_shipped_conditions を新設。fix_commit の記録・到達可能性・tag の祖先であることを検める。v0.11.0 の 8 件は散文からの推測を検算の根拠にしないため祖父条項で外し、列は凍結した(増やすのは保証範囲の変更＝所有者判断)。INC-002 の到達不能な fix_commit は実在する 67475de へ訂正した (4) _validate_owner_overrides を新設。評価者が印した 67 行に evaluator_owner_required を立て、既に散文で書かれていた理由を owner_override_reason へ写した(67/67。新たに書いた理由は無い)。独立検証(ADR-139)は未実施のため fixed:true とは書かない",
+      "residual": "(3) の祖父条項 8 件は、条件(2)が検算されないまま残る。修正が tag の木に在ることは人が確かめたが、機械の検算ではない。(4) は理由の**存在**を求めるだけで、理由の当否は測らない",
+      "cast_analysis": "pending",
+      "evidence_kind": "measurement",
+      "evidence_refs": [
+        "assurance/harness/orchestrator.py",
+        "assurance/tests/test_ledger_integrity_gaps.py",
+        "assurance/ledger/recommendation-status.json"
       ]
     }
   ]

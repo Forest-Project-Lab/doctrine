@@ -70,25 +70,33 @@
       "incident_id": "INC-001-sessionend-audit-gap",
       "index": 3,
       "state": "rejected",
-      "note": "所有者判断ではなく既決。是非の側は木が三重に決めている —— NONGOAL-001 第14項「統治はリポジトリの中で閉じ、外部の実行環境を感知する手段を持たない」、DECIDED-001 事実7「通信に依存しない」、ADR-122「送信は体系が行わない。利用者の承認を経た転記としてだけ戻す」。よって配布側から利用者環境を観測する経路は作らない。『何を止めるか』の側も、検出は手元の鼓動（ADR-070）で起き、CI の稼働は感知しない（NONGOAL 第14項）ので、注入で警告する以外の選択肢がそもそも無い。評価者がこれを所有者判断と印したのは、統治木が入力に入っていないためである（ADR-127）。"
+      "note": "所有者判断ではなく既決。是非の側は木が三重に決めている —— NONGOAL-001 第14項「統治はリポジトリの中で閉じ、外部の実行環境を感知する手段を持たない」、DECIDED-001 事実7「通信に依存しない」、ADR-122「送信は体系が行わない。利用者の承認を経た転記としてだけ戻す」。よって配布側から利用者環境を観測する経路は作らない。『何を止めるか』の側も、検出は手元の鼓動（ADR-070）で起き、CI の稼働は感知しない（NONGOAL 第14項）ので、注入で警告する以外の選択肢がそもそも無い。評価者がこれを所有者判断と印したのは、統治木が入力に入っていないためである（ADR-127）。",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "所有者判断ではなく既決。是非の側は木が三重に決めている —— NONGOAL-001 第14項「統治はリポジトリの中で閉じ、外部の実行環境を感知する手段を持たない」、DECIDED-001 事実7「通信に依存しない」、ADR-122「送信は体系が行わない。利用者の承認を経た転記としてだけ戻す」。よって配布側から利用者環境を観測する経路は作らない。『何を止めるか』の側も、検出は手元の鼓動（ADR-070）で起き、CI の稼働は感知しない（NONGOAL 第14項）ので、注入で警告する以外の選択肢がそもそも無い。評価者がこれを所有者判断と印したのは、統治木が入力に入っていないためである（ADR-127）。"
     },
     {
       "incident_id": "INC-007-linter-nameerror-field-report",
       "index": 3,
       "state": "rejected",
-      "note": "所有者判断ではなく既決。ADR-122 が『運用中の版と生存状態は供給側へ戻す。ただし通信を伴わず、利用者の承認を経た転記としてだけ戻す』と決定しており、可否は決まっている。残るのは転記の様式であって経路の可否ではない。"
+      "note": "所有者判断ではなく既決。ADR-122 が『運用中の版と生存状態は供給側へ戻す。ただし通信を伴わず、利用者の承認を経た転記としてだけ戻す』と決定しており、可否は決まっている。残るのは転記の様式であって経路の可否ではない。",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "所有者判断ではなく既決。ADR-122 が『運用中の版と生存状態は供給側へ戻す。ただし通信を伴わず、利用者の承認を経た転記としてだけ戻す』と決定しており、可否は決まっている。残るのは転記の様式であって経路の可否ではない。"
     },
     {
       "incident_id": "INC-008-ledger-write-back-clobber",
       "index": 8,
       "state": "rejected",
-      "note": "判断ではなく観測で消える。実測: git ls-files assurance/ledger が 38 件を返し、台帳は版管理下にある。追跡外は assurance/ledger/runs/ だけで（.gitignore:20）、それは LEDGER_KINDS が『使い捨ての実行記録・選別を経ていない』と既に宣言済み。よって『追跡外である場合は』の前件が成り立たず、復元手段の要否を決める必要が無い。除去は git から復旧できるので『復旧不能な削除』の類型にも当たらない。"
+      "note": "判断ではなく観測で消える。実測: git ls-files assurance/ledger が 38 件を返し、台帳は版管理下にある。追跡外は assurance/ledger/runs/ だけで（.gitignore:20）、それは LEDGER_KINDS が『使い捨ての実行記録・選別を経ていない』と既に宣言済み。よって『追跡外である場合は』の前件が成り立たず、復元手段の要否を決める必要が無い。除去は git から復旧できるので『復旧不能な削除』の類型にも当たらない。",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "判断ではなく観測で消える。実測: git ls-files assurance/ledger が 38 件を返し、台帳は版管理下にある。追跡外は assurance/ledger/runs/ だけで（.gitignore:20）、それは LEDGER_KINDS が『使い捨ての実行記録・選別を経ていない』と既に宣言済み。よって『追跡外である場合は』の前件が成り立たず、復元手段の要否を決める必要が無い。除去は git から復旧できるので『復旧不能な削除』の類型にも当たらない。"
     },
     {
       "incident_id": "INC-001-sessionend-audit-gap",
       "index": 4,
       "state": "rejected",
-      "note": "示された二択のどちらも採らない。所有者判断でもない。(1) 拒否は保証にならない —— policy-guard.py に .claude/.cache への言及は 0 件で、ガードが解くのは統治木の root （_find_docs_root）である。加えて NONGOAL-001 第4項『Hookが起動しない経路で書かれたものは止められず、全件監査が後から補う』の通り、外部プロセス・別ツール・直接のファイル書き込みは塞げない。塞げないものを塞いだことにすると『見ていないものを見ていると書かない』(NONGOAL 第14項の理由) に反する。(2) 助言も観測できない —— NONGOAL-001 第9項『ガードが実際に違反を拒否できることは検出しない』。(3) 木が既に採っている第三の形が在る: 書き手を縛らず**読み手が検める**。ADR-053 の世代の照合、ADR-119 の実行の印、そして ASM-002 の先行指標（checks_run の集合照合）が同じ線である。是正はこの線を強めることであって、書き込みの禁止ではない。"
+      "note": "示された二択のどちらも採らない。所有者判断でもない。(1) 拒否は保証にならない —— policy-guard.py に .claude/.cache への言及は 0 件で、ガードが解くのは統治木の root （_find_docs_root）である。加えて NONGOAL-001 第4項『Hookが起動しない経路で書かれたものは止められず、全件監査が後から補う』の通り、外部プロセス・別ツール・直接のファイル書き込みは塞げない。塞げないものを塞いだことにすると『見ていないものを見ていると書かない』(NONGOAL 第14項の理由) に反する。(2) 助言も観測できない —— NONGOAL-001 第9項『ガードが実際に違反を拒否できることは検出しない』。(3) 木が既に採っている第三の形が在る: 書き手を縛らず**読み手が検める**。ADR-053 の世代の照合、ADR-119 の実行の印、そして ASM-002 の先行指標（checks_run の集合照合）が同じ線である。是正はこの線を強めることであって、書き込みの禁止ではない。",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "示された二択のどちらも採らない。所有者判断でもない。(1) 拒否は保証にならない —— policy-guard.py に .claude/.cache への言及は 0 件で、ガードが解くのは統治木の root （_find_docs_root）である。加えて NONGOAL-001 第4項『Hookが起動しない経路で書かれたものは止められず、全件監査が後から補う』の通り、外部プロセス・別ツール・直接のファイル書き込みは塞げない。塞げないものを塞いだことにすると『見ていないものを見ていると書かない』(NONGOAL 第14項の理由) に反する。(2) 助言も観測できない —— NONGOAL-001 第9項『ガードが実際に違反を拒否できることは検出しない』。(3) 木が既に採っている第三の形が在る: 書き手を縛らず**読み手が検める**。ADR-053 の世代の照合、ADR-119 の実行の印、そして ASM-002 の先行指標（checks_run の集合照合）が同じ線である。是正はこの線を強めることであって、書き込みの禁止ではない。"
     },
     {
       "incident_id": "INC-001-sessionend-audit-gap",
@@ -109,7 +117,9 @@
       "index": 2,
       "state": "pending",
       "note": "閉じ条件に軸展開の段は無い —— SKILL.md・ADR-117・cast_analysis.py とも『失敗様式の軸へ展開して反例集合へ変換する』段の grep 該当なし。INC-011#1 と重複統合のまま。手順追加は ADR-127 六類型に当たらずレーン内裁量で、owner ではない。",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "閉じ条件に軸展開の段は無い —— SKILL.md・ADR-117・cast_analysis.py とも『失敗様式の軸へ展開して反例集合へ変換する』段の grep 該当なし。INC-011#1 と重複統合のまま。手順追加は ADR-127 六類型に当たらずレーン内裁量で、owner ではない。"
     },
     {
       "incident_id": "INC-002-termcheck-ascii-substring",
@@ -122,7 +132,9 @@
       "index": 5,
       "state": "pending",
       "note": "owner ではない(ADR-127:55 の六類型に不該当)。既定は NONGOAL-001 第9項(non-goals.md:29・50)が『機能カナリアが入るまで拒否の保証はやらない』側に持つ。代理指標の記録経路は現に無い(plugin/scripts に該当なし)。設けるか残すかの ADR 設計判断が未着手。",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "owner ではない(ADR-127:55 の六類型に不該当)。既定は NONGOAL-001 第9項(non-goals.md:29・50)が『機能カナリアが入るまで拒否の保証はやらない』側に持つ。代理指標の記録経路は現に無い(plugin/scripts に該当なし)。設けるか残すかの ADR 設計判断が未着手。"
     },
     {
       "incident_id": "INC-002-termcheck-ascii-substring",
@@ -149,7 +161,9 @@
         "verdict": "縮小採択",
         "reason": "通知欄そのものは marketplace の schema に属し、こちらの設計範囲外である（NONGOAL-001 第10項『リポジトリを越えた統治はしない』）。ただし『変更事実を配布物の中で見えるようにする』部分は自分の領分であり、実施できる。plugin/ に配布物の変更履歴を同梱する形で満たす。#197 のカルク軸の是正が、まさに『利用者側の指摘内容が変わる』最初の実例になるので、同じ反復で入れる。",
         "ruling_ref": "assurance/ledger/rulings/2026-08-09-owner-decisions-delegated.json"
-      }
+      },
+      "evaluator_owner_required": true,
+      "owner_override_reason": "所有者委任による裁定（2026-08-09）: 縮小採択 —— 通知欄そのものは marketplace の schema に属し、こちらの設計範囲外である（NONGOAL-001 第10項『リポジトリを越えた統治はしない』）。ただし『変更事実を配布物の中で見えるようにする』部分は自分の領分であり、実施できる。plugin/ に配布物の変更履歴を同梱する形で満たす。#197 のカルク軸の是正が、まさに『利用者側の指摘内容が変わる』最初の実例になるので、同じ反復で入れる。 ／ 旧 note: 変わらず未着地: CHANGELOG.md は plugin/ に無く、marketplace.json(source ./plugin)に通知欄も無い。届ける道は変更履歴の plugin/ 同梱か配布形式の変更で、六類型『配布境界や保証範囲の変更』に真に当たる。着手は INC-019(fixed:"
     },
     {
       "incident_id": "INC-003-sdk-error-opacity",
@@ -184,13 +198,17 @@
       "index": 5,
       "state": "pending",
       "note": "未着手。最低線の検査は要求側のみ(model_policy.assert_evaluation_floor)。sdk_lane.py:144 が観測値 init.model を記録するが最低線と突き合わせる判定は無く、判定不能時の既定も未定。六類型に非該当。",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "未着手。最低線の検査は要求側のみ(model_policy.assert_evaluation_floor)。sdk_lane.py:144 が観測値 init.model を記録するが最低線と突き合わせる判定は無く、判定不能時の既定も未定。六類型に非該当。"
     },
     {
       "incident_id": "INC-003-sdk-error-opacity",
       "index": 6,
       "state": "rejected",
-      "note": "所有者判断ではなく既決。木は三重に決めている —— ADR-114『レーンが使えないときの状態はPASS でなく UNASSESSED（前提欠如で未評価）』、運転手順 §5『根拠なき PASS を書かない』、そして本キャンペーンで入れた ADR-129『前提が欠けたら UNASSESSED へ倒し、それは待機であって迂回ではない』。分類が UNKNOWN の間、その評価結果を保証の根拠に数えないのが既決であり、『注記付きで有効として扱う』は根拠なき PASS に当たる。所有者へ回さない。"
+      "note": "所有者判断ではなく既決。木は三重に決めている —— ADR-114『レーンが使えないときの状態はPASS でなく UNASSESSED（前提欠如で未評価）』、運転手順 §5『根拠なき PASS を書かない』、そして本キャンペーンで入れた ADR-129『前提が欠けたら UNASSESSED へ倒し、それは待機であって迂回ではない』。分類が UNKNOWN の間、その評価結果を保証の根拠に数えないのが既決であり、『注記付きで有効として扱う』は根拠なき PASS に当たる。所有者へ回さない。",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "所有者判断ではなく既決。木は三重に決めている —— ADR-114『レーンが使えないときの状態はPASS でなく UNASSESSED（前提欠如で未評価）』、運転手順 §5『根拠なき PASS を書かない』、そして本キャンペーンで入れた ADR-129『前提が欠けたら UNASSESSED へ倒し、それは待機であって迂回ではない』。分類が UNKNOWN の間、その評価結果を保証の根拠に数えないのが既決であり、『注記付きで有効として扱う』は根拠なき PASS に当たる。所有者へ回さない。"
     },
     {
       "incident_id": "INC-003-sdk-error-opacity",
@@ -203,7 +221,9 @@
       "incident_id": "INC-003-sdk-error-opacity",
       "index": 8,
       "state": "rejected",
-      "note": "前提が違う。**共通経路は既に在る** —— ADR-074 の `_auditcache.record_error` が `.claude/.cache` のジャーナルへ追記し、`_hookio._record` がフックの例外経路から呼ぶ。記録するのは部品名・例外の型・plugin 内の発生位置・版・時刻だけで、例外の自由文は写さない（統治対象のリポジトリには機密がありうるため。NONGOAL-001 第15項の理由）。上限を保ち、決して例外を投げず、書けなければ黙って諦める。したがって『要否を検討する』段は済んでおり、問いは『何をそこへ載せるか』へ変わる。\n載せる範囲も既決である: (a) ガードの拒否 —— NONGOAL-001 第9項が『ガードが実際に違反を拒否できることは検出しない』と決め、**再検討の条件（機能カナリアが入るまで）まで自分で書いている**。カナリアは入っていないので今は載せない。(b) リンタの助言 —— INC-004#2 が同じ戻り経路を求めており重複。そちらへ寄せる。(c) SDK 例外 —— レーン側の話で、配布物のジャーナルとは別。レーンは runs/ に実行記録を持つが『選別を経ていない』として正本は読まない（LEDGER_KINDS）。\nそして**所有者判断ではない**。非目標の見直しは ADR-127 の六類型に当たらず、決定は ADR で下す。第9項は再検討の条件を自分で持っているので、条件が満たされたときに問い直せばよい。"
+      "note": "前提が違う。**共通経路は既に在る** —— ADR-074 の `_auditcache.record_error` が `.claude/.cache` のジャーナルへ追記し、`_hookio._record` がフックの例外経路から呼ぶ。記録するのは部品名・例外の型・plugin 内の発生位置・版・時刻だけで、例外の自由文は写さない（統治対象のリポジトリには機密がありうるため。NONGOAL-001 第15項の理由）。上限を保ち、決して例外を投げず、書けなければ黙って諦める。したがって『要否を検討する』段は済んでおり、問いは『何をそこへ載せるか』へ変わる。\n載せる範囲も既決である: (a) ガードの拒否 —— NONGOAL-001 第9項が『ガードが実際に違反を拒否できることは検出しない』と決め、**再検討の条件（機能カナリアが入るまで）まで自分で書いている**。カナリアは入っていないので今は載せない。(b) リンタの助言 —— INC-004#2 が同じ戻り経路を求めており重複。そちらへ寄せる。(c) SDK 例外 —— レーン側の話で、配布物のジャーナルとは別。レーンは runs/ に実行記録を持つが『選別を経ていない』として正本は読まない（LEDGER_KINDS）。\nそして**所有者判断ではない**。非目標の見直しは ADR-127 の六類型に当たらず、決定は ADR で下す。第9項は再検討の条件を自分で持っているので、条件が満たされたときに問い直せばよい。",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "前提が違う。**共通経路は既に在る** —— ADR-074 の `_auditcache.record_error` が `.claude/.cache` のジャーナルへ追記し、`_hookio._record` がフックの例外経路から呼ぶ。記録するのは部品名・例外の型・plugin 内の発生位置・版・時刻だけで、例外の自由文は写さない（統治対象のリポジトリには機密がありうるため。NONGOAL-001 第15項の理由）。上限を保ち、決して例外を投げず、書けなければ黙って諦める。したがって『要否を検討する』段は済んでおり、問いは『何をそこへ載せるか』へ変わる。\n載せる範囲も既決である: (a) ガードの拒否 —— NONGOAL-001 第9項が『ガードが実際に違反を拒否できることは検出しない』と決め、**再検討の条件（機能カナリアが入るまで）まで自分で書いている**。カナリアは入っていないので今は載せない。(b) リンタの助言 —— INC-004#2 が同じ戻り経路を求めており重複。そちらへ寄せる。(c) SDK 例外 —— レーン側の話で、配布物のジャーナルとは別。レーンは runs/ に実行記録を持つが『選別を経ていない』として正本は読まない（LEDGER_KINDS）。\nそして**所有者判断ではない**。非目標の見直しは ADR-127 の六類型に当たらず、決定は ADR で下す。第9項は再検討の条件を自分で持っているので、条件が満たされたときに問い直せばよい。"
     },
     {
       "incident_id": "INC-024-coverage-rubric-undecided-at-its-busiest-boundary",
@@ -217,7 +237,9 @@
       "index": 3,
       "state": "landed",
       "evidence_ref": "doctrine_docs/packaging/decisions/ADR-133-coverage-rubric-pins-its-busiest-boundary.md",
-      "note": "所有者が三案から『規準に境界の判定規則を足す』を選んだ（2026-08-07）。保証範囲の変更に当たるため所有者判断を仰ぎ、成立した。"
+      "note": "所有者が三案から『規準に境界の判定規則を足す』を選んだ（2026-08-07）。保証範囲の変更に当たるため所有者判断を仰ぎ、成立した。",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "所有者が三案から『規準に境界の判定規則を足す』を選んだ（2026-08-07）。保証範囲の変更に当たるため所有者判断を仰ぎ、成立した。"
     },
     {
       "incident_id": "INC-024-coverage-rubric-undecided-at-its-busiest-boundary",
@@ -231,7 +253,9 @@
       "index": 5,
       "state": "landed",
       "evidence_ref": "assurance/harness/recheck_evidence.py",
-      "note": "標本の外の母集団にも規則を及ぼした。決定論の照合を全 606 件の終端に走らせ、決定・仕様だけを証拠にしていた緑 13 件を『対応計画あり』へ落とした。取り下げた 7 件だけで是正を閉じていない。"
+      "note": "標本の外の母集団にも規則を及ぼした。決定論の照合を全 606 件の終端に走らせ、決定・仕様だけを証拠にしていた緑 13 件を『対応計画あり』へ落とした。取り下げた 7 件だけで是正を閉じていない。",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "標本の外の母集団にも規則を及ぼした。決定論の照合を全 606 件の終端に走らせ、決定・仕様だけを証拠にしていた緑 13 件を『対応計画あり』へ落とした。取り下げた 7 件だけで是正を閉じていない。"
     },
     {
       "incident_id": "INC-024-coverage-rubric-undecided-at-its-busiest-boundary",
@@ -265,21 +289,27 @@
       "incident_id": "INC-017-accepted-adr-born-red-is-unfixable",
       "index": 1,
       "state": "rejected",
-      "note": "所有者裁定 2026-08-07: 修復路は後継 ADR のみ。accepted→proposed の条件付き carve-out は作らない。可逆の差し戻しは不変性を往復遷移で迂回可能にする（INC-026 推奨#7 と同根）。WATCH-001 第13項。"
+      "note": "所有者裁定 2026-08-07: 修復路は後継 ADR のみ。accepted→proposed の条件付き carve-out は作らない。可逆の差し戻しは不変性を往復遷移で迂回可能にする（INC-026 推奨#7 と同根）。WATCH-001 第13項。",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "所有者裁定 2026-08-07: 修復路は後継 ADR のみ。accepted→proposed の条件付き carve-out は作らない。可逆の差し戻しは不変性を往復遷移で迂回可能にする（INC-026 推奨#7 と同根）。WATCH-001 第13項。"
     },
     {
       "incident_id": "INC-017-accepted-adr-born-red-is-unfixable",
       "index": 7,
       "state": "landed",
       "evidence_ref": "doctrine_docs/_system/watchlist.md",
-      "note": "所有者裁定 2026-08-07 で対価を費用として受理。WATCH-001 第13項に恒久記録（緩和・carve-out 拡張・差し戻しのいずれも作らない）。"
+      "note": "所有者裁定 2026-08-07 で対価を費用として受理。WATCH-001 第13項に恒久記録（緩和・carve-out 拡張・差し戻しのいずれも作らない）。",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "所有者裁定 2026-08-07 で対価を費用として受理。WATCH-001 第13項に恒久記録（緩和・carve-out 拡張・差し戻しのいずれも作らない）。"
     },
     {
       "incident_id": "INC-026-accepted-adr-has-no-sanctioned-repair-path",
       "index": 1,
       "state": "landed",
       "evidence_ref": "doctrine_docs/_system/watchlist.md",
-      "note": "三案のうち「何もしない（後継 ADR の道を維持）」を所有者が選択（2026-08-07）。WATCH-001 第13項に恒久記録。"
+      "note": "三案のうち「何もしない（後継 ADR の道を維持）」を所有者が選択（2026-08-07）。WATCH-001 第13項に恒久記録。",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "三案のうち「何もしない（後継 ADR の道を維持）」を所有者が選択（2026-08-07）。WATCH-001 第13項に恒久記録。"
     },
     {
       "incident_id": "INC-019-version-string-does-not-identify-the-copy",
@@ -342,7 +372,9 @@
       "index": 7,
       "state": "rejected",
       "note": "ADR-125 決定2/4 が既に決めている: 処遇は別台帳に置き、rejected は理由必須で残す（事故分析の記録へ書き戻さない・除去しない）。前提の『復旧不能な削除』も不成立 —— assurance/ledger は git 管理下（git ls-files で実証）。",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "ADR-125 決定2/4 が既に決めている: 処遇は別台帳に置き、rejected は理由必須で残す（事故分析の記録へ書き戻さない・除去しない）。前提の『復旧不能な削除』も不成立 —— assurance/ledger は git 管理下（git ls-files で実証）。"
     },
     {
       "incident_id": "INC-020-evaluator-blindness-read-as-owner-authority",
@@ -380,7 +412,9 @@
       "state": "landed",
       "note": "所有者が 2026-08-07 に (a) 両方実装を裁定（rulings/2026-08-07-bulk-campaign.json「FORMALIZE・VERIFY の両実装」）。ADR-138/139 で実施し formalize.py・verify_fix.py が実在。独立検証なしの期間は VERIFY_GRANDFATHERED（26 件凍結）と NONGOAL-001 第17項で画した。",
       "evidence_ref": "assurance/ledger/rulings/2026-08-07-bulk-campaign.json",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "所有者が 2026-08-07 に (a) 両方実装を裁定（rulings/2026-08-07-bulk-campaign.json「FORMALIZE・VERIFY の両実装」）。ADR-138/139 で実施し formalize.py・verify_fix.py が実在。独立検証なしの期間は VERIFY_GRANDFATHERED（26 件凍結）と NONGOAL-001 第17項で画した。"
     },
     {
       "incident_id": "INC-021-lane-fires-on-declared-without-a-runner",
@@ -411,14 +445,18 @@
       "state": "landed",
       "note": "既決。ADR-139 帰結が走らせ手追加後も「得られるのはセッションの独立まで（NONGOAL-001 第17項）。同系 model の共通原因故障は残余リスク」と前提維持を明記（orchestrator.py:548-552 にも同旨）。SKILL §4:79 が残余リスクを台帳に保つと定める。",
       "evidence_ref": "doctrine_docs/packaging/decisions/ADR-139-verify-runner-and-fixed-gate.md",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "既決。ADR-139 帰結が走らせ手追加後も「得られるのはセッションの独立まで（NONGOAL-001 第17項）。同系 model の共通原因故障は残余リスク」と前提維持を明記（orchestrator.py:548-552 にも同旨）。SKILL §4:79 が残余リスクを台帳に保つと定める。"
     },
     {
       "incident_id": "INC-022-ci-that-cannot-run-is-read-as-red",
       "index": 0,
       "state": "pending",
       "note": "門は着地（ADR-129）。judge が run 不在・取得不成立注記・状態語割れ・未知語をすべて UNASSESSED へ倒し（merge_gate.py:66-107）、README:131-134 が「前提欠如は待機であって迂回ではない」を明記。ただし常設許可の条件3（SKILL.md:143）は今も「PR の CI が pass」の二値のままで、UNASSESSED への分岐が条文に無い。",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "門は着地（ADR-129）。judge が run 不在・取得不成立注記・状態語割れ・未知語をすべて UNASSESSED へ倒し（merge_gate.py:66-107）、README:131-134 が「前提欠如は待機であって迂回ではない」を明記。ただし常設許可の条件3（SKILL.md:143）は今も「PR の CI が pass」の二値のままで、UNASSESSED への分岐が条文に無い。"
     },
     {
       "incident_id": "INC-022-ci-that-cannot-run-is-read-as-red",
@@ -426,14 +464,18 @@
       "state": "landed",
       "note": "着地（ADR-129 決定3）。judge が検査対象 SHA と適用対象 SHA の不一致を UNASSESSED へ倒し（merge_gate.py:85-92「検査していない木は通さない」）、collect が head_sha を判定へ渡す（:159）。README:132-133 が識別子一致を適合の必要条件として明文化。",
       "evidence_ref": "assurance/harness/merge_gate.py:85-92",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "着地（ADR-129 決定3）。judge が検査対象 SHA と適用対象 SHA の不一致を UNASSESSED へ倒し（merge_gate.py:85-92「検査していない木は通さない」）、collect が head_sha を判定へ渡す（:159）。README:132-133 が識別子一致を適合の必要条件として明文化。"
     },
     {
       "incident_id": "INC-022-ci-that-cannot-run-is-read-as-red",
       "index": 2,
       "state": "pending",
       "note": "未着地。ADR-129 帰結は UNASSESSED 時の三択（引き直す/待つ/事象に積む）までで、引き直しの上限回数・待機時間・上限到達時の差し戻し経路の決定論の表は SKILL・README・orchestrator のどこにも無い。六類型に当たらず所有者判断ではない（INC-003#8 の処遇と同じ判断）。",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "未着地。ADR-129 帰結は UNASSESSED 時の三択（引き直す/待つ/事象に積む）までで、引き直しの上限回数・待機時間・上限到達時の差し戻し経路の決定論の表は SKILL・README・orchestrator のどこにも無い。六類型に当たらず所有者判断ではない（INC-003#8 の処遇と同じ判断）。"
     },
     {
       "incident_id": "INC-022-ci-that-cannot-run-is-read-as-red",
@@ -447,7 +489,9 @@
       "index": 4,
       "state": "pending",
       "note": "未着地。non-goals.md の規約は「対象を具体に書き、理由を添える」（:17）までで、検出しない事項の受け皿（どの統制のどの条項が引き受けるか）の併記義務は無い。第9項の再検討条件の自己記載が近い先例のみ。非目標の規約追加は六類型に当たらず所有者判断ではない（INC-003#8 の処遇 note と同じ判断。決定は ADR で下せる）。",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "未着地。non-goals.md の規約は「対象を具体に書き、理由を添える」（:17）までで、検出しない事項の受け皿（どの統制のどの条項が引き受けるか）の併記義務は無い。第9項の再検討条件の自己記載が近い先例のみ。非目標の規約追加は六類型に当たらず所有者判断ではない（INC-003#8 の処遇 note と同じ判断。決定は ADR で下せる）。"
     },
     {
       "incident_id": "INC-022-ci-that-cannot-run-is-read-as-red",
@@ -566,7 +610,9 @@
         "verdict": "採択",
         "reason": "畳み込みが実害を出していることを本再監査で実測した —— disposition が UNASSESSED の 2 件は、unknown にも unmapped にも入らず、status のどの数にも現れない（五値のうち一値が見えない）。読者は全てレーン内部であり配布物ではないので、互換性の破壊は自分の中で閉じる。再判定と同じ反復で行い、schema の移行を一度で済ませる。",
         "ruling_ref": "assurance/ledger/rulings/2026-08-09-owner-decisions-delegated.json"
-      }
+      },
+      "evaluator_owner_required": true,
+      "owner_override_reason": "所有者委任による裁定（2026-08-09）: 採択 —— 畳み込みが実害を出していることを本再監査で実測した —— disposition が UNASSESSED の 2 件は、unknown にも unmapped にも入らず、status のどの数にも現れない（五値のうち一値が見えない）。読者は全てレーン内部であり配布物ではないので、互換性の破壊は自分の中で閉じる。再判定と同じ反復で行い、schema の移行を一度で済ませる。 ／ 旧 note: 未着地。UNKNOWN は今も骨組みの初期値（coverage.py:66）と評価結果の二由来を持ち、弁別は assigned_at の有無（map_coverage.py:60）。計数・表示・試験の分離は済むが、型での二軸分離は網羅台帳 schema（jerg/stpa/cast の全項と rea"
     },
     {
       "incident_id": "INC-010-evaluated-unknown-relisted",
@@ -603,7 +649,9 @@
       "state": "landed",
       "note": "着地（凍結ではなく再評価を設ける側で決着）。recheck_trigger は割当 schema の必須欄（schemas.py:277-281）で、jerg 6・stpa 2・cast 17 の評価済み UNKNOWN 全件が結論の根拠（reason）と再評価契機を持つ。2026-08-07 の取り直し（ADR-134 の範囲限定の古び再判定）で jerg は 8→6 件、各項 reassessments×3。",
       "evidence_ref": "assurance/harness/schemas.py:277-281; assurance/harness/map_coverage.py:248; assurance/ledger/catalogs/jerg-coverage.json（評価済み UNKNOWN 6 件全てに reason・recheck_trigger・reassessments×3）; assurance/harness/independent_recheck.py:21",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "着地（凍結ではなく再評価を設ける側で決着）。recheck_trigger は割当 schema の必須欄（schemas.py:277-281）で、jerg 6・stpa 2・cast 17 の評価済み UNKNOWN 全件が結論の根拠（reason）と再評価契機を持つ。2026-08-07 の取り直し（ADR-134 の範囲限定の古び再判定）で jerg は 8→6 件、各項 reassessments×3。"
     },
     {
       "incident_id": "INC-010-evaluated-unknown-relisted",
@@ -617,7 +665,9 @@
       "index": 7,
       "state": "pending",
       "note": "未決。ADR-139（fixed は独立検証 PASS の verify_ref を要す）・ADR-144（クローズ語彙の三条件）は完了条件を強化したが、『同型を一般に捕まえる不変条件試験』の要求は正本のどこにも無い（PROC-001 にも無し）。六類型のどれにも真には当たらず（ADR-127 決定2）、類型を名指せない申告は owner に立てない。",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "未決。ADR-139（fixed は独立検証 PASS の verify_ref を要す）・ADR-144（クローズ語彙の三条件）は完了条件を強化したが、『同型を一般に捕まえる不変条件試験』の要求は正本のどこにも無い（PROC-001 にも無し）。六類型のどれにも真には当たらず（ADR-127 決定2）、類型を名指せない申告は owner に立てない。"
     },
     {
       "incident_id": "INC-010-evaluated-unknown-relisted",
@@ -639,14 +689,18 @@
       "state": "landed",
       "note": "着地。綴じた識別子は断片で判じない(_termcheck.py:715 _is_identifier_fragment・_GLUE 軸:426)。WATCH-001 第2項が『全体としてしか判じない』を規範化、corpus 試験が性質を凍結。複合語を丸ごと候補にする形は採らず全体か無判定(誤警報を許さない ADR-082 の向き)。",
       "evidence_ref": "plugin/scripts/_termcheck.py:426-434(_GLUE 軸・_is_identifier_fragment)・:715-716(適用)／doctrine_docs/_system/watchlist.md WATCH-001 第2項／plugin/tests/test_termcheck_corpus.py",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "着地。綴じた識別子は断片で判じない(_termcheck.py:715 _is_identifier_fragment・_GLUE 軸:426)。WATCH-001 第2項が『全体としてしか判じない』を規範化、corpus 試験が性質を凍結。複合語を丸ごと候補にする形は採らず全体か無判定(誤警報を許さない ADR-082 の向き)。"
     },
     {
       "incident_id": "INC-004-hyphen-token-undefined-term",
       "index": 2,
       "state": "pending",
       "note": "未着手。助言の受領結果の記録・再出現計数の機構は plugin/scripts に無い(採用/非採用/再出現の grep 該当なし)。control_structure.py:91 は POST_TOOL_LINTER の feedback を additionalContext のみと宣言。正本に却下も無い。六類型に非該当。",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "未着手。助言の受領結果の記録・再出現計数の機構は plugin/scripts に無い(採用/非採用/再出現の grep 該当なし)。control_structure.py:91 は POST_TOOL_LINTER の feedback を additionalContext のみと宣言。正本に却下も無い。六類型に非該当。"
     },
     {
       "incident_id": "INC-004-hyphen-token-undefined-term",
@@ -660,21 +714,27 @@
       "index": 4,
       "state": "pending",
       "note": "未着手。鼓動の照合は版番号のまま(gov-heartbeat.py:387-396 → _auditcache.version_drift/version_lag。ADR-066/070)。判定規則の内容要約値の照合は無い。前提の破れは ASM-003 が 2026-08-08 に FAIL 観測(assumptions.json)、事象は INC-019。",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "未着手。鼓動の照合は版番号のまま(gov-heartbeat.py:387-396 → _auditcache.version_drift/version_lag。ADR-066/070)。判定規則の内容要約値の照合は無い。前提の破れは ASM-003 が 2026-08-08 に FAIL 観測(assumptions.json)、事象は INC-019。"
     },
     {
       "incident_id": "INC-004-hyphen-token-undefined-term",
       "index": 5,
       "state": "pending",
       "note": "部分的。WATCH-001 第4項(リンタは助言のみ・拒否はガードに委ねる)と control_structure.py:86-93 の宣言は在るが、policy-guard.py は用語を見ず(grep 該当なし)、用語規律に限った強制の要否の仕様と戻り経路の割当は無い。",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "部分的。WATCH-001 第4項(リンタは助言のみ・拒否はガードに委ねる)と control_structure.py:86-93 の宣言は在るが、policy-guard.py は用語を見ず(grep 該当なし)、用語規律に限った強制の要否の仕様と戻り経路の割当は無い。"
     },
     {
       "incident_id": "INC-004-hyphen-token-undefined-term",
       "index": 6,
       "state": "pending",
       "note": "未着手。暫定軽減の定義/不定義を明示的に選んだ記録は rulings に無い(2026-08-07-bulk-campaign.json の scope 外)。当該事象は fixed: true(incidents.json)で本件の窓は閉じた。ADR-127 の六類型に非該当のため owner にしない。",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "未着手。暫定軽減の定義/不定義を明示的に選んだ記録は rulings に無い(2026-08-07-bulk-campaign.json の scope 外)。当該事象は fixed: true(incidents.json)で本件の窓は閉じた。ADR-127 の六類型に非該当のため owner にしない。"
     },
     {
       "incident_id": "INC-004-hyphen-token-undefined-term",
@@ -710,7 +770,9 @@
       "index": 0,
       "state": "pending",
       "note": "cast は欠測実行も設定値・実消費・終了理由込みで台帳へ積み閉じない(cast_analysis.py:279-295)が、formalize は非PASSで台帳に書かず(formalize.py:172-175)、verify 記録は実消費・終了理由の欄を欠く。六類型に非該当のため owner とはしない。",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "cast は欠測実行も設定値・実消費・終了理由込みで台帳へ積み閉じない(cast_analysis.py:279-295)が、formalize は非PASSで台帳に書かず(formalize.py:172-175)、verify 記録は実消費・終了理由の欄を欠く。六類型に非該当のため owner とはしない。"
     },
     {
       "incident_id": "INC-014-evaluation-max-turns-marginal",
@@ -744,7 +806,9 @@
         "verdict": "採択（欠測は母数から外し UNASSESSED として記録する）",
         "reason": "欠測を PASS にも FAIL にも数えない。これは §5 の状態語彙（根拠なき PASS を書かない・証拠が消えた PASS は UNKNOWN へ戻す）と同じ向きである。再実行の必須化はしない —— 費用が読めず、欠測率の上限も現時点では根拠を持って引けない。上限を置くのは、欠測率の実測が溜まってからでよい。",
         "ruling_ref": "assurance/ledger/rulings/2026-08-09-owner-decisions-delegated.json"
-      }
+      },
+      "evaluator_owner_required": true,
+      "owner_override_reason": "所有者委任による裁定（2026-08-09）: 採択（欠測は母数から外し UNASSESSED として記録する） —— 欠測を PASS にも FAIL にも数えない。これは §5 の状態語彙（根拠なき PASS を書かない・証拠が消えた PASS は UNKNOWN へ戻す）と同じ向きである。再実行の必須化はしない —— 費用が読めず、欠測率の上限も現時点では根拠を持って引けない。上限を置くのは、欠測率の実測が溜まってからでよい。 ／ 旧 note: 欠測実行を保証の母数から許容するか・再実行必須か・欠測率上限を前提条件に置くかは、保証の主張が覆う範囲を定める受容可否判断で保証範囲の変更に当たる。rulings/2026-08-07-bulk-campaign.json の裁定範囲にも含まれない。"
     },
     {
       "incident_id": "INC-014-evaluation-max-turns-marginal",
@@ -758,7 +822,9 @@
       "index": 6,
       "state": "pending",
       "note": "レーン実行健全性の sensor は不在 —— observe_assumptions.py は ASM-001〜004 限定(同:16-23)、doctor は前提診断、unknown_aging は件数のみ(orchestrator.py:1046)。開発レーン内の新設なら六類型に非該当で、owner を要すのは配布側要素の対象拡大を選ぶ場合だけ。",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "レーン実行健全性の sensor は不在 —— observe_assumptions.py は ASM-001〜004 限定(同:16-23)、doctor は前提診断、unknown_aging は件数のみ(orchestrator.py:1046)。開発レーン内の新設なら六類型に非該当で、owner を要すのは配布側要素の対象拡大を選ぶ場合だけ。"
     },
     {
       "incident_id": "INC-015-discover-output-invisible-to-canon",
@@ -812,7 +878,9 @@
       "index": 6,
       "state": "rejected",
       "note": "既決。ADR-144 が fixed と shipped を別主張として分け(出荷は tag 存在・ancestor 照合・ship_ref の三条件)、間の期間は台帳が fixed:true/shipped:false のまま明示に持つ。検出器・観測器は正本側に置く線が既決 —— 複製側から利用者環境を感知する経路は NONGOAL-001 第14項・DECIDED-001 事実7・ADR-122 が却下済み(INC-001 推奨#3 の処遇と同型)。リリース実施の権限は ADR-145 の裁定が記録。",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "既決。ADR-144 が fixed と shipped を別主張として分け(出荷は tag 存在・ancestor 照合・ship_ref の三条件)、間の期間は台帳が fixed:true/shipped:false のまま明示に持つ。検出器・観測器は正本側に置く線が既決 —— 複製側から利用者環境を感知する経路は NONGOAL-001 第14項・DECIDED-001 事実7・ADR-122 が却下済み(INC-001 推奨#3 の処遇と同型)。リリース実施の権限は ADR-145 の裁定が記録。"
     },
     {
       "incident_id": "INC-015-discover-output-invisible-to-canon",
@@ -851,7 +919,9 @@
       "state": "landed",
       "note": "着地。橋渡しの責任は正本の status が負う —— recommendations(_recommendation_summary が pending 内訳・申告と成立を分けた所有者判断一覧。orchestrator.py:1723-1741)と scenario_candidates(_candidate_summary が未批判 P0/P1 内訳。944-969)を毎回必ず出し(1750-1779)、運転手順が status を反復冒頭の正本と定め(SKILL §3)、報告の規定形式が人間判断事項・次の最危険仮説を必須項に持つ(SKILL §8)。SessionStart 注入でなく進捗報告経路を採った形。六類型のどれにも当たらず所有者判断は不要(ADR-127)。",
       "evidence_ref": "assurance/harness/orchestrator.py:944-969,1723-1741,1750-1779／.claude/skills/assurance-loop/SKILL.md:30,180-186／ADR-125（決定3: 件数を必ず添える）／ADR-140",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "着地。橋渡しの責任は正本の status が負う —— recommendations(_recommendation_summary が pending 内訳・申告と成立を分けた所有者判断一覧。orchestrator.py:1723-1741)と scenario_candidates(_candidate_summary が未批判 P0/P1 内訳。944-969)を毎回必ず出し(1750-1779)、運転手順が status を反復冒頭の正本と定め(SKILL §3)、報告の規定形式が人間判断事項・次の最危険仮説を必須項に持つ(SKILL §8)。SessionStart 注入でなく進捗報告経路を採った形。六類型のどれにも当たらず所有者判断は不要(ADR-127)。"
     },
     {
       "incident_id": "INC-016-cast-analysis-content-unread-by-canon",
@@ -872,7 +942,9 @@
       "index": 6,
       "state": "rejected",
       "note": "前件が成り立たない。機構化系 6 件(推奨#0〜#5)のうち六類型(互換性破壊・配布境界・評価model最低線ほか)に現に当たる物は無い —— #0/#1/#3 は正本側で着地済み、残る #2/#4/#5 は開発レーン内の自律作業。優先順位は ADR-131 が ACTION_PRIORITY 表で凍結済み(書き換えのみ所有者判断)、推奨全件トリアージの権限は ADR-145 の裁定が記録済み(件数で削らず全件処遇の形も同裁定が実施)。申告を権限判定と読まない扱いは ADR-127 が既決。",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "前件が成り立たない。機構化系 6 件(推奨#0〜#5)のうち六類型(互換性破壊・配布境界・評価model最低線ほか)に現に当たる物は無い —— #0/#1/#3 は正本側で着地済み、残る #2/#4/#5 は開発レーン内の自律作業。優先順位は ADR-131 が ACTION_PRIORITY 表で凍結済み(書き換えのみ所有者判断)、推奨全件トリアージの権限は ADR-145 の裁定が記録済み(件数で削らず全件処遇の形も同裁定が実施)。申告を権限判定と読まない扱いは ADR-127 が既決。"
     },
     {
       "incident_id": "INC-016-cast-analysis-content-unread-by-canon",
@@ -913,7 +985,9 @@
         "verdict": "却下",
         "reason": "前半（配布側から複製版を観測できない制約を受け入れる）は採る。後半（自己申告の必須化）は却下する。利用者環境の台帳を読むことは ADR-070 が鼓動側で越境として既に却下しており、NONGOAL-001 第10項とも整合する。代替は既に在る —— gov-heartbeat の --field-state（ADR-122）が『送らずに転記できる』形を提供しており、必須化ではなく任意の転記に留めるのが現行方針と一貫する。",
         "ruling_ref": "assurance/ledger/rulings/2026-08-09-owner-decisions-delegated.json"
-      }
+      },
+      "evaluator_owner_required": true,
+      "owner_override_reason": "所有者委任による裁定（2026-08-09）: 却下 —— 前半（配布側から複製版を観測できない制約を受け入れる）は採る。後半（自己申告の必須化）は却下する。利用者環境の台帳を読むことは ADR-070 が鼓動側で越境として既に却下しており、NONGOAL-001 第10項とも整合する。代替は既に在る —— gov-heartbeat の --field-state（ADR-122）が『送らずに転記できる』形を提供しており、必須化ではなく任意の転記に留めるのが現行方針と一貫する。 ／ 旧 note: 裁定は未存在（rulings/2026-08-07-bulk-campaign.json の scope に無し）。利用者環境の台帳読みは ADR-070 が鼓動側で越境として却下し、INC-019 residual も配布境界の観測として所有者判断と印す。キャンペーン開始の必須条件の新設は保証範囲"
     },
     {
       "incident_id": "INC-005-installed-plugin-version-lag",
@@ -926,7 +1000,9 @@
         "verdict": "採択",
         "reason": "0 世代（版差があれば続行しない）は運用不能である —— 複製の更新は利用者操作に委ねる方針なので、作業木と複製の差は常に生じうる。1 世代までを許容し、成果には『実行時の版 X / 正本の版 Y』の但し書きを必須とする。保証の主張を狭める側の決定なので安全側に倒れる。",
         "ruling_ref": "assurance/ledger/rulings/2026-08-09-owner-decisions-delegated.json"
-      }
+      },
+      "evaluator_owner_required": true,
+      "owner_override_reason": "所有者委任による裁定（2026-08-09）: 採択 —— 0 世代（版差があれば続行しない）は運用不能である —— 複製の更新は利用者操作に委ねる方針なので、作業木と複製の差は常に生じうる。1 世代までを許容し、成果には『実行時の版 X / 正本の版 Y』の但し書きを必須とする。保証の主張を狭める側の決定なので安全側に倒れる。 ／ 旧 note: 版差検出時の続行上限と成果への但し書き形式を定めた正本は無い（ADR-070 の決定は不一致の助言のみで閾値を持たない。ADR-145 の scope 外）。続行条件は保証主張の範囲を定める判断で類型に当たる。"
     },
     {
       "incident_id": "INC-005-installed-plugin-version-lag",
@@ -989,7 +1065,9 @@
         "verdict": "採択",
         "reason": "割当は現に無い（control_structure.py に停滞の観測責任がゼロ件であることを実測済み）。実施主体は保証レーンの orchestrator に一意に定める —— 『next_actions は空にならない』という不変条件を既に持っているのはそこだけである。監査と鼓動には持たせない。重複させると双方が他方を前提にして減衰する（推奨自身がその危険を指している）。",
         "ruling_ref": "assurance/ledger/rulings/2026-08-09-owner-decisions-delegated.json"
-      }
+      },
+      "evaluator_owner_required": true,
+      "owner_override_reason": "所有者委任による裁定（2026-08-09）: 採択 —— 割当は現に無い（control_structure.py に停滞の観測責任がゼロ件であることを実測済み）。実施主体は保証レーンの orchestrator に一意に定める —— 『next_actions は空にならない』という不変条件を既に持っているのはそこだけである。監査と鼓動には持たせない。重複させると双方が他方を前提にして減衰する（推奨自身がその危険を指している）。 ／ 旧 note: 割当は現に無い —— control_structure.py の各要素に進捗停滞の観測責任は書かれていない（HEARTBEAT は古び・版遅れのみ :62-72、SESSION_END_AUDIT は統治木走査 :95-110、ASSURANCE_LANE にも無し :133-146。grep 停"
     },
     {
       "incident_id": "INC-012-states-unnameable-by-canon",
@@ -1009,7 +1087,9 @@
         "verdict": "採択（正本側の指標のみを用いる。現状の追認と明文化）",
         "reason": "判定は現に正本側の指標だけで行っており（orchestrator が台帳の mutations と評価器成果物を比べる）、HEARTBEAT 側の鮮度指標は未実装である。導入複製の版に連動して劣化する指標を保証の先行指標に採ることは、複製の更新を利用者操作に委ねる現行の配布方針と噛み合わない。現状を決定として明文化し、未決を閉じる。",
         "ruling_ref": "assurance/ledger/rulings/2026-08-09-owner-decisions-delegated.json"
-      }
+      },
+      "evaluator_owner_required": true,
+      "owner_override_reason": "所有者委任による裁定（2026-08-09）: 採択（正本側の指標のみを用いる。現状の追認と明文化） —— 判定は現に正本側の指標だけで行っており（orchestrator が台帳の mutations と評価器成果物を比べる）、HEARTBEAT 側の鮮度指標は未実装である。導入複製の版に連動して劣化する指標を保証の先行指標に採ることは、複製の更新を利用者操作に委ねる現行の配布方針と噛み合わない。現状を決定として明文化し、未決を閉じる。 ／ 旧 note: 判定は現に正本側指標のみ（orchestrator.py:1655-1664 が台帳の mutations と評価器成果物を比較。ADR-120 決定2）。HEARTBEAT 側の評価器鮮度指標は未実装（gov-heartbeat.py に該当なし）。採否の決定記録はどの ADR にも無く、PLUG"
     },
     {
       "incident_id": "INC-012-states-unnameable-by-canon",
@@ -1032,7 +1112,9 @@
       "state": "landed",
       "note": "着地済み。第四条件は ADR-121 決定3 で入り、cast_analysis.py:171-184 が settled に ev[\"verifiable\"] を機械で要求（不成立は FAIL）。unknowns 先頭への明記条項は憲章 prompts.py:152-158。prompt 依存の緩和は照合器判定へ移っている。",
       "evidence_ref": "assurance/harness/cast_analysis.py:171-184 / ADR-121",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "着地済み。第四条件は ADR-121 決定3 で入り、cast_analysis.py:171-184 が settled に ev[\"verifiable\"] を機械で要求（不成立は FAIL）。unknowns 先頭への明記条項は憲章 prompts.py:152-158。prompt 依存の緩和は照合器判定へ移っている。"
     },
     {
       "incident_id": "INC-013-cast-analysis-accepts-fabricated-incident",
@@ -1040,14 +1122,18 @@
       "state": "landed",
       "note": "着地済み（形は referent 欄でなく evidence_refs/evidence_kind）。積載時に validate が全行を機械で検め、宣言の無い行・解決しない行は赤（orchestrator.py:1413-1474。ADR-141）。未解決のままの done 遷移は cast_analysis.py:173-174 の settled 条件が塞ぐ。",
       "evidence_ref": "assurance/harness/orchestrator.py:1413-1474 / ADR-141",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "着地済み（形は referent 欄でなく evidence_refs/evidence_kind）。積載時に validate が全行を機械で検め、宣言の無い行・解決しない行は赤（orchestrator.py:1413-1474。ADR-141）。未解決のままの done 遷移は cast_analysis.py:173-174 の settled 条件が塞ぐ。"
     },
     {
       "incident_id": "INC-013-cast-analysis-accepts-fabricated-incident",
       "index": 2,
       "state": "pending",
       "note": "未着地。A2 の注入本文からは手掛かりを除去済み（attack_evaluator.py:303-315）で、ADR-120 帰結が「手掛かりを持たないことを確かめてから使う」規律を書くが、実行系と別の静的検査も、汚染 PASS を計上から外す機構も実装されていない。",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "未着地。A2 の注入本文からは手掛かりを除去済み（attack_evaluator.py:303-315）で、ADR-120 帰結が「手掛かりを持たないことを確かめてから使う」規律を書くが、実行系と別の静的検査も、汚染 PASS を計上から外す機構も実装されていない。"
     },
     {
       "incident_id": "INC-013-cast-analysis-accepts-fabricated-incident",
@@ -1076,7 +1162,9 @@
       "index": 6,
       "state": "pending",
       "note": "未制定。「閉じた件数を被覆指標としない」明文の方針はどの正本にも無い（grep 0件）。六類型のどれにも当たらず（ADR-127 決定2: 類型を名指せない申告は所有者判断でない）、レーン側で方針を起こすか裁く仕事として残る。",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "未制定。「閉じた件数を被覆指標としない」明文の方針はどの正本にも無い（grep 0件）。六類型のどれにも当たらず（ADR-127 決定2: 類型を名指せない申告は所有者判断でない）、レーン側で方針を起こすか裁く仕事として残る。"
     },
     {
       "incident_id": "INC-013-cast-analysis-accepts-fabricated-incident",
@@ -1084,7 +1172,9 @@
       "state": "landed",
       "note": "着地済み。CAST 分析は常に SDK の一回限りセッション（サブエージェント経路）で実行され（cast_analysis.py:146-157）、実在確認条項を含む憲章はコードが組むプロンプトへ毎回埋まる（prompts.py:134-159）。到達は SessionStart 注入に依存せず経路独立。",
       "evidence_ref": "assurance/harness/cast_analysis.py:144-157 / assurance/harness/prompts.py:134-159",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "着地済み。CAST 分析は常に SDK の一回限りセッション（サブエージェント経路）で実行され（cast_analysis.py:146-157）、実在確認条項を含む憲章はコードが組むプロンプトへ毎回埋まる（prompts.py:134-159）。到達は SessionStart 注入に依存せず経路独立。"
     },
     {
       "incident_id": "INC-011-dot-joined-token-undefined-term",
@@ -1099,7 +1189,9 @@
       "index": 1,
       "state": "pending",
       "note": "未着手。STATES(orchestrator.py:33)にも閉じ条件(ADR-117/ADR-144)にも軸展開の段は無い。INC-002#2 の処遇が本件と実質同一(重複)と判じ統合済みで『機構の変更・レーン内の裁量。未着手』と記録(recommendation-status.json)。",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "未着手。STATES(orchestrator.py:33)にも閉じ条件(ADR-117/ADR-144)にも軸展開の段は無い。INC-002#2 の処遇が本件と実質同一(重複)と判じ統合済みで『機構の変更・レーン内の裁量。未着手』と記録(recommendation-status.json)。"
     },
     {
       "incident_id": "INC-011-dot-joined-token-undefined-term",
@@ -1107,7 +1199,9 @@
       "state": "landed",
       "note": "柵は決定済み。接着は - と . のみ、『ここに無い約物は従来どおり語の境目であり、緩和をこれ以上広げてはならない』と WATCH-001 第2項が規範化(watchlist.md:22)。正本 _GLUE(_termcheck.py:426)と一致。ADR-127 六類型に当たらず owner 状態は成立しない。",
       "evidence_ref": "doctrine_docs/_system/watchlist.md:22（WATCH-001 第2項）・plugin/scripts/_termcheck.py:426",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "柵は決定済み。接着は - と . のみ、『ここに無い約物は従来どおり語の境目であり、緩和をこれ以上広げてはならない』と WATCH-001 第2項が規範化(watchlist.md:22)。正本 _GLUE(_termcheck.py:426)と一致。ADR-127 六類型に当たらず owner 状態は成立しない。"
     },
     {
       "incident_id": "INC-011-dot-joined-token-undefined-term",
@@ -1186,7 +1280,9 @@
         "verdict": "採択（ただし順序を付ける）",
         "reason": "そのまま足すと #197 と同型の板挟みになる —— ADR の雛形の既定 status は accepted であり（_registry.py:44）、雛形どおりに起票した書き手がガードに拒まれ、逃げ道が無い。よって順序を固定する: (1) 雛形の既定 status を proposed にする、(2) そのうえでガードに入口検査を足す。逆順では実施しない。",
         "ruling_ref": "assurance/ledger/rulings/2026-08-09-owner-decisions-delegated.json"
-      }
+      },
+      "evaluator_owner_required": true,
+      "owner_override_reason": "所有者委任による裁定（2026-08-09）: 採択（ただし順序を付ける） —— そのまま足すと #197 と同型の板挟みになる —— ADR の雛形の既定 status は accepted であり（_registry.py:44）、雛形どおりに起票した書き手がガードに拒まれ、逃げ道が無い。よって順序を固定する: (1) 雛形の既定 status を proposed にする、(2) そのうえでガードに入口検査を足す。逆順では実施しない。 ／ 旧 note: 未着地。ガードは新規 Write の status を検査しない（policy-guard.py:206-207 で不在ファイルは素通し）。ADR の既定 status は accepted（_registry.py:44）で、既定どおりの起票が拒否対象になる配布ガードの挙動変更。裁定 2026-0"
     },
     {
       "incident_id": "INC-017-accepted-adr-born-red-is-unfixable",
@@ -1199,7 +1295,9 @@
         "verdict": "却下",
         "reason": "三つの理由で採らない。(1) WATCH-001 第8項が per-turn の Hook の予算を守っており、guard+linter の対で 1.0 秒未満という受入が既に在る。PreToolUse で lint を回すと同じ仕事を一ターンに二度買う。(2) WATCH-001 第4項の分業（リンタは助言だけ・拒否はガード）が曖昧になる。(3) 同じ事象の #0（入口で status だけを検める）で危険状態そのものは排除でき、そちらの方が安く、判定が決定的である。#0 を採るのでこちらは要らない。",
         "ruling_ref": "assurance/ledger/rulings/2026-08-09-owner-decisions-delegated.json"
-      }
+      },
+      "evaluator_owner_required": true,
+      "owner_override_reason": "所有者委任による裁定（2026-08-09）: 却下 —— 三つの理由で採らない。(1) WATCH-001 第8項が per-turn の Hook の予算を守っており、guard+linter の対で 1.0 秒未満という受入が既に在る。PreToolUse で lint を回すと同じ仕事を一ターンに二度買う。(2) WATCH-001 第4項の分業（リンタは助言だけ・拒否はガード）が曖昧になる。(3) 同じ事象の #0（入口で status だけを検める）で危険状態そのものは排除でき、そちらの方が安く、判定が決定的である。#0 を採るのでこちらは要らない。 ／ 旧 note: 未着地。policy-guard.py は _termcheck/lint を一切呼ばない（grep 0件）。実装可否は docs-linter.py:563-579 の _termcheck 委譲により技術的に可能。現在通る赤い下書きの Write を新たに拒む配布ガードの挙動変更であり、WATC"
     },
     {
       "incident_id": "INC-017-accepted-adr-born-red-is-unfixable",
@@ -1254,7 +1352,9 @@
         "verdict": "採択（既存キーの意味は変えず、別枠キーを足す）",
         "reason": "DECIDED-001 第12項『判定を書けないときは沈黙して開かない』と同じ向きである。前提が欠けたまま悉皆判定を装うのは、この体系が最も嫌う形（監査が木の所見へ縮退する）。docs-audit/1 は ADR-137 で外部契約になっているので、totals の既存キーの意味は変えず、別枠のキーを**足す**ことで満たす。加算だけなので後方互換であり、互換性の破壊にはならない。",
         "ruling_ref": "assurance/ledger/rulings/2026-08-09-owner-decisions-delegated.json"
-      }
+      },
+      "evaluator_owner_required": true,
+      "owner_override_reason": "所有者委任による裁定（2026-08-09）: 採択（既存キーの意味は変えず、別枠キーを足す） —— DECIDED-001 第12項『判定を書けないときは沈黙して開かない』と同じ向きである。前提が欠けたまま悉皆判定を装うのは、この体系が最も嫌う形（監査が木の所見へ縮退する）。docs-audit/1 は ADR-137 で外部契約になっているので、totals の既存キーの意味は変えず、別枠のキーを**足す**ことで満たす。加算だけなので後方互換であり、互換性の破壊にはならない。 ／ 旧 note: 未着地。_backlog_finding は trace_mode と unmarked_files しか見ず（_audit_trace.py:199-212）、取得状態は trace_coverage に載るだけ（_tracescan.py:507、docs-audit.py:1347-1349）"
     },
     {
       "incident_id": "INC-018-audit-degrades-into-a-tree-finding",
@@ -1302,7 +1402,9 @@
         "verdict": "採択（別カテゴリとする）",
         "reason": "warn に混ぜると運転規律が摩耗する —— §0.4 は『warn が 1 件でもあれば他の何より先に扱う』と定めており、環境要因で発火し続ける warn が入ると、その規律が守れなくなって形骸化する。別カテゴリ（判定不能）とし、運転規律は『前提を回復してから判定する』を与える。#0 と同じ ADR で決める。",
         "ruling_ref": "assurance/ledger/rulings/2026-08-09-owner-decisions-delegated.json"
-      }
+      },
+      "evaluator_owner_required": true,
+      "owner_override_reason": "所有者委任による裁定（2026-08-09）: 採択（別カテゴリとする） —— warn に混ぜると運転規律が摩耗する —— §0.4 は『warn が 1 件でもあれば他の何より先に扱う』と定めており、環境要因で発火し続ける warn が入ると、その規律が守れなくなって形骸化する。別カテゴリ（判定不能）とし、運転規律は『前提を回復してから判定する』を与える。#0 と同じ ADR で決める。 ／ 旧 note: 未決。ADR-089 決定4 は git 縮退を『勘定に状態だけ・警告は出さない』と置き、ICD-005 の重さは warn/error の二値のみ。docs-audit/1 は外部契約(ADR-137)であり、totals・warn の意味変更は出力契約の互換性に触れるため所有者判断が要る。"
     },
     {
       "incident_id": "INC-018-audit-degrades-into-a-tree-finding",
@@ -1366,7 +1468,9 @@
       "state": "landed",
       "note": "決定は成立済み(ADR-144、accepted 2026-08-07)。版番号を判定根拠にせず commit の系譜だけとし(shipped 三条件: tag・merge-base・ship_ref)、複製の稼働は観測できないことも帰結に確定記載(NONGOAL-001 第14項)。gitCommitSha の観測は observe_asm_003 で既用。",
       "evidence_ref": "doctrine_docs/packaging/decisions/ADR-144-incident-closure-vocabulary.md",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "決定は成立済み(ADR-144、accepted 2026-08-07)。版番号を判定根拠にせず commit の系譜だけとし(shipped 三条件: tag・merge-base・ship_ref)、複製の稼働は観測できないことも帰結に確定記載(NONGOAL-001 第14項)。gitCommitSha の観測は observe_asm_003 で既用。"
     },
     {
       "incident_id": "INC-008-ledger-write-back-clobber",
@@ -1393,7 +1497,9 @@
         "verdict": "類型訂正のうえ実装判断へ差し戻す（所有者判断ではない）",
         "reason": "同じ事象の推奨 #8 は『除去は git から復旧できるので復旧不能な削除の類型に当たらない』として却下されている。#5 はその実測を引用しながら同じ類型を名乗っており、台帳の中で矛盾している。実際に書かれている理由『権限設計そのものは所有者の領分』は六類型のどれでもない。よって所有者判断から外す。実装の決定: 機構で一律禁止はしない（CURATE の重複統合は正当な除去を要する）。代わりに、消えた id を validate が名指す検査を置く（merged_into の器が既に在るので、統合以外の消失だけを咎められる）。",
         "ruling_ref": "assurance/ledger/rulings/2026-08-09-owner-decisions-delegated.json"
-      }
+      },
+      "evaluator_owner_required": true,
+      "owner_override_reason": "所有者委任による裁定（2026-08-09）: 類型訂正のうえ実装判断へ差し戻す（所有者判断ではない） —— 同じ事象の推奨 #8 は『除去は git から復旧できるので復旧不能な削除の類型に当たらない』として却下されている。#5 はその実測を引用しながら同じ類型を名乗っており、台帳の中で矛盾している。実際に書かれている理由『権限設計そのものは所有者の領分』は六類型のどれでもない。よって所有者判断から外す。実装の決定: 機構で一律禁止はしない（CURATE の重複統合は正当な除去を要する）。代わりに、消えた id を validate が名指す検査を置く（merged_into の器が既に在るので、統合以外の消失だけを咎められる）。 ／ 旧 note: 類型は復旧不能な削除。除去を禁ずる機構は現に無く(policy-guard.py・checks.yml に assurance/ledger 規則ゼロ)、OWNER 範囲に置くか機構で一律禁止かは未決のまま。台帳は git 追跡下で履歴からの復元は可能(#8 却下の実測)だが、権限設計そのものは所有"
     },
     {
       "incident_id": "INC-008-ledger-write-back-clobber",
@@ -1414,7 +1520,9 @@
       "index": 9,
       "state": "rejected",
       "note": "ADR-114 により前提不成立。台帳書き込み実装(cast_analysis.py の update_incident)は開発専用レーンに在り配布物に含まれない(marketplace.json の source は ./plugin のみ、plugin/ 内に assurance 参照ゼロ)。導入複製に同型の除去が成立する環境は無い。一般の版遅れ警告は ADR-066/122(_auditcache.version_drift/version_lag)が別途持つ",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "ADR-114 により前提不成立。台帳書き込み実装(cast_analysis.py の update_incident)は開発専用レーンに在り配布物に含まれない(marketplace.json の source は ./plugin のみ、plugin/ 内に assurance 参照ゼロ)。導入複製に同型の除去が成立する環境は無い。一般の版遅れ警告は ADR-066/122(_auditcache.version_drift/version_lag)が別途持つ"
     },
     {
       "incident_id": "INC-009-sessionend-audit-unobservable",
@@ -1443,14 +1551,18 @@
       "state": "landed",
       "note": "所有者判断は済み。ADR-121 決定4 が §5.5 の明示決定を置換し、要約を書けなかった実行は終了コード 3 を返す(docs-audit.py:1514、SPEC-011:76、受入 test_audit.py:1335)。別置きの機械可読な失敗印も ADR-119 で在る(hook_session_end_write=failed、docs-audit.py:1501-1502)",
       "evidence_ref": "doctrine_docs/packaging/decisions/ADR-121-claim-level-evidence-rule.md（決定4）／plugin/scripts/docs-audit.py:1514／doctrine_docs/audit/spec/SPEC-011-corpus-audit.md:76／plugin/tests/test_audit.py:1335",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "所有者判断は済み。ADR-121 決定4 が §5.5 の明示決定を置換し、要約を書けなかった実行は終了コード 3 を返す(docs-audit.py:1514、SPEC-011:76、受入 test_audit.py:1335)。別置きの機械可読な失敗印も ADR-119 で在る(hook_session_end_write=failed、docs-audit.py:1501-1502)"
     },
     {
       "incident_id": "INC-009-sessionend-audit-unobservable",
       "index": 4,
       "state": "rejected",
       "note": "ADR-126 が『散文の ADR に書いて終わりにする』を却下し(散文は指標を観測できる形にしない)、想定+先行指標の置き場を assurance/ledger/assumptions.json に決定。§5.5 系の想定は ASM-001 が先行指標つきで登記済み(観測器 observe_asm_001)。名指しの残余リスク自体は ADR-121 の終了コード 3 で解消",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "ADR-126 が『散文の ADR に書いて終わりにする』を却下し(散文は指標を観測できる形にしない)、想定+先行指標の置き場を assurance/ledger/assumptions.json に決定。§5.5 系の想定は ASM-001 が先行指標つきで登記済み(観測器 observe_asm_001)。名指しの残余リスク自体は ADR-121 の終了コード 3 で解消"
     },
     {
       "incident_id": "INC-009-sessionend-audit-unobservable",
@@ -1493,7 +1605,9 @@
       "index": 5,
       "state": "pending",
       "note": "未着地。PROC-001:129 と WATCH-001 第13項に作法は在るが、inject-contract.py の _fact_lines は max_facts=12(216行)で先頭12項しか運ばず、第13項は注入されないことを実測した。載せない理由の記録も無い。",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "未着地。PROC-001:129 と WATCH-001 第13項に作法は在るが、inject-contract.py の _fact_lines は max_facts=12(216行)で先頭12項しか運ばず、第13項は注入されないことを実測した。載せない理由の記録も無い。"
     },
     {
       "incident_id": "INC-024-coverage-rubric-undecided-at-its-busiest-boundary",
@@ -1507,14 +1621,18 @@
       "index": 1,
       "state": "rejected",
       "note": "ADR-133 却下項「幅（値と再現回数の対）だけを持って規準は直さない」が本案の構造を却下。所有者は三案から規準修正を選択(2026-08-07、INC-024#3 処遇)。一致の数を指標に持たない規律は ADR-132 も定める。",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "ADR-133 却下項「幅（値と再現回数の対）だけを持って規準は直さない」が本案の構造を却下。所有者は三案から規準修正を選択(2026-08-07、INC-024#3 処遇)。一致の数を指標に持たない規律は ADR-132 も定める。"
     },
     {
       "incident_id": "INC-024-coverage-rubric-undecided-at-its-busiest-boundary",
       "index": 7,
       "state": "rejected",
       "note": "ADR-133 が幅保持案を却下し「残る幅は規準の文が縮め、抜取りの独立再判定が測る」と決めた(ADR-133:38-39,81)。恒常的な幅測定を前提とする併記必須は所有者選択(規準修正)と矛盾。幅併記の集計機構も実在しない。",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "ADR-133 が幅保持案を却下し「残る幅は規準の文が縮め、抜取りの独立再判定が測る」と決めた(ADR-133:38-39,81)。恒常的な幅測定を前提とする併記必須は所有者選択(規準修正)と矛盾。幅併記の集計機構も実在しない。"
     },
     {
       "incident_id": "INC-025-adr-130-implemented-the-option-it-rejected",
@@ -1522,7 +1640,9 @@
       "state": "landed",
       "note": "ADR-134 決定2-3(所有者判断 2026-08-07)。is_stale が証拠の属する種別だけを比較し(orchestrator.py:1153-1186)、無証拠非終端は種別増のみで古びる(同:1189-1196)。試験 test_staleness_scope.py。実台帳も新規則で取り直し済(b570f42)。",
       "evidence_ref": "assurance/harness/orchestrator.py:1153",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "ADR-134 決定2-3(所有者判断 2026-08-07)。is_stale が証拠の属する種別だけを比較し(orchestrator.py:1153-1186)、無証拠非終端は種別増のみで古びる(同:1189-1196)。試験 test_staleness_scope.py。実台帳も新規則で取り直し済(b570f42)。"
     },
     {
       "incident_id": "INC-025-adr-130-implemented-the-option-it-rejected",
@@ -1530,7 +1650,9 @@
       "state": "landed",
       "note": "ADR-134 決定1。索引が七種別(文書・監査検査・リンタ検査・スクリプト・試験・Hook・技能)の指紋と件数を持ち(system_index.py:186-196)、判定は引いた種別だけを比較(orchestrator.py:1171-1186)。粒度は区画別でなく種別別を所有者が採った。",
       "evidence_ref": "assurance/harness/system_index.py:186",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "ADR-134 決定1。索引が七種別(文書・監査検査・リンタ検査・スクリプト・試験・Hook・技能)の指紋と件数を持ち(system_index.py:186-196)、判定は引いた種別だけを比較(orchestrator.py:1171-1186)。粒度は区画別でなく種別別を所有者が採った。"
     },
     {
       "incident_id": "INC-025-adr-130-implemented-the-option-it-rejected",
@@ -1538,7 +1660,9 @@
       "state": "landed",
       "note": "所有者が決めた(ADR-134 決定5、2026-08-07): 古びは閾値一束25件で next_actions へ挙げ、閾値未満でも必ず数えて出す。実装 STALE_RAISE_THRESHOLD/should_raise_stale(orchestrator.py:1136-1150)。「一切挙げない」案は却下済(ADR-134:42-43)。",
       "evidence_ref": "doctrine_docs/packaging/decisions/ADR-134-staleness-is-scoped-to-what-the-judgement-cited.md",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "所有者が決めた(ADR-134 決定5、2026-08-07): 古びは閾値一束25件で next_actions へ挙げ、閾値未満でも必ず数えて出す。実装 STALE_RAISE_THRESHOLD/should_raise_stale(orchestrator.py:1136-1150)。「一切挙げない」案は却下済(ADR-134:42-43)。"
     },
     {
       "incident_id": "INC-025-adr-130-implemented-the-option-it-rejected",
@@ -1588,7 +1712,9 @@
       "state": "landed",
       "note": "ADR-129 が裁定済み。一律禁止でなく三値の門を採り「UNASSESSED は待機を意味し、迂回を意味しない。引き直すか、待つか、事象として積むか」(ADR-129:72-73)。実装は merge_gate.py:33(VERDICTS)・:45(終了コード3)・:68(run 不在→UNASSESSED)。README:131 が運転手順へ接続。",
       "evidence_ref": "doctrine_docs/packaging/decisions/ADR-129-merge-gate-is-three-valued.md:72",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "ADR-129 が裁定済み。一律禁止でなく三値の門を採り「UNASSESSED は待機を意味し、迂回を意味しない。引き直すか、待つか、事象として積むか」(ADR-129:72-73)。実装は merge_gate.py:33(VERDICTS)・:45(終了コード3)・:68(run 不在→UNASSESSED)。README:131 が運転手順へ接続。"
     },
     {
       "incident_id": "INC-022-ci-that-cannot-run-is-read-as-red",
@@ -1640,14 +1766,18 @@
       "state": "landed",
       "note": "ADR-142 決定5「前方のみ。既存の mutations-2026-08-04／-06／-07 は遡って直さない」が裁定（却下欄: 遡及編集は所有者判断のまま、前方だけを機構で塞ぐ）。読取り側は日付止まり証拠を安全側に扱う (orchestrator.py:1038-1040)。以後の記録は generated_at 必須 (mutations-2026-08-07.json は 18:52:02Z を持つ)。",
       "evidence_ref": "doctrine_docs/packaging/decisions/ADR-142-attack-record-always-carries-its-fields.md:63",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "ADR-142 決定5「前方のみ。既存の mutations-2026-08-04／-06／-07 は遡って直さない」が裁定（却下欄: 遡及編集は所有者判断のまま、前方だけを機構で塞ぐ）。読取り側は日付止まり証拠を安全側に扱う (orchestrator.py:1038-1040)。以後の記録は generated_at 必須 (mutations-2026-08-07.json は 18:52:02Z を持つ)。"
     },
     {
       "incident_id": "INC-023-attack-freshness-truncated-to-the-day",
       "index": 6,
       "state": "pending",
       "note": "決定は無い。同趣旨の仮説は DISCOVER の口に候補として滞留（cast の new_scenario_candidates「攻撃済みの単位が評価器全体のまま」、orchestrator.py:904 が読む。ADR-140）。incidents.json の residual も「本事象の分析を待つ」のまま。追加欄で台帳互換を保てるため六類型「互換性を壊す変更」に直ちには当たらない。",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "決定は無い。同趣旨の仮説は DISCOVER の口に候補として滞留（cast の new_scenario_candidates「攻撃済みの単位が評価器全体のまま」、orchestrator.py:904 が読む。ADR-140）。incidents.json の residual も「本事象の分析を待つ」のまま。追加欄で台帳互換を保てるため六類型「互換性を壊す変更」に直ちには当たらない。"
     },
     {
       "incident_id": "INC-023-attack-freshness-truncated-to-the-day",
@@ -1662,14 +1792,18 @@
       "index": 8,
       "state": "pending",
       "note": "未解決のまま。attack_evaluator.py は実在 (assurance/harness/attack_evaluator.py。ADR-120 帰結が走らせ手として名指し)。だが control_structure.py の要素一覧 (:27-146) に ATTACK_EVALUATOR は無く、ASSURANCE_LANE の implemented_by も orchestrator.py のみ。登録も「登録しない」の明記も無い。",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "未解決のまま。attack_evaluator.py は実在 (assurance/harness/attack_evaluator.py。ADR-120 帰結が走らせ手として名指し)。だが control_structure.py の要素一覧 (:27-146) に ATTACK_EVALUATOR は無く、ASSURANCE_LANE の implemented_by も orchestrator.py のみ。登録も「登録しない」の明記も無い。"
     },
     {
       "incident_id": "INC-023-attack-freshness-truncated-to-the-day",
       "index": 9,
       "state": "pending",
       "note": "前提が失効している。修正は main へ merge 済み (commit 89599ab、HEAD の祖先) で、レーンはリポジトリから直接走るため未修正の複製で鮮度判定する間隙が無い。実台帳で ATTACK_EVALUATOR が挙がることも実測済み (ledger/red/INC-023 の measured_after)。incidents.json は shipped:false のまま (ADR-144 三条件: 修正を含む release tag が無い。tag は v0.5.0 まで)。",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "前提が失効している。修正は main へ merge 済み (commit 89599ab、HEAD の祖先) で、レーンはリポジトリから直接走るため未修正の複製で鮮度判定する間隙が無い。実台帳で ATTACK_EVALUATOR が挙がることも実測済み (ledger/red/INC-023 の measured_after)。incidents.json は shipped:false のまま (ADR-144 三条件: 修正を含む release tag が無い。tag は v0.5.0 まで)。"
     }
   ]
 }
