@@ -3,12 +3,13 @@ id: ADR-120
 title: 状態は名指しできるか、できないと明記されるかのどちらかとし、未攻撃の評価器は次の行動に挙げる
 type: ADR
 domain: packaging
-status: accepted
+status: superseded
 owner: doctrine-maintainers
 created: 2026-08-06
 updated: 2026-08-06
 sources: ["ADR-115", assurance/harness/orchestrator.py, assurance/harness/attack_evaluator.py]
 depends_on: [ADR-114, ADR-115, ADR-117, ADR-118]
+superseded_by: ADR-148
 llm_context: task
 ---
 

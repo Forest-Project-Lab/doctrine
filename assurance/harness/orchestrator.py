@@ -148,6 +148,30 @@ def validate():
     problems.extend(_validate_closure_vocabulary())
     problems.extend(_validate_coverage_merges())
     problems.extend(_validate_ledger_readability())
+    problems.extend(_validate_nameable_states())
+    return problems
+
+
+def _validate_nameable_states():
+    """名指しできる状態は優先順の表に載り、名指ししない状態は載らない。
+
+    ADR-120（を置換した ADR-148）の二分と ADR-131 の表が、別々に
+    書き換えられて食い違うのを防ぐ。試験の側だけで持っていたので、
+    運転手順 §0 が毎回走らせる validate へ移す。
+    """
+    problems = []
+    nameable = set(NAMEABLE_STATES)
+    within = set(WITHIN_CYCLE_STATES)
+    priority = set(ACTION_PRIORITY)
+    for st in sorted(nameable - priority):
+        problems.append("名指しできる状態 %s が優先順の表に無い" % st)
+    for st in sorted(priority - nameable):
+        problems.append("優先順の表の %s が名指しできる状態でない" % st)
+    for st in sorted(nameable & within):
+        problems.append("状態 %s が名指しの二分の両側に在る" % st)
+    missing = set(STATES) - nameable - within
+    for st in sorted(missing):
+        problems.append("状態 %s がどちらにも属さない" % st)
     return problems
 
 
@@ -384,6 +408,11 @@ def catalog_status():
 NAMEABLE_STATES = frozenset({
     "INGEST_NORMS", "MAP_COVERAGE", "CAST_ANALYSIS", "DISCOVER",
     "ATTACK_EVALUATOR", "FORMALIZE", "APPLY_FINDINGS", "REVIEW_ASSUMPTION",
+    # ADR-148 が ADR-120 を置換して移した。承認された検証計画は「買った義務」で
+    # あり、帳簿（formalize と red）だけから指せる。名指しできないままだと、
+    # FORMALIZE が計画を承認した瞬間にその計画は正本の視野から消える —— 実測で
+    # 30 件が消えていた（INC-033）。
+    "REPRODUCE_RED",
 })
 
 # 名指しできる状態の優先順（ADR-131。所有者判断）。
@@ -403,6 +432,8 @@ NAMEABLE_STATES = frozenset({
 #   MAP_COVERAGE      本丸（Doctrine 本体）の欠落。**測る対象**
 #   APPLY_FINDINGS    検証基盤の改善の推奨。**測る道具**の完成度
 #   ATTACK_EVALUATOR  評価器自身への攻撃
+#   REPRODUCE_RED     承認済みの検証計画。**既に買った義務**であり、
+#                     新しい計画や新しい仮説を買うより先に果たす
 #   FORMALIZE/DISCOVER 上のどれも鳴らないときの既定の入口（INC-006）
 #
 # 検証基盤は本丸を測るための道具であって、道具の完成度が目的ではない。
@@ -414,6 +445,7 @@ ACTION_PRIORITY = {
     "MAP_COVERAGE": 40,
     "APPLY_FINDINGS": 50,
     "ATTACK_EVALUATOR": 60,
+    "REPRODUCE_RED": 65,
     "FORMALIZE": 70,
     "DISCOVER": 80,
 }
@@ -423,7 +455,7 @@ ACTION_PRIORITY = {
 # ここに置くことは「名指ししない」ことの明示であって、やらなくてよいという
 # 意味ではない。反復の中で順に踏む。
 WITHIN_CYCLE_STATES = frozenset({
-    "CHALLENGE", "REPRODUCE_RED", "FIX", "VERIFY", "RECORD", "CURATE",
+    "CHALLENGE", "FIX", "VERIFY", "RECORD", "CURATE",
 })
 
 # 台帳に在る成果物の種別と、正本がそれを読む経路。
@@ -479,13 +511,10 @@ LEDGER_KINDS = (
      "match": "assumptions.json",
      "read_by": ("load_assumptions", "assumption_backlog"),
      "why_not_read": None},
-    {"kind": "red/<事象 id>.json",
+    {"kind": "red/<対象 id>.json",
      "match": "red/*.json",
-     "read_by": (),
-     "why_not_read":
-         "修正前 FAIL の証拠。これを読む段（REPRODUCE_RED・FIX・VERIFY）は"
-         "WITHIN_CYCLE_STATES であり、帳簿だけからは指せないと ADR-120 で"
-         "明記済み。証拠は反復の中で作られ、その反復の中で読まれる。"},
+     "read_by": ("load_red_records", "unreproduced_plans"),
+     "why_not_read": None},
     {"kind": "recheck-<日付>.json",
      "match": "recheck-*.json",
      "read_by": (),
@@ -822,6 +851,101 @@ def unformalized_survivors():
                 if isinstance(plan, dict) and plan.get("scenario_id"):
                     planned.add(plan["scenario_id"])
     return [sid for sid in survivors if sid not in planned]
+
+
+def load_red_records(ledger_dir=None):
+    """修正前 FAIL の証拠。鍵は対象 id（scenario か incident）。無ければ空。
+
+    鍵はファイル名を第一とする —— `verify_fix.py` が
+    `ledger/red/<対象 id>.json` で引くので、引き方を二重定義しない。
+    """
+    out = {}
+    root = ledger_dir or _ledger_dir()
+    d = os.path.join(root, "red")
+    if not os.path.isdir(d):
+        return out
+    for name in sorted(os.listdir(d)):
+        if not name.endswith(".json"):
+            continue
+        doc = ledger_io.read_json(os.path.join(d, name), default=None)
+        if isinstance(doc, dict):
+            out[name[:-5]] = doc
+    return out
+
+
+def red_closed(record):
+    """REPRODUCE_RED が消化されたか（ADR-148）。
+
+    消化と認めるのは二つだけ。
+    - 赤が赤だった（`phase: before-fix` で、0 でない返り値と観測された失敗）。
+      **最初から緑は再現と認めない**（運転手順 §2）。
+    - 再現不能と記録された（`phase: impossible`）。理由つきで RECORD へ抜ける。
+
+    どちらでもない記録（沈黙・空の観測）は消化ではない。
+    """
+    if not isinstance(record, dict):
+        return False
+    phase = record.get("phase")
+    if phase == "impossible":
+        return bool(record.get("reason") or record.get("note"))
+    if phase != "before-fix":
+        return False
+    if record.get("returncode") in (0, None) and not record.get("reds"):
+        return False        # 最初から緑（または返り値が無い）は再現ではない
+    observed = record.get("observed_failures") or record.get("reds") or []
+    return bool(observed)
+
+
+def unreproduced_plans(ledger_dir=None):
+    """承認された検証計画のうち、赤の証拠も再現不能の記録も無いもの。
+
+    返すのは [(scenario_id, formalize のファイル名)] を id 順で。
+    数えるのは APPROVE だけ —— REJECT と UNKNOWN は義務を生まない。
+    """
+    root = ledger_dir or _ledger_dir()
+    fm_dir = os.path.join(root, "formalize")
+    if not os.path.isdir(fm_dir):
+        return []
+    reds = load_red_records(root)
+    out = []
+    for name in sorted(os.listdir(fm_dir)):
+        if not name.endswith(".json"):
+            continue
+        doc = ledger_io.read_json(os.path.join(fm_dir, name), default=None)
+        if not isinstance(doc, dict):
+            continue
+        for plan in doc.get("plans") or []:
+            if not isinstance(plan, dict):
+                continue
+            if plan.get("verdict") != "APPROVE":
+                continue
+            sid = plan.get("scenario_id")
+            if not sid:
+                continue
+            if red_closed(reds.get(sid)):
+                continue
+            out.append((sid, name))
+    return sorted(set(out))
+
+
+def reproduce_red_summary(ledger_dir=None):
+    """承認・消化・未消化の数。挙げないときも必ず数えて出す。"""
+    root = ledger_dir or _ledger_dir()
+    fm_dir = os.path.join(root, "formalize")
+    approved = set()
+    if os.path.isdir(fm_dir):
+        for name in sorted(os.listdir(fm_dir)):
+            if not name.endswith(".json"):
+                continue
+            doc = ledger_io.read_json(os.path.join(fm_dir, name), default=None)
+            for plan in (doc or {}).get("plans") or []:
+                if isinstance(plan, dict) and plan.get("verdict") == "APPROVE" \
+                        and plan.get("scenario_id"):
+                    approved.add(plan["scenario_id"])
+    outstanding = [sid for sid, _f in unreproduced_plans(root)]
+    return {"approved": len(approved),
+            "reproduced": len(approved) - len(outstanding),
+            "outstanding": len(outstanding)}
 
 
 def load_verify_records():
@@ -1691,6 +1815,17 @@ def next_actions(index_sha=None):
             "ATTACK_EVALUATOR: 評価器の成果物(%s)が故障注入の証拠(%s)より新しい"
             % (latest_output, latest_attack or "無し"))
 
+    # 承認された検証計画のうち、赤の証拠が無いもの（ADR-148）。
+    # FORMALIZE が「消化」と数えるのは判定が付いたことであって、計画が
+    # 果たされたことではない。ここを読まないと、承認した瞬間に義務が
+    # 正本の視野から消える（実測 30 件。INC-033）。
+    unreproduced = unreproduced_plans()
+    if unreproduced:
+        head = ", ".join(sid for sid, _f in unreproduced[:3])
+        add("REPRODUCE_RED: 承認済みで赤の証拠が無い計画 %d 件（%s%s）"
+            % (len(unreproduced), head,
+               " ほか" if len(unreproduced) > 3 else ""))
+
     # 批判を生き残ったのに計画審査の判定を持たない scenario（ADR-138）。
     # 挙げるのは判定の無い生き残りだけ —— 判定済み（APPROVE も REJECT も
     # UNKNOWN も）を挙げ続けると、消化した審査を毎回買い直す「消えない行動」に
@@ -1804,6 +1939,7 @@ def main(argv=None):
             # 最古の日付だけで、健全さの判定はしない —— 件数ゼロを健全さと
             # 読む形は指標として成り立たない（ASM-004 の rejected_indicators）。
             "unknown_aging": unknown_aging(),
+            "reproduce_red": reproduce_red_summary(),
         }, ensure_ascii=False, indent=2))
         return 0
     print("usage: orchestrator.py [status|validate]")

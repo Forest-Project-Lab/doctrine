@@ -229,6 +229,32 @@ class OrchestratorTest(unittest.TestCase):
             actions = orchestrator.next_actions()
             self.assertEqual(
                 [a for a in actions if a.startswith("FORMALIZE")], [], actions)
+            # ADR-148: 承認された計画は、赤の証拠が付くまで REPRODUCE_RED が
+            # 引き受ける。既定の入口（DISCOVER）へ落ちるのは、その義務が
+            # 果たされてからである —— 買った義務が、新しい仮説を買うより先。
+            self.assertTrue(
+                [a for a in actions if a.startswith("REPRODUCE_RED")], actions)
+            self.assertEqual(
+                [a for a in actions if a.startswith("DISCOVER")], [], actions)
+
+    def test_discover_returns_once_the_approved_plan_has_red_evidence(self):
+        """赤の証拠が付けば REPRODUCE_RED は消え、既定の入口へ戻る（ADR-148）。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            self._stub_ledger(
+                tmp, coverage_unknown=0, survivors=["SCN-1", "SCN-2"],
+                plans=[{"scenario_id": "SCN-1", "verdict": "APPROVE"},
+                       {"scenario_id": "SCN-2", "verdict": "REJECT"}])
+            red_dir = os.path.join(tmp, "ledger", "red")
+            os.makedirs(red_dir, exist_ok=True)
+            with open(os.path.join(red_dir, "SCN-1.json"), "w",
+                      encoding="utf-8") as fh:
+                json.dump({"kind": "reproduce-red", "phase": "before-fix",
+                           "returncode": 1,
+                           "observed_failures": ["FAIL: x"]}, fh)
+            actions = orchestrator.next_actions()
+            self.assertEqual(
+                [a for a in actions if a.startswith("REPRODUCE_RED")], [],
+                actions)
             self.assertTrue([a for a in actions if a.startswith("DISCOVER")],
                             actions)
 
