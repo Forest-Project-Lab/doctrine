@@ -242,6 +242,94 @@
           "state": "FAIL"
         }
       ]
+    },
+    {
+      "id": "ASM-005-the-ledger-is-always-syntactically-readable",
+      "assumption": "台帳は常に構文的に読める正本である",
+      "rests_on": [
+        "next_actions の導出（読めた分だけを数え、読めない分を空として扱わない）",
+        "coverage_status の五値の集計",
+        "validate の各検査（推奨の処遇・想定・出荷・統合・名指しの二分）",
+        "verify_fix が引く赤の証拠と、orchestrator が引く formalize の判定"
+      ],
+      "if_false": "読み手は None を返して黙って劣化するので、外から見た形は『その台帳が無い』と区別できない。行動がその分だけ静かに消え、正本は『前提はすべて充足』と告げうる（INC-006 の沈黙の型）。実際 INC-027 で、書き込み中の中断が台帳を切り詰めることを実測した。",
+      "verified_by": "未実施（独立の評価セッションによる検証はまだ受けていない）",
+      "sources": [
+        "assurance/harness/ledger_io.py",
+        "assurance/harness/orchestrator.py",
+        "assurance/tests/test_ledger_io.py",
+        "assurance/tests/test_readers_do_not_hide_corruption.py"
+      ],
+      "incident_id": "INC-027-ledger-write-not-atomic",
+      "leading_indicators": [
+        {
+          "observe_where": "orchestrator validate の出力（assurance/.venv/bin/python assurance/harness/orchestrator.py validate）",
+          "abnormal_when": "『台帳が読めない（空ではない。破損の疑い）』が 1 件でも出るとき。総なめの検査が捉えた形であり、その台帳を読む行動が静かに消えている",
+          "observed_at": "2026-08-09",
+          "observation": "problems は空。全台帳が読めた。",
+          "state": "PASS"
+        },
+        {
+          "observe_where": "同じ validate の出力（_validate_no_swallowed_corruption が出す行）",
+          "abnormal_when": "『読み手が破損を飲み込んだ』が 1 件でも出るとき。総なめより強い信号で、この実行で実際に読もうとして失敗している",
+          "observed_at": "2026-08-09",
+          "observation": "note_corrupt の記録なし。",
+          "state": "PASS"
+        },
+        {
+          "observe_where": "assurance/ledger/ に残る pid 付きの一時ファイル（find assurance/ledger -name '*.tmp'）",
+          "abnormal_when": "一時ファイルが残っているとき。原子化は効いている（正本は無傷）が、書き手が書き切る前に落ちた痕跡である",
+          "observed_at": "2026-08-09",
+          "observation": "残骸なし。",
+          "state": "PASS"
+        }
+      ],
+      "rejected_indicators": [
+        {
+          "indicator": "台帳のファイルサイズの急減",
+          "why": "正当な CURATE（重複統合・整理）でも減る。減少そのものは破損を意味しない"
+        }
+      ],
+      "observation_history": []
+    },
+    {
+      "id": "ASM-006-the-ledger-has-a-single-writer",
+      "assumption": "台帳への書き込みは単一の書き手による",
+      "rests_on": [
+        "read-modify-write する走らせ手（observe_assumptions・verify_assumptions が assumptions.json を、cast_analysis が incidents.json を）",
+        "原子化（ledger_io.write_json）が守るのは『書き切れなかった』側だけで、『二人とも書き切って片方が論理的に古い』側は守らない"
+      ],
+      "if_false": "後から書いた側が、先に書いた側の追記を整形式のまま消す。外から見た形は『そもそも書かれなかった』と区別できない。INC-008 で実際に起きた（分析中に積んだ事象 INC-007 が、分析終了時の書き戻しで消えた）。",
+      "verified_by": "未実施（独立の評価セッションによる検証はまだ受けていない）",
+      "sources": [
+        "assurance/ledger/incidents.json の INC-008",
+        "assurance/harness/cast_analysis.py の update_incident",
+        "assurance/harness/ledger_io.py"
+      ],
+      "incident_id": "INC-008-ledger-write-back-clobber",
+      "leading_indicators": [
+        {
+          "observe_where": "harness の走らせ手の同時実行（ps -eo cmd | grep assurance/harness）",
+          "abnormal_when": "同じ台帳を触る harness プロセスが二つ以上同時に走っているとき。原子化では防げない層の危険状態そのもの",
+          "observed_at": "2026-08-09",
+          "observation": "同時実行なし（本再監査は逐次で走らせた）。",
+          "state": "PASS"
+        },
+        {
+          "observe_where": "追記の直後の読み直し（足した id が実在するか）",
+          "abnormal_when": "直前に足したはずの id が次の読み出しで消えているとき。INC-008 の形そのもので、git には現れない（commit 前に起きる）",
+          "observed_at": "2026-08-09",
+          "observation": "本再監査で足した ASM-005/006・INC-027〜038 はいずれも読み直しで実在した。",
+          "state": "PASS"
+        }
+      ],
+      "rejected_indicators": [
+        {
+          "indicator": "git の衝突",
+          "why": "同じプロセス内の書き戻しの取りこぼしは commit 前に起きるので、git には現れない"
+        }
+      ],
+      "observation_history": []
     }
   ]
 }
