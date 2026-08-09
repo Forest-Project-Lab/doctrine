@@ -1,0 +1,686 @@
+{
+  "accepted_flaws": [
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "決定論の掃引（assurance/harness/recheck_evidence.py の _refresh_stamp）は、証拠ポインタを引き直す職掌の中で by['rubric_sha256'] を現行値で無条件に代入する。掃引が自力で復元できる情報は証拠の所在だけであり、判定時にどの規準が適用されたかは掃引の入力に存在しない。したがって書込み権限の範囲が、復元可能性の範囲を超えている。ソフトウェアの不具合としてではなく、掃引に与えた要求（『台帳を現行の値と整合させる』）が、保存すべき履歴の性質を制約として含んでいなかったこととして記述する。",
+      "evidence_ref": "assurance/harness/recheck_evidence.py",
+      "flaw_type": "制御動作が誤っている",
+      "normative_refs": [
+        "software-does-not-fail-requirements-defect",
+        "causality-as-inadequate-control-not-failure",
+        "自動化は設計者の想定に遡る",
+        "trace-why-design-flaw-was-introduced"
+      ],
+      "why_it_seemed_adequate": "掃引の目的は台帳を現行状態と整合させることであり、刻印も台帳が持つ現行値の一つに見えた。索引の刻印は掃引が更新するのが従来からの務めであり、記録側の刻印を同じ手続きで揃えることは一貫した設計に見えた。加えて規準が改訂されていない期間は、上書きと保存が出力として同値であり、設計上の区別が観測に現れない。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "規準が改訂されたことを機械が検め、台帳の刻印との食い違いを次の行動へ結ぶ入力が存在しない（residual に明記）。ASSURANCE_LANE は決定論試験の成否と台帳を手掛かりに次の行動を導くが、『現行規準の指紋』と『台帳が保持する刻印の集合』を突き合わせる観測点が無いため、再判定（MAP_COVERAGE）の起動が人の気付きに依存する。制御アクションに対する効果のフィードバックが対で備わっていない。",
+      "evidence_ref": "事象記録の residual 節",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "control-action-requires-feedback",
+        "全コントロールループにフィードバック必須",
+        "計画外変化の検出手段",
+        "安全想定の記録と失効先行指標の定義"
+      ],
+      "why_it_seemed_adequate": "規準は滅多に動かず、動かす当人がその場で再判定を回す前提が成り立っていた。606 件すべてが単一の指紋 fb7c0460 であった観測は、その前提が保たれている証拠として読める。稀にしか起きない事象に対して常時の観測点を置かないのは、資源配分として合理的に見える。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "『証拠の引き直し（掃引）』と『意味の再判定（MAP_COVERAGE）』の責任分界が、修正時の fix_note で初めて言語化された。分界が明文化されていない間、掃引の実装からは両方を担ってよいと読める状態にあり、規準が動いたときに誰が再判定を起動するかの責任所在が構造上どこにも割り当てられていない。責任の未割当は個別の是正ではなく統制構造の再設計の対象である。",
+      "evidence_ref": "事象記録の fix_note 節",
+      "flaw_type": "統制どうしの調整の欠如",
+      "normative_refs": [
+        "責任の空白は構造再設計",
+        "責任権限説明責任の割当明示",
+        "重複責任による監視の抜け",
+        "責任割り当ての経時的劣化"
+      ],
+      "why_it_seemed_adequate": "どちらも同じ保証レーンの内部手続きであり、台帳を最新化するという同じ方向を向いている。分界は実装者の頭の中で自明に見え、成文化する必要が感じられる契機（規準の改訂）がまだ一度も来ていなかった。"
+    },
+    {
+      "control_element_id": "CI_RELEASE_CHECK",
+      "description": "CI は掃引の成否と決定論試験を赤で止めるが、『掃引が刻印を保存する』という不変条件を対象とする試験を持っていなかった（test_rubric_stamp_preserved.py は本件後に追加）。この不変条件は規準が動いたときにしか出力差として現れないため、規準を固定したまま実行される試験群では、上書き実装と保存実装が同じ緑を返す。すなわち検査の設計が、ハザードが顕在化する条件を再現していない。",
+      "evidence_ref": "assurance/tests/test_rubric_stamp_preserved.py",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "監査の検出力評価",
+        "監査のすり抜け時に監査手順を是正",
+        "安全立証でなく非安全状態の探索",
+        "verify-all-hazard-preventing-systems"
+      ],
+      "why_it_seemed_adequate": "決定論試験は同じ入力に同じ出力が返ることを確かめる設計であり、掃引はその意味で決定論的に振る舞っていた。f0d4e8e^ / f0d4e8e / origin/main のいずれでも 606 件が同一指紋であるという事実は、台帳が整合していることの積極的な証拠として読める。"
+    },
+    {
+      "control_element_id": "OWNER",
+      "description": "OWNER が merge の可否に用いる手掛かりは PR の diff と台帳である。台帳は刻印の値を示すが、その刻印が『判定時に記録された値』か『直近の掃引が書いた値』かを区別する情報を持たない。規準が動いていない間、両者は同じ文字列として現れる。したがって由来の保存という統制上の性質が失われても、OWNER の手掛かりには何の変化も生じない。これは既知の穴『報告が実施ではなく意図を書いていても人からは見分けにくい』と同型の、情報提供側の設計欠陥である。",
+      "evidence_ref": "統制構造 OWNER の手掛かり一覧",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "defects-in-information-providing-systems",
+        "controller-needs-concrete-feedback-channels",
+        "文書確認のみの監督の限界",
+        "include-information-supplier-defect"
+      ],
+      "why_it_seemed_adequate": "台帳に刻印が存在し、値が現行規準と一致していることは、追跡可能性が保たれている外観そのものである。差分に現れない性質を疑う手掛かりが OWNER の側に無い以上、承認は与えられた情報の範囲で整合している。"
+    },
+    {
+      "control_element_id": "GOVERNANCE_TREE",
+      "description": "ADR-133 決定3 は『どの規準に対する判定かを後から言える』という安全制約を課したが、その制約を実施しているコード（掃引の書込み経路）と決定文書との間にトレースが無い。統治木の走査と dep-graph の逆依存は doctrine_docs 配下の文書間依存を対象としており、決定が課した不変条件の実装先である assurance/harness は走査範囲の外にある。制約が文書として存在することと、実装がその制約に束縛されていることが分離している。",
+      "evidence_ref": "統制構造 GOVERNANCE_TREE の実体と手掛かり",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "何をとなぜのトレース文書化",
+        "ハザードから安全制約を導出",
+        "each-component-enforces-its-constraints",
+        "対象変化への要求事項追随"
+      ],
+      "why_it_seemed_adequate": "統治木は文書の統治のために設計されており、その範囲内では一貫して機能している。決定が課す制約の実装は、決定を読んだ実装者が守るという運用で足りていた期間が長い。"
+    },
+    {
+      "control_element_id": "PRE_TOOL_GUARD",
+      "description": "ガード（および POST_TOOL_LINTER の助言）は文書の編集・削除を対象とする。統治の主張を担う実体が文書から台帳（assurance/ledger/）へ広がった一方で、拒否の門と助言の対象範囲は文書のまま据え置かれている。台帳の不変条件を壊す編集は、この門を通らずに入る。",
+      "evidence_ref": "統制構造 PRE_TOOL_GUARD / POST_TOOL_LINTER の制御記述",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "責任割り当ての経時的劣化",
+        "対象変化への要求事項追随",
+        "each-component-enforces-its-constraints"
+      ],
+      "why_it_seemed_adequate": "ガードの分界は、統治の主張が文書に載っていた時期の構造として妥当だった。範囲の据え置きは能動的な決定ではなく、担い手の移動に対して範囲が追随しなかった結果であり、どの時点でも個別には不自然に見えない。"
+    },
+    {
+      "control_element_id": "HEARTBEAT",
+      "description": "鼓動は監査の古びと導入複製の版遅れを警告するが、『規準が動いた』および『台帳の刻印が現行規準と食い違う』は観測対象に入っていない。さらに鼓動は導入複製の側で動くため、この観測を鼓動へ足すと、版が遅れた環境では検出器も遅れる共通原因故障（INC-005）を継承する。すなわち劣化の検出を担う要素自身の劣化が、同じ経路で見えなくなる。",
+      "evidence_ref": "統制構造 HEARTBEAT の既知の穴（INC-005）",
+      "flaw_type": "統制自身の劣化を検出できない",
+      "normative_refs": [
+        "共通の体系的要因による多重防護の無効化",
+        "自己満足への構造的対策",
+        "変化ドリフトの事前検出"
+      ],
+      "why_it_seemed_adequate": "鼓動の職掌は古びの警告であり、規準の同一性は台帳側の関心事として分掌されている。分掌それ自体は明快で、どちらの側からも欠落が見えにくい。"
+    }
+  ],
+  "analysis": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "決定論の掃引（assurance/harness/recheck_evidence.py の _refresh_stamp）は、証拠ポインタを引き直す職掌の中で by['rubric_sha256'] を現行値で無条件に代入する。掃引が自力で復元できる情報は証拠の所在だけであり、判定時にどの規準が適用されたかは掃引の入力に存在しない。したがって書込み権限の範囲が、復元可能性の範囲を超えている。ソフトウェアの不具合としてではなく、掃引に与えた要求（『台帳を現行の値と整合させる』）が、保存すべき履歴の性質を制約として含んでいなかったこととして記述する。",
+        "evidence_ref": "assurance/harness/recheck_evidence.py",
+        "flaw_type": "制御動作が誤っている",
+        "normative_refs": [
+          "software-does-not-fail-requirements-defect",
+          "causality-as-inadequate-control-not-failure",
+          "自動化は設計者の想定に遡る",
+          "trace-why-design-flaw-was-introduced"
+        ],
+        "why_it_seemed_adequate": "掃引の目的は台帳を現行状態と整合させることであり、刻印も台帳が持つ現行値の一つに見えた。索引の刻印は掃引が更新するのが従来からの務めであり、記録側の刻印を同じ手続きで揃えることは一貫した設計に見えた。加えて規準が改訂されていない期間は、上書きと保存が出力として同値であり、設計上の区別が観測に現れない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "規準が改訂されたことを機械が検め、台帳の刻印との食い違いを次の行動へ結ぶ入力が存在しない（residual に明記）。ASSURANCE_LANE は決定論試験の成否と台帳を手掛かりに次の行動を導くが、『現行規準の指紋』と『台帳が保持する刻印の集合』を突き合わせる観測点が無いため、再判定（MAP_COVERAGE）の起動が人の気付きに依存する。制御アクションに対する効果のフィードバックが対で備わっていない。",
+        "evidence_ref": "事象記録の residual 節",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "control-action-requires-feedback",
+          "全コントロールループにフィードバック必須",
+          "計画外変化の検出手段",
+          "安全想定の記録と失効先行指標の定義"
+        ],
+        "why_it_seemed_adequate": "規準は滅多に動かず、動かす当人がその場で再判定を回す前提が成り立っていた。606 件すべてが単一の指紋 fb7c0460 であった観測は、その前提が保たれている証拠として読める。稀にしか起きない事象に対して常時の観測点を置かないのは、資源配分として合理的に見える。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "『証拠の引き直し（掃引）』と『意味の再判定（MAP_COVERAGE）』の責任分界が、修正時の fix_note で初めて言語化された。分界が明文化されていない間、掃引の実装からは両方を担ってよいと読める状態にあり、規準が動いたときに誰が再判定を起動するかの責任所在が構造上どこにも割り当てられていない。責任の未割当は個別の是正ではなく統制構造の再設計の対象である。",
+        "evidence_ref": "事象記録の fix_note 節",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "責任の空白は構造再設計",
+          "責任権限説明責任の割当明示",
+          "重複責任による監視の抜け",
+          "責任割り当ての経時的劣化"
+        ],
+        "why_it_seemed_adequate": "どちらも同じ保証レーンの内部手続きであり、台帳を最新化するという同じ方向を向いている。分界は実装者の頭の中で自明に見え、成文化する必要が感じられる契機（規準の改訂）がまだ一度も来ていなかった。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "CI は掃引の成否と決定論試験を赤で止めるが、『掃引が刻印を保存する』という不変条件を対象とする試験を持っていなかった（test_rubric_stamp_preserved.py は本件後に追加）。この不変条件は規準が動いたときにしか出力差として現れないため、規準を固定したまま実行される試験群では、上書き実装と保存実装が同じ緑を返す。すなわち検査の設計が、ハザードが顕在化する条件を再現していない。",
+        "evidence_ref": "assurance/tests/test_rubric_stamp_preserved.py",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "監査の検出力評価",
+          "監査のすり抜け時に監査手順を是正",
+          "安全立証でなく非安全状態の探索",
+          "verify-all-hazard-preventing-systems"
+        ],
+        "why_it_seemed_adequate": "決定論試験は同じ入力に同じ出力が返ることを確かめる設計であり、掃引はその意味で決定論的に振る舞っていた。f0d4e8e^ / f0d4e8e / origin/main のいずれでも 606 件が同一指紋であるという事実は、台帳が整合していることの積極的な証拠として読める。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "OWNER が merge の可否に用いる手掛かりは PR の diff と台帳である。台帳は刻印の値を示すが、その刻印が『判定時に記録された値』か『直近の掃引が書いた値』かを区別する情報を持たない。規準が動いていない間、両者は同じ文字列として現れる。したがって由来の保存という統制上の性質が失われても、OWNER の手掛かりには何の変化も生じない。これは既知の穴『報告が実施ではなく意図を書いていても人からは見分けにくい』と同型の、情報提供側の設計欠陥である。",
+        "evidence_ref": "統制構造 OWNER の手掛かり一覧",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "defects-in-information-providing-systems",
+          "controller-needs-concrete-feedback-channels",
+          "文書確認のみの監督の限界",
+          "include-information-supplier-defect"
+        ],
+        "why_it_seemed_adequate": "台帳に刻印が存在し、値が現行規準と一致していることは、追跡可能性が保たれている外観そのものである。差分に現れない性質を疑う手掛かりが OWNER の側に無い以上、承認は与えられた情報の範囲で整合している。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "ADR-133 決定3 は『どの規準に対する判定かを後から言える』という安全制約を課したが、その制約を実施しているコード（掃引の書込み経路）と決定文書との間にトレースが無い。統治木の走査と dep-graph の逆依存は doctrine_docs 配下の文書間依存を対象としており、決定が課した不変条件の実装先である assurance/harness は走査範囲の外にある。制約が文書として存在することと、実装がその制約に束縛されていることが分離している。",
+        "evidence_ref": "統制構造 GOVERNANCE_TREE の実体と手掛かり",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "何をとなぜのトレース文書化",
+          "ハザードから安全制約を導出",
+          "each-component-enforces-its-constraints",
+          "対象変化への要求事項追随"
+        ],
+        "why_it_seemed_adequate": "統治木は文書の統治のために設計されており、その範囲内では一貫して機能している。決定が課す制約の実装は、決定を読んだ実装者が守るという運用で足りていた期間が長い。"
+      },
+      {
+        "control_element_id": "PRE_TOOL_GUARD",
+        "description": "ガード（および POST_TOOL_LINTER の助言）は文書の編集・削除を対象とする。統治の主張を担う実体が文書から台帳（assurance/ledger/）へ広がった一方で、拒否の門と助言の対象範囲は文書のまま据え置かれている。台帳の不変条件を壊す編集は、この門を通らずに入る。",
+        "evidence_ref": "統制構造 PRE_TOOL_GUARD / POST_TOOL_LINTER の制御記述",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "責任割り当ての経時的劣化",
+          "対象変化への要求事項追随",
+          "each-component-enforces-its-constraints"
+        ],
+        "why_it_seemed_adequate": "ガードの分界は、統治の主張が文書に載っていた時期の構造として妥当だった。範囲の据え置きは能動的な決定ではなく、担い手の移動に対して範囲が追随しなかった結果であり、どの時点でも個別には不自然に見えない。"
+      },
+      {
+        "control_element_id": "HEARTBEAT",
+        "description": "鼓動は監査の古びと導入複製の版遅れを警告するが、『規準が動いた』および『台帳の刻印が現行規準と食い違う』は観測対象に入っていない。さらに鼓動は導入複製の側で動くため、この観測を鼓動へ足すと、版が遅れた環境では検出器も遅れる共通原因故障（INC-005）を継承する。すなわち劣化の検出を担う要素自身の劣化が、同じ経路で見えなくなる。",
+        "evidence_ref": "統制構造 HEARTBEAT の既知の穴（INC-005）",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "共通の体系的要因による多重防護の無効化",
+          "自己満足への構造的対策",
+          "変化ドリフトの事前検出"
+        ],
+        "why_it_seemed_adequate": "鼓動の職掌は古びの警告であり、規準の同一性は台帳側の関心事として分掌されている。分掌それ自体は明快で、どちらの側からも欠落が見えにくい。"
+      }
+    ],
+    "hazard": "台帳上の判定と、その判定が参照した規準の同一性を結ぶ束縛（刻印）が、証拠ポインタの引き直しを職掌とする決定論の掃引によって上書き可能であり、かつ上書きが起きたことを事後に区別する情報が台帳に残らない、というシステム状態。この状態は、規準の改訂と掃引の実行順という運用条件のもとで由来の喪失に至る。",
+    "incident_id": "INC-037-deterministic-sweep-overwrites-the-rubric-stamp",
+    "leading_indicators": [
+      {
+        "indicator": "台帳中の刻印集合と現行規準の指紋の食い違い",
+        "observable": "assurance/ledger/ の全記録から rubric_sha256 の相異なる値を集計し、リポジトリ正本から算出した現行規準の指紋と突合した結果",
+        "threshold": "相異なる刻印が2種以上、または現行指紋と一致しない刻印が1件以上ある状態で、対応する MAP_COVERAGE 再判定の記録が台帳に無い場合を異常とする",
+        "version_independent": true,
+        "where": "CI_RELEASE_CHECK（.github/workflows のジョブ）およびリポジトリ正本側の掃引前チェック",
+        "why_version_independent": "リポジトリ正本の CI で算出・突合するため、利用者環境へ導入された複製の版に依存しない"
+      },
+      {
+        "indicator": "掃引が書き換えたキー集合に刻印が含まれる事象",
+        "observable": "recheck_evidence の書込み経路が記録側で代入したキー名の集合（不変条件試験の観測値）",
+        "threshold": "rubric_sha256 への代入が既存値の存在する記録に対して1件でも発生したら赤で止める（0件を正常とする）",
+        "version_independent": true,
+        "where": "assurance/tests/test_rubric_stamp_preserved.py と CI_RELEASE_CHECK",
+        "why_version_independent": "正本のテストとして走り、導入複製の版を参照しない"
+      },
+      {
+        "indicator": "由来不明の刻印の新規発生（setdefault 補完の副作用）",
+        "observable": "掃引1回あたり、刻印を持たなかった記録へ新たに刻印が付与された件数と、その記録の判定日時",
+        "threshold": "付与件数が0を超え、かつ対象記録の判定日時が直近の規準改訂より前である場合を異常とする",
+        "version_independent": true,
+        "where": "ASSURANCE_LANE の掃引ログと assurance/ledger/",
+        "why_version_independent": "台帳と掃引ログはリポジトリ正本側の資産であり、複製の版に依らず観測できる"
+      },
+      {
+        "indicator": "規準を変更する PR に再判定が伴わない状態",
+        "observable": "規準定義ファイルに触れる PR の diff と、同一 PR ないし後続の台帳に現れる MAP_COVERAGE 再判定記録の有無",
+        "threshold": "規準定義に変更を含む PR が merge 可能状態に達した時点で再判定記録が存在しないなら、merge 前に赤とする",
+        "version_independent": true,
+        "where": "CI_RELEASE_CHECK の docs-audit JSON 相当の出力、および OWNER が読む PR の diff",
+        "why_version_independent": "PR と台帳という正本側の対象のみを見る。ただし MAP_COVERAGE の実在が未確認である点は unknowns を参照"
+      },
+      {
+        "indicator": "刻印食い違いの警告を導入複製側（鼓動）で出す場合の検出遅れ",
+        "observable": "警告を出した検出器のプラグイン版と、リポジトリ正本の版の世代差",
+        "threshold": "複製の版が正本より1世代以上遅れている状態で、この指標を検出根拠として採用していることを異常とする",
+        "version_independent": false,
+        "where": "HEARTBEAT（plugin/scripts/gov-heartbeat.py）と .claude/.cache/last-audit.json",
+        "why_version_independent": "検出器自身が導入複製の側で動くため、版が遅れると検出器も遅れる（INC-005 の共通原因故障）。この指標は正本側の指標の代替にはならず、補助としてのみ扱う"
+      }
+    ],
+    "loss": "台帳に積まれた各判定について「どの規準（rubric）に対する判定か」を後から機械が言えなくなる状態。ADR-133 決定3 が台帳へ持たせた由来の追跡可能性が、規準改訂後に掃引が回った時点で静かに失われ、保証の主張（landed 判定の根拠）が第三者に再検証できなくなる。本件では規準が改訂されていない期間に掃引が回った(PR #277)ため実損は生じておらず、ニアミスとして扱う。損失が現に出ていないことは、統制上この状態が許容できることを意味しない（許容可否の判断は OWNER にある）。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "setdefault 適用後は既存の刻印が不変のまま保たれ、索引側の刻印のみが更新される。旧指紋を持つ記録数が掃引前後で変わらなければ仮説は棄却される。",
+        "hypothesis": "規準定義を一文字変更してから掃引を回すと、修正前のコードでは台帳の全記録の刻印が現行値へ移り、判定と規準の対応が失われる。",
+        "oracle": "掃引の前後で assurance/ledger/ の rubric_sha256 の分布を採取し、旧指紋を持つ記録が0件になるかを見る。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "刻印欠落記録が0件、またはすべての欠落記録の判定日時が直近の規準改訂より後である。",
+        "hypothesis": "刻印を持たない旧記録に対する setdefault の補完が、旧規準で判定された記録に現行規準の指紋を刻み、由来を誤って確定させる。",
+        "oracle": "刻印欠落記録の判定日時を規準の改訂履歴と突合し、改訂より前の判定に現行指紋が付与されていないかを確認する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "記録側の刻印へ書き込む経路が _refresh_stamp のみである。",
+        "hypothesis": "掃引以外の経路（索引再構築・移行・手編集）からも記録側の刻印が書き換わり、許可制を掃引にだけ入れても由来の喪失が残る。",
+        "oracle": "rubric_sha256 への代入・更新箇所をリポジトリ全体で走査し、記録側を触る経路を列挙する。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "改訂を含む変更が merge される時点で食い違いが next_actions に自動で挙がり、遅延が0に近い。",
+        "hypothesis": "規準が改訂されても再判定の起動が人の気付きに依存するため、改訂から再判定完了までの間、台帳は旧規準に基づく判定を landed として提示し続ける。",
+        "oracle": "規準の改訂時刻と、対応する MAP_COVERAGE 再判定の完了時刻の差を台帳から測る。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "掃引以外のすべての手続きについて、書き換え対象のキーが入力から一意に復元可能である。",
+        "hypothesis": "出力の値のみを根拠とする既存の保証層は、履歴の性質を壊す他の書込みについても同様に検出力を持たない（本件は単発ではなく類型である）。",
+        "oracle": "台帳へ書き込む自動手続きを列挙し、各手続きが『自力で復元できない情報』を書き換えていないかを、入力に含まれる情報の集合と突合して点検する。",
+        "severity": "P1"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "台帳への書込みを行う自動手続きに、書き換えてよいキーの許可制（allowlist）を導入し、許可外のキーへの代入を実行時に拒む。掃引の職掌は証拠ポインタと索引の刻印に限定し、記録側の刻印を許可外に置く。setdefault による個別修正は症状の是正であり、権限の構造化まで到達させる。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "リポジトリ正本側の CI に、現行規準の指紋と台帳の刻印集合を突合するジョブを追加し、食い違いがあり再判定記録が無い場合を赤とする。あわせて ASSURANCE_LANE の next_actions に同じ食い違いを挙げる（residual の案を次の反復ではなく本反復の候補へ引き上げるかは OWNER の判断）。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "『証拠の引き直し（掃引）』と『意味の再判定（MAP_COVERAGE）』の責任分界と、規準改訂時に再判定を起動する責任者・起動条件・完了判定を文書として確立する。分界が fix_note にのみ存在する状態を解消する。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "台帳の刻印の意味（判定時に記録された値であること）を仕様として明記し、刻印を後から補完した記録を『由来推定』として別キーで区別できるようにする。台帳スキーマの変更は互換性に触れるため可否は OWNER が決める。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "ガード・リンタ・統治木の走査対象を、文書だけでなく台帳の不変条件へ拡張するか否かを決める。拡張しない場合は、台帳の不変条件を誰が強制するかを明示して穴として記録する。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "ADR-139 の独立検証を実施するまで本件を fixed:true としない。あわせて setdefault が旧記録へ誤った由来を刻まないかを検証し、指摘が是正完了として閉じられるまで追跡する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "記録側の rubric_sha256 への代入箇所を全走査し、掃引以外の書込み経路の有無を確定する。存在する場合は同じ許可制の対象に含める。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "本分析が依拠した機構（recheck_evidence.py / MAP_COVERAGE / ADR-133 決定3）の実在をリポジトリ上で確認し、統制構造の要素一覧に不足があれば要素として追加する。実在が確認できない場合は、本分析の該当する control_flaws を撤回する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "『現在値の整合』を保つ設計と『由来の保存』を保つ設計が区別されておらず、自動化された手続きの書込み権限が、その手続きが自力で復元できる情報の範囲で制約されていない。同型の欠陥は、台帳へ書き込む他のすべての自動手続きに潜在しうる。",
+      "統治の主張を担う実体が文書（doctrine_docs）から台帳（assurance/ledger/）へ広がった一方で、ガード・リンタ・統治木の走査という統制の対象範囲が文書のまま据え置かれている。担い手の移動に対して範囲が追随せず、ずれが時間とともに広がる構造になっている。",
+      "規準が長く動かない期間は、上書きと保存が観測上同値になるため欠陥が休眠する。損失が出ていないことが保証の有効性の証拠として読まれやすく、休眠期間が長いほど検査の設計を見直す契機が生じにくい。",
+      "保証の各層（決定論試験・PR の diff・台帳の目視）がいずれも出力の値を根拠にしており、独立した多重防護に見えて同一の前提（値が正しければ由来も正しい）を共有している。この共通前提が、複数の防護を同時に無効化する。",
+      "欠陥の検出が独立再監査の抜取りという低頻度・人手の経路に依存しており、常時稼働する検出器が担っていない。",
+      "ASSURANCE_LANE の既知の穴のとおり評価者が同系 model であり、同じ盲点（履歴の性質を出力の値で代替して確かめる）を共有する共通原因故障が残る。",
+      "古びと版遅れの検出器が導入複製の側で動く構造（INC-005）により、新たな検出器をその経路に足すと同じ共通原因を継承する。"
+    ],
+    "unknowns": [
+      "【実在の未確認・最優先】事象が名指しする機構のうち、掃引 assurance/harness/recheck_evidence.py（_refresh_stamp）と、意味の再判定 MAP_COVERAGE は、与えられた統制構造の要素として列挙されていない。ASSURANCE_LANE の実体として挙がっているのは assurance/harness/orchestrator.py のみである。さらに作業ディレクトリ（/tmp/assurance-cast-bsnt0xuy）は空であり、リポジトリを参照できないため、これらのファイル・ADR-133 決定3・ADR-139・PR #277・コミット f0d4e8e・INC-024#6・606 件という数値のいずれも実在を確認していない。事象の記録は与えられた入力であって実在の証明ではない。本分析は、掃引と MAP_COVERAGE が ASSURANCE_LANE の内部要素として実在するという仮定の上に立っており、この仮定が崩れれば control_flaws のうち ASSURANCE_LANE を指す3件と CI_RELEASE_CHECK を指す1件は成立しない。confidence を low としたのはこの理由による。",
+      "MAP_COVERAGE の統制上の位置（誰がどの手掛かりで起動を判断し、結果をどこへ返すか）が不明。統制構造に要素として存在しないため、責任の割当先を特定できない。",
+      "台帳の刻印が『判定時の規準』を指すという意味規定が、どの文書のどの条項で確立されているかを確認していない（ADR-133 決定3 の本文を読んでいない）。意味規定が存在しないなら、欠陥は上書きではなく仕様の未確立の側にある。",
+      "setdefault による修正が、刻印を持たない旧記録に現行規準を付与することで、実際には旧規準で判定された記録に誤った由来を刻む可能性があるか。独立検証（ADR-139）が未実施であり、判定できない。",
+      "掃引以外に記録側の rubric_sha256 を書き換える経路（索引再構築、移行スクリプト、手作業の編集など）が存在するかを確認していない。",
+      "606 件すべてが同一指紋という観測が、規準が一度も改訂されていないことを意味するのか、参照した履歴の範囲が限定されているだけなのかを確認していない。",
+      "独立再監査 Phase D の抜取り率と抜取り基準が不明であり、同種の由来喪失が抜取り外の記録に存在するかを判定できない。",
+      "規準の改訂が過去に起きた場合、当時の運用でどのように再判定が行われたか（あるいは行われなかったか）の記録の所在が不明。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は『現在の値が整合しているか』を検める設計であり、『値の由来が保存されるか』という履歴の性質を検める設計ではない。規準が一度も動いていない期間は、上書きする実装と保存する実装が同一の出力を返すため、決定論試験・PR の diff・台帳の目視のいずれにも差が現れない。ハザードが顕在化する条件（規準の改訂 → 掃引の実行）が試験環境で再現されていないことが、検出力の欠落の本体である。検出は独立再監査 Phase D の landed 抜取り（INC-024#6）というサンプリング経路に依存しており、抜取りに当たらなければ規準が次に動いた後まで表面化しなかった。またコードの実装で確認して初めて判明したことが示すとおり、出力の観測だけでは到達できない欠陥であり、出力を根拠とする保証層すべてに共通する盲点である。修正（setdefault）が入ったことはこの盲点を埋めておらず、独立検証（ADR-139）も未実施であるため、指摘は是正完了として閉じられない。"
+  },
+  "control_structure_ids": [
+    "OWNER",
+    "CI_RELEASE_CHECK",
+    "SESSION_START_CONTRACT",
+    "HEARTBEAT",
+    "PRE_TOOL_GUARD",
+    "POST_TOOL_LINTER",
+    "SESSION_END_AUDIT",
+    "CAPTURE_NUDGE",
+    "PLUGIN_DISTRIBUTION",
+    "ASSURANCE_LANE",
+    "GOVERNANCE_TREE"
+  ],
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "duration_ms": 273141,
+  "errors": [],
+  "execution_kind": "real-sdk",
+  "flaws_with_citation_defect": [],
+  "generated_at": "2026-08-09T22:37:09Z",
+  "git_dirty": true,
+  "git_sha": "c18bc7524e5b2ca9f1eafe3a4210f4295841a16a",
+  "incident_evidence": {
+    "kind": "measurement",
+    "refs": [
+      "assurance/harness/recheck_evidence.py",
+      "assurance/tests/test_rubric_stamp_preserved.py"
+    ],
+    "resolved": [
+      "assurance/harness/recheck_evidence.py",
+      "assurance/tests/test_rubric_stamp_preserved.py"
+    ],
+    "unresolved": [],
+    "verifiable": true
+  },
+  "incident_id": "INC-037-deterministic-sweep-overwrites-the-rubric-stamp",
+  "incident_sha256": "d4e7354246f6fd5bccfdc30c600501b0f5901e07d2c201d997a8a8e9cfec6344",
+  "init": {
+    "claude_code_version": "2.1.221",
+    "model": "claude-opus-5",
+    "session_id": "db16420c-7ebd-418c-b059-909aaa37d67a",
+    "tools_count": 27
+  },
+  "kind": "cast-analysis",
+  "leading_indicators_defined": true,
+  "options": {
+    "allowed_tools": [],
+    "cwd": "/tmp/assurance-cast-bsnt0xuy",
+    "effort": "high",
+    "max_budget_usd": 4.0,
+    "max_turns": 8,
+    "model": "claude-opus-5",
+    "setting_sources": [],
+    "timeout_s": 900
+  },
+  "oracle": "structured_output がレーン側再検証にも適合",
+  "principles_offered": 337,
+  "prompt_sha256": "1f1fdfdbf486857d839e44bd57ad3cbd80b97dcd7578356d540ca5cf48a9dc6b",
+  "rejected_flaws": [],
+  "result_meta": {
+    "duration_api_ms": 271056,
+    "is_error": false,
+    "num_turns": 3,
+    "session_id": "db16420c-7ebd-418c-b059-909aaa37d67a",
+    "subtype": "success",
+    "total_cost_usd": 0.8976465,
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 40095,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 40095,
+      "cache_read_input_tokens": 71483,
+      "inference_geo": "not_available",
+      "input_tokens": 4,
+      "iterations": "list",
+      "output_tokens": 16970,
+      "server_tool_use": {
+        "web_fetch_requests": 0,
+        "web_search_requests": 0
+      },
+      "service_tier": "standard",
+      "speed": "standard"
+    }
+  },
+  "schema_sha256": "0d1643d5e16353723405302c1f6ffcf753915e2a4f27a3530e8ef9a9ee45cb46",
+  "sdk_version": "0.2.129",
+  "settled": true,
+  "status": "PASS",
+  "structured_output": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "決定論の掃引（assurance/harness/recheck_evidence.py の _refresh_stamp）は、証拠ポインタを引き直す職掌の中で by['rubric_sha256'] を現行値で無条件に代入する。掃引が自力で復元できる情報は証拠の所在だけであり、判定時にどの規準が適用されたかは掃引の入力に存在しない。したがって書込み権限の範囲が、復元可能性の範囲を超えている。ソフトウェアの不具合としてではなく、掃引に与えた要求（『台帳を現行の値と整合させる』）が、保存すべき履歴の性質を制約として含んでいなかったこととして記述する。",
+        "evidence_ref": "assurance/harness/recheck_evidence.py",
+        "flaw_type": "制御動作が誤っている",
+        "normative_refs": [
+          "software-does-not-fail-requirements-defect",
+          "causality-as-inadequate-control-not-failure",
+          "自動化は設計者の想定に遡る",
+          "trace-why-design-flaw-was-introduced"
+        ],
+        "why_it_seemed_adequate": "掃引の目的は台帳を現行状態と整合させることであり、刻印も台帳が持つ現行値の一つに見えた。索引の刻印は掃引が更新するのが従来からの務めであり、記録側の刻印を同じ手続きで揃えることは一貫した設計に見えた。加えて規準が改訂されていない期間は、上書きと保存が出力として同値であり、設計上の区別が観測に現れない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "規準が改訂されたことを機械が検め、台帳の刻印との食い違いを次の行動へ結ぶ入力が存在しない（residual に明記）。ASSURANCE_LANE は決定論試験の成否と台帳を手掛かりに次の行動を導くが、『現行規準の指紋』と『台帳が保持する刻印の集合』を突き合わせる観測点が無いため、再判定（MAP_COVERAGE）の起動が人の気付きに依存する。制御アクションに対する効果のフィードバックが対で備わっていない。",
+        "evidence_ref": "事象記録の residual 節",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "control-action-requires-feedback",
+          "全コントロールループにフィードバック必須",
+          "計画外変化の検出手段",
+          "安全想定の記録と失効先行指標の定義"
+        ],
+        "why_it_seemed_adequate": "規準は滅多に動かず、動かす当人がその場で再判定を回す前提が成り立っていた。606 件すべてが単一の指紋 fb7c0460 であった観測は、その前提が保たれている証拠として読める。稀にしか起きない事象に対して常時の観測点を置かないのは、資源配分として合理的に見える。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "『証拠の引き直し（掃引）』と『意味の再判定（MAP_COVERAGE）』の責任分界が、修正時の fix_note で初めて言語化された。分界が明文化されていない間、掃引の実装からは両方を担ってよいと読める状態にあり、規準が動いたときに誰が再判定を起動するかの責任所在が構造上どこにも割り当てられていない。責任の未割当は個別の是正ではなく統制構造の再設計の対象である。",
+        "evidence_ref": "事象記録の fix_note 節",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "責任の空白は構造再設計",
+          "責任権限説明責任の割当明示",
+          "重複責任による監視の抜け",
+          "責任割り当ての経時的劣化"
+        ],
+        "why_it_seemed_adequate": "どちらも同じ保証レーンの内部手続きであり、台帳を最新化するという同じ方向を向いている。分界は実装者の頭の中で自明に見え、成文化する必要が感じられる契機（規準の改訂）がまだ一度も来ていなかった。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "CI は掃引の成否と決定論試験を赤で止めるが、『掃引が刻印を保存する』という不変条件を対象とする試験を持っていなかった（test_rubric_stamp_preserved.py は本件後に追加）。この不変条件は規準が動いたときにしか出力差として現れないため、規準を固定したまま実行される試験群では、上書き実装と保存実装が同じ緑を返す。すなわち検査の設計が、ハザードが顕在化する条件を再現していない。",
+        "evidence_ref": "assurance/tests/test_rubric_stamp_preserved.py",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "監査の検出力評価",
+          "監査のすり抜け時に監査手順を是正",
+          "安全立証でなく非安全状態の探索",
+          "verify-all-hazard-preventing-systems"
+        ],
+        "why_it_seemed_adequate": "決定論試験は同じ入力に同じ出力が返ることを確かめる設計であり、掃引はその意味で決定論的に振る舞っていた。f0d4e8e^ / f0d4e8e / origin/main のいずれでも 606 件が同一指紋であるという事実は、台帳が整合していることの積極的な証拠として読める。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "OWNER が merge の可否に用いる手掛かりは PR の diff と台帳である。台帳は刻印の値を示すが、その刻印が『判定時に記録された値』か『直近の掃引が書いた値』かを区別する情報を持たない。規準が動いていない間、両者は同じ文字列として現れる。したがって由来の保存という統制上の性質が失われても、OWNER の手掛かりには何の変化も生じない。これは既知の穴『報告が実施ではなく意図を書いていても人からは見分けにくい』と同型の、情報提供側の設計欠陥である。",
+        "evidence_ref": "統制構造 OWNER の手掛かり一覧",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "defects-in-information-providing-systems",
+          "controller-needs-concrete-feedback-channels",
+          "文書確認のみの監督の限界",
+          "include-information-supplier-defect"
+        ],
+        "why_it_seemed_adequate": "台帳に刻印が存在し、値が現行規準と一致していることは、追跡可能性が保たれている外観そのものである。差分に現れない性質を疑う手掛かりが OWNER の側に無い以上、承認は与えられた情報の範囲で整合している。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "ADR-133 決定3 は『どの規準に対する判定かを後から言える』という安全制約を課したが、その制約を実施しているコード（掃引の書込み経路）と決定文書との間にトレースが無い。統治木の走査と dep-graph の逆依存は doctrine_docs 配下の文書間依存を対象としており、決定が課した不変条件の実装先である assurance/harness は走査範囲の外にある。制約が文書として存在することと、実装がその制約に束縛されていることが分離している。",
+        "evidence_ref": "統制構造 GOVERNANCE_TREE の実体と手掛かり",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "何をとなぜのトレース文書化",
+          "ハザードから安全制約を導出",
+          "each-component-enforces-its-constraints",
+          "対象変化への要求事項追随"
+        ],
+        "why_it_seemed_adequate": "統治木は文書の統治のために設計されており、その範囲内では一貫して機能している。決定が課す制約の実装は、決定を読んだ実装者が守るという運用で足りていた期間が長い。"
+      },
+      {
+        "control_element_id": "PRE_TOOL_GUARD",
+        "description": "ガード（および POST_TOOL_LINTER の助言）は文書の編集・削除を対象とする。統治の主張を担う実体が文書から台帳（assurance/ledger/）へ広がった一方で、拒否の門と助言の対象範囲は文書のまま据え置かれている。台帳の不変条件を壊す編集は、この門を通らずに入る。",
+        "evidence_ref": "統制構造 PRE_TOOL_GUARD / POST_TOOL_LINTER の制御記述",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "責任割り当ての経時的劣化",
+          "対象変化への要求事項追随",
+          "each-component-enforces-its-constraints"
+        ],
+        "why_it_seemed_adequate": "ガードの分界は、統治の主張が文書に載っていた時期の構造として妥当だった。範囲の据え置きは能動的な決定ではなく、担い手の移動に対して範囲が追随しなかった結果であり、どの時点でも個別には不自然に見えない。"
+      },
+      {
+        "control_element_id": "HEARTBEAT",
+        "description": "鼓動は監査の古びと導入複製の版遅れを警告するが、『規準が動いた』および『台帳の刻印が現行規準と食い違う』は観測対象に入っていない。さらに鼓動は導入複製の側で動くため、この観測を鼓動へ足すと、版が遅れた環境では検出器も遅れる共通原因故障（INC-005）を継承する。すなわち劣化の検出を担う要素自身の劣化が、同じ経路で見えなくなる。",
+        "evidence_ref": "統制構造 HEARTBEAT の既知の穴（INC-005）",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "共通の体系的要因による多重防護の無効化",
+          "自己満足への構造的対策",
+          "変化ドリフトの事前検出"
+        ],
+        "why_it_seemed_adequate": "鼓動の職掌は古びの警告であり、規準の同一性は台帳側の関心事として分掌されている。分掌それ自体は明快で、どちらの側からも欠落が見えにくい。"
+      }
+    ],
+    "hazard": "台帳上の判定と、その判定が参照した規準の同一性を結ぶ束縛（刻印）が、証拠ポインタの引き直しを職掌とする決定論の掃引によって上書き可能であり、かつ上書きが起きたことを事後に区別する情報が台帳に残らない、というシステム状態。この状態は、規準の改訂と掃引の実行順という運用条件のもとで由来の喪失に至る。",
+    "incident_id": "INC-037-deterministic-sweep-overwrites-the-rubric-stamp",
+    "leading_indicators": [
+      {
+        "indicator": "台帳中の刻印集合と現行規準の指紋の食い違い",
+        "observable": "assurance/ledger/ の全記録から rubric_sha256 の相異なる値を集計し、リポジトリ正本から算出した現行規準の指紋と突合した結果",
+        "threshold": "相異なる刻印が2種以上、または現行指紋と一致しない刻印が1件以上ある状態で、対応する MAP_COVERAGE 再判定の記録が台帳に無い場合を異常とする",
+        "version_independent": true,
+        "where": "CI_RELEASE_CHECK（.github/workflows のジョブ）およびリポジトリ正本側の掃引前チェック",
+        "why_version_independent": "リポジトリ正本の CI で算出・突合するため、利用者環境へ導入された複製の版に依存しない"
+      },
+      {
+        "indicator": "掃引が書き換えたキー集合に刻印が含まれる事象",
+        "observable": "recheck_evidence の書込み経路が記録側で代入したキー名の集合（不変条件試験の観測値）",
+        "threshold": "rubric_sha256 への代入が既存値の存在する記録に対して1件でも発生したら赤で止める（0件を正常とする）",
+        "version_independent": true,
+        "where": "assurance/tests/test_rubric_stamp_preserved.py と CI_RELEASE_CHECK",
+        "why_version_independent": "正本のテストとして走り、導入複製の版を参照しない"
+      },
+      {
+        "indicator": "由来不明の刻印の新規発生（setdefault 補完の副作用）",
+        "observable": "掃引1回あたり、刻印を持たなかった記録へ新たに刻印が付与された件数と、その記録の判定日時",
+        "threshold": "付与件数が0を超え、かつ対象記録の判定日時が直近の規準改訂より前である場合を異常とする",
+        "version_independent": true,
+        "where": "ASSURANCE_LANE の掃引ログと assurance/ledger/",
+        "why_version_independent": "台帳と掃引ログはリポジトリ正本側の資産であり、複製の版に依らず観測できる"
+      },
+      {
+        "indicator": "規準を変更する PR に再判定が伴わない状態",
+        "observable": "規準定義ファイルに触れる PR の diff と、同一 PR ないし後続の台帳に現れる MAP_COVERAGE 再判定記録の有無",
+        "threshold": "規準定義に変更を含む PR が merge 可能状態に達した時点で再判定記録が存在しないなら、merge 前に赤とする",
+        "version_independent": true,
+        "where": "CI_RELEASE_CHECK の docs-audit JSON 相当の出力、および OWNER が読む PR の diff",
+        "why_version_independent": "PR と台帳という正本側の対象のみを見る。ただし MAP_COVERAGE の実在が未確認である点は unknowns を参照"
+      },
+      {
+        "indicator": "刻印食い違いの警告を導入複製側（鼓動）で出す場合の検出遅れ",
+        "observable": "警告を出した検出器のプラグイン版と、リポジトリ正本の版の世代差",
+        "threshold": "複製の版が正本より1世代以上遅れている状態で、この指標を検出根拠として採用していることを異常とする",
+        "version_independent": false,
+        "where": "HEARTBEAT（plugin/scripts/gov-heartbeat.py）と .claude/.cache/last-audit.json",
+        "why_version_independent": "検出器自身が導入複製の側で動くため、版が遅れると検出器も遅れる（INC-005 の共通原因故障）。この指標は正本側の指標の代替にはならず、補助としてのみ扱う"
+      }
+    ],
+    "loss": "台帳に積まれた各判定について「どの規準（rubric）に対する判定か」を後から機械が言えなくなる状態。ADR-133 決定3 が台帳へ持たせた由来の追跡可能性が、規準改訂後に掃引が回った時点で静かに失われ、保証の主張（landed 判定の根拠）が第三者に再検証できなくなる。本件では規準が改訂されていない期間に掃引が回った(PR #277)ため実損は生じておらず、ニアミスとして扱う。損失が現に出ていないことは、統制上この状態が許容できることを意味しない（許容可否の判断は OWNER にある）。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "setdefault 適用後は既存の刻印が不変のまま保たれ、索引側の刻印のみが更新される。旧指紋を持つ記録数が掃引前後で変わらなければ仮説は棄却される。",
+        "hypothesis": "規準定義を一文字変更してから掃引を回すと、修正前のコードでは台帳の全記録の刻印が現行値へ移り、判定と規準の対応が失われる。",
+        "oracle": "掃引の前後で assurance/ledger/ の rubric_sha256 の分布を採取し、旧指紋を持つ記録が0件になるかを見る。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "刻印欠落記録が0件、またはすべての欠落記録の判定日時が直近の規準改訂より後である。",
+        "hypothesis": "刻印を持たない旧記録に対する setdefault の補完が、旧規準で判定された記録に現行規準の指紋を刻み、由来を誤って確定させる。",
+        "oracle": "刻印欠落記録の判定日時を規準の改訂履歴と突合し、改訂より前の判定に現行指紋が付与されていないかを確認する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "記録側の刻印へ書き込む経路が _refresh_stamp のみである。",
+        "hypothesis": "掃引以外の経路（索引再構築・移行・手編集）からも記録側の刻印が書き換わり、許可制を掃引にだけ入れても由来の喪失が残る。",
+        "oracle": "rubric_sha256 への代入・更新箇所をリポジトリ全体で走査し、記録側を触る経路を列挙する。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "改訂を含む変更が merge される時点で食い違いが next_actions に自動で挙がり、遅延が0に近い。",
+        "hypothesis": "規準が改訂されても再判定の起動が人の気付きに依存するため、改訂から再判定完了までの間、台帳は旧規準に基づく判定を landed として提示し続ける。",
+        "oracle": "規準の改訂時刻と、対応する MAP_COVERAGE 再判定の完了時刻の差を台帳から測る。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "掃引以外のすべての手続きについて、書き換え対象のキーが入力から一意に復元可能である。",
+        "hypothesis": "出力の値のみを根拠とする既存の保証層は、履歴の性質を壊す他の書込みについても同様に検出力を持たない（本件は単発ではなく類型である）。",
+        "oracle": "台帳へ書き込む自動手続きを列挙し、各手続きが『自力で復元できない情報』を書き換えていないかを、入力に含まれる情報の集合と突合して点検する。",
+        "severity": "P1"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "台帳への書込みを行う自動手続きに、書き換えてよいキーの許可制（allowlist）を導入し、許可外のキーへの代入を実行時に拒む。掃引の職掌は証拠ポインタと索引の刻印に限定し、記録側の刻印を許可外に置く。setdefault による個別修正は症状の是正であり、権限の構造化まで到達させる。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "リポジトリ正本側の CI に、現行規準の指紋と台帳の刻印集合を突合するジョブを追加し、食い違いがあり再判定記録が無い場合を赤とする。あわせて ASSURANCE_LANE の next_actions に同じ食い違いを挙げる（residual の案を次の反復ではなく本反復の候補へ引き上げるかは OWNER の判断）。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "『証拠の引き直し（掃引）』と『意味の再判定（MAP_COVERAGE）』の責任分界と、規準改訂時に再判定を起動する責任者・起動条件・完了判定を文書として確立する。分界が fix_note にのみ存在する状態を解消する。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "台帳の刻印の意味（判定時に記録された値であること）を仕様として明記し、刻印を後から補完した記録を『由来推定』として別キーで区別できるようにする。台帳スキーマの変更は互換性に触れるため可否は OWNER が決める。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "ガード・リンタ・統治木の走査対象を、文書だけでなく台帳の不変条件へ拡張するか否かを決める。拡張しない場合は、台帳の不変条件を誰が強制するかを明示して穴として記録する。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "ADR-139 の独立検証を実施するまで本件を fixed:true としない。あわせて setdefault が旧記録へ誤った由来を刻まないかを検証し、指摘が是正完了として閉じられるまで追跡する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "記録側の rubric_sha256 への代入箇所を全走査し、掃引以外の書込み経路の有無を確定する。存在する場合は同じ許可制の対象に含める。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "本分析が依拠した機構（recheck_evidence.py / MAP_COVERAGE / ADR-133 決定3）の実在をリポジトリ上で確認し、統制構造の要素一覧に不足があれば要素として追加する。実在が確認できない場合は、本分析の該当する control_flaws を撤回する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "『現在値の整合』を保つ設計と『由来の保存』を保つ設計が区別されておらず、自動化された手続きの書込み権限が、その手続きが自力で復元できる情報の範囲で制約されていない。同型の欠陥は、台帳へ書き込む他のすべての自動手続きに潜在しうる。",
+      "統治の主張を担う実体が文書（doctrine_docs）から台帳（assurance/ledger/）へ広がった一方で、ガード・リンタ・統治木の走査という統制の対象範囲が文書のまま据え置かれている。担い手の移動に対して範囲が追随せず、ずれが時間とともに広がる構造になっている。",
+      "規準が長く動かない期間は、上書きと保存が観測上同値になるため欠陥が休眠する。損失が出ていないことが保証の有効性の証拠として読まれやすく、休眠期間が長いほど検査の設計を見直す契機が生じにくい。",
+      "保証の各層（決定論試験・PR の diff・台帳の目視）がいずれも出力の値を根拠にしており、独立した多重防護に見えて同一の前提（値が正しければ由来も正しい）を共有している。この共通前提が、複数の防護を同時に無効化する。",
+      "欠陥の検出が独立再監査の抜取りという低頻度・人手の経路に依存しており、常時稼働する検出器が担っていない。",
+      "ASSURANCE_LANE の既知の穴のとおり評価者が同系 model であり、同じ盲点（履歴の性質を出力の値で代替して確かめる）を共有する共通原因故障が残る。",
+      "古びと版遅れの検出器が導入複製の側で動く構造（INC-005）により、新たな検出器をその経路に足すと同じ共通原因を継承する。"
+    ],
+    "unknowns": [
+      "【実在の未確認・最優先】事象が名指しする機構のうち、掃引 assurance/harness/recheck_evidence.py（_refresh_stamp）と、意味の再判定 MAP_COVERAGE は、与えられた統制構造の要素として列挙されていない。ASSURANCE_LANE の実体として挙がっているのは assurance/harness/orchestrator.py のみである。さらに作業ディレクトリ（/tmp/assurance-cast-bsnt0xuy）は空であり、リポジトリを参照できないため、これらのファイル・ADR-133 決定3・ADR-139・PR #277・コミット f0d4e8e・INC-024#6・606 件という数値のいずれも実在を確認していない。事象の記録は与えられた入力であって実在の証明ではない。本分析は、掃引と MAP_COVERAGE が ASSURANCE_LANE の内部要素として実在するという仮定の上に立っており、この仮定が崩れれば control_flaws のうち ASSURANCE_LANE を指す3件と CI_RELEASE_CHECK を指す1件は成立しない。confidence を low としたのはこの理由による。",
+      "MAP_COVERAGE の統制上の位置（誰がどの手掛かりで起動を判断し、結果をどこへ返すか）が不明。統制構造に要素として存在しないため、責任の割当先を特定できない。",
+      "台帳の刻印が『判定時の規準』を指すという意味規定が、どの文書のどの条項で確立されているかを確認していない（ADR-133 決定3 の本文を読んでいない）。意味規定が存在しないなら、欠陥は上書きではなく仕様の未確立の側にある。",
+      "setdefault による修正が、刻印を持たない旧記録に現行規準を付与することで、実際には旧規準で判定された記録に誤った由来を刻む可能性があるか。独立検証（ADR-139）が未実施であり、判定できない。",
+      "掃引以外に記録側の rubric_sha256 を書き換える経路（索引再構築、移行スクリプト、手作業の編集など）が存在するかを確認していない。",
+      "606 件すべてが同一指紋という観測が、規準が一度も改訂されていないことを意味するのか、参照した履歴の範囲が限定されているだけなのかを確認していない。",
+      "独立再監査 Phase D の抜取り率と抜取り基準が不明であり、同種の由来喪失が抜取り外の記録に存在するかを判定できない。",
+      "規準の改訂が過去に起きた場合、当時の運用でどのように再判定が行われたか（あるいは行われなかったか）の記録の所在が不明。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は『現在の値が整合しているか』を検める設計であり、『値の由来が保存されるか』という履歴の性質を検める設計ではない。規準が一度も動いていない期間は、上書きする実装と保存する実装が同一の出力を返すため、決定論試験・PR の diff・台帳の目視のいずれにも差が現れない。ハザードが顕在化する条件（規準の改訂 → 掃引の実行）が試験環境で再現されていないことが、検出力の欠落の本体である。検出は独立再監査 Phase D の landed 抜取り（INC-024#6）というサンプリング経路に依存しており、抜取りに当たらなければ規準が次に動いた後まで表面化しなかった。またコードの実装で確認して初めて判明したことが示すとおり、出力の観測だけでは到達できない欠陥であり、出力を根拠とする保証層すべてに共通する盲点である。修正（setdefault）が入ったことはこの盲点を埋めておらず、独立検証（ADR-139）も未実施であるため、指摘は是正完了として閉じられない。"
+  }
+}

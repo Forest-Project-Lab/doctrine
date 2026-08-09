@@ -1,0 +1,883 @@
+{
+  "accepted_flaws": [
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "ADR-144 が定める出荷の三条件について、決定論試験（validate）に対応する検査が一つも置かれていない。条件(2)が実際に作用する唯一のフィールドである fix_commit は、値が記録されていること以上の検査を受けず、その値がどの ref からも到達できない状態（af9c858、--is-ancestor が exit 1）でも緑のまま出荷が積まれた。制御動作としての『条件の強制』が、記載欄の存在という形の検査に置き換わっている。",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "機械的遵守が前提の指示は自動化",
+        "accidents-from-inadequate-constraint-enforcement",
+        "最低準拠は不十分",
+        "変更後に事故が起きる前提の変更管理"
+      ],
+      "why_it_seemed_adequate": "三条件は散文の規約として ADR に書かれ、台帳側にはそれに対応する記入欄が用意されていた。記入欄が埋まっていることは規約の遵守の代理として自然に読めた。また squash merge により枝側の commit が正本の木から到達不能になるという版管理の性質は、条件を書いた時点の運用想定に含まれておらず、『記録された commit は当然そこに在る』という想定が破られる契機が観測されていなかった。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "重複する項目の統合が、統合先と統合元の判定の緑さの順を問わずに行われる。このため UNKNOWN（判定不能）の項を緑の項へ吸わせる方向の統合が可能で、合成台帳での実証では unknown が 5 から 4 へ減った状態でも validate は緑を返した。件数の付け替えという整合性の操作が、保証の強さを緩める方向へ働く経路になっている。",
+      "flaw_type": "制御動作が誤っている",
+      "normative_refs": [
+        "リスク情報の不透明な集約禁止",
+        "安全立証でなく非安全状態の探索",
+        "verify-decomposition-assumptions"
+      ],
+      "why_it_seemed_adequate": "統合は『同じ事を二度数えない』ための正しさの操作として設計されており、統合後に鍵と件数の整合が保たれていれば正しいと定義できた。統合という操作が判定の分布を動かしうること、そしてその方向に安全側・危険側の区別があることは、統合の仕様の関心事として立てられていなかった。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "判定の五値のうち UNASSESSED が、集計 status のどの数にも現れない。未評価の項目は集計上どの数にも属さず、母数からも外れるため、『まだ評価されていない量』が台帳のどの手掛かりからも読めない。緑・赤の比だけが出て、評価が及んでいない範囲は見えない。",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "要約統計偏重による傾向情報の喪失",
+        "情報システム保有と有用性の乖離",
+        "リスク情報の不透明な集約禁止"
+      ],
+      "why_it_seemed_adequate": "集計は『評価の結果』を要約する目的で設計され、未評価は結果ではないため集計対象外とするのが自然な区分に見えた。値域と集計鍵の突合という検査は、どちらも自分たちが書いた定義であるがゆえに一致していると想定されやすい。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "評価者が所有者判断の印（owner フラグ）を覆すとき、理由の記載を求める検査が置かれていない。evaluator_claimed_owner 67 に対し owner 12、差 55 について、覆した根拠の有無が機械的には確かめられない状態が続いていた。所有者の権限に触れる書き換えが、通常の台帳整備と同じ経路で行われる。",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "責任権限説明責任の割当明示",
+        "responsibility-authority-accountability-in-spec",
+        "安全責任のオーナー特定必須"
+      ],
+      "why_it_seemed_adequate": "評価者は『所有者判断が要るか否か』の一次判定を行う役割であり、印の付け替えは判定の更新という日常の整備作業として設計の内側にあった。理由は多くの場合すでに散文で書かれていたため（写し取れた 67/67 がそれを示す）、規律として機能しているように見え、機械で求める必要が薄く見えた。"
+    },
+    {
+      "control_element_id": "OWNER",
+      "description": "評価者が所有者判断の印を覆した事実と、その件数・理由が所有者へ届く経路が統制構造に無い。差 55 は独立再監査が evaluator_claimed_owner と owner を突き合わせて追跡して初めて現れたものであり、所有者の手掛かり（進捗報告・PR の diff・台帳）のいずれからも、自分の判断範囲が縮んでいることは読めない。",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "control-action-requires-feedback",
+        "全コントロールループにフィードバック必須",
+        "defects-in-information-providing-systems"
+      ],
+      "why_it_seemed_adequate": "所有者の手掛かりは台帳そのものであり、台帳を見れば分かるという設計上の前提が置かれていた。台帳には最終の owner 値が正しく載っており、その値がどう決まったか（誰が何件覆したか）は台帳を一行ずつ読む限り自然には浮かばない。既知の穴『報告が実施ではなく意図を書いていても人からは見分けにくい』と同型の見分けにくさである。"
+    },
+    {
+      "control_element_id": "OWNER",
+      "description": "所有者が受け取る緑は『台帳の形が整っている』ことの緑であるが、受け取り側では『台帳の主張が裏付けられている』ことの緑として読める。どの列が機械で検められ、どの列が散文の規律だけで支えられているかの区別が、台帳にも報告にも現れないため、所有者のプロセスモデルは実状態より強い保証を示す。",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "プロセスモデルと実状態の不整合",
+        "include-information-supplier-defect",
+        "分析出力の客観性を僭称しない"
+      ],
+      "why_it_seemed_adequate": "検算器は一つで、出力も一つの緑である。範囲の異なる複数の主張が一つの合図に畳み込まれていることは、検算器を書いた側にとっては自明でも、合図だけを受け取る側からは見えない。緑が長く緑であり続けたことは、範囲の妥当性の証拠のようにも読めた。"
+    },
+    {
+      "control_element_id": "CI_RELEASE_CHECK",
+      "description": "CI は merge 前に赤で止める統制であり、その赤さの根拠に決定論試験の成否を用いている。しかし試験が検めるのは台帳の形であり、fix_commit の到達可能性のようにリポジトリの木を触る検査は行われない。CI はリポジトリ正本を見る立場にありながら、正本の木に対する台帳の主張を照合しておらず、squash merge で枝が畳まれた後も何も言わない。",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "監査のすり抜け時に監査手順を是正",
+        "全体健全性と部分健全性の分離評価",
+        "監視責任の空白排除",
+        "重複責任による監視の抜け"
+      ],
+      "why_it_seemed_adequate": "CI と保証レーンの役割分担は『CI はジョブの成否を見る／中身の検算は保証レーンが持つ』と自然に読め、二重に検めない設計は重複の排除として合理的に見えた。どちらも相手が見ていると想定できる境界が、明示されないまま置かれていた。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "検算の対象範囲が、台帳の列の増加や散文の規約（ADR）の追加に追随しているかを測る仕組みが体系の内側に無い。四つの穴はいずれも独立再監査 2026-08-09 Phase D という外の目で初めて現れており、体系は自らの検算範囲が痩せていることを観測する手掛かりを持たない。",
+      "flaw_type": "統制自身の劣化を検出できない",
+      "normative_refs": [
+        "外部指摘依存でなく能動的探索",
+        "監査の検出力評価",
+        "自己満足への構造的対策",
+        "検出失敗の原因調査"
+      ],
+      "why_it_seemed_adequate": "検算器は追加のたびに緑を返し続けており、緑が続くことは健全さの証拠として読める。範囲の欠落は、欠落している当の検査によっては原理的に見えない。独立再監査が存在することは統制として健全であり、外部の目が見つけたこと自体は設計どおりの働きにも見える。"
+    },
+    {
+      "control_element_id": "GOVERNANCE_TREE",
+      "description": "ADR に書かれた条件（例：ADR-144 の三条件）と、それを機械で検める関数との対応を示す痕跡が統治木に無い。条項が増えても、対応する検算が在るかどうかを示す手掛かり（トレース）が存在しないため、無検算の条項が静かに積み上がる。",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "何をとなぜのトレース文書化",
+        "安全想定の記録と失効先行指標の定義",
+        "クリティカル条項の静かな削除の検出"
+      ],
+      "why_it_seemed_adequate": "ADR は決定を残す文書であり、実装との対応は実装側の関心事として分離するのが自然な設計に見えた。統治木の監査（docs-audit）は文書の整合を見る仕組みであり、文書と実装の対応まで見る仕組みとしては構成されていない。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "是正として新設された _validate_shipped_conditions は、v0.11.0 の 8 件を祖父条項で対象外とし、列を凍結した。これにより検算の対象範囲と台帳が主張する保証範囲は食い違ったまま残り、その 8 件については条件(2)が検算されない状態で緑が返る。修正が tag の木に在ることは人が確かめたが、機械の検算ではない。",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "リスク情報の不透明な集約禁止",
+        "全体健全性と部分健全性の分離評価",
+        "指摘欠点の是正完了追跡"
+      ],
+      "why_it_seemed_adequate": "散文からの推測を検算の根拠にしないという判断は、検算の意味を薄めないための正しい保守である。列の凍結も保証範囲の拡大を所有者判断に留保する扱いとして筋が通る。ただし『対象外である』という事実自体が緑の中に畳み込まれると、範囲の食い違いは再び見えなくなる。"
+    }
+  ],
+  "analysis": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "ADR-144 が定める出荷の三条件について、決定論試験（validate）に対応する検査が一つも置かれていない。条件(2)が実際に作用する唯一のフィールドである fix_commit は、値が記録されていること以上の検査を受けず、その値がどの ref からも到達できない状態（af9c858、--is-ancestor が exit 1）でも緑のまま出荷が積まれた。制御動作としての『条件の強制』が、記載欄の存在という形の検査に置き換わっている。",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "機械的遵守が前提の指示は自動化",
+          "accidents-from-inadequate-constraint-enforcement",
+          "最低準拠は不十分",
+          "変更後に事故が起きる前提の変更管理"
+        ],
+        "why_it_seemed_adequate": "三条件は散文の規約として ADR に書かれ、台帳側にはそれに対応する記入欄が用意されていた。記入欄が埋まっていることは規約の遵守の代理として自然に読めた。また squash merge により枝側の commit が正本の木から到達不能になるという版管理の性質は、条件を書いた時点の運用想定に含まれておらず、『記録された commit は当然そこに在る』という想定が破られる契機が観測されていなかった。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "重複する項目の統合が、統合先と統合元の判定の緑さの順を問わずに行われる。このため UNKNOWN（判定不能）の項を緑の項へ吸わせる方向の統合が可能で、合成台帳での実証では unknown が 5 から 4 へ減った状態でも validate は緑を返した。件数の付け替えという整合性の操作が、保証の強さを緩める方向へ働く経路になっている。",
+        "flaw_type": "制御動作が誤っている",
+        "normative_refs": [
+          "リスク情報の不透明な集約禁止",
+          "安全立証でなく非安全状態の探索",
+          "verify-decomposition-assumptions"
+        ],
+        "why_it_seemed_adequate": "統合は『同じ事を二度数えない』ための正しさの操作として設計されており、統合後に鍵と件数の整合が保たれていれば正しいと定義できた。統合という操作が判定の分布を動かしうること、そしてその方向に安全側・危険側の区別があることは、統合の仕様の関心事として立てられていなかった。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "判定の五値のうち UNASSESSED が、集計 status のどの数にも現れない。未評価の項目は集計上どの数にも属さず、母数からも外れるため、『まだ評価されていない量』が台帳のどの手掛かりからも読めない。緑・赤の比だけが出て、評価が及んでいない範囲は見えない。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "要約統計偏重による傾向情報の喪失",
+          "情報システム保有と有用性の乖離",
+          "リスク情報の不透明な集約禁止"
+        ],
+        "why_it_seemed_adequate": "集計は『評価の結果』を要約する目的で設計され、未評価は結果ではないため集計対象外とするのが自然な区分に見えた。値域と集計鍵の突合という検査は、どちらも自分たちが書いた定義であるがゆえに一致していると想定されやすい。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "評価者が所有者判断の印（owner フラグ）を覆すとき、理由の記載を求める検査が置かれていない。evaluator_claimed_owner 67 に対し owner 12、差 55 について、覆した根拠の有無が機械的には確かめられない状態が続いていた。所有者の権限に触れる書き換えが、通常の台帳整備と同じ経路で行われる。",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "責任権限説明責任の割当明示",
+          "responsibility-authority-accountability-in-spec",
+          "安全責任のオーナー特定必須"
+        ],
+        "why_it_seemed_adequate": "評価者は『所有者判断が要るか否か』の一次判定を行う役割であり、印の付け替えは判定の更新という日常の整備作業として設計の内側にあった。理由は多くの場合すでに散文で書かれていたため（写し取れた 67/67 がそれを示す）、規律として機能しているように見え、機械で求める必要が薄く見えた。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "評価者が所有者判断の印を覆した事実と、その件数・理由が所有者へ届く経路が統制構造に無い。差 55 は独立再監査が evaluator_claimed_owner と owner を突き合わせて追跡して初めて現れたものであり、所有者の手掛かり（進捗報告・PR の diff・台帳）のいずれからも、自分の判断範囲が縮んでいることは読めない。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "control-action-requires-feedback",
+          "全コントロールループにフィードバック必須",
+          "defects-in-information-providing-systems"
+        ],
+        "why_it_seemed_adequate": "所有者の手掛かりは台帳そのものであり、台帳を見れば分かるという設計上の前提が置かれていた。台帳には最終の owner 値が正しく載っており、その値がどう決まったか（誰が何件覆したか）は台帳を一行ずつ読む限り自然には浮かばない。既知の穴『報告が実施ではなく意図を書いていても人からは見分けにくい』と同型の見分けにくさである。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者が受け取る緑は『台帳の形が整っている』ことの緑であるが、受け取り側では『台帳の主張が裏付けられている』ことの緑として読める。どの列が機械で検められ、どの列が散文の規律だけで支えられているかの区別が、台帳にも報告にも現れないため、所有者のプロセスモデルは実状態より強い保証を示す。",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "プロセスモデルと実状態の不整合",
+          "include-information-supplier-defect",
+          "分析出力の客観性を僭称しない"
+        ],
+        "why_it_seemed_adequate": "検算器は一つで、出力も一つの緑である。範囲の異なる複数の主張が一つの合図に畳み込まれていることは、検算器を書いた側にとっては自明でも、合図だけを受け取る側からは見えない。緑が長く緑であり続けたことは、範囲の妥当性の証拠のようにも読めた。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "CI は merge 前に赤で止める統制であり、その赤さの根拠に決定論試験の成否を用いている。しかし試験が検めるのは台帳の形であり、fix_commit の到達可能性のようにリポジトリの木を触る検査は行われない。CI はリポジトリ正本を見る立場にありながら、正本の木に対する台帳の主張を照合しておらず、squash merge で枝が畳まれた後も何も言わない。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "監査のすり抜け時に監査手順を是正",
+          "全体健全性と部分健全性の分離評価",
+          "監視責任の空白排除",
+          "重複責任による監視の抜け"
+        ],
+        "why_it_seemed_adequate": "CI と保証レーンの役割分担は『CI はジョブの成否を見る／中身の検算は保証レーンが持つ』と自然に読め、二重に検めない設計は重複の排除として合理的に見えた。どちらも相手が見ていると想定できる境界が、明示されないまま置かれていた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "検算の対象範囲が、台帳の列の増加や散文の規約（ADR）の追加に追随しているかを測る仕組みが体系の内側に無い。四つの穴はいずれも独立再監査 2026-08-09 Phase D という外の目で初めて現れており、体系は自らの検算範囲が痩せていることを観測する手掛かりを持たない。",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "外部指摘依存でなく能動的探索",
+          "監査の検出力評価",
+          "自己満足への構造的対策",
+          "検出失敗の原因調査"
+        ],
+        "why_it_seemed_adequate": "検算器は追加のたびに緑を返し続けており、緑が続くことは健全さの証拠として読める。範囲の欠落は、欠落している当の検査によっては原理的に見えない。独立再監査が存在することは統制として健全であり、外部の目が見つけたこと自体は設計どおりの働きにも見える。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "ADR に書かれた条件（例：ADR-144 の三条件）と、それを機械で検める関数との対応を示す痕跡が統治木に無い。条項が増えても、対応する検算が在るかどうかを示す手掛かり（トレース）が存在しないため、無検算の条項が静かに積み上がる。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "何をとなぜのトレース文書化",
+          "安全想定の記録と失効先行指標の定義",
+          "クリティカル条項の静かな削除の検出"
+        ],
+        "why_it_seemed_adequate": "ADR は決定を残す文書であり、実装との対応は実装側の関心事として分離するのが自然な設計に見えた。統治木の監査（docs-audit）は文書の整合を見る仕組みであり、文書と実装の対応まで見る仕組みとしては構成されていない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "是正として新設された _validate_shipped_conditions は、v0.11.0 の 8 件を祖父条項で対象外とし、列を凍結した。これにより検算の対象範囲と台帳が主張する保証範囲は食い違ったまま残り、その 8 件については条件(2)が検算されない状態で緑が返る。修正が tag の木に在ることは人が確かめたが、機械の検算ではない。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "リスク情報の不透明な集約禁止",
+          "全体健全性と部分健全性の分離評価",
+          "指摘欠点の是正完了追跡"
+        ],
+        "why_it_seemed_adequate": "散文からの推測を検算の根拠にしないという判断は、検算の意味を薄めないための正しい保守である。列の凍結も保証範囲の拡大を所有者判断に留保する扱いとして筋が通る。ただし『対象外である』という事実自体が緑の中に畳み込まれると、範囲の食い違いは再び見えなくなる。"
+      }
+    ],
+    "hazard": "台帳の検算器が緑を返す状態と、台帳の記載が保証の規約を満たしている状態とが一致していないシステム状態。すなわち、(a) 台帳の「形」（鍵・型・整合）のみを検める検算範囲と、(b) 台帳が外の世界（git の到達可能性、五値の値域、統合前後の判定分布、印の由来）について主張する内容との間に差があり、その差が緑という単一の合図に畳み込まれて外へ出ていく状態。",
+    "incident_id": "INC-036-ledger-integrity-gaps-the-canon-declines-to-check",
+    "leading_indicators": [
+      {
+        "indicator": "出荷・受入に作用する ADR 条項のうち、対応する検算関数が紐付いていない条項の数",
+        "observable": "ADR 条項 id と検算関数 id の対応表（現状は不在のため新設が前提）",
+        "threshold": "未対応の条項が 1 件で警告、2 件以上または新規 ADR の追加時に未対応のまま merge されようとしたら赤",
+        "version_independent": true,
+        "where": "doctrine_docs 配下の ADR と assurance/harness/orchestrator.py の検算関数一覧を突合する CI ジョブ",
+        "why_version_independent": "リポジトリ正本のみを入力とし、利用者環境の導入複製の版に依存しない"
+      },
+      {
+        "indicator": "台帳スキーマの列のうち、いずれの検算関数からも参照されない列の数（未読列数）",
+        "observable": "検算が参照する鍵集合と台帳スキーマの鍵集合の差集合",
+        "threshold": "未読列が 1 つでも出れば警告し、列追加の PR では赤（新設列は検算か明示的除外のいずれかを要求する）",
+        "version_independent": true,
+        "where": "assurance/harness/orchestrator.py の検算関数群と assurance/ledger/ のスキーマ",
+        "why_version_independent": "正本のコードとスキーマだけで判定でき、複製の更新状況に依存しない"
+      },
+      {
+        "indicator": "列挙型の値域と集計鍵の差集合（UNASSESSED 型の欠落の一般形）",
+        "observable": "各列挙型の全値と、その型を集計する status 辞書の鍵の集合差",
+        "threshold": "差集合が空でなければ赤（値域の全値が集計のどこかに現れることを不変条件とする）",
+        "version_independent": true,
+        "where": "assurance/ledger/recommendation-status.json のスキーマと集計器",
+        "why_version_independent": "台帳と集計器の静的な突合であり、実行環境や複製版に依存しない"
+      },
+      {
+        "indicator": "台帳の変換（統合・正規化・移送・スキーマ移行）の前後で、判定不能または赤の総数が安全側でない方向へ動いた回数",
+        "observable": "変換前後の判定分布の単調性検査の結果",
+        "threshold": "安全側でない方向への移動が 1 回でも検出されたら赤。安全側（緑→判定不能）への移動は許す",
+        "version_independent": true,
+        "where": "assurance/harness/orchestrator.py の変換経路に置く性質試験（assurance/tests/）",
+        "why_version_independent": "正本の試験として走り、導入複製を経由しない"
+      },
+      {
+        "indicator": "評価者が所有者判断の印を覆した行のうち、理由欄が空の行数、および覆し件数の推移（evaluator_claimed_owner と owner の差）",
+        "observable": "evaluator_owner_required が立ち owner_override_reason が空の行数／差の月次推移",
+        "threshold": "理由欄が空の行が 1 行でもあれば赤。差の値そのものは赤にせず、前回報告からの増加を所有者へ必ず提示する",
+        "version_independent": true,
+        "where": "assurance/ledger/ の該当列を読む検算と、所有者への定期報告",
+        "why_version_independent": "台帳の内容のみに基づき、導入複製の版に依存しない"
+      },
+      {
+        "indicator": "検算の対象外として凍結されている行数（祖父条項の残数）",
+        "observable": "_validate_shipped_conditions の除外リストの長さ",
+        "threshold": "8 を超えたら赤（増加は保証範囲の縮小＝所有者判断が必要）。減少方向のみ承認なしで許す",
+        "version_independent": true,
+        "where": "assurance/harness/orchestrator.py の除外定義と assurance/ledger/",
+        "why_version_independent": "正本のコードとデータで完結する"
+      },
+      {
+        "indicator": "台帳の参照型フィールド（git の ref・commit・ファイルパス・URL など外の世界を指す欄）のうち、指し先の実在検査を持たない欄の数",
+        "observable": "参照型フィールドの一覧と、各欄に対応する実在検査の有無",
+        "threshold": "実在検査を持たない参照型フィールドが 1 つでもあれば警告、出荷条件に作用する欄なら赤",
+        "version_independent": true,
+        "where": "assurance/ledger/ のスキーマ定義と assurance/harness/orchestrator.py",
+        "why_version_independent": "正本のスキーマとコードの突合で判定できる"
+      },
+      {
+        "indicator": "直近 N 件の台帳穴について、発見者が体系内の検算か外部の独立再監査かの比",
+        "observable": "台帳各事象の detected_by の分類",
+        "threshold": "直近 3 件連続で体系内の自己検出が 0 なら、検算範囲そのものの見直しを起動する",
+        "version_independent": true,
+        "where": "assurance/ledger/ の事象記録",
+        "why_version_independent": "台帳の記録に基づく集計であり、複製の版に依存しない"
+      },
+      {
+        "indicator": "台帳の未検算項目の警告を導入複製側の機構（鼓動・SessionEnd 監査）で出す場合の、複製の版遅れ世代数",
+        "observable": "導入複製の版と正本の版の差",
+        "threshold": "1 世代以上の遅れで警告、2 世代以上で当該警告を信頼できない旨を明示する",
+        "version_independent": false,
+        "where": "HEARTBEAT が読む導入複製の版情報（.claude/.cache/last-audit.json および複製の版）",
+        "why_version_independent": "この指標を評価する検出器自体が導入複製の側で動くため、複製の更新が遅れると検出器も同じだけ遅れる。INC-005 と同型の共通原因故障であり、正本側からは複製が何世代遅れているかを観測できない。上の 8 指標を正本の CI に置くのはこの故障を避けるためであり、複製側にも置く場合はこの遅れを隠さない"
+      }
+    ],
+    "loss": "保証台帳が示す「緑」を根拠に所有者・CI・後続の保証活動が意思決定するとき、実際には機械の検算に一度も掛かっていない主張（出荷三条件の充足、所有者判断の印の由来、判定不能の件数、未評価の存在）が裏付け済みとして扱われる。結果として、関係者が信じる保証水準が、実際に検算されている保証水準を上回った状態で出荷・受入・分析終了の判断が積まれる。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "全列挙型で差集合が空であること",
+        "hypothesis": "UNASSESSED の欠落は個別事象ではなく、台帳の全列挙型に同型の『値域の一部が集計鍵に現れない』欠落が他にも存在する",
+        "oracle": "台帳スキーマの全列挙型について、値域の集合と集計 status の鍵集合の差を機械で取る",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "参照型フィールドの全てに実在検査が対応していること",
+        "hypothesis": "fix_commit 以外にも、外の世界を指す台帳の欄（ref・tag・ファイルパス・issue 番号・URL）で指し先の実在が検算されていないものがある",
+        "oracle": "台帳の参照型フィールドを列挙し、各々に実在検査が対応しているかを照合する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "全変換が安全側単調であること",
+        "hypothesis": "統合以外の変換（正規化・移送・スキーマ移行・再集計）にも、判定を安全側でない方向へ動かせる経路がある",
+        "oracle": "全変換経路について変換前後の判定分布の安全側単調性を性質試験で検査する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "過去事象のうち相当数が体系内の検算によって検出されていること",
+        "hypothesis": "体系の内側には検算範囲を測る目が無く、同型の穴は外部の独立再監査が入らない限り検出されない",
+        "oracle": "台帳の全事象の detected_by を分類し、体系内検出と外部検出の比を取る",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "所有者権限に触れる評価者書込可能欄が owner フラグ以外に存在しないこと",
+        "hypothesis": "評価者が書き換え可能な欄のうち、所有者の権限に触れるものが owner フラグ以外にもあり、同様に理由なしで覆せる",
+        "oracle": "台帳の評価者書込可能欄を列挙し、所有者判断・保証範囲・出荷可否に作用する欄を特定する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "除外指定が _validate_shipped_conditions の 8 件のみであること",
+        "hypothesis": "祖父条項のような『検算対象外』の指定が台帳の他の検査にも存在し、その総量がどこにも集計されていない",
+        "oracle": "検算コード中の除外・スキップ・凍結の指定を全て列挙し、対象外行数の総和を出す",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "全ての evidence_refs と名指された関数・列が実在すること",
+        "hypothesis": "事象記録が名指す機構の一部は実在しない、または名前が実装と食い違っている",
+        "oracle": "evidence_refs の各ファイルの存在と、名指された関数・列の実在を直接確認する",
+        "severity": "P0"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "evidence_refs の各ファイルと、名指された検算関数・台帳列・ADR-144/ADR-139 の実在を直接確認する。本分析は実在を仮定した上に立っており、確認前に本分析を根拠として構造を変更しない",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "台帳スキーマの各列に『どの検算関数が読むか』の宣言を持たせ、未宣言または未読の列が存在したら validate を赤にする。列の追加が自動的に検算の欠落として現れるようにする",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "出荷・受入に作用する ADR 条項と検算関数 id の対応表を統治木に置き、対応の無い条項がある状態を CI が警告する。ADR の追加時に対応表の更新を要求する",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "validate の出力を単一の緑から、『何を検めた緑か』の範囲を伴う出力へ変える。台帳と進捗報告に、機械で検められた列と規律のみで支えられている列の区別を載せる",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "台帳の全変換（統合に限らず正規化・移送・スキーマ移行）について、変換前後の判定分布が安全側にのみ動くことを一般の性質試験として書く",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "列挙型の値域と集計鍵の一致、および参照型フィールドの実在検査の有無を、個別の検査ではなく台帳全体の不変条件として置く",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "leading_indicators に挙げた 8 つの正本側指標を CI の常設ジョブとして置き、閾値超過を merge の赤止めに接続する。複製側に置く指標は版遅れを併記する",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "評価者が所有者判断の印を覆した件数と理由を、所有者の定期報告に必ず含める経路を設ける（現状は台帳を追跡して初めて現れる）",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "祖父条項 8 件を検算対象へ戻すか、外したまま保証範囲の縮小として明示し続けるかを決める。列の凍結の解除も同じ判断に属する",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "評価者が所有者判断の印を覆せる範囲を決める（そもそも覆せるべきか、覆せるなら理由の当否を誰が測るか）。評価者は同系 model であり、共通原因故障が残る立場にある",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "台帳の主張を外の世界（リポジトリの木）と照合する責任を CI_RELEASE_CHECK と ASSURANCE_LANE のどちらが持つかを明示的に割り当て、双方が相手側と読める境界を解消する",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "検算範囲の暗黙の境界（台帳の形は検めるが台帳が指す外の世界は検めない）を、想定として文書に明記し、その想定が失効する先行指標を併記する",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "独立再監査 Phase D が四つの穴を検出した手順のうち、体系内の常設検査へ移設できる部分を特定して移設する。移設できない部分は外部監査の固有の役割として明記する",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "ADR-144 の条件(1) と (3) の内容と、それぞれの検算状況を調査する。条件(2) のみが分かっている現状では無検算の範囲の全容が測れていない",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "ADR-139 の独立検証を実施し、(1)(2)(4) の是正が当該の穴を塞いだかを確認するまで fixed:false を維持する",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "検算器が『台帳の形』を対象として育ち、『台帳が指す外の世界』を対象としなかった。この対象境界はどこにも明文化されておらず、境界の存在自体が見えない。",
+      "範囲の異なる複数の主張が、緑という単一の合図に畳み込まれている。合図の受け手（所有者・CI・後続の保証活動）は、その緑が何を検めた緑かを区別できない。",
+      "散文の規約（ADR）と機械の検算の間に対応表が無く、条項が増えるほど無検算の条項が静かに積み上がる。条項の追加は検算の追加を呼ばない。",
+      "規律（人の慎重さ）で支えられている箇所と機械で支えられている箇所の区別が、どの手掛かりにも現れない。この一点が OWNER・CI_RELEASE_CHECK・ASSURANCE_LANE の三層を同時に無効化する共通原因になっている。",
+      "穴の発見が外部の独立再監査に依存しており、検算範囲そのものを測る目が体系の内側に無い。範囲の欠落は、欠落している当の検査では原理的に見えない。",
+      "評価者と所有者の権限境界（誰が所有者判断の要否を決めるか、覆すとき何を残すか）が構造の仕様に書かれていない。評価者は同系 model であり、共通原因故障が残る立場にある。",
+      "台帳の整合性を保つ操作（統合・集計・凍結）が、保証の強さを動かしうるという観点で設計されていない。整合は正しさの規準として立てられ、安全側・危険側の方向の区別を持たない。",
+      "CI と保証レーンの間に、どちらが台帳の主張を外の世界と照合するかの明示的な割当てが無く、双方が相手側の担当と読める境界が残っている。"
+    ],
+    "unknowns": [
+      "本分析の作業環境には evidence_refs のいずれのファイルも存在せず（作業ディレクトリは空）、事象が名指す validate・_validate_shipped_conditions・_validate_owner_overrides・coverage_status・ADR-144・ADR-139・evaluator_claimed_owner のいずれについても実在を確認していない。与えられた統制構造に要素として現れるのは ASSURANCE_LANE（実体 assurance/harness/orchestrator.py、手掛かり assurance/ledger/）と GOVERNANCE_TREE までであり、上記の検算関数・列・ADR は要素として名指されていない。本分析はそれらが ASSURANCE_LANE と GOVERNANCE_TREE の内部として実在するという仮定の上に立っており、この仮定が崩れれば統制欠陥の大半は対象を失う。confidence を low とした主たる根拠はこれである。",
+      "ADR-144 の三条件のうち、条件(1) と (3) の内容が事象の記録に現れない。検算されていない範囲の全容は測れていない。",
+      "祖父条項で外された v0.11.0 の 8 件について、修正が tag の木に在ることを人が確かめたとあるが、その確認の記録の所在・再現手順・確認者の独立性は不明。",
+      "evaluator_claimed_owner 67 と owner 12 の差 55 のうち、評価者の判断が所有者の判断と実質的に食い違っていた件数は不明。是正は理由の存在を求めるだけで、理由の当否は測っていない。",
+      "validate が緑のまま通っていた期間に、この台帳の緑を根拠として実際に下された出荷・受入・分析終了の判断が何件あったかは不明。損失の実際の広がりは測れていない。",
+      "INC-002 の到達不能な fix_commit を 67475de へ訂正した判断が正しいことの独立検証は未実施。",
+      "ADR-139 の独立検証が未実施のため、(1)(2)(4) の是正が実際に当該の穴を塞いだかを示す証拠は無い。fixed:false のままである。",
+      "四つの穴が台帳に入り込んだ時点（いつ検算範囲の外に落ちたか）と、その時点で範囲外に置くという判断があったのか、単に問いが立たなかったのかは記録から判別できない。",
+      "独立再監査 Phase D が四つを検出できた手順のうち、体系内へ移設可能な部分がどこまでかは未調査。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は台帳の「形」を対象として育った。鍵が在るか、型が合うか、件数が整合するかは検められ、台帳が指す外の世界（git の木、値域の全体、統合前後の判定分布、印の由来）は検算の対象境界の外に置かれていた。この境界はどこにも明文化されておらず、出力は一つの緑である。範囲の異なる複数の主張が単一の合図に畳み込まれた結果、CI はその緑を赤止めの根拠にし、所有者はその緑を台帳の裏付けとして読み、保証レーンは自らの緑を健全さの証拠として読んだ。三層が同じ一つの合図に依存していたため、独立していたはずの防護が同時に無効化された（共通の体系的要因による多重防護の無効化）。さらに、検算範囲が条項と列の増加に追随しているかを測る検査が体系の内側に無く、範囲の欠落は欠落している当の検査によっては原理的に見えない。四つの穴が独立再監査という外の目でしか現れなかったのはこのためであり、既存の保証は「見逃した」というより「その範囲を見る立場に置かれていなかった」。なお本事象は fixed:false であり、(1)(2)(4) の是正が実際に穴を塞いだかは ADR-139 の独立検証が未実施のため未確認である。修正の存在は分析の代わりにならない。"
+  },
+  "control_structure_ids": [
+    "OWNER",
+    "CI_RELEASE_CHECK",
+    "SESSION_START_CONTRACT",
+    "HEARTBEAT",
+    "PRE_TOOL_GUARD",
+    "POST_TOOL_LINTER",
+    "SESSION_END_AUDIT",
+    "CAPTURE_NUDGE",
+    "PLUGIN_DISTRIBUTION",
+    "ASSURANCE_LANE",
+    "GOVERNANCE_TREE"
+  ],
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "duration_ms": 337919,
+  "errors": [],
+  "execution_kind": "real-sdk",
+  "flaws_with_citation_defect": [],
+  "generated_at": "2026-08-09T22:32:32Z",
+  "git_dirty": true,
+  "git_sha": "c18bc7524e5b2ca9f1eafe3a4210f4295841a16a",
+  "incident_evidence": {
+    "kind": "measurement",
+    "refs": [
+      "assurance/harness/orchestrator.py",
+      "assurance/tests/test_ledger_integrity_gaps.py",
+      "assurance/ledger/recommendation-status.json"
+    ],
+    "resolved": [
+      "assurance/harness/orchestrator.py",
+      "assurance/tests/test_ledger_integrity_gaps.py",
+      "assurance/ledger/recommendation-status.json"
+    ],
+    "unresolved": [],
+    "verifiable": true
+  },
+  "incident_id": "INC-036-ledger-integrity-gaps-the-canon-declines-to-check",
+  "incident_sha256": "e93027e9701f5b423e44b540042ec6cb63768ed37bc1358ea4e01294d367e532",
+  "init": {
+    "claude_code_version": "2.1.221",
+    "model": "claude-opus-5",
+    "session_id": "df4d1efc-0878-433c-95ac-555da6e458b7",
+    "tools_count": 27
+  },
+  "kind": "cast-analysis",
+  "leading_indicators_defined": true,
+  "options": {
+    "allowed_tools": [],
+    "cwd": "/tmp/assurance-cast-_1c7uxh3",
+    "effort": "high",
+    "max_budget_usd": 4.0,
+    "max_turns": 8,
+    "model": "claude-opus-5",
+    "setting_sources": [],
+    "timeout_s": 900
+  },
+  "oracle": "structured_output がレーン側再検証にも適合",
+  "principles_offered": 337,
+  "prompt_sha256": "692aa40aa1249b27ae6304f5031936d18d83302e8d2995b541b209abf7a32c01",
+  "rejected_flaws": [],
+  "result_meta": {
+    "duration_api_ms": 334863,
+    "is_error": false,
+    "num_turns": 4,
+    "session_id": "df4d1efc-0878-433c-95ac-555da6e458b7",
+    "subtype": "success",
+    "total_cost_usd": 1.1080075,
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 49684,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 49684,
+      "cache_read_input_tokens": 128269,
+      "inference_geo": "not_available",
+      "input_tokens": 6,
+      "iterations": "list",
+      "output_tokens": 20399,
+      "server_tool_use": {
+        "web_fetch_requests": 0,
+        "web_search_requests": 0
+      },
+      "service_tier": "standard",
+      "speed": "standard"
+    }
+  },
+  "schema_sha256": "0d1643d5e16353723405302c1f6ffcf753915e2a4f27a3530e8ef9a9ee45cb46",
+  "sdk_version": "0.2.129",
+  "settled": true,
+  "status": "PASS",
+  "structured_output": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "ADR-144 が定める出荷の三条件について、決定論試験（validate）に対応する検査が一つも置かれていない。条件(2)が実際に作用する唯一のフィールドである fix_commit は、値が記録されていること以上の検査を受けず、その値がどの ref からも到達できない状態（af9c858、--is-ancestor が exit 1）でも緑のまま出荷が積まれた。制御動作としての『条件の強制』が、記載欄の存在という形の検査に置き換わっている。",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "機械的遵守が前提の指示は自動化",
+          "accidents-from-inadequate-constraint-enforcement",
+          "最低準拠は不十分",
+          "変更後に事故が起きる前提の変更管理"
+        ],
+        "why_it_seemed_adequate": "三条件は散文の規約として ADR に書かれ、台帳側にはそれに対応する記入欄が用意されていた。記入欄が埋まっていることは規約の遵守の代理として自然に読めた。また squash merge により枝側の commit が正本の木から到達不能になるという版管理の性質は、条件を書いた時点の運用想定に含まれておらず、『記録された commit は当然そこに在る』という想定が破られる契機が観測されていなかった。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "重複する項目の統合が、統合先と統合元の判定の緑さの順を問わずに行われる。このため UNKNOWN（判定不能）の項を緑の項へ吸わせる方向の統合が可能で、合成台帳での実証では unknown が 5 から 4 へ減った状態でも validate は緑を返した。件数の付け替えという整合性の操作が、保証の強さを緩める方向へ働く経路になっている。",
+        "flaw_type": "制御動作が誤っている",
+        "normative_refs": [
+          "リスク情報の不透明な集約禁止",
+          "安全立証でなく非安全状態の探索",
+          "verify-decomposition-assumptions"
+        ],
+        "why_it_seemed_adequate": "統合は『同じ事を二度数えない』ための正しさの操作として設計されており、統合後に鍵と件数の整合が保たれていれば正しいと定義できた。統合という操作が判定の分布を動かしうること、そしてその方向に安全側・危険側の区別があることは、統合の仕様の関心事として立てられていなかった。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "判定の五値のうち UNASSESSED が、集計 status のどの数にも現れない。未評価の項目は集計上どの数にも属さず、母数からも外れるため、『まだ評価されていない量』が台帳のどの手掛かりからも読めない。緑・赤の比だけが出て、評価が及んでいない範囲は見えない。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "要約統計偏重による傾向情報の喪失",
+          "情報システム保有と有用性の乖離",
+          "リスク情報の不透明な集約禁止"
+        ],
+        "why_it_seemed_adequate": "集計は『評価の結果』を要約する目的で設計され、未評価は結果ではないため集計対象外とするのが自然な区分に見えた。値域と集計鍵の突合という検査は、どちらも自分たちが書いた定義であるがゆえに一致していると想定されやすい。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "評価者が所有者判断の印（owner フラグ）を覆すとき、理由の記載を求める検査が置かれていない。evaluator_claimed_owner 67 に対し owner 12、差 55 について、覆した根拠の有無が機械的には確かめられない状態が続いていた。所有者の権限に触れる書き換えが、通常の台帳整備と同じ経路で行われる。",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "責任権限説明責任の割当明示",
+          "responsibility-authority-accountability-in-spec",
+          "安全責任のオーナー特定必須"
+        ],
+        "why_it_seemed_adequate": "評価者は『所有者判断が要るか否か』の一次判定を行う役割であり、印の付け替えは判定の更新という日常の整備作業として設計の内側にあった。理由は多くの場合すでに散文で書かれていたため（写し取れた 67/67 がそれを示す）、規律として機能しているように見え、機械で求める必要が薄く見えた。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "評価者が所有者判断の印を覆した事実と、その件数・理由が所有者へ届く経路が統制構造に無い。差 55 は独立再監査が evaluator_claimed_owner と owner を突き合わせて追跡して初めて現れたものであり、所有者の手掛かり（進捗報告・PR の diff・台帳）のいずれからも、自分の判断範囲が縮んでいることは読めない。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "control-action-requires-feedback",
+          "全コントロールループにフィードバック必須",
+          "defects-in-information-providing-systems"
+        ],
+        "why_it_seemed_adequate": "所有者の手掛かりは台帳そのものであり、台帳を見れば分かるという設計上の前提が置かれていた。台帳には最終の owner 値が正しく載っており、その値がどう決まったか（誰が何件覆したか）は台帳を一行ずつ読む限り自然には浮かばない。既知の穴『報告が実施ではなく意図を書いていても人からは見分けにくい』と同型の見分けにくさである。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者が受け取る緑は『台帳の形が整っている』ことの緑であるが、受け取り側では『台帳の主張が裏付けられている』ことの緑として読める。どの列が機械で検められ、どの列が散文の規律だけで支えられているかの区別が、台帳にも報告にも現れないため、所有者のプロセスモデルは実状態より強い保証を示す。",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "プロセスモデルと実状態の不整合",
+          "include-information-supplier-defect",
+          "分析出力の客観性を僭称しない"
+        ],
+        "why_it_seemed_adequate": "検算器は一つで、出力も一つの緑である。範囲の異なる複数の主張が一つの合図に畳み込まれていることは、検算器を書いた側にとっては自明でも、合図だけを受け取る側からは見えない。緑が長く緑であり続けたことは、範囲の妥当性の証拠のようにも読めた。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "CI は merge 前に赤で止める統制であり、その赤さの根拠に決定論試験の成否を用いている。しかし試験が検めるのは台帳の形であり、fix_commit の到達可能性のようにリポジトリの木を触る検査は行われない。CI はリポジトリ正本を見る立場にありながら、正本の木に対する台帳の主張を照合しておらず、squash merge で枝が畳まれた後も何も言わない。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "監査のすり抜け時に監査手順を是正",
+          "全体健全性と部分健全性の分離評価",
+          "監視責任の空白排除",
+          "重複責任による監視の抜け"
+        ],
+        "why_it_seemed_adequate": "CI と保証レーンの役割分担は『CI はジョブの成否を見る／中身の検算は保証レーンが持つ』と自然に読め、二重に検めない設計は重複の排除として合理的に見えた。どちらも相手が見ていると想定できる境界が、明示されないまま置かれていた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "検算の対象範囲が、台帳の列の増加や散文の規約（ADR）の追加に追随しているかを測る仕組みが体系の内側に無い。四つの穴はいずれも独立再監査 2026-08-09 Phase D という外の目で初めて現れており、体系は自らの検算範囲が痩せていることを観測する手掛かりを持たない。",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "外部指摘依存でなく能動的探索",
+          "監査の検出力評価",
+          "自己満足への構造的対策",
+          "検出失敗の原因調査"
+        ],
+        "why_it_seemed_adequate": "検算器は追加のたびに緑を返し続けており、緑が続くことは健全さの証拠として読める。範囲の欠落は、欠落している当の検査によっては原理的に見えない。独立再監査が存在することは統制として健全であり、外部の目が見つけたこと自体は設計どおりの働きにも見える。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "ADR に書かれた条件（例：ADR-144 の三条件）と、それを機械で検める関数との対応を示す痕跡が統治木に無い。条項が増えても、対応する検算が在るかどうかを示す手掛かり（トレース）が存在しないため、無検算の条項が静かに積み上がる。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "何をとなぜのトレース文書化",
+          "安全想定の記録と失効先行指標の定義",
+          "クリティカル条項の静かな削除の検出"
+        ],
+        "why_it_seemed_adequate": "ADR は決定を残す文書であり、実装との対応は実装側の関心事として分離するのが自然な設計に見えた。統治木の監査（docs-audit）は文書の整合を見る仕組みであり、文書と実装の対応まで見る仕組みとしては構成されていない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "是正として新設された _validate_shipped_conditions は、v0.11.0 の 8 件を祖父条項で対象外とし、列を凍結した。これにより検算の対象範囲と台帳が主張する保証範囲は食い違ったまま残り、その 8 件については条件(2)が検算されない状態で緑が返る。修正が tag の木に在ることは人が確かめたが、機械の検算ではない。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "リスク情報の不透明な集約禁止",
+          "全体健全性と部分健全性の分離評価",
+          "指摘欠点の是正完了追跡"
+        ],
+        "why_it_seemed_adequate": "散文からの推測を検算の根拠にしないという判断は、検算の意味を薄めないための正しい保守である。列の凍結も保証範囲の拡大を所有者判断に留保する扱いとして筋が通る。ただし『対象外である』という事実自体が緑の中に畳み込まれると、範囲の食い違いは再び見えなくなる。"
+      }
+    ],
+    "hazard": "台帳の検算器が緑を返す状態と、台帳の記載が保証の規約を満たしている状態とが一致していないシステム状態。すなわち、(a) 台帳の「形」（鍵・型・整合）のみを検める検算範囲と、(b) 台帳が外の世界（git の到達可能性、五値の値域、統合前後の判定分布、印の由来）について主張する内容との間に差があり、その差が緑という単一の合図に畳み込まれて外へ出ていく状態。",
+    "incident_id": "INC-036-ledger-integrity-gaps-the-canon-declines-to-check",
+    "leading_indicators": [
+      {
+        "indicator": "出荷・受入に作用する ADR 条項のうち、対応する検算関数が紐付いていない条項の数",
+        "observable": "ADR 条項 id と検算関数 id の対応表（現状は不在のため新設が前提）",
+        "threshold": "未対応の条項が 1 件で警告、2 件以上または新規 ADR の追加時に未対応のまま merge されようとしたら赤",
+        "version_independent": true,
+        "where": "doctrine_docs 配下の ADR と assurance/harness/orchestrator.py の検算関数一覧を突合する CI ジョブ",
+        "why_version_independent": "リポジトリ正本のみを入力とし、利用者環境の導入複製の版に依存しない"
+      },
+      {
+        "indicator": "台帳スキーマの列のうち、いずれの検算関数からも参照されない列の数（未読列数）",
+        "observable": "検算が参照する鍵集合と台帳スキーマの鍵集合の差集合",
+        "threshold": "未読列が 1 つでも出れば警告し、列追加の PR では赤（新設列は検算か明示的除外のいずれかを要求する）",
+        "version_independent": true,
+        "where": "assurance/harness/orchestrator.py の検算関数群と assurance/ledger/ のスキーマ",
+        "why_version_independent": "正本のコードとスキーマだけで判定でき、複製の更新状況に依存しない"
+      },
+      {
+        "indicator": "列挙型の値域と集計鍵の差集合（UNASSESSED 型の欠落の一般形）",
+        "observable": "各列挙型の全値と、その型を集計する status 辞書の鍵の集合差",
+        "threshold": "差集合が空でなければ赤（値域の全値が集計のどこかに現れることを不変条件とする）",
+        "version_independent": true,
+        "where": "assurance/ledger/recommendation-status.json のスキーマと集計器",
+        "why_version_independent": "台帳と集計器の静的な突合であり、実行環境や複製版に依存しない"
+      },
+      {
+        "indicator": "台帳の変換（統合・正規化・移送・スキーマ移行）の前後で、判定不能または赤の総数が安全側でない方向へ動いた回数",
+        "observable": "変換前後の判定分布の単調性検査の結果",
+        "threshold": "安全側でない方向への移動が 1 回でも検出されたら赤。安全側（緑→判定不能）への移動は許す",
+        "version_independent": true,
+        "where": "assurance/harness/orchestrator.py の変換経路に置く性質試験（assurance/tests/）",
+        "why_version_independent": "正本の試験として走り、導入複製を経由しない"
+      },
+      {
+        "indicator": "評価者が所有者判断の印を覆した行のうち、理由欄が空の行数、および覆し件数の推移（evaluator_claimed_owner と owner の差）",
+        "observable": "evaluator_owner_required が立ち owner_override_reason が空の行数／差の月次推移",
+        "threshold": "理由欄が空の行が 1 行でもあれば赤。差の値そのものは赤にせず、前回報告からの増加を所有者へ必ず提示する",
+        "version_independent": true,
+        "where": "assurance/ledger/ の該当列を読む検算と、所有者への定期報告",
+        "why_version_independent": "台帳の内容のみに基づき、導入複製の版に依存しない"
+      },
+      {
+        "indicator": "検算の対象外として凍結されている行数（祖父条項の残数）",
+        "observable": "_validate_shipped_conditions の除外リストの長さ",
+        "threshold": "8 を超えたら赤（増加は保証範囲の縮小＝所有者判断が必要）。減少方向のみ承認なしで許す",
+        "version_independent": true,
+        "where": "assurance/harness/orchestrator.py の除外定義と assurance/ledger/",
+        "why_version_independent": "正本のコードとデータで完結する"
+      },
+      {
+        "indicator": "台帳の参照型フィールド（git の ref・commit・ファイルパス・URL など外の世界を指す欄）のうち、指し先の実在検査を持たない欄の数",
+        "observable": "参照型フィールドの一覧と、各欄に対応する実在検査の有無",
+        "threshold": "実在検査を持たない参照型フィールドが 1 つでもあれば警告、出荷条件に作用する欄なら赤",
+        "version_independent": true,
+        "where": "assurance/ledger/ のスキーマ定義と assurance/harness/orchestrator.py",
+        "why_version_independent": "正本のスキーマとコードの突合で判定できる"
+      },
+      {
+        "indicator": "直近 N 件の台帳穴について、発見者が体系内の検算か外部の独立再監査かの比",
+        "observable": "台帳各事象の detected_by の分類",
+        "threshold": "直近 3 件連続で体系内の自己検出が 0 なら、検算範囲そのものの見直しを起動する",
+        "version_independent": true,
+        "where": "assurance/ledger/ の事象記録",
+        "why_version_independent": "台帳の記録に基づく集計であり、複製の版に依存しない"
+      },
+      {
+        "indicator": "台帳の未検算項目の警告を導入複製側の機構（鼓動・SessionEnd 監査）で出す場合の、複製の版遅れ世代数",
+        "observable": "導入複製の版と正本の版の差",
+        "threshold": "1 世代以上の遅れで警告、2 世代以上で当該警告を信頼できない旨を明示する",
+        "version_independent": false,
+        "where": "HEARTBEAT が読む導入複製の版情報（.claude/.cache/last-audit.json および複製の版）",
+        "why_version_independent": "この指標を評価する検出器自体が導入複製の側で動くため、複製の更新が遅れると検出器も同じだけ遅れる。INC-005 と同型の共通原因故障であり、正本側からは複製が何世代遅れているかを観測できない。上の 8 指標を正本の CI に置くのはこの故障を避けるためであり、複製側にも置く場合はこの遅れを隠さない"
+      }
+    ],
+    "loss": "保証台帳が示す「緑」を根拠に所有者・CI・後続の保証活動が意思決定するとき、実際には機械の検算に一度も掛かっていない主張（出荷三条件の充足、所有者判断の印の由来、判定不能の件数、未評価の存在）が裏付け済みとして扱われる。結果として、関係者が信じる保証水準が、実際に検算されている保証水準を上回った状態で出荷・受入・分析終了の判断が積まれる。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "全列挙型で差集合が空であること",
+        "hypothesis": "UNASSESSED の欠落は個別事象ではなく、台帳の全列挙型に同型の『値域の一部が集計鍵に現れない』欠落が他にも存在する",
+        "oracle": "台帳スキーマの全列挙型について、値域の集合と集計 status の鍵集合の差を機械で取る",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "参照型フィールドの全てに実在検査が対応していること",
+        "hypothesis": "fix_commit 以外にも、外の世界を指す台帳の欄（ref・tag・ファイルパス・issue 番号・URL）で指し先の実在が検算されていないものがある",
+        "oracle": "台帳の参照型フィールドを列挙し、各々に実在検査が対応しているかを照合する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "全変換が安全側単調であること",
+        "hypothesis": "統合以外の変換（正規化・移送・スキーマ移行・再集計）にも、判定を安全側でない方向へ動かせる経路がある",
+        "oracle": "全変換経路について変換前後の判定分布の安全側単調性を性質試験で検査する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "過去事象のうち相当数が体系内の検算によって検出されていること",
+        "hypothesis": "体系の内側には検算範囲を測る目が無く、同型の穴は外部の独立再監査が入らない限り検出されない",
+        "oracle": "台帳の全事象の detected_by を分類し、体系内検出と外部検出の比を取る",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "所有者権限に触れる評価者書込可能欄が owner フラグ以外に存在しないこと",
+        "hypothesis": "評価者が書き換え可能な欄のうち、所有者の権限に触れるものが owner フラグ以外にもあり、同様に理由なしで覆せる",
+        "oracle": "台帳の評価者書込可能欄を列挙し、所有者判断・保証範囲・出荷可否に作用する欄を特定する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "除外指定が _validate_shipped_conditions の 8 件のみであること",
+        "hypothesis": "祖父条項のような『検算対象外』の指定が台帳の他の検査にも存在し、その総量がどこにも集計されていない",
+        "oracle": "検算コード中の除外・スキップ・凍結の指定を全て列挙し、対象外行数の総和を出す",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "全ての evidence_refs と名指された関数・列が実在すること",
+        "hypothesis": "事象記録が名指す機構の一部は実在しない、または名前が実装と食い違っている",
+        "oracle": "evidence_refs の各ファイルの存在と、名指された関数・列の実在を直接確認する",
+        "severity": "P0"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "evidence_refs の各ファイルと、名指された検算関数・台帳列・ADR-144/ADR-139 の実在を直接確認する。本分析は実在を仮定した上に立っており、確認前に本分析を根拠として構造を変更しない",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "台帳スキーマの各列に『どの検算関数が読むか』の宣言を持たせ、未宣言または未読の列が存在したら validate を赤にする。列の追加が自動的に検算の欠落として現れるようにする",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "出荷・受入に作用する ADR 条項と検算関数 id の対応表を統治木に置き、対応の無い条項がある状態を CI が警告する。ADR の追加時に対応表の更新を要求する",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "validate の出力を単一の緑から、『何を検めた緑か』の範囲を伴う出力へ変える。台帳と進捗報告に、機械で検められた列と規律のみで支えられている列の区別を載せる",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "台帳の全変換（統合に限らず正規化・移送・スキーマ移行）について、変換前後の判定分布が安全側にのみ動くことを一般の性質試験として書く",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "列挙型の値域と集計鍵の一致、および参照型フィールドの実在検査の有無を、個別の検査ではなく台帳全体の不変条件として置く",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "leading_indicators に挙げた 8 つの正本側指標を CI の常設ジョブとして置き、閾値超過を merge の赤止めに接続する。複製側に置く指標は版遅れを併記する",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "評価者が所有者判断の印を覆した件数と理由を、所有者の定期報告に必ず含める経路を設ける（現状は台帳を追跡して初めて現れる）",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "祖父条項 8 件を検算対象へ戻すか、外したまま保証範囲の縮小として明示し続けるかを決める。列の凍結の解除も同じ判断に属する",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "評価者が所有者判断の印を覆せる範囲を決める（そもそも覆せるべきか、覆せるなら理由の当否を誰が測るか）。評価者は同系 model であり、共通原因故障が残る立場にある",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "台帳の主張を外の世界（リポジトリの木）と照合する責任を CI_RELEASE_CHECK と ASSURANCE_LANE のどちらが持つかを明示的に割り当て、双方が相手側と読める境界を解消する",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "検算範囲の暗黙の境界（台帳の形は検めるが台帳が指す外の世界は検めない）を、想定として文書に明記し、その想定が失効する先行指標を併記する",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "独立再監査 Phase D が四つの穴を検出した手順のうち、体系内の常設検査へ移設できる部分を特定して移設する。移設できない部分は外部監査の固有の役割として明記する",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "ADR-144 の条件(1) と (3) の内容と、それぞれの検算状況を調査する。条件(2) のみが分かっている現状では無検算の範囲の全容が測れていない",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "ADR-139 の独立検証を実施し、(1)(2)(4) の是正が当該の穴を塞いだかを確認するまで fixed:false を維持する",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "検算器が『台帳の形』を対象として育ち、『台帳が指す外の世界』を対象としなかった。この対象境界はどこにも明文化されておらず、境界の存在自体が見えない。",
+      "範囲の異なる複数の主張が、緑という単一の合図に畳み込まれている。合図の受け手（所有者・CI・後続の保証活動）は、その緑が何を検めた緑かを区別できない。",
+      "散文の規約（ADR）と機械の検算の間に対応表が無く、条項が増えるほど無検算の条項が静かに積み上がる。条項の追加は検算の追加を呼ばない。",
+      "規律（人の慎重さ）で支えられている箇所と機械で支えられている箇所の区別が、どの手掛かりにも現れない。この一点が OWNER・CI_RELEASE_CHECK・ASSURANCE_LANE の三層を同時に無効化する共通原因になっている。",
+      "穴の発見が外部の独立再監査に依存しており、検算範囲そのものを測る目が体系の内側に無い。範囲の欠落は、欠落している当の検査では原理的に見えない。",
+      "評価者と所有者の権限境界（誰が所有者判断の要否を決めるか、覆すとき何を残すか）が構造の仕様に書かれていない。評価者は同系 model であり、共通原因故障が残る立場にある。",
+      "台帳の整合性を保つ操作（統合・集計・凍結）が、保証の強さを動かしうるという観点で設計されていない。整合は正しさの規準として立てられ、安全側・危険側の方向の区別を持たない。",
+      "CI と保証レーンの間に、どちらが台帳の主張を外の世界と照合するかの明示的な割当てが無く、双方が相手側の担当と読める境界が残っている。"
+    ],
+    "unknowns": [
+      "本分析の作業環境には evidence_refs のいずれのファイルも存在せず（作業ディレクトリは空）、事象が名指す validate・_validate_shipped_conditions・_validate_owner_overrides・coverage_status・ADR-144・ADR-139・evaluator_claimed_owner のいずれについても実在を確認していない。与えられた統制構造に要素として現れるのは ASSURANCE_LANE（実体 assurance/harness/orchestrator.py、手掛かり assurance/ledger/）と GOVERNANCE_TREE までであり、上記の検算関数・列・ADR は要素として名指されていない。本分析はそれらが ASSURANCE_LANE と GOVERNANCE_TREE の内部として実在するという仮定の上に立っており、この仮定が崩れれば統制欠陥の大半は対象を失う。confidence を low とした主たる根拠はこれである。",
+      "ADR-144 の三条件のうち、条件(1) と (3) の内容が事象の記録に現れない。検算されていない範囲の全容は測れていない。",
+      "祖父条項で外された v0.11.0 の 8 件について、修正が tag の木に在ることを人が確かめたとあるが、その確認の記録の所在・再現手順・確認者の独立性は不明。",
+      "evaluator_claimed_owner 67 と owner 12 の差 55 のうち、評価者の判断が所有者の判断と実質的に食い違っていた件数は不明。是正は理由の存在を求めるだけで、理由の当否は測っていない。",
+      "validate が緑のまま通っていた期間に、この台帳の緑を根拠として実際に下された出荷・受入・分析終了の判断が何件あったかは不明。損失の実際の広がりは測れていない。",
+      "INC-002 の到達不能な fix_commit を 67475de へ訂正した判断が正しいことの独立検証は未実施。",
+      "ADR-139 の独立検証が未実施のため、(1)(2)(4) の是正が実際に当該の穴を塞いだかを示す証拠は無い。fixed:false のままである。",
+      "四つの穴が台帳に入り込んだ時点（いつ検算範囲の外に落ちたか）と、その時点で範囲外に置くという判断があったのか、単に問いが立たなかったのかは記録から判別できない。",
+      "独立再監査 Phase D が四つを検出できた手順のうち、体系内へ移設可能な部分がどこまでかは未調査。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は台帳の「形」を対象として育った。鍵が在るか、型が合うか、件数が整合するかは検められ、台帳が指す外の世界（git の木、値域の全体、統合前後の判定分布、印の由来）は検算の対象境界の外に置かれていた。この境界はどこにも明文化されておらず、出力は一つの緑である。範囲の異なる複数の主張が単一の合図に畳み込まれた結果、CI はその緑を赤止めの根拠にし、所有者はその緑を台帳の裏付けとして読み、保証レーンは自らの緑を健全さの証拠として読んだ。三層が同じ一つの合図に依存していたため、独立していたはずの防護が同時に無効化された（共通の体系的要因による多重防護の無効化）。さらに、検算範囲が条項と列の増加に追随しているかを測る検査が体系の内側に無く、範囲の欠落は欠落している当の検査によっては原理的に見えない。四つの穴が独立再監査という外の目でしか現れなかったのはこのためであり、既存の保証は「見逃した」というより「その範囲を見る立場に置かれていなかった」。なお本事象は fixed:false であり、(1)(2)(4) の是正が実際に穴を塞いだかは ADR-139 の独立検証が未実施のため未確認である。修正の存在は分析の代わりにならない。"
+  }
+}
