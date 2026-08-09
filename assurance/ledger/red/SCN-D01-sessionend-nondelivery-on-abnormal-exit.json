@@ -1,0 +1,12 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "reproduce-red",
+  "incident_id": null,
+  "subject": "SCN-D01 異常終了時の SessionEnd 不達",
+  "generated_at": "2026-08-09T23:55:00Z",
+  "phase": "impossible",
+  "reason": "承認された計画の手順 3（陽性対照）が通らないため、計画自身の中止条件に従って止める。計画は「差分が空なら SessionEnd 経路自体が未配線であるため本手順を中止し、『SCN-D02 と切り分け不能』として記録する（赤とは記録しない）」と定めていた。実測では、正常終了のセッションでも監査レコードは 1 件も増えなかった —— 異常終了の効果を測る土台が無い。原因は INC-039（口の仕事が待ちの上限を超えて毎回打ち切られる）で、これは異常終了とは独立の別経路である。",
+  "evidence_ref": "assurance/ledger/red/INC-039-sessionend-audit-exceeds-hook-budget.json",
+  "next": "INC-039 の是正（ADR-150）が入り、正常終了で監査が配送されるようになった。陽性対照が成立する土台ができたので、SCN-D01 は改めて測り直せる。そのときの観測点は『kill -9 したセッションの負債の印が残り、次のセッションが告げるか』であり、修正前の設計（監査レコードの増減）より鋭い。",
+  "procedure_order": "REPRODUCE_RED を FIX の前に実施した。中止の判断も修正のコードを書く前に下している。"
+}

@@ -1,0 +1,90 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "reproduce-red",
+  "incident_id": "INC-039-sessionend-audit-exceeds-hook-budget",
+  "subject": "SessionEnd の全件監査は所要 8〜9.5 秒で、ホストの SessionEnd 予算（1 秒超〜2 秒未満）を超えるため一度も完了しない",
+  "note": "SCN-D01（異常終了時の SessionEnd 不達）の陽性対照を取ろうとして見つけた。異常終了を待つまでもなく、正常終了でも走っていない。",
+  "generated_at": "2026-08-09T23:45:00Z",
+  "git_sha": "4ebb1cb",
+  "phase": "before-fix",
+  "command": "claude -p（使い捨て worktree・隔離 CLAUDE_CONFIG_DIR）で SessionEnd フックの遅延を 0/1/2/3/9 秒と変えて完了を観測する",
+  "returncode": 1,
+  "expect": "修正前に、監査の所要（8 秒超）が予算（2 秒未満）を超えて不達になること。最初から緑は再現と認めない",
+  "procedure_order": "REPRODUCE_RED を FIX の前に実施した。修正のコードはまだ一行も書いていない。",
+  "observed_failures": [
+    "実環境: .claude/.cache/last-audit.json は generated_at 2026-08-04T00:00:00Z・mtime 2026-08-04T17:27:07Z のまま。5 日間・8 セッションの終了を挟んで一度も更新されていない",
+    "実環境: claude -p を 3 回走らせ、3 回とも標準エラーへ 'SessionEnd hook [...docs-audit.py --root-from ... --summary-in-project ...] failed: Hook cancelled' が出る。要約の mtime は 3 回とも不変",
+    "疑似端末（script -qec）経由でも要約の mtime は不変",
+    "使い捨て fixture での予算の実測: 遅延 1 秒は完了 3/3・cancelled 0/3、遅延 2 秒は完了 0/3・cancelled 3/3、遅延 3 秒・9 秒も cancelled",
+    "docs-audit.py を手で走らせた実測は 8.46 / 8.21 / 9.52 秒（exit 0 で正常に要約を書く）。つまりスクリプトは健全で、予算を超えていることだけが不達の原因である"
+  ],
+  "red_evidence_detail": {
+    "budget_probe": {
+      "method": "使い捨て worktree の .claude/settings.local.json に SessionEnd フック \"sh -c 'sleep <d>; echo <印> >> <marker>'\" を置き、claude -p を走らせて印の出現を数える（各 3 回）",
+      "results": [
+        {
+          "delay_s": 0,
+          "completed": "3/3",
+          "cancelled": "0/3"
+        },
+        {
+          "delay_s": 1,
+          "completed": "3/3",
+          "cancelled": "0/3"
+        },
+        {
+          "delay_s": 2,
+          "completed": "0/3",
+          "cancelled": "3/3"
+        },
+        {
+          "delay_s": 3,
+          "completed": "0/3",
+          "cancelled": "3/3"
+        },
+        {
+          "delay_s": 9,
+          "completed": "0/3",
+          "cancelled": "3/3"
+        }
+      ],
+      "conclusion": "ホストの SessionEnd 予算は 1 秒超〜2 秒未満。監査の所要 8〜9.5 秒はこれを常に超える。"
+    },
+    "detachment_probe": {
+      "method": "同じ fixture で SessionEnd フックを『9 秒かかる子を切り離して即座に返る』形にし、12 秒待って印を数える",
+      "results": [
+        {
+          "form": "setsid sh -c 'sleep 9; ...' &",
+          "completed": "YES",
+          "cancelled": 0
+        },
+        {
+          "form": "nohup sh -c 'sleep 9; ...' & exit 0",
+          "completed": "YES",
+          "cancelled": 0
+        }
+      ],
+      "conclusion": "切り離した子はセッション終了後も生き延びて完了する。是正の方向は実測で裏づいた。"
+    },
+    "defect": "SessionEnd の口に、予算の 4〜9 倍かかる仕事を直に置いている。フックは毎回起動して毎回打ち切られ、要約は前の内容のまま残る。外から見た形は『走ったが変化が無かった』と区別できず、SessionStart は 5 日前の error 0 / warn 0 / advisory 0 を『前回監査』として正の安心のまま注入し続ける（ASM-001 の if_false そのもの）。打ち切りの事実は標準エラーへ出ているが、それを読んで台帳へ積む段がどこにも無い。"
+  },
+  "field_measurement": {
+    "method": "実環境の .claude/.cache/session-flags の mtime（セッション活動の代理）と last-audit.json の鮮度の突合",
+    "sessions_that_edited_since_last_audit": [
+      "edits-a43df44d (2026-08-05 05:05)",
+      "edits-271789d6 (2026-08-06 03:11)",
+      "edits-f431ce81 (2026-08-06 09:05)",
+      "edits-aa85d1cf (2026-08-07 05:23)",
+      "edits-e6ca0c72 (2026-08-07 17:31)",
+      "edits-168ee7ab (2026-08-07 22:52)",
+      "edits-fa3b929c (2026-08-09 18:57。本セッション)"
+    ],
+    "audits_delivered": 0,
+    "note": "最後の要約 mtime 2026-08-04 17:27 より後に統治文書を編集したセッションが 7 件（本セッションを含む）。監査の配送は 0 件。"
+  },
+  "limits": [
+    "予算の値はこのホスト（Claude Code 2.1.223 / devcontainer / WSL2）での実測であり、他のホストで同じとは限らない。境界は 1 秒超〜2 秒未満としか言えず、正確な閾値は測っていない。",
+    "対話セッションの終了を直接観測してはいない。対話側の証拠は session-flags と要約の突合という間接測定である。",
+    "SCN-D01 が主題とした『異常終了』の効果は、この不達に覆い隠されて分離できない。"
+  ]
+}

@@ -24,6 +24,7 @@ import hashlib
 import json
 import os
 import re
+import subprocess
 import sys
 
 # 作業木にバイトコードを残さない(ADR-075)。フックは一回きりの短命な
@@ -107,6 +108,8 @@ def _parse_args(argv):
         "config": None,
         "today": None,
         "respect_docs_level": False,
+        "detach": False,        # SessionEnd 用。負債を置いて子へ渡し即座に返る。
+        "clear_due": None,      # 切り離された子だけが付ける。完走したら印を消す。
     }
     i = 0
     n = len(argv)
@@ -157,6 +160,23 @@ def _parse_args(argv):
             # 生の変数がシェルでパスになる場所を無くす(INC-032)。
             opts["summary_in_project"] = True
             i += 1
+            continue
+        if a == "--detach":
+            # SessionEnd の口は 1 秒台でしか待ってもらえない(INC-039 の実測)。
+            # 全件監査は 8〜9.5 秒かかるので、この口では負債の印だけを置き、
+            # 監査そのものは切り離した子に渡して即座に返る。
+            opts["detach"] = True
+            i += 1
+            continue
+        if a == "--clear-due":
+            # 切り離された子が自分に付ける。完走したときだけ負債の印を消す。
+            # 利用者が手で付けることは想定しないが、付いても害は無い。
+            if i + 1 >= n:
+                return None, "--clear-due には識別子が必要"
+            if not argv[i + 1].strip():
+                return None, "--clear-due が空"
+            opts["clear_due"] = argv[i + 1]
+            i += 2
             continue
         if a == "--fail-on":
             if i + 1 >= n:
@@ -1431,6 +1451,49 @@ def _atomic_write(path, text):
 # main
 # ---------------------------------------------------------------------------
 
+def _detach_and_queue(argv, opts):
+    """負債の印を置き、監査そのものを切り離した子へ渡して即座に返る。
+
+    SessionEnd の口の予算は、このホストの実測で 1 秒超〜2 秒未満だった。全件監査
+    (274 文書で 8〜9.5 秒)は常にこれを超えて打ち切られ、要約は 5 日・8 セッション
+    にわたって一度も更新されなかった(INC-039)。口では負債だけを置く。
+
+    子が完走すれば印は消える。子が落ちても・切り離しが効かない環境でも、印は
+    残る —— 次のセッションの契約注入がそれを読んで「監査が済んでいない」と告げる。
+    どちらに転んでも、走らなかったことが黙って消えないのが要点である。
+
+    ここで例外を投げない。SessionEnd の口を壊すことは、監査が遅れることより悪い。
+    """
+    proj = _auditcache.project_dir(opts["root_from"])
+    # セッション識別子はホストによって鍵の名が違う。stdin の JSON は読まない
+    # (対話 CLI では待ちで止まる。main の注記と同じ理由)。どれも無ければ時刻を
+    # 使う —— 識別子が取れないことを負債を置かない理由にはしない。
+    token = ""
+    for key in ("CLAUDE_SESSION_ID", "CLAUDE_CODE_SESSION_ID"):
+        token = os.environ.get(key) or ""
+        if token:
+            break
+    token = token or datetime.datetime.now(datetime.timezone.utc).strftime(
+        "queued-%Y%m%dT%H%M%SZ")
+    try:
+        _auditcache.write_due(token, proj=proj)
+    except Exception:                                    # noqa: BLE001
+        pass
+    child = [sys.executable, os.path.abspath(__file__)]
+    child += [a for a in argv if a != "--detach"]
+    child += ["--clear-due", token]
+    try:
+        subprocess.Popen(                                # noqa: S603
+            child, stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            start_new_session=True, cwd=proj)
+    except (OSError, ValueError):
+        # 切り離せない環境では監査は走らないが、負債の印は残っている。
+        # 沈黙して開かない(DECIDED-001 第12項): 何が起きたかを一行で告げる。
+        sys.stdout.write("監査を切り離せなかった。負債の印だけ残す: %s\n" % token)
+    return 0
+
+
 def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
@@ -1445,8 +1508,12 @@ def main(argv=None):
             "docs-audit.py [--root PATH | --root-from PROJ] [--json] "
             "[--summary-out PATH | --summary-in-project] "
             "[--fail-on error|never] [--config PATH] "
-            "[--today YYYY-MM-DD] [--respect-docs-level]\n")
+            "[--today YYYY-MM-DD] [--respect-docs-level] "
+            "[--detach] [--clear-due TOKEN]\n")
         return 2
+
+    if opts["detach"]:
+        return _detach_and_queue(list(argv), opts)
 
     root = opts["root"]
     if root is None and opts["root_from"]:
@@ -1531,6 +1598,14 @@ def main(argv=None):
         _auditcache.write_stamp("hook_session_end_audit", proj=proj)
         _auditcache.write_stamp("hook_session_end_write", proj=proj,
                                 value="ok" if write_ok else "failed")
+
+    # 負債の解消。**要約を書けたときだけ**消す(INC-039)。走っただけで消すと、
+    # 書けなかった実行が負債を帳消しにしてしまい、次のセッションは古い要約を
+    # 「済んだもの」として受け取る —— 直そうとしている形そのものに戻る。
+    if opts["clear_due"] and write_ok and summary_out:
+        _auditcache.clear_due(
+            opts["clear_due"],
+            proj=opts["root_from"] or os.path.dirname(os.path.abspath(root)))
 
     # 標準出力。
     if opts["json"]:

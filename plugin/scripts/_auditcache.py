@@ -202,6 +202,84 @@ def project_dir(proj=None):
     return os.getcwd()
 
 
+DUE_NAME = "audit-due"
+
+# 監査の負債の印。SessionEnd の口は 1 秒台で返さないとホストに打ち切られるが
+# (INC-039 の実測: 遅延 1 秒は完了 3/3、2 秒は打ち切り 3/3)、全件監査の所要は
+# 8〜9.5 秒である。そこで口では負債だけを置き、監査そのものは切り離した子が
+# 走る。子が完走すれば印は消え、消えなければ次のセッションが負債を見る。
+# 「走らなかったこと」が、要約の古さではなくファイルの実在として残るのが要点。
+
+
+def due_dir(proj=None):
+    """監査の負債の印の置き場。印と同じ .claude/.cache の下。"""
+    return os.path.join(project_dir(proj), ".claude", ".cache", DUE_NAME)
+
+
+def write_due(token, proj=None, now=None):
+    """負債の印を置く。最善努力(決して例外を投げない)。返り値はパスか None。
+
+    token はセッションの識別子。無ければ呼び出し側が時刻から作る。ファイル名に
+    使うので、英数とハイフン以外は落とす(ファイル名による注入を作らない)。
+    """
+    safe = re.sub(r"[^A-Za-z0-9_-]", "", str(token or ""))[:64]
+    if not safe:
+        return None
+    try:
+        d = due_dir(proj)
+        os.makedirs(d, exist_ok=True)
+        path = os.path.join(d, safe + ".json")
+        stamp = (now or datetime.datetime.now(datetime.timezone.utc)).strftime(
+            "%Y-%m-%dT%H:%M:%SZ")
+        # 一時名に pid を混ぜる(ADR-075)。write_stamp と同じ形。
+        tmp = "%s.%d.tmp" % (path, os.getpid())
+        with open(tmp, "w", encoding="utf-8") as fh:
+            fh.write(json.dumps({"token": safe, "queued_at": stamp},
+                                ensure_ascii=False))
+        os.replace(tmp, path)
+        return path
+    except OSError:
+        return None
+
+
+def clear_due(token, proj=None):
+    """負債の印を消す。監査が完走したときだけ呼ぶ。真偽を返す。"""
+    safe = re.sub(r"[^A-Za-z0-9_-]", "", str(token or ""))[:64]
+    if not safe:
+        return False
+    try:
+        os.remove(os.path.join(due_dir(proj), safe + ".json"))
+        return True
+    except OSError:
+        return False
+
+
+def read_due(proj=None):
+    """未消化の負債を [(token, queued_at)] で返す。古い順。読めない印は飛ばす。
+
+    黙って空にしない —— 読めなかった印は queued_at を None として残し、
+    「在るが読めない」を「無い」と取り違えないようにする。
+    """
+    out = []
+    try:
+        names = sorted(os.listdir(due_dir(proj)))
+    except OSError:
+        return out
+    for name in names:
+        if not name.endswith(".json"):
+            continue
+        token = name[:-5]
+        queued = None
+        try:
+            with open(os.path.join(due_dir(proj), name), encoding="utf-8") as fh:
+                queued = (json.load(fh) or {}).get("queued_at")
+        except (OSError, ValueError):
+            queued = None
+        out.append((token, queued if isinstance(queued, str) else None))
+    out.sort(key=lambda pair: (pair[1] or "", pair[0]))
+    return out
+
+
 STAMPS_NAME = "hook-stamps"
 
 # ガード(PreToolUse)とリンタ(PostToolUse)は同じ編集の出来事に対で発火する。

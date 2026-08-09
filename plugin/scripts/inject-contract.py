@@ -455,8 +455,32 @@ def _tree_initialized(docs_root):
     return _auditcache.has_initialized_marker(docs_root)
 
 
+def _render_due_warning(due):
+    """未消化の監査の負債を一行に。無ければ空リスト。
+
+    暦の古さ(既定 7 日)より鋭い信号である。SessionEnd が監査を終えられずに
+    閉じたセッションは、その一件目から数に出る。実測では暦の閾値に届かない
+    5 日・7 セッションのあいだ、要約は error 0 の緑を正の安心として注入し
+    続けていた(INC-039)。負債はファイルの実在なので、暦を待たない。
+    """
+    if not due:
+        return []
+    oldest = ""
+    for _token, queued in due:
+        if queued:
+            oldest = _frontmatter.sanitize_inline(queued, 40)
+            break
+    line = ("⚠ 監査の負債 %d 件。SessionEnd が全件監査を終えられないまま閉じた"
+            "セッションがこれだけある" % len(due))
+    if oldest:
+        line += "（最古 %s）" % oldest
+    line += ("。要約は現状を映していない —— 緑であっても、それは負債より前の"
+             "緑である。docs-audit を手で走らせて解消すること(R11)。")
+    return [line]
+
+
 def _render_audit_summary(summary, today=None, stale_days=DEFAULT_AUDIT_STALE_DAYS,
-                          docs_level=4, tree_initialized=False):
+                          docs_level=4, tree_initialized=False, due=()):
     """前回監査の要約を一行群に。本文は転載しない。
 
     R11(統治の生存性): 要約が無いことと、要約が古いことは、どちらも
@@ -464,7 +488,13 @@ def _render_audit_summary(summary, today=None, stale_days=DEFAULT_AUDIT_STALE_DA
     警告として出す(要約なし=情報なしではなく、死活の疑いとして扱う)。
     Level 2 に SessionEnd の監査は無い(ADR-019)ため、Level 2 では死活の
     疑いを立てず、事実だけを静かに書く(誤報を出さない)。
+
+    負債(due)は、どの経路を通っても最後に足す。要約が無い経路にも足す ——
+    「要約が無い」と「監査を終えられずに閉じた回が在る」は別の事実であり、
+    片方が言えたからもう片方を黙ってよいわけではない。
     """
+    # Level 2 に SessionEnd の監査は無いので、負債の概念も持たない(誤報を出さない)。
+    debt = _render_due_warning(due) if docs_level >= 3 else []
     if not isinstance(summary, dict):
         if docs_level < 3:
             return ["前回監査なし。Level 2 では SessionEnd の監査は走らない"
@@ -472,19 +502,19 @@ def _render_audit_summary(summary, today=None, stale_days=DEFAULT_AUDIT_STALE_DA
         if tree_initialized:
             # 導入直後で初回 SessionEnd 監査がまだ走っていない(#74)。監査の停止では
             # ないので ⚠ ではなく中立の案内にする(導入初日を警告で始めない)。
-            return ["前回監査なし。導入直後です。初回の監査はこのセッションの終了時"
+            return debt + ["前回監査なし。導入直後です。初回の監査はこのセッションの終了時"
                     "(SessionEnd)に走ります。すぐ確かめたいなら docs-audit を手で実行できます。"]
-        return ["前回監査なし。⚠ SessionEnd の監査が一度も動いていないか、"
-                "統治木の場所が変わった可能性がある。docs-audit を手で実行して、"
-                "統治が生きていることを確かめること(R11)。"]
+        return debt + ["前回監査なし。⚠ SessionEnd の監査が一度も動いていないか、"
+                       "統治木の場所が変わった可能性がある。docs-audit を手で実行して、"
+                       "統治が生きていることを確かめること(R11)。"]
     schema = summary.get("schema")
     if schema != "docs-audit/1":
         # 通常の経路ではここへ来ない。_auditcache.load がスキーマの合わない候補を
         # 飛ばすため(ADR-053)、main から渡る要約は必ず docs-audit/1 である。
         # 直に呼ばれたとき(テスト・将来の別の呼び出し側)の守りとして残す。
         # スキーマが合わなくても落とさない。最低限のことだけ伝える。
-        return ["前回監査の要約を読めなかった（スキーマ不一致）。"]
-    lines = []
+        return debt + ["前回監査の要約を読めなかった（スキーマ不一致）。"]
+    lines = list(debt)
     totals = summary.get("totals") or {}
     # 監査要約は攻撃者制御になりうる(ファイル名が findings 経由で届く。#96)。
     # 逐語挿入するフィールドはすべて sanitize_inline を通す(ADR-040)。
@@ -828,8 +858,12 @@ def _status_sections(audit_summary, config_unused, today, stale_days,
     sections.append({
         "key": "audit",
         "title": "## 前回監査の要約",
+        # 負債の読みは listdir 一回。置き場の解決は共有コアに委ねる(自前で
+        # 解かない。DECIDED-001 事実1)。SessionStart の予算に効かない安さで、
+        # 暦(既定 7 日)より鋭い信号を運ぶ(INC-039)。
         "lines": _render_audit_summary(audit_summary, today, stale_days,
-                                       docs_level, tree_initialized),
+                                       docs_level, tree_initialized,
+                                       due=_auditcache.read_due()),
         "tier": 0,
         "protected": True,
     })

@@ -748,6 +748,30 @@
       ],
       "cast_analysis_ref": "assurance/ledger/cast/INC-038-rubric-offers-a-pointer-form-the-index-cannot-supply.json",
       "cast_analyzed_at": "2026-08-09T22:41:38Z"
+    },
+    {
+      "id": "INC-039-sessionend-audit-exceeds-hook-budget",
+      "date": "2026-08-09",
+      "summary": "SessionEnd の口に全件監査（所要 8〜9.5 秒）を直に置いていたが、ホストがSessionEnd の完了を待つ時間の上限は 1 秒超〜2 秒未満だった。監査は毎回打ち切られ、5 日・7 セッションにわたって一度も配送されなかった。",
+      "detected_by": "2026-08-09 の独立再監査。SCN-D01（異常終了時の SessionEnd 不達）の陽性対照を取ろうとして、正常終了でも走っていないことに気づいた。",
+      "evidence_kind": "measurement",
+      "evidence_refs": [
+        "assurance/ledger/red/INC-039-sessionend-audit-exceeds-hook-budget.json",
+        "assurance/ledger/verify/INC-039-sessionend-audit-exceeds-hook-budget.json",
+        "doctrine_docs/packaging/decisions/ADR-150-session-end-queues-the-audit.md",
+        "plugin/tests/test_sessionend_budget.py"
+      ],
+      "impact": "統治の生存（R11）の中心が死んでいた。全件監査は SessionEnd でしか走らず、その要約が次セッションの契約注入と鼓動の唯一の入力である。要約は 2026-08-04 のerror 0 / warn 0 / advisory 0 で凍り、5 日間・7 セッション（すべて統治文書を編集している）にわたって『前回監査』として正の安心のまま注入され続けた。暦による古び警告の閾値は 7 日で、5 日はそこに届かない。実際にはその時点で監査の warn が 4 件立っており、うち 3 件は本再監査キャンペーン自身が残した残滓（ADR-147・ADR-149 の adr_not_landed、SPEC-029 の trace_stale）だった。つまり『全門緑』という本キャンペーンの報告は、gate の判定（--fail-on error）としては正しいが、警告の側は誰も見ていなかった。打ち切りの事実は標準エラーへ毎回出ていたのに、それを読んで台帳へ積む段がどこにも無かった。",
+      "fixed": true,
+      "fix_note": "ADR-150。SessionEnd の口は --detach で監査を予約するだけにした。口がするのは負債の印（.claude/.cache/audit-due/<識別子>.json）を置くことと、監査を切り離した子（start_new_session=True）へ渡すことの二つだけで、即座に 0 を返す。負債は要約を書けたときだけ消す（--clear-due）—— 走っただけで消すと、書けなかった実行が負債を帳消しにする。負債が残っていれば、次のセッションの契約注入が要約より先に件数と最古の予約時刻を告げる（暦の閾値を待たない）。切り離せない環境でも 0 を返し、負債を残して一行告げる（沈黙して開かない）。",
+      "verify_ref": "assurance/ledger/verify/INC-039-sessionend-audit-exceeds-hook-budget.json",
+      "residual": [
+        "対話セッションの終了は直接観測していない。証拠は session-flags の mtime と要約の鮮度の突合という間接測定である。",
+        "待ちの上限の正確な閾値は測っていない（1 秒超〜2 秒未満とだけ言える）。他のホスト（desktop アプリ・別 OS）では測っていない。",
+        "切り離した子が完走することは実測したが、ホストが終了時にプロセス群ごと畳む環境では走らない。その場合も負債は残るので、走らなかったことは消えない —— 覆っているのは『消えないこと』であって『必ず走ること』ではない。",
+        "SCN-D01 が主題とした異常終了の効果は、この不達に覆い隠されて分離できなかった。修正後に改めて測る必要がある。"
+      ],
+      "evidence_note": "使い捨て git worktree と隔離した CLAUDE_CONFIG_DIR で claude -p を各 3 回。待ちの上限の走査（0/1/2/3/9 秒）と切り離しの生存確認、および実環境の session-flags と要約の突合。"
     }
   ]
 }
