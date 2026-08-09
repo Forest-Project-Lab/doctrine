@@ -566,7 +566,56 @@ def _registry_section_names():
         return ()
 
 
-def _mask_approved_compounds(masked, glossary=None):
+def _calque_tokens(glossary):
+    """カルク表の字面を [(行, 照合する字面)] で返す。ここだけが解釈する。
+
+    表B のセルは三つの飾りを持つ。字面の解釈をここへ一本化し、照合の側でも
+    覆いの側でも同じ解釈を使う(二重定義しない。DECIDED-001 事実1)。
+
+    - 全角スラッシュ『／』で並ぶ変種は、それぞれが独立の字面である。
+    - 末尾の（…）は用法の但し書き(過剰・意味)であって字面ではない。
+    - 先頭の『〜』は句の導入の記号であって字面ではない。
+    """
+    out = []
+    if glossary is None:
+        return out
+    for row in glossary.calque_table:
+        surface = row[0]
+        for variant in surface.split("／"):
+            token = _TRAILING_PARENS_RE.sub("", variant.strip()).strip()
+            token = token.lstrip("〜")
+            if token:
+                out.append((row, token))
+    return out
+
+
+def _mask_arbiter(tokens, contenders):
+    """覆いの字面と、これから探す字面を、一本の交替で並べた正規表現。
+
+    長い順に並べるので、同じ位置では**最長の字面が勝つ**。同点は覆いが勝つ
+    —— 節名は書き手が言い換えられないので、そこは ADR-135 の限界のまま残す。
+
+    覆いが常に勝つ形（従来）だと、節名を含むだけの長い禁止語まで黙って
+    無効になっていた（`理由付け` ⊃ `理由`）。仲裁を入れて両方向を直す。
+    """
+    ordered = sorted(tokens, key=len, reverse=True)
+    rest = sorted((c for c in contenders if c not in tokens),
+                  key=len, reverse=True)
+    literals = []
+    seen = set()
+    for group in (ordered, rest):
+        for lit in group:
+            if lit and lit not in seen:
+                seen.add(lit)
+                literals.append(lit)
+    if not literals:
+        return None
+    # 同じ長さなら覆いを先に置く（交替は先勝ちなので、同点は覆いが勝つ）。
+    literals.sort(key=lambda s: (-len(s), s not in tokens))
+    return re.compile("|".join(re.escape(s) for s in literals))
+
+
+def _mask_approved_compounds(masked, glossary=None, contenders=()):
     """Blank approved compounds and dictionary-registered exceptions
     (length-preserving) so a banned synonym that is only a substring of a
     legitimate longer token is not flagged, while a standalone synonym in
@@ -586,16 +635,25 @@ def _mask_approved_compounds(masked, glossary=None):
     """
     tokens = set(_APPROVED_COMPOUNDS)
     tokens.update(_registry_section_names())
+    contenders = [c for c in contenders if c]
     if glossary is not None:
         tokens.update(t for t in glossary.proper_nouns if t)
-        banned = [syn for syn, _a in glossary.banned_synonyms]
         for term in glossary.approved_terms:
-            if any(syn in term and syn != term for syn in banned):
+            if any(c in term and c != term for c in contenders):
                 tokens.add(term)
-    for compound in sorted(tokens, key=len, reverse=True):
-        if compound in masked:
-            masked = masked.replace(compound, _blank(compound))
-    return masked
+    rx = _mask_arbiter(tokens, contenders)
+    if rx is None:
+        return masked
+    out = []
+    pos = 0
+    for m in rx.finditer(masked):
+        lit = m.group(0)
+        out.append(masked[pos:m.start()])
+        # 覆いの字面なら消す。探している字面（より長いので勝った）なら残す。
+        out.append(_blank(lit) if lit in tokens else lit)
+        pos = m.end()
+    out.append(masked[pos:])
+    return "".join(out)
 
 
 _ASCII_SYNONYM_RE = re.compile(r"^[A-Za-z0-9]+$")
@@ -636,7 +694,9 @@ def _check_banned_synonyms(masked, glossary):
     longer ASCII word is not that word.
     Ordered by (synonym order in glossary, first occurrence).
     """
-    masked = _mask_approved_compounds(masked, glossary)
+    masked = _mask_approved_compounds(
+        masked, glossary,
+        contenders=[syn for syn, _a in glossary.banned_synonyms])
     out = []
     for syn, approved in glossary.banned_synonyms:
         if _ASCII_SYNONYM_RE.match(syn):
@@ -653,28 +713,33 @@ def _check_banned_synonyms(masked, glossary):
 
 
 def _check_calque(masked, glossary):
-    """CALQUE (ERROR) — §1 calque dict / R10. Literal substring on masked body."""
+    """CALQUE (ERROR) — §1 calque dict / R10. Literal substring on masked body.
+
+    必須節の名は、禁止同義語と同じく覆う。書き手は節名を言い換えられないので、
+    利用者のカルク表が節名（やその断片）を挙げると、書けば CALQUE・消せば
+    MISSING_SECTION の詰みになる —— #197 と同型である。ADR-135 は表A の軸
+    だけを直しており、同じ論法が当てはまる表B へ運ばれていなかった。
+
+    字面の解釈は `_calque_tokens` に一本化する（照合と覆いで二重定義しない）。
+    """
+    rows = _calque_tokens(glossary)
+    masked = _mask_approved_compounds(
+        masked, glossary, contenders=[token for _row, token in rows])
     out = []
-    for surface, fix, en in glossary.calque_table:
-        # A surface cell may list two variants separated by the full-width
-        # slash '／'; each variant is its own literal to match. A leading 〜
-        # placeholder (a phrase leader) is stripped so the literal token is the
-        # concrete tail of the phrase.
-        for variant in surface.split("／"):
-            # A trailing （...） on a surface is a usage qualifier (過剰 / 意味),
-            # not part of the literal phrase: '〜を可能にする（過剰）' matches the
-            # phrase 'を可能にする'. doc-review judges the borderline overuse.
-            token = _TRAILING_PARENS_RE.sub("", variant.strip()).strip().lstrip("〜")
-            if token == "":
-                continue
-            idx = masked.find(token)
-            if idx < 0:
-                continue
-            msg = "カルク『%s』→『%s』に直す。" % (surface, fix)
-            if en:
-                msg += "（なぞった英語: %s）" % en
-            out.append(Finding("CALQUE", ERROR, msg, _line_of_offset(masked, idx)))
-            break   # one finding per calque row
+    seen_rows = set()
+    for row, token in rows:
+        key = id(row)
+        if key in seen_rows:
+            continue            # one finding per calque row
+        idx = masked.find(token)
+        if idx < 0:
+            continue
+        seen_rows.add(key)
+        surface, fix, en = row
+        msg = "カルク『%s』→『%s』に直す。" % (surface, fix)
+        if en:
+            msg += "（なぞった英語: %s）" % en
+        out.append(Finding("CALQUE", ERROR, msg, _line_of_offset(masked, idx)))
     return out
 
 
