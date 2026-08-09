@@ -164,7 +164,17 @@ def main(argv=None):
         return bail_unassessed("赤の証拠が読めない: %s" % exc)
     red_sha256 = schemas.sha256_of(red_doc)
 
-    diff_text = _git(["diff", args.diff_range])
+    # 検証の記録そのものを、検証対象の diff から外す(INC-028)。
+    #
+    # 記録は commit 前の diff に対して作られるのに、その記録自体が次の commit で
+    # 同じ枝へ入る。すると独立検証は毎回「この diff は、別の変更集合に対する
+    # 検証記録を同梱している」と正しく指摘する —— 記録と、それが検証した変更
+    # 集合が、原理的に一致しないからである。実測では二度とも single_change の
+    # 減点材料になった。
+    #
+    # 記録は評価の成果であって、評価される変更ではない。除外して循環を切る。
+    diff_text = _git(["diff", args.diff_range, "--",
+                      ".", ":(exclude)assurance/ledger/verify/"])
     if diff_text is None:
         return bail_unassessed(
             "git diff %s が取れない（範囲が不正か repo の外）" % args.diff_range,
