@@ -252,8 +252,20 @@ def _git(args):
 
 
 def _git_available():
+    """git が使えて、履歴が揃っていること。
+
+    浅い複製（CI の `actions/checkout` の既定は深さ 1）では、実在する commit
+    でも到達できないと出る。前提の欠如を所見にすると、門が偽の赤を出す ——
+    「門が正しいものを咎める型は、見逃しより害が大きい」（WATCH-001 第10項）。
+    浅いときは検算そのものを見送る。
+    """
     r = _git(["rev-parse", "--git-dir"])
-    return bool(r and r.returncode == 0)
+    if not (r and r.returncode == 0):
+        return False
+    shallow = _git(["rev-parse", "--is-shallow-repository"])
+    if shallow and shallow.stdout.strip() == "true":
+        return False
+    return True
 
 
 def _git_has_commit(rev):
