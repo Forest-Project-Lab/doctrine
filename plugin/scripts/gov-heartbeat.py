@@ -48,7 +48,7 @@ STATE_NAME = _auditcache.STATE_NAME   # 正本は共有コア(ADR-053)
 
 
 def _docs_root():
-    proj = os.environ.get("CLAUDE_PROJECT_DIR")
+    proj = _auditcache.project_dir()
     if proj:
         found = _registry.locate_docs_root(proj)
         if found is not None:
@@ -101,7 +101,7 @@ def _once_per_session(sid):
     if not sid:
         return False
     cands = []
-    proj = os.environ.get("CLAUDE_PROJECT_DIR")
+    proj = _auditcache.project_dir()
     if proj:
         cands.append(os.path.join(proj, ".claude", ".cache", "session-flags"))
     cands.append(os.path.join(os.getcwd(), ".claude", ".cache", "session-flags"))

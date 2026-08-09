@@ -27,6 +27,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import _auditcache
 import _hookio
 # doctrine:begin SPEC-022
 _FLAG_STALE_SECONDS = 7 * 24 * 3600   # 印の掃除(7日より古い印は消す)
@@ -52,7 +53,7 @@ def _safe_sid(data):
 def _flag_dir():
     """review-nudge.py と同じ置き場の解決(書けなくてもよいので読み側は緩く)。"""
     cands = []
-    proj = os.environ.get("CLAUDE_PROJECT_DIR")
+    proj = _auditcache.project_dir()
     if proj:
         cands.append(os.path.join(proj, ".claude", ".cache", "session-flags"))
     cands.append(os.path.join(os.getcwd(), ".claude", ".cache", "session-flags"))

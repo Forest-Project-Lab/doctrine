@@ -250,9 +250,16 @@ class TestHooksFullProfile(unittest.TestCase):
         self.assertEqual(len(cmds), 1)
         argv = _argv(cmds[0])
         self.assertTrue(argv[0].endswith("/scripts/docs-audit.py"))
-        self.assertIn("--summary-out", argv)
-        self.assertEqual(argv[argv.index("--summary-out") + 1],
-                         "${CLAUDE_PROJECT_DIR}/.claude/.cache/last-audit.json")
+        # INC-032: 置き場は --summary-in-project が解決済みのプロジェクト根から
+        # 導く。配線が "${CLAUDE_PROJECT_DIR}/..." とパスを組むと、変数が展開
+        # されないとき "/.claude/..."(ファイルシステムの根)になっていた。
+        # 生の変数がシェルでパスになる場所を配線から無くす。
+        self.assertIn("--summary-in-project", argv)
+        self.assertNotIn("--summary-out", argv)
+        for token in argv:
+            self.assertFalse(
+                token.startswith("${CLAUDE_PROJECT_DIR}/"),
+                "配線が生の変数からパスを組んでいる: %r" % token)
         self.assertIn("--root-from", argv)
         self.assertEqual(argv[argv.index("--root-from") + 1],
                          "${CLAUDE_PROJECT_DIR}")

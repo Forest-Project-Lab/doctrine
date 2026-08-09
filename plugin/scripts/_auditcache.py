@@ -178,6 +178,30 @@ def load(docs_root=None):
 # 判定はここに一度だけ置く(ADR-053 と同じ原理。読み手ごとに答えを割らない)。
 # ---------------------------------------------------------------------------
 
+def project_dir(proj=None):
+    """実行時の状態を書いてよいプロジェクト根。信じられなければ作業ディレクトリ。
+
+    信じるのは**絶対パスで実在するディレクトリ**だけとする。相対の値は
+    作業ディレクトリ次第で別の場所を指し、ガードとリンタの印が二つのファイルへ
+    割れる —— すると鮮度の判定が「拒否経路の配線が欠けている」という偽の警報を
+    出す。実測では、相対の値でリポジトリの作業木の中へ `sub/.claude/.cache/` が
+    生成された（INC-032）。置き場は `${CLAUDE_PROJECT_DIR}/.claude/.cache` に
+    限る（WATCH-001 第9項）。
+
+    信じられない値は「与えられていない」と同じ既定（作業ディレクトリ）へ倒す。
+    黙って広げない —— 与えられた値から勝手に場所を作らない、という意味である。
+    """
+    for candidate in (proj, os.environ.get("CLAUDE_PROJECT_DIR")):
+        if not candidate or not isinstance(candidate, str):
+            continue
+        if not os.path.isabs(candidate):
+            continue
+        if not os.path.isdir(candidate):
+            continue
+        return candidate
+    return os.getcwd()
+
+
 STAMPS_NAME = "hook-stamps"
 
 # ガード(PreToolUse)とリンタ(PostToolUse)は同じ編集の出来事に対で発火する。
@@ -193,9 +217,7 @@ def stamps_path(proj=None):
     proj を与えなければ CLAUDE_PROJECT_DIR、無ければ作業ディレクトリ。監査は
     監査対象の木の親を渡す(試験と CI で決定的にするため)。
     """
-    if not proj:
-        proj = os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()
-    return os.path.join(proj, ".claude", ".cache", STAMPS_NAME)
+    return os.path.join(project_dir(proj), ".claude", ".cache", STAMPS_NAME)
 
 
 def _parse_ts(value):
@@ -348,7 +370,7 @@ def version_lag(proj=None, current=None):
     """
     try:
         if proj is None:
-            proj = os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()
+            proj = project_dir()
         own = _read_plugin_json(_own_package_dir())
         name = own.get("name") if own else None
         if current is None:
@@ -496,7 +518,7 @@ def field_state_report(proj=None):
     ものは「不明」と書き、推測で埋めない。決して例外を投げない。
     """
     if proj is None:
-        proj = os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()
+        proj = project_dir()
 
     def _or_unknown(value):
         return value if isinstance(value, str) and value.strip() else "不明"
@@ -543,7 +565,7 @@ _ERRORS_CAP = 20
 def errors_path(proj=None):
     """エラージャーナルの置き場(git の追跡外。発火の印と同じ .claude/.cache)。"""
     if not proj:
-        proj = os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()
+        proj = project_dir()
     return os.path.join(proj, ".claude", ".cache", ERRORS_NAME)
 
 

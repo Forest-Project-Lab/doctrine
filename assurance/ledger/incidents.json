@@ -607,6 +607,24 @@
         "plugin/tests/test_skill_commands_run.py",
         "plugin/scripts/dep-graph.py"
       ]
+    },
+    {
+      "id": "INC-032-hook-boundary-opens-silently",
+      "date": "2026-08-09",
+      "summary": "フックの境界が三つの経路で沈黙して開いていた。(1) 空の --root-from を素通りし、告げられていない統治木を作業ディレクトリから歩いて見つけて監査する (2) SessionEnd の配線を空の変数で展開すると --summary-out がファイルシステムの根を指す (3) 相対の CLAUDE_PROJECT_DIR で、実行時の状態がリポジトリの作業木の中へ生成される",
+      "detected_by": "独立再監査 2026-08-09 の Phase G。(1) --root-from '' で /workspaces/doctrine/doctrine_docs が監査されることを実測。(2) 配線を空文字で展開して /.claude/.cache/last-audit.json になることを実測。(3) CLAUDE_PROJECT_DIR=sub でカオス行列を回したところ、リポジトリ内に sub/.claude/.cache/hook-stamps が実際に生成された",
+      "impact": "確定事実12『フックの境界は沈黙して開かない』と WATCH-001 第9項『書き先は ${CLAUDE_PROJECT_DIR}/.claude/.cache に限る』の双方に対する反例。(3) は印が別ファイルへ割れるので、鮮度の判定が『拒否経路の配線が欠けている疑い』という偽の警報を出しうる（INC-006 の系）。カオス行列 385 プローブでは他に一件も破れが無く、この経路だけが開いていた",
+      "fixed": false,
+      "fix_note": "(1) 空の --root-from を使用法の誤り(2)へ倒す。(2) 配線から生の変数のパスを消し、--summary-in-project が解決済みのプロジェクト根から導く。(3) 共有の解決器 _auditcache.project_dir() を置き、信じるのは絶対パスで実在するディレクトリだけとする。信じられない値は『与えられていない』と同じ既定へ倒す。置き場を自前で解いている箇所が他に生えないことを軸で凍結した。修正後にカオス行列 385 プローブを再走し、sub/ が生成されないことを実測した。独立検証(ADR-139)は未実施のため fixed:true とは書かない",
+      "residual": "絶対パスで実在するディレクトリなら、それがプロジェクトかどうかは検めない。悪意ある値までは防がない(NONGOAL-001 の敵対的入力の項)。",
+      "cast_analysis": "pending",
+      "evidence_kind": "measurement",
+      "evidence_refs": [
+        "plugin/scripts/_auditcache.py",
+        "plugin/scripts/docs-audit.py",
+        "plugin/hooks/hooks.json",
+        "plugin/tests/test_hook_boundary.py"
+      ]
     }
   ]
 }

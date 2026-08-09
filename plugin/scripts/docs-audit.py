@@ -102,6 +102,7 @@ def _parse_args(argv):
         "root_from": None,      # プロジェクト根。locate_docs_root で統治木を解決。
         "json": False,
         "summary_out": None,
+        "summary_in_project": False,
         "fail_on": "never",     # 既定は SessionEnd 想定(非ブロッキング)
         "config": None,
         "today": None,
@@ -121,6 +122,13 @@ def _parse_args(argv):
             # プロジェクト根から統治木を解決する(ADR-022)。SessionEnd の配線用。
             if i + 1 >= n:
                 return None, "--root-from にはパスが必要"
+            # 空の値は「与えられていない」ではない。配線の ${CLAUDE_PROJECT_DIR}
+            # が展開されなかった姿である。素通りさせると、告げられていない木を
+            # 作業ディレクトリから歩いて見つけて監査してしまう —— 境界が沈黙して
+            # 開く(DECIDED-001 第12項)。使用法の誤りとして 2 へ倒す(INC-032)。
+            if not argv[i + 1].strip():
+                return None, ("--root-from が空。配線の ${CLAUDE_PROJECT_DIR} が"
+                              "展開されていない疑い(境界は沈黙して開かない)")
             opts["root_from"] = argv[i + 1]
             i += 2
             continue
@@ -137,8 +145,18 @@ def _parse_args(argv):
         if a == "--summary-out":
             if i + 1 >= n:
                 return None, "--summary-out にはパスが必要"
+            if not argv[i + 1].strip():
+                return None, "--summary-out が空"
             opts["summary_out"] = argv[i + 1]
             i += 2
+            continue
+        if a == "--summary-in-project":
+            # 要約の置き場を --root-from の値から導く。配線が
+            # "${CLAUDE_PROJECT_DIR}/.claude/.cache/..." と書くと、変数が
+            # 展開されないとき "/.claude/..." (ファイルシステムの根)になる。
+            # 生の変数がシェルでパスになる場所を無くす(INC-032)。
+            opts["summary_in_project"] = True
+            i += 1
             continue
         if a == "--fail-on":
             if i + 1 >= n:
@@ -1420,7 +1438,8 @@ def main(argv=None):
         sys.stdout.write("usage error: %s\n" % err)
         sys.stdout.write(
             "docs-audit.py [--root PATH | --root-from PROJ] [--json] "
-            "[--summary-out PATH] [--fail-on error|never] [--config PATH] "
+            "[--summary-out PATH | --summary-in-project] "
+            "[--fail-on error|never] [--config PATH] "
             "[--today YYYY-MM-DD] [--respect-docs-level]\n")
         return 2
 
@@ -1462,7 +1481,8 @@ def main(argv=None):
         sys.stdout.write("usage error: %s\n" % exc)
         sys.stdout.write(
             "docs-audit.py [--root PATH | --root-from PROJ] [--json] "
-            "[--summary-out PATH] [--fail-on error|never] [--config PATH] "
+            "[--summary-out PATH | --summary-in-project] "
+            "[--fail-on error|never] [--config PATH] "
             "[--today YYYY-MM-DD] [--respect-docs-level]\n")
         return 2
 
@@ -1480,10 +1500,16 @@ def main(argv=None):
 
     # 要約の永続化(--summary-out)。原子的に書き、失敗しても 0 を保つ(§5.5)。
     write_ok = True
-    if opts["summary_out"]:
+    summary_out = opts["summary_out"]
+    if opts["summary_in_project"] and not summary_out:
+        # 置き場は解決済みのプロジェクト根から導く(INC-032)。生の変数が
+        # シェルでパスになる場所を作らない。WATCH-001 第9項の置き場に限る。
+        base = opts["root_from"] or os.path.dirname(os.path.abspath(root))
+        summary_out = os.path.join(base, ".claude", ".cache", "last-audit.json")
+    if summary_out:
         proj = opts["root_from"] or os.path.dirname(os.path.abspath(root))
         try:
-            _atomic_write(opts["summary_out"],
+            _atomic_write(summary_out,
                           json.dumps(summary, ensure_ascii=False,
                                      sort_keys=True, indent=2) + "\n")
         except OSError as exc:
@@ -1511,7 +1537,7 @@ def main(argv=None):
     # ゲート判定。
     if opts["fail_on"] == "error" and summary["totals"][SEV_ERROR] > 0:
         return 1
-    if opts["summary_out"] and not write_ok:
+    if summary_out and not write_ok:
         return 3
     return 0
 

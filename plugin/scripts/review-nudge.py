@@ -28,6 +28,7 @@ sys.dont_write_bytecode = True
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import _auditcache
 import _hookio
 import json  # noqa: E402
 
@@ -97,7 +98,7 @@ def session_flag_dir():
     決して例外を投げない。作れなければ None(印は諦める。助言層なので安全)。
     """
     cands = []
-    proj = os.environ.get("CLAUDE_PROJECT_DIR")
+    proj = _auditcache.project_dir()
     if proj:
         cands.append(os.path.join(proj, ".claude", ".cache", "session-flags"))
     cands.append(os.path.join(os.getcwd(), ".claude", ".cache", "session-flags"))
@@ -160,7 +161,7 @@ def _maybe_code_trace_nudge(data, path):
         name = os.path.basename(path)
         if name.startswith(".") or name.endswith(".md"):
             return 0   # 走査の対象にならないファイル(SPEC-026 の規則と同じ)。
-        proj = os.environ.get("CLAUDE_PROJECT_DIR") or os.getcwd()
+        proj = _auditcache.project_dir()
         docs_root = _registry.locate_docs_root(proj)
         if not docs_root:
             return 0
@@ -170,7 +171,6 @@ def _maybe_code_trace_nudge(data, path):
             return 0   # 文書は追跡の終点にならない。
         if _registry.docs_level(docs_root) < 3:
             return 0   # 段差ゲート(ADR-019 と同じ線)。
-        import _auditcache
         summary = _auditcache.load(docs_root)
         if not isinstance(summary, dict) or "trace_coverage" not in summary:
             return 0   # 追跡を使っていない体系では黙る(ADR-063)。

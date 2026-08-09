@@ -24,7 +24,7 @@ llm_context: task
 - **PreToolUse / matcher `Edit|Write|MultiEdit`**: `policy-guard.py` を起動し、三つのガードをかける（guard ドメインの ICD-003）。
 - **PreToolUse / matcher `Bash`**: `policy-guard.py` を起動し、削除の安全だけを deny で見る。
 - **PostToolUse / matcher `Edit|Write|MultiEdit`**: `policy-guard.py`・`docs-linter.py`・`review-nudge.py` をこの順に並べる（lint ドメインの ICD-004）`[R7][R10]`。`review-nudge.py` は型付き文書の編集に doc-review を促す助言である。
-- **SessionEnd**: `docs-audit.py` を起動し、全件を監査する（audit ドメインの ICD-005）。要約を次セッションの注入へ渡すため、`--json --summary-out "${CLAUDE_PROJECT_DIR}/.claude/.cache/last-audit.json" --fail-on never --respect-docs-level` を付け（プロジェクトスコープ: プラグインの更新で失われず、別プロジェクトと衝突しない）、`--root-from "${CLAUDE_PROJECT_DIR}"` でプロジェクト根を渡す（統治木の解決は docs-audit 側が ADR-022 の優先順で行う。統治木が無ければ静かに飛ばす）。`--fail-on never` で後始末を妨げず、`--respect-docs-level` で Level 2 の体系では監査を飛ばす（ADR-019。CI はこの旗を付けない）。
+- **SessionEnd**: `docs-audit.py` を起動し、全件を監査する（audit ドメインの ICD-005）。要約を次セッションの注入へ渡すため、`--json --summary-in-project --fail-on never --respect-docs-level` を付け（プロジェクトスコープ: プラグインの更新で失われず、別プロジェクトと衝突しない。**置き場は監査が解決済みのプロジェクト根から導く** —— 配線が生の変数からパスを組むと、変数が展開されないとき `/.claude/...` すなわちファイルシステムの根を指す。INC-032）、`--root-from "${CLAUDE_PROJECT_DIR}"` でプロジェクト根を渡す（統治木の解決は docs-audit 側が ADR-022 の優先順で行う。統治木が無ければ静かに飛ばす）。`--fail-on never` で後始末を妨げず、`--respect-docs-level` で Level 2 の体系では監査を飛ばす（ADR-019。CI はこの旗を付けない）。
 
 `command` は、すべて `"${CLAUDE_PLUGIN_ROOT}/scripts/<名>.py"` の形で解決する。`command` はシェル経由で走るため、`${CLAUDE_PLUGIN_ROOT}`・`${CLAUDE_PROJECT_DIR}` を含むパスは必ず二重引用符で囲む。囲まないと、空白を含むパスで語が割れ、フックが起動しないか誤った場所を指す。引数を付ける場合はスクリプトのパスに続けて書く（SessionEnd の `docs-audit.py` だけが、要約の成果物を書くため引数を持つ）。
 
