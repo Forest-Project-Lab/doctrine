@@ -18,6 +18,7 @@ import fnmatch
 import glob
 import json
 import os
+import subprocess
 import sys
 
 sys.dont_write_bytecode = True
@@ -149,6 +150,8 @@ def validate():
     problems.extend(_validate_coverage_merges())
     problems.extend(_validate_ledger_readability())
     problems.extend(_validate_nameable_states())
+    problems.extend(_validate_shipped_conditions())
+    problems.extend(_validate_owner_overrides())
     return problems
 
 
@@ -172,6 +175,123 @@ def _validate_nameable_states():
     missing = set(STATES) - nameable - within
     for st in sorted(missing):
         problems.append("状態 %s がどちらにも属さない" % st)
+    return problems
+
+
+# 条件(2)の検算を要さない出荷（祖父条項。ADR-139 の VERIFY_GRANDFATHERED と同じ形）。
+#
+# v0.11.0 の出荷 8 件は fix_commit を記録せずに積まれた。散文の fix_note から
+# commit を推すことはできるが、**推した値を検算の根拠にするのは検算ではない**。
+# 事実として、修正はいずれも tag の木に在ることを人が確かめている。
+# この列は増やさない —— 増やすことは検証の門を後ろへ動かすことであり、
+# 保証範囲の変更として所有者判断に当たる（運転手順 §7）。
+SHIPPED_GRANDFATHERED = frozenset({
+    "INC-010-evaluated-unknown-relisted",
+    "INC-015-discover-output-invisible-to-canon",
+    "INC-016-cast-analysis-content-unread-by-canon",
+    "INC-020-evaluator-blindness-read-as-owner-authority",
+    "INC-021-lane-fires-on-declared-without-a-runner",
+    "INC-022-ci-that-cannot-run-is-read-as-red",
+    "INC-023-attack-freshness-truncated-to-the-day",
+    "INC-025-adr-130-implemented-the-option-it-rejected",
+})
+
+
+def _validate_shipped_conditions(incidents=None):
+    """出荷（shipped）の三条件を機械で検める（ADR-144。INC-036）。
+
+    ADR-144 は三条件を定めたが、機械が検めていたのは「記録の形」だけで、
+    条件そのものは書き手の手順に委ねられていた。独立再監査が、台帳唯一の
+    fix_commit がどの ref からも到達できない dangling commit であること
+    （squash merge の前の枝の commit）を実測した —— 条件(2)が実際に作用する
+    唯一のフィールドが、その検算に落ちる。
+
+    検めるのは三つ。fix_commit が書かれていること・その commit が実在して
+    到達できること・ship_ref の tag の祖先であること。git が使えない環境では
+    何も言わない（前提の欠如を所見にしない）。
+    """
+    problems = []
+    incidents = load_incidents() if incidents is None else incidents
+    if not _git_available():
+        return problems
+    for inc in incidents:
+        if not inc.get("shipped"):
+            continue
+        if inc.get("id") in SHIPPED_GRANDFATHERED:
+            continue
+        ident = inc.get("id")
+        tag = (inc.get("ship_ref") or "").strip()
+        commit = (inc.get("fix_commit") or "").strip()
+        if not tag:
+            problems.append("出荷 %s に ship_ref が無い" % ident)
+            continue
+        tag_name = tag.split()[0] if tag else ""
+        if not commit:
+            problems.append(
+                "出荷 %s に fix_commit が無い（ADR-144 の条件2 を検算できない）"
+                % ident)
+            continue
+        if not _git_has_commit(commit):
+            problems.append(
+                "出荷 %s の fix_commit %s がどの ref からも到達できない"
+                % (ident, commit))
+            continue
+        if not _git_is_ancestor(commit, tag_name):
+            problems.append(
+                "出荷 %s の fix_commit %s が %s の祖先でない"
+                % (ident, commit, tag_name))
+    return problems
+
+
+def _git(args):
+    try:
+        return subprocess.run(["git"] + args, cwd=os.path.dirname(LANE_DIR),
+                              capture_output=True, text=True, timeout=60)
+    except (OSError, subprocess.SubprocessError):
+        return None
+
+
+def _git_available():
+    r = _git(["rev-parse", "--git-dir"])
+    return bool(r and r.returncode == 0)
+
+
+def _git_has_commit(rev):
+    r = _git(["merge-base", "--is-ancestor", rev, "HEAD"])
+    if r is not None and r.returncode == 0:
+        return True
+    r = _git(["branch", "-a", "--contains", rev])
+    return bool(r and r.returncode == 0 and r.stdout.strip())
+
+
+def _git_is_ancestor(rev, ref):
+    r = _git(["merge-base", "--is-ancestor", rev, ref])
+    return bool(r and r.returncode == 0)
+
+
+def _validate_owner_overrides(rows=None):
+    """評価者の「所有者判断が要る」の印を覆すなら、理由を書く（INC-036）。
+
+    評価者が owner を印した推奨 67 件のうち 55 件が owner 以外の状態へ
+    置かれていた。覆すこと自体は正しい —— 分析には統治木が渡らないので、
+    評価者には全部が未決に見える（正本自身がそう書いている）。しかし
+    **覆した理由を機械が要求していなかった**。今は規律だけが支えている。
+    """
+    problems = []
+    if rows is None:
+        # 鍵つきの写像で返るので、行だけを取る。
+        rows = list(load_recommendation_status().values())
+    for r in rows:
+        if not isinstance(r, dict) or not r.get("evaluator_owner_required"):
+            continue
+        if r.get("state") == "owner":
+            continue
+        if (r.get("owner_override_reason") or "").strip():
+            continue
+        problems.append(
+            "推奨 %s#%s は評価者が所有者判断を要すると印したのに、"
+            "%s へ置いた理由（owner_override_reason）が無い"
+            % (r.get("incident_id"), r.get("index"), r.get("state")))
     return problems
 
 
@@ -232,7 +352,29 @@ def _validate_coverage_merges(ledger_dir=None):
                                 % (where, target))
             if not (e.get("merge_note") or "").strip():
                 problems.append("統合 %s に merge_note（日付と理由）が無い" % where)
+            if target in by_key:
+                src_rank = _DISPOSITION_RANK.get(e.get("disposition"))
+                dst_rank = _DISPOSITION_RANK.get(
+                    by_key[target].get("disposition"))
+                if (src_rank is not None and dst_rank is not None
+                        and dst_rank > src_rank):
+                    problems.append(
+                        "統合 %s が判定を緑へ寄せている（%s → %s）。"
+                        "重複の統合は数の付け替えであって判定の変更ではない"
+                        % (where, e.get("disposition"),
+                           by_key[target].get("disposition")))
     return problems
+
+
+# 判定の「緑さ」の順。統合で判定が緑へ動くことを禁ずるためだけに使う
+# （評価の優劣を表す表ではない。数の付け替えで判定不能が消えるのを防ぐ）。
+_DISPOSITION_RANK = {
+    "UNASSESSED": 0,
+    "UNKNOWN": 1,
+    "対応計画あり": 2,
+    "非該当で理由あり": 3,
+    "実装・試験・証拠あり": 4,
+}
 
 
 def _validate_recommendation_status(rows=None):
@@ -1427,6 +1569,9 @@ def coverage_status(index_sha=None):
         # 統合済み（merged_into。CURATE の重複統合）は作業として数えない。
         # 判定は消さず残る —— 生き残りの項が正本で、統合欄は出自の記録である。
         merged = sum(1 for e in entries if e.get("merged_into"))
+        unassessed = sum(1 for e in entries
+                         if not e.get("merged_into")
+                         and e.get("disposition") == "UNASSESSED")
         unknown = sum(1 for e in entries
                       if not e.get("merged_into")
                       and e.get("disposition") == "UNKNOWN")
@@ -1462,6 +1607,10 @@ def coverage_status(index_sha=None):
             "status": "PARTIAL" if unmapped else "MAPPED",
             "unmapped": unmapped,
             "unknown": unknown,
+            # 五値のうち UNASSESSED（前提が欠けて評価できない）は、unknown
+            # にも unmapped にも入らないので、どの数にも現れていなかった。
+            # 一値が見えないと「五値で覆っている」という主張が保てない。
+            "unassessed": unassessed,
             "stale_open": stale_open,
             "stale_settled": stale_settled,
             "merged": merged,
