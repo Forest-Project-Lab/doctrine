@@ -1,0 +1,41 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "verify-record",
+  "target_id": "INC-039-sessionend-audit-exceeds-hook-budget",
+  "generated_at": "2026-08-09T23:50:58Z",
+  "git_sha": "0442eea813bad0a477e2ca8858a846e4fb4d0c4a",
+  "diff_range": "4ebb1cb..HEAD",
+  "diff_sha256": "46bc2f19f5b5f6c3b79cc19aae28b761ba52e049fe1869a896334d8663267913",
+  "red_sha256": "46404edd637512c0865129e99ec65a1640ed8732748b5b7d0f1540c4da69d665",
+  "prompt_sha256": "f7acb3ac149fe54c51137469da384bc4c158d2add22c7273dec734c92a5b0ae3",
+  "model": "claude-opus-5",
+  "effort": "high",
+  "cost_usd": 0.8244,
+  "record": {
+    "target_id": "INC-039-sessionend-audit-exceeds-hook-budget",
+    "verdict": "PASS",
+    "checks": {
+      "red_was_red": "PASS",
+      "green_is_green": "PASS",
+      "single_change": "PASS"
+    },
+    "reasons": [
+      "赤は修正前の観測として成立している。phase=before-fix・git_sha=4ebb1cb・returncode=1 を持ち、budget_probe は遅延 0/1 秒＝完了 3/3、2/3/9 秒＝打ち切り 3/3 と各 3 回の反復で境界を挟んでいる。監査本体の所要 8.46/8.21/9.52 秒（exit 0 で要約を書く）も別に測られており、『スクリプトは健全・予算超過だけが不達の原因』という切り分けが観測で裏づいている。最初から緑ではない（claude -p 3 回で 3 回とも 'Hook cancelled'、要約 mtime 不変）。",
+      "赤の主張は実環境の独立な痕跡とも一致している。last-audit.json の generated_at 2026-08-04・mtime 2026-08-04T17:27 と、それ以降に統治文書を編集した 7 セッション・配送 0 件という突合は、フックの成否とは別系統の観測（ファイルの鮮度）であり、赤の存在を単一の観測に依存させていない。",
+      "緑は『赤で FAIL した当の観測』の反転を見ている。赤の観測 #2（claude -p で 'Hook cancelled' 3/3・要約 mtime 不変）に対し、修正後は同種の使い捨て worktree で打ち切り 0 件、かつ SessionEnd 直後は last-audit.json が無く audit-due/<セッション id>.json が在り、15 秒後に last-audit.json が在って負債が消えている。単に『打ち切りが消えた』（口が何もしなくなれば自明に達成される空の緑）だけでなく、要約の書き込みという赤の本丸が実際に配送されたことを陽性の痕跡で押さえている点で、空の緑ではない。",
+      "oracle の緩和は見当たらない。diff は既存の判定基準を書き換えず削除もしていない（SPEC-011 の既存受入『書けなかった実行は 3 を返す』はそのまま残り、受入基準は追加のみ。inject-contract の _render_audit_summary は既定 due=() の追加引数で既存経路の出力を変えない）。新規 test_sessionend_budget.py は緩和ではなく新しい拘束であり、しかも赤→緑の判定に使われた oracle ではない（判定はホストでの実測）。",
+      "新規試験は時間ではなく構造で凍結している（口が run_audit を呼ばないこと、start_new_session=True、子の argv から --detach が落ち --clear-due が付くこと、切り離し失敗でも rc=0 かつ負債が残ること、書き込み失敗時に負債が消えないこと）。時間閾値を試験に埋め込んでいないため、ホスト依存の閾値を試験側で緩めるという逃げ道を作っていない。",
+      "一主題性は保たれている。ADR-150／SPEC-011／_auditcache の負債原始関数／docs-audit の --detach・--clear-due／inject-contract の負債告知／新規試験は、いずれも『SessionEnd は監査を予約する』という単一主題の構成要素である。context-map と overview の 1 行追加は ADR-150 登録に伴う機械的な帰結。hooks.json には主題と無関係な全体整形（SessionStart〜PreCompact の再フォーマット）が混入しているが、行ごとに読む限り matcher とコマンド文字列は同一で、意味の変化は SessionEnd への --detach 追加ただ一つであり、赤→緑の帰属を曖昧にしていない。"
+    ],
+    "residual_risks": [
+      "修正後の観測に after-fix の台帳記録（git_sha・生成時刻・反復回数・returncode）が無い。赤は各 3 回の反復を明示しているのに対し、緑の配送観測（15 秒後に last-audit.json、負債消滅）は回数が書かれておらず n=1 の可能性がある。反復の非対称性は残る。",
+      "赤の柱の一つである実環境・対話セッションの経路（session-flags と要約の突合、7 セッション・配送 0 件）は修正後に再測定されていない。緑は使い捨て worktree の claude -p のみ。not_verified に明記されているとおり、対話終了の直接観測は無い。",
+      "口が常に 0 を返す設計により、ADR-121 が定めた『要約を書けなかった実行は 3 を返す』というホストから見える信号は SessionEnd 経路では届かなくなる（子の stderr も DEVNULL）。書けなかったことの唯一の痕跡は負債ファイルと、それを読む次回 SessionStart の注入に一本化された。この代替経路が実環境の SessionStart で働くことは inject-contract.py の単体実行（failsafe_observation）でしか確認されていない。",
+      "負債の置き場の解決経路が書き手と読み手で異なる。書きは _auditcache.project_dir(opts[\"root_from\"])（フックは --root-from ${CLAUDE_PROJECT_DIR}）、読みは inject-contract 側で引数なしの _auditcache.read_due()（cwd もしくは環境変数依存）。SessionStart の cwd がプロジェクト根と食い違うホストでは負債が見えなくなりうるが、その条件下での観測は無い。clear_due 側も root_from が無い呼ばれ方では dirname(root) を使い、write 時の解決と一致する保証が観測されていない。",
+      "切り離しの有効性はこのホスト（Claude Code 2.1.223 / devcontainer / WSL2）の一例のみ。予算の正確な閾値も未測定（1 秒超〜2 秒未満）。切り離した子をホストがプロセス群ごと畳む環境では監査は走らず、毎セッション負債が積み上がる（安全側には倒れるが恒常的な警告になる）挙動は未観測。",
+      "新設の 19 件は修正前に赤であった記録が存在しない（機能とともに新設されたため原理的に取れない）。決定的試験は赤→緑の証明ではなく、今回の挙動の凍結として読むべきである。"
+    ]
+  },
+  "sdk_status": "PASS",
+  "reason": null
+}
