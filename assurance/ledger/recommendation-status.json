@@ -1057,9 +1057,9 @@
     {
       "incident_id": "INC-006-next-actions-silently-empty",
       "index": 5,
-      "state": "pending",
-      "note": "所有者委任による裁定（2026-08-09）: 採択 —— 割当は現に無い（control_structure.py に停滞の観測責任がゼロ件であることを実測済み）。実施主体は保証レーンの orchestrator に一意に定める —— 『next_actions は空にならない』という不変条件を既に持っているのはそこだけである。監査と鼓動には持たせない。重複させると双方が他方を前提にして減衰する（推奨自身がその危険を指している）。 ／ 旧 note: 割当は現に無い —— control_structure.py の各要素に進捗停滞の観測責任は書かれていない（HEARTBEAT は古び・版遅れのみ :62-72、SESSION_END_AUDIT は統治木走査 :95-110、ASSURANCE_LANE にも無し :133-146。grep 停",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）",
+      "state": "landed",
+      "note": "着地した（2026-08-09）。裁定どおり進捗の停止の観測責任を ASSURANCE_LANE に一意に置き、監査・鼓動には持たせないことを試験で凍結した。／ 所有者委任による裁定（2026-08-09）: 採択 —— 割当は現に無い（control_structure.py に停滞の観測責任がゼロ件であることを実測済み）。実施主体は保証レーンの orchestrator に一意に定める —— 『next_actions は空にならない』という不変条件を既に持っているのはそこだけである。監査と鼓動には持たせない。重複させると双方が他方を前提にして減衰する（推奨自身がその危険を指している）。 ／ 旧 note: 割当は現に無い —— control_structure.py の各要素に進捗停滞の観測責任は書かれていない（HEARTBEAT は古び・版遅れのみ :62-72、SESSION_END_AUDIT は統治木走査 :95-110、ASSURANCE_LANE にも無し :133-146。grep 停",
+      "investigated": true,
       "owner_ruling": {
         "date": "2026-08-09",
         "verdict": "採択",
@@ -1067,7 +1067,8 @@
         "ruling_ref": "assurance/ledger/rulings/2026-08-09-owner-decisions-delegated.json"
       },
       "evaluator_owner_required": true,
-      "owner_override_reason": "所有者委任による裁定（2026-08-09）: 採択 —— 割当は現に無い（control_structure.py に停滞の観測責任がゼロ件であることを実測済み）。実施主体は保証レーンの orchestrator に一意に定める —— 『next_actions は空にならない』という不変条件を既に持っているのはそこだけである。監査と鼓動には持たせない。重複させると双方が他方を前提にして減衰する（推奨自身がその危険を指している）。 ／ 旧 note: 割当は現に無い —— control_structure.py の各要素に進捗停滞の観測責任は書かれていない（HEARTBEAT は古び・版遅れのみ :62-72、SESSION_END_AUDIT は統治木走査 :95-110、ASSURANCE_LANE にも無し :133-146。grep 停"
+      "owner_override_reason": "所有者委任による裁定（2026-08-09）: 採択 —— 割当は現に無い（control_structure.py に停滞の観測責任がゼロ件であることを実測済み）。実施主体は保証レーンの orchestrator に一意に定める —— 『next_actions は空にならない』という不変条件を既に持っているのはそこだけである。監査と鼓動には持たせない。重複させると双方が他方を前提にして減衰する（推奨自身がその危険を指している）。 ／ 旧 note: 割当は現に無い —— control_structure.py の各要素に進捗停滞の観測責任は書かれていない（HEARTBEAT は古び・版遅れのみ :62-72、SESSION_END_AUDIT は統治木走査 :95-110、ASSURANCE_LANE にも無し :133-146。grep 停",
+      "evidence_ref": "assurance/harness/control_structure.py の ASSURANCE_LANE control_actions『進捗の停止を観測する』、assurance/tests/test_control_structure_assignments.py"
     },
     {
       "incident_id": "INC-012-states-unnameable-by-canon",
@@ -1887,6 +1888,22 @@
       "owner_decision_kind": "配布境界や保証範囲の変更",
       "evaluator_owner_required": true,
       "note": "green_is_green が UNKNOWN のまま是正が着地している状態で、いつ・どの証拠で fixed:true と書けるのかは、保証の主張の範囲を定める判断である。本再監査で 12 件の是正がこの状態のまま積まれた。所有者判断へ回す"
+    },
+    {
+      "incident_id": "INC-027-ledger-write-not-atomic",
+      "index": 7,
+      "state": "landed",
+      "investigated": true,
+      "evidence_ref": "assurance/ledger/assumptions.json の ASM-005/ASM-006（先行指標つき）、assurance/harness/orchestrator.py の _validate_assumptions",
+      "note": "着地した。二つの安全上の想定を ASM-005（台帳は常に構文的に読める正本である）・ASM-006（台帳への書き込みは単一の書き手による）として登録し、失効を示す先行指標を各々に紐づけた。ASM-005 は validate の二つの行（総なめの『読めない』と、実際に読んで失敗した『飲み込んだ』）と pid 付き一時ファイルの残骸。ASM-006 は harness の同時実行と、追記直後の読み直し。verified_by は『未実施』と正直に書いた —— 独立の評価セッションによる検証はまだ受けていない"
+    },
+    {
+      "incident_id": "INC-027-ledger-write-not-atomic",
+      "index": 8,
+      "state": "landed",
+      "investigated": true,
+      "evidence_ref": "assurance/harness/control_structure.py の ASSURANCE_LANE control_actions『台帳の健全性を保つ』、assurance/tests/test_control_structure_assignments.py",
+      "note": "着地した。台帳の健全性の責任を ASSURANCE_LANE に一意に置いた。書き手の原子化は『書き切れなかった』側しか守らないので、『読めない台帳が在る』と声を出す責任を分けて名指した。一意であること（他の要素が同じ責任を名乗らないこと）を試験で凍結した —— 重複させると双方が他方を前提にして減衰する"
     }
   ]
 }
