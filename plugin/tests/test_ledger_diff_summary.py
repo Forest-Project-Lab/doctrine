@@ -76,6 +76,20 @@ class _Fixture(unittest.TestCase):
             {"incident_id": "INC-%03d" % (i + start), "index": 0,
              "state": state, "note": "x" * 40} for i in range(n)]}
 
+    def catalog(self, n, disposition="対応計画あり"):
+        """網羅台帳の実物の形。短い列と長い列を両方持ち、名の鍵は key。
+
+        最初に見つけた一覧だけを数える作りだと、ここで 338 件の側が落ちる
+        （実際に落ちた。再判定 21 件が「動いた件 0」と要約された）。
+        """
+        return {
+            "kind": "coverage",
+            "book_sha256": "abc",
+            "dispositions": [{"id": "D%d" % i, "state": "x"} for i in range(5)],
+            "entries": [{"key": "CAST:項目-%03d" % i, "disposition": disposition,
+                         "reason": "y" * 40} for i in range(n)],
+        }
+
 
 class SmallDiffPassesTest(_Fixture):
     def test_a_one_record_change_is_not_big(self):
@@ -132,7 +146,9 @@ class BigDiffTest(_Fixture):
         self.commit()
         s = lds.summarize(base)
         self.assertEqual(len(s["removed"]), 110)
-        self.assertIn("assurance/ledger/big.json:INC-119#0", s["removed"])
+        # 名は列の鍵で名前空間を分ける（別の列の同名が衝突しないように）。
+        self.assertIn("assurance/ledger/big.json:dispositions/INC-119#0",
+                      s["removed"])
 
 
 class CorruptLedgerTest(_Fixture):
@@ -152,6 +168,46 @@ class CorruptLedgerTest(_Fixture):
         self.commit()
         s = lds.summarize(base)
         self.assertTrue(any("(前)" in u for u in s["unreadable"]))
+
+
+class CatalogShapeTest(_Fixture):
+    """網羅台帳の実物の形で数える（過少報告の回帰の錨）。"""
+
+    def test_the_long_list_is_not_shadowed_by_a_short_one(self):
+        self.write("assurance/ledger/catalogs/cast-coverage.json", self.catalog(338))
+        base = self.commit()
+        doc = self.catalog(338)
+        for e in doc["entries"][:21]:
+            e["disposition"] = "実装・試験・証拠あり"
+        self.write("assurance/ledger/catalogs/cast-coverage.json", doc)
+        self.commit()
+        s = lds.summarize(base)
+        self.assertEqual(len(s["transitions"]), 21,
+                         "動いた件を過少に報告した: %d" % len(s["transitions"]))
+        self.assertEqual(len(s["added"]), 0)
+        self.assertEqual(len(s["removed"]), 0)
+
+    def test_the_key_field_is_used_as_the_name(self):
+        self.write("assurance/ledger/catalogs/c.json", self.catalog(3))
+        base = self.commit()
+        doc = self.catalog(3)
+        doc["entries"][0]["disposition"] = "UNKNOWN"
+        self.write("assurance/ledger/catalogs/c.json", doc)
+        self.commit()
+        s = lds.summarize(base)
+        self.assertEqual(len(s["transitions"]), 1)
+        self.assertIn("CAST:項目-000", s["transitions"][0],
+                      "位置で数えている（名の鍵 key を使っていない）")
+
+    def test_same_name_in_two_lists_does_not_collide(self):
+        before = {"a": [{"id": "X", "state": "p"}], "b": [{"id": "X", "state": "p"}]}
+        after = {"a": [{"id": "X", "state": "q"}], "b": [{"id": "X", "state": "p"}]}
+        self.write("assurance/ledger/z.json", before)
+        base = self.commit()
+        self.write("assurance/ledger/z.json", after)
+        self.commit()
+        s = lds.summarize(base)
+        self.assertEqual(len(s["transitions"]), 1, "別の列の同名が衝突した")
 
 
 class ScopeTest(_Fixture):

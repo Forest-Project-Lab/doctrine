@@ -100,44 +100,63 @@ def _load_at(rev, path):
     return json.loads(raw)
 
 
-def _records(doc):
-    """台帳の中の「件」を (id, 状態) の辞書に均す。形は台帳ごとに違う。
+# 件の中で「どれが名か」。上から順に当たる。
+ID_KEYS = ("id", "incident_id", "scenario_id", "key", "token", "name")
+# 件の中で「どれが状態か」。上から順に当たる。
+STATE_KEYS = ("state", "status", "disposition", "verdict", "phase")
 
-    id と読める鍵を順に当たる。どれも無ければ位置を id 代わりにする（並びが
-    変わると別物に見えるが、数の増減は正しく出る）。
+
+def _one_record(prefix, i, item):
+    """一件を (名, 状態) にする。名が無ければ位置を名の代わりにする。"""
+    if not isinstance(item, dict):
+        return "%s#%d" % (prefix, i), None
+    ident = None
+    for key in ID_KEYS:
+        v = item.get(key)
+        if isinstance(v, str) and v:
+            ident = v
+            break
+    if ident is None:
+        ident = "#%d" % i
+    elif "index" in item:
+        ident = "%s#%s" % (ident, item.get("index"))
+    state = None
+    for key in STATE_KEYS:
+        v = item.get(key)
+        if isinstance(v, str) and v:
+            state = v
+            break
+    return "%s%s" % (prefix, ident), state
+
+
+def _records(doc):
+    """台帳の中の「件」を (名, 状態) の辞書に均す。形は台帳ごとに違う。
+
+    **一覧の鍵は選ばない。列に見えるものを全部数える。**最初に見つけた一つを
+    採る形にしていたら、網羅台帳（`dispositions` 5 件と `entries` 338 件を
+    両方持つ）で 338 件の側を丸ごと落とした —— 再判定で 21 件が動いた PR が
+    「動いた件 0」と要約された。**要約が黙って過少に出るのは、要約が無いより
+    悪い**（読み手は「見た」と思う）。名は鍵で名前空間を分け、別の列の同名が
+    衝突しないようにする。
     """
-    if isinstance(doc, dict):
-        for key in ("incidents", "assumptions", "dispositions", "plans",
-                    "entries", "records", "scenarios", "items"):
-            if isinstance(doc.get(key), list):
-                doc = doc[key]
-                break
-        else:
-            return {}
-    if not isinstance(doc, list):
+    if isinstance(doc, list):
+        out = {}
+        for i, item in enumerate(doc):
+            k, v = _one_record("", i, item)
+            out[k] = v
+        return out
+    if not isinstance(doc, dict):
         return {}
     out = {}
-    for i, item in enumerate(doc):
-        if not isinstance(item, dict):
-            out["#%d" % i] = None
+    for key in sorted(doc):
+        seq = doc[key]
+        if not isinstance(seq, list) or not seq:
             continue
-        ident = None
-        for key in ("id", "incident_id", "scenario_id", "token", "name"):
-            v = item.get(key)
-            if isinstance(v, str) and v:
-                ident = v
-                break
-        if ident is None:
-            ident = "#%d" % i
-        elif "index" in item:
-            ident = "%s#%s" % (ident, item.get("index"))
-        state = None
-        for key in ("state", "status", "disposition", "verdict", "phase"):
-            v = item.get(key)
-            if isinstance(v, str) and v:
-                state = v
-                break
-        out[ident] = state
+        if not any(isinstance(x, dict) for x in seq):
+            continue        # 文字列の列（sources 等）は「件」ではない
+        for i, item in enumerate(seq):
+            k, v = _one_record("%s/" % key, i, item)
+            out[k] = v
     return out
 
 
