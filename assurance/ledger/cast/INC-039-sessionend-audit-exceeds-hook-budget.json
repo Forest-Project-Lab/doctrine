@@ -1,0 +1,816 @@
+{
+  "accepted_flaws": [
+    {
+      "control_element_id": "SESSION_END_AUDIT",
+      "description": "全件監査（所要 8〜9.5 秒）は SessionEnd の口に同期で置かれ、ホストが SessionEnd の完了を待つ上限（測定範囲では 1 秒超〜2 秒未満）を超えたため、走査は毎回途中で打ち切られ、要約 .claude/.cache/last-audit.json は一度も更新されなかった。制御動作『統治木を全件走査し要約を書く』が、口の側の資源予算（時間）によって成立しない構成になっていた。統制の仕様には所要時間の上限という要求が存在せず、ホストが課す予算も統制構造上どの要素の制御にも現れていない。",
+      "evidence_ref": "assurance/ledger/red/INC-039-sessionend-audit-exceeds-hook-budget.json",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "自動化は設計者の想定に遡る",
+        "破られた想定の再検討",
+        "設計時想定の運用中再検査",
+        "software-does-not-fail-requirements-defect",
+        "最悪環境を前提に設計運用"
+      ],
+      "why_it_seemed_adequate": "監査単体は手元で実行すれば必ず完走し、SessionEnd は『セッションが終わる時点だから待てる』という読みは自然だった。既知の穴として記録されていたのは『SessionEnd が発火しない終了では走らない』（INC-001）であり、『発火したが完了を待たれない』という様態は想定の外にあった。口に与えられる時間の上限はホスト側の性質で、文書からは読み取れない。"
+    },
+    {
+      "control_element_id": "SESSION_END_AUDIT",
+      "description": "このセンサの唯一の手掛かりである last-audit.json は監査が成功した場合にのみ更新される。打ち切りの事実は標準エラーへ毎回出力されていたが、それを読み取って台帳へ積む段が構造上どこにも割り当てられていない。結果として『センサが起動したが仕事を終えなかった』という状態を表現する経路が存在せず、センサの沈黙は下流からは『変化なし』と区別できない。制御ループに、制御動作の効果を判定するフィードバックが対で備わっていない。",
+      "evidence_ref": "assurance/ledger/verify/INC-039-sessionend-audit-exceeds-hook-budget.json",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "control-action-requires-feedback",
+        "全コントロールループにフィードバック必須",
+        "問題報告経路の可用性",
+        "調査対象としての安全情報システム"
+      ],
+      "why_it_seemed_adequate": "成功時に痕跡を残す設計は最小で、痕跡が新しければ走った・古ければ古び警告という二状態のモデルは扱いやすい。標準エラーはホストが表示するので人が気づくという暗黙の前提が置かれていたが、セッション終了時の出力は誰の目にも留まらない位置にある。"
+    },
+    {
+      "control_element_id": "SESSION_START_CONTRACT",
+      "description": "契約注入は last-audit.json の要約をそのまま『前回監査』として提示するが、その要約がいつ書かれたか、直前のセッションで監査が予約され充足されたかを問わない。このため 2026-08-04 の error 0 / warn 0 / advisory 0 が 7 セッション連続で正の安心として供給された。情報を受け取る側（次セッションの判断）に不完全な情報が届いた原因は、情報提供側であるこの注入経路の設計にある。注入の有無そのものが R11 の指標とされている一方、注入される内容の鮮度は指標に含まれていない。",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "defects-in-information-providing-systems",
+        "include-information-supplier-defect",
+        "プロセスモデルと実状態の不整合",
+        "利用可能な形式での情報提示"
+      ],
+      "why_it_seemed_adequate": "監査は SessionEnd で必ず走るという前提の下では、要約は常に直前セッションのものであり、日付を添えることは冗長に見える。鮮度の判定は鼓動（HEARTBEAT）の責任だと読める分担になっており、注入側が二重に検査する必要は無いと考えるのが自然だった。"
+    },
+    {
+      "control_element_id": "HEARTBEAT",
+      "description": "古びの警告は暦の経過（閾値 7 日）を尺度としており、5 日・7 セッションの不達はこの閾値に届かなかった。統治木の編集という作業量ではなく壁時計時間を尺度に取っているため、短期間に多数のセッションが統治文書を編集する状況（本再監査キャンペーンがまさにそれ）で検出が最も遅くなる。先行指標として、対象リスク（監査されないまま統治木が変更されること）と因果的に対応する量が選ばれていない。",
+      "flaw_type": "制御動作が遅い",
+      "normative_refs": [
+        "先行指標の妥当性・代理指標の禁止",
+        "リスク先行指標による監査",
+        "リスクの先行指標の妥当性検証",
+        "計画外変化の検出手段"
+      ],
+      "why_it_seemed_adequate": "暦の閾値は『しばらく触っていない複製の要約は信用しない』という素直な設計で、通常の利用（数日おきに数セッション）では十分に見えた。セッション回数や編集件数を尺度にするには、セッションの開始を数える別の痕跡が要り、当時それは監査の副産物としてしか存在しなかった。"
+    },
+    {
+      "control_element_id": "SESSION_START_CONTRACT",
+      "description": "SESSION_END_AUDIT（書き手）、SESSION_START_CONTRACT と HEARTBEAT（読み手二つ）は、last-audit.json という単一の痕跡と『SessionEnd という単一の実行機会』に直列で依存している。書き手が沈黙すると、独立に見える読み手二つが同時に同じ誤りを告げる。多重の防護に見える三要素が、共通原因（一つのファイル、一つの口、一つの成功時のみ更新される規約）でまとめて無効化される構造になっており、どの要素も『他方が見ている』前提で自らの検査を持たない。",
+      "flaw_type": "統制どうしの調整の欠如",
+      "normative_refs": [
+        "共通の体系的要因による多重防護の無効化",
+        "監視責任の空白排除",
+        "全体構造の分析",
+        "verify-decomposition-assumptions"
+      ],
+      "why_it_seemed_adequate": "一つの要約を一箇所に置き、複数の統制がそれを読むのは重複を避ける自然な設計で、各要素の責任も明快に分かれて見える。分担の明快さが、共通の依存点を単一障害点として意識させにくくした。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "門の判定は --fail-on error であり、warn と advisory を読み、追跡し、閉じる責任が構造上どの要素にも割り当てられていない。『全門緑』というキャンペーンの報告は error 基準では正しいが、その正しさは警告側の未観測を含意しない。実際、本キャンペーン自身が残した残滓（ADR-147・ADR-149 の adr_not_landed、SPEC-029 の trace_stale）が誰にも追跡されないまま滞留した。指摘された欠陥を是正完了まで追跡する経路が欠けている。",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "audit-findings-must-be-closed",
+        "指摘欠点の是正完了追跡",
+        "責任の空白は構造再設計",
+        "リスク情報の不透明な集約禁止",
+        "全体健全性と部分健全性の分離評価"
+      ],
+      "why_it_seemed_adequate": "門は通す／止めるの二値判断であり、止める基準を error に限るのは誤検知で作業を止めないための妥当な設計である。warn は『いずれ人が読む助言』として設計されており、読み手を明示的に置かないことが穴だとは見えにくい。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "保証レーンの試験群は、監査ロジックが正しい結果を出すことを検査するが、監査が実環境の口から実際に配送されることを検査していない。SCN-D01（異常終了時の SessionEnd 不達）は不達そのものを主題としながら、正常終了という陽性対照を取らない設計であったため、常時不達という状態が『異常終了の効果』の背後に隠れた。検出は 2026-08-09 の独立再監査で陽性対照を取ろうとした偶然による。監査が明白な不動作を検出できなかったこと自体が、監査手順の有効性の問題として扱われる経路が無い。",
+      "flaw_type": "統制自身の劣化を検出できない",
+      "normative_refs": [
+        "監査のすり抜け時に監査手順を是正",
+        "検出失敗の原因調査",
+        "監査の検出力評価",
+        "安全立証でなく非安全状態の探索",
+        "非寄与コンポーネントも分析対象"
+      ],
+      "why_it_seemed_adequate": "センサが走っているかどうかは、要約が更新されていることで確かめられるという読みが成立していた（その要約こそが凍っていた）。また『異常終了では走らない』という既知の穴が記録済みであったため、正常終了では走るという対偶が暗黙に成立して見えた。"
+    },
+    {
+      "control_element_id": "CI_RELEASE_CHECK",
+      "description": "CI はリポジトリ正本に対して docs-audit を直接起動し JSON を得るため、監査は常に完走し常に緑であった。CI が観測していないのは『導入複製の hook 経路で、口に与えられた時間予算の内側に監査が収まるか』である。既知の穴として『複製の版を見ない』が記録されているが、その隣にある『口の実行環境（時間予算・プロセス回収）を見ない』は記録されていない。宣言された設計と、損失発生時に実際に動作していた構造の突合が行われていない。",
+      "evidence_ref": "plugin/tests/test_sessionend_budget.py",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "宣言された設計と実動作の突合",
+        "公式設計と実動作の二重評価",
+        "手順の存在確認でなく適用確認",
+        "trace-why-design-flaw-was-introduced"
+      ],
+      "why_it_seemed_adequate": "CI で監査が緑なら監査は機能している、という推論は監査ロジックについては正しい。配送経路（hook の口）は薄いラッパに見えるため、試験対象として分離する動機が弱かった。"
+    },
+    {
+      "control_element_id": "OWNER",
+      "description": "所有者に届く三つの手掛かり（進捗報告・PR の diff・台帳）のいずれにも、監査が配送されていないという事実が現れる場所が無い。報告は門の判定を根拠に『全門緑』を伝え、台帳には赤が積まれず、diff には監査の不動作は映らない。既知の穴『報告が実施ではなく意図を書いていても人からは見分けにくい』の隣接形として、ここでは報告する側も配送を事実だと信じており、意図と実施の区別がそもそも報告者にも観測できない状態にあった。上位のコントローラが対象の現在の安全状態を判定するためのフィードバック手段が、この経路について備わっていない。",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "controller-needs-concrete-feedback-channels",
+        "feedback-enables-improvement-of-controls",
+        "情報システム保有と有用性の乖離",
+        "設計上と実際の伝達経路の照合"
+      ],
+      "why_it_seemed_adequate": "門の判定・台帳・diff の三点セットは、統治の状態を見るための手段として設計上は十分な広がりを持つ。三点がいずれも同じ上流（監査の要約）に依存していることは、要約が生きている限り問題として現れない。"
+    },
+    {
+      "control_element_id": "PLUGIN_DISTRIBUTION",
+      "description": "ADR-150 による是正（口は予約だけを行い即座に 0 を返す、負債の印を残す）は導入複製へ配布されて初めて効く。しかし複製が何世代遅れているかはリポジトリ側から観測できない（既知の穴・INC-005）。したがって是正後も、旧版の複製では同じ不達が続き、かつその複製には負債の印という新しい手掛かりが存在しないため、不達は旧版のままの経路（暦 7 日の古び警告）でしか現れない。是正の到達そのものを観測する手段が構造に無い。",
+      "flaw_type": "統制自身の劣化を検出できない",
+      "normative_refs": [
+        "供給要素の変更を利用者へ通知",
+        "重要変更の明示的通知",
+        "是正措置の有効性証拠の収集",
+        "推奨事項の責任割当実施検査フィードバック"
+      ],
+      "why_it_seemed_adequate": "更新は利用者の操作に依存するという性質は既知の穴として明記済みであり、marketplace 経由の配布は標準的な手段である。是正が『配布すれば効く』ものだという読みは、修正が入った時点では自然だった。"
+    }
+  ],
+  "analysis": {
+    "confidence": "medium",
+    "control_flaws": [
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "全件監査（所要 8〜9.5 秒）は SessionEnd の口に同期で置かれ、ホストが SessionEnd の完了を待つ上限（測定範囲では 1 秒超〜2 秒未満）を超えたため、走査は毎回途中で打ち切られ、要約 .claude/.cache/last-audit.json は一度も更新されなかった。制御動作『統治木を全件走査し要約を書く』が、口の側の資源予算（時間）によって成立しない構成になっていた。統制の仕様には所要時間の上限という要求が存在せず、ホストが課す予算も統制構造上どの要素の制御にも現れていない。",
+        "evidence_ref": "assurance/ledger/red/INC-039-sessionend-audit-exceeds-hook-budget.json",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "自動化は設計者の想定に遡る",
+          "破られた想定の再検討",
+          "設計時想定の運用中再検査",
+          "software-does-not-fail-requirements-defect",
+          "最悪環境を前提に設計運用"
+        ],
+        "why_it_seemed_adequate": "監査単体は手元で実行すれば必ず完走し、SessionEnd は『セッションが終わる時点だから待てる』という読みは自然だった。既知の穴として記録されていたのは『SessionEnd が発火しない終了では走らない』（INC-001）であり、『発火したが完了を待たれない』という様態は想定の外にあった。口に与えられる時間の上限はホスト側の性質で、文書からは読み取れない。"
+      },
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "このセンサの唯一の手掛かりである last-audit.json は監査が成功した場合にのみ更新される。打ち切りの事実は標準エラーへ毎回出力されていたが、それを読み取って台帳へ積む段が構造上どこにも割り当てられていない。結果として『センサが起動したが仕事を終えなかった』という状態を表現する経路が存在せず、センサの沈黙は下流からは『変化なし』と区別できない。制御ループに、制御動作の効果を判定するフィードバックが対で備わっていない。",
+        "evidence_ref": "assurance/ledger/verify/INC-039-sessionend-audit-exceeds-hook-budget.json",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "control-action-requires-feedback",
+          "全コントロールループにフィードバック必須",
+          "問題報告経路の可用性",
+          "調査対象としての安全情報システム"
+        ],
+        "why_it_seemed_adequate": "成功時に痕跡を残す設計は最小で、痕跡が新しければ走った・古ければ古び警告という二状態のモデルは扱いやすい。標準エラーはホストが表示するので人が気づくという暗黙の前提が置かれていたが、セッション終了時の出力は誰の目にも留まらない位置にある。"
+      },
+      {
+        "control_element_id": "SESSION_START_CONTRACT",
+        "description": "契約注入は last-audit.json の要約をそのまま『前回監査』として提示するが、その要約がいつ書かれたか、直前のセッションで監査が予約され充足されたかを問わない。このため 2026-08-04 の error 0 / warn 0 / advisory 0 が 7 セッション連続で正の安心として供給された。情報を受け取る側（次セッションの判断）に不完全な情報が届いた原因は、情報提供側であるこの注入経路の設計にある。注入の有無そのものが R11 の指標とされている一方、注入される内容の鮮度は指標に含まれていない。",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "defects-in-information-providing-systems",
+          "include-information-supplier-defect",
+          "プロセスモデルと実状態の不整合",
+          "利用可能な形式での情報提示"
+        ],
+        "why_it_seemed_adequate": "監査は SessionEnd で必ず走るという前提の下では、要約は常に直前セッションのものであり、日付を添えることは冗長に見える。鮮度の判定は鼓動（HEARTBEAT）の責任だと読める分担になっており、注入側が二重に検査する必要は無いと考えるのが自然だった。"
+      },
+      {
+        "control_element_id": "HEARTBEAT",
+        "description": "古びの警告は暦の経過（閾値 7 日）を尺度としており、5 日・7 セッションの不達はこの閾値に届かなかった。統治木の編集という作業量ではなく壁時計時間を尺度に取っているため、短期間に多数のセッションが統治文書を編集する状況（本再監査キャンペーンがまさにそれ）で検出が最も遅くなる。先行指標として、対象リスク（監査されないまま統治木が変更されること）と因果的に対応する量が選ばれていない。",
+        "flaw_type": "制御動作が遅い",
+        "normative_refs": [
+          "先行指標の妥当性・代理指標の禁止",
+          "リスク先行指標による監査",
+          "リスクの先行指標の妥当性検証",
+          "計画外変化の検出手段"
+        ],
+        "why_it_seemed_adequate": "暦の閾値は『しばらく触っていない複製の要約は信用しない』という素直な設計で、通常の利用（数日おきに数セッション）では十分に見えた。セッション回数や編集件数を尺度にするには、セッションの開始を数える別の痕跡が要り、当時それは監査の副産物としてしか存在しなかった。"
+      },
+      {
+        "control_element_id": "SESSION_START_CONTRACT",
+        "description": "SESSION_END_AUDIT（書き手）、SESSION_START_CONTRACT と HEARTBEAT（読み手二つ）は、last-audit.json という単一の痕跡と『SessionEnd という単一の実行機会』に直列で依存している。書き手が沈黙すると、独立に見える読み手二つが同時に同じ誤りを告げる。多重の防護に見える三要素が、共通原因（一つのファイル、一つの口、一つの成功時のみ更新される規約）でまとめて無効化される構造になっており、どの要素も『他方が見ている』前提で自らの検査を持たない。",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "共通の体系的要因による多重防護の無効化",
+          "監視責任の空白排除",
+          "全体構造の分析",
+          "verify-decomposition-assumptions"
+        ],
+        "why_it_seemed_adequate": "一つの要約を一箇所に置き、複数の統制がそれを読むのは重複を避ける自然な設計で、各要素の責任も明快に分かれて見える。分担の明快さが、共通の依存点を単一障害点として意識させにくくした。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "門の判定は --fail-on error であり、warn と advisory を読み、追跡し、閉じる責任が構造上どの要素にも割り当てられていない。『全門緑』というキャンペーンの報告は error 基準では正しいが、その正しさは警告側の未観測を含意しない。実際、本キャンペーン自身が残した残滓（ADR-147・ADR-149 の adr_not_landed、SPEC-029 の trace_stale）が誰にも追跡されないまま滞留した。指摘された欠陥を是正完了まで追跡する経路が欠けている。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "audit-findings-must-be-closed",
+          "指摘欠点の是正完了追跡",
+          "責任の空白は構造再設計",
+          "リスク情報の不透明な集約禁止",
+          "全体健全性と部分健全性の分離評価"
+        ],
+        "why_it_seemed_adequate": "門は通す／止めるの二値判断であり、止める基準を error に限るのは誤検知で作業を止めないための妥当な設計である。warn は『いずれ人が読む助言』として設計されており、読み手を明示的に置かないことが穴だとは見えにくい。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "保証レーンの試験群は、監査ロジックが正しい結果を出すことを検査するが、監査が実環境の口から実際に配送されることを検査していない。SCN-D01（異常終了時の SessionEnd 不達）は不達そのものを主題としながら、正常終了という陽性対照を取らない設計であったため、常時不達という状態が『異常終了の効果』の背後に隠れた。検出は 2026-08-09 の独立再監査で陽性対照を取ろうとした偶然による。監査が明白な不動作を検出できなかったこと自体が、監査手順の有効性の問題として扱われる経路が無い。",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "監査のすり抜け時に監査手順を是正",
+          "検出失敗の原因調査",
+          "監査の検出力評価",
+          "安全立証でなく非安全状態の探索",
+          "非寄与コンポーネントも分析対象"
+        ],
+        "why_it_seemed_adequate": "センサが走っているかどうかは、要約が更新されていることで確かめられるという読みが成立していた（その要約こそが凍っていた）。また『異常終了では走らない』という既知の穴が記録済みであったため、正常終了では走るという対偶が暗黙に成立して見えた。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "CI はリポジトリ正本に対して docs-audit を直接起動し JSON を得るため、監査は常に完走し常に緑であった。CI が観測していないのは『導入複製の hook 経路で、口に与えられた時間予算の内側に監査が収まるか』である。既知の穴として『複製の版を見ない』が記録されているが、その隣にある『口の実行環境（時間予算・プロセス回収）を見ない』は記録されていない。宣言された設計と、損失発生時に実際に動作していた構造の突合が行われていない。",
+        "evidence_ref": "plugin/tests/test_sessionend_budget.py",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "宣言された設計と実動作の突合",
+          "公式設計と実動作の二重評価",
+          "手順の存在確認でなく適用確認",
+          "trace-why-design-flaw-was-introduced"
+        ],
+        "why_it_seemed_adequate": "CI で監査が緑なら監査は機能している、という推論は監査ロジックについては正しい。配送経路（hook の口）は薄いラッパに見えるため、試験対象として分離する動機が弱かった。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者に届く三つの手掛かり（進捗報告・PR の diff・台帳）のいずれにも、監査が配送されていないという事実が現れる場所が無い。報告は門の判定を根拠に『全門緑』を伝え、台帳には赤が積まれず、diff には監査の不動作は映らない。既知の穴『報告が実施ではなく意図を書いていても人からは見分けにくい』の隣接形として、ここでは報告する側も配送を事実だと信じており、意図と実施の区別がそもそも報告者にも観測できない状態にあった。上位のコントローラが対象の現在の安全状態を判定するためのフィードバック手段が、この経路について備わっていない。",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "controller-needs-concrete-feedback-channels",
+          "feedback-enables-improvement-of-controls",
+          "情報システム保有と有用性の乖離",
+          "設計上と実際の伝達経路の照合"
+        ],
+        "why_it_seemed_adequate": "門の判定・台帳・diff の三点セットは、統治の状態を見るための手段として設計上は十分な広がりを持つ。三点がいずれも同じ上流（監査の要約）に依存していることは、要約が生きている限り問題として現れない。"
+      },
+      {
+        "control_element_id": "PLUGIN_DISTRIBUTION",
+        "description": "ADR-150 による是正（口は予約だけを行い即座に 0 を返す、負債の印を残す）は導入複製へ配布されて初めて効く。しかし複製が何世代遅れているかはリポジトリ側から観測できない（既知の穴・INC-005）。したがって是正後も、旧版の複製では同じ不達が続き、かつその複製には負債の印という新しい手掛かりが存在しないため、不達は旧版のままの経路（暦 7 日の古び警告）でしか現れない。是正の到達そのものを観測する手段が構造に無い。",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "供給要素の変更を利用者へ通知",
+          "重要変更の明示的通知",
+          "是正措置の有効性証拠の収集",
+          "推奨事項の責任割当実施検査フィードバック"
+        ],
+        "why_it_seemed_adequate": "更新は利用者の操作に依存するという性質は既知の穴として明記済みであり、marketplace 経由の配布は標準的な手段である。是正が『配布すれば効く』ものだという読みは、修正が入った時点では自然だった。"
+      }
+    ],
+    "hazard": "統治木が編集されている状態で、統制構造が保持する「前回監査の結果」というプロセスモデルが実状態と乖離し、その乖離を検出する経路が構造内に存在しない状態。乖離は二重である：(a) 監査が走っていないのに走ったものとして読まれる、(b) 監査の警告側（warn/advisory）が誰の手掛かりにも割り当てられていない。この状態では、統治文書への非安全な変更が観測されないまま蓄積し、かつ「全門緑」という報告がその蓄積を積極的に覆い隠す。",
+    "incident_id": "INC-039-sessionend-audit-exceeds-hook-budget",
+    "leading_indicators": [
+      {
+        "indicator": "hook の口に置く処理の実測所要時間と、口に許される待ち時間の余裕率",
+        "observable": "docs-audit.py および各 hook スクリプトを代表的な統治木サイズに対して起動し、起動から終了までの実時間を計測する",
+        "threshold": "口に同期で置く処理の所要が 1.0 秒（観測された待ち上限の下限）を超えたら警告、2.0 秒を超えたら赤。同期処理を口に追加する変更は所要計測の添付なしに通さない",
+        "version_independent": true,
+        "where": "CI（.github/workflows の release-check）。リポジトリ正本に対して実行する",
+        "why_version_independent": "計測はリポジトリ正本に対して CI 側で行われ、導入複製の版に依存しない。ただし『ホストの待ち上限が 1〜2 秒である』という閾値の根拠は 2026-08-09 の一環境での測定にのみ基づく"
+      },
+      {
+        "indicator": "配送経路の陽性対照試験の存在と実行",
+        "observable": "plugin/tests/test_sessionend_budget.py に相当する『正常終了で監査が実際に配送される』ことを確かめる試験が存在し、skip されずに実行されていること",
+        "threshold": "配送経路の陽性対照が 1 件でも欠落・skip・削除されたら赤。センサを新設する変更は、そのセンサの生存を測る対照試験を伴わない限り通さない",
+        "version_independent": true,
+        "where": "CI のジョブ結果と試験一覧",
+        "why_version_independent": "試験の存在と実行はリポジトリ正本側の事実であり、利用者環境の複製の版に依存しない"
+      },
+      {
+        "indicator": "未充足の監査負債（audit-due）の件数と最古の予約時刻",
+        "observable": ".claude/.cache/audit-due/ に残る印の個数と、その中の最古の予約時刻",
+        "threshold": "1 件でも残っていれば件数と最古時刻を告知。最古が 2 セッション分または 24 時間を超えたら異常として台帳へ事象を起こす",
+        "version_independent": false,
+        "where": "SessionStart の契約注入（inject-contract.py）が要約より先に読む位置",
+        "why_version_independent": "負債の印は ADR-150 以降の複製にしか存在しない。旧版の複製ではこの指標そのものが生成されないため、版が遅れた環境では指標も沈黙する（INC-005 の共通原因故障をそのまま継承する）"
+      },
+      {
+        "indicator": "監査の更新を挟まないセッション開始の連続回数（暦ではなく機会を尺度にした鮮度）",
+        "observable": "session-flags の mtime 列と last-audit.json の更新時刻の突合",
+        "threshold": "監査の更新なしにセッション開始が 2 回連続したら警告、3 回で赤。暦 7 日の閾値はこれと併存させ、置き換えない",
+        "version_independent": false,
+        "where": "UserPromptSubmit の鼓動（gov-heartbeat.py）",
+        "why_version_independent": "検出器が導入複製の側で動くため、複製の版が遅れればこの尺度も届かない。加えて session-flags の mtime は対話セッション終了の直接観測ではなく間接測定である"
+      },
+      {
+        "indicator": "統治文書の編集があった期間に warn = 0 が連続する回数（沈黙の疑い）",
+        "observable": "台帳へ積まれる監査要約の warn / advisory 件数の時系列と、同期間の統治木の編集有無",
+        "threshold": "統治文書の編集があるにもかかわらず warn = 0 が 3 セッション続いたら『センサ沈黙の疑い』として調査を起こす。0 が続くこと自体を正常の証拠として扱わない",
+        "version_independent": false,
+        "where": "assurance/ledger/ に蓄積される監査要約の時系列（要約統計だけでなく推移を保持する）",
+        "why_version_independent": "要約は導入複製側の監査が生成するため、複製が旧版で沈黙していれば時系列も凍り、凍っていること自体はこの指標の内側からは新旧が区別できない"
+      },
+      {
+        "indicator": "warn / advisory の滞留日数（指摘から是正完了までの追跡）",
+        "observable": "監査 findings の識別子ごとの初出時刻と消失時刻の差",
+        "threshold": "同一 finding が 3 セッションまたは 7 日を超えて滞留したら、所有者へ届く報告に件数を明示する。--fail-on error の判定とは独立に集計する",
+        "version_independent": false,
+        "where": "assurance/ledger/（保証レーンが台帳の健全性を保つ位置）",
+        "why_version_independent": "findings は導入複製の監査が生成するため、監査が届かない環境では滞留の計測自体が成立しない"
+      }
+    ],
+    "loss": "統治の生存（R11）の中心が 5 日・7 セッションにわたり不在だった。全件監査は SessionEnd の口で毎回打ち切られ、要約は 2026-08-04 の error 0 / warn 0 / advisory 0 で凍り、その凍った値が「前回監査」として毎セッション冒頭に正の安心として注入された。7 セッションはすべて統治文書を編集しており、その間に実在した warn 4 件（うち 3 件は本再監査キャンペーン自身が残した ADR-147・ADR-149 の adr_not_landed と SPEC-029 の trace_stale）は誰の視界にも入らなかった。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "すべての口が代表的な統治木サイズで 1 秒未満に完走し、打ち切りが一度も観測されない。",
+        "hypothesis": "SessionEnd 以外の口（Stop / PreCompact の capture-nudge、PreToolUse のガード）も、統治木が大きくなると待ち上限を超えて打ち切られる。",
+        "oracle": "各 hook スクリプトを 0/1/2/3/9 秒の待ち走査と同じ手法で計測し、口ごとの所要分布と打ち切り率を得る。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "測定したすべての環境で負債が次セッション開始までに消化される。",
+        "hypothesis": "ADR-150 の切り離した子は、ホストが終了時にプロセス群ごと畳む環境では走らない。負債は残るが監査は永久に充足されず、負債の件数が単調増加する。",
+        "oracle": "実環境で複数回セッションを終了させ、負債の印の消化率（--clear-due が発火した割合）を測る。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "すべての導入複製が ADR-150 以降であり、かつ版の観測手段が存在する。",
+        "hypothesis": "導入複製が ADR-150 以前の版のまま残る環境では、同じ不達が継続し、かつ負債の印が生成されないため新しい先行指標がいずれも沈黙する（是正が届いたかを誰も観測できない）。",
+        "oracle": "導入複製の版と audit-due ディレクトリの存在有無を突合し、旧版の複製が現存するかを確認する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "書き込み不可の場合に口が一行告げ、その告知が次セッションの契約注入に現れる。",
+        "hypothesis": "負債の印を置く先（.claude/.cache）が書き込み不可・容量不足のとき、口は 0 を返し負債も残らず、事象は完全に沈黙する（『沈黙して開かない』の裏返し）。",
+        "oracle": "キャッシュ先を書き込み不可にした状態で口を起動し、標準出力・終了コード・次セッションの告知を観測する。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "すべての warn が 3 セッション以内に消えるか、消えない場合に所有者へ届く報告に件数が現れる。",
+        "hypothesis": "監査が配送されるようになっても、warn / advisory の受け手が構造上不在であるため、同型の損失（警告が誰にも読まれない）が下流で再発する。",
+        "oracle": "監査要約の warn について、初出から消失までの滞留日数を時系列で計測する。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "当該期間の編集に由来する新規 findings がゼロである。",
+        "hypothesis": "凍った要約が注入されていた 5 日・7 セッションの間に行われた統治文書の編集に、未観測の warn に起因する欠陥が残っている。",
+        "oracle": "当該期間の diff を対象に、修正後の監査を遡って適用し findings を比較する。",
+        "severity": "P2"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "hook の口に同期で置くすべての処理について、許容所要時間を仕様として明文化し（現時点の根拠は 1 秒超〜2 秒未満の一環境測定）、CI で実測して閾値超過を赤にする。同期処理を口に追加する変更は所要計測の添付を条件とする。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "センサを新設・変更する際に『そのセンサが起動し完了したこと』を独立に確かめる陽性対照試験を必須とする規約を、保証レーンの決定論試験に組み込む。SCN-D01 のように不達を主題とするシナリオは、対照条件の取得を設計要件にする。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "統制構造の記述を ADR-150 後の姿へ更新する。SESSION_END_AUDIT の制御を『予約と負債の印』と『切り離した子による走査』に分解し、負債の印（.claude/.cache/audit-due/）を SESSION_START_CONTRACT の一次手掛かりとして構造図に明示する。欠落・不十分なフィードバック経路は図上で区別して示す。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "warn / advisory の受け手と、指摘を閉じる条件を構造上明示的に割り当てる。誰が読み、いつ滞留を異常とし、どこへ積むかを責任として記述する。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "門の判定基準を warn まで広げるか、warn は別経路（滞留日数の報告）で扱うかは、互換性と作業停止のトレードオフに触れるため所有者が決める。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "鮮度の尺度に『監査の更新を挟まないセッション開始回数』を追加し、暦 7 日と併存させる（置き換えない）。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "他の口（Stop / PreCompact の capture-nudge、UserPromptSubmit の鼓動、PreToolUse のガード）についても所要時間と待ち上限の関係を測る。予算超過が SessionEnd 固有かどうかは未確認である。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "待ち上限の正確な閾値と、切り離した子がプロセス群回収を生き延びるかを、他ホスト（desktop アプリ・別 OS）で測る。現在の測定は一環境に限られる。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "SCN-D01（異常終了時の SessionEnd 不達）を修正後に測り直す。常時不達に覆われていた効果は分離されていない。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "5 日間に注入された凍った要約が、その期間の統治文書編集にどのような影響を残したかを追跡し、未観測 warn の下流に欠陥が入っていないかを確認する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "成功したときにだけ痕跡を残す規約を採り、その痕跡の存在を『センサが生きている』証拠として読む——沈黙を正常と解釈する構造が、SESSION_END_AUDIT・HEARTBEAT・SESSION_START_CONTRACT の三要素に共通の前提として埋め込まれている。",
+      "統制の実行環境（口を呼ぶホスト）が統制構造にコントローラとして現れていない。ホストが課す資源予算（完了を待つ時間、プロセス群の回収）は、どの要素の制御・手掛かりにも表現されておらず、統制の仕様に資源要求という項目自体が無い。",
+      "検出器の生存を測る試験（陽性対照）が保証レーンの試験群に構造的に欠けている。試験は『センサの出力が正しいか』を検査する形に揃っており、『センサが起動して完了したか』を検査する形が存在しない。",
+      "警告（warn / advisory）の受け手が構造上どこにも割り当てられていない。門は error だけで通す／止めるを決め、それより弱い信号は生成されるが消費されない——生成と消費の非対称が『全門緑』という報告の意味を実態より広く見せる。",
+      "鮮度・古びの尺度が壁時計時間（暦 7 日）に統一されており、作業量（セッション数・編集件数）に連動する尺度が無い。作業が密な期間ほど検出が遅くなるという逆相関が、監査キャンペーンのような集中作業期間で最大の盲点になる。",
+      "既知の穴（NONGOAL-001 系の『体系側から検出しない』）が各要素の脚注として個別に散在しており、それらを横断して『どの統制の生存が誰にも測られていないか』を一望する地図が無い。個別には受容された残余リスクが、集合としては監視されていない領域を作る。",
+      "再監査キャンペーン自身が生む findings が、そのキャンペーンが依存する同じ未観測経路に落ちる自己参照的な構造。観測者が観測手段の一部を兼ねているため、観測手段の故障が観測者からは見えない。",
+      "損失が長く起きていない経路（監査は前から動いていた）に対する自己満足への構造的対策が無く、動いていた実績が試験の動機を弱める方向に働く。"
+    ],
+    "unknowns": [
+      "修正（ADR-150）が導入した機構——負債の印（.claude/.cache/audit-due/<識別子>.json）、--detach による切り離し、--clear-due による負債消去——は、与えられた統制構造のどの要素にも現れない。構造の記述は ADR-150 以前の姿（SESSION_END_AUDIT が SessionEnd で直接走査する）のままである。したがって本分析は修正前の構造に対しては要素 id に対応づけられているが、修正後の統制構造は実在を確認していない。負債機構に関する記述（先行指標その3、PLUGIN_DISTRIBUTION の欠陥）は、事象の記録が述べる内容に依拠しており、実装の実在は本分析では検証していない。",
+      "口に待ち時間の上限を課している主体（ホスト）は、統制構造にコントローラとして存在しない。本事象の直接の制約源が構造にモデル化されていないため、『どの要素が時間予算を保証するか』は構造上答えが無い。この空白自体が再設計の対象である。",
+      "待ち上限の正確な閾値は測定されていない（1 秒超〜2 秒未満とだけ言える）。他のホスト（desktop アプリ、別 OS）では測定されていないため、閾値が環境横断で成立するかは不明。",
+      "対話セッションの終了は直接観測されていない。証拠は session-flags の mtime と要約の鮮度の突合という間接測定であり、7 セッションという回数の確度はこの間接測定の確度を超えない。",
+      "ホストが終了時にプロセス群ごと畳む環境で、切り離した子が完走するかは不明。覆われているのは『負債が消えないこと』であって『監査が必ず走ること』ではない。",
+      "SCN-D01 が主題とした異常終了時の不達の効果は、この常時不達に覆い隠されて分離できていない。修正後に測り直すまで、異常終了経路の実際の寄与は不明。",
+      "監査 warn 4 件のうち、本キャンペーン由来と特定された 3 件を除く残り 1 件の内容は、事象の記録から判別できない。",
+      "5 日間に注入された凍った要約が、その期間の 7 セッションの統治文書編集にどのような判断上の影響を与えたかは調査されていない。損失の下流側の広がりは未測定である。",
+      "他の口（Stop / PreCompact / UserPromptSubmit / PreToolUse）の所要時間と待ち上限の関係は測られていない。同種の予算超過が他の口で進行中かどうかは不明。",
+      "監査の所要時間 8〜9.5 秒が統治木の規模とともにどう伸びるか（今後さらに超過幅が広がるか）は測られていない。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は『監査が正しい結果を出すか』を見ており、『監査が届いたか』を見る位置に検査を持っていなかった。具体的には四つの経路が同時にすり抜けた。(1) 打ち切りの痕跡は標準エラーにしか現れず、口の終了コードや last-audit.json の側からは不動作と無変化が区別できない（成功時のみ更新される痕跡を生存の証拠として読む規約）。(2) 鮮度の検査は暦 7 日であり、5 日・7 セッションはその内側に収まった——尺度が作業量ではなく壁時計時間だったため、編集が密な期間ほど検出が遅い。(3) CI は正本に対して監査を直接起動するので常に完走し、口の時間予算という実環境側の制約は試験対象の外にあった。(4) SCN-D01 は SessionEnd 不達を主題としながら陽性対照（正常終了で走ることの確認）を取らない設計だったため、常時不達が異常終了の効果に埋もれて分離されなかった。加えて、門が --fail-on error で判定するため、監査が仮に走っていたとしても warn 側は誰の手掛かりにもならない設計であり、この事象は『センサの沈黙』と『警告の受け手の不在』という二つの独立した穴が重なって初めて 5 日間可視化されなかった。修正（ADR-150）は (1) と (2) を機構として塞いだが、なぜ配送を測る試験が保証レーンに無かったのかという問い自体は塞いでいない。"
+  },
+  "control_structure_ids": [
+    "OWNER",
+    "CI_RELEASE_CHECK",
+    "SESSION_START_CONTRACT",
+    "HEARTBEAT",
+    "PRE_TOOL_GUARD",
+    "POST_TOOL_LINTER",
+    "SESSION_END_AUDIT",
+    "CAPTURE_NUDGE",
+    "PLUGIN_DISTRIBUTION",
+    "ASSURANCE_LANE",
+    "GOVERNANCE_TREE"
+  ],
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "duration_ms": 326696,
+  "errors": [],
+  "execution_kind": "real-sdk",
+  "flaws_with_citation_defect": [],
+  "generated_at": "2026-08-10T00:11:09Z",
+  "git_dirty": false,
+  "git_sha": "2d9d53ec517a737d2bfc09648dbb349b51a18c83",
+  "incident_evidence": {
+    "kind": "measurement",
+    "refs": [
+      "assurance/ledger/red/INC-039-sessionend-audit-exceeds-hook-budget.json",
+      "assurance/ledger/verify/INC-039-sessionend-audit-exceeds-hook-budget.json",
+      "doctrine_docs/packaging/decisions/ADR-150-session-end-queues-the-audit.md",
+      "plugin/tests/test_sessionend_budget.py"
+    ],
+    "resolved": [
+      "assurance/ledger/red/INC-039-sessionend-audit-exceeds-hook-budget.json",
+      "assurance/ledger/verify/INC-039-sessionend-audit-exceeds-hook-budget.json",
+      "doctrine_docs/packaging/decisions/ADR-150-session-end-queues-the-audit.md",
+      "plugin/tests/test_sessionend_budget.py"
+    ],
+    "unresolved": [],
+    "verifiable": true
+  },
+  "incident_id": "INC-039-sessionend-audit-exceeds-hook-budget",
+  "incident_sha256": "cff9c871647067cd61aec40e5c4a24ec4cbae9b7a7a790da26d9d400c16fcfc7",
+  "init": {
+    "claude_code_version": "2.1.221",
+    "model": "claude-opus-5",
+    "session_id": "f02109b2-0546-4c1e-b1f5-130510ee5f5f",
+    "tools_count": 27
+  },
+  "kind": "cast-analysis",
+  "leading_indicators_defined": true,
+  "options": {
+    "allowed_tools": [],
+    "cwd": "/tmp/assurance-cast-hutz2nqu",
+    "effort": "high",
+    "max_budget_usd": 4.0,
+    "max_turns": 8,
+    "model": "claude-opus-5",
+    "setting_sources": [],
+    "timeout_s": 900
+  },
+  "oracle": "structured_output がレーン側再検証にも適合",
+  "principles_offered": 337,
+  "prompt_sha256": "5f9b42a56a2e2a9eca9fdb6880c8805560c6e840eca8de47ed1047c629e507db",
+  "rejected_flaws": [],
+  "result_meta": {
+    "duration_api_ms": 319428,
+    "is_error": false,
+    "num_turns": 2,
+    "session_id": "f02109b2-0546-4c1e-b1f5-130510ee5f5f",
+    "subtype": "success",
+    "total_cost_usd": 1.08962,
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 56363,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 56363,
+      "cache_read_input_tokens": 0,
+      "inference_geo": "not_available",
+      "input_tokens": 2,
+      "iterations": "list",
+      "output_tokens": 19540,
+      "server_tool_use": {
+        "web_fetch_requests": 0,
+        "web_search_requests": 0
+      },
+      "service_tier": "standard",
+      "speed": "standard"
+    }
+  },
+  "schema_sha256": "0d1643d5e16353723405302c1f6ffcf753915e2a4f27a3530e8ef9a9ee45cb46",
+  "sdk_version": "0.2.129",
+  "settled": true,
+  "status": "PASS",
+  "structured_output": {
+    "confidence": "medium",
+    "control_flaws": [
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "全件監査（所要 8〜9.5 秒）は SessionEnd の口に同期で置かれ、ホストが SessionEnd の完了を待つ上限（測定範囲では 1 秒超〜2 秒未満）を超えたため、走査は毎回途中で打ち切られ、要約 .claude/.cache/last-audit.json は一度も更新されなかった。制御動作『統治木を全件走査し要約を書く』が、口の側の資源予算（時間）によって成立しない構成になっていた。統制の仕様には所要時間の上限という要求が存在せず、ホストが課す予算も統制構造上どの要素の制御にも現れていない。",
+        "evidence_ref": "assurance/ledger/red/INC-039-sessionend-audit-exceeds-hook-budget.json",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "自動化は設計者の想定に遡る",
+          "破られた想定の再検討",
+          "設計時想定の運用中再検査",
+          "software-does-not-fail-requirements-defect",
+          "最悪環境を前提に設計運用"
+        ],
+        "why_it_seemed_adequate": "監査単体は手元で実行すれば必ず完走し、SessionEnd は『セッションが終わる時点だから待てる』という読みは自然だった。既知の穴として記録されていたのは『SessionEnd が発火しない終了では走らない』（INC-001）であり、『発火したが完了を待たれない』という様態は想定の外にあった。口に与えられる時間の上限はホスト側の性質で、文書からは読み取れない。"
+      },
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "このセンサの唯一の手掛かりである last-audit.json は監査が成功した場合にのみ更新される。打ち切りの事実は標準エラーへ毎回出力されていたが、それを読み取って台帳へ積む段が構造上どこにも割り当てられていない。結果として『センサが起動したが仕事を終えなかった』という状態を表現する経路が存在せず、センサの沈黙は下流からは『変化なし』と区別できない。制御ループに、制御動作の効果を判定するフィードバックが対で備わっていない。",
+        "evidence_ref": "assurance/ledger/verify/INC-039-sessionend-audit-exceeds-hook-budget.json",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "control-action-requires-feedback",
+          "全コントロールループにフィードバック必須",
+          "問題報告経路の可用性",
+          "調査対象としての安全情報システム"
+        ],
+        "why_it_seemed_adequate": "成功時に痕跡を残す設計は最小で、痕跡が新しければ走った・古ければ古び警告という二状態のモデルは扱いやすい。標準エラーはホストが表示するので人が気づくという暗黙の前提が置かれていたが、セッション終了時の出力は誰の目にも留まらない位置にある。"
+      },
+      {
+        "control_element_id": "SESSION_START_CONTRACT",
+        "description": "契約注入は last-audit.json の要約をそのまま『前回監査』として提示するが、その要約がいつ書かれたか、直前のセッションで監査が予約され充足されたかを問わない。このため 2026-08-04 の error 0 / warn 0 / advisory 0 が 7 セッション連続で正の安心として供給された。情報を受け取る側（次セッションの判断）に不完全な情報が届いた原因は、情報提供側であるこの注入経路の設計にある。注入の有無そのものが R11 の指標とされている一方、注入される内容の鮮度は指標に含まれていない。",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "defects-in-information-providing-systems",
+          "include-information-supplier-defect",
+          "プロセスモデルと実状態の不整合",
+          "利用可能な形式での情報提示"
+        ],
+        "why_it_seemed_adequate": "監査は SessionEnd で必ず走るという前提の下では、要約は常に直前セッションのものであり、日付を添えることは冗長に見える。鮮度の判定は鼓動（HEARTBEAT）の責任だと読める分担になっており、注入側が二重に検査する必要は無いと考えるのが自然だった。"
+      },
+      {
+        "control_element_id": "HEARTBEAT",
+        "description": "古びの警告は暦の経過（閾値 7 日）を尺度としており、5 日・7 セッションの不達はこの閾値に届かなかった。統治木の編集という作業量ではなく壁時計時間を尺度に取っているため、短期間に多数のセッションが統治文書を編集する状況（本再監査キャンペーンがまさにそれ）で検出が最も遅くなる。先行指標として、対象リスク（監査されないまま統治木が変更されること）と因果的に対応する量が選ばれていない。",
+        "flaw_type": "制御動作が遅い",
+        "normative_refs": [
+          "先行指標の妥当性・代理指標の禁止",
+          "リスク先行指標による監査",
+          "リスクの先行指標の妥当性検証",
+          "計画外変化の検出手段"
+        ],
+        "why_it_seemed_adequate": "暦の閾値は『しばらく触っていない複製の要約は信用しない』という素直な設計で、通常の利用（数日おきに数セッション）では十分に見えた。セッション回数や編集件数を尺度にするには、セッションの開始を数える別の痕跡が要り、当時それは監査の副産物としてしか存在しなかった。"
+      },
+      {
+        "control_element_id": "SESSION_START_CONTRACT",
+        "description": "SESSION_END_AUDIT（書き手）、SESSION_START_CONTRACT と HEARTBEAT（読み手二つ）は、last-audit.json という単一の痕跡と『SessionEnd という単一の実行機会』に直列で依存している。書き手が沈黙すると、独立に見える読み手二つが同時に同じ誤りを告げる。多重の防護に見える三要素が、共通原因（一つのファイル、一つの口、一つの成功時のみ更新される規約）でまとめて無効化される構造になっており、どの要素も『他方が見ている』前提で自らの検査を持たない。",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "共通の体系的要因による多重防護の無効化",
+          "監視責任の空白排除",
+          "全体構造の分析",
+          "verify-decomposition-assumptions"
+        ],
+        "why_it_seemed_adequate": "一つの要約を一箇所に置き、複数の統制がそれを読むのは重複を避ける自然な設計で、各要素の責任も明快に分かれて見える。分担の明快さが、共通の依存点を単一障害点として意識させにくくした。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "門の判定は --fail-on error であり、warn と advisory を読み、追跡し、閉じる責任が構造上どの要素にも割り当てられていない。『全門緑』というキャンペーンの報告は error 基準では正しいが、その正しさは警告側の未観測を含意しない。実際、本キャンペーン自身が残した残滓（ADR-147・ADR-149 の adr_not_landed、SPEC-029 の trace_stale）が誰にも追跡されないまま滞留した。指摘された欠陥を是正完了まで追跡する経路が欠けている。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "audit-findings-must-be-closed",
+          "指摘欠点の是正完了追跡",
+          "責任の空白は構造再設計",
+          "リスク情報の不透明な集約禁止",
+          "全体健全性と部分健全性の分離評価"
+        ],
+        "why_it_seemed_adequate": "門は通す／止めるの二値判断であり、止める基準を error に限るのは誤検知で作業を止めないための妥当な設計である。warn は『いずれ人が読む助言』として設計されており、読み手を明示的に置かないことが穴だとは見えにくい。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "保証レーンの試験群は、監査ロジックが正しい結果を出すことを検査するが、監査が実環境の口から実際に配送されることを検査していない。SCN-D01（異常終了時の SessionEnd 不達）は不達そのものを主題としながら、正常終了という陽性対照を取らない設計であったため、常時不達という状態が『異常終了の効果』の背後に隠れた。検出は 2026-08-09 の独立再監査で陽性対照を取ろうとした偶然による。監査が明白な不動作を検出できなかったこと自体が、監査手順の有効性の問題として扱われる経路が無い。",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "監査のすり抜け時に監査手順を是正",
+          "検出失敗の原因調査",
+          "監査の検出力評価",
+          "安全立証でなく非安全状態の探索",
+          "非寄与コンポーネントも分析対象"
+        ],
+        "why_it_seemed_adequate": "センサが走っているかどうかは、要約が更新されていることで確かめられるという読みが成立していた（その要約こそが凍っていた）。また『異常終了では走らない』という既知の穴が記録済みであったため、正常終了では走るという対偶が暗黙に成立して見えた。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "CI はリポジトリ正本に対して docs-audit を直接起動し JSON を得るため、監査は常に完走し常に緑であった。CI が観測していないのは『導入複製の hook 経路で、口に与えられた時間予算の内側に監査が収まるか』である。既知の穴として『複製の版を見ない』が記録されているが、その隣にある『口の実行環境（時間予算・プロセス回収）を見ない』は記録されていない。宣言された設計と、損失発生時に実際に動作していた構造の突合が行われていない。",
+        "evidence_ref": "plugin/tests/test_sessionend_budget.py",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "宣言された設計と実動作の突合",
+          "公式設計と実動作の二重評価",
+          "手順の存在確認でなく適用確認",
+          "trace-why-design-flaw-was-introduced"
+        ],
+        "why_it_seemed_adequate": "CI で監査が緑なら監査は機能している、という推論は監査ロジックについては正しい。配送経路（hook の口）は薄いラッパに見えるため、試験対象として分離する動機が弱かった。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者に届く三つの手掛かり（進捗報告・PR の diff・台帳）のいずれにも、監査が配送されていないという事実が現れる場所が無い。報告は門の判定を根拠に『全門緑』を伝え、台帳には赤が積まれず、diff には監査の不動作は映らない。既知の穴『報告が実施ではなく意図を書いていても人からは見分けにくい』の隣接形として、ここでは報告する側も配送を事実だと信じており、意図と実施の区別がそもそも報告者にも観測できない状態にあった。上位のコントローラが対象の現在の安全状態を判定するためのフィードバック手段が、この経路について備わっていない。",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "controller-needs-concrete-feedback-channels",
+          "feedback-enables-improvement-of-controls",
+          "情報システム保有と有用性の乖離",
+          "設計上と実際の伝達経路の照合"
+        ],
+        "why_it_seemed_adequate": "門の判定・台帳・diff の三点セットは、統治の状態を見るための手段として設計上は十分な広がりを持つ。三点がいずれも同じ上流（監査の要約）に依存していることは、要約が生きている限り問題として現れない。"
+      },
+      {
+        "control_element_id": "PLUGIN_DISTRIBUTION",
+        "description": "ADR-150 による是正（口は予約だけを行い即座に 0 を返す、負債の印を残す）は導入複製へ配布されて初めて効く。しかし複製が何世代遅れているかはリポジトリ側から観測できない（既知の穴・INC-005）。したがって是正後も、旧版の複製では同じ不達が続き、かつその複製には負債の印という新しい手掛かりが存在しないため、不達は旧版のままの経路（暦 7 日の古び警告）でしか現れない。是正の到達そのものを観測する手段が構造に無い。",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "供給要素の変更を利用者へ通知",
+          "重要変更の明示的通知",
+          "是正措置の有効性証拠の収集",
+          "推奨事項の責任割当実施検査フィードバック"
+        ],
+        "why_it_seemed_adequate": "更新は利用者の操作に依存するという性質は既知の穴として明記済みであり、marketplace 経由の配布は標準的な手段である。是正が『配布すれば効く』ものだという読みは、修正が入った時点では自然だった。"
+      }
+    ],
+    "hazard": "統治木が編集されている状態で、統制構造が保持する「前回監査の結果」というプロセスモデルが実状態と乖離し、その乖離を検出する経路が構造内に存在しない状態。乖離は二重である：(a) 監査が走っていないのに走ったものとして読まれる、(b) 監査の警告側（warn/advisory）が誰の手掛かりにも割り当てられていない。この状態では、統治文書への非安全な変更が観測されないまま蓄積し、かつ「全門緑」という報告がその蓄積を積極的に覆い隠す。",
+    "incident_id": "INC-039-sessionend-audit-exceeds-hook-budget",
+    "leading_indicators": [
+      {
+        "indicator": "hook の口に置く処理の実測所要時間と、口に許される待ち時間の余裕率",
+        "observable": "docs-audit.py および各 hook スクリプトを代表的な統治木サイズに対して起動し、起動から終了までの実時間を計測する",
+        "threshold": "口に同期で置く処理の所要が 1.0 秒（観測された待ち上限の下限）を超えたら警告、2.0 秒を超えたら赤。同期処理を口に追加する変更は所要計測の添付なしに通さない",
+        "version_independent": true,
+        "where": "CI（.github/workflows の release-check）。リポジトリ正本に対して実行する",
+        "why_version_independent": "計測はリポジトリ正本に対して CI 側で行われ、導入複製の版に依存しない。ただし『ホストの待ち上限が 1〜2 秒である』という閾値の根拠は 2026-08-09 の一環境での測定にのみ基づく"
+      },
+      {
+        "indicator": "配送経路の陽性対照試験の存在と実行",
+        "observable": "plugin/tests/test_sessionend_budget.py に相当する『正常終了で監査が実際に配送される』ことを確かめる試験が存在し、skip されずに実行されていること",
+        "threshold": "配送経路の陽性対照が 1 件でも欠落・skip・削除されたら赤。センサを新設する変更は、そのセンサの生存を測る対照試験を伴わない限り通さない",
+        "version_independent": true,
+        "where": "CI のジョブ結果と試験一覧",
+        "why_version_independent": "試験の存在と実行はリポジトリ正本側の事実であり、利用者環境の複製の版に依存しない"
+      },
+      {
+        "indicator": "未充足の監査負債（audit-due）の件数と最古の予約時刻",
+        "observable": ".claude/.cache/audit-due/ に残る印の個数と、その中の最古の予約時刻",
+        "threshold": "1 件でも残っていれば件数と最古時刻を告知。最古が 2 セッション分または 24 時間を超えたら異常として台帳へ事象を起こす",
+        "version_independent": false,
+        "where": "SessionStart の契約注入（inject-contract.py）が要約より先に読む位置",
+        "why_version_independent": "負債の印は ADR-150 以降の複製にしか存在しない。旧版の複製ではこの指標そのものが生成されないため、版が遅れた環境では指標も沈黙する（INC-005 の共通原因故障をそのまま継承する）"
+      },
+      {
+        "indicator": "監査の更新を挟まないセッション開始の連続回数（暦ではなく機会を尺度にした鮮度）",
+        "observable": "session-flags の mtime 列と last-audit.json の更新時刻の突合",
+        "threshold": "監査の更新なしにセッション開始が 2 回連続したら警告、3 回で赤。暦 7 日の閾値はこれと併存させ、置き換えない",
+        "version_independent": false,
+        "where": "UserPromptSubmit の鼓動（gov-heartbeat.py）",
+        "why_version_independent": "検出器が導入複製の側で動くため、複製の版が遅れればこの尺度も届かない。加えて session-flags の mtime は対話セッション終了の直接観測ではなく間接測定である"
+      },
+      {
+        "indicator": "統治文書の編集があった期間に warn = 0 が連続する回数（沈黙の疑い）",
+        "observable": "台帳へ積まれる監査要約の warn / advisory 件数の時系列と、同期間の統治木の編集有無",
+        "threshold": "統治文書の編集があるにもかかわらず warn = 0 が 3 セッション続いたら『センサ沈黙の疑い』として調査を起こす。0 が続くこと自体を正常の証拠として扱わない",
+        "version_independent": false,
+        "where": "assurance/ledger/ に蓄積される監査要約の時系列（要約統計だけでなく推移を保持する）",
+        "why_version_independent": "要約は導入複製側の監査が生成するため、複製が旧版で沈黙していれば時系列も凍り、凍っていること自体はこの指標の内側からは新旧が区別できない"
+      },
+      {
+        "indicator": "warn / advisory の滞留日数（指摘から是正完了までの追跡）",
+        "observable": "監査 findings の識別子ごとの初出時刻と消失時刻の差",
+        "threshold": "同一 finding が 3 セッションまたは 7 日を超えて滞留したら、所有者へ届く報告に件数を明示する。--fail-on error の判定とは独立に集計する",
+        "version_independent": false,
+        "where": "assurance/ledger/（保証レーンが台帳の健全性を保つ位置）",
+        "why_version_independent": "findings は導入複製の監査が生成するため、監査が届かない環境では滞留の計測自体が成立しない"
+      }
+    ],
+    "loss": "統治の生存（R11）の中心が 5 日・7 セッションにわたり不在だった。全件監査は SessionEnd の口で毎回打ち切られ、要約は 2026-08-04 の error 0 / warn 0 / advisory 0 で凍り、その凍った値が「前回監査」として毎セッション冒頭に正の安心として注入された。7 セッションはすべて統治文書を編集しており、その間に実在した warn 4 件（うち 3 件は本再監査キャンペーン自身が残した ADR-147・ADR-149 の adr_not_landed と SPEC-029 の trace_stale）は誰の視界にも入らなかった。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "すべての口が代表的な統治木サイズで 1 秒未満に完走し、打ち切りが一度も観測されない。",
+        "hypothesis": "SessionEnd 以外の口（Stop / PreCompact の capture-nudge、PreToolUse のガード）も、統治木が大きくなると待ち上限を超えて打ち切られる。",
+        "oracle": "各 hook スクリプトを 0/1/2/3/9 秒の待ち走査と同じ手法で計測し、口ごとの所要分布と打ち切り率を得る。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "測定したすべての環境で負債が次セッション開始までに消化される。",
+        "hypothesis": "ADR-150 の切り離した子は、ホストが終了時にプロセス群ごと畳む環境では走らない。負債は残るが監査は永久に充足されず、負債の件数が単調増加する。",
+        "oracle": "実環境で複数回セッションを終了させ、負債の印の消化率（--clear-due が発火した割合）を測る。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "すべての導入複製が ADR-150 以降であり、かつ版の観測手段が存在する。",
+        "hypothesis": "導入複製が ADR-150 以前の版のまま残る環境では、同じ不達が継続し、かつ負債の印が生成されないため新しい先行指標がいずれも沈黙する（是正が届いたかを誰も観測できない）。",
+        "oracle": "導入複製の版と audit-due ディレクトリの存在有無を突合し、旧版の複製が現存するかを確認する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "書き込み不可の場合に口が一行告げ、その告知が次セッションの契約注入に現れる。",
+        "hypothesis": "負債の印を置く先（.claude/.cache）が書き込み不可・容量不足のとき、口は 0 を返し負債も残らず、事象は完全に沈黙する（『沈黙して開かない』の裏返し）。",
+        "oracle": "キャッシュ先を書き込み不可にした状態で口を起動し、標準出力・終了コード・次セッションの告知を観測する。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "すべての warn が 3 セッション以内に消えるか、消えない場合に所有者へ届く報告に件数が現れる。",
+        "hypothesis": "監査が配送されるようになっても、warn / advisory の受け手が構造上不在であるため、同型の損失（警告が誰にも読まれない）が下流で再発する。",
+        "oracle": "監査要約の warn について、初出から消失までの滞留日数を時系列で計測する。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "当該期間の編集に由来する新規 findings がゼロである。",
+        "hypothesis": "凍った要約が注入されていた 5 日・7 セッションの間に行われた統治文書の編集に、未観測の warn に起因する欠陥が残っている。",
+        "oracle": "当該期間の diff を対象に、修正後の監査を遡って適用し findings を比較する。",
+        "severity": "P2"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "hook の口に同期で置くすべての処理について、許容所要時間を仕様として明文化し（現時点の根拠は 1 秒超〜2 秒未満の一環境測定）、CI で実測して閾値超過を赤にする。同期処理を口に追加する変更は所要計測の添付を条件とする。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "センサを新設・変更する際に『そのセンサが起動し完了したこと』を独立に確かめる陽性対照試験を必須とする規約を、保証レーンの決定論試験に組み込む。SCN-D01 のように不達を主題とするシナリオは、対照条件の取得を設計要件にする。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "統制構造の記述を ADR-150 後の姿へ更新する。SESSION_END_AUDIT の制御を『予約と負債の印』と『切り離した子による走査』に分解し、負債の印（.claude/.cache/audit-due/）を SESSION_START_CONTRACT の一次手掛かりとして構造図に明示する。欠落・不十分なフィードバック経路は図上で区別して示す。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "warn / advisory の受け手と、指摘を閉じる条件を構造上明示的に割り当てる。誰が読み、いつ滞留を異常とし、どこへ積むかを責任として記述する。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "門の判定基準を warn まで広げるか、warn は別経路（滞留日数の報告）で扱うかは、互換性と作業停止のトレードオフに触れるため所有者が決める。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "鮮度の尺度に『監査の更新を挟まないセッション開始回数』を追加し、暦 7 日と併存させる（置き換えない）。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "他の口（Stop / PreCompact の capture-nudge、UserPromptSubmit の鼓動、PreToolUse のガード）についても所要時間と待ち上限の関係を測る。予算超過が SessionEnd 固有かどうかは未確認である。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "待ち上限の正確な閾値と、切り離した子がプロセス群回収を生き延びるかを、他ホスト（desktop アプリ・別 OS）で測る。現在の測定は一環境に限られる。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "SCN-D01（異常終了時の SessionEnd 不達）を修正後に測り直す。常時不達に覆われていた効果は分離されていない。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "5 日間に注入された凍った要約が、その期間の統治文書編集にどのような影響を残したかを追跡し、未観測 warn の下流に欠陥が入っていないかを確認する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "成功したときにだけ痕跡を残す規約を採り、その痕跡の存在を『センサが生きている』証拠として読む——沈黙を正常と解釈する構造が、SESSION_END_AUDIT・HEARTBEAT・SESSION_START_CONTRACT の三要素に共通の前提として埋め込まれている。",
+      "統制の実行環境（口を呼ぶホスト）が統制構造にコントローラとして現れていない。ホストが課す資源予算（完了を待つ時間、プロセス群の回収）は、どの要素の制御・手掛かりにも表現されておらず、統制の仕様に資源要求という項目自体が無い。",
+      "検出器の生存を測る試験（陽性対照）が保証レーンの試験群に構造的に欠けている。試験は『センサの出力が正しいか』を検査する形に揃っており、『センサが起動して完了したか』を検査する形が存在しない。",
+      "警告（warn / advisory）の受け手が構造上どこにも割り当てられていない。門は error だけで通す／止めるを決め、それより弱い信号は生成されるが消費されない——生成と消費の非対称が『全門緑』という報告の意味を実態より広く見せる。",
+      "鮮度・古びの尺度が壁時計時間（暦 7 日）に統一されており、作業量（セッション数・編集件数）に連動する尺度が無い。作業が密な期間ほど検出が遅くなるという逆相関が、監査キャンペーンのような集中作業期間で最大の盲点になる。",
+      "既知の穴（NONGOAL-001 系の『体系側から検出しない』）が各要素の脚注として個別に散在しており、それらを横断して『どの統制の生存が誰にも測られていないか』を一望する地図が無い。個別には受容された残余リスクが、集合としては監視されていない領域を作る。",
+      "再監査キャンペーン自身が生む findings が、そのキャンペーンが依存する同じ未観測経路に落ちる自己参照的な構造。観測者が観測手段の一部を兼ねているため、観測手段の故障が観測者からは見えない。",
+      "損失が長く起きていない経路（監査は前から動いていた）に対する自己満足への構造的対策が無く、動いていた実績が試験の動機を弱める方向に働く。"
+    ],
+    "unknowns": [
+      "修正（ADR-150）が導入した機構——負債の印（.claude/.cache/audit-due/<識別子>.json）、--detach による切り離し、--clear-due による負債消去——は、与えられた統制構造のどの要素にも現れない。構造の記述は ADR-150 以前の姿（SESSION_END_AUDIT が SessionEnd で直接走査する）のままである。したがって本分析は修正前の構造に対しては要素 id に対応づけられているが、修正後の統制構造は実在を確認していない。負債機構に関する記述（先行指標その3、PLUGIN_DISTRIBUTION の欠陥）は、事象の記録が述べる内容に依拠しており、実装の実在は本分析では検証していない。",
+      "口に待ち時間の上限を課している主体（ホスト）は、統制構造にコントローラとして存在しない。本事象の直接の制約源が構造にモデル化されていないため、『どの要素が時間予算を保証するか』は構造上答えが無い。この空白自体が再設計の対象である。",
+      "待ち上限の正確な閾値は測定されていない（1 秒超〜2 秒未満とだけ言える）。他のホスト（desktop アプリ、別 OS）では測定されていないため、閾値が環境横断で成立するかは不明。",
+      "対話セッションの終了は直接観測されていない。証拠は session-flags の mtime と要約の鮮度の突合という間接測定であり、7 セッションという回数の確度はこの間接測定の確度を超えない。",
+      "ホストが終了時にプロセス群ごと畳む環境で、切り離した子が完走するかは不明。覆われているのは『負債が消えないこと』であって『監査が必ず走ること』ではない。",
+      "SCN-D01 が主題とした異常終了時の不達の効果は、この常時不達に覆い隠されて分離できていない。修正後に測り直すまで、異常終了経路の実際の寄与は不明。",
+      "監査 warn 4 件のうち、本キャンペーン由来と特定された 3 件を除く残り 1 件の内容は、事象の記録から判別できない。",
+      "5 日間に注入された凍った要約が、その期間の 7 セッションの統治文書編集にどのような判断上の影響を与えたかは調査されていない。損失の下流側の広がりは未測定である。",
+      "他の口（Stop / PreCompact / UserPromptSubmit / PreToolUse）の所要時間と待ち上限の関係は測られていない。同種の予算超過が他の口で進行中かどうかは不明。",
+      "監査の所要時間 8〜9.5 秒が統治木の規模とともにどう伸びるか（今後さらに超過幅が広がるか）は測られていない。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は『監査が正しい結果を出すか』を見ており、『監査が届いたか』を見る位置に検査を持っていなかった。具体的には四つの経路が同時にすり抜けた。(1) 打ち切りの痕跡は標準エラーにしか現れず、口の終了コードや last-audit.json の側からは不動作と無変化が区別できない（成功時のみ更新される痕跡を生存の証拠として読む規約）。(2) 鮮度の検査は暦 7 日であり、5 日・7 セッションはその内側に収まった——尺度が作業量ではなく壁時計時間だったため、編集が密な期間ほど検出が遅い。(3) CI は正本に対して監査を直接起動するので常に完走し、口の時間予算という実環境側の制約は試験対象の外にあった。(4) SCN-D01 は SessionEnd 不達を主題としながら陽性対照（正常終了で走ることの確認）を取らない設計だったため、常時不達が異常終了の効果に埋もれて分離されなかった。加えて、門が --fail-on error で判定するため、監査が仮に走っていたとしても warn 側は誰の手掛かりにもならない設計であり、この事象は『センサの沈黙』と『警告の受け手の不在』という二つの独立した穴が重なって初めて 5 日間可視化されなかった。修正（ADR-150）は (1) と (2) を機構として塞いだが、なぜ配送を測る試験が保証レーンに無かったのかという問い自体は塞いでいない。"
+  }
+}
