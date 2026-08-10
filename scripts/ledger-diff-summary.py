@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# doctrine:begin SPEC-030
 """巨大な台帳 PR の差分要約（機械生成）と、その添付の義務の検め。
 
 リポジトリ内の自己適用であり、配布するプラグインの一部ではない
@@ -28,6 +29,7 @@
 
 終了コード: 0 = 適合 / 1 = 違反 / 2 = 使い方の誤り
 """
+# doctrine:end SPEC-030
 import json
 import os
 import subprocess
