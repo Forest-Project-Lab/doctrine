@@ -103,3 +103,31 @@ jobs:
         run: |
           git fetch --no-tags --depth=1 origin "$BASE_SHA"
           python3 scripts/release-check.py --diff-base "$BASE_SHA"
+
+      # Huge ledger PRs (owner request, 2026-08-09). The assurance ledgers run to
+      # hundreds of KB; one re-judgment moves thousands of lines. This campaign
+      # merged several such PRs autonomously — nobody could have read them. A
+      # diff over the threshold now needs either an independent approving review
+      # or a machine-generated summary pasted into the PR body, anchored by a
+      # digest line the author cannot retype. Fetch depth 100 so `git show
+      # <base>:<path>` can read the before-state (depth 1 has no blobs).
+      - name: Ledger diff summary (huge ledger PRs)
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git fetch --no-tags --depth=100 origin "$BASE_SHA"
+          printf '%s' "$PR_BODY" > "$RUNNER_TEMP/pr-body.txt"
+          # An approving review from anyone counts as the independent read.
+          # A failed API call must not silently grant the exemption, so default
+          # to 0 and only pass --approved on a positive answer.
+          n=$(gh pr view "$PR_NUMBER" --json reviews \
+                --jq '[.reviews[] | select(.state == "APPROVED")] | length' \
+              2>/dev/null || echo 0)
+          approved=""
+          [ "${n:-0}" -gt 0 ] 2>/dev/null && approved="--approved"
+          python3 scripts/ledger-diff-summary.py --diff-base "$BASE_SHA" \
+            --check --pr-body-file "$RUNNER_TEMP/pr-body.txt" $approved
