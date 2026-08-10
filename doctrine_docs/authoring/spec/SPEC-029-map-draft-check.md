@@ -72,7 +72,7 @@ llm_context: task
 
 対象は検査の本体。更新は `trace-index.py --id SPEC-029` が返す行を写す（ADR-061）。
 
-- sha256:4971049f2ec234079a28d0f1ae132e13f67452a7af39c5aa82dd57de938b91f0
+- sha256:3fd52cb45c94e84abfd687927940e3f582985fee7e39d4c3bb8e22d5f66a68d7
 
 ## 受入基準
 
