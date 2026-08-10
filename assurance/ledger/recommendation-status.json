@@ -1904,6 +1904,82 @@
       "investigated": true,
       "evidence_ref": "assurance/harness/control_structure.py の ASSURANCE_LANE control_actions『台帳の健全性を保つ』、assurance/tests/test_control_structure_assignments.py",
       "note": "着地した。台帳の健全性の責任を ASSURANCE_LANE に一意に置いた。書き手の原子化は『書き切れなかった』側しか守らないので、『読めない台帳が在る』と声を出す責任を分けて名指した。一意であること（他の要素が同じ責任を名乗らないこと）を試験で凍結した —— 重複させると双方が他方を前提にして減衰する"
+    },
+    {
+      "incident_id": "INC-039-sessionend-audit-exceeds-hook-budget",
+      "index": 0,
+      "state": "pending",
+      "investigated": true,
+      "note": "縮小して受ける。口の許容所要を『時間の門』にはしない —— WATCH-001 第8項が「試験は実時計を読んではならない」を凍結しており、環境で揺れる閾値を CI の赤にすると本キャンペーンが直したのと同じ型（誰も何も変えていないのに赤くなる）を作る。代わりに構造で凍結した: plugin/tests/test_sessionend_budget.py が『口が監査本体を呼ばないこと』『子を切り離すこと』を検める。仕様の明文化（SPEC-011 の『SessionEnd は監査を予約する』節）も済んでいる。残るのは『同期処理を口に足す変更に所要計測の添付を求める』部分で、これは未着手。"
+    },
+    {
+      "incident_id": "INC-039-sessionend-audit-exceeds-hook-budget",
+      "index": 1,
+      "state": "landed",
+      "investigated": true,
+      "note": "着地した。運転手順へ『センサを足す・変える差分は陽性対照を同じ差分で持つ』を書いた。出るべきときに出ることを確かめない検査は、出ないことを観測しても意味を持たない —— 出なかったのか、そもそも出せないのかが区別できない。SCN-D01 がまさにその設計だった。",
+      "evidence_ref": "doctrine_docs/packaging/procedures/PROC-001-development-norms.md"
+    },
+    {
+      "incident_id": "INC-039-sessionend-audit-exceeds-hook-budget",
+      "index": 2,
+      "state": "landed",
+      "investigated": true,
+      "note": "着地した。SESSION_END_AUDIT の control_actions を三つ（予約・切り離した子の走査・要約を書けたときだけ負債を消す）に分解し、feedback に audit-due/ を足した。成功時だけ動く痕跡を生存の証拠に読むと不動作と無変化が区別できない —— 負債の印はその逆で、済んでいないときにだけ在る。known_gaps も書き直した（切り離しの生存はホスト依存）。",
+      "evidence_ref": "assurance/harness/control_structure.py"
+    },
+    {
+      "incident_id": "INC-039-sessionend-audit-exceeds-hook-budget",
+      "index": 3,
+      "state": "landed",
+      "investigated": true,
+      "note": "着地した。統制構造に WARNING_BACKLOG を要素として足し、割当が無いことを known_gaps に明記した（無いものを在るように書かない）。運転手順には当面の埋め方を書いた —— 終端報告で件数と内訳を必ず出し、warn 0 でないまま『全門緑』と書かない。閉じる条件の恒久的な割当は推奨#4（所有者判断）が決まってから。",
+      "evidence_ref": "assurance/harness/control_structure.py / doctrine_docs/packaging/procedures/PROC-001-development-norms.md"
+    },
+    {
+      "incident_id": "INC-039-sessionend-audit-exceeds-hook-budget",
+      "index": 4,
+      "state": "owner",
+      "investigated": true,
+      "note": "所有者判断。門の判定基準を warn まで広げるか、warn は別経路（滞留日数の報告）で扱うか。六類型では『互換性を壊す変更』にあたる（既存の緑が赤になりうる）。**本件は 2026-08-09 の委任（ADR-147）の 12 件に含まれない新規の判断であり、私は裁かない。**仰いで止まる。判断の材料: 広げると本キャンペーンのような残滓が即座に止まる代わりに、warn を持つ既存の変更が merge できなくなる。別経路にすると止まらないが、滞留は見える。",
+      "evaluator_owner_required": true,
+      "owner_decision_kind": "互換性を壊す変更"
+    },
+    {
+      "incident_id": "INC-039-sessionend-audit-exceeds-hook-budget",
+      "index": 5,
+      "state": "landed",
+      "investigated": true,
+      "note": "着地した。ADR-150 の負債の印が、まさに『監査の更新を挟まないセッション終了の回数』である。暦 7 日は置き換えず併存させた（推奨の指定どおり）。負債は一件目から出るので、編集が密な期間ほど検出が遅れるという尺度の欠陥が解ける。",
+      "evidence_ref": "plugin/scripts/inject-contract.py の _render_due_warning / plugin/tests/test_sessionend_budget.py"
+    },
+    {
+      "incident_id": "INC-039-sessionend-audit-exceeds-hook-budget",
+      "index": 6,
+      "state": "pending",
+      "investigated": true,
+      "note": "調査の継続。他の口（Stop / PreCompact の capture-nudge、UserPromptSubmit の鼓動、PreToolUse のガード）の所要と待ちの上限の関係は未測定。ただし鼓動とガードには既にper-turn の受入（guard+linter の対で 1.0 秒未満。test_perf_gate.py）が在り、SessionEnd のような 8 秒級の乖離は構造上起きにくい。capture-nudge は未測定。"
+    },
+    {
+      "incident_id": "INC-039-sessionend-audit-exceeds-hook-budget",
+      "index": 7,
+      "state": "pending",
+      "investigated": true,
+      "note": "調査の継続。待ちの上限の正確な閾値と、切り離した子がプロセス群回収を生き延びるかは、他ホスト（desktop アプリ・別 OS）で未測定。現在の測定は Claude Code 2.1.223 をdevcontainer で動かした一環境に限られる。ADR-150 はこの値に依存しない設計にしてある。"
+    },
+    {
+      "incident_id": "INC-039-sessionend-audit-exceeds-hook-budget",
+      "index": 8,
+      "state": "pending",
+      "investigated": true,
+      "note": "調査の継続。SCN-D01 の測り直し。常時不達が解けて陽性対照が成立する土台ができたので、kill -9 したセッションの負債の印が残り次のセッションが告げるか、という修正前より鋭い観測点で測れる。処遇は assurance/ledger/red/SCN-D01-….json に phase: impossible として在る。"
+    },
+    {
+      "incident_id": "INC-039-sessionend-audit-exceeds-hook-budget",
+      "index": 9,
+      "state": "pending",
+      "investigated": true,
+      "note": "調査の継続。5 日間に注入された凍った要約の下流影響。部分的には既に測った —— その期間の未観測 warn 4 件はすべて本キャンペーン自身の残滓（ADR-147/149 の未着地・SPEC-029 の指紋・印なし）であり、PR #289 で 0 にした。残るのは『凍った要約を読んで下した判断に誤りが混じっていないか』の追跡で、これは未実施。"
     }
   ]
 }

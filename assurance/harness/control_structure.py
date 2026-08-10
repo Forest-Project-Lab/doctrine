@@ -96,16 +96,48 @@ ELEMENTS = (
         "name": "SessionEnd の全件監査",
         "kind": "sensor",
         "implemented_by": "plugin/scripts/docs-audit.py",
-        "control_actions": ["統治木を全件走査し、要約を .claude/.cache へ書く"],
+        # ADR-150 で二段に分かれた。口は予約するだけで走査しない —— ホストが
+        # SessionEnd の完了を待つ上限(実測 1 秒超〜2 秒未満)を、走査の所要
+        # (8〜9.5 秒)が必ず超えるからである(INC-039)。
+        "control_actions": [
+            "SessionEnd の口で監査を予約する（負債の印を置き、切り離した子へ渡す）",
+            "切り離した子が統治木を全件走査し、要約を .claude/.cache へ書く",
+            "要約を書けたときだけ負債の印を消す（走っただけでは消さない）",
+        ],
         # 宣言と実装の突合（INC-001 推奨#2 の着地）: この feedback の宣言を
         # 実際に stat する経路は observe_assumptions.py が持つ —— ASM-001 の
         # 観測が last-audit.json の generated_at と mtime を読み、ASM-002 の
         # 観測が checks_run 集合を現行 AUDIT_CHECKS と照合する。複製側の
         # 自己申告に依存しない外形観測がこれである（ADR-144）。
-        "feedback": [".claude/.cache/last-audit.json（次セッションの注入と鼓動が読む）"],
+        "feedback": [
+            ".claude/.cache/last-audit.json（次セッションの注入と鼓動が読む）",
+            # INC-039 推奨#2 の着地。成功したときだけ動く痕跡を生存の証拠に
+            # 読むと、不動作と無変化が区別できない。負債の印はその逆で、
+            # 済んでいないときにだけ在る。二つ揃って初めて両側が見える。
+            ".claude/.cache/audit-due/（済んでいない予約。契約注入が要約より先に読む）",
+        ],
         "known_gaps": [
-            "SessionEnd が発火しない終了（強制終了・環境の落ち）では走らず、"
-            "走らなかったこと自体は次セッションの古び警告でしか判らない（INC-001）",
+            "SessionEnd が発火しない終了（強制終了・環境の落ち）では口も走らないので"
+            "負債の印すら置かれない。そのセッションは統治の目から完全に落ちる（INC-001）",
+            "切り離した子がホストのプロセス群回収を生き延びるかはホスト依存である。"
+            "生き延びなければ監査は走らないが、負債の印は残る（覆っているのは"
+            "『走らなかったことが消えないこと』であって『必ず走ること』ではない。INC-039）",
+        ],
+    },
+    {
+        # INC-039 推奨#3 の着地。門は --fail-on error で判ずるので、warn と
+        # advisory を読み・追う責任がどの要素にも無かった。実際、本再監査
+        # キャンペーン自身が残した warn 4 件を 5 日間だれも見ていない。
+        "id": "WARNING_BACKLOG",
+        "name": "監査の警告（warn / advisory）の滞留",
+        "kind": "process",
+        "implemented_by": "doctrine_docs/packaging/procedures/PROC-001-development-norms.md",
+        "control_actions": [],
+        "feedback": ["last-audit.json の totals と top_findings"],
+        "known_gaps": [
+            "読み手は在る（契約注入が要約の先頭 5 件を運ぶ）が、滞留を異常と"
+            "する条件と、閉じる責任の割当は未定である。門を warn まで広げるか"
+            "別経路にするかは所有者判断（INC-039 推奨#4）",
         ],
     },
     {

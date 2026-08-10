@@ -771,7 +771,10 @@
         "切り離した子が完走することは実測したが、ホストが終了時にプロセス群ごと畳む環境では走らない。その場合も負債は残るので、走らなかったことは消えない —— 覆っているのは『消えないこと』であって『必ず走ること』ではない。",
         "SCN-D01 が主題とした異常終了の効果は、この不達に覆い隠されて分離できなかった。修正後に改めて測る必要がある。"
       ],
-      "evidence_note": "使い捨て git worktree と隔離した CLAUDE_CONFIG_DIR で claude -p を各 3 回。待ちの上限の走査（0/1/2/3/9 秒）と切り離しの生存確認、および実環境の session-flags と要約の突合。"
+      "evidence_note": "使い捨て git worktree と隔離した CLAUDE_CONFIG_DIR で claude -p を各 3 回。待ちの上限の走査（0/1/2/3/9 秒）と切り離しの生存確認、および実環境の session-flags と要約の突合。",
+      "cast_analysis": "done",
+      "cast_analysis_ref": "assurance/ledger/cast/INC-039-sessionend-audit-exceeds-hook-budget.json",
+      "cast_analyzed_at": "2026-08-10T00:11:09Z"
     }
   ]
 }
