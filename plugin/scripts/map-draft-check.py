@@ -59,9 +59,10 @@ import _frontmatter          # noqa: E402  日付の解釈の正本(ADR-099・AD
 # doctrine:begin SPEC-029
 SCHEMA = "map-draft-check/1"
 MODEL_SCHEMA = "system-map/gold-model/0.1"
-USAGE = ("map-draft-check.py --model PATH --repo PATH [--docs-root PATH] "
-         "[--repo-prefix NAME] [--today YYYY-MM-DD] [--trace-json PATH] "
-         "[--json]")
+USAGE = ("map-draft-check.py --model PATH "
+         "(--repo PREFIX=PATH [--repo PREFIX=PATH ...] | "
+         "--repo PATH [--repo-prefix NAME]) [--docs-root PATH] "
+         "[--today YYYY-MM-DD] [--trace-json [PREFIX=]PATH ...] [--json]")
 
 # 語彙の正本は lens 側 gold-model の schema.json(0.1)。ここはその写しである(D7)。
 ENUM_REVIEW_STATUS = ("proposed", "confirmed")
@@ -373,7 +374,8 @@ def _infer_repo_prefix(model):
 def check_d2(model, opts, git, findings, unver):
     """D2: 出所の実在。検証の道が無いものは所見にせず一覧へ回す。"""
     n = 0
-    if not opts.get("repo_prefix"):
+    if not opts.get("repos") and not opts.get("repo_prefix"):
+        # 多数派の推定は旧形(単一 --repo)だけ。新形は接頭が経路を名指しする。
         opts["default_prefix"] = _infer_repo_prefix(model)
     for sw, src in _iter_sources(model):
         n += 1
@@ -388,7 +390,8 @@ def _check_one_source(sw, src, opts, git, findings, unver):
         return
     source = source.strip()
     if source.startswith("http://") or source.startswith("https://"):
-        _check_url_source(sw, source, git, findings, unver)
+        _check_url_source(sw, source, list(opts["_gits"].values()),
+                          findings, unver)
         return
     m = SOURCE_RE.match(source)
     path = m.group(2).strip() if m else ""
@@ -397,16 +400,26 @@ def _check_one_source(sw, src, opts, git, findings, unver):
            "URL でもリポジトリ接頭付きパスでもない。機械検証の道が無い")
         return
     prefix, rev = m.group(1), m.group(3)
-    expected = opts["repo_prefix"] or opts.get("default_prefix")
-    if expected and prefix != expected:
-        # 他リポジトリを読んだという主張を、こちらの木に対して検証しない。
-        # --repo-prefix が無いときも接頭を無視しない —— 無視すると、別の
-        # リポジトリの主張が偶然こちらに在るパスで通ってしまう(INC-035)。
-        _u(unver, sw, source,
-           "接頭 %s は検証対象(%s)と異なる。他リポジトリの出所は機械検証できない"
-           % (prefix, expected))
-        return
-    abspath, why = _safe_join(opts["repo"], path)
+    if opts.get("repos"):
+        # 新形(ADR-158): 接頭ごとに出所をそのリポジトリで解決する。
+        if prefix not in opts["repos"]:
+            _u(unver, sw, source,
+               "接頭 %s はどの --repo にも合わない。機械検証の道が無い" % prefix)
+            return
+        repo = opts["repos"][prefix]
+        git = opts["_gits"][prefix]
+    else:
+        expected = opts["repo_prefix"] or opts.get("default_prefix")
+        if expected and prefix != expected:
+            # 他リポジトリを読んだという主張を、こちらの木に対して検証しない。
+            # --repo-prefix が無いときも接頭を無視しない —— 無視すると、別の
+            # リポジトリの主張が偶然こちらに在るパスで通ってしまう(INC-035)。
+            _u(unver, sw, source,
+               "接頭 %s は検証対象(%s)と異なる。他リポジトリの出所は機械検証できない"
+               % (prefix, expected))
+            return
+        repo = opts["repo"]
+    abspath, why = _safe_join(repo, path)
     if abspath is None:
         _f(findings, "D2_SOURCE_UNRESOLVED", sw, why)
         return
@@ -530,15 +543,21 @@ def _check_rev(sw, source, path, rev, git, findings, unver):
            "%s の時点に %s が無い(git cat-file -e)" % (rev, path))
 
 
-def _check_url_source(sw, source, git, findings, unver):
-    """URL は取得しない。blob URL でローカル履歴が知る SHA だけ局所で検める。"""
+def _check_url_source(sw, source, gits, findings, unver):
+    """URL は取得しない。blob URL でローカル履歴が知る SHA だけ局所で検める。
+
+    gits は問い合わせ先の一覧(旧形は一つ、新形は --repo ごと。ADR-158)。
+    どれかの履歴が SHA を知るときだけ、その履歴の中で検める。
+    """
     m = BLOB_URL_RE.search(source)
-    if m and git.available() and git.has_commit(m.group(1)):
-        if not git.has_object(m.group(1), m.group(2)):
-            _f(findings, "D2_SOURCE_UNRESOLVED", sw,
-               "blob URL の %s の時点に %s が無い"
-               % (m.group(1)[:12], m.group(2)))
-        return
+    if m:
+        for git in gits:
+            if git.available() and git.has_commit(m.group(1)):
+                if not git.has_object(m.group(1), m.group(2)):
+                    _f(findings, "D2_SOURCE_UNRESOLVED", sw,
+                       "blob URL の %s の時点に %s が無い"
+                       % (m.group(1)[:12], m.group(2)))
+                return
     _u(unver, sw, source, "URL は取得しない。機械検証不能として列挙する")
 
 
@@ -575,22 +594,41 @@ def check_d3(model, today, findings):
 
 # ---- D4: アンカーと追跡範囲 -------------------------------------------------
 
-def _trace_ranges(opts):
+def _trace_ranges(opts, prefix=None):
     """追跡範囲を得る。--trace-json 優先、無ければ同じディレクトリの
     trace-index.py を子プロセスで実行する(入口は入口を取り込まない)。
+    prefix は新形(--repo 接頭=経路)の接頭。旧形は None(ADR-158)。
     得られなければ (None, 理由) を返す。"""
-    if opts["trace_json"]:
+    if prefix in opts["_trace_cache"]:
+        return opts["_trace_cache"][prefix]
+    result = _trace_ranges_uncached(opts, prefix)
+    opts["_trace_cache"][prefix] = result
+    return result
+
+
+def _trace_ranges_uncached(opts, prefix):
+    injected = (opts["trace_jsons"].get(prefix) if prefix is not None
+                else opts["trace_json"])
+    if injected:
         try:
-            with open(opts["trace_json"], "r", encoding="utf-8") as fh:
+            with open(injected, "r", encoding="utf-8") as fh:
                 payload = json.load(fh)
         except (OSError, ValueError) as exc:
             return None, "--trace-json が読めない(%r)" % (exc,)
     else:
+        repo = (opts["repos"][prefix] if prefix is not None
+                else opts["repo"])
         here = os.path.dirname(os.path.abspath(__file__))
         cmd = [sys.executable, os.path.join(here, "trace-index.py"),
-               "--root", opts["repo"], "--format", "json"]
-        if opts["docs_root"]:
-            cmd += ["--docs-root", opts["docs_root"]]
+               "--root", repo, "--format", "json"]
+        docs_root = opts["docs_root"]
+        if prefix is not None and repo != opts.get("_first_repo"):
+            # 接頭ごとの木では、その木の統治木だけを渡す(他の木の統治木を
+            # 混ぜない)。無ければ trace-index 側の解決に任せる。
+            cand = os.path.join(repo, "doctrine_docs")
+            docs_root = cand if os.path.isdir(cand) else None
+        if docs_root:
+            cmd += ["--docs-root", docs_root]
         try:
             proc = subprocess.run(cmd, stdout=subprocess.PIPE,
                                   stderr=subprocess.PIPE, timeout=300)
@@ -608,22 +646,44 @@ def _trace_ranges(opts):
     return (ranges if isinstance(ranges, list) else []), None
 
 
+def _range_paths(ranges):
+    return sorted({r.get("path") for r in ranges
+                   if isinstance(r, dict) and r.get("path")})
+
+
 def check_d4(model, opts, git, findings, unver):
     """D4: doctrine 権威の code_range アンカーは追跡範囲と一致し、
-    source_revision の commit が履歴に実在する。"""
+    source_revision の commit が履歴に実在する。
+
+    新形(複数 --repo。ADR-158)では、アンカーの target の接頭が合う
+    リポジトリの索引と履歴に対して検める。接頭がどの --repo にも合わない
+    (または無い)アンカーは機械検証不能へ回す(検証の道を偽らない)。
+    """
     anchors = [(w, a) for w, a in _named(model, "anchors")
                if a.get("target_kind") == "code_range"
                and a.get("authority") == "doctrine"]
     if not anchors:
         return
-    ranges, why = _trace_ranges(opts)
-    paths = []
-    if ranges is not None:
-        paths = sorted({r.get("path") for r in ranges
-                       if isinstance(r, dict) and r.get("path")})
+    multi = bool(opts.get("repos"))
+    ranges, why, paths = None, None, []
+    if not multi:
+        ranges, why = _trace_ranges(opts)
+        if ranges is not None:
+            paths = _range_paths(ranges)
     for where, anchor in anchors:
         target = anchor.get("target")
         target = target if isinstance(target, str) else ""
+        a_git = git
+        if multi:
+            pm = SOURCE_RE.match(target.strip()) if target else None
+            a_prefix = pm.group(1) if pm else None
+            if a_prefix is None or a_prefix not in opts["repos"]:
+                _u(unver, where, target,
+                   "アンカーの接頭がどの --repo にも合わない。機械検証の道が無い")
+                continue
+            ranges, why = _trace_ranges(opts, a_prefix)
+            paths = _range_paths(ranges) if ranges is not None else []
+            a_git = opts["_gits"][a_prefix]
         if ranges is None:
             _u(unver, where, target, "追跡範囲が得られない: %s" % why)
         elif not any(p in target for p in paths):
@@ -632,7 +692,7 @@ def check_d4(model, opts, git, findings, unver):
                % target)
         rev = anchor.get("source_revision")
         if isinstance(rev, str) and rev:
-            _check_anchor_rev(where, rev, git, findings, unver)
+            _check_anchor_rev(where, rev, a_git, findings, unver)
 
 
 def _check_anchor_rev(where, rev, git, findings, unver):
@@ -703,27 +763,85 @@ def _render_text(model_path, findings, unver, totals):
     return "\n".join(out)
 
 
+_PREFIX_RE = re.compile(r"^[\w.-]+$")
+
+
+def _split_prefixed(value):
+    """`接頭=経路` の形なら (接頭, 経路) を、そうでなければ (None, value) を返す。"""
+    if "=" in value:
+        prefix, path = value.split("=", 1)
+        if _PREFIX_RE.match(prefix) and path:
+            return prefix, path
+    return None, value
+
+
 def _parse_args(argv):
-    """最小の引数解析。誤りがあれば (None, 理由) を返す。"""
-    opts = {"model": None, "repo": None, "docs_root": None,
+    """最小の引数解析。誤りがあれば (None, 理由) を返す。
+
+    `--repo` は `接頭=経路` の反復(ADR-158)か、旧形の単一経路のどちらか。
+    黙る後勝ちは置かない —— 同じ接頭の二度渡し・旧形の二度渡し・旧新の混在は
+    使い方の誤りに倒す(誤りを飲み込む口は境界が沈黙して開く形と同族)。
+    """
+    opts = {"model": None, "repo": None, "repos": {}, "docs_root": None,
             "repo_prefix": None, "default_prefix": None, "today": None,
-            "trace_json": None, "json": False}
-    flags = {"--model": "model", "--repo": "repo", "--docs-root": "docs_root",
-             "--repo-prefix": "repo_prefix", "--today": "today",
-             "--trace-json": "trace_json"}
+            "trace_json": None, "trace_jsons": {}, "json": False}
+    flags = {"--model": "model", "--docs-root": "docs_root",
+             "--repo-prefix": "repo_prefix", "--today": "today"}
     i = 0
     while i < len(argv):
         a = argv[i]
         if a == "--json":
             opts["json"] = True
             i += 1
+        elif a == "--repo" and i + 1 < len(argv):
+            prefix, path = _split_prefixed(argv[i + 1])
+            if prefix is not None:
+                if opts["repo"] is not None:
+                    return None, "--repo の旧形(経路だけ)と新形(接頭=経路)は混ぜない"
+                if prefix in opts["repos"]:
+                    return None, "--repo の接頭 %s が二度渡された" % prefix
+                opts["repos"][prefix] = path
+            else:
+                if opts["repos"]:
+                    return None, "--repo の旧形(経路だけ)と新形(接頭=経路)は混ぜない"
+                if opts["repo"] is not None:
+                    return None, "--repo が二度渡された(後勝ちにしない)"
+                opts["repo"] = path
+            i += 2
+        elif a == "--trace-json" and i + 1 < len(argv):
+            prefix, path = _split_prefixed(argv[i + 1])
+            if prefix is not None:
+                if opts["trace_json"] is not None:
+                    return None, "--trace-json の旧形と新形(接頭=経路)は混ぜない"
+                if prefix in opts["trace_jsons"]:
+                    return None, "--trace-json の接頭 %s が二度渡された" % prefix
+                opts["trace_jsons"][prefix] = path
+            else:
+                if opts["trace_jsons"]:
+                    return None, "--trace-json の旧形と新形(接頭=経路)は混ぜない"
+                if opts["trace_json"] is not None:
+                    return None, "--trace-json が二度渡された(後勝ちにしない)"
+                opts["trace_json"] = path
+            i += 2
         elif a in flags and i + 1 < len(argv):
+            if opts[flags[a]] is not None:
+                return None, "%s が二度渡された(後勝ちにしない)" % a
             opts[flags[a]] = argv[i + 1]
             i += 2
         else:
             return None, "不明な引数か値の欠落: %s" % a
-    if not opts["model"] or not opts["repo"]:
+    if not opts["model"] or not (opts["repo"] or opts["repos"]):
         return None, "--model と --repo は必須"
+    if opts["repos"] and opts["repo_prefix"]:
+        return None, "--repo-prefix は旧形(--repo 経路)とだけ使う"
+    if opts["trace_jsons"] and not opts["repos"]:
+        return None, "--trace-json の接頭は --repo 接頭=経路 と共に使う"
+    if opts["trace_json"] and opts["repos"]:
+        return None, "複数 --repo では --trace-json も 接頭=経路 で渡す"
+    unknown = set(opts["trace_jsons"]) - set(opts["repos"])
+    if unknown:
+        return None, ("--trace-json の接頭 %s に対応する --repo が無い"
+                      % ", ".join(sorted(unknown)))
     if opts["today"] is not None:
         today = _frontmatter.parse_date(opts["today"])
         if today is None:
@@ -741,16 +859,28 @@ def main(argv=None):
     if not os.path.isfile(opts["model"]):
         sys.stderr.write("モデルが無い: %s\n" % opts["model"])
         return 3
-    if not os.path.isdir(opts["repo"]):
-        sys.stderr.write("リポジトリの根が無い: %s\n" % opts["repo"])
-        return 3
-    if opts["trace_json"] and not os.path.isfile(opts["trace_json"]):
-        sys.stderr.write("--trace-json が無い: %s\n" % opts["trace_json"])
-        return 3
+    repo_list = (list(opts["repos"].items()) if opts["repos"]
+                 else [(None, opts["repo"])])
+    for prefix, path in repo_list:
+        if not os.path.isdir(path):
+            name = ("%s=%s" % (prefix, path)) if prefix else path
+            sys.stderr.write("リポジトリの根が無い: %s\n" % name)
+            return 3
+    for prefix, path in ([(None, opts["trace_json"])] if opts["trace_json"]
+                         else list(opts["trace_jsons"].items())):
+        if path and not os.path.isfile(path):
+            name = ("%s=%s" % (prefix, path)) if prefix else path
+            sys.stderr.write("--trace-json が無い: %s\n" % name)
+            return 3
+    first_repo = repo_list[0][1]
+    opts["_first_repo"] = first_repo
     if not opts["docs_root"]:
-        cand = os.path.join(opts["repo"], "doctrine_docs")
+        cand = os.path.join(first_repo, "doctrine_docs")
         if os.path.isdir(cand):
             opts["docs_root"] = cand
+    # 接頭ごとの git(ADR-158)。旧形は None 鍵の一つだけ。
+    opts["_gits"] = {prefix: _Git(path) for prefix, path in repo_list}
+    opts["_trace_cache"] = {}
     findings, unver = [], []
     try:
         with open(opts["model"], "r", encoding="utf-8") as fh:
@@ -774,7 +904,7 @@ def main(argv=None):
         model = None
     n_sources = 0
     if model is not None:
-        git = _Git(opts["repo"])
+        git = opts["_gits"].get(None) or _Git(first_repo)
         check_d7(model, findings)
         check_d1(model, findings)
         check_provenance_present(model, findings)

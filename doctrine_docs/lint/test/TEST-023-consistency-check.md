@@ -6,7 +6,7 @@ domain: lint
 status: current
 owner: doctrine-maintainers
 created: 2026-07-26
-updated: 2026-08-07
+updated: 2026-08-13
 sources: [scripts/consistency-check.py, plugin/tests/test_linter.py]
 depends_on: [SPEC-023]
 llm_context: task

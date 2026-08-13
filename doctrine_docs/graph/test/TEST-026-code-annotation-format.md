@@ -6,7 +6,7 @@ domain: graph
 status: current
 owner: doctrine-maintainers
 created: 2026-07-27
-updated: 2026-07-28
+updated: 2026-08-13
 sources: [doctrine_docs/graph/spec/SPEC-026-code-annotation-format.md]
 depends_on: [SPEC-026]
 llm_context: task

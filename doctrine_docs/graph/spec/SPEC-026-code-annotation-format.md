@@ -6,7 +6,7 @@ domain: graph
 status: current
 owner: doctrine-maintainers
 created: 2026-07-27
-updated: 2026-07-28
+updated: 2026-08-13
 sources: [doctrine_docs/graph/decisions/ADR-054-code-range-scope-expansion.md]
 depends_on: [REQ-003]
 llm_context: task
@@ -42,7 +42,8 @@ ADR-054 が定めた追跡の終点（注釈の対が囲むコードの範囲）
 - 引数は `[--root PATH] [--docs-root PATH] [--id ID] [--coverage] [--term TERM] [--format json|text] [--max-files N]`。
 - `--id` を与えると、その仕様に対応する範囲だけを返す（仕様の側から見た逆リンク）。与えなければ全ての範囲を返す。
 - `--coverage` は勘定（件数）を返す。`--term` を添えると、その項の一覧（`annotated`・`unmarked`・`excluded:<規則id>`・`pruned:<規則id>`）をその場で導出して返す。`--term` は `--coverage` と共にだけ使え、規則の表に無い項は使い方の誤りとする。
-- `json` は `{"schema": "trace-index/1", "root": <相対の基準>, "ranges": [...], "findings": [...]}`。`root` は名前だけを載せ、絶対パスを載せない。
+- `json` は `{"schema": "trace-index/1", "root": <相対の基準>, "source_revision": <完全SHA|null>, "source_dirty": <真偽|null>, "generator": {...}, "ranges": [...], "findings": [...]}`。`root` は名前だけを載せ、絶対パスを載せない。
+- `source_revision`（測った木の版。HEAD（作業木が向いているコミット）の完全 SHA（コミットを一意に指す指紋）か null）・`source_dirty`・`generator` は、`--coverage` 系の返す値にも同じ意味で載る（ADR-155）。解決は共有の補助 `_revinfo.py` に一本化する。鍵の追加は互換であり、読み手は未知の最上位の鍵を読み捨てる（確定事実13）。
 - 終了コードは、問い合わせが成立すれば所見の有無にかかわらず 0、使い方を誤れば 2、根が見つからなければ 3 とする。これは問い合わせのための CLI であって、違反を止めるゲートではない（dep-graph と同じ規約）。
 
 ### 記録と宣言（仕様の側）
@@ -136,9 +137,10 @@ ADR-054 が定めた追跡の終点（注釈の対が囲むコードの範囲）
 
 ## 実装の指紋
 
-対象は印と疑いと宣言の照合の正本。更新は `trace-index.py --id SPEC-026` が返す行を写す（ADR-061）。
+対象は印と疑いと宣言の照合の正本、および測った木の版の解決（`_revinfo.py`。ADR-155）。更新は `trace-index.py --id SPEC-026` が返す行を写す（ADR-061）。
 
 - sha256:40cd012442bc2335ede11258996a5b74757a75c1a4d7ab7f56c163f8fbcce487
+- sha256:9e7681dea279d43d23a110149e2d8899bfc27dc3bf6d7c87416712a9ea44640a
 - sha256:d2ab67666bb9a45ca5015b1157e7d36e46811bfaddfa2b9b9d23675dcd0fc338
 - sha256:fbaad0db88469a98dfa490ce1d97bf0a5f980617f9163d88aa7983d98137e08e
 

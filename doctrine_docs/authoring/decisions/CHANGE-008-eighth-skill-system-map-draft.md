@@ -6,7 +6,7 @@ domain: authoring
 status: current
 owner: doctrine-maintainers
 created: 2026-08-07
-updated: 2026-08-07
+updated: 2026-08-13
 sources: ["https://github.com/Forest-Project-Lab/doctrine/issues/212"]
 depends_on: [SPEC-016]
 llm_context: task

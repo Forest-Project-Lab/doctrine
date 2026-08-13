@@ -6,7 +6,7 @@ domain: authoring
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-08-07
+updated: 2026-08-13
 sources: [spec/doctrine.ja.md §4.1]
 depends_on: [SPEC-016, SPEC-017]
 llm_context: task

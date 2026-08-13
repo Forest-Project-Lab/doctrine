@@ -6,8 +6,8 @@ domain: graph
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-27
-sources: [plugin/scripts/_depgraph.py]
+updated: 2026-08-13
+sources: [plugin/scripts/_depgraph.py, plugin/scripts/dep-graph.py]
 depends_on: [REQ-002, REQ-003, ICD-001]
 llm_context: task
 ---
@@ -35,6 +35,16 @@ llm_context: task
   - **唯一の例外**: `depends_on` と `impacts` は、生のフロントマターの値ではなく**索引の値**（解決済みの端）を返す。読み手にはこちらが有用である。
   - 組み立てと直列化の項が一致することは受入が凍らせる。正本を書いても、一致を機械が見ていなければまたずれる。
 
+### CLI の返す値（dep-graph/1。ADR-153・ADR-154・ADR-155）
+
+CLI `dep-graph.py` が `--json` で返す値の形。入口の宣言は ICD-002 が持ち、ここは詳細の正本である。
+
+- 最上位の鍵は `{schema: "dep-graph/1", root: <名前だけ>, source_revision, source_dirty, generator, mode, nodes, edges, result}`（`--impacts`・`--dependents`・`--reverse-refs` では `id` が、`--reverse-refs` では `count` が加わる）。`nodes` は `to_json()` の節点、`edges` は `classify_edges()` の分類済みの端。
+- `--classify-edges` の `result` は `edges` と同じ内容の重複である（互換のため残す。ADR-153）。
+- `--find-root [開始位置]` はグラフを組まず、登録簿の遡り（ADR-022 の規則の実装）で統治木を探し、`result` に統治木の絶対パスを返す。見つからなければ `result` は null・終了コード 3。この形では `nodes`・`edges` は空とする（走査の値段を払わせない）。
+- `source_revision`・`source_dirty`・`generator` の意味は ADR-155 のとおり（git の HEAD（作業木が向いているコミット）の完全 SHA（コミットを一意に指す指紋）か null・未コミット変更の有無・`{name, version}`）。解決は共有の補助 `_revinfo.py` に一本化し、各スクリプトで再実装しない。
+- 診断（根が無い等）は標準エラーへ出す。stdout は返す値（または人向けの本文）だけとする。
+
 ## 制約
 
 - 標準ライブラリだけで実装する。pip も通信も使わない。
@@ -59,4 +69,4 @@ llm_context: task
 
 ## 受入基準
 
-TEST-006 で確認する。受入シナリオの識別子（TC：以下に挙げる番号）ごとに、次のすべてに合格すること。前向き影響集合（TC-113..116）、逆依存を現行文書のみに絞る挙動（TC-078・TC-090）、端の分類（intra_domain / cross_domain_icd / cross_domain_violation / dangling、TC-069..072・TC-117・TC-123・TC-083）、逆孤児を二種類に分ける検査（TC-093..095）。
+TEST-006 で確認する。受入シナリオの識別子（TC：以下に挙げる番号）ごとに、次のすべてに合格すること。前向き影響集合（TC-113..116）、逆依存を現行文書のみに絞る挙動（TC-078・TC-090）、端の分類（intra_domain / cross_domain_icd / cross_domain_violation / dangling、TC-069..072・TC-117・TC-123・TC-083）、逆孤児を二種類に分ける検査（TC-093..095）。CLI の返す値（`dep-graph/1` の鍵・`result` と `edges` の重複・`--find-root` の絶対パスと終了コード 3・診断が stdout を汚さないこと・三鍵の三態）も TEST-006 で確認する（ADR-153・ADR-154・ADR-155）。

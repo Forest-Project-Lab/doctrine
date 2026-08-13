@@ -6,7 +6,7 @@ domain: authoring
 status: current
 owner: doctrine-maintainers
 created: 2026-08-07
-updated: 2026-08-07
+updated: 2026-08-13
 sources: [plugin/scripts/map-draft-check.py]
 depends_on: [SPEC-016]
 llm_context: task
@@ -35,7 +35,8 @@ llm_context: task
 
 ## 入出力
 
-- 引数: `--model PATH`（検査対象の JSON）、`--repo PATH`（出所を解決するリポジトリの根）、`--docs-root PATH`（任意。無指定なら `--repo` 直下の `doctrine_docs` を使う）、`--repo-prefix NAME`（任意。この接頭の出所だけを `--repo` で解決し、別の接頭は機械検証不能の一覧へ回す）、`--today YYYY-MM-DD`（任意。日付の上限。無指定なら形だけ検める）、`--trace-json PATH`（任意。`trace-index/1` の JSON を注入する。無指定なら同じディレクトリの `trace-index.py` を子プロセスで実行する）、`--json`。
+- 引数: `--model PATH`（検査対象の JSON）、`--repo <接頭>=<経路>`（**反復可**。接頭ごとに出所をそのリポジトリの根で解決する。ADR-158）、旧形 `--repo PATH` 一つ＋任意の `--repo-prefix NAME`（後方互換。この接頭の出所だけを `--repo` で解決する）、`--docs-root PATH`（任意。無指定なら最初の `--repo` 直下の `doctrine_docs` を使う）、`--today YYYY-MM-DD`（任意。日付の上限。無指定なら形だけ検める）、`--trace-json <接頭>=<経路>` または旧形 `--trace-json PATH`（任意。`trace-index/1` の JSON を接頭ごとに注入する。無い接頭は対応するリポジトリで `trace-index.py` を子プロセス実行して読む）、`--json`。
+- 引数の誤りは黙って飲み込まない: 旧形と新形の混在、同じ接頭の二度渡し、`=` 無し `--repo` の二度渡し、どの `--repo` にも `=` が無いのに `--trace-json` に接頭があるときは、使い方の誤り（終了コード 2）に倒す（黙る後勝ちの廃止。ADR-158）。どの接頭にも合わない出所は従来どおり機械検証不能の一覧へ回す。
 - 返す値: 人が読む日本語の報告。`--json` は `{"schema": "map-draft-check/1", "model": 名前, "findings": [...], "unverifiable": [...], "totals": {...}}` を返す。所見（findings）と機械検証不能（unverifiable）は別の一覧であり、混ぜない。
 - 終了コード: 0 所見なし / 1 所見あり / 2 使い方の誤り / 3 対象（モデル・リポジトリの根・`--trace-json` の実体）が無い。ICD-002 の 0/2/3 の規約に、所見あり=1（`docs-linter --batch` と同じ）を加えた形である。
 
@@ -72,7 +73,7 @@ llm_context: task
 
 対象は検査の本体。更新は `trace-index.py --id SPEC-029` が返す行を写す（ADR-061）。
 
-- sha256:3fd52cb45c94e84abfd687927940e3f582985fee7e39d4c3bb8e22d5f66a68d7
+- sha256:c4d0481dd605bf274145438ab0ce0446288211eba199f6d9bb844a2fee6e4d2e
 
 ## 受入基準
 
@@ -84,7 +85,9 @@ llm_context: task
 - 負の出所を欠く `unknown` の Contract が `D6` で挙がり、持つものは挙がらないこと。
 - `confirmed` を名乗る実体が `D1` で挙がること。
 - 最上位の必須キーの欠落・語彙の外れ値・`from`/`to` の欠落が `D7` で挙がること。
-- URL・会話・別接頭の出所が所見にならず、機械検証不能の一覧に載ること。git の無い木で `@rev` と `source_revision` の検査が機械検証不能へ退くこと。
+- URL・会話・どの `--repo` にも合わない接頭の出所が所見にならず、機械検証不能の一覧に載ること。git の無い木で `@rev` と `source_revision` の検査が機械検証不能へ退くこと。
+- `--repo <接頭>=<経路>` を二つ渡した二リポジトリの模型で、両方の接頭の出所が解決され、片側だけ渡した走行では合わない接頭が機械検証不能に載ること（ADR-158）。
+- 旧形と新形の混在・同じ接頭の二度渡し・`=` 無し `--repo` の二度渡しが、使い方の誤り（終了コード 2）で拒まれること。
 - 終了コードが 0/1/2/3 になること。`--json` が宣言の形を返すこと。
 - 観点ごとの対応は TEST-029 に示す。
 

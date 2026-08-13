@@ -6,8 +6,8 @@ domain: authoring
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-08-07
-sources: [spec/doctrine.ja.md §4.1]
+updated: 2026-08-13
+sources: [spec/doctrine.ja.md §4.1, plugin/scripts/map-draft-check.py, plugin/scripts/scaffold.py]
 llm_context: task
 canonical_for: [scaffolding, term-extraction, skills, templates]
 ---
@@ -41,6 +41,12 @@ authoring ドメインは、型付き文書を正しい置き場所と様式で�
 - doc-author が作る文書の様式: すべての文書は §3.4 のフロントマター（文書先頭の YAML メタデータ）を持つ。`id` はファイル名と一致させ、型ごとに決められた置き場所に従う。
 - scaffold が置く最小集合: `doctrine_docs/_system/{glossary,decided-facts,non-goals,overview}.md`、`AGENTS.md`・`CLAUDE.md`、`doctrine_docs/_system/.docs-level`（`level: N` の一行で、いま使われている Level を公開する）。
 - term-extract が出す候補表: `text`・`json`・`csv` の3様式。いずれにも、これは候補にすぎず採否は人が決める旨の注記を付ける。
+
+### 外部条項（体系の外の消費者が依存してよい口。確定事実13）
+
+- 出所検証の門: `map-draft-check.py --json` の返す値（`map-draft-check/1`）だけに依存してよい（ADR-158）。形と検査の正本は SPEC-029。引数は `--repo <接頭>=<経路>` の反復を受け、同じ接頭の二度渡しと旧形・新形の混在は使い方の誤り（終了コード 2）に倒す。
+- 必須節の名の問い合わせ: `scaffold.py --list-sections [--type <型>] --json` の返す値（`scaffold-sections/1`。`{"schema", "sections": {<型>: [<節名>…]}, "generator"}`）だけに依存してよい（ADR-159）。正本は登録簿（ICD-001）のまま動かさず、この口は写しではなく参照である。未知の型は使い方の誤り（終了コード 2）。
+- 進化の規約は確定事実13（ADR-152）に従う —— 鍵の追加は互換、読み手は未知の最上位の鍵を読み捨て、互換を壊す変更はスキーマ名の版を上げる。機械向けの JSON は stdout へ、診断は標準エラーへ。
 
 ## 依存してよい入口
 

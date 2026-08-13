@@ -6,7 +6,7 @@ domain: lint
 status: current
 owner: doctrine-maintainers
 created: 2026-07-26
-updated: 2026-08-03
+updated: 2026-08-13
 sources: [plugin/scripts/review-nudge.py]
 depends_on: [ICD-004]
 llm_context: task

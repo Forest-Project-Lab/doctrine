@@ -6,7 +6,7 @@ domain: graph
 status: current
 owner: doctrine-maintainers
 created: 2026-08-03
-updated: 2026-08-03
+updated: 2026-08-13
 sources: [https://github.com/Forest-Project-Lab/doctrine/issues/204, plugin/scripts/trace-index.py]
 depends_on: [ICD-002, SPEC-026]
 llm_context: task

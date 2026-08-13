@@ -6,8 +6,8 @@ domain: audit
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-08-07
-sources: [spec/doctrine.ja.md#4.2]
+updated: 2026-08-13
+sources: [spec/doctrine.ja.md#4.2, plugin/scripts/docs-audit.py]
 canonical_for: [corpus-audit, audit-summary-schema, intake-ledger-format, view-stamp-format]
 llm_context: task
 ---
@@ -30,7 +30,7 @@ ICD・正本・投影・現行・依存・参照は用語辞書（`_system/gloss
 
 - `corpus-audit`: 全件監査の検査群と、各検査の重大度。
 - `intake-ledger-format`: 分類の記録（`_system/.md-intake`）の書式の正本。一行一項目 `パス: 非文書|投影|保留|ビュー [YYYY-MM-DD]`（保留は期限必須。末尾 `/` は配下全体）。照合は完全一致をプレフィクスより優先する（ADR-073。一括分類の配下から一件だけを別分類に取り出せる）。ビューと分類した文書は刻印を必ず持つ。読み取りは共有コア `_intake.py`（IMPL-018）に一本化する。
-- `view-stamp-format`: 刻印（ビューが記す参照時点。ADR-073）の書式の正本。ファイル内の一行 `<!-- doctrine:view src=<出所> as-of=<版> date=<YYYY-MM-DD> refs=<id,…> -->`。`src`（出所のリポジトリ名）と `date` は必須。`as-of`（出所の版。本リポジトリでは plugin.json の version）と `refs`（参照した文書 id のカンマ区切り）は任意。HTML コメントの外の同形の行も受理する。
+- `view-stamp-format`: 刻印（ビューが記す参照時点。ADR-073）の書式の正本。ファイル内の一行 `<!-- doctrine:view src=<出所> as-of=<版> date=<YYYY-MM-DD> refs=<id,…> -->`。`src`（出所のリポジトリ名）と `date` は必須。`as-of`（出所の版。本リポジトリでは plugin.json の version）と `refs`（参照した文書 id のカンマ区切り）は任意。HTML コメントの外の同形の行も受理する。**外部の表示製品（リポジトリの外の消費者）も同じ書式を使ってよい**（ADR-157）—— そのとき `src` は消費者（製品）の名、`as-of` は参照した doctrine の参照点（tag と SHA（コミットを一意に指す指紋））とする。doctrine が検査するのは自リポジトリ内のビューだけであり、外部の刻印は検査しない。
 - `audit-summary-schema`: 監査の要約スキーマ `docs-audit/1` の形。
 
 検査と重大度（固定）。名前の正本は `docs-audit.py` の `AUDIT_CHECKS` であり、
@@ -83,7 +83,9 @@ ICD・正本・投影・現行・依存・参照は用語辞書（`_system/gloss
 他ドメインが依存してよい入出力を定める。
 
 - 入力: 統治木のルート、`--config`（調整値）、`--today YYYY-MM-DD`（基準日。同じ値なら毎回同じ結果になる）。
-- 返す値: 要約スキーマ `docs-audit/1`。形は `{schema, generated_at, today, root, totals:{error,warn,advisory}, counts_by_check, checks_run, top_findings, findings}`。`top_findings` は error を先頭に並べ、上限 20 件とする。
+- 返す値: 要約スキーマ `docs-audit/1`。形は `{schema, generated_at, today, root, source_revision, source_dirty, generator, totals:{error,warn,advisory}, counts_by_check, checks_run, top_findings, findings}`。`top_findings` は error を先頭に並べ、上限 20 件とする。`source_revision`・`source_dirty`・`generator` の意味は graph の宣言（ICD-002「測った木の版と作り手」。ADR-155）と同じで、本ドメインで再定義しない（ADR-156）。鍵の追加は互換であり、読み手は未知の最上位の鍵を読み捨ててよい。互換を壊す変更はスキーマ名の版を上げる（確定事実13。ADR-152）。
+- `root` の意味: 絶対パスに正規化して書く（ADR-156）。理由は注入側の照合 —— 相対の root は他プロジェクトの所見の誤注入を捨てるために照合不能として扱われる（SPEC-012）。追跡索引の `root`（名前だけ。ICD-002）とは問いが違い、揃えない。「同じ木を測ったか」の照合には `source_revision` を使う。
+- `findings` の各項の形: `{check, severity, doc_id, path, message, refs}`（ADR-156）。`severity` の語彙は error・warn・advisory で、重大度の正本は本 ICD の検査表のとおり。
 - 終了コード: SessionEnd 経路（`--fail-on never`）は常に 0 を返し、セッションの後始末を妨げない。CI 経路（`--fail-on error`）は error 所見が一つでもあれば 1 を返す。
 - context ドメインへの注入との受け渡し: 監査は要約を `${CLAUDE_PROJECT_DIR}/.claude/.cache/last-audit.json`（プロジェクトスコープ。ADR-037）へ書く。書き込みは一時ファイルを経て一括で差し替え、途中状態を残さない。次のセッションで context の SessionStart 注入がこの要約を読む（読み手はプロジェクトスコープを先に、旧 `${CLAUDE_PLUGIN_ROOT}/.cache` を後方互換の最後に見る）。
 - 外部利用者（リポジトリの外の表示製品を含む）の読み口: `docs-audit.py --root <統治木> --json` を実行して返る値（`docs-audit/1`）**だけ**に依存してよい（ADR-137）。`--today` を渡せば決定論になる。`.claude/.cache/last-audit.json` は体系内部の受け渡しであり、直読みは契約の外である。

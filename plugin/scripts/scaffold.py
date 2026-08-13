@@ -14,6 +14,11 @@
 
 CLI:
   scaffold.py [--level {2,3,4}] [--root PATH] [--dry-run] [--fallback]
+  scaffold.py --list-sections [--type TYPE] [--json]
+    必須節の名の問い合わせ(ADR-159。ICD-007 の外部条項)。足場を一切書かず、
+    登録簿(REQUIRED_SECTIONS)をその場で読んで返す(写しではなく参照)。
+    --json は {"schema": "scaffold-sections/1", "sections": {...}, "generator": {...}}。
+    未知の型は使い方の誤り(2)。
 作る対象(これだけ。存在すれば飛ばす。原子的・冪等)。統治木は既定で
 doctrine_docs/(ADR-022。既に docs/_system が在るなら docs/ を使い続ける):
   <統治木>/_system/glossary.md      GLOSSARY(§1 の承認語表+カルク表を種にする)
@@ -299,6 +304,9 @@ def _parse_args(argv):
         "dry_run": False,
         "fallback": False,
         "today": None,
+        "list_sections": False,
+        "type": None,
+        "json": False,
     }
     i = 0
     n = len(argv)
@@ -345,7 +353,27 @@ def _parse_args(argv):
             opts["fallback"] = True
             i += 1
             continue
+        if a == "--list-sections":
+            opts["list_sections"] = True
+            i += 1
+            continue
+        if a == "--type" or a.startswith("--type="):
+            if "=" in a:
+                opts["type"] = a.split("=", 1)[1]
+                i += 1
+            else:
+                if i + 1 >= n:
+                    return None, "--type には型コードが必要"
+                opts["type"] = argv[i + 1]
+                i += 2
+            continue
+        if a == "--json":
+            opts["json"] = True
+            i += 1
+            continue
         return None, "不明な引数: %s" % a
+    if (opts["type"] or opts["json"]) and not opts["list_sections"]:
+        return None, "--type と --json は --list-sections と共に使う"
     return opts, None
 
 
@@ -353,8 +381,34 @@ def _usage(msg):
     sys.stdout.write("usage error: %s\n" % msg)
     sys.stdout.write(
         "scaffold.py [--level {2,3,4}] [--root PATH] [--dry-run] [--fallback]\n"
+        "scaffold.py --list-sections [--type TYPE] [--json]\n"
     )
     return 2
+
+
+def _list_sections(opts):
+    """必須節の名の問い合わせ(ADR-159)。登録簿をその場で読む。書かない。"""
+    if opts["type"] is not None:
+        t = opts["type"].strip().upper()
+        if t not in _registry.TYPES:
+            return _usage("未知の型: %s(登録簿に無い)" % opts["type"])
+        wanted = [t]
+    else:
+        # 必須節を課す全型(登録簿の整列順)。課さない型は載せない。
+        wanted = sorted(_registry.REQUIRED_SECTIONS.keys())
+    sections = {t: list(_registry.required_sections(t)) for t in wanted}
+    if opts["json"]:
+        import json as _json
+        import _revinfo
+        payload = {"schema": "scaffold-sections/1", "sections": sections,
+                   "generator": _revinfo.generator_info("scaffold.py")}
+        sys.stdout.write(_json.dumps(payload, ensure_ascii=False,
+                                     sort_keys=True, indent=2) + "\n")
+        return 0
+    for t in wanted:
+        names = sections[t]
+        sys.stdout.write("%s: %s\n" % (t, "、".join(names) if names else "(無し)"))
+    return 0
 
 
 # ---------------------------------------------------------------------------
@@ -467,6 +521,10 @@ def main(argv=None):
     opts, err = _parse_args(list(argv))
     if err is not None:
         return _usage(err)
+
+    if opts["list_sections"]:
+        # 問い合わせの口(ADR-159)。足場づくりへ進まない(読みだけ)。
+        return _list_sections(opts)
 
     try:
         created = _today_iso(opts["today"])
