@@ -28,6 +28,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import _config
 import _registry  # noqa: E402
+import _revinfo  # noqa: E402
 import _tracescan  # noqa: E402
 
 # doctrine:begin SPEC-026
@@ -148,6 +149,10 @@ def main(argv=None):
         sys.stderr.write("走査の根が見つからない\n")
         return 3
 
+    # 測った木の版と作り手(ADR-155)。どの返す値にも同じ三鍵を載せる。
+    rev = _revinfo.revision_of(os.path.abspath(root))
+    gen = _revinfo.generator_info("trace-index.py")
+
     ranges, findings, coverage = _tracescan.scan_tree(
         root, docs_root=docs_root, max_files=opts["max_files"],
         collect_members=bool(opts["term"]),
@@ -162,7 +167,10 @@ def main(argv=None):
             names = coverage.get("members", {}).get(opts["term"], [])
             if opts["format"] == "json":
                 payload = {"schema": SCHEMA, "root": os.path.basename(
-                    os.path.abspath(root)), "term": opts["term"],
+                    os.path.abspath(root)),
+                    "source_revision": rev["source_revision"],
+                    "source_dirty": rev["source_dirty"],
+                    "generator": gen, "term": opts["term"],
                     "count": len(names), "paths": names}
                 sys.stdout.write(
                     json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
@@ -175,7 +183,10 @@ def main(argv=None):
         cov = {k: v for k, v in coverage.items() if k != "members"}
         if opts["format"] == "json":
             payload = {"schema": SCHEMA, "root": os.path.basename(
-                os.path.abspath(root)), "coverage": cov}
+                os.path.abspath(root)),
+                "source_revision": rev["source_revision"],
+                "source_dirty": rev["source_dirty"],
+                "generator": gen, "coverage": cov}
             sys.stdout.write(
                 json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
         else:
@@ -195,7 +206,10 @@ def main(argv=None):
         # root は名前だけを載せる。絶対パスを外へ出さない(機械をまたいで
         # 共有できる形を保つ。ADR-055)。
         payload = {"schema": SCHEMA, "root": os.path.basename(
-            os.path.abspath(root)), "ranges": ranges, "findings": findings}
+            os.path.abspath(root)),
+            "source_revision": rev["source_revision"],
+            "source_dirty": rev["source_dirty"],
+            "generator": gen, "ranges": ranges, "findings": findings}
         sys.stdout.write(json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
     else:
         sys.stdout.write(_render_text(ranges, findings, opts["doc_id"]) + "\n")

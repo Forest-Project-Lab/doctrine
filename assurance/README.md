@@ -170,4 +170,4 @@ PASS（適合の証拠あり）/ FAIL（走ったが不適合）/ UNKNOWN（観�
 - 評価者の CHALLENGE（独立批判）と VERIFY（独立検証）へ、実装者の会話・弁明・期待回答を渡さない。渡してよいのは構造化された成果物だけ。
 - 模擬（stub）で通った結果を、実 Claude での保証として記録しない。記録には必ず実行種別を書く。
 
-<!-- doctrine:view src=doctrine as-of=0.10.0 date=2026-08-07 refs=DECIDED-001,NONGOAL-001 -->
+<!-- doctrine:view src=doctrine as-of=0.11.0 date=2026-08-13 refs=DECIDED-001,NONGOAL-001 -->

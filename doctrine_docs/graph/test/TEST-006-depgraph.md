@@ -6,8 +6,8 @@ domain: graph
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-27
-sources: [plugin/tests/test_depgraph.py]
+updated: 2026-08-13
+sources: [plugin/tests/test_depgraph.py, plugin/tests/test_read_surface.py]
 depends_on: [SPEC-006]
 llm_context: task
 ---

@@ -6,7 +6,7 @@ domain: guard
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-08-03
+updated: 2026-08-13
 sources: [spec/doctrine.ja.md §4.2]
 depends_on: [REQ-004, ICD-001, ICD-002]
 llm_context: task

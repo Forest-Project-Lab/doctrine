@@ -6,7 +6,7 @@ domain: audit
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-08-03
+updated: 2026-08-13
 sources: [spec/doctrine.ja.md#4.2]
 depends_on: [REQ-008, ICD-008, ICD-001, ICD-002]
 llm_context: task
@@ -20,7 +20,7 @@ llm_context: task
 
 - 入力: コマンドライン引数 `[--root PATH | --root-from PROJ] [--json] [--summary-out PATH | --summary-in-project] [--fail-on error|never] [--config PATH] [--today YYYY-MM-DD] [--respect-docs-level]`。`--root-from` はプロジェクト根を取り、統治木を ADR-022 の優先順で解決する（統治木が無ければ飛ばして 0）。**`--root-from` に空の値を与えるのは使用法の誤りとして 2 へ倒す** —— 空は「与えられていない」ではなく、配線の `${CLAUDE_PROJECT_DIR}` が展開されなかった姿である。素通りさせると、告げられていない統治木を作業ディレクトリから歩いて見つけて監査してしまう（境界が沈黙して開く。確定事実12・INC-032）。`--summary-in-project` は要約の置き場を解決済みのプロジェクト根から導く（`<proj>/.claude/.cache/last-audit.json`）。配線が生の変数からパスを組むと、変数が展開されないとき根を指すため、その形を配線から無くす。標準入力は読まない。入力内容に結果が左右されないからであり、対話端末から起動しても入力待ちで止まらない。
 - 処理: 統治木のルート配下のすべての .md について、graph（ICD-002）が依存グラフを組み、登録簿（ICD-001）が各文書の型・`status`・`llm_context` を解決する。本文は一度だけ読んでノードに付ける。
-- 返す値: 要約スキーマ `docs-audit/1`。形は `{schema, generated_at, today, root, totals:{error,warn,advisory}, counts_by_check, checks_run, top_findings, findings}`。`root` は絶対パスに正規化して書く（注入側が相対 root を照合不能として捨てるため。SPEC-012）。`--json` を付けると機械向けの JSON を、付けなければ人間向けの平文を出す。`--summary-out`（または `--summary-in-project`）を指定すると、要約を一時ファイルに書いてから改名して差し替え、途中状態を残さない。
+- 返す値: 要約スキーマ `docs-audit/1`。形は `{schema, generated_at, today, root, source_revision, source_dirty, generator, totals:{error,warn,advisory}, counts_by_check, checks_run, top_findings, findings}`。`root` は絶対パスに正規化して書く（注入側が相対 root を照合不能として捨てるため。SPEC-012）。`source_revision`（測った木の版。完全 SHA（コミットを一意に指す指紋）か null）・`source_dirty`・`generator` の意味は graph の宣言（ICD-002。ADR-155）と同じで、解決は共有の補助 `_revinfo.py` に委ねる（ADR-156）。`--json` を付けると機械向けの JSON を、付けなければ人間向けの平文を出す。`--summary-out`（または `--summary-in-project`）を指定すると、要約を一時ファイルに書いてから改名して差し替え、途中状態を残さない。
 
 ## 制約
 

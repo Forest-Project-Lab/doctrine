@@ -41,6 +41,7 @@ import _audit_trace
 import _auditcache
 import _frontmatter
 import _registry
+import _revinfo
 import _termcheck
 
 
@@ -1362,6 +1363,8 @@ def build_summary(root, findings, today, knobs, generated_at=None,
             totals[sev] += 1
         counts_by_check[f["check"]] = counts_by_check.get(f["check"], 0) + 1
 
+    _src_rev = _revinfo.revision_of(os.path.abspath(root))
+
     cap = knobs["top_findings_cap"]
     top = _top_findings(findings, cap)
 
@@ -1377,6 +1380,10 @@ def build_summary(root, findings, today, knobs, generated_at=None,
         # 照合不能として捨てるため(越境注入の防止)、相対のまま書くと正当な
         # 要約まで「前回監査なし」に劣化する。
         "root": os.path.abspath(root),
+        # 測った木の版と作り手(ADR-155/ADR-156)。意味は graph の宣言と同じ。
+        "source_revision": _src_rev["source_revision"],
+        "source_dirty": _src_rev["source_dirty"],
+        "generator": _revinfo.generator_info("docs-audit.py"),
         "totals": totals,
         "counts_by_check": counts_by_check,
         # この版が走らせた検査の一覧(#95。検証器の実行証跡)。counts_by_check は

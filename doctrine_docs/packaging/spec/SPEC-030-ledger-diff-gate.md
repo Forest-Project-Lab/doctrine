@@ -6,7 +6,7 @@ domain: packaging
 status: current
 owner: doctrine-maintainers
 created: 2026-08-10
-updated: 2026-08-10
+updated: 2026-08-13
 sources: [scripts/ledger-diff-summary.py, .github/workflows/checks.yml]
 depends_on: [SPEC-020, ICD-005]
 llm_context: task

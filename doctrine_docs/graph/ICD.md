@@ -6,8 +6,8 @@ domain: graph
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-08-03
-sources: [plugin/scripts/_depgraph.py, plugin/scripts/trace-index.py]
+updated: 2026-08-13
+sources: [plugin/scripts/_depgraph.py, plugin/scripts/trace-index.py, plugin/scripts/dep-graph.py]
 canonical_for: [dependency-graph-api, trace-index-api]
 llm_context: task
 ---
@@ -41,11 +41,32 @@ llm_context: task
 - `reverse_orphans()`: `{req_without_spec, spec_without_test}` を返す（対象は現行文書のみ）。
 - CLI `dep-graph.py` の終了コード: 問い合わせが成立すれば、所見の有無にかかわらず 0。使い方を誤れば 2、ルートが見つからなければ 3。
 
+### 依存グラフの問い合わせ（CLI。dep-graph/1。ADR-153）
+
+外部の消費者（リポジトリの外の表示製品を含む）が依存してよいのは、CLI `dep-graph.py` が返す値だけである。
+
+- JSON の形は `{"schema": "dep-graph/1", "root": <名前だけ>, "source_revision": <完全SHA|null>, "source_dirty": <真偽|null>, "generator": {...}, "mode": <モード名>, "nodes": [...], "edges": [...], "result": ...}`（モードによっては `id`・`count` が加わる）。`root` に絶対パスを載せない（trace-index/1 と同義）。節点の項の正本は SPEC-006（節点は隠さない。ADR-087）。
+- モードは `--impacts <id>`・`--dependents <id>`・`--classify-edges`・`--reverse-orphans`・`--reverse-refs <id>`・`--find-root [開始位置]` の六つ。`--json` は修飾子であってモードではない（ADR-110）。
+- `--classify-edges` の `result` は `edges` と同じ内容の重複である（互換のため残す。読み手はどちらか一方だけを読む。ADR-153）。
+- `--find-root` はグラフを組まずに統治木を探し（規則の正本は ADR-022）、`result` に統治木の絶対パスを返す。見つからなければ `result` は null で終了コード 3。この口だけは絶対パスを返す —— 自分の機械の統治木を見つけるための口であり、機械をまたいで共有する成果物ではない（ADR-154）。
+- 診断は標準エラーへ出す。stdout は返す値だけとする（ADR-153）。
+
+### 測った木の版と作り手（ADR-155）
+
+`trace-index/1` と `dep-graph/1` は、最上位に次の三つの鍵を名乗る。鍵の追加は互換であり、読み手は未知の最上位の鍵を読み捨ててよい。互換を壊す変更はスキーマ名の版を上げる（確定事実13。ADR-152）。
+
+- `source_revision`: 測った木の版 —— HEAD（作業木が向いているコミット）の完全 SHA（コミットを一意に指す指紋）。解決できない木（git でない等）では null。
+- `source_dirty`: 測った木に未コミットの変更が在れば true、無ければ false、git で解決できなければ null。
+- `generator`: `{name, version}`。`name` はスクリプト名、`version` は plugin.json の版（知れなければ null）。
+- 複数の返す値の `source_revision` が同値であることを「同じ木を測った」ことの照合に使う。`root` は照合の鍵ではない（口ごとに意味が違ってよい。ADR-155・ADR-156）。
+
 ### 追跡索引の問い合わせ（trace-index-api。ADR-112）
 
 外部の消費者（リポジトリの外の表示製品を含む）と他ドメインが依存してよいのは、CLI `trace-index.py` が返す値だけである。
 
-- JSON の形は `{"schema": "trace-index/1", "root": <名前だけ>, "ranges": [...], "findings": [...]}`。`root` に絶対パスを載せない。
+- JSON の形は `{"schema": "trace-index/1", "root": <名前だけ>, "source_revision": <完全SHA|null>, "source_dirty": <真偽|null>, "generator": {...}, "ranges": [...], "findings": [...]}`。`root` に絶対パスを載せない。三つの版の鍵の意味は「測った木の版と作り手」の節のとおり（ADR-155）。
+- `--id <id>` を与えると、その仕様に対応する範囲だけを返す（仕様の側から見た逆リンク。詳細は SPEC-026）。
+- `findings` の各項は `{code, path, line, message}`。重さ（severity）は持たない —— 検出に徹し、判定はしない。判定済みの重さが要る読み手は、監査要約（`docs-audit/1`。ICD-005）の trace 系の所見から severity 付きで読む（ADR-156）。
 - `ranges` の各項はちょうど五項 `{id, path, begin_line, end_line, fingerprint}`。`path` は根からの相対で、区切りは `/`。
 - `--coverage` は勘定（既定は件数だけ）を返し、`--coverage --term <項>` は当該の一覧を返す。
 - 終了コードは dep-graph と同じ規約: 問い合わせが成立すれば 0、使い方を誤れば 2、根が見つからなければ 3。

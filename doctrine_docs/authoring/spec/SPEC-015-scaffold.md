@@ -6,7 +6,7 @@ domain: authoring
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-27
+updated: 2026-08-13
 sources: [plugin/scripts/scaffold.py]
 depends_on: [REQ-011]
 llm_context: task
@@ -18,7 +18,7 @@ llm_context: task
 
 ## 入出力
 
-入力は CLI（コマンド行）引数 `scaffold.py [--level {2,3,4}] [--root PATH] [--dry-run] [--fallback]`（試験用に `--today` を持つ）。統治木は既定で `doctrine_docs/` に置く。既に `docs/_system` が在る（doctrine が初期化した印を持つ）場合だけ `docs/` を使い続け、統治木を二つにしない（ADR-022）。`_system` を持たない素の `docs/` には決して入植しない。書き出すのは次のファイルだけである。各ファイルのフロントマター（文書先頭の YAML メタデータ）の日付欄は、実行した日付で埋める。
+入力は CLI（コマンド行）引数 `scaffold.py [--level {2,3,4}] [--root PATH] [--dry-run] [--fallback] [--list-sections [--type <型>] [--json]]`（試験用に `--today` を持つ）。`--list-sections` は問い合わせであり、足場を一切書かない — 登録簿（ICD-001 の `REQUIRED_SECTIONS`）をその場で読み、型ごとの必須節の名を返す（ADR-159。宣言は ICD-007 の外部条項）。`--json` の返す値は `{"schema": "scaffold-sections/1", "sections": {<型>: [<節名>…]}, "generator": {...}}`（`generator` の意味は ADR-155 と同じ。木を測らないので木の版の鍵は持たない）。`--type` に登録簿に無い型を与えたら使い方の誤り（終了コード 2）。統治木は既定で `doctrine_docs/` に置く。既に `docs/_system` が在る（doctrine が初期化した印を持つ）場合だけ `docs/` を使い続け、統治木を二つにしない（ADR-022）。`_system` を持たない素の `docs/` には決して入植しない。書き出すのは次のファイルだけである。各ファイルのフロントマター（文書先頭の YAML メタデータ）の日付欄は、実行した日付で埋める。
 
 - `doctrine_docs/_system/glossary.md`（GLOSSARY。§1 の承認語表とカルク表を雛形に写す）。
 - `doctrine_docs/_system/decided-facts.md`（DECIDED。`review_by` を created+90日で埋める）。
@@ -43,7 +43,7 @@ llm_context: task
 
 対象は契約の要約(モジュール冒頭)。更新は `trace-index.py --id SPEC-015` が返す行を写す（ADR-061）。
 
-- sha256:ce865bde6da4f02c8d520e6c6354c2a2f36c047d9589847d5070e070555a276e
+- sha256:f27a6b5e1a6f7b9172286f10e315a644b0e41d7fa33ff67ccc531b6bbf5ec7f0
 
 ## 受入基準
 

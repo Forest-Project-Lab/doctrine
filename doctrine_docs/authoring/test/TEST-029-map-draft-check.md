@@ -6,8 +6,8 @@ domain: authoring
 status: current
 owner: doctrine-maintainers
 created: 2026-08-07
-updated: 2026-08-07
-sources: [plugin/tests/test_mapdraft.py, plugin/tests/test_mapdraft_hardening.py]
+updated: 2026-08-13
+sources: [plugin/tests/test_mapdraft.py, plugin/tests/test_mapdraft_hardening.py, plugin/tests/test_read_surface.py]
 depends_on: [SPEC-029]
 llm_context: task
 ---

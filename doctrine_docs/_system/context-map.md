@@ -38,10 +38,17 @@ sources: []
 - ADR-074 --depends_on--> ICD-005
 - ADR-075 --depends_on--> ICD-004
 - ADR-150 --depends_on--> ICD-005
+- ADR-156 --depends_on--> ICD-002
 - CHANGE-003 --depends_on--> ICD-005
 - CHANGE-005 --depends_on--> ICD-005
+- CHANGE-010 --depends_on--> ICD-002
+- CHANGE-010 --depends_on--> ICD-005
+- CHANGE-010 --depends_on--> ICD-007
 - ICD-004 --depends_on--> ICD-001
 - ICD-004 --depends_on--> ICD-002
+- IMPACT-010 --depends_on--> ICD-002
+- IMPACT-010 --depends_on--> ICD-005
+- IMPACT-010 --depends_on--> ICD-007
 - SPEC-003 --depends_on--> ICD-001
 - SPEC-003 --depends_on--> ICD-002
 - SPEC-006 --depends_on--> ICD-001

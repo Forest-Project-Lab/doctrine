@@ -5,7 +5,7 @@ type: OVERVIEW
 domain: _system
 status: current
 owner: render-projection
-updated: 2026-08-10
+updated: 2026-08-13
 llm_context: always
 sources: []
 ---
@@ -17,7 +17,7 @@ sources: []
 | id | type | domain | title |
 |---|---|---|---|
 | GLOSSARY-001 | GLOSSARY | _system | 用語辞書の正本 |
-| DECIDED-001 | DECIDED | _system | 横断の確定方針（12事実） |
+| DECIDED-001 | DECIDED | _system | 横断の確定方針（13事実） |
 | NONGOAL-001 | NONGOAL | _system | 横断のやらないこと（18項） |
 | WATCH-001 | WATCH | _system | 横断の退行監視（13項） |
 | REQ-000 | REQ | _system | この体系が解くこと（製品の粒度） |
@@ -38,6 +38,8 @@ sources: []
 | ADR-113 | ADR | audit | 投影の列挙は各行の最初の id だけから採る |
 | ADR-137 | ADR | audit | 監査要約の読み口を宣言する — 外部利用者は CLI の返す値だけに依存する |
 | ADR-149 | ADR | audit | 孤児は「放置」を測る。予定した見直しの日は二重に数えない |
+| ADR-156 | ADR | audit | 監査要約も測った木の版を名乗る — あわせて root の意味と findings の項目形を宣言する |
+| ADR-157 | ADR | audit | 刻印の書式を外部の表示製品と共用する — doctrine は外部の刻印を検査しない |
 | CHANGE-004 | CHANGE | audit | 体系外の解釈文書をビューと定め、刻印で古びを見えるようにする |
 | CHANGE-009 | CHANGE | audit | 監査要約の読み口を ICD へ宣言する（issue |
 | IMPACT-004 | IMPACT | audit | ビューと刻印 — 影響の列挙 |
@@ -59,6 +61,8 @@ sources: []
 | ADR-051 | ADR | authoring | 変更フローの段数は、規模ではなく決定を含むか否かで分ける |
 | ADR-077 | ADR | authoring | 圧縮前の促しは届かない。退避の合図を圧縮後の注入へ移す |
 | ADR-136 | ADR | authoring | 配布技能に system-map-draft を加える（ADR-010 を置換。一覧の正本は SPEC-016） |
+| ADR-158 | ADR | authoring | map-draft-check は複数リポジトリの出所を受ける — 黙る後勝ちを廃し、口を外部条項として宣言する |
+| ADR-159 | ADR | authoring | 必須節の名を CLI から問えるようにする — scaffold に list-sections の口を足す |
 | CHANGE-008 | CHANGE | authoring | 配布技能に system-map-draft を加える（issue |
 | IMPACT-008 | IMPACT | authoring | 配布技能 system-map-draft の追加 — 影響の列挙 |
 | IMPL-015 | IMPL | authoring | scaffold/term-extract の実装注記 |
@@ -117,6 +121,9 @@ sources: []
 | ADR-088 | ADR | graph | 両端から書かれた同じ事実に印を付ける。畳み方を読み手に決めさせない |
 | ADR-089 | ADR | graph | 無視される物は走査しない。その判定は git に訊く |
 | ADR-112 | ADR | graph | 読み口の宣言を現行の合意台帳へ追随させる（初版の決定を置換） |
+| ADR-153 | ADR | graph | dep-graph の CLI の返す値を宣言する — 実装の内部形を黙った契約にしない |
+| ADR-154 | ADR | graph | 統治木の発見を CLI から問えるようにする — dep-graph に find-root の口を足す |
+| ADR-155 | ADR | graph | graph の読み口は測った木の版と作り手を名乗る — source_revision・source_dirty・generator |
 | CHANGE-003 | CHANGE | graph | 悉皆トレース — 印なしゼロを選べる体系にする |
 | CHANGE-007 | CHANGE | graph | 追跡索引の読み口を ICD へ宣言する（issue |
 | IMPACT-003 | IMPACT | graph | 悉皆トレース — 影響の列挙 |
@@ -263,14 +270,18 @@ sources: []
 | ADR-147 | ADR | packaging | 独立再監査 2026-08-09 の所有者裁定を恒久記録する |
 | ADR-148 | ADR | packaging | 承認された検証計画は正本が名指しできる（ADR-120 を置換） |
 | ADR-150 | ADR | packaging | SessionEnd は監査を予約する（口には負債だけを置く） |
+| ADR-151 | ADR | packaging | 2026-08-13 の一括波（#294 の受け）の権限を恒久記録する |
+| ADR-152 | ADR | packaging | 外部読み口の進化規約 — 鍵の追加は互換、壊す変更は版上げ、診断は標準エラー |
 | CHANGE-001 | CHANGE | packaging | 導入済みプラグインの版の遅れを生存性として照合する |
 | CHANGE-002 | CHANGE | packaging | リリースの整合を CI の門で検める — 変更履歴の書き忘れを止める |
 | CHANGE-005 | CHANGE | packaging | 不具合の兆候を記録し、承認を経た issue 報告を促す |
 | CHANGE-006 | CHANGE | packaging | フック境界と実行環境の堅牢化 — 何を変えたか |
+| CHANGE-010 | CHANGE | packaging | 層Aの読み口の完全化（issue |
 | IMPACT-001 | IMPACT | packaging | 版の遅れの照合 — 影響の列挙 |
 | IMPACT-002 | IMPACT | packaging | リリース整合の門 — 影響の列挙 |
 | IMPACT-005 | IMPACT | packaging | 不具合の記録と報告 — 影響の列挙 |
 | IMPACT-006 | IMPACT | packaging | フック境界と実行環境の堅牢化 — 影響の列挙 |
+| IMPACT-010 | IMPACT | packaging | 層Aの読み口の完全化 — 影響の列挙 |
 | IMPL-017 | IMPL | packaging | パッケージ・Hook配線の実装注記 |
 | IMPL-019 | IMPL | packaging | gov-heartbeat.py（統治ハートビート）の実装メモ |
 | PROC-001 | PROC | packaging | 開発規範 — 方法論の採用範囲と、機械の検算・人の査読の分担 |

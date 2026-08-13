@@ -6,7 +6,7 @@ domain: audit
 status: current
 owner: doctrine-maintainers
 created: 2026-08-07
-updated: 2026-08-07
+updated: 2026-08-13
 sources: [plugin/scripts/dep-graph.py]
 depends_on: [CHANGE-009, ICD-005]
 llm_context: task

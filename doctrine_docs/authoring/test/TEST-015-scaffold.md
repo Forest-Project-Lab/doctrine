@@ -6,8 +6,8 @@ domain: authoring
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-27
-sources: [plugin/tests/test_scaffold.py]
+updated: 2026-08-13
+sources: [plugin/tests/test_scaffold.py, plugin/tests/test_read_surface.py]
 depends_on: [SPEC-015]
 llm_context: task
 ---

@@ -6,7 +6,7 @@ domain: packaging
 status: current
 owner: doctrine-maintainers
 created: 2026-07-28
-updated: 2026-08-07
+updated: 2026-08-13
 sources: [scripts/release-check.py, .github/workflows/checks.yml, CHANGELOG.md]
 depends_on: [SPEC-020, ICD-005]
 llm_context: task
