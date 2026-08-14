@@ -1,0 +1,263 @@
+{
+  "anchors": [
+    {
+      "authority": "doctrine",
+      "id": "a-spec-007",
+      "observed_at": "2026-08-14",
+      "source_revision": "4d00eed7548275197289af796a13c222ac529da8",
+      "target": "doctrine: doctrine_docs/lint/spec/SPEC-007-document-linter.md",
+      "target_kind": "document"
+    },
+    {
+      "authority": "doctrine",
+      "id": "a-spec-011",
+      "observed_at": "2026-08-14",
+      "source_revision": "4d00eed7548275197289af796a13c222ac529da8",
+      "target": "doctrine: doctrine_docs/audit/spec/SPEC-011-corpus-audit.md",
+      "target_kind": "document"
+    }
+  ],
+  "contracts": [
+    {
+      "assumptions": [
+        "点検は編集の後に走る",
+        "拒否はガードが担う"
+      ],
+      "guarantee": "リンタは decision を返さず、助言だけを出す。",
+      "id": "c-lint-advises-only",
+      "owner": "doctrine-maintainers",
+      "provenance": [
+        {
+          "checked_at": "2026-08-14",
+          "locator": "L51",
+          "source": "doctrine: doctrine_docs/lint/spec/SPEC-007-document-linter.md",
+          "verdict": "present"
+        }
+      ],
+      "response_measure": "定性的である（返り値に decision の鍵が無いこと）",
+      "review_status": "proposed",
+      "subject": "d-lint",
+      "verification_status": "planned"
+    },
+    {
+      "assumptions": [
+        "利用者の実行環境に python3 が在る"
+      ],
+      "guarantee": "すべてのスクリプトは標準ライブラリだけで動き、pip にも通信にも依存しない。",
+      "id": "c-stdlib-only",
+      "owner": "doctrine-maintainers",
+      "provenance": [
+        {
+          "checked_at": "2026-08-14",
+          "locator": "「すべてのスクリプトは、標準ライブラリだけで動く」",
+          "source": "doctrine: doctrine_docs/_system/decided-facts.md",
+          "verdict": "present"
+        }
+      ],
+      "response_measure": "定性的である（外部の取り込みが無いこと）",
+      "review_status": "proposed",
+      "subject": "doctrine",
+      "verification_status": "claimed"
+    }
+  ],
+  "elements": [
+    {
+      "id": "d-model",
+      "kind": "subsystem",
+      "name": "登録簿（構造規則の正本）",
+      "owner": "doctrine-maintainers",
+      "provenance": [
+        {
+          "checked_at": "2026-08-14",
+          "locator": "「構造規則とフロントマターの解析を、体系の唯一の正本として公開する」",
+          "source": "doctrine: doctrine_docs/model/ICD.md",
+          "verdict": "present"
+        }
+      ],
+      "purpose": "型・status・置き場所・必須キー・必須節の規則を、体系の中で一度だけ持つ。",
+      "responsibilities": [
+        "type-registry の正本",
+        "frontmatter-schema の正本"
+      ],
+      "review_status": "proposed"
+    },
+    {
+      "id": "d-lint",
+      "kind": "subsystem",
+      "name": "リンタ（編集ごとの点検）",
+      "owner": "doctrine-maintainers",
+      "provenance": [
+        {
+          "checked_at": "2026-08-14",
+          "locator": "L27",
+          "source": "doctrine: doctrine_docs/lint/spec/SPEC-007-document-linter.md",
+          "verdict": "present"
+        }
+      ],
+      "purpose": "編集された一つの文書だけを点検し、助言を返す。拒否はしない。",
+      "responsibilities": [
+        "document-lint",
+        "term-check"
+      ],
+      "review_status": "proposed"
+    },
+    {
+      "id": "d-audit",
+      "kind": "subsystem",
+      "name": "監査（全件の走査）",
+      "owner": "doctrine-maintainers",
+      "provenance": [
+        {
+          "checked_at": "2026-08-14",
+          "locator": "L22",
+          "source": "doctrine: doctrine_docs/audit/spec/SPEC-011-corpus-audit.md",
+          "verdict": "present"
+        }
+      ],
+      "purpose": "統治木の全件を走査し、所見と要約を出す。セッション境界と CI で走る。",
+      "responsibilities": [
+        "corpus-audit",
+        "audit-summary-schema"
+      ],
+      "review_status": "proposed"
+    },
+    {
+      "id": "d-graph",
+      "kind": "subsystem",
+      "name": "依存グラフと追跡索引",
+      "owner": "doctrine-maintainers",
+      "provenance": [
+        {
+          "checked_at": "2026-08-14",
+          "locator": "「追跡索引への問い合わせの入口をここで唯一定める」",
+          "source": "doctrine: doctrine_docs/graph/ICD.md",
+          "verdict": "present"
+        }
+      ],
+      "purpose": "文書の依存の辺と、注釈の対が囲むコード範囲を、問い合わせのたびに導出して返す。",
+      "responsibilities": [
+        "dependency-graph-api",
+        "trace-index-api"
+      ],
+      "review_status": "proposed"
+    },
+    {
+      "id": "d-hooks",
+      "kind": "component",
+      "name": "配線（実行環境との接点）",
+      "owner": "doctrine-maintainers",
+      "provenance": [
+        {
+          "checked_at": "2026-08-14",
+          "locator": "「7 つのイベントを各スクリプトへ配線する仕様である」",
+          "source": "doctrine: doctrine_docs/packaging/spec/SPEC-019-hooks.md",
+          "verdict": "present"
+        }
+      ],
+      "purpose": "実行環境の七つの出来事を、各スクリプトへ配線する。",
+      "responsibilities": [
+        "hook-wiring"
+      ],
+      "review_status": "proposed"
+    }
+  ],
+  "flows": [
+    {
+      "condition": "Edit・Write・MultiEdit のいずれかが走ったとき",
+      "from": "d-hooks",
+      "id": "f-hook-lint",
+      "kind": "command",
+      "label": "編集の後にリンタを起こす",
+      "payload_or_action": "PostToolUse の封筒（編集された道を含む）",
+      "provenance": [
+        {
+          "checked_at": "2026-08-14",
+          "locator": "「PostToolUse / matcher」",
+          "source": "doctrine: doctrine_docs/packaging/spec/SPEC-019-hooks.md",
+          "verdict": "present"
+        }
+      ],
+      "review_status": "proposed",
+      "to": "d-lint"
+    },
+    {
+      "condition": "点検のたび",
+      "from": "d-lint",
+      "id": "f-lint-registry",
+      "kind": "data",
+      "label": "規則を問い合わせる",
+      "payload_or_action": "必須キー・status の許可表・置き場所・必須節の問い合わせ",
+      "provenance": [
+        {
+          "checked_at": "2026-08-14",
+          "locator": "L29",
+          "source": "doctrine: doctrine_docs/lint/spec/SPEC-007-document-linter.md",
+          "verdict": "present"
+        }
+      ],
+      "review_status": "proposed",
+      "to": "d-model"
+    },
+    {
+      "condition": "全件監査のたび",
+      "from": "d-audit",
+      "id": "f-audit-graph",
+      "kind": "data",
+      "label": "依存グラフを組ませる",
+      "payload_or_action": "統治木の全 .md からの依存の辺",
+      "provenance": [
+        {
+          "checked_at": "2026-08-14",
+          "locator": "L22",
+          "source": "doctrine: doctrine_docs/audit/spec/SPEC-011-corpus-audit.md",
+          "verdict": "present"
+        }
+      ],
+      "review_status": "proposed",
+      "to": "d-graph"
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "s-edit",
+      "kind": "normal",
+      "name": "文書を一つ編集したとき",
+      "provenance": [
+        {
+          "checked_at": "2026-08-14",
+          "locator": "「PostToolUse / matcher」",
+          "source": "doctrine: doctrine_docs/packaging/spec/SPEC-019-hooks.md",
+          "verdict": "present"
+        }
+      ],
+      "review_status": "proposed",
+      "steps": [
+        {
+          "actor": "d-hooks",
+          "flow": "f-hook-lint",
+          "receiver": "d-lint"
+        },
+        {
+          "actor": "d-lint",
+          "flow": "f-lint-registry",
+          "receiver": "d-model"
+        }
+      ]
+    }
+  ],
+  "schema": "system-map/gold-model/0.1",
+  "system": {
+    "boundary": "境界の内側は配布物(plugin/)と統治木(doctrine_docs/)。利用者・実行環境(Claude Code)・外部の表示製品は境界の外に居る。",
+    "provenance": [
+      {
+        "checked_at": "2026-08-14",
+        "locator": "「意味モデルの型 MODEL（系の意味モデルを持つ文書の型）の設計」",
+        "source": "doctrine: doctrine_docs/model/decisions/ADR-163-model-type-design.md",
+        "verdict": "present"
+      }
+    ],
+    "purpose": "古びた仕様がコードになるのを防ぐため、文書の型・出所・依存・鮮度を機械で見張る。",
+    "review_status": "proposed"
+  },
+  "target": "doctrine"
+}

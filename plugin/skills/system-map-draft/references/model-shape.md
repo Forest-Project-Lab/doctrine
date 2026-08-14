@@ -1,15 +1,29 @@
 # モデルの形（各欄の起草の手引き）
 
-スキーマの正本は lens 側の `gold-model/schema.json`（`system-map/gold-model/0.1`）であり、この手引きはその写しではない。起草のとき迷いやすい欄の判断だけを書く。手本は同じ場所の `target-1-doctrine-and-lens.json`。
+器（描く先の JSON）の版の正本は lens 側の `gold-model/schema.json`（`system-map/gold-model/0.1`）であり、この手引きはその写しではない。起草のとき迷いやすい欄の判断だけを書く。**doctrine 側で機械が検める形の正本は SPEC-031（共有コア `_model`）である。**
 
-最上位の必須欄は `schema`・`target`・`system`・`elements`・`flows`・`contracts`・`scenarios`・`anchors` の八つ。件数が 0 でも配列は置く。
+## .md の並べ方（ADR-163 決定3）
 
-## system（必須）
+値の正本は MODEL 型の .md の本文であり、実体は一つにつき `### <id> — <表示名>` の見出しと、その直下の ```json の塊で書く。散文は塊の周りに自由に書いてよい（読む人のための説明であり、値ではない）。**必須節の外に置いた塊は値として拾われない**（例示を値にしない）。
 
-`purpose` は二文以内。`boundary` は境界の内側と外側を一文ずつ。`provenance` と `review_status` を持つ。
+| 節 | 描く先の欄 | 塊の数 |
+|---|---|---|
+| 系の概要 | `target` と `system` | ちょうど一つ |
+| 要素の一覧 | `elements` | 実体ごとに一つ |
+| 流れの一覧 | `flows` | 実体ごとに一つ |
+| 契約の一覧 | `contracts` | 実体ごとに一つ |
+| シナリオの一覧 | `scenarios` | 実体ごとに一つ |
+| アンカーの一覧 | `anchors` | 実体ごとに一つ |
+
+描く先の JSON の最上位は `schema`・`target`・`system`・`elements`・`flows`・`contracts`・`scenarios`・`anchors` の八つで、件数が 0 でも配列は置かれる（描き手が組む）。`schema` は描き手が持つ定数であり、本文には書かない。
+
+## 系の概要（system。必須）
+
+`target` に対象の名（kebab-case）を書く —— 描き手が最上位へ持ち上げる。`purpose` は二文以内。`boundary` は境界の内側と外側を一文ずつ。`provenance` と `review_status` を持つ。
 
 ```json
-"system": {
+{
+  "target": "doctrine-and-lens",
   "purpose": "統治木を持つ開発を、規則の検査と帰結の表示の一組で支える。",
   "boundary": "境界の内側は二製品。保守者は利用者として、編集器は実行環境として、境界の外に居る。",
   "provenance": [
