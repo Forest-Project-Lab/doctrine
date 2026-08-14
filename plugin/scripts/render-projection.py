@@ -536,16 +536,53 @@ def _report_model_findings(path, findings):
                          % (path, f.code, f.where, f.message))
 
 
+def _orphan_model_json(docs_root, drawn):
+    """正本の .md を持たない .json（描いた覚えのある名の物）を列挙する。
+
+    正本を消した・改名した・型を変えたときに、隣の .json が取り残される。
+    取り残しは .md ではないので、リンタも監査も見ない —— ここが唯一の見張りである。
+    """
+    out = []
+    for dirpath, dirnames, filenames in os.walk(docs_root):
+        dirnames.sort()
+        for name in sorted(filenames):
+            # 見張るのは「MODEL の投影の名をした .json」だけである。統治木に置いた
+            # 設定(`_system/.context-config.json` など)を巻き込まない。
+            if not (name.endswith(".json") and name.startswith("MODEL-")):
+                continue
+            path = os.path.join(dirpath, name)
+            if path in drawn:
+                continue
+            md = os.path.splitext(path)[0] + ".md"
+            if not os.path.exists(md):
+                out.append(path)
+                continue
+            try:
+                fm, _body, _errs = _frontmatter.parse_file(md)
+            except (OSError, UnicodeDecodeError):
+                continue
+            if _frontmatter.coerce_str(fm.get("type")) != "MODEL":
+                out.append(path)
+    return out
+
+
 def _do_model(docs_root, doc_id, out_path, check):
     """model モードの実体。書き出し / --out / --check の三つを担う。
 
     返り値は終了コード。壊れた模型は描かず 1 を返す(黙って古い JSON を残さない)。
+    正本を持たない取り残しの .json も 1 で告げる。
     """
     models = _collect_models(docs_root, doc_id)
     if doc_id is not None and not models:
         sys.stderr.write("MODEL 文書が見つからない: %s\n" % doc_id)
         return 3
+    if doc_id is not None and len(models) > 1:
+        # 一件を指したはずが二件在る。後勝ちで黙って上書きしない。
+        sys.stderr.write("id が重複している: %s (%s)\n"
+                         % (doc_id, ", ".join(p for _i, p, _b, _s in models)))
+        return 1
     rc = 0
+    drawn = set()
     for ident, path, body, status in models:
         content, findings = _render_model(body, status)
         if content is None:
@@ -553,6 +590,7 @@ def _do_model(docs_root, doc_id, out_path, check):
             rc = 1
             continue
         json_path = _model_json_path(path)
+        drawn.add(json_path)
         if check:
             existing = _read_existing(json_path)
             if existing is None:
@@ -567,7 +605,17 @@ def _do_model(docs_root, doc_id, out_path, check):
         if out_path == "-":
             sys.stdout.write(content)
             continue
-        _atomic_write(out_path or json_path, content)
+        try:
+            _atomic_write(out_path or json_path, content)
+        except OSError as exc:
+            sys.stderr.write("書き出せない: %s (%s)\n"
+                             % (out_path or json_path, exc))
+            rc = 1
+    if doc_id is None and out_path is None:
+        # 一括で回したときだけ、取り残しを見張る(一件を指した実行では見ない)。
+        for stale in _orphan_model_json(docs_root, drawn):
+            sys.stdout.write("正本の無い投影: %s\n" % stale)
+            rc = 1
     return rc
 
 

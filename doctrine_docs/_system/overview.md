@@ -201,6 +201,7 @@ sources: []
 | ADR-107 | ADR | model | 読み取りの門を迂回しない。復号の寛容さは正本の引数で表す |
 | ADR-161 | ADR | model | 意味モデルの正本を統治木の中の型付き .md とし、JSON は一方通行の投影とする（方向づけ。実施は凍結の解除後） |
 | ADR-163 | ADR | model | 意味モデルの型 MODEL の設計（名前・置き場所・必須節・本文の形・担保の口） |
+| ADR-164 | ADR | model | MODEL の描画先・引退の扱い・塊の中の散文の門を定める（ADR-163 の追補） |
 | IMPACT-011 | IMPACT | model | 意味モデルの型 MODEL の新設の影響（CHANGE-011） |
 | IMPL-001 | IMPL | model | `_registry.py` の実装メモ |
 | IMPL-002 | IMPL | model | `_frontmatter.py` の実装メモ |

@@ -26,7 +26,7 @@ llm_context: task
 
 - context-injection: 注入は常時集合（DECIDED・NONGOAL・WATCH・廃止事実・GLOSSARY 見出し）を要点に絞り、上限を守って渡す。文書の本文全量と never 群の本文は、いずれも注入には混ぜない。
 - context-pack: タスク別パックは、被覆を計算する前に never 群を取り除く。そのうえで最少集合と、各事実の出所を返す。
-- projection-render: 投影（Overview・ICD 一覧・Context Map の骨組み、および MODEL の JSON）は正本から描画する。同じ源からは何度描いても同じ結果になり（冪等）、手では書き溜めない。**MODEL の JSON は、正本の .md と同じ場所・同じ名の `.json` へ描く**（ADR-163 決定4）。器の形と語彙の正本は model ドメイン（SPEC-031）に在り、ここは描く口だけを持つ。
+- projection-render: 投影（Overview・ICD 一覧・Context Map の骨組み、および MODEL の JSON）は正本から描画する。同じ源からは何度描いても同じ結果になり（冪等）、手では書き溜めない。**MODEL の JSON は、正本の .md と同じ場所・同じ名の `.json` へ描く**（置き場所の正本は ADR-164 決定1）。器の形と語彙の正本は model ドメイン（SPEC-031）に在り、ここは描く口だけを持つ。
 
 ## データ契約
 

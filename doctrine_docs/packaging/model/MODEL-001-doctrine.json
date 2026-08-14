@@ -41,7 +41,7 @@
     },
     {
       "assumptions": [
-        "利用者の実行環境に python3 が在る"
+        "利用者の実行環境に Python の実行器が在る"
       ],
       "guarantee": "すべてのスクリプトは標準ライブラリだけで動き、pip にも通信にも依存しない。",
       "id": "c-stdlib-only",
@@ -74,7 +74,7 @@
           "verdict": "present"
         }
       ],
-      "purpose": "型・status・置き場所・必須キー・必須節の規則を、体系の中で一度だけ持つ。",
+      "purpose": "型・位置づけ・置き場所・必須キー・必須節の規則を、体系の中で一度だけ持つ。",
       "responsibilities": [
         "type-registry の正本",
         "frontmatter-schema の正本"
@@ -186,7 +186,7 @@
       "id": "f-lint-registry",
       "kind": "data",
       "label": "規則を問い合わせる",
-      "payload_or_action": "必須キー・status の許可表・置き場所・必須節の問い合わせ",
+      "payload_or_action": "必須キー・位置づけの許可表・置き場所・必須節の問い合わせ",
       "provenance": [
         {
           "checked_at": "2026-08-14",
