@@ -105,4 +105,4 @@ MIT License。[LICENSE](LICENSE) を参照。商用利用・改変・再配布�
 
 仕様の基盤となる出典は、[spec/doctrine.ja.md](spec/doctrine.ja.md) の付録C に示す（ASD-STE100・S1000D・DO-178C・MBSE/SysML・c-TF-IDF・JTCA ほか）。常時投入を最小に保つ根拠は、入力が長いほどモデルの成功率が下がるという知見（ETH Zürich & LogicStar.ai, arXiv:2602.11988, 2026）に基づく。あわせて本 README は、記録管理（ISO 15489）、要求工学（ISO/IEC/IEEE 29148）、ADR（Michael Nygard）、Diátaxis、C4 モデルも参照する。
 
-<!-- doctrine:view src=doctrine as-of=0.12.0 date=2026-08-14 refs=SPEC-011,SPEC-019,SPEC-020 -->
+<!-- doctrine:view src=doctrine as-of=0.13.0 date=2026-08-14 refs=SPEC-011,SPEC-019,SPEC-020 -->
