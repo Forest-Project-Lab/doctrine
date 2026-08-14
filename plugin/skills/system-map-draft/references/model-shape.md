@@ -98,7 +98,11 @@
 
 ## Scenario
 
+必須欄は器が定める九つ（`id`・`goal`・`trigger`・`preconditions`・`steps`・`outcome`・`kind`・`provenance`・`review_status`）。段（`steps[]`）の必須欄は `actor`・`action`・`receiver`・`expected` である（`flow` は任意だが、書けば実在の Flow を指す）。**六欄（`goal`・`trigger`・`preconditions`・`outcome`・`action`・`expected`）は表示の実体を支える** —— 欠けると「記録が無い」と「問題が無い」が同じ表示になる。
+
 `steps` の `actor`・`receiver`・`flow` は、静的構造に実在する `id` だけを指す（M-12。幽霊要素の禁止）。例外系は `kind: exception` とし、`exception_of` で正常系 Scenario の `id` を指す。
+
+**必須欄と語彙の正本は器の `schema.json` であり、doctrine は固定した一枚から導く**（ADR-165・EXT-007）。この手引きは判断の助けであって、必須欄の正本ではない —— 以前ここを正本として採ったため、器と食い違った投影が緑で通った。
 
 ## TraceAnchor
 

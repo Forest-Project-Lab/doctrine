@@ -5,6 +5,7 @@
     "plugin/templates/": "生成の種。注釈を書けば scaffold の生成先へ写り込む。統治は生成先の木で行う",
     "plugin/hooks/hooks.json": "JSON は注釈を持てない。配線の正本は SPEC-019 が sources で指す",
     "plugin/hooks/hooks.level2.json": "JSON は注釈を持てない。配線の正本は SPEC-019 が sources で指す",
-    "assurance/ledger/": "保証レーンの台帳(機械生成の証拠)。注釈の印を持たず、統治は ADR-114 の隔離が持つ"
+    "assurance/ledger/": "保証レーンの台帳(機械生成の証拠)。注釈の印を持たず、統治は ADR-114 の隔離が持つ",
+    "plugin/schemas/": "上流の器(gold-model/schema.json)の固定した写し。JSON は注釈を持てない。固定点と指紋は EXT-007 が見張る"
   }
 }

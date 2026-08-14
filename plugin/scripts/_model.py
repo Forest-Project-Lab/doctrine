@@ -28,21 +28,105 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import _registry
 
 # doctrine:begin SPEC-031
-# 器の版。描き手が持つ定数とする(ADR-163 決定9)。版の進め方は #294 の B1 が持つ。
-MODEL_SCHEMA = "system-map/gold-model/0.1"
+# 器の形の正本は doctrine-lens 側の `gold-model/schema.json` である(#294 の B7)。
+# **写しを持たず、固定した一枚から導く**(ADR-165) —— 以前はここに列挙の写しを置き、
+# 必須欄は散文の手引きから採っていたため、器と食い違った(実測: 描いた投影が相手の
+# 門 M-18 で落ちた。Scenario の必須欄が器の九つに対しこちらは五つだった)。
+SCHEMA_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                           "schemas", "system-map-gold-model-0.1.json")
 
-# 描く先の最上位の欄(map-draft-check の TOP_KEYS と同じ形)。
-TOP_KEYS = ("schema", "target", "system", "elements", "flows", "contracts",
-            "scenarios", "anchors")
-ENTITY_LISTS = ("elements", "flows", "contracts", "scenarios", "anchors")
+
+def load_schema(path=None):
+    """固定した器の一枚を読む。読めなければ (None, 理由) を返す(黙らない)。"""
+    path = path or SCHEMA_FILE
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            return json.load(fh), None
+    except (OSError, ValueError) as exc:
+        return None, "器の写しを読めない: %s (%s)" % (path, exc)
+
+
+_SCHEMA, SCHEMA_ERROR = load_schema()
+
+
+def _defs():
+    return (_SCHEMA or {}).get("$defs") or {}
+
+
+def _derive():
+    """器から、この部品が使う表を導く。器が無ければ空の表を返す。"""
+    if not _SCHEMA:
+        return {}, (), (), {}, (), (), {}
+    props = _SCHEMA.get("properties") or {}
+    top = tuple(_SCHEMA.get("required") or ())
+    lists, def_for = [], {}
+    for key in top:
+        ref = ((props.get(key) or {}).get("items") or {}).get("$ref")
+        if ref:
+            lists.append(key)
+            def_for[key] = ref.rsplit("/", 1)[-1]
+    lists = tuple(lists)
+    defs = _defs()
+    required = {}
+    for key in lists:
+        required[key] = tuple((defs.get(def_for[key]) or {}).get("required") or ())
+    # 系の塊は、器の system の必須欄に加えて `target` を持つ —— 器では最上位の欄で
+    # あり、描き手が塊から持ち上げる(ADR-165 決定2)。
+    required["system"] = tuple((props.get("system") or {}).get("required") or ()) \
+        + ("target",)
+    prov = tuple((defs.get("Source") or {}).get("required") or ())
+    step_items = (((defs.get("Scenario") or {}).get("properties") or {})
+                  .get("steps") or {}).get("items") or {}
+    steps = tuple(step_items.get("required") or ())
+    # 語彙は「器が enum を書いた欄」を機械的に集める(名を手で並べない)。
+    enums = {}
+    for key in lists:
+        entity = defs.get(def_for[key]) or {}
+        table = {}
+        for name, spec in (entity.get("properties") or {}).items():
+            if isinstance(spec, dict):
+                values = spec.get("enum")
+                if values is None and "$ref" in spec:
+                    values = (defs.get(spec["$ref"].rsplit("/", 1)[-1]) or {}).get("enum")
+                if values:
+                    table[name] = tuple(values)
+        enums[key] = table
+    sys_enums = {}
+    for name, spec in ((props.get("system") or {}).get("properties") or {}).items():
+        if isinstance(spec, dict) and "$ref" in spec:
+            values = (defs.get(spec["$ref"].rsplit("/", 1)[-1]) or {}).get("enum")
+            if values:
+                sys_enums[name] = tuple(values)
+    enums["system"] = sys_enums
+    return required, top, lists, enums, prov, steps, def_for
+
+
+REQUIRED_FIELDS, TOP_KEYS, ENTITY_LISTS, ENUMS, PROVENANCE_FIELDS, STEP_FIELDS, \
+    DEF_FOR_LIST = _derive()
+
+MODEL_SCHEMA = (((_SCHEMA or {}).get("properties") or {})
+                .get("schema") or {}).get("const") or (_SCHEMA or {}).get("$id")
+
+# 出所の verdict の語彙(器の Source から導く)。
+ENUM_VERDICT = tuple((((_defs().get("Source") or {}).get("properties") or {})
+                      .get("verdict") or {}).get("enum") or ())
+# 確定の語彙(器の ReviewStatus から導く)。
+ENUM_REVIEW_STATUS = tuple((_defs().get("ReviewStatus") or {}).get("enum") or ())
+# 呼び手(map-draft-check)が引く別名。いずれも器から導いた値であり、写しではない。
+ENUM_VERIFICATION_STATUS = tuple(
+    (_defs().get("VerificationStatus") or {}).get("enum") or ())
+ENUM_TARGET_KIND = ENUMS.get("anchors", {}).get("target_kind", ())
+ENUM_AUTHORITY = ENUMS.get("anchors", {}).get("authority", ())
+ENUM_ELEMENT_KIND = ENUMS.get("elements", {}).get("kind", ())
+ENUM_FLOW_KIND = ENUMS.get("flows", {}).get("kind", ())
+ENUM_SCENARIO_KIND = ENUMS.get("scenarios", {}).get("kind", ())
 
 # 必須節と、描く先の欄の対応。**節名は登録簿から機械的に導く** —— 字面を写すと
 # 登録簿を直したときに本文の値だけが拾われなくなる(WATCH-001 第2項が同じ形の
 # 手写しを戻り禁止にしている。DECIDED-001 事実1)。登録簿の並びは器の最上位の欄と
 # 一対一である(ADR-163 決定2。_registry.py の註釈がそう宣言している)。
 _MODEL_SECTIONS = _registry.required_sections("MODEL")
-_SECTION_ORDER = ("system",) + ENTITY_LISTS
-SECTION_FOR_LIST = dict(zip(_SECTION_ORDER[1:], _MODEL_SECTIONS[1:]))
+SECTION_FOR_LIST = dict(zip(ENTITY_LISTS, _MODEL_SECTIONS[1:]))
 SYSTEM_SECTION = _MODEL_SECTIONS[0] if _MODEL_SECTIONS else "系の概要"
 
 # 散文を書く欄。用語の門(禁止同義語・カルク・未定義語)は、この欄の値にだけ掛ける
@@ -50,43 +134,12 @@ SYSTEM_SECTION = _MODEL_SECTIONS[0] if _MODEL_SECTIONS else "系の概要"
 PROSE_FIELDS = ("purpose", "boundary", "guarantee", "response_measure",
                 "label", "payload_or_action", "condition", "name",
                 "responsibilities", "assumptions", "na_reason",
-                "self_loop_reason")
+                "self_loop_reason", "goal", "trigger", "preconditions",
+                "outcome", "action", "expected")
 
 # 引退した位置づけ(ADR-027 の退避・後継による置換・廃止)。確定の同値はここへ
 # 掛けない —— 確定を経た模型を引退させる道を塞がないためである(ADR-164)。
 RETIRED_STATUSES = ("deprecated", "superseded", "archived")
-
-# 語彙の正本(lens 側 gold-model の schema.json 0.1 を写したもの)。
-ENUM_REVIEW_STATUS = ("proposed", "confirmed")
-ENUM_VERDICT = ("present", "silent")
-ENUM_TARGET_KIND = ("document", "code_range", "test", "external_doc",
-                    "artifact")
-ENUM_AUTHORITY = ("doctrine", "gold_model")
-ENUM_VERIFICATION_STATUS = ("unknown", "claimed", "planned", "verified",
-                            "failed", "stale", "not_applicable")
-ENUM_ELEMENT_KIND = ("person", "organization", "system", "subsystem",
-                     "component", "operation", "external_system", "device")
-ENUM_FLOW_KIND = ("data", "command", "event", "physical", "human_action")
-ENUM_SCENARIO_KIND = ("normal", "exception")
-
-# 実体ごとの必須欄。手引き(skills/system-map-draft/references/model-shape.md)が
-# 「必須」と書いた欄をそのまま採る。
-REQUIRED_FIELDS = {
-    "system": ("target", "purpose", "boundary", "provenance", "review_status"),
-    "elements": ("id", "name", "kind", "purpose", "responsibilities", "owner",
-                 "provenance", "review_status"),
-    "flows": ("id", "from", "to", "label", "kind", "payload_or_action",
-              "condition", "provenance", "review_status"),
-    "contracts": ("id", "subject", "assumptions", "guarantee",
-                  "response_measure", "verification_status", "owner",
-                  "provenance", "review_status"),
-    "scenarios": ("id", "kind", "steps", "provenance", "review_status"),
-    "anchors": ("id", "target_kind", "target", "source_revision",
-                "observed_at", "authority"),
-}
-
-# 出所(Source)の必須欄。
-PROVENANCE_FIELDS = ("source", "locator", "checked_at", "verdict")
 
 _H2_RE = re.compile(r"^##\s+(.*?)\s*$")
 _H3_RE = re.compile(r"^###\s+(.*?)\s*$")
@@ -270,8 +323,8 @@ def check_structure(model, findings):
             if system.get(key) is None:
                 _f(findings, "MODEL_MISSING_FIELD", "system",
                    "必須欄 %s が無い(値が null も欠落と数える)" % key, line)
-        _check_enum(findings, "system", "review_status", system,
-                    ENUM_REVIEW_STATUS, line)
+        for key, values in sorted((ENUMS.get("system") or {}).items()):
+            _check_enum(findings, "system", key, system, values, line)
         _check_provenance(findings, "system", system, line)
 
     seen = {}
@@ -307,29 +360,15 @@ def check_structure(model, findings):
                        "見出し『%s』に id %s が無い。見出しと塊を揃える"
                        % (heading, ident), line)
             if label != "anchors":
-                _check_enum(findings, where, "review_status", item,
-                            ENUM_REVIEW_STATUS, line)
                 _check_provenance(findings, where, item, line)
-        # 語彙(実体ごと)
-    for item in model.get("elements", []):
-        _check_enum(findings, "elements[%s]" % item.get("id"), "kind", item,
-                    ENUM_ELEMENT_KIND, item.get("_line", 0))
-    for item in model.get("flows", []):
-        _check_enum(findings, "flows[%s]" % item.get("id"), "kind", item,
-                    ENUM_FLOW_KIND, item.get("_line", 0))
-    for item in model.get("scenarios", []):
-        _check_enum(findings, "scenarios[%s]" % item.get("id"), "kind", item,
-                    ENUM_SCENARIO_KIND, item.get("_line", 0))
-    for item in model.get("contracts", []):
-        _check_enum(findings, "contracts[%s]" % item.get("id"),
-                    "verification_status", item, ENUM_VERIFICATION_STATUS,
-                    item.get("_line", 0))
-    for item in model.get("anchors", []):
-        where = "anchors[%s]" % item.get("id")
-        _check_enum(findings, where, "target_kind", item, ENUM_TARGET_KIND,
-                    item.get("_line", 0))
-        _check_enum(findings, where, "authority", item, ENUM_AUTHORITY,
-                    item.get("_line", 0))
+        # 語彙(実体ごと)。器が enum を書いた欄を機械的に検める(名を並べない)。
+    for label in ENTITY_LISTS:
+        table = ENUMS.get(label) or {}
+        for item in model.get(label, []):
+            where = "%s[%s]" % (label, item.get("id"))
+            line = item.get("_line", 0)
+            for key, values in sorted(table.items()):
+                _check_enum(findings, where, key, item, values, line)
     _check_references(model, findings)
 
 
@@ -394,6 +433,10 @@ def _check_references(model, findings):
             if not isinstance(step, dict):
                 _f(findings, "MODEL_BAD_STEPS", sw, "段が写像でない", line)
                 continue
+            for key in STEP_FIELDS:
+                if step.get(key) is None:
+                    _f(findings, "MODEL_MISSING_FIELD", sw,
+                       "段の必須欄 %s が無い(器が要する)" % key, line)
             _need(sw, step.get("actor"), elements, "actor", line)
             _need(sw, step.get("receiver"), elements, "receiver", line)
             _need(sw, step.get("flow"), flows, "flow", line)
@@ -438,6 +481,10 @@ def check_confirmation(model, status, findings):
 
 def check_document(body, status):
     """本文と `status` を検め、所見の列を返す。リンタの口はこれ一つ。"""
+    if SCHEMA_ERROR:
+        # 器を読めないまま黙って通さない(沈黙する検証器を作らない)。
+        return [Finding("MODEL_SCHEMA_UNREADABLE", "ERROR", "(器)",
+                        SCHEMA_ERROR, 0)]
     model, findings = parse_model(body)
     check_structure(model, findings)
     check_confirmation(model, status, findings)

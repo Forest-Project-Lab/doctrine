@@ -2,6 +2,42 @@
   "anchors": [
     {
       "authority": "doctrine",
+      "id": "a-registry",
+      "observed_at": "2026-08-14",
+      "source_revision": "44a5ca3679d4f9e627fcf428d71be64b58e70c77",
+      "target": "doctrine: plugin/scripts/_registry.py(SPEC-001 の注釈対)",
+      "target_kind": "code_range",
+      "url": "https://github.com/Forest-Project-Lab/doctrine/blob/44a5ca3679d4f9e627fcf428d71be64b58e70c77/plugin/scripts/_registry.py"
+    },
+    {
+      "authority": "doctrine",
+      "id": "a-linter",
+      "observed_at": "2026-08-14",
+      "source_revision": "44a5ca3679d4f9e627fcf428d71be64b58e70c77",
+      "target": "doctrine: plugin/scripts/docs-linter.py(SPEC-007 の注釈対)",
+      "target_kind": "code_range",
+      "url": "https://github.com/Forest-Project-Lab/doctrine/blob/44a5ca3679d4f9e627fcf428d71be64b58e70c77/plugin/scripts/docs-linter.py"
+    },
+    {
+      "authority": "doctrine",
+      "id": "a-audit",
+      "observed_at": "2026-08-14",
+      "source_revision": "44a5ca3679d4f9e627fcf428d71be64b58e70c77",
+      "target": "doctrine: plugin/scripts/docs-audit.py(SPEC-011 の注釈対)",
+      "target_kind": "code_range",
+      "url": "https://github.com/Forest-Project-Lab/doctrine/blob/44a5ca3679d4f9e627fcf428d71be64b58e70c77/plugin/scripts/docs-audit.py"
+    },
+    {
+      "authority": "doctrine",
+      "id": "a-depgraph",
+      "observed_at": "2026-08-14",
+      "source_revision": "44a5ca3679d4f9e627fcf428d71be64b58e70c77",
+      "target": "doctrine: plugin/scripts/dep-graph.py(SPEC-013 の注釈対)",
+      "target_kind": "code_range",
+      "url": "https://github.com/Forest-Project-Lab/doctrine/blob/44a5ca3679d4f9e627fcf428d71be64b58e70c77/plugin/scripts/dep-graph.py"
+    },
+    {
+      "authority": "doctrine",
       "id": "a-spec-007",
       "observed_at": "2026-08-14",
       "source_revision": "4d00eed7548275197289af796a13c222ac529da8",
@@ -75,6 +111,9 @@
         }
       ],
       "purpose": "型・位置づけ・置き場所・必須キー・必須節の規則を、体系の中で一度だけ持つ。",
+      "realized_by": [
+        "a-registry"
+      ],
       "responsibilities": [
         "type-registry の正本",
         "frontmatter-schema の正本"
@@ -95,6 +134,9 @@
         }
       ],
       "purpose": "編集された一つの文書だけを点検し、助言を返す。拒否はしない。",
+      "realized_by": [
+        "a-linter"
+      ],
       "responsibilities": [
         "document-lint",
         "term-check"
@@ -115,6 +157,9 @@
         }
       ],
       "purpose": "統治木の全件を走査し、所見と要約を出す。セッション境界と CI で走る。",
+      "realized_by": [
+        "a-audit"
+      ],
       "responsibilities": [
         "corpus-audit",
         "audit-summary-schema"
@@ -135,6 +180,9 @@
         }
       ],
       "purpose": "文書の依存の辺と、注釈の対が囲むコード範囲を、問い合わせのたびに導出して返す。",
+      "realized_by": [
+        "a-depgraph"
+      ],
       "responsibilities": [
         "dependency-graph-api",
         "trace-index-api"
@@ -155,6 +203,10 @@
         }
       ],
       "purpose": "実行環境の七つの出来事を、各スクリプトへ配線する。",
+      "realization": {
+        "reason": "配線の正本は JSON(hooks.json)であり、注釈の対を持てない媒体である(設定の trace_exempt が理由と共に載せる。ADR-072)。実装の範囲へ結べない。",
+        "status": "not_applicable"
+      },
       "responsibilities": [
         "hook-wiring"
       ],
@@ -219,9 +271,15 @@
   ],
   "scenarios": [
     {
+      "goal": "編集された一つの文書が、規則に照らして点検される。",
       "id": "s-edit",
       "kind": "normal",
       "name": "文書を一つ編集したとき",
+      "outcome": "所見が助言として返り、編集は拒まれない(拒否はガードの領分)。",
+      "preconditions": [
+        "統治木が在る",
+        "配線が生きている"
+      ],
       "provenance": [
         {
           "checked_at": "2026-08-14",
@@ -233,16 +291,21 @@
       "review_status": "proposed",
       "steps": [
         {
+          "action": "編集の後にリンタを起こす",
           "actor": "d-hooks",
+          "expected": "リンタが編集された道を受け取る",
           "flow": "f-hook-lint",
           "receiver": "d-lint"
         },
         {
+          "action": "必須キーと許可表を問い合わせる",
           "actor": "d-lint",
+          "expected": "登録簿が型ごとの規則を返す",
           "flow": "f-lint-registry",
           "receiver": "d-model"
         }
-      ]
+      ],
+      "trigger": "Edit・Write・MultiEdit のいずれかが走ったとき"
     }
   ],
   "schema": "system-map/gold-model/0.1",

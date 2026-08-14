@@ -34,10 +34,13 @@ llm_context: task
   `schema`・`target`・`system`・`elements`・`flows`・`contracts`・`scenarios`・`anchors`。
   `target` は「系の概要」の塊から最上位へ持ち上げる。並びは文書の中の出現順、鍵は整列、
   末尾に改行を一つ置く。
-- 語彙の正本: `MODEL_SCHEMA`・`TOP_KEYS`・`ENTITY_LISTS`・`REQUIRED_FIELDS`・
-  `PROVENANCE_FIELDS`・`PROSE_FIELDS`・`RETIRED_STATUSES` と、列挙（`ENUM_REVIEW_STATUS`・
-  `ENUM_VERDICT`・`ENUM_TARGET_KIND`・`ENUM_AUTHORITY`・`ENUM_VERIFICATION_STATUS`・
-  `ENUM_ELEMENT_KIND`・`ENUM_FLOW_KIND`・`ENUM_SCENARIO_KIND`）。件数は書かない（ADR-075）。
+- `load_schema(path)`: 同梱した器の一枚（`plugin/schemas/system-map-gold-model-0.1.json`）を
+  読み、`(schema, 理由)` を返す。読めなければ `schema` は None である。
+- **器から導く表**: `MODEL_SCHEMA`（器の版）・`TOP_KEYS`・`ENTITY_LISTS`・`REQUIRED_FIELDS`
+  （実体ごとと系）・`STEP_FIELDS`（シナリオの段）・`PROVENANCE_FIELDS`（出所）・`ENUMS`
+  （器が `enum` を書いた欄を機械的に集めた表）と、呼び手が引く別名の列挙。**手で並べた表を
+  持たない**（ADR-165 決定2）。`PROSE_FIELDS` と `RETIRED_STATUSES` は doctrine 側の定めで
+  あり、器には無い。
 - `prose_values(model)`: 塊の中の散文の値を `(where, 行, 文字列)` の列で返す。用語の門を
   塊の中へ届かせるための口であり、対象は `PROSE_FIELDS` の欄に限る（ADR-164 決定3）。
 
@@ -56,8 +59,11 @@ llm_context: task
 - **必須節の外に置かれた塊は値として拾わない。** 散文の例示を値にしない。
 - 描く向きは .md から JSON への一方通行とする。JSON を読んで .md を組む口は持たない
   （ADR-161 決定3）。
-- 器の版（`MODEL_SCHEMA`）はこの部品が持つ定数とする（ADR-163 決定9）。版の進め方は
-  issue #294 の B1（器の正本と版の進め方）が持ち、本仕様は決めない。
+- **器の形の正本は doctrine-lens の `schema.json` であり、doctrine は固定した一枚を同梱して
+  そこから導く**（ADR-165・EXT-007）。器の版（`MODEL_SCHEMA`）も一枚から読む。版の進め方は
+  ADR-165 決定4 が持つ。
+- **器の一枚を読めないときは黙って通さない** —— `MODEL_SCHEMA_UNREADABLE`（ERROR）一件だけを
+  返し、他の検査を行わない（器を持たないまま緑を出さない）。
 
 ## エラー時挙動
 
@@ -69,7 +75,8 @@ llm_context: task
   `MODEL_MISSING_FIELD`・`MODEL_BAD_ID`・`MODEL_BAD_ENUM`・`MODEL_BAD_PROVENANCE`・
   `MODEL_BAD_REALIZED_BY`・`MODEL_DUPLICATE_ID`・`MODEL_HEADING_ID_MISMATCH`・
   `MODEL_HEADING_WITHOUT_BLOCK`・`MODEL_DANGLING_REF`・`MODEL_SELF_LOOP_WITHOUT_REASON`・
-  `MODEL_BAD_STEPS`・`MODEL_UNCONFIRMED_IN_CURRENT`・`MODEL_CONFIRMED_NOT_CURRENT`。
+  `MODEL_BAD_STEPS`・`MODEL_UNCONFIRMED_IN_CURRENT`・`MODEL_CONFIRMED_NOT_CURRENT`・
+  `MODEL_SCHEMA_UNREADABLE`。
   段は `MODEL_CONFIRMED_NOT_CURRENT` だけが WARN で、ほかは ERROR とする（ADR-164 決定4）。
 - **アンカーは値を担わない**（指し先の記述である）ので、`review_status` と `provenance` を
   求めない。
@@ -83,7 +90,7 @@ llm_context: task
 この節がある文書だけが、コードとの追跡の対象になる（ADR-056 の opt-in）。更新は
 `trace-index.py --id SPEC-031` が返す行を写す。
 
-- sha256:198194789b4c556a966ec6722396ae6ff358d457e488571cd6c70bb8e6f0dee6
+- sha256:1503addc972e6513150e479fe4e2ae8002dd8ab402921595b1e5e57aa32d9058
 
 ## 受入基準
 
@@ -97,7 +104,9 @@ llm_context: task
 - 描いた JSON は、最上位が八つの欄を持ち、`target` が最上位に在り、解析の覚え書きを含まず、
   同じ入力から同じ文字列になる。文書の中の出現順が保たれる。
 - リンタが同じ規則で MODEL の本文を咎める（規則が二重に定義されていない）。節名は登録簿と
-  一致する（写しを持たない）。
+  一致し、必須欄と語彙は同梱した器の一枚と一致する（どちらも写しを持たない）。
+- シナリオの段の必須欄（器の `Scenario.steps.items.required`）が検められる。
+- 器の一枚を取り除くと `MODEL_SCHEMA_UNREADABLE` だけが出て、他の検査が黙って通らない。
 - 配列でない `realized_by`・`null` の必須欄・空でない文字列でない id・塊を持たない見出しが、
   それぞれ固有の名の所見になり、**例外を漏らさない**。
 - 塊の中の散文（`PROSE_FIELDS`）に用語の門が掛かる。
