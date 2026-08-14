@@ -27,7 +27,7 @@ llm_context: task
 - `regression-guard`（R5）: 一度廃止したものの復活や、撤回した方針の再採用を防ぐ。DECIDED・WATCH と突き合わせる。
 - `llm-context-pack`（R5）: タスクごとに、必要な文書を過不足なく集めたまとまりを作る。`llm_context:never` の文書は除き、各文書の出所を示す（`collect-context.py`、ICD-006）。組んだ文脈から体系外の .md を生成して保存するときは、刻印（参照時点の一行。ICD-005）を打たせる（ADR-073）。
 - `docs-curate`（R8）: 点検・統合・降格・削除を一つずつ進める。どこからも依存されていないかを確かめ、投影を作り直す。
-- `system-map-draft`（ADR-136）: 対象リポジトリから proposed 限定の意味モデルの下書きを起草し、出所を機械検証（`map-draft-check.py`）に通す。確定（confirmed への昇格）は人が行う。
+- `system-map-draft`（ADR-136・ADR-163）: 対象リポジトリから proposed 限定の意味モデルの下書きを、**統治木の中の MODEL 型の .md** として起草する。構造はリンタ（`MODEL_*`。SPEC-031）が、出所は `map-draft-check.py` が機械検証する。JSON は `render-projection.py model` が .md から一方通行で描く。確定（`confirmed` への昇格と `status` の一押し）は人が行う。
 
 ## 制約
 

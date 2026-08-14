@@ -38,8 +38,14 @@ llm_context: task
 検査群）・SPEC-014（描画の口）・ICD-006（描く口の宣言）・ICD-001（`semantic-model-shape` の
 宣言）・SPEC-029（語彙の写しの廃止と門の掛け先）・TEST-007・TEST-014。
 
-第三波で直すもの（まだ触らない）: `plugin/skills/system-map-draft/`（下書きを .md で起草する
-形へ）と、その SPEC-016・ICD-007 の記述。
+第三波で直したもの: `plugin/skills/system-map-draft/SKILL.md` と参照三点
+（`acceptance-gates.md`・`model-shape.md`）、SPEC-016 の技能の記述。あわせて実例
+`doctrine_docs/packaging/model/MODEL-001-doctrine.md` と、その投影
+`MODEL-001-doctrine.json` を同梱した。
+
+実例の門の実測（2026-08-14）: リンタ所見 0 件 / 描画 成功 / 出所の門は **出所 12 件・所見 0 件・
+機械検証不能 0 件**。M 層（lens 側 validator）は**回していない** —— 実行に複製の取得（通信）が
+要り、本波の作業では行っていない。
 
 ## 影響する実装
 
