@@ -19,7 +19,13 @@
 from __future__ import annotations
 
 import json
+import os
 import re
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import _registry
 
 # doctrine:begin SPEC-031
 # 器の版。描き手が持つ定数とする(ADR-163 決定9)。版の進め方は #294 の B1 が持つ。
@@ -30,16 +36,25 @@ TOP_KEYS = ("schema", "target", "system", "elements", "flows", "contracts",
             "scenarios", "anchors")
 ENTITY_LISTS = ("elements", "flows", "contracts", "scenarios", "anchors")
 
-# 必須節(登録簿の REQUIRED_SECTIONS["MODEL"])と、描く先の欄の対応。
-# 節名は登録簿が正本であり、ここは対応表だけを持つ。
-SECTION_FOR_LIST = {
-    "elements": "要素の一覧",
-    "flows": "流れの一覧",
-    "contracts": "契約の一覧",
-    "scenarios": "シナリオの一覧",
-    "anchors": "アンカーの一覧",
-}
-SYSTEM_SECTION = "系の概要"
+# 必須節と、描く先の欄の対応。**節名は登録簿から機械的に導く** —— 字面を写すと
+# 登録簿を直したときに本文の値だけが拾われなくなる(WATCH-001 第2項が同じ形の
+# 手写しを戻り禁止にしている。DECIDED-001 事実1)。登録簿の並びは器の最上位の欄と
+# 一対一である(ADR-163 決定2。_registry.py の註釈がそう宣言している)。
+_MODEL_SECTIONS = _registry.required_sections("MODEL")
+_SECTION_ORDER = ("system",) + ENTITY_LISTS
+SECTION_FOR_LIST = dict(zip(_SECTION_ORDER[1:], _MODEL_SECTIONS[1:]))
+SYSTEM_SECTION = _MODEL_SECTIONS[0] if _MODEL_SECTIONS else "系の概要"
+
+# 散文を書く欄。用語の門(禁止同義語・カルク・未定義語)は、この欄の値にだけ掛ける
+# (id・種別・パス・日付のような機械の値には掛けない)。
+PROSE_FIELDS = ("purpose", "boundary", "guarantee", "response_measure",
+                "label", "payload_or_action", "condition", "name",
+                "responsibilities", "assumptions", "na_reason",
+                "self_loop_reason")
+
+# 引退した位置づけ(ADR-027 の退避・後継による置換・廃止)。確定の同値はここへ
+# 掛けない —— 確定を経た模型を引退させる道を塞がないためである(ADR-164)。
+RETIRED_STATUSES = ("deprecated", "superseded", "archived")
 
 # 語彙の正本(lens 側 gold-model の schema.json 0.1 を写したもの)。
 ENUM_REVIEW_STATUS = ("proposed", "confirmed")
@@ -99,16 +114,17 @@ def _f(out, code, where, message, line=0, severity="ERROR"):
     out.append(Finding(code, severity, where, message, line))
 
 
-def parse_blocks(body):
-    """本文から (節名, 見出し, 塊の文字列, 行番号) の列を、出現順で返す。
+def _scan(body):
+    """本文を一度だけ走り、(塊の列, 見出しの列) を返す。
 
-    節は `## 見出し`、実体は `### 見出し`、値は直後の ```json の囲みである。
-    節名の照合は部分一致とする(リンタの必須節検査と同じ規律。言い換えは許さないが、
-    「## 要素の一覧（案）」のような添え書きは通す)。
+    塊は (節名, 見出し, 塊の文字列, 行番号)。見出しは (節名, 見出し, 行番号, 塊を持つか)。
+    **塊を持たない見出しも返す** —— 見出しが在るのに値が無い実体は、正本には見えて
+    投影には居ない、という黙った食い違いになるからである。
     """
-    out = []
+    blocks = []
+    headings = []
     section = None
-    heading = None
+    cur = None                 # いま開いている見出しの、headings の中の位置
     i = 0
     lines = body.splitlines()
     n = len(lines)
@@ -117,12 +133,13 @@ def parse_blocks(body):
         m2 = _H2_RE.match(line)
         if m2:
             section = m2.group(1)
-            heading = None
+            cur = None
             i += 1
             continue
         m3 = _H3_RE.match(line)
         if m3:
-            heading = m3.group(1)
+            headings.append([section, m3.group(1), i + 1, False])
+            cur = len(headings) - 1
             i += 1
             continue
         if _FENCE_OPEN_RE.match(line):
@@ -130,11 +147,24 @@ def parse_blocks(body):
             j = start
             while j < n and not _FENCE_ANY_RE.match(lines[j]):
                 j += 1
-            out.append((section, heading, "\n".join(lines[start:j]), start))
+            heading = headings[cur][1] if cur is not None else None
+            blocks.append((section, heading, "\n".join(lines[start:j]), start))
+            if cur is not None:
+                headings[cur][3] = True
             i = j + 1
             continue
         i += 1
-    return out
+    return blocks, headings
+
+
+def parse_blocks(body):
+    """本文から (節名, 見出し, 塊の文字列, 行番号) の列を、出現順で返す。
+
+    節は `## 見出し`、実体は `### 見出し`、値は直後の ```json の囲みである。
+    節名の照合は部分一致とする(リンタの必須節検査と同じ規律。言い換えは許さないが、
+    「## 要素の一覧（案）」のような添え書きは通す)。
+    """
+    return _scan(body)[0]
 
 
 def _list_for_section(section):
@@ -157,14 +187,21 @@ def parse_model(body):
     findings = []
     model = {"system": None, "elements": [], "flows": [], "contracts": [],
              "scenarios": [], "anchors": []}
-    for section, heading, raw, line in parse_blocks(body):
+    blocks, headings = _scan(body)
+    for section, heading, line, has_block in headings:
+        if _list_for_section(section) is None or has_block:
+            continue
+        _f(findings, "MODEL_HEADING_WITHOUT_BLOCK", heading,
+           "見出しが在るのに ```json の塊が無い。値が投影へ出ない"
+           "(囲みは ```json と綴る)", line)
+    for section, heading, raw, line in blocks:
         target = _list_for_section(section)
         if target is None:
             # 必須節の外に置かれた塊は、値として拾わない(散文の例示を値にしない)。
             continue
         try:
             value = json.loads(raw)
-        except ValueError as exc:
+        except (ValueError, RecursionError) as exc:
             _f(findings, "MODEL_BAD_JSON", heading or section,
                "JSON として読めない(%s)。塊の中身を直す" % exc, line)
             continue
@@ -204,7 +241,7 @@ def _check_enum(findings, where, key, entity, allowed, line):
 def _check_provenance(findings, where, entity, line):
     prov = entity.get("provenance")
     if prov is None:
-        return                      # 必須欄の検査が別に咎める
+        return                      # 必須欄の検査が null を欠落として咎める
     if not isinstance(prov, list) or not prov:
         _f(findings, "MODEL_BAD_PROVENANCE", where,
            "provenance は一件以上の配列である(読んだ場所を書く)", line)
@@ -230,9 +267,9 @@ def check_structure(model, findings):
     else:
         line = model.get("_system_line", 0)
         for key in REQUIRED_FIELDS["system"]:
-            if key not in system:
+            if system.get(key) is None:
                 _f(findings, "MODEL_MISSING_FIELD", "system",
-                   "必須欄 %s が無い" % key, line)
+                   "必須欄 %s が無い(値が null も欠落と数える)" % key, line)
         _check_enum(findings, "system", "review_status", system,
                     ENUM_REVIEW_STATUS, line)
         _check_provenance(findings, "system", system, line)
@@ -242,11 +279,21 @@ def check_structure(model, findings):
         for item in model.get(label, []):
             line = item.get("_line", 0)
             ident = item.get("id")
-            where = "%s[%s]" % (label, ident if ident else "?")
+            # id が無いときは見出しで指す(『elements[?]』では直す先が分からない)。
+            if isinstance(ident, str) and ident:
+                where = "%s[%s]" % (label, ident)
+            elif item.get("_heading"):
+                where = "%s[見出し『%s』]" % (label, item["_heading"])
+            else:
+                where = "%s[?]" % label
             for key in REQUIRED_FIELDS[label]:
-                if key not in item:
+                if item.get(key) is None:
                     _f(findings, "MODEL_MISSING_FIELD", where,
-                       "必須欄 %s が無い" % key, line)
+                       "必須欄 %s が無い(値が null も欠落と数える)" % key, line)
+            if "id" in item and not (isinstance(ident, str) and ident.strip()):
+                _f(findings, "MODEL_BAD_ID", where,
+                   "id が空でない文字列でない(%r)。id は文書の中で一意の文字列とする"
+                   % (ident,), line)
             if isinstance(ident, str) and ident:
                 if ident in seen:
                     _f(findings, "MODEL_DUPLICATE_ID", where,
@@ -287,7 +334,9 @@ def check_structure(model, findings):
 
 
 def _ids(model, label):
-    return {i.get("id") for i in model.get(label, []) if isinstance(i.get("id"), str)}
+    """label の実体の id の集合。空でない文字列だけを採る。"""
+    return {i.get("id") for i in model.get(label, [])
+            if isinstance(i.get("id"), str) and i.get("id").strip()}
 
 
 def _check_references(model, findings):
@@ -308,8 +357,18 @@ def _check_references(model, findings):
         where = "elements[%s]" % item.get("id")
         line = item.get("_line", 0)
         _need(where, item.get("parent"), elements, "parent", line)
-        for anchor in item.get("realized_by") or []:
-            _need(where, anchor, anchors, "realized_by", line)
+        realized = item.get("realized_by")
+        if realized is None:
+            pass
+        elif not isinstance(realized, list):
+            # 配列でない値を反復すると、文字を一つずつ辿るか例外が漏れる。
+            # 所見にして止める(SPEC-031「例外を投げない」)。
+            _f(findings, "MODEL_BAD_REALIZED_BY", where,
+               "realized_by が配列でない(%r)。アンカーの id の配列とする"
+               % (realized,), line)
+        else:
+            for anchor in realized:
+                _need(where, anchor, anchors, "realized_by", line)
     for item in model.get("flows", []):
         where = "flows[%s]" % item.get("id")
         line = item.get("_line", 0)
@@ -357,18 +416,24 @@ def check_confirmation(model, status, findings):
                            item.get("_line", 0)))
     if not values:
         return
+    if status in RETIRED_STATUSES:
+        # 引退した模型(廃止・置換・退避)の値は confirmed のまま凍らせてよい。
+        # ここを咎めると、確定を経た模型を引退させる道が塞がる(ADR-164)。
+        return
     unconfirmed = [(w, line) for (w, v, line) in values
                    if v.get("review_status") != "confirmed"]
-    if status == "current":
+    if _registry.is_current(status):
         for where, line in unconfirmed:
             _f(findings, "MODEL_UNCONFIRMED_IN_CURRENT", where,
                "status が current だが review_status が confirmed でない"
                "(確定の一押しと値の状態を揃える。ADR-163 決定6)", line)
     elif not unconfirmed:
+        # **機械へ「確定せよ」とは言わない。** 確定の一押しは人の仕事であり、
+        # 機械が取れる行いは値を戻すことだけである(ADR-163 決定6・ADR-164)。
         _f(findings, "MODEL_CONFIRMED_NOT_CURRENT", "(文書)",
-           "全ての値が confirmed である。確定の一押し(status を current へ)を"
-           "行うか、値を proposed へ戻す(ADR-163 決定6)",
-           model.get("_system_line", 0))
+           "全ての値が confirmed である。確定の一押し(status)は人が行う —— "
+           "機械は status を動かさない。値を proposed へ戻すか、人の確定を待つ",
+           model.get("_system_line", 0), severity="WARN")
 
 
 def check_document(body, status):
@@ -377,6 +442,34 @@ def check_document(body, status):
     check_structure(model, findings)
     check_confirmation(model, status, findings)
     return findings
+
+
+def prose_values(model):
+    """塊の中の散文の値を (where, 行, 文字列) の列で返す(用語の門に掛けるため)。
+
+    掛けるのは PROSE_FIELDS の欄だけである —— id・種別・パス・日付のような機械の値に
+    用語の門を掛けると、誤った咎めが出る。文字列の配列は要素ごとに返す。
+    """
+    out = []
+
+    def _take(where, entity, line):
+        for key in PROSE_FIELDS:
+            value = entity.get(key)
+            if isinstance(value, str):
+                out.append((where, line, value))
+            elif isinstance(value, list):
+                for item in value:
+                    if isinstance(item, str):
+                        out.append((where, line, item))
+
+    system = model.get("system")
+    if isinstance(system, dict):
+        _take("system", system, model.get("_system_line", 0))
+    for label in ENTITY_LISTS:
+        for item in model.get(label, []):
+            _take("%s[%s]" % (label, item.get("id")), item,
+                  item.get("_line", 0))
+    return out
 
 
 def build_json(model):

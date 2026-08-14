@@ -50,7 +50,7 @@ doctrine は、文書の統治（型・出所・依存・鮮度）を機械で�
   "id": "d-model",
   "name": "登録簿（構造規則の正本）",
   "kind": "subsystem",
-  "purpose": "型・status・置き場所・必須キー・必須節の規則を、体系の中で一度だけ持つ。",
+  "purpose": "型・位置づけ・置き場所・必須キー・必須節の規則を、体系の中で一度だけ持つ。",
   "responsibilities": ["type-registry の正本", "frontmatter-schema の正本"],
   "owner": "doctrine-maintainers",
   "provenance": [
@@ -187,7 +187,7 @@ doctrine は、文書の統治（型・出所・依存・鮮度）を機械で�
   "to": "d-model",
   "label": "規則を問い合わせる",
   "kind": "data",
-  "payload_or_action": "必須キー・status の許可表・置き場所・必須節の問い合わせ",
+  "payload_or_action": "必須キー・位置づけの許可表・置き場所・必須節の問い合わせ",
   "condition": "点検のたび",
   "provenance": [
     {
@@ -255,7 +255,7 @@ doctrine は、文書の統治（型・出所・依存・鮮度）を機械で�
 {
   "id": "c-stdlib-only",
   "subject": "doctrine",
-  "assumptions": ["利用者の実行環境に python3 が在る"],
+  "assumptions": ["利用者の実行環境に Python の実行器が在る"],
   "guarantee": "すべてのスクリプトは標準ライブラリだけで動き、pip にも通信にも依存しない。",
   "response_measure": "定性的である（外部の取り込みが無いこと）",
   "verification_status": "claimed",

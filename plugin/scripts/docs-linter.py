@@ -599,12 +599,41 @@ def _check_model(meta, body, findings):
     if meta.get("type") != "MODEL":
         return
     status = meta.get("status") or _registry.default_status("MODEL")
-    for finding in _model.check_document(body or "", status):
+    body = body or ""
+    for finding in _model.check_document(body, status):
+        where = finding.where
+        if finding.line:
+            where = "%s(行 %d)" % (where, finding.line)
         findings.append(Finding(
             finding.code,
             ERROR if finding.severity == "ERROR" else WARN,
-            "%s: %s" % (finding.where, finding.message),
+            "%s: %s" % (where, finding.message),
             "ADR-163"))
+    _check_model_prose(meta, body, findings)
+
+
+def _check_model_prose(meta, body, findings):
+    """MODEL の塊の中の散文へ、用語の門を届かせる(ADR-164)。
+
+    用語チェッカーは囲みの中を丸ごと覆う(`_termcheck.mask_body`)。MODEL は値の
+    ほとんどが囲みの中に在るので、そのままでは**この型にだけ門が効かない**。
+    掛けるのは散文の欄の値だけとし(`_model.PROSE_FIELDS`)、id・種別・パス・日付の
+    ような機械の値には掛けない。段は用語チェッカーの返すものをそのまま使う。
+    """
+    model, _errs = _model.parse_model(body)
+    values = _model.prose_values(model)
+    if not values:
+        return
+    try:
+        docs_root = _registry.walkup_docs_root(os.getcwd())
+        glossary = _termcheck.load_glossary(docs_root)
+    except Exception:                                     # pragma: no cover
+        return
+    for where, line, text in values:
+        for f in _termcheck.check(text, meta, glossary):
+            findings.append(Finding(
+                f.code, ERROR if f.severity == "ERROR" else WARN,
+                "%s(行 %d): %s" % (where, line, f.message), "§1"))
 
 
 def _check_trace(meta, body, findings):

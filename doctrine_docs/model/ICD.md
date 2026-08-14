@@ -8,7 +8,7 @@ owner: doctrine-maintainers
 created: 2026-06-30
 updated: 2026-08-14
 sources: [DOCTRINE-001]
-canonical_for: [type-registry, status-vocabulary, frontmatter-schema, frontmatter-parser, llm-context-policy]
+canonical_for: [type-registry, status-vocabulary, frontmatter-schema, frontmatter-parser, llm-context-policy, semantic-model-shape]
 llm_context: task
 ---
 

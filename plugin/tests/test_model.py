@@ -174,6 +174,97 @@ class StructureTest(unittest.TestCase):
         self.assertIn("MODEL_MISSING_SYSTEM", self._codes(text))
 
 
+class HardeningTest(unittest.TestCase):
+    """独立検証(2026-08-14)が挙げた壊れ方を凍らせる(ADR-164)。"""
+
+    def _findings(self, text, status="proposed"):
+        return _model.check_document(text, status)
+
+    def _codes(self, text, status="proposed"):
+        return sorted({f.code for f in self._findings(text, status)})
+
+    def test_realized_by_that_is_not_a_list_does_not_raise(self):
+        """配列でない realized_by で例外を漏らさない(リンタが全検査を落とす形を防ぐ)。"""
+        for value in (3, "a-1", {"a": 1}):
+            codes = self._codes(body(elements=(dict(ELEMENT_A, realized_by=value),
+                                               ELEMENT_B)))
+            self.assertIn("MODEL_BAD_REALIZED_BY", codes)
+            self.assertNotIn("MODEL_DANGLING_REF", codes,
+                             "文字列を一字ずつ辿らない")
+
+    def test_null_value_counts_as_a_missing_field(self):
+        """鍵が在っても値が null なら欠落と数える(器は出所を一件以上要する)。"""
+        self.assertIn("MODEL_MISSING_FIELD",
+                      self._codes(body(elements=(dict(ELEMENT_A, provenance=None),
+                                                 ELEMENT_B))))
+        self.assertIn("MODEL_MISSING_FIELD",
+                      self._codes(body(system=dict(SYSTEM, purpose=None))))
+
+    def test_id_must_be_a_non_empty_string(self):
+        for bad in (1, "", "  ", None):
+            self.assertIn("MODEL_BAD_ID",
+                          self._codes(body(elements=(dict(ELEMENT_A, id=bad),
+                                                     ELEMENT_B))),
+                          repr(bad))
+
+    def test_empty_id_is_not_a_reference_target(self):
+        text = body(elements=(dict(ELEMENT_A, id=""), ELEMENT_B),
+                    flows=(dict(FLOW, **{"from": ""}),))
+        self.assertIn("MODEL_DANGLING_REF", self._codes(text))
+
+    def test_heading_without_a_block_is_reported(self):
+        """見出しが在るのに塊が無い実体は、黙って投影から消えない。"""
+        text = body() + "\n## 要素の一覧\n\n### e-c — 塊を書き忘れた\n\n（説明だけ）\n"
+        self.assertIn("MODEL_HEADING_WITHOUT_BLOCK", self._codes(text))
+
+    def test_non_json_fence_is_reported_through_the_heading(self):
+        text = body().replace("### e-b — 蓄え\n\n```json", "### e-b — 蓄え\n\n```", 1)
+        self.assertIn("MODEL_HEADING_WITHOUT_BLOCK", self._codes(text))
+
+    def test_retired_models_keep_their_confirmed_values(self):
+        """引退した位置づけでは確定の同値を検めない(引退の道を塞がない)。"""
+        confirmed = body(system=dict(SYSTEM, review_status="confirmed"),
+                         elements=(dict(ELEMENT_A, review_status="confirmed"),
+                                   dict(ELEMENT_B, review_status="confirmed")),
+                         flows=(dict(FLOW, review_status="confirmed"),),
+                         contracts=(dict(CONTRACT, review_status="confirmed"),),
+                         scenarios=(dict(SCENARIO, review_status="confirmed"),))
+        for status in ("deprecated", "superseded", "archived"):
+            self.assertEqual(self._codes(confirmed, status), [], status)
+
+    def test_confirmed_not_current_is_a_warning_and_does_not_order_the_machine(self):
+        """機械へ『確定せよ』とは言わない。段も WARN に留める(ADR-164 決定4)。"""
+        confirmed = body(system=dict(SYSTEM, review_status="confirmed"),
+                         elements=(dict(ELEMENT_A, review_status="confirmed"),
+                                   dict(ELEMENT_B, review_status="confirmed")),
+                         flows=(dict(FLOW, review_status="confirmed"),),
+                         contracts=(dict(CONTRACT, review_status="confirmed"),),
+                         scenarios=(dict(SCENARIO, review_status="confirmed"),))
+        found = [f for f in self._findings(confirmed, "proposed")
+                 if f.code == "MODEL_CONFIRMED_NOT_CURRENT"]
+        self.assertEqual(len(found), 1)
+        self.assertEqual(found[0].severity, "WARN")
+        self.assertIn("人が行う", found[0].message)
+        self.assertNotIn("current へ", found[0].message)
+
+    def test_section_names_are_derived_from_the_registry(self):
+        """節名を写さない(登録簿から導く。WATCH-001 第2項)。"""
+        reg = _util.load_core("_registry")
+        names = reg.required_sections("MODEL")
+        self.assertEqual(_model.SYSTEM_SECTION, names[0])
+        self.assertEqual(tuple(_model.SECTION_FOR_LIST[k]
+                               for k in _model.ENTITY_LISTS), tuple(names[1:]))
+
+    def test_prose_values_carry_only_prose_fields(self):
+        model, _ = _model.parse_model(body())
+        values = [v for _w, _l, v in _model.prose_values(model)]
+        self.assertIn("受け口", values)             # name は散文の欄
+        self.assertIn("受理", values)               # responsibilities の要素
+        self.assertNotIn("e-a", values)             # id は機械の値
+        self.assertNotIn("component", values)       # 種別は機械の値
+        self.assertNotIn("2026-08-14", values)      # 日付は機械の値
+
+
 class ConfirmationTest(unittest.TestCase):
     """確定の一押しは status で表す(ADR-163 決定6)。"""
 

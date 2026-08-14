@@ -22,5 +22,5 @@ sources: []
 | graph | ICD-002 | graph のインターフェース（依存グラフと追跡索引の問い合わせ契約） | dependency-graph-api, trace-index-api | 2026-08-13 |
 | guard | ICD-003 | guard のインターフェース（三ガードの公開境界） | policy-guards | 2026-06-30 |
 | lint | ICD-004 | lint のインターフェース（リンタと用語チェッカーの公開契約） | document-lint, term-check | 2026-08-14 |
-| model | ICD-001 | model のインターフェース（登録簿と解析の公開契約） | type-registry, status-vocabulary, frontmatter-schema, frontmatter-parser, llm-context-policy | 2026-08-14 |
+| model | ICD-001 | model のインターフェース（登録簿と解析の公開契約） | type-registry, status-vocabulary, frontmatter-schema, frontmatter-parser, llm-context-policy, semantic-model-shape | 2026-08-14 |
 | packaging | ICD-008 | packaging のインターフェース（配布物の形・Hook配線・段差） | plugin-packaging, hook-wiring, level-staging | 2026-07-26 |

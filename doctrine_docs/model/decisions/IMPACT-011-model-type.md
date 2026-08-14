@@ -38,7 +38,7 @@ llm_context: task
 検査群）・SPEC-014（描画の口）・ICD-006（描く口の宣言）・ICD-001（`semantic-model-shape` の
 宣言）・SPEC-029（語彙の写しの廃止と門の掛け先）・TEST-007・TEST-014。
 
-第三波で直したもの: `plugin/skills/system-map-draft/SKILL.md` と参照三点
+第三波で直したもの: `plugin/skills/system-map-draft/SKILL.md` と参照二点
 （`acceptance-gates.md`・`model-shape.md`）、SPEC-016 の技能の記述。あわせて実例
 `doctrine_docs/packaging/model/MODEL-001-doctrine.md` と、その投影
 `MODEL-001-doctrine.json` を同梱した。
