@@ -38,7 +38,7 @@
 - `regression-guard`: 廃止した方針の復活と、撤回した決定の再採用を防ぐ。`DECIDED`・`WATCH` と突き合わせる。
 - `llm-context-pack`: タスク別の最小の文脈を集約する。`never` 群を除外し、被覆を満たす最少集合に絞り、各事実の出所を表示する。
 - `docs-curate`: 点検→統合・降格・削除を一片ずつ進める。逆参照を確認し、投影を描画し直し、常時集合が上限を超えたら縮める。
-- `system-map-draft`: 対象リポジトリから proposed 限定の意味モデルの下書きを起草する。全ての値に出所（読んだ場所・確認日・判定）を付け、出所は `map-draft-check.py` が機械検証する。確定（confirmed への昇格）は人が行う。
+- `system-map-draft`: 対象リポジトリから proposed 限定の意味モデルの下書きを、**統治木の中の `MODEL` 型の .md** として起草する。全ての値に出所（読んだ場所・確認日・判定）を付け、本文の構造はリンタが、出所は `map-draft-check.py` が機械検証する。JSON は `render-projection.py model` が .md から一方通行で描く。確定（`confirmed` への昇格と `status` の一押し）は人が行う。
 
 ---
 
@@ -48,7 +48,7 @@ per-turn（毎ターン）のHookは単一文書だけを点検する。全件�
 
 - `SessionStart` → `inject-contract.py`: 契約の最小注入。`DECIDED`（現行）・`NONGOAL`・廃止事実・`GLOSSARY` 見出し・`WATCH` の要点と、前回監査の要約を描画して渡す。注入量の上限を守り、冒頭で要点を復唱させ、重要な文書を冒頭と末尾に置く。
 - `PreToolUse` → `policy-guard.py`: 三つのガード。不変性ガード（`archive/` と既存 `ADR` の改変を拒否）、`ICD` 依存ガード（ドメイン外の非 `ICD` 宛 `depends_on` を拒否）、削除安全ガード（現行の依存が残る降格・削除を拒否）。違反は実行前に拒否する。
-- `PostToolUse` → `policy-guard.py`・`docs-linter.py`・`review-nudge.py`（この順）: ガードは `Edit`・`MultiEdit` の事後で、事前に判定できなかった `ICD` 依存違反・削除安全違反を再点検して止める。リンタは助言だけを返す（必須キー・状態の型別許可・id とファイル名の一致・型と置き場所の整合・`llm_context` の値・`SPEC` 必須4節・用語チェッカー・追跡性）。`review-nudge.py` は型付き文書の編集に doc-review を促す助言で、`decision` は出さない。リンタと nudge は決して止めない。
+- `PostToolUse` → `policy-guard.py`・`docs-linter.py`・`review-nudge.py`（この順）: ガードは `Edit`・`MultiEdit` の事後で、事前に判定できなかった `ICD` 依存違反・削除安全違反を再点検して止める。リンタは助言だけを返す（必須キー・状態の型別許可・id とファイル名の一致・型と置き場所の整合・`llm_context` の値・`SPEC` 必須4節・`MODEL` の本文の構造・用語チェッカー・追跡性）。`review-nudge.py` は型付き文書の編集に doc-review を促す助言で、`decision` は出さない。リンタと nudge は決して止めない。
 - `UserPromptSubmit` → `gov-heartbeat.py`: 統治ハートビート。前回監査の鮮度と doc-review 定例の期限を毎会話で照合し、最も重い一件だけをセッションに一度促す。統治の全停止(フックの沈黙)を警報に変える(R11)。
 - `Stop` → `capture-nudge.py`: 記録の確認。統治文書を編集したのに記録(ADR・DECIDED・WATCH・CHANGE、またはセッションメモ)へ触れていないセッションの終端を一度だけ差し止め、「記録するか、決定なしと明言するか」を問う(R12)。
 - `PreCompact` → `precompact-dump.py`: 圧縮で会話が要約される前に、未記録の決定を `_system/.session-notes` へ退避させる指示を注入する。未選別のメモは次セッションの注入が選別を義務化する(R12)。
@@ -69,6 +69,7 @@ per-turn（毎ターン）のHookは単一文書だけを点検する。全件�
 | `_depgraph.py` | 共有 | 依存グラフの中核（`dep-graph.py`・監査が読み込む） |
 | `_termcheck.py` | 共有 | 用語チェックの中核（辞書の解析・照合。`term-check.py`・リンタが読み込む） |
 | `_intake.py` | 共有 | 分類の記録（`.md-intake`）の読み取りと刻印の解析（監査・リンタ・整合点検・リリースの門が共有） |
+| `_model.py` | 共有 | 意味モデル（`MODEL` 型）の本文の解析と担保。器の形は同梱した `schemas/system-map-gold-model-0.1.json` から導く（リンタ・描き手・出所の門が共有） |
 | `_config.py` | 共有 | 統治の設定（`_system/.context-config.json`）の読み取り（監査・リンタ・注入・鼓動・追跡が共有） |
 | `_tokens.py` | 共有 | トークンの見積りと較正の解釈（注入・収集・鼓動が共有） |
 | `_hookio.py` | 共有 | フック境界の入出力（読み取り・判定の書き出し。すべてのフックが共有） |
@@ -121,7 +122,7 @@ per-turn（毎ターン）のHookは単一文書だけを点検する。全件�
 
 ### 検出（リンタと監査が後から指摘する）
 
-- リンタが、必須キー・状態の型別許可・置き場所・`SPEC` 必須4節・禁止同義語・カルクを単一文書ごとに指摘する（`R2`・`R6`・`R8`・`R10`）。
+- リンタが、必須キー・状態の型別許可・置き場所・`SPEC` 必須4節・`MODEL` の本文の構造（必須欄・語彙・参照の実在・確定の同値）・禁止同義語・カルクを単一文書ごとに指摘する（`R2`・`R6`・`R8`・`R10`）。
 - 監査が、全件で、孤児・逆孤児・dead link・`canonical_for` 衝突・投影ドリフト・`review_by` 超過を一覧化する（`R1`・`R3`・`R8`）。
 
 ### 委ねる（構造では閉じない。人間とLLMが判断する）
@@ -136,4 +137,4 @@ per-turn（毎ターン）のHookは単一文書だけを点検する。全件�
 
 「100%の予防」は構造上できない。本プラグインの効果は、適切に運用された場合に、特定の失敗類型を検出・早期発見できることに限る。
 
-<!-- doctrine:view src=doctrine as-of=0.12.0 date=2026-08-14 refs=ICD-005,SPEC-016,SPEC-019,SPEC-020 -->
+<!-- doctrine:view src=doctrine as-of=0.13.0 date=2026-08-14 refs=ICD-005,SPEC-016,SPEC-019,SPEC-020 -->
