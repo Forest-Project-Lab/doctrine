@@ -6,7 +6,7 @@ domain: authoring
 status: current
 owner: doctrine-maintainers
 created: 2026-08-07
-updated: 2026-08-13
+updated: 2026-08-14
 sources: [plugin/scripts/map-draft-check.py]
 depends_on: [SPEC-016]
 llm_context: task

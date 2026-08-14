@@ -6,7 +6,7 @@ domain: guard
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-08-13
+updated: 2026-08-14
 sources: [plugin/tests/test_guard.py]
 depends_on: [SPEC-003]
 llm_context: task

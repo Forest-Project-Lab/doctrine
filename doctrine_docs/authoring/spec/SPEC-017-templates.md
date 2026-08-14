@@ -1,20 +1,20 @@
 ---
 id: SPEC-017
-title: templates（20型＋icd-index）
+title: templates（型ごとの雛形＋icd-index）
 type: SPEC
 domain: authoring
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-26
+updated: 2026-08-14
 sources: [spec/doctrine.ja.md §3.4]
 depends_on: [REQ-011, ICD-001]
 llm_context: task
 ---
 
-# templates（20型＋icd-index）
+# templates（型ごとの雛形＋icd-index）
 
-テンプレートは、型ごとに様式をかたどった雛形である。20種の型のテンプレート（ADR-013 の PROC と ADR-026 の EXT を含む）と、1種の投影の雛形（icd-index）で計21個。§1 の語彙を、体系の中でテンプレートが一度だけ書き写し、ほかには持たせない。`[R6][R8]`
+テンプレートは、型ごとに様式をかたどった雛形である。登録簿の各型のテンプレート（ADR-013 の PROC・ADR-026 の EXT・ADR-163 の MODEL を含む）と、1種の投影の雛形（icd-index）から成る。**件数は書かない**——数は登録簿の `TYPES` と在庫表が持つ（ADR-075）。§1 の語彙を、体系の中でテンプレートが一度だけ書き写し、ほかには持たせない。`[R6][R8]`
 
 ## 入出力
 

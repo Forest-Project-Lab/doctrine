@@ -53,7 +53,7 @@ sources: []
 | REQ-015 | REQ | authoring | 会話知識の捕捉（セッションの決定は消える前にディスクへ） |
 | SPEC-015 | SPEC | authoring | scaffold（_system 非破壊シード） |
 | SPEC-016 | SPEC | authoring | skills（8技能を一仕様で） |
-| SPEC-017 | SPEC | authoring | templates（20型＋icd-index） |
+| SPEC-017 | SPEC | authoring | templates（型ごとの雛形＋icd-index） |
 | SPEC-018 | SPEC | authoring | term-extract（c-TF-IDF 候補語抽出） |
 | SPEC-022 | SPEC | authoring | 会話知識の捕捉（終端の確認・圧縮前の退避・次セッションの選別） |
 | SPEC-029 | SPEC | authoring | map-draft-check（意味モデル下書きの出所検証） |
@@ -198,6 +198,9 @@ sources: []
 | ADR-101 | ADR | model | スカラへの正規化を共有コアに一度だけ置く。入れ物は空にする |
 | ADR-106 | ADR | model | 使われない正本を落とす。二重に持っていた規則は正本へ寄せる |
 | ADR-107 | ADR | model | 読み取りの門を迂回しない。復号の寛容さは正本の引数で表す |
+| ADR-161 | ADR | model | 意味モデルの正本を統治木の中の型付き .md とし、JSON は一方通行の投影とする（方向づけ。実施は凍結の解除後） |
+| ADR-163 | ADR | model | 意味モデルの型 MODEL の設計（名前・置き場所・必須節・本文の形・担保の口） |
+| IMPACT-011 | IMPACT | model | 意味モデルの型 MODEL の新設の影響（CHANGE-011） |
 | IMPL-001 | IMPL | model | `_registry.py` の実装メモ |
 | IMPL-002 | IMPL | model | `_frontmatter.py` の実装メモ |
 | TEST-001 | TEST | model | 登録簿契約のテスト計画 |

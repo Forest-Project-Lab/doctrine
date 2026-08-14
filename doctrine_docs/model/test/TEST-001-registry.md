@@ -6,7 +6,7 @@ domain: model
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-29
+updated: 2026-08-14
 sources: [DOCTRINE-001]
 depends_on: [SPEC-001]
 llm_context: task
@@ -26,6 +26,7 @@ SPEC-001 の登録簿契約を検証する。実装テストは `plugin/tests/te
 - `resolve_duplicate_id` が、与える順序に依らず整列した順の最初を返す。空・None・文字列でない要素に例外を投げない（ADR-049）。
 - 消した表（`SYSTEM_TIER_TYPES`・`ALWAYS_CONTRACT_TYPES`・`LEVEL3_KEYS`・`LEVEL4_KEYS`）が**戻っていない**こと（ADR-106）。`required_keys` が型だけを取り、段を渡すと `TypeError` になること。**登録簿の公開名が消費者を持つ**ことをメタの受入が検めること。
 - `SUBDOMAIN_KINDS` が手書きの期待表と一致し、三語で重複が無い（ADR-092）。`TestRequiredKeys` が確認する。
+- MODEL の登録（既定 `status`=proposed・既定 `llm_context`=task・置き場所 `<domain>/model/`・点検周期 180 日・必須節の六つ）が、手書きの期待表と一致する（ADR-163）。`test_model_registration` と置き場所・必須節の凍結試験が確認する。
 
 ## 退行観点
 

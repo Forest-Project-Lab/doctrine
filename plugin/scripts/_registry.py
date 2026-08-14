@@ -25,7 +25,7 @@ import stat
 TYPES = (
     "ICD", "OVERVIEW", "GLOSSARY", "CTXMAP", "DECIDED", "NONGOAL", "WATCH",
     "REQ", "SPEC", "DATA", "API", "ADR", "CHANGE", "IMPACT", "IMPL", "PROC",
-    "TEST", "RESEARCH", "ARCHIVE", "EXT",
+    "TEST", "RESEARCH", "ARCHIVE", "EXT", "MODEL",
 )
 
 # 既定status — one value per type (§3.2 「既定status」 column).
@@ -50,6 +50,9 @@ TYPE_DEFAULT_STATUS = {
     "RESEARCH": "draft",
     "ARCHIVE": "archived",
     "EXT": "current",
+    # MODEL は下書きから始まる(ADR-163 決定5)。current への遷移が「確定の一押し」で
+    # あり、全ての値の review_status が confirmed であることと同値になる(決定6)。
+    "MODEL": "proposed",
 }
 
 # 既定 llm_context — always|task|never (§3.2 「llm_context」 column).
@@ -74,6 +77,8 @@ TYPE_DEFAULT_LLM_CONTEXT = {
     "RESEARCH": "never",
     "ARCHIVE": "never",
     "EXT": "task",
+    # MODEL は平時の文脈へ載せない(嵩む)。要る作業のときだけ載る(ADR-163 決定5)。
+    "MODEL": "task",
 }
 
 # 置き場所 — allowed directories relative to docs/ (set of patterns).
@@ -100,6 +105,7 @@ TYPE_LOCATION = {
     "RESEARCH": ["<domain>/research/"],
     "ARCHIVE": ["<domain>/archive/"],
     "EXT": ["<domain>/external/"],
+    "MODEL": ["<domain>/model/"],      # 系の意味モデル(ADR-163 決定1)
 }
 
 # status:archived の文書は、型に依らず <domain>/archive/ 配下に置く(ADR-027)。
@@ -210,6 +216,14 @@ REQUIRED_SECTIONS = {
     "SPEC": ("入出力", "制約", "エラー時挙動", "受入基準"),
     "TEST": ("受入基準への対応", "退行観点", "合否基準"),
     "WATCH": ("戻してはならない事項", "撤回日", "根拠", "再点検期限"),
+    # MODEL の六節は、描く先の器の最上位の欄と一対一に対応する(ADR-163 決定2)。
+    # schema と target は「系の概要」の塊が持つので、節は増やさない。
+    # **節名に裸の一般語を使わない** —— 節名は用語チェッカーの照合から外れるので
+    # (ADR-135。書き手が言い換えられないものを咎めない)、『流れ』のような一語を
+    # 節名にすると、その語を禁止同義語に持つ木で照合が黙って落ちる(実測: 試験
+    # test_operational_extends_seed が落ちた)。複合語にして射程を狭める。
+    "MODEL": ("系の概要", "要素の一覧", "流れの一覧", "契約の一覧",
+              "シナリオの一覧", "アンカーの一覧"),
     # RESEARCH は節を課さない(上記のとおり)。投影(OVERVIEW/CTXMAP/GLOSSARY/
     # ICDINDEX)も課さない —— 機械が描くものであり、人が節を書かない。
 }
@@ -238,6 +252,8 @@ TYPE_REVIEW_CYCLE_DAYS = {
     "PROC": 180,
     "TEST": 365,
     "EXT": 180,
+    # MODEL は対象の系が動けば古びる。仕様と同じ周期で見直す(ADR-163 決定5)。
+    "MODEL": 180,
 }
 
 

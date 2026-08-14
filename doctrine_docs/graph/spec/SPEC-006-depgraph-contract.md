@@ -6,7 +6,7 @@ domain: graph
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-08-13
+updated: 2026-08-14
 sources: [plugin/scripts/_depgraph.py, plugin/scripts/dep-graph.py]
 depends_on: [REQ-002, REQ-003, ICD-001]
 llm_context: task
