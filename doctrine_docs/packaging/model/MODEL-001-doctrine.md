@@ -48,6 +48,7 @@ doctrine は、文書の統治（型・出所・依存・鮮度）を機械で�
 ```json
 {
   "id": "d-model",
+  "realized_by": ["a-registry"],
   "name": "登録簿（構造規則の正本）",
   "kind": "subsystem",
   "purpose": "型・位置づけ・置き場所・必須キー・必須節の規則を、体系の中で一度だけ持つ。",
@@ -70,6 +71,7 @@ doctrine は、文書の統治（型・出所・依存・鮮度）を機械で�
 ```json
 {
   "id": "d-lint",
+  "realized_by": ["a-linter"],
   "name": "リンタ（編集ごとの点検）",
   "kind": "subsystem",
   "purpose": "編集された一つの文書だけを点検し、助言を返す。拒否はしない。",
@@ -92,6 +94,7 @@ doctrine は、文書の統治（型・出所・依存・鮮度）を機械で�
 ```json
 {
   "id": "d-audit",
+  "realized_by": ["a-audit"],
   "name": "監査（全件の走査）",
   "kind": "subsystem",
   "purpose": "統治木の全件を走査し、所見と要約を出す。セッション境界と CI で走る。",
@@ -114,6 +117,7 @@ doctrine は、文書の統治（型・出所・依存・鮮度）を機械で�
 ```json
 {
   "id": "d-graph",
+  "realized_by": ["a-depgraph"],
   "name": "依存グラフと追跡索引",
   "kind": "subsystem",
   "purpose": "文書の依存の辺と、注釈の対が囲むコード範囲を、問い合わせのたびに導出して返す。",
@@ -138,6 +142,10 @@ doctrine は、文書の統治（型・出所・依存・鮮度）を機械で�
   "id": "d-hooks",
   "name": "配線（実行環境との接点）",
   "kind": "component",
+  "realization": {
+    "status": "not_applicable",
+    "reason": "配線の正本は JSON(hooks.json)であり、注釈の対を持てない媒体である(設定の trace_exempt が理由と共に載せる。ADR-072)。実装の範囲へ結べない。"
+  },
   "purpose": "実行環境の七つの出来事を、各スクリプトへ配線する。",
   "responsibilities": ["hook-wiring"],
   "owner": "doctrine-maintainers",
@@ -281,9 +289,17 @@ doctrine は、文書の統治（型・出所・依存・鮮度）を機械で�
   "id": "s-edit",
   "name": "文書を一つ編集したとき",
   "kind": "normal",
+  "goal": "編集された一つの文書が、規則に照らして点検される。",
+  "trigger": "Edit・Write・MultiEdit のいずれかが走ったとき",
+  "preconditions": ["統治木が在る", "配線が生きている"],
+  "outcome": "所見が助言として返り、編集は拒まれない(拒否はガードの領分)。",
   "steps": [
-    { "actor": "d-hooks", "receiver": "d-lint", "flow": "f-hook-lint" },
-    { "actor": "d-lint", "receiver": "d-model", "flow": "f-lint-registry" }
+    { "actor": "d-hooks", "receiver": "d-lint", "flow": "f-hook-lint",
+      "action": "編集の後にリンタを起こす",
+      "expected": "リンタが編集された道を受け取る" },
+    { "actor": "d-lint", "receiver": "d-model", "flow": "f-lint-registry",
+      "action": "必須キーと許可表を問い合わせる",
+      "expected": "登録簿が型ごとの規則を返す" }
   ],
   "provenance": [
     {
@@ -298,6 +314,64 @@ doctrine は、文書の統治（型・出所・依存・鮮度）を機械で�
 ```
 
 ## アンカーの一覧
+
+### a-registry
+
+```json
+{
+  "id": "a-registry",
+  "target_kind": "code_range",
+  "target": "doctrine: plugin/scripts/_registry.py(SPEC-001 の注釈対)",
+  "source_revision": "44a5ca3679d4f9e627fcf428d71be64b58e70c77",
+  "observed_at": "2026-08-14",
+  "authority": "doctrine",
+  "url": "https://github.com/Forest-Project-Lab/doctrine/blob/44a5ca3679d4f9e627fcf428d71be64b58e70c77/plugin/scripts/_registry.py"
+}
+```
+
+### a-linter
+
+```json
+{
+  "id": "a-linter",
+  "target_kind": "code_range",
+  "target": "doctrine: plugin/scripts/docs-linter.py(SPEC-007 の注釈対)",
+  "source_revision": "44a5ca3679d4f9e627fcf428d71be64b58e70c77",
+  "observed_at": "2026-08-14",
+  "authority": "doctrine",
+  "url": "https://github.com/Forest-Project-Lab/doctrine/blob/44a5ca3679d4f9e627fcf428d71be64b58e70c77/plugin/scripts/docs-linter.py"
+}
+```
+
+### a-audit
+
+```json
+{
+  "id": "a-audit",
+  "target_kind": "code_range",
+  "target": "doctrine: plugin/scripts/docs-audit.py(SPEC-011 の注釈対)",
+  "source_revision": "44a5ca3679d4f9e627fcf428d71be64b58e70c77",
+  "observed_at": "2026-08-14",
+  "authority": "doctrine",
+  "url": "https://github.com/Forest-Project-Lab/doctrine/blob/44a5ca3679d4f9e627fcf428d71be64b58e70c77/plugin/scripts/docs-audit.py"
+}
+```
+
+### a-depgraph
+
+```json
+{
+  "id": "a-depgraph",
+  "target_kind": "code_range",
+  "target": "doctrine: plugin/scripts/dep-graph.py(SPEC-013 の注釈対)",
+  "source_revision": "44a5ca3679d4f9e627fcf428d71be64b58e70c77",
+  "observed_at": "2026-08-14",
+  "authority": "doctrine",
+  "url": "https://github.com/Forest-Project-Lab/doctrine/blob/44a5ca3679d4f9e627fcf428d71be64b58e70c77/plugin/scripts/dep-graph.py"
+}
+```
+
+<!-- ここから下は既存のアンカー -->
 
 ### a-spec-007
 

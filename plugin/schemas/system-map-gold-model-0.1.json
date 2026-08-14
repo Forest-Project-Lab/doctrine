@@ -1,0 +1,559 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "system-map/gold-model/0.1",
+  "title": "system-map 候補モデル(Phase 0 検証用スキーマ 0.1)",
+  "$comment": "正本は issue 204 の合意台帳 v3.2。エンティティは事前分析 §6.2 の字義に従い、authority(v3.2-10)・負の出所(v3.2-5 補強1)・七状態(v3.2-9)を実装する。これは候補モデルのスキーマであり、doctrine の正式スキーマではない(v3.2-2′ 条件2)。",
+  "type": "object",
+  "required": [
+    "schema",
+    "target",
+    "system",
+    "elements",
+    "flows",
+    "contracts",
+    "scenarios",
+    "anchors"
+  ],
+  "properties": {
+    "schema": {
+      "const": "system-map/gold-model/0.1"
+    },
+    "target": {
+      "type": "string",
+      "description": "対象の名前(doctrine-and-lens | lens-shipping | celery | 任意の安全例)"
+    },
+    "elements": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/SystemElement"
+      }
+    },
+    "flows": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Flow"
+      }
+    },
+    "contracts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Contract"
+      }
+    },
+    "scenarios": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Scenario"
+      }
+    },
+    "anchors": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/TraceAnchor"
+      }
+    },
+    "system": {
+      "type": "object",
+      "description": "対象全体の目的と境界(§7.1。所有者指摘 2026-08-04 で必須化)",
+      "required": [
+        "purpose",
+        "boundary",
+        "provenance",
+        "review_status"
+      ],
+      "properties": {
+        "purpose": {
+          "type": "string",
+          "description": "この系は何のために在るか(二文以内)"
+        },
+        "boundary": {
+          "type": "string",
+          "description": "境界の内側と外側を一文ずつ"
+        },
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "review_status": {
+          "$ref": "#/$defs/ReviewStatus"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "Source": {
+      "type": "object",
+      "description": "出所。verdict=silent は「確認したが記載が無かった」の負の出所(v3.2-5 補強1)。未調査は出所そのものを書かない — 空白と沈黙を混同しない。",
+      "required": [
+        "source",
+        "checked_at",
+        "verdict"
+      ],
+      "properties": {
+        "source": {
+          "type": "string",
+          "description": "URL、またはリポジトリ接頭付きパス(`doctrine:` / `doctrine-lens:`)。両リポジトリに似た名の文書が在るため、パス単独を許さない(S4)"
+        },
+        "locator": {
+          "type": "string",
+          "description": "節・見出し・行など、確認した箇所"
+        },
+        "checked_at": {
+          "type": "string",
+          "format": "date"
+        },
+        "verdict": {
+          "enum": [
+            "present",
+            "silent"
+          ]
+        }
+      }
+    },
+    "Provenance": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Source"
+      },
+      "minItems": 1
+    },
+    "ReviewStatus": {
+      "enum": [
+        "proposed",
+        "confirmed"
+      ],
+      "description": "AI が推定した値は proposed。所有者の確認で confirmed。proposed を正本表示に混ぜない(§6.4)。"
+    },
+    "VerificationStatus": {
+      "enum": [
+        "unknown",
+        "claimed",
+        "planned",
+        "verified",
+        "failed",
+        "stale",
+        "not_applicable"
+      ],
+      "description": "七状態(v3.2-9)。claimed=主張のみ。planned=方法・予定ありだが結果なし(ADR-081 の「検証戦略」)。verified は証跡最小形を伴う場合のみ。"
+    },
+    "SystemElement": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "kind",
+        "purpose",
+        "responsibilities",
+        "owner",
+        "provenance",
+        "review_status"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "person",
+            "organization",
+            "system",
+            "subsystem",
+            "component",
+            "operation",
+            "external_system",
+            "device"
+          ]
+        },
+        "purpose": {
+          "type": "string",
+          "description": "何のために在るか。一〜二文"
+        },
+        "responsibilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "not_responsible_for": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "担わないこと(任意だが推奨)"
+        },
+        "owner": {
+          "type": "string"
+        },
+        "parent": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "親要素の id。最上位は null。親はちょうど 0 または 1(§6.4)"
+        },
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "review_status": {
+          "$ref": "#/$defs/ReviewStatus"
+        },
+        "realized_by": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "実現先(コード範囲・手順書等)への anchor id"
+        },
+        "requirements": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "risks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "realization": {
+          "type": "object",
+          "description": "コード・試験・証拠による実現が意味上適用されない要素の明示(M-14)。realized_by と排他。",
+          "required": [
+            "status",
+            "reason"
+          ],
+          "properties": {
+            "status": {
+              "const": "not_applicable"
+            },
+            "reason": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "Flow": {
+      "type": "object",
+      "$comment": "IN/OUT は見る側で変わるため kind に含めない(§6.2)。control/feedback は役割の項で表す。",
+      "required": [
+        "id",
+        "from",
+        "to",
+        "kind",
+        "label",
+        "payload_or_action",
+        "condition",
+        "provenance",
+        "review_status"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "from": {
+          "type": "string",
+          "description": "送信元 SystemElement の id(ちょうど1)"
+        },
+        "to": {
+          "type": "string",
+          "description": "受信先 SystemElement の id(ちょうど1)"
+        },
+        "kind": {
+          "enum": [
+            "data",
+            "command",
+            "event",
+            "physical",
+            "human_action"
+          ]
+        },
+        "label": {
+          "type": "string",
+          "description": "動詞または交換物。無名の矢印を禁ずる(全辺ラベル)"
+        },
+        "payload_or_action": {
+          "type": "string"
+        },
+        "condition": {
+          "type": "string",
+          "description": "いつ・どの状態で成立するか"
+        },
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "review_status": {
+          "$ref": "#/$defs/ReviewStatus"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "schema": {
+          "type": "string"
+        },
+        "timing": {
+          "type": "string"
+        },
+        "feedback_for": {
+          "type": "string",
+          "description": "この流れがフィードバックである場合、対象の Flow の id"
+        },
+        "self_loop_reason": {
+          "type": "string",
+          "description": "from=to のとき必須(§6.4)"
+        }
+      }
+    },
+    "Contract": {
+      "type": "object",
+      "$comment": "条件必須(M-15): verification_status=not_applicable のとき na_reason(+出所)が必須。理由は状態の構成要件である(v3.2-9「適用しない理由を所有者が明示した」)。",
+      "required": [
+        "id",
+        "subject",
+        "assumptions",
+        "guarantee",
+        "response_measure",
+        "verification_status",
+        "owner",
+        "provenance",
+        "review_status"
+      ],
+      "properties": {
+        "na_reason": {
+          "type": "string",
+          "description": "not_applicable のとき必須。適用しない理由(出所は provenance に置く)"
+        },
+        "id": {
+          "type": "string"
+        },
+        "subject": {
+          "type": "string",
+          "description": "対象の SystemElement または Flow の id"
+        },
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "description": "無条件の保証文を許さない(§6.1)"
+        },
+        "guarantee": {
+          "type": "string"
+        },
+        "response_measure": {
+          "type": "string",
+          "description": "判定可能な測定基準、または「定性的である」の明示(§6.4)"
+        },
+        "verification_status": {
+          "$ref": "#/$defs/VerificationStatus"
+        },
+        "owner": {
+          "type": "string"
+        },
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "review_status": {
+          "$ref": "#/$defs/ReviewStatus"
+        },
+        "failure_effect": {
+          "type": "string",
+          "description": "破られたときの影響"
+        },
+        "verification_method": {
+          "type": "string"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          },
+          "description": "verified のとき必須・最低1件(§6.4)"
+        }
+      }
+    },
+    "Evidence": {
+      "type": "object",
+      "description": "証跡最小形(v3.2-9)は五項: 指紋・実行環境・版・終了状態・時刻。",
+      "$comment": "等価規則(M-16): git の commit SHA は内容の指紋を兼ねる。version に SHA(7〜40 桁の16進)を置けば fingerprint は省略可。どちらも無いものは verified の証跡にならない。黙った省略を許さない。",
+      "required": [
+        "ref",
+        "environment",
+        "version",
+        "exit_status",
+        "observed_at"
+      ],
+      "properties": {
+        "ref": {
+          "type": "string",
+          "description": "証拠への到達可能な参照(URL・パス・anchor id)"
+        },
+        "fingerprint": {
+          "type": "string"
+        },
+        "environment": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "exit_status": {
+          "type": "string"
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date"
+        }
+      }
+    },
+    "Scenario": {
+      "type": "object",
+      "required": [
+        "id",
+        "goal",
+        "trigger",
+        "preconditions",
+        "steps",
+        "outcome",
+        "kind",
+        "provenance",
+        "review_status"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "goal": {
+          "type": "string"
+        },
+        "trigger": {
+          "type": "string"
+        },
+        "preconditions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "actor",
+              "action",
+              "receiver",
+              "expected"
+            ],
+            "$comment": "静的構造に在る要素と Flow だけを使う。幽霊要素の禁止(§7.3)。",
+            "properties": {
+              "actor": {
+                "type": "string",
+                "description": "SystemElement の id"
+              },
+              "action": {
+                "type": "string"
+              },
+              "receiver": {
+                "type": "string",
+                "description": "SystemElement の id"
+              },
+              "expected": {
+                "type": "string"
+              },
+              "flow": {
+                "type": "string",
+                "description": "対応する Flow の id"
+              }
+            }
+          }
+        },
+        "outcome": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "normal",
+            "exception"
+          ]
+        },
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "review_status": {
+          "$ref": "#/$defs/ReviewStatus"
+        },
+        "exception_of": {
+          "type": "string",
+          "description": "例外系のとき、対応する正常系 Scenario の id"
+        },
+        "loss_or_failure": {
+          "type": "string"
+        }
+      }
+    },
+    "TraceAnchor": {
+      "type": "object",
+      "required": [
+        "id",
+        "target_kind",
+        "target",
+        "source_revision",
+        "observed_at",
+        "authority"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "target_kind": {
+          "enum": [
+            "document",
+            "code_range",
+            "test",
+            "external_doc",
+            "artifact"
+          ]
+        },
+        "target": {
+          "type": "string"
+        },
+        "source_revision": {
+          "type": "string",
+          "description": "tag または SHA(v3.2-2′ 条件4)"
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date"
+        },
+        "authority": {
+          "enum": [
+            "doctrine",
+            "gold_model"
+          ],
+          "description": "鮮度判定の権威(v3.2-10)。doctrine 管理下(文書・trace-index が指紋を持つコード範囲)は doctrine。契約外は gold_model。同一アンカーに二つの判定器を置かない。"
+        },
+        "environment": {
+          "type": "string"
+        },
+        "fingerprint": {
+          "type": "string"
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date"
+        },
+        "url": {
+          "type": "string",
+          "description": "開ける参照(SHA 固定の blob/tree URL、または外部 URL)。realized_by から指される anchor は必須(M-14: 実在するアンカーを開ける)"
+        }
+      }
+    }
+  }
+}

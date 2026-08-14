@@ -202,6 +202,7 @@ sources: []
 | ADR-161 | ADR | model | 意味モデルの正本を統治木の中の型付き .md とし、JSON は一方通行の投影とする（方向づけ。実施は凍結の解除後） |
 | ADR-163 | ADR | model | 意味モデルの型 MODEL の設計（名前・置き場所・必須節・本文の形・担保の口） |
 | ADR-164 | ADR | model | MODEL の描画先・引退の扱い・塊の中の散文の門を定める（ADR-163 の追補） |
+| ADR-165 | ADR | model | 器の形を写さず、固定した一枚から導く（写しをやめる） |
 | IMPACT-011 | IMPACT | model | 意味モデルの型 MODEL の新設の影響（CHANGE-011） |
 | IMPL-001 | IMPL | model | `_registry.py` の実装メモ |
 | IMPL-002 | IMPL | model | `_frontmatter.py` の実装メモ |
@@ -209,6 +210,7 @@ sources: []
 | TEST-002 | TEST | model | フロントマター解析契約のテスト計画 |
 | TEST-031 | TEST | model | 意味モデルの本文の形と担保のテスト計画 |
 | EXT-003 | EXT | model | 上位設計書（spec/doctrine.ja.md, DOCTRINE-001）への依存 |
+| EXT-007 | EXT | model | 意味モデルの器（`gold-model/schema.json`）の固定した写しへの依存 |
 | ICD-008 | ICD | packaging | packaging のインターフェース（配布物の形・Hook配線・段差） |
 | REQ-013 | REQ | packaging | 保証限界の明示（各成果物が予防・検出・委ねるを書く） |
 | REQ-014 | REQ | packaging | 統治の生存性（統治自身の死活が可視で、沈黙する故障を禁じる） |

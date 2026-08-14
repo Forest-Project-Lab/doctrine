@@ -51,10 +51,11 @@ llm_context: task
   "purpose": "<一〜二文>",
   "responsibilities": ["<担うこと。最低 1 件>"],
   "owner": "<持ち主>",
+  "realized_by": ["<アンカーの id。コードか試験を指す>"],
   "provenance": [
     {
       "source": "<接頭: パス@rev、または URL>",
-      "locator": "<行番号か引用>",
+      "locator": "<行番号か引用。機械が確かめられる錨を書けるだけ書く>",
       "checked_at": "<YYYY-MM-DD>",
       "verdict": "present"
     }
@@ -62,6 +63,11 @@ llm_context: task
   "review_status": "proposed"
 }
 ```
+
+<!-- コード・試験による実現が意味上当てはまらない要素(人・外部の系・注釈を持てない媒体)は、
+     realized_by の代わりに
+     "realization": { "status": "not_applicable", "reason": "<理由>" }
+     を書く。どちらも無い要素は、上流の到達の門(M-14)で落ちる。 -->
 
 ## 流れの一覧
 
@@ -122,11 +128,17 @@ llm_context: task
   "id": "<シナリオの id>",
   "name": "<筋の名>",
   "kind": "normal",
+  "goal": "<この筋で達したいこと>",
+  "trigger": "<きっかけ>",
+  "preconditions": ["<前提。最低 1 件>"],
+  "outcome": "<結果>",
   "steps": [
     {
       "actor": "<要素の id>",
       "receiver": "<要素の id>",
-      "flow": "<流れの id>"
+      "flow": "<流れの id>",
+      "action": "<この段での行い>",
+      "expected": "<期待する結果>"
     }
   ],
   "provenance": [

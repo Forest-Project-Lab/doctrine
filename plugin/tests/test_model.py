@@ -60,7 +60,12 @@ CONTRACT = {
 }
 SCENARIO = {
     "id": "s-1", "name": "正常系", "kind": "normal",
-    "steps": [{"actor": "e-a", "receiver": "e-b", "flow": "f-1"}],
+    "goal": "受理した記録を蓄えへ収める。",
+    "trigger": "外から求めが届いたとき",
+    "preconditions": ["蓄えが書ける"],
+    "outcome": "記録が蓄えに在る。",
+    "steps": [{"actor": "e-a", "receiver": "e-b", "flow": "f-1",
+               "action": "受理して書き込む", "expected": "記録が一件増える"}],
     "provenance": [{"source": "demo: README.md", "locator": "L3",
                     "checked_at": "2026-08-14", "verdict": "present"}],
     "review_status": "proposed",
@@ -148,7 +153,8 @@ class StructureTest(unittest.TestCase):
 
     def test_dangling_scenario_step(self):
         bad = dict(SCENARIO, steps=[{"actor": "e-a", "receiver": "e-b",
-                                     "flow": "f-none"}])
+                                     "flow": "f-none", "action": "a",
+                                     "expected": "b"}])
         self.assertIn("MODEL_DANGLING_REF", self._codes(body(scenarios=(bad,))))
 
     def test_self_loop_needs_a_reason(self):
@@ -299,6 +305,68 @@ class ConfirmationTest(unittest.TestCase):
         """アンカーは値を担わない(指し先の記述)。review_status を求めない。"""
         codes = self._codes(body(), "proposed")
         self.assertNotIn("MODEL_MISSING_FIELD", codes)
+
+
+class SchemaDerivationTest(unittest.TestCase):
+    """必須欄と語彙は、同梱した器の一枚から導く(ADR-165)。写しを持たない。"""
+
+    def _schema(self):
+        return json.loads(_util.read(os.path.join(
+            _util.PLUGIN_ROOT, "schemas", "system-map-gold-model-0.1.json")))
+
+    def test_required_fields_match_the_container(self):
+        s = self._schema()
+        defs = s["$defs"]
+        want = {
+            "elements": tuple(defs["SystemElement"]["required"]),
+            "flows": tuple(defs["Flow"]["required"]),
+            "contracts": tuple(defs["Contract"]["required"]),
+            "scenarios": tuple(defs["Scenario"]["required"]),
+            "anchors": tuple(defs["TraceAnchor"]["required"]),
+        }
+        for label, fields in want.items():
+            self.assertEqual(_model.REQUIRED_FIELDS[label], fields, label)
+        # 系の塊は器の system の必須欄 + target(描き手が持ち上げる。ADR-165 決定5)
+        self.assertEqual(
+            _model.REQUIRED_FIELDS["system"],
+            tuple(s["properties"]["system"]["required"]) + ("target",))
+
+    def test_step_and_provenance_fields_match_the_container(self):
+        defs = self._schema()["$defs"]
+        self.assertEqual(
+            _model.STEP_FIELDS,
+            tuple(defs["Scenario"]["properties"]["steps"]["items"]["required"]))
+        self.assertEqual(_model.PROVENANCE_FIELDS,
+                         tuple(defs["Source"]["required"]))
+
+    def test_enums_match_the_container(self):
+        defs = self._schema()["$defs"]
+        self.assertEqual(_model.ENUM_ELEMENT_KIND,
+                         tuple(defs["SystemElement"]["properties"]["kind"]["enum"]))
+        self.assertEqual(_model.ENUM_FLOW_KIND,
+                         tuple(defs["Flow"]["properties"]["kind"]["enum"]))
+        self.assertEqual(_model.ENUM_VERIFICATION_STATUS,
+                         tuple(defs["VerificationStatus"]["enum"]))
+        self.assertEqual(_model.ENUM_REVIEW_STATUS,
+                         tuple(defs["ReviewStatus"]["enum"]))
+        self.assertEqual(_model.MODEL_SCHEMA,
+                         self._schema()["properties"]["schema"]["const"])
+
+    def test_missing_container_is_not_silent(self):
+        """器を読めないまま緑を出さない(ADR-165 決定7)。"""
+        schema, err = _model.load_schema("/nonexistent/schema.json")
+        self.assertIsNone(schema)
+        self.assertIn("器の写しを読めない", err)
+
+    def test_locator_is_no_longer_required(self):
+        """器が要するのは source・checked_at・verdict である(ADR-165 の帰結)。"""
+        self.assertNotIn("locator", _model.PROVENANCE_FIELDS)
+        prov = [{"source": "demo: README.md", "checked_at": "2026-08-14",
+                 "verdict": "present"}]
+        codes = sorted({f.code for f in _model.check_document(
+            body(elements=(dict(ELEMENT_A, provenance=prov), ELEMENT_B)),
+            "proposed")})
+        self.assertEqual(codes, [])
 
 
 class RenderTest(unittest.TestCase):
