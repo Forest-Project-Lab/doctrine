@@ -3,10 +3,11 @@ id: ADR-112
 title: 読み口の宣言を現行の合意台帳へ追随させる（初版の決定を置換）
 type: ADR
 domain: graph
-status: accepted
+status: superseded
+superseded_by: ADR-162
 owner: doctrine-maintainers
 created: 2026-08-03
-updated: 2026-08-03
+updated: 2026-08-14
 sources: [https://github.com/Forest-Project-Lab/doctrine/issues/204, plugin/scripts/trace-index.py]
 llm_context: task
 ---
