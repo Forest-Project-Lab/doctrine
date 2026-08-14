@@ -5,7 +5,7 @@ type: OVERVIEW
 domain: _system
 status: current
 owner: render-projection
-updated: 2026-08-13
+updated: 2026-08-14
 llm_context: always
 sources: []
 ---
@@ -63,6 +63,7 @@ sources: []
 | ADR-136 | ADR | authoring | 配布技能に system-map-draft を加える（ADR-010 を置換。一覧の正本は SPEC-016） |
 | ADR-158 | ADR | authoring | map-draft-check は複数リポジトリの出所を受ける — 黙る後勝ちを廃し、口を外部条項として宣言する |
 | ADR-159 | ADR | authoring | 必須節の名を CLI から問えるようにする — scaffold に list-sections の口を足す |
+| ADR-160 | ADR | authoring | 誤読の門を、全読者共通の床と、対象ごとに宣言する読者層に分ける（提案。手順書の正本は lens 側） |
 | CHANGE-008 | CHANGE | authoring | 配布技能に system-map-draft を加える（issue |
 | IMPACT-008 | IMPACT | authoring | 配布技能 system-map-draft の追加 — 影響の列挙 |
 | IMPL-015 | IMPL | authoring | scaffold/term-extract の実装注記 |
@@ -120,10 +121,10 @@ sources: []
 | ADR-087 | ADR | graph | 問い合わせの節点は隠さない。組み立てた項をそのまま返す |
 | ADR-088 | ADR | graph | 両端から書かれた同じ事実に印を付ける。畳み方を読み手に決めさせない |
 | ADR-089 | ADR | graph | 無視される物は走査しない。その判定は git に訊く |
-| ADR-112 | ADR | graph | 読み口の宣言を現行の合意台帳へ追随させる（初版の決定を置換） |
 | ADR-153 | ADR | graph | dep-graph の CLI の返す値を宣言する — 実装の内部形を黙った契約にしない |
 | ADR-154 | ADR | graph | 統治木の発見を CLI から問えるようにする — dep-graph に find-root の口を足す |
 | ADR-155 | ADR | graph | graph の読み口は測った木の版と作り手を名乗る — source_revision・source_dirty・generator |
+| ADR-162 | ADR | graph | H 層の判定を受けて意味モデルの器の凍結を解く（ADR-112 を置換） |
 | CHANGE-003 | CHANGE | graph | 悉皆トレース — 印なしゼロを選べる体系にする |
 | CHANGE-007 | CHANGE | graph | 追跡索引の読み口を ICD へ宣言する（issue |
 | IMPACT-003 | IMPACT | graph | 悉皆トレース — 影響の列挙 |

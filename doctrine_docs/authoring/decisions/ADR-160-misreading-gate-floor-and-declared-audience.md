@@ -3,7 +3,7 @@ id: ADR-160
 title: 誤読の門を、全読者共通の床と、対象ごとに宣言する読者層に分ける（提案。手順書の正本は lens 側）
 type: ADR
 domain: authoring
-status: proposed
+status: accepted
 owner: doctrine-maintainers
 created: 2026-08-14
 updated: 2026-08-14

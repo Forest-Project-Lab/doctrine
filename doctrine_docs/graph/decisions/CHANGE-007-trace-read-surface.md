@@ -6,7 +6,7 @@ domain: graph
 status: current
 owner: doctrine-maintainers
 created: 2026-08-03
-updated: 2026-08-13
+updated: 2026-08-14
 sources: [https://github.com/Forest-Project-Lab/doctrine/issues/204, plugin/scripts/trace-index.py]
 depends_on: [ICD-002, SPEC-026]
 llm_context: task
@@ -34,3 +34,5 @@ issue #204 の合意台帳 v2（2026-08-03。v2-13・v2-11′・v2-14）。表�
 2026-08-03 に完了。決定は ADR-111、影響の列挙は IMPACT-007。ICD-002 へ `trace-index-api` を宣言し、`.gitignore` と分類の記録（`.md-intake`）へ `Reference_material/` を登録し、DECIDED-001 の見出しの件数表記を直した。上流の更新に伴う source_drift は 26 件——各件、追随不要（追加のみの変更）を確かめて `updated` を上げ、固定点で advisory 0 に収束した。全件監査 error 0 / warn 0 / advisory 0、試験・投影の照合・release-check の全ゲート通過を確認した。
 
 2026-08-03 追補: 合意台帳が v3（第3版。「v」は版）を経て v3.1（自己完結版）へ置換され、所有者が P1（画面区分）・P2（実験ブランチ方式）・台帳 v3 を明示 ACK（承諾の表明）したため、正規の道（ADR-044）に従い ADR-112 で ADR-111 を置換し、記録を追随させた（三層ゲートと `UNASSESSED`（未評価）の記録・`planned` ↔ 検証戦略の対応・所有者 ACK の記録）。ICD-002 の根拠参照を ADR-112 へ更新。操作的内容（ICD 宣言・`.gitignore`・分類の記録）は無変更。全ゲートの通過を再確認した。
+
+2026-08-14 追補: H 層の判定（床の四つの逆読みが 0 件。証跡の等級は所有者の報告）を受けて ADR-162 が ADR-112 を置換し、意味モデルの器の凍結を解いた。**ICD-002 の宣言と根拠参照は動かしていない** —— 宣言の中身が一文字も変わらない張り替えは、`updated` の連鎖（上流更新の伝播）を木の広い範囲へ波及させるだけだからである（実測: ICD-002 の日付を上げると追随の疑いが 9 件、その追随でさらに 15 件が湧いた）。根拠の連鎖は ADR-111 → ADR-112 → ADR-162 であり、`superseded_by` で機械的に辿れる。参照の張り替えは、ICD-002 の宣言そのものを変える波でまとめて行う。
