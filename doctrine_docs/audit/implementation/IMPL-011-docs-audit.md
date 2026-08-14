@@ -6,7 +6,7 @@ domain: audit
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-08-13
+updated: 2026-08-14
 sources: [plugin/scripts/docs-audit.py]
 depends_on: [SPEC-011]
 llm_context: task

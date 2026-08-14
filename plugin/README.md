@@ -136,4 +136,4 @@ per-turn（毎ターン）のHookは単一文書だけを点検する。全件�
 
 「100%の予防」は構造上できない。本プラグインの効果は、適切に運用された場合に、特定の失敗類型を検出・早期発見できることに限る。
 
-<!-- doctrine:view src=doctrine as-of=0.12.0 date=2026-08-13 refs=ICD-005,SPEC-016,SPEC-019,SPEC-020 -->
+<!-- doctrine:view src=doctrine as-of=0.12.0 date=2026-08-14 refs=ICD-005,SPEC-016,SPEC-019,SPEC-020 -->

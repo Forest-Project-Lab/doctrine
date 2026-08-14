@@ -27,7 +27,7 @@ import _registry as R  # noqa: E402
 EXPECTED_TYPES = (
     "ICD", "OVERVIEW", "GLOSSARY", "CTXMAP", "DECIDED", "NONGOAL", "WATCH",
     "REQ", "SPEC", "DATA", "API", "ADR", "CHANGE", "IMPACT", "IMPL", "PROC",
-    "TEST", "RESEARCH", "ARCHIVE", "EXT",
+    "TEST", "RESEARCH", "ARCHIVE", "EXT", "MODEL",
 )
 
 EXPECTED_DEFAULT_STATUS = {
@@ -37,7 +37,7 @@ EXPECTED_DEFAULT_STATUS = {
     "API": "current", "ADR": "accepted", "CHANGE": "proposed",
     "IMPACT": "current", "IMPL": "current", "PROC": "current",
     "TEST": "current", "RESEARCH": "draft", "ARCHIVE": "archived",
-    "EXT": "current",
+    "EXT": "current", "MODEL": "proposed",
 }
 
 EXPECTED_DEFAULT_LLM_CONTEXT = {
@@ -46,18 +46,20 @@ EXPECTED_DEFAULT_LLM_CONTEXT = {
     "SPEC": "task", "DATA": "task", "API": "task", "ADR": "task",
     "CHANGE": "task", "IMPACT": "task", "IMPL": "task", "PROC": "task",
     "TEST": "task", "RESEARCH": "never", "ARCHIVE": "never",
-    "EXT": "task",
+    "EXT": "task", "MODEL": "task",
 }
 
 
 class TestTypeRegistryParity(unittest.TestCase):
     """All types present, in registry order, with correct default tables (仕様 §2.1 + ADR-013)."""
 
-    def test_20_types_in_order(self):
-        # 仕様 §2.1 + ADR-013 の型 + EXT(ADR-026 外部アンカー)。数は下で凍結する。
+    def test_types_in_order(self):
+        # 仕様 §2.1 + ADR-013 の型 + EXT(ADR-026 外部アンカー)
+        # + MODEL(ADR-163 系の意味モデル)。数は手書きの表が凍結する。
         self.assertEqual(R.TYPES, EXPECTED_TYPES)
-        self.assertEqual(len(R.TYPES), 20)
-        self.assertEqual(len(set(R.TYPES)), 20, "no duplicate type codes")
+        self.assertEqual(len(R.TYPES), len(EXPECTED_TYPES))
+        self.assertEqual(len(set(R.TYPES)), len(EXPECTED_TYPES),
+                         "no duplicate type codes")
 
     def test_default_status_per_type(self):
         self.assertEqual(set(R.TYPE_DEFAULT_STATUS), set(EXPECTED_TYPES))
@@ -545,6 +547,17 @@ class TestReviewCycle(unittest.TestCase):
         self.assertEqual(R.review_cycle_days("ICD"), 180)
         self.assertEqual(R.review_cycle_days("REQ"), 365)
         self.assertEqual(R.review_cycle_days("EXT"), 180)
+        # MODEL は対象の系が動けば古びる(ADR-163 決定5)。
+        self.assertEqual(R.review_cycle_days("MODEL"), 180)
+
+    def test_model_registration(self):
+        """MODEL の登録(ADR-163)。下書きから始まり、確定は status で表す。"""
+        self.assertEqual(R.default_status("MODEL"), "proposed")
+        self.assertEqual(R.default_llm_context("MODEL"), "task")
+        self.assertEqual(R.allowed_locations("MODEL"), ["<domain>/model/"])
+        self.assertEqual(R.type_of("MODEL-1"), "MODEL")
+        self.assertNotIn("accepted", R.status_allowed("MODEL"))
+        self.assertIn("current", R.status_allowed("MODEL"))
 
     def test_unknown_type_has_no_cycle(self):
         self.assertIsNone(R.review_cycle_days("XYZ"))
@@ -594,6 +607,8 @@ EXPECTED_TYPE_LOCATION = {
     "SPEC": ("<domain>/spec/",),
     "TEST": ("<domain>/test/",),
     "WATCH": ("_system/", "<domain>/test/"),
+    # MODEL は系の意味モデル(ADR-163 決定1)。<domain>/model/ の一箇所。
+    "MODEL": ("<domain>/model/",),
 }
 
 

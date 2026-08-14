@@ -6,7 +6,7 @@ domain: model
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-07-29
+updated: 2026-08-14
 sources: [DOCTRINE-001]
 depends_on: [REQ-001, DATA-001]
 llm_context: task
@@ -19,7 +19,7 @@ llm_context: task
 ## 入出力
 
 - `type_of(id)`: `id` の接頭辞（最初の `-` より前）を型として返す。例えば `SPEC-014` は `SPEC` を返す。接頭辞が未知、`id` が不正、または文字列でない場合は None を返す。
-- `is_known_type(type)`: 20 型のいずれかなら真を返す。
+- `is_known_type(type)`: 登録簿に載る型のいずれかなら真を返す（件数は書かない。数は `TYPES` の長さが持つ。ADR-075）。
 - `default_status(type)` と `default_llm_context(type)`: 既定値を返す。未知の型なら None を返す。
 - `status_allowed(type)`: 許可する `status` の集合を返す。毎回新しい集合を返す。
 - `allowed_locations(type)`: 許可する置き場所の列を返す。毎回新しいリストを返す。**`REQ` は `<domain>/` と `_system/` の二つを許す**（ADR-091）—— `_system/` に置いた `REQ` は製品の粒度、`<domain>/` に置いた `REQ` は文書・機能の粒度である。**粒度は置き場所が言い、新しい欄を作らない**（`_system/` は既に横断の三本 `DECIDED`・`NONGOAL`・`WATCH` を置く棚であり、横断・一木に一つ・正本という性質が揃っている）。粒度そのものは機械で判じられないので、取り違えは人とレビューが見る。
@@ -48,11 +48,11 @@ llm_context: task
 
 この節がある文書だけが、コードとの追跡の対象になる（ADR-056 の opt-in）。指紋は位置を含まないので、コードを別のファイルへ移しても古びと判じない。更新は `trace-index.py --id SPEC-001` が返す行を写す。
 
-- sha256:75211e4b9456d46acb1bb74067e32501a6501fa9f3e3f2b39abf1f498bf22b23
+- sha256:81771cbc9fb920eee7f5f2e1028aa961f632998f622fcec97c207167bd430f47
 
 ## 受入基準
 
-- 20 型の登録簿、`status` の許可表、型ごとの既定値、置き場所、既定点検周期（ADR-025）、archived の置き場所（ADR-027）が、DATA-001 と一致する。
+- 登録簿の型・`status` の許可表・型ごとの既定値・置き場所・既定点検周期（ADR-025）・archived の置き場所（ADR-027）・型ごとの必須節（ADR-090）が、DATA-001 と一致する。
 - 置き場所の規則は、手書きの期待表（`EXPECTED_TYPE_LOCATION`）で凍らせる（ADR-060 の様式。ADR-091）。**正本から生成しない** —— 以前この凍結は無く、置き場所を変えても黙って通った（`TYPES`・既定 `status`・既定 `llm_context` は凍結済みだったのに、置き場所だけが凍結されていなかった）。
 - `SUBDOMAIN_KINDS` は手書きの期待表で凍らせる（ADR-060 の様式。ADR-092）。**正本から生成しない。** 語を増やす・減らす・並びを変えるときは ADR で決めてから期待表を直す。あわせて、この項が必須キーにも段階キーの梯子にも入らないことを凍らせる —— 後から `review_by` の要求や再点検周期を足すと、その凍結が落ちる。
 - **登録簿の公開名は、消費者を持つ**（ADR-106）。使われない表は消費者が無いまま古び、**静かに嘘になる** —— 実際、`ALWAYS_CONTRACT_TYPES` は `OVERVIEW` を欠き、`SYSTEM_TIER_TYPES` は `REQ` を欠いていた（ADR-091 で `_system` へ置ける型が増えたのに、誰も読まない表は誰も直さなかった）。メタの受入が検める。

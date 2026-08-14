@@ -148,6 +148,7 @@ sources: [ASD-STE100, S1000D, DO-178C, MBSE/SysML, c-TF-IDF, JTCA, context-rot, 
 | RESEARCH | Research Note | `<domain>/research/` | draft | never | 出所、取得日、事実、比較 | 決定 |
 | ARCHIVE | Archive Note | `<domain>/archive/` | archived | never | アーカイブ理由、アーカイブ日、後継ID | 現行情報 |
 | EXT | External Anchor（外部依存の登録） | `<domain>/external/` | current | task | 対象の場所、検査の方法（exists／hash／`review_by` のみ）、期待、壊れ方 | 外部の正本の中身の写し |
+| MODEL | 系の意味モデル | `<domain>/model/` | proposed | task | 系の概要・要素・流れ・契約・シナリオ・アンカーの一覧（値は見出しの直下の JSON の塊が持つ。ADR-163） | 描いた JSON の写し、確定の判断そのもの |
 
 新しい型を増やすのは、既存型で表せない情報が出てからにする。空の型を先に作らない。`[R8]`
 

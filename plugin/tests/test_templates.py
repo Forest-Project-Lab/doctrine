@@ -66,12 +66,13 @@ TYPE_TEMPLATES = {
     "research.md.tmpl": "RESEARCH",
     "archive.md.tmpl": "ARCHIVE",
     "ext.md.tmpl": "EXT",
+    "model.md.tmpl": "MODEL",
 }
 
 # Projection seed outside the type templates (type OVERVIEW reused, C8).
 PROJECTION_SEED = {"icd-index.md.tmpl": "OVERVIEW"}
 
-# All 21 shipped templates (20 type + 1 projection seed).
+# 型の雛形 + 投影の種。件数は書かない(ADR-075: 数はテーブルの長さが持つ)。
 ALL_TEMPLATES = dict(TYPE_TEMPLATES)
 ALL_TEMPLATES.update(PROJECTION_SEED)
 

@@ -6,7 +6,7 @@ domain: packaging
 status: current
 owner: doctrine-maintainers
 created: 2026-08-13
-updated: 2026-08-13
+updated: 2026-08-14
 sources: [plugin/scripts/dep-graph.py]
 depends_on: [CHANGE-010, ICD-002, ICD-005, ICD-007]
 llm_context: task

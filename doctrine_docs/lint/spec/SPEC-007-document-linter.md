@@ -6,7 +6,7 @@ domain: lint
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-08-13
+updated: 2026-08-14
 sources: [plugin/scripts/docs-linter.py]
 depends_on: [REQ-005, REQ-006, REQ-007, ICD-001, ICD-002, ICD-005]
 llm_context: task

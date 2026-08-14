@@ -1,0 +1,159 @@
+---
+id: MODEL-<連番>
+title: <系の名>の意味モデル
+type: MODEL
+domain: <ドメイン名>
+status: proposed
+owner: <個人名>
+created: <YYYY-MM-DD>
+updated: <YYYY-MM-DD>
+sources: [<出所URL/会話ID>]
+llm_context: task
+---
+
+# <系の名>の意味モデル
+
+<!-- 値の正本は各見出しの直下の JSON の塊である(ADR-163 決定3)。散文は塊の周りに
+     自由に書いてよい。JSON は render-projection.py が塊を並べて描く(一方通行。
+     JSON を直して本文へ書き戻さない)。status を current にしてよいのは、全ての値の
+     review_status が confirmed になったときだけである(決定6)。 -->
+
+## 系の概要
+
+（この系が何のために在るかを散文で書く。値は下の塊が持つ）
+
+```json
+{
+  "target": "<対象の名。kebab-case>",
+  "purpose": "<二文以内>",
+  "boundary": "<境界の内側と外側を一文ずつ>",
+  "provenance": [
+    {
+      "source": "<接頭: パス@rev、または URL>",
+      "locator": "<行番号か、本文からの引用>",
+      "checked_at": "<YYYY-MM-DD>",
+      "verdict": "present"
+    }
+  ],
+  "review_status": "proposed"
+}
+```
+
+## 要素の一覧
+
+### <要素の id> — <表示名>
+
+```json
+{
+  "id": "<要素の id>",
+  "name": "<表示名>",
+  "kind": "subsystem",
+  "purpose": "<一〜二文>",
+  "responsibilities": ["<担うこと。最低 1 件>"],
+  "owner": "<持ち主>",
+  "provenance": [
+    {
+      "source": "<接頭: パス@rev、または URL>",
+      "locator": "<行番号か引用>",
+      "checked_at": "<YYYY-MM-DD>",
+      "verdict": "present"
+    }
+  ],
+  "review_status": "proposed"
+}
+```
+
+## 流れの一覧
+
+### <流れの id> — <ラベル>
+
+```json
+{
+  "id": "<流れの id>",
+  "from": "<要素の id>",
+  "to": "<要素の id>",
+  "label": "<動詞か交換物>",
+  "kind": "data",
+  "payload_or_action": "<運ぶもの、または行い>",
+  "condition": "<起きる条件。無ければ「常時」>",
+  "provenance": [
+    {
+      "source": "<接頭: パス@rev、または URL>",
+      "locator": "<行番号か引用>",
+      "checked_at": "<YYYY-MM-DD>",
+      "verdict": "present"
+    }
+  ],
+  "review_status": "proposed"
+}
+```
+
+## 契約の一覧
+
+### <契約の id> — <主題>
+
+```json
+{
+  "id": "<契約の id>",
+  "subject": "<誰の契約か>",
+  "assumptions": ["<前提。最低 1 件>"],
+  "guarantee": "<保証する内容>",
+  "response_measure": "<判定できる測定基準。無ければ「定性的である」と明示>",
+  "verification_status": "unknown",
+  "owner": "<持ち主>",
+  "provenance": [
+    {
+      "source": "<接頭: パス@rev、または URL>",
+      "locator": "<全文(該当の記載なし) のように、見た範囲>",
+      "checked_at": "<YYYY-MM-DD>",
+      "verdict": "silent"
+    }
+  ],
+  "review_status": "proposed"
+}
+```
+
+## シナリオの一覧
+
+### <シナリオの id> — <筋の名>
+
+```json
+{
+  "id": "<シナリオの id>",
+  "name": "<筋の名>",
+  "kind": "normal",
+  "steps": [
+    {
+      "actor": "<要素の id>",
+      "receiver": "<要素の id>",
+      "flow": "<流れの id>"
+    }
+  ],
+  "provenance": [
+    {
+      "source": "<接頭: パス@rev、または URL>",
+      "locator": "<行番号か引用>",
+      "checked_at": "<YYYY-MM-DD>",
+      "verdict": "present"
+    }
+  ],
+  "review_status": "proposed"
+}
+```
+
+## アンカーの一覧
+
+### <アンカーの id>
+
+```json
+{
+  "id": "<アンカーの id>",
+  "target_kind": "document",
+  "target": "<接頭: 指し先>",
+  "source_revision": "<tag か SHA>",
+  "observed_at": "<YYYY-MM-DD>",
+  "authority": "doctrine"
+}
+```
+
+<!-- 入れない: 器の欄の一覧の写し、描いた JSON の写し、確定の判断そのもの -->

@@ -6,7 +6,7 @@ domain: audit
 status: current
 owner: doctrine-maintainers
 created: 2026-07-26
-updated: 2026-08-13
+updated: 2026-08-14
 sources: [plugin/scripts/_intake.py]
 depends_on: [SPEC-011]
 llm_context: task

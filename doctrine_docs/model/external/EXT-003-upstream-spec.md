@@ -6,7 +6,7 @@ domain: model
 status: current
 owner: doctrine-maintainers
 created: 2026-07-26
-updated: 2026-08-07
+updated: 2026-08-14
 sources: [spec/doctrine.ja.md]
 review_by: 2026-10-26
 llm_context: task
@@ -24,7 +24,7 @@ llm_context: task
 
 - 対象: `spec/doctrine.ja.md`
 - 検査: hash(内容の指紋)
-- 指紋: sha256:7eb9a615da9cd151a58b6ac036de8bb27a238e116d48a11f9e68c0092397904b
+- 指紋: sha256:f4e3d9f5b6ee94f9bcbf3cbb78a9787208d40cb4b84ee4e68dfa6b05ae71a567
 - 期待する状態: 在ること。加えて、決定(ADR)が上位設計書の記述を変えるとき、同じ変更で上位設計書も更新される(上位が下位 SPEC より古い逆転を作らない)。
 
 検査を exists から hash へ上げた(ADR-075)。上位設計書は統治木の外に在り、監査もリンタも

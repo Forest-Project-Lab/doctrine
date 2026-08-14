@@ -3,7 +3,7 @@ id: ADR-161
 title: 意味モデルの正本を統治木の中の型付き .md とし、JSON は一方通行の投影とする（方向づけ。実施は凍結の解除後）
 type: ADR
 domain: model
-status: proposed
+status: accepted
 owner: doctrine-maintainers
 created: 2026-08-14
 updated: 2026-08-14

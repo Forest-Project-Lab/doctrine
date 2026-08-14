@@ -12,6 +12,9 @@
    - `TEST`・`WATCH` → `<domain>/test/`
    - `RESEARCH` → `<domain>/research/`
    - `ARCHIVE` → `<domain>/archive/`
+   - `PROC` → `<domain>/procedures/`
+   - `EXT` → `<domain>/external/`
+   - `MODEL` → `<domain>/model/`
    - `ICD` → `<domain>/`（直下に `ICD.md`）
 3. その文書に要らない層は作らない。要る型が出たときに、そのとき作る。
 

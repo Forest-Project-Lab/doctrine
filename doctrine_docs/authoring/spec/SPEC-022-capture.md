@@ -6,7 +6,7 @@ domain: authoring
 status: current
 owner: doctrine-maintainers
 created: 2026-07-26
-updated: 2026-08-13
+updated: 2026-08-14
 sources: [plugin/scripts/capture-nudge.py, plugin/scripts/precompact-dump.py]
 depends_on: [REQ-015, ICD-004, ICD-006]
 llm_context: task
