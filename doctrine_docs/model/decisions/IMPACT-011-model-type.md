@@ -34,8 +34,12 @@ llm_context: task
   `doctrine_docs/authoring/test/TEST-017-templates.md` — 雛形の件数の表記を、件数を書かない
   形へ改めた（ADR-075）。
 
-第二波以降で直すもの（本波では触らない）: SPEC-007（リンタの検査群）・SPEC-014（描画の口）・
-ICD-004・ICD-006・SPEC-029（出所の門の掛け先）・`plugin/skills/system-map-draft/`。
+第二波で直したもの: **SPEC-031・TEST-031**（新設。共有コアの契約と受入）・SPEC-007（リンタの
+検査群）・SPEC-014（描画の口）・ICD-006（描く口の宣言）・ICD-001（`semantic-model-shape` の
+宣言）・SPEC-029（語彙の写しの廃止と門の掛け先）・TEST-007・TEST-014。
+
+第三波で直すもの（まだ触らない）: `plugin/skills/system-map-draft/`（下書きを .md で起草する
+形へ）と、その SPEC-016・ICD-007 の記述。
 
 ## 影響する実装
 
@@ -46,8 +50,18 @@ ICD-004・ICD-006・SPEC-029（出所の門の掛け先）・`plugin/skills/syst
 - `plugin/skills/doc-author/references/lazy-domain-gen.md` — 層の遅延生成の一覧へ
   `MODEL` → `<domain>/model/` を足した。あわせて、以前の型追加が取り残していた `PROC` →
   `<domain>/procedures/` と `EXT` → `<domain>/external/` も補った。
-- 触らないもの: `scaffold.py`（`--list-sections` は登録簿をその場で読むので自動で追随する）、
-  `docs-linter.py`（本文の構造検査は第二波）、`render-projection.py`（描画の口は第二波）。
+- 触らないもの: `scaffold.py`（`--list-sections` は登録簿をその場で読むので自動で追随する）。
+
+第二波の実装:
+
+- `plugin/scripts/_model.py`（新設。印の対で SPEC-031 と結び、指紋を記録した）。
+- `plugin/scripts/docs-linter.py`（`_check_model` を足した。印の内側は触っていないので
+  SPEC-007 の指紋は動かない）。
+- `plugin/scripts/render-projection.py`（`model` モード・`--id`・隣へ `.json` を描く口。
+  `MODES` は印の内側なので SPEC-014 の指紋を打ち直した）。
+- `plugin/scripts/map-draft-check.py`（語彙の写しを共有コアへ寄せた。印の内側なので SPEC-029 の
+  指紋を打ち直した）。
+- `plugin/tests/test_model.py`（新設。31 件）。
 
 ## 影響するテスト
 

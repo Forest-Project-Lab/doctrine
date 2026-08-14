@@ -29,6 +29,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import _depgraph
 import _frontmatter
+import _model
 import _registry
 
 # 投影の冒頭に必ず置く一行(§3.9 / 付録B / テンプレート規則)。
@@ -45,7 +46,7 @@ ICD_INDEX_REL = "_system/icd-index.md"
 CTXMAP_REL = "_system/context-map.md"
 
 # doctrine:begin SPEC-014
-MODES = ("overview", "icd-index", "context-map-skeleton", "all")
+MODES = ("overview", "icd-index", "context-map-skeleton", "model", "all")
 # doctrine:end SPEC-014
 
 
@@ -54,7 +55,8 @@ MODES = ("overview", "icd-index", "context-map-skeleton", "all")
 # ---------------------------------------------------------------------------
 def _parse_args(argv):
     """argv を (opts, error_message) に解く。error は usage 終了(2)に回す。"""
-    opts = {"mode": None, "docs_root": None, "out": None, "check": False}
+    opts = {"mode": None, "docs_root": None, "out": None, "check": False,
+            "doc_id": None}
     i = 0
     n = len(argv)
     while i < n:
@@ -75,6 +77,12 @@ def _parse_args(argv):
             opts["check"] = True
             i += 1
             continue
+        if a == "--id":
+            if i + 1 >= n:
+                return None, "--id には文書の id が必要(例 MODEL-001)"
+            opts["doc_id"] = argv[i + 1]
+            i += 2
+            continue
         if a.startswith("--"):
             return None, "不明な引数: %s" % a
         if opts["mode"] is not None:
@@ -85,19 +93,25 @@ def _parse_args(argv):
         i += 1
 
     if opts["mode"] is None:
-        return None, "モードを一つ指定する(overview|icd-index|context-map-skeleton|all)"
+        return None, ("モードを一つ指定する"
+                      "(overview|icd-index|context-map-skeleton|model|all)")
     if opts["check"] and opts["out"] is not None:
         return None, "--check と --out は同時に使えない"
     if opts["out"] is not None and opts["mode"] == "all":
         return None, "--out は単一モードでだけ使える(all は不可)"
+    if opts["doc_id"] is not None and opts["mode"] not in ("model", "all"):
+        return None, "--id は model モードでだけ使える"
+    if opts["out"] is not None and opts["mode"] == "model" \
+            and opts["doc_id"] is None:
+        return None, "model モードで --out を使うときは --id で一件を指す"
     return opts, None
 
 
 def _usage(msg):
     sys.stdout.write("usage error: %s\n" % msg)
     sys.stdout.write(
-        "render-projection.py (overview|icd-index|context-map-skeleton|all) "
-        "[--docs-root R] [--out PATH|-] [--check]\n"
+        "render-projection.py (overview|icd-index|context-map-skeleton|model|all) "
+        "[--docs-root R] [--id ID] [--out PATH|-] [--check]\n"
     )
     return 2
 
@@ -465,6 +479,98 @@ def _render_one(mode, docs_root, docs):
     raise ValueError("未対応モード: %s" % mode)
 
 
+# ---------------------------------------------------------------------------
+# 意味モデル(MODEL)の投影 —— .md 正本から JSON を一方通行で描く(ADR-161・ADR-163)
+# ---------------------------------------------------------------------------
+def _collect_models(docs_root, doc_id=None):
+    """MODEL 型の文書を (id, 絶対パス, 本文, status) の列で返す。決定論(パス整列)。
+
+    ここだけは本文を読む —— 値の正本が本文の JSON の塊だからである(ADR-163 決定3)。
+    ほかの投影は従来どおりフロントマターしか読まない。
+    """
+    out = []
+    if not os.path.isdir(docs_root):
+        return out
+    paths = []
+    for dirpath, dirnames, filenames in os.walk(docs_root):
+        dirnames.sort()
+        for name in sorted(filenames):
+            if name.endswith(".md"):
+                paths.append(os.path.join(dirpath, name))
+    paths.sort()
+    for path in paths:
+        try:
+            fm, body, _errs = _frontmatter.parse_file(path)
+        except (OSError, UnicodeDecodeError):
+            continue
+        if _frontmatter.coerce_str(fm.get("type")) != "MODEL":
+            continue
+        ident = (_frontmatter.coerce_str(fm.get("id")) or "").strip()
+        if doc_id is not None and ident != doc_id:
+            continue
+        status = (_frontmatter.coerce_str(fm.get("status"))
+                  or _registry.default_status("MODEL") or "")
+        out.append((ident, path, body, status))
+    return out
+
+
+def _model_json_path(md_path):
+    """正本の .md の隣に、同じ名で .json を置く(ADR-163 決定4)。"""
+    return os.path.splitext(md_path)[0] + ".json"
+
+
+def _render_model(body, status):
+    """(内容, 所見) を返す。所見が在れば内容は None(壊れた模型は描かない)。"""
+    model, findings = _model.parse_model(body or "")
+    _model.check_structure(model, findings)
+    _model.check_confirmation(model, status, findings)
+    hard = [f for f in findings if f.severity == "ERROR"]
+    if hard:
+        return None, hard
+    return _model.render_json(model), []
+
+
+def _report_model_findings(path, findings):
+    for f in findings:
+        sys.stderr.write("%s: [%s] %s: %s\n"
+                         % (path, f.code, f.where, f.message))
+
+
+def _do_model(docs_root, doc_id, out_path, check):
+    """model モードの実体。書き出し / --out / --check の三つを担う。
+
+    返り値は終了コード。壊れた模型は描かず 1 を返す(黙って古い JSON を残さない)。
+    """
+    models = _collect_models(docs_root, doc_id)
+    if doc_id is not None and not models:
+        sys.stderr.write("MODEL 文書が見つからない: %s\n" % doc_id)
+        return 3
+    rc = 0
+    for ident, path, body, status in models:
+        content, findings = _render_model(body, status)
+        if content is None:
+            _report_model_findings(path, findings)
+            rc = 1
+            continue
+        json_path = _model_json_path(path)
+        if check:
+            existing = _read_existing(json_path)
+            if existing is None:
+                sys.stdout.write("投影未生成: %s\n" % json_path)
+                rc = 1
+                continue
+            if existing != content:
+                sys.stdout.write("投影ドリフト: %s\n" % json_path)
+                _emit_diff(existing, content)
+                rc = 1
+            continue
+        if out_path == "-":
+            sys.stdout.write(content)
+            continue
+        _atomic_write(out_path or json_path, content)
+    return rc
+
+
 def _canonical_path(mode, docs_root):
     rel = {
         "overview": OVERVIEW_REL,
@@ -546,18 +652,25 @@ def main(argv=None):
     docs = _collect_docs(docs_root)
 
     if opts["mode"] == "all":
-        # 三つを正本パスへ描画する(--out/--check は all 不可: _parse_args で弾く)。
+        # 三つの投影と、MODEL の JSON を正本パスへ描画する
+        # (--out は all 不可: _parse_args で弾く)。
         if opts["check"]:
             rc = 0
             for m in ("overview", "icd-index", "context-map-skeleton"):
                 rc = _do_check(m, docs_root, docs) or rc
+            rc = _do_model(docs_root, opts["doc_id"], None, True) or rc
             return rc
+        rc = 0
         for m in ("overview", "icd-index", "context-map-skeleton"):
             content = _render_one(m, docs_root, docs)
             _atomic_write(_canonical_path(m, docs_root), content)
-        return 0
+        rc = _do_model(docs_root, opts["doc_id"], None, False) or rc
+        return rc
 
     mode = opts["mode"]
+
+    if mode == "model":
+        return _do_model(docs_root, opts["doc_id"], opts["out"], opts["check"])
 
     if opts["check"]:
         return _do_check(mode, docs_root, docs)

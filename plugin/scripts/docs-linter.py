@@ -28,6 +28,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import _hookio
 import _frontmatter
 import _intake
+import _model
 import _registry
 import _termcheck
 
@@ -588,6 +589,24 @@ _REQ_TAG_RE = re.compile(r"\[R\d+\]")
 _REQ_ID_RE = re.compile(r"\bREQ-\d+\b")
 
 
+def _check_model(meta, body, findings):
+    """MODEL の本文の構造(ADR-163 決定7)。規則の実体は共有コア `_model` が持つ。
+
+    JSON の側が要する構造を .md の側で機械的に担保する口である。**兄弟文書は
+    読まない** —— 検めるのはこの一文書の中だけで、参照の実在も文書の中に限る。
+    意味の正しさは検めない(出所の実在は map-draft-check、確定は人)。
+    """
+    if meta.get("type") != "MODEL":
+        return
+    status = meta.get("status") or _registry.default_status("MODEL")
+    for finding in _model.check_document(body or "", status):
+        findings.append(Finding(
+            finding.code,
+            ERROR if finding.severity == "ERROR" else WARN,
+            "%s: %s" % (finding.where, finding.message),
+            "ADR-163"))
+
+
 def _check_trace(meta, body, findings):
     """§3.10 MISSING_TRACE (ERROR) — SPEC/IMPL/TEST needs [R]/REQ/depends_on."""
     type_code = meta.get("type")
@@ -804,6 +823,7 @@ def lint_text(text, path):
     _check_dates(meta, findings)
     _check_research_decision(meta, body, findings)
     _check_spec_sections(meta, body, findings)
+    _check_model(meta, body, findings)
     _check_term_check(meta, body, path, findings, text)
     _check_icd_dep(meta, path, findings)
     _check_trace(meta, body, findings)

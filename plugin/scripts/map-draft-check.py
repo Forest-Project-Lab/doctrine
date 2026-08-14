@@ -55,27 +55,26 @@ sys.dont_write_bytecode = True
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import _frontmatter          # noqa: E402  日付の解釈の正本(ADR-099・ADR-101)
+import _model                # noqa: E402  器の語彙と形の正本(ADR-163)
 
 # doctrine:begin SPEC-029
 SCHEMA = "map-draft-check/1"
-MODEL_SCHEMA = "system-map/gold-model/0.1"
+MODEL_SCHEMA = _model.MODEL_SCHEMA
 USAGE = ("map-draft-check.py --model PATH "
          "(--repo PREFIX=PATH [--repo PREFIX=PATH ...] | "
          "--repo PATH [--repo-prefix NAME]) [--docs-root PATH] "
          "[--today YYYY-MM-DD] [--trace-json [PREFIX=]PATH ...] [--json]")
 
-# 語彙の正本は lens 側 gold-model の schema.json(0.1)。ここはその写しである(D7)。
-ENUM_REVIEW_STATUS = ("proposed", "confirmed")
-ENUM_VERDICT = ("present", "silent")
-ENUM_TARGET_KIND = ("document", "code_range", "test", "external_doc",
-                    "artifact")
-ENUM_AUTHORITY = ("doctrine", "gold_model")
-ENUM_VERIFICATION_STATUS = ("unknown", "claimed", "planned", "verified",
-                            "failed", "stale", "not_applicable")
+# 語彙と形の正本は共有コア `_model` に一つだけ置く(ADR-163 決定8)。以前はここに
+# 写しが在り、リンタ・描き手・門で三重になる形だった。写さずに引く。
+ENUM_REVIEW_STATUS = _model.ENUM_REVIEW_STATUS
+ENUM_VERDICT = _model.ENUM_VERDICT
+ENUM_TARGET_KIND = _model.ENUM_TARGET_KIND
+ENUM_AUTHORITY = _model.ENUM_AUTHORITY
+ENUM_VERIFICATION_STATUS = _model.ENUM_VERIFICATION_STATUS
 
-TOP_KEYS = ("schema", "target", "system", "elements", "flows", "contracts",
-            "scenarios", "anchors")
-ENTITY_LISTS = ("elements", "flows", "contracts", "scenarios", "anchors")
+TOP_KEYS = _model.TOP_KEYS
+ENTITY_LISTS = _model.ENTITY_LISTS
 
 SOURCE_RE = re.compile(r"^([\w.-]+):\s*(.+?)(?:@([0-9a-f]{7,40}))?$")
 PATHISH_RE = re.compile(r"^[\w./\-]+$")

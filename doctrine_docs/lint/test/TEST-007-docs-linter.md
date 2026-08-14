@@ -28,6 +28,8 @@ llm_context: task
 - ADR-075: 必須節の直後に小見出しを置いた SPEC が `EMPTY_SECTION` にならないこと。
 - ADR-075: 発火の印が PostToolUse の経路のときだけ残ること。
 
+- MODEL の本文の構造（`MODEL_*`）が ERROR で出ること。規則の実体が共有コア `_model` に一つだけ在り、リンタが写しを持たないこと（実装試験は `plugin/tests/test_model.py` の `LinterWiringTest`）。
+
 ## 退行観点
 
 - リンタは決して `decision` を出さず、助言だけを出す[R7]。WATCH に挙げた懸念事項と突き合わせて確かめる。
