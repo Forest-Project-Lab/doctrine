@@ -178,6 +178,7 @@ sources: []
 | REQ-001 | REQ | model | 構造規則とメタデータ様式を単一の正本として定義する |
 | SPEC-001 | SPEC | model | 登録簿の契約（registry contract） |
 | SPEC-002 | SPEC | model | フロントマター解析の契約 |
+| SPEC-031 | SPEC | model | 意味モデルの本文の形と機械の担保（`_model.py` の契約） |
 | DATA-001 | DATA | model | 登録簿とフロントマターのスキーマ |
 | ADR-001 | ADR | model | 構造規則の単一正本化（C2） |
 | ADR-002 | ADR | model | フロントマター解析の3要素戻り値（C1） |
@@ -205,6 +206,7 @@ sources: []
 | IMPL-002 | IMPL | model | `_frontmatter.py` の実装メモ |
 | TEST-001 | TEST | model | 登録簿契約のテスト計画 |
 | TEST-002 | TEST | model | フロントマター解析契約のテスト計画 |
+| TEST-031 | TEST | model | 意味モデルの本文の形と担保のテスト計画 |
 | EXT-003 | EXT | model | 上位設計書（spec/doctrine.ja.md, DOCTRINE-001）への依存 |
 | ICD-008 | ICD | packaging | packaging のインターフェース（配布物の形・Hook配線・段差） |
 | REQ-013 | REQ | packaging | 保証限界の明示（各成果物が予防・検出・委ねるを書く） |

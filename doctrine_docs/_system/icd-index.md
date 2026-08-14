@@ -18,7 +18,7 @@ sources: []
 |---|---|---|---|---|
 | audit | ICD-005 | audit のインターフェース（全件監査の境界） | corpus-audit, audit-summary-schema, intake-ledger-format, view-stamp-format | 2026-08-13 |
 | authoring | ICD-007 | authoring のインターフェース（作成・初期化・支援） | scaffolding, term-extraction, skills, templates | 2026-08-14 |
-| context | ICD-006 | context のインターフェース（注入・パック・投影描画の契約） | context-injection, context-pack, projection-render | 2026-07-26 |
+| context | ICD-006 | context のインターフェース（注入・パック・投影描画の契約） | context-injection, context-pack, projection-render | 2026-08-14 |
 | graph | ICD-002 | graph のインターフェース（依存グラフと追跡索引の問い合わせ契約） | dependency-graph-api, trace-index-api | 2026-08-13 |
 | guard | ICD-003 | guard のインターフェース（三ガードの公開境界） | policy-guards | 2026-06-30 |
 | lint | ICD-004 | lint のインターフェース（リンタと用語チェッカーの公開契約） | document-lint, term-check | 2026-08-14 |

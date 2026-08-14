@@ -23,6 +23,8 @@ SPEC-014 の受入基準を `plugin/tests/test_render.py` で確かめる `[R1]`
 - `--check` が投影ドリフト（または未生成）を非ゼロ終了で知らせ、一致したときは 0 を返すこと。
 - 投影のフロントマターが `type: OVERVIEW`・`id: OVERVIEW-<n>` であること（C8とは凍結した契約の整合を見る判断項目をいう）。
 
+- `model` モード: 正本の .md の隣へ `.json` を描くこと。`--check` が未生成とドリフトを非ゼロで落とすこと。**所見の在る模型を描かない**こと。`--id` の指し先が無ければ 3、`--out` を `--id` 無しで使えば 2 を返すこと。`all` が MODEL の投影を含むこと（実装試験は `plugin/tests/test_model.py` の `RendererCliTest`）。
+
 ## 退行観点
 
 - 投影が自分自身を Overview の一覧に載せないこと（WATCH と突き合わせる）。

@@ -31,6 +31,7 @@ model ドメインは、構造規則とフロントマターの解析を、体�
 
 本 ICD だけが正本である事実を以下に挙げる。`canonical_for` の値と対応する。
 
+- semantic-model-shape: 意味モデル（MODEL 型）の本文の形と語彙の正本（`_model.py`。SPEC-031・ADR-163）。器が要する構造・実体ごとの必須欄・限られた語の値・所見の名を、体系の中でここに一度だけ持つ。リンタ（ICD-004）・描き手（ICD-006）・出所の門（SPEC-029）はここを呼び、写しを持たない。
 - type-registry: 型の登録簿（ADR-013 で PROC を、ADR-026 で EXT を、ADR-163 で MODEL を追加）。型の順序、既定 `status`、既定 `llm_context`、置き場所、既定点検周期（ADR-025）、archived の置き場所（ADR-027）を定める。
 - `status-vocabulary`: `status` の統制語彙 8 値。accepted は ADR だけに使う。draft は RESEARCH だけに使う。
 - frontmatter-schema: 必須 8 キー（`id`, title, `type`, `domain`, `status`, `owner`, `updated`, `sources`）。created は必須としない。DECIDED と WATCH は `review_by` も必須とする。
