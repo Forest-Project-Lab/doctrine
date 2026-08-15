@@ -1980,6 +1980,28 @@
       "state": "pending",
       "investigated": true,
       "note": "調査の継続。5 日間に注入された凍った要約の下流影響。部分的には既に測った —— その期間の未観測 warn 4 件はすべて本キャンペーン自身の残滓（ADR-147/149 の未着地・SPEC-029 の指紋・印なし）であり、PR #289 で 0 にした。残るのは『凍った要約を読んで下した判断に誤りが混じっていないか』の追跡で、これは未実施。"
+    },
+    {
+      "incident_id": "INC-042-decision-and-oracle-land-in-one-diff",
+      "index": 6,
+      "state": "landed",
+      "note": "単発か構造的な定常かを数えた。直近 200 コミットで同居 83 件（41.5%）、うち assert 純減 1 件。構造の条件は常態、危険な現れは稀。",
+      "evidence_ref": "assurance/ledger/incidents.json",
+      "investigated": "2026-08-15 本反復（決定論の走査。評価セッションを買っていない）"
+    },
+    {
+      "incident_id": "INC-042-decision-and-oracle-land-in-one-diff",
+      "index": 4,
+      "state": "pending",
+      "note": "green_is_green の分布集計。走らせ手を足すなら正本が読む段も同時に要る（§2）。現時点で verify 記録は 2 件しか無く、分布を語れる母数が無い。母数が育ってから。",
+      "investigated": "2026-08-15 本反復"
+    },
+    {
+      "incident_id": "INC-042-decision-and-oracle-land-in-one-diff",
+      "index": 5,
+      "state": "pending",
+      "note": "『緑は期待値の由来を保証しない』の明文化と、期待値変更に決定 id を添える記法。統治木への追記であり、推奨#0（運用規約をどちらに倒すか）の所有者判断が先に要る —— 先に記法だけ書くと、決定の順序を変えない選択と噛み合わない。",
+      "investigated": "2026-08-15 本反復"
     }
   ]
 }
