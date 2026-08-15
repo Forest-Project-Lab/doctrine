@@ -924,21 +924,35 @@ def _as_upper_bound(value):
         else value
 
 
-def _max_instant_by_upper_bound(values):
-    """左辺（評価器の成果物）の最大。日付だけの値はその日の終わりとして並ぶ。
-
-    返すのは**元の値**である。表示は、証拠が持たない精度を騙らない ——
-    並べ替えと比較の鍵だけを上界へ寄せる（ADR-167）。
-    """
-    seen = [v.replace(" ", "T", 1)
-            for v in values if isinstance(v, str) and len(v) >= 10]
-    return max(seen, key=_as_upper_bound) if seen else None
-
 
 def evaluator_outputs_latest():
     """評価器が最後に何かを出した日。無ければ None。
 
-    対象は評価の成果物だけ（カタログ・事故分析・網羅の割当・計画審査・
+    **記録された値をそのまま返す。**日付だけの刻印を時刻へ膨らませない ——
+    表示は、証拠が持たない精度を騙らない。鮮度の比較に使う上界は
+    `evaluator_outputs_upper_bound` が別に与える（ADR-167）。
+    """
+    return _max_instant(_evaluator_output_instants())
+
+
+def evaluator_outputs_upper_bound():
+    """鮮度の比較に使う、評価器の成果物の**上界**（ADR-167）。
+
+    日付だけの刻印はその日の終わりとして並ぶ。左辺を上界で見るのは、
+    「順序が判らないなら、攻撃が覆っていないほうへ倒す」ためである
+    （事象 INC-044）。右辺（故障注入の証拠）は始まりのまま比べる。
+
+    `evaluator_outputs_latest` と分けてあるのは、**選ばれる要素**を
+    変えないためである。上界で選ぶと、同じ日に日付だけの刻印と精密な
+    刻印が混ざったとき、返り値が精度の低いほうへ落ちる。比較にだけ
+    上界を使い、表示と他の読み手には記録された値を渡す。
+    """
+    seen = [_as_upper_bound(v) for v in _evaluator_output_instants()]
+    return _max_instant(seen)
+
+
+def _evaluator_output_instants():
+    """評価の成果物の刻印の列（カタログ・事故分析・網羅の割当・計画審査・
     独立検証）。決定論試験や煙試験は評価ではないので数えない。
     """
     seen = []
@@ -957,8 +971,8 @@ def evaluator_outputs_latest():
             try:
                 with open(cov_path, encoding="utf-8") as f:
                     entries = json.load(f).get("entries", [])
-                seen.append(_max_instant_by_upper_bound(
-                    [e.get("assigned_at") for e in entries]))
+                seen.append(_max_instant([e.get("assigned_at")
+                                          for e in entries]))
             except (OSError, ValueError):
                 pass
     cast_dir = os.path.join(LANE_DIR, "ledger", "cast")
@@ -978,8 +992,7 @@ def evaluator_outputs_latest():
         seen.append(fm.get("generated_at") or fm.get("date"))
     for doc in load_verify_records().values():
         seen.append(doc.get("generated_at"))
-    # 左辺なので上界で並べる（ADR-167）。返すのは元の値で、鍵だけを寄せる。
-    return _max_instant_by_upper_bound([v for v in seen if v])
+    return [v for v in seen if v]
 
 
 def latest_scenarios():
@@ -2066,12 +2079,13 @@ def next_actions(index_sha=None):
     # まだ攻撃されていない。AI の判定が「実際に欠陥を捕まえる」ことは、攻撃の証拠
     # でしか言えない（INC-012）。
     latest_output = evaluator_outputs_latest()
+    # 丸めは辺ごとに逆である（ADR-167）。右辺はその日の始まり（`_max_instant`
+    # が与えるまま）、左辺はその日の終わり。上界は比較にだけ使い、表示には
+    # 記録された値をそのまま出す —— 証拠が持たない精度を騙らない。
+    output_bound = evaluator_outputs_upper_bound()
     latest_attack = attack_evidence_latest()
-    # 比較の鍵は辺ごとに逆へ丸める（ADR-167）。右辺はその日の始まり
-    # （`_max_instant` が与えるまま）、左辺はその日の終わり。表示は元の値の
-    # まま出す —— 証拠が持たない精度を騙らない。
-    if latest_output and (latest_attack is None
-                          or latest_attack < _as_upper_bound(latest_output)):
+    if output_bound and (latest_attack is None
+                         or latest_attack < output_bound):
         add(
             "ATTACK_EVALUATOR: 評価器の成果物(%s)が故障注入の証拠(%s)より新しい"
             % (latest_output, latest_attack or "無し"))

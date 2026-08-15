@@ -92,5 +92,32 @@ class FreshnessRoundingBySide(unittest.TestCase):
                             "日付だけの攻撃証拠が同じ日の成果物を覆っている")
 
 
+class UpperBoundDoesNotDegradeTheReportedValue(unittest.TestCase):
+    """上界は比較にだけ使い、記録された値の精度を落とさない。
+
+    独立検証が最初の実装に見つけた欠陥である。`max(seen, key=上界)` は鍵だけで
+    なく**選ばれる要素**を変えるので、同じ日に日付だけの刻印と精密な刻印が
+    混ざると、返り値が精度の低いほうへ落ちていた。日付だけの値は計画審査の
+    `date` などから恒常的に入るので、仮想の入力ではない。
+    """
+
+    def test_the_reported_value_keeps_its_precision(self):
+        vals = ["2026-08-06", "2026-08-06T14:00:00Z"]
+        self.assertEqual(orchestrator._max_instant(vals),
+                         "2026-08-06T14:00:00Z")
+
+    def test_the_comparison_key_rises_to_the_end_of_the_day(self):
+        vals = ["2026-08-06", "2026-08-06T14:00:00Z"]
+        self.assertEqual(
+            orchestrator._max_instant(
+                [orchestrator._as_upper_bound(v) for v in vals]),
+            "2026-08-06T23:59:59Z")
+
+    def test_the_two_readings_are_separate_functions(self):
+        """表示用と比較用を一つの関数に兼ねさせない（兼ねると精度が落ちる）。"""
+        self.assertTrue(callable(orchestrator.evaluator_outputs_latest))
+        self.assertTrue(callable(orchestrator.evaluator_outputs_upper_bound))
+
+
 if __name__ == "__main__":
     unittest.main()

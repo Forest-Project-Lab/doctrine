@@ -1,0 +1,42 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "verify-record",
+  "target_id": "INC-044-evaluator-output-backdated-to-day-start-is-unsafe",
+  "generated_at": "2026-08-15T17:39:31Z",
+  "git_sha": "0d7c3c9fe7a78269d0dcd1c90488d33830a26339",
+  "diff_range": "origin/main..HEAD",
+  "diff_sha256": "b9a20b6be4eaa38f0a6e2bf996357d897dce50fb28aeb399aa770b466a4e5dff",
+  "red_sha256": "c6466df9005e8fcfd9ce7f89720faa3b9c4ad2877422efe027665b7bb19a7d95",
+  "prompt_sha256": "472d76f8eb712bba08402e29e3e6a0b95ce744a571f6f8d6fcffd30d542646b4",
+  "model": "claude-opus-5",
+  "effort": "high",
+  "cost_usd": 0.6898,
+  "record": {
+    "target_id": "INC-044-evaluator-output-backdated-to-day-start-is-unsafe",
+    "verdict": "UNKNOWN",
+    "reasons": [
+      "再実行はできていない。対象リポジトリはこの環境に無く（作業ディレクトリは空）、試験の実行・他の呼び出し元の grep はいずれも不可だった。以下はすべて diff と台帳の記述からの導出であり、独立な実行観測ではない。",
+      "red_was_red = PASS（導出による）。修正前の条件式は文脈行に `if latest_output and (latest_attack is None or latest_attack < latest_output)` として diff 内に見えている。辞書式比較では短い前置文字列が小さいので、attack='2026-08-06T09:00:00Z' vs output='2026-08-06' は False、両辺 '2026-08-06' も False。どちらも ATTACK_EVALUATOR を提起せず、assertTrue の 2 件は必ず FAIL する —— observed_failures の 2 件と一致する。残る 2 件は修正前も True/[] を満たし、green_before_and_after と一致する。同一実行の中で 2 件 ok・2 件 FAIL・errors:0 が成立している事実は、赤が土台の破損や収集失敗による赤でないことを裏づける。",
+      "green_is_green = PASS（導出による）。修正後は左辺だけが `_as_upper_bound` を通り '2026-08-06T23:59:59Z' となるので、赤の 2 件は True へ反転して ok になり、歯止めの 2 件（翌日の攻撃／右辺のみ日付だけ）は値が変わらず緑のまま。赤で FAIL した当の観測が、この diff の機構によって PASS へ変わることが辿れる。oracle 側の緩和は見当たらない —— 既存の期待値の書き換えは diff 内に一つも無く、試験の削除も無く、右辺の `_max_instant` は無傷、閾値の変更も無い。試験の増加は 495→499 で新設ファイルの 4 件と符合する。",
+      "single_change = PASS。実装の変更は一主題 —— 左辺（評価器の成果物）の比較鍵だけを当日の上界へ寄せる。新関数 2 つと差し替え 3 箇所はすべてその一点に奉仕しており、無関係な変更は混じっていない。残る 3 ファイルは新設の試験と証拠台帳（doctrine:exempt）である。",
+      "総合を PASS にしない理由：claim の一項が diff 自身によって反証される。『返す値と表示は元のまま。並べ替えと比較の鍵だけを上界へ寄せた』とあるが、`max(seen, key=_as_upper_bound)` は鍵だけでなく**選ばれる要素**を変える。同じ日に日付だけの刻印と精密な刻印が混在する場合、旧 `_max_instant`（sorted[-1]）は '2026-08-06T14:00:00Z' を返したのに対し、新実装は鍵が同着上位となる '2026-08-06' を返す。これは仮想の入力ではない —— 同じ関数の中の `fm.get(\"generated_at\") or fm.get(\"date\")` が日付だけの値を恒常的に `seen` へ入れる。",
+      "作用の射程が観測されていない。diff は `evaluator_outputs_latest()` の**返り値の選び方**を大域的に変えたうえで、`_as_upper_bound` を当てた比較点は `next_actions` の一箇所だけである。他の呼び出し元があれば、そこは上界へ寄せないまま、以前より小さく並ぶ（精度の落ちた）値を受け取る。他の呼び出し元の有無は与えられた観測にも diff にも現れておらず、全 499 件緑はその不在を示さない（被覆の証拠が無い）。",
+      "赤台帳が『独立検証が green_is_green を UNKNOWN でなく PASS で返せば、その向きが効くと判る』と書いている点は、証拠ではなく判定者への誘導であり、上記の判断には算入していない。ADR-167 が PR #315 で先に着地しているという主張も、この入力からは検証できない（diff 内に ADR 文書が無いことと矛盾しない、という以上は言えない）。"
+    ],
+    "checks": {
+      "red_was_red": "PASS",
+      "green_is_green": "PASS",
+      "single_change": "PASS"
+    },
+    "residual_risks": [
+      "`_max_instant_by_upper_bound` は同日に日付だけの刻印と精密な刻印が混在すると日付だけの値を返し、ATTACK_EVALUATOR のメッセージ表示が以前より粗くなる。claim の『表示は元のまま』はこの経路で成立しない。",
+      "`evaluator_outputs_latest()` の他の呼び出し元は `_as_upper_bound` を通さない。もし他の鮮度比較があれば、そこでは精度の落ちた返り値がむしろ危険側へ倒れうる。呼び出し元の一覧は未観測。",
+      "鍵が同着（例：'2026-08-06' と '2026-08-06T23:59:59Z'）のとき、`max` は最初の最大要素を返し、旧 `sorted(...)[-1]` は最後を返す。返り値が入力の並び順（ファイル走査順）に依存する。",
+      "新設 4 件の試験はいずれも評価器の成果物を 1 個しか立てない stub であり、上の混在・同着の経路を一切覆っていない。",
+      "赤の台帳・修正後の台帳とも本 diff の中で追加された実装者の自己申告であり、独立な再実行は行えていない。sha 94b6b84 / 49b3ecc の実在も未確認。",
+      "independent_recheck が実時点を刻む件（ADR-167 決定#2）は本変更の外にあり、既存の recheck 4 件は UNKNOWN のまま残る —— known_gap の自己申告どおりだが、これも未確認。"
+    ]
+  },
+  "sdk_status": "PASS",
+  "reason": null
+}
