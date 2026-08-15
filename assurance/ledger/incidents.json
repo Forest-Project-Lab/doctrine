@@ -913,7 +913,10 @@
       "residual": [
         "本件が見つかったのは、評価器がたまたま当の語を引用したからである。引用しなければ同じ穴は開いたまま気付かれない。**発見は機構ではなく偶然に依っている。**",
         "台帳には評価器の散文が大量に在り、他にも統治の語彙の引用が混じっている可能性がある。印の語の連なり以外は走査の対象でないので、いま赤になっていないだけかもしれない。"
-      ]
+      ],
+      "cast_analysis": "done",
+      "cast_analysis_ref": "assurance/ledger/cast/INC-045-generated-prose-trips-the-marker-self-scan.json",
+      "cast_analyzed_at": "2026-08-15T18:02:06Z"
     }
   ]
 }

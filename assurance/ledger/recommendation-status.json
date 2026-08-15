@@ -2257,6 +2257,45 @@
       "owner_decision_kind": "互換性を壊す変更",
       "evaluator_owner_required": true,
       "investigated": "2026-08-15 本反復"
+    },
+    {
+      "incident_id": "INC-045-generated-prose-trips-the-marker-self-scan",
+      "index": 0,
+      "state": "landed",
+      "note": "REPRODUCE_RED を固定した。一時領域に、行頭で統治外を宣言しつつ散文で同じ連なりを引用する JSON を 1 件だけ作り、走査を当てて疑いが返ることを確かめた（台帳にも評価器にも依存しない）。試験の原文自身が印の形を含むので、木の外に置いてある —— **再現の試験を置くこと自体が再現になる。**是正と同じ変更で持ち込む。",
+      "evidence_ref": "assurance/ledger/red/INC-045-generated-prose-trips-the-marker-self-scan.json",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS）"
+    },
+    {
+      "incident_id": "INC-045-generated-prose-trips-the-marker-self-scan",
+      "index": 6,
+      "state": "landed",
+      "note": "潜在を全件計数した。main の台帳で疑いに一致する行は **0 件**（実物の一件は PR #317 のブランチにだけ在る）。ただし統治の識別子を引用する台帳ファイルは **49 件** あり、母集団は広い。潜在は現時点で 0 だが、母集団の広さから見て次に起きるのは時間の問題である。",
+      "evidence_ref": "assurance/ledger/red/INC-045-generated-prose-trips-the-marker-self-scan.json",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS）"
+    },
+    {
+      "incident_id": "INC-045-generated-prose-trips-the-marker-self-scan",
+      "index": 1,
+      "state": "owner",
+      "note": "ADR-067 決定#4 の射程を狭める後継 ADR。宣言を持つファイルでは疑いの照合を行わず、勘定の第四項としては数え続ける。**配布物の振る舞いが変わる** —— 導入先で exempt を宣言したファイルの綴りの揺れが報告されなくなるので、配布した道具が返す所見の範囲が狭まる。六類型の『配布境界や保証範囲の変更』に当たる。",
+      "owner_decision_kind": "配布境界や保証範囲の変更",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS）"
+    },
+    {
+      "incident_id": "INC-045-generated-prose-trips-the-marker-self-scan",
+      "index": 3,
+      "state": "pending",
+      "note": "台帳の生成テキストにおける統治語彙の出現を、疑いの判定とは独立に計数する監視。本反復で一度計数した（49 ファイル）が、これは一回きりの測定であって追跡ではない。走らせ手を足すなら正本が読む段も同時に要る（§2）。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS）"
+    },
+    {
+      "incident_id": "INC-045-generated-prose-trips-the-marker-self-scan",
+      "index": 4,
+      "state": "pending",
+      "note": "CI の赤について失敗行の著者（実装者／評価器）を区別して記録する。**是正権限が受け手に無い赤**という類型は本件で初めて現れた。門は緩めない。実装は #1 の決定が先に要る（どちらへ倒すかで記録の意味が変わる）。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS）"
     }
   ]
 }
