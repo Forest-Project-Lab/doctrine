@@ -1,0 +1,27 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "reproduce-red",
+  "incident_id": "INC-044-evaluator-output-backdated-to-day-start-is-unsafe",
+  "generated_at": "2026-08-15T17:05:00Z",
+  "git_sha": "94b6b84",
+  "phase": "before-fix",
+  "command": "python3 -m unittest discover -s assurance/tests -p test_freshness_rounding_by_side.py",
+  "returncode": 1,
+  "expect": "修正前に FAIL すること（最初から緑は再現と認めない）",
+  "observed_failures": [
+    "FAIL: test_day_only_output_is_not_covered_by_an_earlier_same_day_attack — 日付だけの成果物を、同じ日の先行する攻撃（09:00:00Z）が覆っていた",
+    "FAIL: test_both_day_only_on_the_same_day_stays_unattacked — 両辺とも日付だけで前後を決められない対を『攻撃済み』と読んでいた"
+  ],
+  "green_before_and_after": [
+    "test_a_later_attack_still_covers_a_day_only_output — 翌日の攻撃は覆う。過剰是正の歯止め",
+    "test_the_right_side_rounding_is_unchanged — 右辺は今までどおりその日の始まり（INC-023 のまま）"
+  ],
+  "measured": {
+    "ran": 4,
+    "failures": 2,
+    "errors": 0,
+    "passed": 2
+  },
+  "decision_landed_before_the_fix": "ADR-167 は本変更の**前**の PR (#315) で main へ着地している。INC-042 の推奨#0 の方向（規則を変える是正は反復を二つ使う）を一度試すためであり、実装の差分から見て決定は差分の外の材料になっている。**この配置自体が測定である** —— 独立検証が green_is_green を UNKNOWN でなく PASS で返せば、その向きが効くと判る。",
+  "note": "凍結したのは振る舞いであって関数の形ではない。実装は _as_upper_bound と _max_instant_by_upper_bound を足し、左辺の並べ替えと比較の鍵だけを上界へ寄せた。**返す値と表示は元のまま**にしてある —— 証拠が持たない精度を騙らないため。"
+}
