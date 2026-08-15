@@ -2692,6 +2692,89 @@
       "state": "pending",
       "note": "境界の宣言ごとに『その反例を探す検査が在るか』の対応表を作る。未実施。**これは INC-047 の推奨#6（覆いが自称より狭い同形の全数調査）と同じ主題**であり、宣言の側から検査を引く向きの調査である。まとめて扱うのが筋。",
       "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実物確認）"
+    },
+    {
+      "incident_id": "INC-033-approved-plans-have-no-canonical-pressure",
+      "index": 0,
+      "state": "landed",
+      "note": "台帳の全種別に読み口か理由を必須とする不変条件は**実装済み**（_validate_ledger_kinds）。実測: 種別 15 のうち read_by を持つ 11、持たない 4 はいずれも why_not_read を持つ（recheck・runs・rulings・smoke-latest）。宣言された読み口 18 件はすべて orchestrator の属性へ解決する。**『宣言はあるが呼び出しが 0 本』は validate の検査には無い**が、AST で走査したところ 18 件すべてが実際に呼ばれており、現時点で該当は無い。機械の検査に移すのは残件（#3 と同じ主題）。",
+      "evidence_ref": "assurance/harness/orchestrator.py",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実物確認と AST 走査）"
+    },
+    {
+      "incident_id": "INC-033-approved-plans-have-no-canonical-pressure",
+      "index": 2,
+      "state": "landed",
+      "note": "未消化残高の常時掲出は**実装済み**。status 要約に reproduce_red（approved 30・reproduced 1・**outstanding 29**）が在り、next_actions にも『承認済みで赤の証拠が無い計画 29 件』として出ている。両方に載っている。**ただし『0 でない限りキャンペーンを閉じられない』の部分は無い** —— 残高が非ゼロでも反復は閉じられる（現に閉じ続けている）。",
+      "evidence_ref": "assurance/harness/orchestrator.py",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実物確認と AST 走査）"
+    },
+    {
+      "incident_id": "INC-033-approved-plans-have-no-canonical-pressure",
+      "index": 1,
+      "state": "pending",
+      "note": "消化の定義を『判定が付いた』から『遷移先の義務が記録された』へ移す件。**REPRODUCE_RED の圧は在る**（#2 のとおり）が、『判定のみで閉じる段が他に残っていないかをvalidate で列挙する』側は無い。ADR-148 が red/ に対して行ったことの一般化が残件である。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実物確認と AST 走査）"
+    },
+    {
+      "incident_id": "INC-033-approved-plans-have-no-canonical-pressure",
+      "index": 3,
+      "state": "pending",
+      "note": "新しい状態・実行経路・台帳種別を足す diff に、正本側の読み口が同一 diff で伴うかをrelease-check で検める。未実装。**これが INC-012・INC-015・INC-033 の同型そのものに対する検出点**であり、#0 の『呼び出し 0 本』の機械化もここに乗る。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実物確認と AST 走査）"
+    },
+    {
+      "incident_id": "INC-033-approved-plans-have-no-canonical-pressure",
+      "index": 4,
+      "state": "pending",
+      "note": "試験側だけが保持している整合規則の洗い出しと正本への移送。未実施。**本反復で一例を見た** —— INC-032 の『共有解決器を再定義しない』規則は test_hook_boundary.py の中にしか無く、正本の validate には無い。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実物確認と AST 走査）"
+    },
+    {
+      "incident_id": "INC-033-approved-plans-have-no-canonical-pressure",
+      "index": 5,
+      "state": "pending",
+      "note": "INC-012・INC-015・INC-033 を一つの体系的要因として統治木に記録し、release-check の検査項目まで配線する。未実施。#3 と同じ主題の文書側である。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実物確認と AST 走査）"
+    },
+    {
+      "incident_id": "INC-033-approved-plans-have-no-canonical-pressure",
+      "index": 9,
+      "state": "pending",
+      "note": "未消化の計画を実際に消化する経路。**残高は 30 → 29 へ 1 件だけ減っている**（approved 30・reproduced 1）。正本が名指しするようになったことと、義務が果たされたことは別だ、という推奨の指摘はそのまま当たっている。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実物確認と AST 走査）"
+    },
+    {
+      "incident_id": "INC-033-approved-plans-have-no-canonical-pressure",
+      "index": 10,
+      "state": "pending",
+      "note": "独立再監査がこの積を測った経緯（定めた検査項目か裁量か）の確認。未実施。**INC-047 の分析が指した『検出が保証構造の外側の偶然に依存する』と同じ問い**である。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実物確認と AST 走査）"
+    },
+    {
+      "incident_id": "INC-033-approved-plans-have-no-canonical-pressure",
+      "index": 8,
+      "state": "pending",
+      "note": "ADR-139 に基づく独立検証（ADR-148 の読み口が実際に next_actions の出力を変えることの観測）。未実施。ledger/verify に INC-033 の記録は無い。なお本反復で **next_actions に REPRODUCE_RED が現に出ていることは確認した** が、これは実施者自身の観測であって独立検証ではない。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実物確認と AST 走査）"
+    },
+    {
+      "incident_id": "INC-033-approved-plans-have-no-canonical-pressure",
+      "index": 6,
+      "state": "owner",
+      "note": "docs-audit の走査対象に保証台帳の残高を含めるか、台帳専用の全件走査を別に置くか。**docs-audit は配布物であり、その走査対象を広げることは配布した道具の役割を変える。**評価者自身が『導入複製側の器に載せると版遅れの共通原因を継承する』と限定を付けている。",
+      "owner_decision_kind": "配布境界や保証範囲の変更",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実物確認と AST 走査）"
+    },
+    {
+      "incident_id": "INC-033-approved-plans-have-no-canonical-pressure",
+      "index": 7,
+      "state": "owner",
+      "note": "優先順の表への REPRODUCE_RED の配置の裁定。ADR-131 決定2 により所有者判断と明記されている。**表の並びは next_actions の意味そのもの**であり、変えると何が先に来るかが変わる。類型は『互換性を壊す変更』（既存の順序に依る読み手の期待が変わる）。",
+      "owner_decision_kind": "互換性を壊す変更",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実物確認と AST 走査）"
     }
   ]
 }
