@@ -2914,6 +2914,120 @@
       "owner_decision_kind": "配布境界や保証範囲の変更",
       "evaluator_owner_required": true,
       "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実物確認）"
+    },
+    {
+      "incident_id": "INC-036-ledger-integrity-gaps-the-canon-declines-to-check",
+      "index": 0,
+      "state": "landed",
+      "note": "名指しされたものの実在を直接確認した。**すべて実在する。**evidence_refs 三件（orchestrator.py・test_ledger_integrity_gaps.py・recommendation-status.json）、検算関数 9 件（_validate_coverage_merges・_validate_shipped_conditions・_validate_owner_overrides・_validate_recommendation_status・_validate_incident_evidence・_validate_ledger_kinds・_validate_ledger_readability・_validate_closure_vocabulary・_validate_assumptions）、ADR-144・ADR-139 の文書。本分析を根拠として構造を変更してよい前提は成り立つ。",
+      "evidence_ref": "assurance/harness/orchestrator.py",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実在確認と実測）"
+    },
+    {
+      "incident_id": "INC-036-ledger-integrity-gaps-the-canon-declines-to-check",
+      "index": 7,
+      "state": "landed",
+      "note": "評価者が所有者判断の印を覆した件数と理由を実測した。**80 件**が owner 以外へ置かれており（rejected 16・pending 40・landed 24）、**80 件すべてが理由（owner_override_reason）を持つ**。ADR-127 の門（覆すなら理由を書く）は現に効いている。**ただし推奨が求めるのは『所有者の定期報告に必ず含める経路』であり、それは無い** —— 現状は台帳を追跡して初めて現れる（本反復がまさにそれをやった）。経路の新設は未実施。参考: 所有者棚は 23 件（配布境界や保証範囲の変更 17・互換性を壊す変更 6）。",
+      "evidence_ref": "assurance/ledger/recommendation-status.json",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実在確認と実測）"
+    },
+    {
+      "incident_id": "INC-036-ledger-integrity-gaps-the-canon-declines-to-check",
+      "index": 13,
+      "state": "landed",
+      "note": "ADR-144 の条件の内容と検算状況を調べた。ADR-144 の決定は三項（受容・出荷・想定の観測）で、『条件(1)〜(3)』は**出荷の三条件**を指す: (1) リリース tag が存在する、(2) 修正 commit が tag の祖先である、(3) 照合の記録を ship_ref に残す。**現状の検算**（_validate_shipped_conditions）は、ship_ref の存在・fix_commit の存在・その commit が到達可能であること・**tag の祖先であること**を検める。つまり **(2) と (3) は機械が検めており、(1)『tag が存在する』は独立には検めていない**（祖先判定が失敗する形で間接的に効くだけ）。ADR-144 の本文は『機械が検めるのは記録の形までとし、三条件の実施は書き手の手順に置く』と書いており、**現状はその記述より進んでいる**（INC-036 の是正で条件(2)が機械化された）。文書と実装の食い違いなので、ADR の追記か後継が要る。",
+      "evidence_ref": "assurance/harness/orchestrator.py",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実在確認と実測）"
+    },
+    {
+      "incident_id": "INC-036-ledger-integrity-gaps-the-canon-declines-to-check",
+      "index": 1,
+      "state": "pending",
+      "note": "台帳スキーマの各列に『どの検算関数が読むか』の宣言を持たせる。未実施。**種別の水準では在る**（LEDGER_KINDS の read_by。INC-033 推奨#0 で確認）が、**列の水準には無い**。列の追加が自動的に検算の欠落として現れる形は作られていない。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実在確認と実測）"
+    },
+    {
+      "incident_id": "INC-036-ledger-integrity-gaps-the-canon-declines-to-check",
+      "index": 2,
+      "state": "pending",
+      "note": "出荷・受入に作用する ADR 条項と検算関数 id の対応表。未実施。**#13 の調査がその素材の一部を作った** —— ADR-144 の出荷三条件のうち (2)(3) は _validate_shipped_conditions が読み、(1) は独立には読まれない。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実在確認と実測）"
+    },
+    {
+      "incident_id": "INC-036-ledger-integrity-gaps-the-canon-declines-to-check",
+      "index": 3,
+      "state": "pending",
+      "note": "validate の出力を『何を検めた緑か』の範囲を伴う形へ変える。未実施。**INC-047 の分析が指した『真偽に圧縮された信号は対象集合の大きさに不変』と同じ主題**であり、INC-035 推奨#1（門の出口を三値に）とも同型。三つまとめて一つの設計になる。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実在確認と実測）"
+    },
+    {
+      "incident_id": "INC-036-ledger-integrity-gaps-the-canon-declines-to-check",
+      "index": 4,
+      "state": "pending",
+      "note": "台帳の全変換について、変換前後の判定分布が安全側にのみ動くことを性質試験として書く。未実施。**INC-046（五値が反復ごとに行き来する）が、この性質が現に成り立っていないことを示している** ——再判定は変換ではないが、分布が両方向へ動く点は同じである。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実在確認と実測）"
+    },
+    {
+      "incident_id": "INC-036-ledger-integrity-gaps-the-canon-declines-to-check",
+      "index": 5,
+      "state": "pending",
+      "note": "列挙型の値域と集計鍵の一致、参照型フィールドの実在検査を台帳全体の不変条件として置く。未実施。**参照型の実在検査は ADR-166 で事象の evidence_refs にだけ入った**（本セッションで着地）。台帳全体の不変条件へ引き上げる部分が残っている。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実在確認と実測）"
+    },
+    {
+      "incident_id": "INC-036-ledger-integrity-gaps-the-canon-declines-to-check",
+      "index": 6,
+      "state": "pending",
+      "note": "先行指標 8 件を CI の常設ジョブにし、閾値超過を merge の赤止めに接続する。未実施。**同型の推奨が INC-029#4・INC-035#3 にも在り、いずれも未実施**。『先行指標を定義したが観測していない』が事象をまたいで共通している。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実在確認と実測）"
+    },
+    {
+      "incident_id": "INC-036-ledger-integrity-gaps-the-canon-declines-to-check",
+      "index": 11,
+      "state": "pending",
+      "note": "検算範囲の暗黙の境界（台帳の形は検めるが台帳が指す外の世界は検めない）を想定として明記する。未実施。**ただし境界は本セッションで一度動いた** —— ADR-166 が『書いた参照は実在すること』を要求するようにしたので、台帳が指す外の世界の一部は検められるようになった。想定の記述はその後を追っていない。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実在確認と実測）"
+    },
+    {
+      "incident_id": "INC-036-ledger-integrity-gaps-the-canon-declines-to-check",
+      "index": 12,
+      "state": "pending",
+      "note": "独立再監査 Phase D の手順のうち常設検査へ移せる部分の特定と移設。未実施。**INC-047 推奨#2（二通りで数える行為を偶然から常設の統制へ移す）と同じ主題**である。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実在確認と実測）"
+    },
+    {
+      "incident_id": "INC-036-ledger-integrity-gaps-the-canon-declines-to-check",
+      "index": 14,
+      "state": "pending",
+      "note": "ADR-139 の独立検証。未実施（ledger/verify に INC-036 の記録は無い）。fixed:false は維持されている。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実在確認と実測）"
+    },
+    {
+      "incident_id": "INC-036-ledger-integrity-gaps-the-canon-declines-to-check",
+      "index": 8,
+      "state": "owner",
+      "note": "祖父条項 8 件を検算対象へ戻すか、外したまま保証範囲の縮小として明示し続けるか。**実測: SHIPPED_GRANDFATHERED は 8 件**（INC-010・INC-015・INC-016・INC-020 ほか）。戻すと既存の緑が赤になりうるので『互換性を壊す変更』、外したままにするなら『保証範囲の縮小の明示』であり、いずれにせよ六類型に触れる。",
+      "owner_decision_kind": "配布境界や保証範囲の変更",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実在確認と実測）"
+    },
+    {
+      "incident_id": "INC-036-ledger-integrity-gaps-the-canon-declines-to-check",
+      "index": 9,
+      "state": "owner",
+      "note": "評価者が所有者判断の印を覆せる範囲の決定。**本反復の実測が材料になる** —— 現に 80 件が覆されており、全件が理由を持つ。理由の当否を誰が測るかは未定である。評価者は同系 model であり共通原因故障が残る立場にある、という評価者自身の指摘も含む。",
+      "owner_decision_kind": "配布境界や保証範囲の変更",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実在確認と実測）"
+    },
+    {
+      "incident_id": "INC-036-ledger-integrity-gaps-the-canon-declines-to-check",
+      "index": 10,
+      "state": "owner",
+      "note": "台帳の主張を外の世界と照合する責任を CI_RELEASE_CHECK と ASSURANCE_LANE のどちらが持つか。**双方が相手側と読める境界の解消**であり、統制構造の責任割当そのもの。INC-032#4（安全制約の強制責任の割当）と同じ主題である。",
+      "owner_decision_kind": "配布境界や保証範囲の変更",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実在確認と実測）"
     }
   ]
 }
