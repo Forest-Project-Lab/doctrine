@@ -17,23 +17,25 @@
       "category": "安全性と危険要因",
       "source_lines": "L6-L6",
       "disposition": "対応計画あり",
-      "reason": "保証が寄りかかる前提を「想定」として名指しし失効の先行指標を併記する決定（ADR-126）と、想定の観測を機械が追記するというクローズ語彙の決定（ADR-144）が現に在る。しかし「〜は正しいと仮定する」で止まった記述を咎める検査は監査40検査にもリンタ24コードにも無く、決定が働いている証拠を索引で指せない。",
+      "reason": "保証が寄りかかる前提を「想定」として名指し、失効の先行指標を併記する決定(ADR-126)と、想定の観測を機械が追記するというクローズ語彙の決定(ADR-144)が現に在る。ただし索引の監査40検査・リンタ24コードのどれにも、楽観仮定を置いた記述や解析の欠けを挙げる検査は無く、決定が働いている証拠を指せない。",
       "evidence": [
         "ADR-126",
-        "ADR-144"
+        "ADR-144",
+        "ADR-081",
+        "NONGOAL-001"
       ],
-      "recheck_trigger": "想定の名指しや失効の先行指標を検める監査の検査名が新設されたとき。",
-      "gap": "楽観的前提を含む記述を挙げる検査（監査の検査名またはリンタの検査コード）が索引に無い。決めたが、それを働かせる機構が見えない。",
+      "recheck_trigger": "監査またはリンタに、想定・仮定の明示や未解析の前提を挙げる検査が加わったとき。",
+      "gap": "想定の明示を強い、無根拠の楽観仮定（「〜は起こらない」だけの記述）を挙げる機構が索引に無い。決めたが働かせる機構が指せない。",
       "confidence": "medium",
-      "assigned_at": "2026-08-15T14:06:31Z",
+      "assigned_at": "2026-08-15T18:13:37Z",
       "assigned_by": {
         "model": "claude-opus-5",
         "effort": "high",
-        "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
-        "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+        "prompt_sha256": "87fe69ac4511eee5d24ddbc6da34b90bb9fcbd7310fb5c25ec0d64563d400812",
+        "index_sha256": "1c2ac94f1d99b52b148024cd5ba4b4195865add7ad498bbfe6fed9093fed01f9",
         "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
         "category_sha256": {
-          "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+          "documents": "06976e642bee0dd769896682acca347253188c23880ff388a0ad67b12a46e08b",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
           "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
@@ -42,7 +44,7 @@
           "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
         },
         "category_counts": {
-          "documents": 306,
+          "documents": 307,
           "audit_checks": 40,
           "linter_codes": 24,
           "scripts": 31,
@@ -50,7 +52,7 @@
           "hooks": 7,
           "skills": 8
         },
-        "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+        "git_sha": "fc3b9709ead18a215bf49ef342c2d10174000973"
       },
       "reassessments": [
         {
@@ -307,6 +309,43 @@
               "skills": 8
             },
             "git_sha": "428469efbd0ed480d395be30b56cd8146e9fe5c3"
+          }
+        },
+        {
+          "disposition": "対応計画あり",
+          "reason": "保証が寄りかかる前提を「想定」として名指しし失効の先行指標を併記する決定（ADR-126）と、想定の観測を機械が追記するというクローズ語彙の決定（ADR-144）が現に在る。しかし「〜は正しいと仮定する」で止まった記述を咎める検査は監査40検査にもリンタ24コードにも無く、決定が働いている証拠を索引で指せない。",
+          "evidence": [
+            "ADR-126",
+            "ADR-144"
+          ],
+          "gap": "楽観的前提を含む記述を挙げる検査（監査の検査名またはリンタの検査コード）が索引に無い。決めたが、それを働かせる機構が見えない。",
+          "confidence": "medium",
+          "assigned_at": "2026-08-15T14:06:31Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
+            "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+            "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
+            "category_sha256": {
+              "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+              "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+              "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
+              "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
+              "test_files": "4ce7bbd9022f4aacb440cfccdb01bb9e15fead3fcfe0f68e23785ceb35c90aa3",
+              "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+              "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
+            },
+            "category_counts": {
+              "documents": 306,
+              "audit_checks": 40,
+              "linter_codes": 24,
+              "scripts": 31,
+              "test_files": 35,
+              "hooks": 7,
+              "skills": 8
+            },
+            "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
           }
         }
       ]
@@ -697,26 +736,26 @@
       "category": "文書化",
       "source_lines": "L18-L18",
       "disposition": "対応計画あり",
-      "reason": "雛形が定める節の存在は MISSING_SECTION・EMPTY_SECTION が機械で守っており、雛形と実態の整合も ADR-090 が定める。だが「制約文が条件と動作を特定しているか」の判定は ADR-020 により監査でなく doc-review（技能＝人と判断の層）に委ねられ、機械が守る対象になっていない。",
+      "reason": "雛形が定める節の有無と空節は機械が守っている(ADR-090・MISSING_SECTION・EMPTY_SECTION、雛形の正本は SPEC-017)。しかし守られているのは器の形であって、制約文が検査可能な述語かどうかの判定は監査でなく doc-review が担うと決めてあり(ADR-020)、機械の検めは索引に無い。",
       "evidence": [
-        "ADR-020",
         "ADR-090",
-        "SPEC-017",
         "MISSING_SECTION",
-        "EMPTY_SECTION"
+        "EMPTY_SECTION",
+        "SPEC-017",
+        "ADR-020"
       ],
-      "recheck_trigger": "制約文の述語性をリンタか監査が判定する検査コード・検査名が加わったとき。",
-      "gap": "標語的な一文の制約を弾く機械の検査が無い。節の有無は機械が見るが、節の中身が検査可能な述語かは見ていない。",
+      "recheck_trigger": "制約文の述語化・条件記載を機械が咎める検査（リンタコードまたは監査検査）が現れたとき。",
+      "gap": "制約文が「どの条件で何が成立していなければならないか」を特定しているかを機械が検める検査が無く、判断の層に委ねられている。",
       "confidence": "medium",
-      "assigned_at": "2026-08-15T14:06:31Z",
+      "assigned_at": "2026-08-15T18:13:37Z",
       "assigned_by": {
         "model": "claude-opus-5",
         "effort": "high",
-        "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
-        "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+        "prompt_sha256": "87fe69ac4511eee5d24ddbc6da34b90bb9fcbd7310fb5c25ec0d64563d400812",
+        "index_sha256": "1c2ac94f1d99b52b148024cd5ba4b4195865add7ad498bbfe6fed9093fed01f9",
         "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
         "category_sha256": {
-          "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+          "documents": "06976e642bee0dd769896682acca347253188c23880ff388a0ad67b12a46e08b",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
           "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
@@ -725,7 +764,7 @@
           "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
         },
         "category_counts": {
-          "documents": 306,
+          "documents": 307,
           "audit_checks": 40,
           "linter_codes": 24,
           "scripts": 31,
@@ -733,7 +772,7 @@
           "hooks": 7,
           "skills": 8
         },
-        "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+        "git_sha": "fc3b9709ead18a215bf49ef342c2d10174000973"
       },
       "reassessments": [
         {
@@ -1001,6 +1040,46 @@
             },
             "git_sha": "428469efbd0ed480d395be30b56cd8146e9fe5c3"
           }
+        },
+        {
+          "disposition": "対応計画あり",
+          "reason": "雛形が定める節の存在は MISSING_SECTION・EMPTY_SECTION が機械で守っており、雛形と実態の整合も ADR-090 が定める。だが「制約文が条件と動作を特定しているか」の判定は ADR-020 により監査でなく doc-review（技能＝人と判断の層）に委ねられ、機械が守る対象になっていない。",
+          "evidence": [
+            "ADR-020",
+            "ADR-090",
+            "SPEC-017",
+            "MISSING_SECTION",
+            "EMPTY_SECTION"
+          ],
+          "gap": "標語的な一文の制約を弾く機械の検査が無い。節の有無は機械が見るが、節の中身が検査可能な述語かは見ていない。",
+          "confidence": "medium",
+          "assigned_at": "2026-08-15T14:06:31Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
+            "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+            "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
+            "category_sha256": {
+              "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+              "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+              "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
+              "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
+              "test_files": "4ce7bbd9022f4aacb440cfccdb01bb9e15fead3fcfe0f68e23785ceb35c90aa3",
+              "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+              "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
+            },
+            "category_counts": {
+              "documents": 306,
+              "audit_checks": 40,
+              "linter_codes": 24,
+              "scripts": 31,
+              "test_files": 35,
+              "hooks": 7,
+              "skills": 8
+            },
+            "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+          }
         }
       ]
     },
@@ -1113,25 +1192,24 @@
       "category": "試験設計",
       "source_lines": "L38-L38",
       "disposition": "対応計画あり",
-      "reason": "要求・仕様・実装・試験を型で分け、置き場所を機械が守る枠（DATA-001／SPEC-001／TYPE_LOCATION_MISMATCH）が在り、層分離という趣旨は体系に取り込まれている。しかし要求・制約の文言に道具名やスクリプト名が混ざっていないかを検める機構は索引に無い。",
+      "reason": "統治の対象を知識と決定の層に限る決定(ADR-015)と、実装手段への依存を EXT 型のアンカーとして外へ出す決定(ADR-026・EXT-001)が在り、層分離の方針は現に在る。だが要求・制約の本文に特定のツール名やスクリプト名が混ざっていないことを検める検査は索引のどこにも無い。",
       "evidence": [
-        "DATA-001",
-        "SPEC-001",
         "ADR-015",
-        "TYPE_LOCATION_MISMATCH"
+        "ADR-026",
+        "EXT-001"
       ],
-      "recheck_trigger": "REQ 層の本文に固有の道具名が現れることを咎める検査が新設されたとき。",
-      "gap": "上位層の文言が特定の実装手段に直結していないことを検める検査が無い（分離は置き場所についてのみ機械が守っている）。",
-      "confidence": "low",
-      "assigned_at": "2026-08-15T14:06:31Z",
+      "recheck_trigger": "要求・制約の本文に対する実装名混入の検査、または用語チェッカーにその軸が加わったとき。",
+      "gap": "本文の実装名の混入（代替実装に置き換えると無効になる制約）を挙げる機構が索引に無い。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-15T18:13:37Z",
       "assigned_by": {
         "model": "claude-opus-5",
         "effort": "high",
-        "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
-        "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+        "prompt_sha256": "87fe69ac4511eee5d24ddbc6da34b90bb9fcbd7310fb5c25ec0d64563d400812",
+        "index_sha256": "1c2ac94f1d99b52b148024cd5ba4b4195865add7ad498bbfe6fed9093fed01f9",
         "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
         "category_sha256": {
-          "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+          "documents": "06976e642bee0dd769896682acca347253188c23880ff388a0ad67b12a46e08b",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
           "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
@@ -1140,7 +1218,7 @@
           "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
         },
         "category_counts": {
-          "documents": 306,
+          "documents": 307,
           "audit_checks": 40,
           "linter_codes": 24,
           "scripts": 31,
@@ -1148,7 +1226,7 @@
           "hooks": 7,
           "skills": 8
         },
-        "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+        "git_sha": "fc3b9709ead18a215bf49ef342c2d10174000973"
       },
       "reassessments": [
         {
@@ -1413,6 +1491,45 @@
               "skills": 8
             },
             "git_sha": "428469efbd0ed480d395be30b56cd8146e9fe5c3"
+          }
+        },
+        {
+          "disposition": "対応計画あり",
+          "reason": "要求・仕様・実装・試験を型で分け、置き場所を機械が守る枠（DATA-001／SPEC-001／TYPE_LOCATION_MISMATCH）が在り、層分離という趣旨は体系に取り込まれている。しかし要求・制約の文言に道具名やスクリプト名が混ざっていないかを検める機構は索引に無い。",
+          "evidence": [
+            "DATA-001",
+            "SPEC-001",
+            "ADR-015",
+            "TYPE_LOCATION_MISMATCH"
+          ],
+          "gap": "上位層の文言が特定の実装手段に直結していないことを検める検査が無い（分離は置き場所についてのみ機械が守っている）。",
+          "confidence": "low",
+          "assigned_at": "2026-08-15T14:06:31Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
+            "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+            "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
+            "category_sha256": {
+              "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+              "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+              "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
+              "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
+              "test_files": "4ce7bbd9022f4aacb440cfccdb01bb9e15fead3fcfe0f68e23785ceb35c90aa3",
+              "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+              "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
+            },
+            "category_counts": {
+              "documents": 306,
+              "audit_checks": 40,
+              "linter_codes": 24,
+              "scripts": 31,
+              "test_files": 35,
+              "hooks": 7,
+              "skills": 8
+            },
+            "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
           }
         }
       ]
@@ -2756,24 +2873,25 @@
       "category": "検証計画",
       "source_lines": "L233-L233",
       "disposition": "対応計画あり",
-      "reason": "統治の対象を知識と決定の層に限る決定（ADR-015）と型ごとの置き場所の強制（TYPE_LOCATION_MISMATCH）が抽象度の分離を支えるが、上位層の文書に実装詳細が混入したことを「粒度違反」として挙げる検査は監査にもリンタにも無い。",
+      "reason": "粒度の層分けは決定として在り(製品の粒度の要求を _system の棚へ置く ADR-091、統治の層を限る ADR-015)、型と置き場所の一致は機械が守っている(TYPE_LOCATION_MISMATCH)。しかしそれは置き場所の一致であって、上位層の本文へ実装詳細が混入したことを咎める働きではない。",
       "evidence": [
+        "ADR-091",
         "ADR-015",
-        "ADR-051",
-        "TYPE_LOCATION_MISMATCH"
+        "TYPE_LOCATION_MISMATCH",
+        "ADR-161"
       ],
-      "recheck_trigger": "上位層文書の実装詳細混入を挙げる検査が監査またはリンタに加わったとき。",
-      "gap": "粒度違反（上位レイヤへの実装詳細の混入）を検出する検査名・検査コードが索引に無い。",
-      "confidence": "low",
-      "assigned_at": "2026-08-15T14:06:31Z",
+      "recheck_trigger": "上位層文書への実装詳細混入を咎めるリンタコードまたは監査検査が加わったとき。",
+      "gap": "上位レイヤの文書に具体の機材名・API 名などが書かれた「粒度違反」を挙げる検査が索引に無い。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-15T18:13:37Z",
       "assigned_by": {
         "model": "claude-opus-5",
         "effort": "high",
-        "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
-        "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+        "prompt_sha256": "87fe69ac4511eee5d24ddbc6da34b90bb9fcbd7310fb5c25ec0d64563d400812",
+        "index_sha256": "1c2ac94f1d99b52b148024cd5ba4b4195865add7ad498bbfe6fed9093fed01f9",
         "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
         "category_sha256": {
-          "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+          "documents": "06976e642bee0dd769896682acca347253188c23880ff388a0ad67b12a46e08b",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
           "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
@@ -2782,7 +2900,7 @@
           "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
         },
         "category_counts": {
-          "documents": 306,
+          "documents": 307,
           "audit_checks": 40,
           "linter_codes": 24,
           "scripts": 31,
@@ -2790,7 +2908,7 @@
           "hooks": 7,
           "skills": 8
         },
-        "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+        "git_sha": "fc3b9709ead18a215bf49ef342c2d10174000973"
       },
       "reassessments": [
         {
@@ -3052,6 +3170,44 @@
               "skills": 8
             },
             "git_sha": "428469efbd0ed480d395be30b56cd8146e9fe5c3"
+          }
+        },
+        {
+          "disposition": "対応計画あり",
+          "reason": "統治の対象を知識と決定の層に限る決定（ADR-015）と型ごとの置き場所の強制（TYPE_LOCATION_MISMATCH）が抽象度の分離を支えるが、上位層の文書に実装詳細が混入したことを「粒度違反」として挙げる検査は監査にもリンタにも無い。",
+          "evidence": [
+            "ADR-015",
+            "ADR-051",
+            "TYPE_LOCATION_MISMATCH"
+          ],
+          "gap": "粒度違反（上位レイヤへの実装詳細の混入）を検出する検査名・検査コードが索引に無い。",
+          "confidence": "low",
+          "assigned_at": "2026-08-15T14:06:31Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
+            "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+            "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
+            "category_sha256": {
+              "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+              "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+              "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
+              "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
+              "test_files": "4ce7bbd9022f4aacb440cfccdb01bb9e15fead3fcfe0f68e23785ceb35c90aa3",
+              "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+              "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
+            },
+            "category_counts": {
+              "documents": 306,
+              "audit_checks": 40,
+              "linter_codes": 24,
+              "scripts": 31,
+              "test_files": 35,
+              "hooks": 7,
+              "skills": 8
+            },
+            "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
           }
         }
       ]
@@ -3854,27 +4010,27 @@
       "title": "UCA はコンテキストを必須要素とする",
       "category": "文書化",
       "source_lines": "L389-L389",
-      "disposition": "対応計画あり",
-      "reason": "雛形が定める節を機械が検める枠（ADR-090・SPEC-017・MISSING_SECTION・EMPTY_SECTION）と、雛形の指示文が残った記述を咎める仕組み（template_placeholder・PLACEHOLDER_VALUE）は在る。だが「いつ違反になるか」という成立条件を必須節として要求している正本は索引に現れず、結果のみの記述を弾く検査も無い。",
+      "disposition": "UNKNOWN",
+      "reason": "雛形が定める節を検める機構は在る(ADR-090・MISSING_SECTION・EMPTY_SECTION、雛形の正本は SPEC-017)が、索引は必須節の名を渡していないため、「適用条件（いつ違反になるか）」に当たる節が必須化されているかを判定できない。結果のみの記述を弾いているかも索引からは読み取れない。",
       "evidence": [
         "ADR-090",
-        "SPEC-017",
         "MISSING_SECTION",
         "EMPTY_SECTION",
-        "template_placeholder"
+        "SPEC-017",
+        "ADR-159"
       ],
-      "recheck_trigger": "雛形に成立条件の節が定義され、その欠落を MISSING_SECTION 系が拾うようになったとき。",
-      "gap": "成立条件（適用コンテキスト）を必須要素として要求する節の定義と、それを検める検査の両方が索引に無い。",
+      "recheck_trigger": "必須節の一覧（scaffold の list-sections の返す値、ADR-159）が索引に載り、条件欄の必須性が判るようになったとき。",
+      "gap": null,
       "confidence": "medium",
-      "assigned_at": "2026-08-15T14:06:31Z",
+      "assigned_at": "2026-08-15T18:13:37Z",
       "assigned_by": {
         "model": "claude-opus-5",
         "effort": "high",
-        "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
-        "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+        "prompt_sha256": "87fe69ac4511eee5d24ddbc6da34b90bb9fcbd7310fb5c25ec0d64563d400812",
+        "index_sha256": "1c2ac94f1d99b52b148024cd5ba4b4195865add7ad498bbfe6fed9093fed01f9",
         "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
         "category_sha256": {
-          "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+          "documents": "06976e642bee0dd769896682acca347253188c23880ff388a0ad67b12a46e08b",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
           "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
@@ -3883,7 +4039,7 @@
           "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
         },
         "category_counts": {
-          "documents": 306,
+          "documents": 307,
           "audit_checks": 40,
           "linter_codes": 24,
           "scripts": 31,
@@ -3891,7 +4047,7 @@
           "hooks": 7,
           "skills": 8
         },
-        "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+        "git_sha": "fc3b9709ead18a215bf49ef342c2d10174000973"
       },
       "reassessments": [
         {
@@ -4154,6 +4310,46 @@
             },
             "git_sha": "428469efbd0ed480d395be30b56cd8146e9fe5c3"
           }
+        },
+        {
+          "disposition": "対応計画あり",
+          "reason": "雛形が定める節を機械が検める枠（ADR-090・SPEC-017・MISSING_SECTION・EMPTY_SECTION）と、雛形の指示文が残った記述を咎める仕組み（template_placeholder・PLACEHOLDER_VALUE）は在る。だが「いつ違反になるか」という成立条件を必須節として要求している正本は索引に現れず、結果のみの記述を弾く検査も無い。",
+          "evidence": [
+            "ADR-090",
+            "SPEC-017",
+            "MISSING_SECTION",
+            "EMPTY_SECTION",
+            "template_placeholder"
+          ],
+          "gap": "成立条件（適用コンテキスト）を必須要素として要求する節の定義と、それを検める検査の両方が索引に無い。",
+          "confidence": "medium",
+          "assigned_at": "2026-08-15T14:06:31Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
+            "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+            "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
+            "category_sha256": {
+              "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+              "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+              "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
+              "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
+              "test_files": "4ce7bbd9022f4aacb440cfccdb01bb9e15fead3fcfe0f68e23785ceb35c90aa3",
+              "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+              "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
+            },
+            "category_counts": {
+              "documents": 306,
+              "audit_checks": 40,
+              "linter_codes": 24,
+              "scripts": 31,
+              "test_files": 35,
+              "hooks": 7,
+              "skills": 8
+            },
+            "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+          }
         }
       ]
     },
@@ -4381,24 +4577,25 @@
       "category": "試験設計",
       "source_lines": "L419-L419",
       "disposition": "UNKNOWN",
-      "reason": "体系は閾値や上限を持つ規則（二つの上限・期限・古びの閾値）を確かに持つが、それらに対して過剰・不足・方向の三観点の試験が在るかは索引から判定できない。索引は試験ファイルと件数しか渡さず、個々の試験の名は渡していないため、境界試験の有無を指せない。三観点の生成を要求する決定・仕様・検査も索引に見当たらない。",
+      "reason": "体系には数値パラメータが現に在る（注入とパックの二上限 ADR-009、既定点検周期 ADR-025、トークン見積り ADR-105）。だが過剰・不足・方向の三観点を必ず展開させる規則や検査が在るかは索引から判らず、索引は試験ファイルと件数だけを渡し個々の試験名を渡していないため、境界の試験の有無も確かめられない。",
       "evidence": [
         "ADR-009",
-        "ADR-134",
+        "ADR-025",
+        "ADR-105",
         "PROC-001"
       ],
-      "recheck_trigger": "境界値の三観点を要求する規定が明文化されるか、索引が個々の試験名を渡すようになったとき。",
-      "gap": "閾値を持つ規則に境界の三観点を要求する規定と、その充足を示せる証拠ポインタの双方が索引から判らない。",
+      "recheck_trigger": "開発規範(PROC-001)に境界値の三観点の義務が加わるか、対応する監査・リンタの検査が現れたとき。",
+      "gap": null,
       "confidence": "medium",
-      "assigned_at": "2026-08-15T14:06:31Z",
+      "assigned_at": "2026-08-15T18:13:37Z",
       "assigned_by": {
         "model": "claude-opus-5",
         "effort": "high",
-        "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
-        "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+        "prompt_sha256": "87fe69ac4511eee5d24ddbc6da34b90bb9fcbd7310fb5c25ec0d64563d400812",
+        "index_sha256": "1c2ac94f1d99b52b148024cd5ba4b4195865add7ad498bbfe6fed9093fed01f9",
         "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
         "category_sha256": {
-          "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+          "documents": "06976e642bee0dd769896682acca347253188c23880ff388a0ad67b12a46e08b",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
           "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
@@ -4407,7 +4604,7 @@
           "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
         },
         "category_counts": {
-          "documents": 306,
+          "documents": 307,
           "audit_checks": 40,
           "linter_codes": 24,
           "scripts": 31,
@@ -4415,7 +4612,7 @@
           "hooks": 7,
           "skills": 8
         },
-        "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+        "git_sha": "fc3b9709ead18a215bf49ef342c2d10174000973"
       },
       "reassessments": [
         {
@@ -4717,6 +4914,44 @@
             },
             "git_sha": "428469efbd0ed480d395be30b56cd8146e9fe5c3"
           }
+        },
+        {
+          "disposition": "UNKNOWN",
+          "reason": "体系は閾値や上限を持つ規則（二つの上限・期限・古びの閾値）を確かに持つが、それらに対して過剰・不足・方向の三観点の試験が在るかは索引から判定できない。索引は試験ファイルと件数しか渡さず、個々の試験の名は渡していないため、境界試験の有無を指せない。三観点の生成を要求する決定・仕様・検査も索引に見当たらない。",
+          "evidence": [
+            "ADR-009",
+            "ADR-134",
+            "PROC-001"
+          ],
+          "gap": "閾値を持つ規則に境界の三観点を要求する規定と、その充足を示せる証拠ポインタの双方が索引から判らない。",
+          "confidence": "medium",
+          "assigned_at": "2026-08-15T14:06:31Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
+            "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+            "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
+            "category_sha256": {
+              "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+              "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+              "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
+              "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
+              "test_files": "4ce7bbd9022f4aacb440cfccdb01bb9e15fead3fcfe0f68e23785ceb35c90aa3",
+              "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+              "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
+            },
+            "category_counts": {
+              "documents": 306,
+              "audit_checks": 40,
+              "linter_codes": 24,
+              "scripts": 31,
+              "test_files": 35,
+              "hooks": 7,
+              "skills": 8
+            },
+            "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+          }
         }
       ]
     },
@@ -5011,25 +5246,26 @@
       "category": "組織と力量",
       "source_lines": "L411-L411",
       "disposition": "対応計画あり",
-      "reason": "手順を運ぶ型 PROC の新設（ADR-013）と開発規範 PROC-001（機械の検算・人の査読の分担）により、人手の工程も統治木の中の型付き文書として同じ登録簿・リンタ・監査に掛かる。所有者判断も六類型の名指しを要する（ADR-127）。ただし人手工程が統治木に現れていないこと自体を挙げる機構は無く、原則が求める「同一手順で全体分析へ組み込む」の網羅側が機械で守られていない。",
+      "reason": "人手の工程は正本に載っている（機械の検算と人の査読の分担 PROC-001、所有者判断の六類型 ADR-127、検出は機械・送信は人 ADR-074）し、人へ促す発火も在る(review-nudge.py・capture-nudge.py)。だが人の判断そのものを機械の経路と同じ手順で逸脱解析の対象に載せる仕組みは索引に無い。",
       "evidence": [
-        "ADR-013",
         "PROC-001",
         "ADR-127",
-        "plugin/scripts/_registry.py"
+        "ADR-074",
+        "plugin/scripts/review-nudge.py",
+        "plugin/scripts/capture-nudge.py"
       ],
-      "recheck_trigger": "人手工程の欠落や未登録を挙げる監査の検査名が加わったとき。",
-      "gap": "人手判断の工程が統治木から欠けていることを検出する検査が無い（監査の孤児系は文書間の辺を見るが工程の欠落は見ない）。",
+      "recheck_trigger": "人手工程を対象にした逸脱の識別・欠落検出の検査が監査に加わったとき。",
+      "gap": "人手工程（査読の見落とし・裁定の誤り）を自動処理と同一の逸脱識別手順で洗い、欠落を挙げる機構が無い。",
       "confidence": "medium",
-      "assigned_at": "2026-08-15T14:06:31Z",
+      "assigned_at": "2026-08-15T18:13:37Z",
       "assigned_by": {
         "model": "claude-opus-5",
         "effort": "high",
-        "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
-        "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+        "prompt_sha256": "87fe69ac4511eee5d24ddbc6da34b90bb9fcbd7310fb5c25ec0d64563d400812",
+        "index_sha256": "1c2ac94f1d99b52b148024cd5ba4b4195865add7ad498bbfe6fed9093fed01f9",
         "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
         "category_sha256": {
-          "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+          "documents": "06976e642bee0dd769896682acca347253188c23880ff388a0ad67b12a46e08b",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
           "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
@@ -5038,7 +5274,7 @@
           "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
         },
         "category_counts": {
-          "documents": 306,
+          "documents": 307,
           "audit_checks": 40,
           "linter_codes": 24,
           "scripts": 31,
@@ -5046,7 +5282,7 @@
           "hooks": 7,
           "skills": 8
         },
-        "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+        "git_sha": "fc3b9709ead18a215bf49ef342c2d10174000973"
       },
       "reassessments": [
         {
@@ -5313,6 +5549,45 @@
             },
             "git_sha": "428469efbd0ed480d395be30b56cd8146e9fe5c3"
           }
+        },
+        {
+          "disposition": "対応計画あり",
+          "reason": "手順を運ぶ型 PROC の新設（ADR-013）と開発規範 PROC-001（機械の検算・人の査読の分担）により、人手の工程も統治木の中の型付き文書として同じ登録簿・リンタ・監査に掛かる。所有者判断も六類型の名指しを要する（ADR-127）。ただし人手工程が統治木に現れていないこと自体を挙げる機構は無く、原則が求める「同一手順で全体分析へ組み込む」の網羅側が機械で守られていない。",
+          "evidence": [
+            "ADR-013",
+            "PROC-001",
+            "ADR-127",
+            "plugin/scripts/_registry.py"
+          ],
+          "gap": "人手判断の工程が統治木から欠けていることを検出する検査が無い（監査の孤児系は文書間の辺を見るが工程の欠落は見ない）。",
+          "confidence": "medium",
+          "assigned_at": "2026-08-15T14:06:31Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
+            "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+            "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
+            "category_sha256": {
+              "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+              "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+              "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
+              "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
+              "test_files": "4ce7bbd9022f4aacb440cfccdb01bb9e15fead3fcfe0f68e23785ceb35c90aa3",
+              "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+              "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
+            },
+            "category_counts": {
+              "documents": 306,
+              "audit_checks": 40,
+              "linter_codes": 24,
+              "scripts": 31,
+              "test_files": 35,
+              "hooks": 7,
+              "skills": 8
+            },
+            "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+          }
         }
       ]
     },
@@ -5322,25 +5597,26 @@
       "category": "検証計画",
       "source_lines": "L471-L471",
       "disposition": "対応計画あり",
-      "reason": "故障注入の記録に findings・residual_risks・故障族を常に持たせる決定（ADR-142）と、失敗仮説を独立に創出する口（ADR-140）が在り、実行・反映側の失敗も guard_liveness_gap や発火の印の食い違い（ADR-062）が個別に検出する。しかし分析が二型（判断の誤りと実行・反映の失敗）の双方を持つことを要求し、片側だけの分析を挙げる機構は索引に無い。",
+      "reason": "実行・反映の失敗を判断の誤りと分ける機構は現に在る（不実行と書き込み失敗を区別する ADR-119、発火の印の対の食い違い ADR-062、guard_liveness_gap、走らなかったことが消えない試験 test_sessionend_budget.py）。だがこれは検出器の側であり、分析成果物が二型を必ず含むことを求め欠落を挙げる機構は索引に無い。",
       "evidence": [
-        "ADR-142",
-        "ADR-140",
+        "ADR-119",
         "ADR-062",
-        "guard_liveness_gap"
+        "guard_liveness_gap",
+        "plugin/tests/test_sessionend_budget.py",
+        "ADR-142"
       ],
-      "recheck_trigger": "シナリオ台帳に二型の区別欄が入り、その欠落を正本の検査が咎めるようになったとき。",
-      "gap": "損失シナリオが二型の双方を含むことを検める検査・門が無い（個別の検出は在るが、網羅の要求が機械化されていない）。",
+      "recheck_trigger": "事故分析・故障注入の台帳に二型の必須欄と、その欠落を挙げる検査が加わったとき。",
+      "gap": "損失シナリオの様式に二型（判断の誤り／実行・反映の失敗）を必須化し、片側だけの分析を挙げる機構が無い。",
       "confidence": "medium",
-      "assigned_at": "2026-08-15T14:06:31Z",
+      "assigned_at": "2026-08-15T18:13:37Z",
       "assigned_by": {
         "model": "claude-opus-5",
         "effort": "high",
-        "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
-        "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+        "prompt_sha256": "87fe69ac4511eee5d24ddbc6da34b90bb9fcbd7310fb5c25ec0d64563d400812",
+        "index_sha256": "1c2ac94f1d99b52b148024cd5ba4b4195865add7ad498bbfe6fed9093fed01f9",
         "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
         "category_sha256": {
-          "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+          "documents": "06976e642bee0dd769896682acca347253188c23880ff388a0ad67b12a46e08b",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
           "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
@@ -5349,7 +5625,7 @@
           "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
         },
         "category_counts": {
-          "documents": 306,
+          "documents": 307,
           "audit_checks": 40,
           "linter_codes": 24,
           "scripts": 31,
@@ -5357,7 +5633,7 @@
           "hooks": 7,
           "skills": 8
         },
-        "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+        "git_sha": "fc3b9709ead18a215bf49ef342c2d10174000973"
       },
       "reassessments": [
         {
@@ -5621,6 +5897,45 @@
             },
             "git_sha": "428469efbd0ed480d395be30b56cd8146e9fe5c3"
           }
+        },
+        {
+          "disposition": "対応計画あり",
+          "reason": "故障注入の記録に findings・residual_risks・故障族を常に持たせる決定（ADR-142）と、失敗仮説を独立に創出する口（ADR-140）が在り、実行・反映側の失敗も guard_liveness_gap や発火の印の食い違い（ADR-062）が個別に検出する。しかし分析が二型（判断の誤りと実行・反映の失敗）の双方を持つことを要求し、片側だけの分析を挙げる機構は索引に無い。",
+          "evidence": [
+            "ADR-142",
+            "ADR-140",
+            "ADR-062",
+            "guard_liveness_gap"
+          ],
+          "gap": "損失シナリオが二型の双方を含むことを検める検査・門が無い（個別の検出は在るが、網羅の要求が機械化されていない）。",
+          "confidence": "medium",
+          "assigned_at": "2026-08-15T14:06:31Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
+            "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+            "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
+            "category_sha256": {
+              "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+              "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+              "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
+              "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
+              "test_files": "4ce7bbd9022f4aacb440cfccdb01bb9e15fead3fcfe0f68e23785ceb35c90aa3",
+              "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+              "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
+            },
+            "category_counts": {
+              "documents": 306,
+              "audit_checks": 40,
+              "linter_codes": 24,
+              "scripts": 31,
+              "test_files": 35,
+              "hooks": 7,
+              "skills": 8
+            },
+            "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+          }
         }
       ]
     },
@@ -5630,25 +5945,25 @@
       "category": "試験設計",
       "source_lines": "L484-L484",
       "disposition": "対応計画あり",
-      "reason": "被覆マトリクス（統治要求×発火経路×証跡、SPEC-025）と、各行が実効を示す試験を名指し示せないなら未証と明示する決定（ADR-084）、発火点が走らせ手を持つか未実装と明記するかの二択（ADR-128）が、観測手段・適用手段を明示させる設計として現に在る。だがマトリクスの各行が観測手段・適用手段を名指していることを機械が検める検査は索引に無く、TEST-025 は計画文書であって試験ファイルを索引から名指せない。",
+      "reason": "観測手段と適用手段を先に名指す形は決定と仕様として在る（統治要求×発火経路×証跡の被覆マトリクス SPEC-025、各行が実効を示す試験を名指すか未証と明示 ADR-084、発火点は走らせ手を持つか未実装と明記 ADR-128、受入計画 TEST-025）。だがそれを機械が検める検査名・試験ファイルを索引から特定できない。",
       "evidence": [
         "SPEC-025",
         "ADR-084",
         "ADR-128",
         "TEST-025"
       ],
-      "recheck_trigger": "被覆マトリクスの行の欠落を咎める検査が実装され、対応する試験ファイルが索引に現れたとき。",
-      "gap": "被覆の行に発火経路が入っていることを検める機械の検査が無い。原因分析の前段としての精緻化を強いる機構も無い。",
+      "recheck_trigger": "被覆マトリクスの行の充足を検める検査または対応する試験ファイルが索引に現れたとき。",
+      "gap": "被覆マトリクスの各行が発火経路と証跡を実際に名指していることを機械が検める検査が索引に無い（TEST-025 は計画文書であって機械の検めではない）。",
       "confidence": "medium",
-      "assigned_at": "2026-08-15T14:06:31Z",
+      "assigned_at": "2026-08-15T18:13:37Z",
       "assigned_by": {
         "model": "claude-opus-5",
         "effort": "high",
-        "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
-        "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+        "prompt_sha256": "87fe69ac4511eee5d24ddbc6da34b90bb9fcbd7310fb5c25ec0d64563d400812",
+        "index_sha256": "1c2ac94f1d99b52b148024cd5ba4b4195865add7ad498bbfe6fed9093fed01f9",
         "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
         "category_sha256": {
-          "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+          "documents": "06976e642bee0dd769896682acca347253188c23880ff388a0ad67b12a46e08b",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
           "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
@@ -5657,7 +5972,7 @@
           "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
         },
         "category_counts": {
-          "documents": 306,
+          "documents": 307,
           "audit_checks": 40,
           "linter_codes": 24,
           "scripts": 31,
@@ -5665,7 +5980,7 @@
           "hooks": 7,
           "skills": 8
         },
-        "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+        "git_sha": "fc3b9709ead18a215bf49ef342c2d10174000973"
       },
       "reassessments": [
         {
@@ -5930,6 +6245,45 @@
             },
             "git_sha": "428469efbd0ed480d395be30b56cd8146e9fe5c3"
           }
+        },
+        {
+          "disposition": "対応計画あり",
+          "reason": "被覆マトリクス（統治要求×発火経路×証跡、SPEC-025）と、各行が実効を示す試験を名指し示せないなら未証と明示する決定（ADR-084）、発火点が走らせ手を持つか未実装と明記するかの二択（ADR-128）が、観測手段・適用手段を明示させる設計として現に在る。だがマトリクスの各行が観測手段・適用手段を名指していることを機械が検める検査は索引に無く、TEST-025 は計画文書であって試験ファイルを索引から名指せない。",
+          "evidence": [
+            "SPEC-025",
+            "ADR-084",
+            "ADR-128",
+            "TEST-025"
+          ],
+          "gap": "被覆の行に発火経路が入っていることを検める機械の検査が無い。原因分析の前段としての精緻化を強いる機構も無い。",
+          "confidence": "medium",
+          "assigned_at": "2026-08-15T14:06:31Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
+            "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+            "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
+            "category_sha256": {
+              "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+              "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+              "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
+              "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
+              "test_files": "4ce7bbd9022f4aacb440cfccdb01bb9e15fead3fcfe0f68e23785ceb35c90aa3",
+              "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+              "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
+            },
+            "category_counts": {
+              "documents": 306,
+              "audit_checks": 40,
+              "linter_codes": 24,
+              "scripts": 31,
+              "test_files": 35,
+              "hooks": 7,
+              "skills": 8
+            },
+            "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+          }
         }
       ]
     },
@@ -5939,24 +6293,26 @@
       "category": "検証計画",
       "source_lines": "L514-L514",
       "disposition": "対応計画あり",
-      "reason": "事象を閉じる条件として統制欠陥と先行指標を持つ事故分析を要求する決定（ADR-117）、推奨の処遇（ADR-125）、失敗仮説の創出の口（ADR-140）が在り、原因分析の枠自体は体系に在る。しかし原因を四類型（実行基盤の故障・ルール実装の欠陥・上流入力の不正・状態把握の誤り）に固定し、埋まっていない欄を挙げる機構は索引に無い。",
+      "reason": "事故分析の枠は決定として在る（閉じる条件に統制欠陥と先行指標を要する ADR-117、失敗仮説の創出の口 ADR-140、推奨の処遇 ADR-125、故障注入の記録の必須項目 ADR-142）。だが原因を四類型（実行基盤の故障・実装の欠陥・上流入力の不正・状態把握の誤り）に固定し、分類漏れを挙げる機構は索引に無い。なお体系はハザード層そのものは採らないと決めている(ADR-081)。",
       "evidence": [
         "ADR-117",
+        "ADR-140",
         "ADR-125",
-        "ADR-140"
+        "ADR-142",
+        "ADR-081"
       ],
-      "recheck_trigger": "事故分析の様式に原因の類型欄が入り、空欄を機械が咎めるようになったとき。",
-      "gap": "四原因の分類欄と、その空欄を挙げる検査が無い。決定は分析の在ることを求めるが、原因の網羅の形は求めていない。",
+      "recheck_trigger": "事故分析の様式に原因類型の必須欄が入り、その欠落を挙げる検査が加わったとき。",
+      "gap": "原因の類型を固定した様式と、空欄・偏りを機械が挙げる検査が無い。",
       "confidence": "medium",
-      "assigned_at": "2026-08-15T14:06:31Z",
+      "assigned_at": "2026-08-15T18:13:37Z",
       "assigned_by": {
         "model": "claude-opus-5",
         "effort": "high",
-        "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
-        "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+        "prompt_sha256": "87fe69ac4511eee5d24ddbc6da34b90bb9fcbd7310fb5c25ec0d64563d400812",
+        "index_sha256": "1c2ac94f1d99b52b148024cd5ba4b4195865add7ad498bbfe6fed9093fed01f9",
         "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
         "category_sha256": {
-          "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+          "documents": "06976e642bee0dd769896682acca347253188c23880ff388a0ad67b12a46e08b",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
           "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
@@ -5965,7 +6321,7 @@
           "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
         },
         "category_counts": {
-          "documents": 306,
+          "documents": 307,
           "audit_checks": 40,
           "linter_codes": 24,
           "scripts": 31,
@@ -5973,7 +6329,7 @@
           "hooks": 7,
           "skills": 8
         },
-        "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+        "git_sha": "fc3b9709ead18a215bf49ef342c2d10174000973"
       },
       "reassessments": [
         {
@@ -6267,6 +6623,44 @@
             },
             "git_sha": "428469efbd0ed480d395be30b56cd8146e9fe5c3"
           }
+        },
+        {
+          "disposition": "対応計画あり",
+          "reason": "事象を閉じる条件として統制欠陥と先行指標を持つ事故分析を要求する決定（ADR-117）、推奨の処遇（ADR-125）、失敗仮説の創出の口（ADR-140）が在り、原因分析の枠自体は体系に在る。しかし原因を四類型（実行基盤の故障・ルール実装の欠陥・上流入力の不正・状態把握の誤り）に固定し、埋まっていない欄を挙げる機構は索引に無い。",
+          "evidence": [
+            "ADR-117",
+            "ADR-125",
+            "ADR-140"
+          ],
+          "gap": "四原因の分類欄と、その空欄を挙げる検査が無い。決定は分析の在ることを求めるが、原因の網羅の形は求めていない。",
+          "confidence": "medium",
+          "assigned_at": "2026-08-15T14:06:31Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
+            "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+            "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
+            "category_sha256": {
+              "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+              "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+              "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
+              "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
+              "test_files": "4ce7bbd9022f4aacb440cfccdb01bb9e15fead3fcfe0f68e23785ceb35c90aa3",
+              "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+              "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
+            },
+            "category_counts": {
+              "documents": 306,
+              "audit_checks": 40,
+              "linter_codes": 24,
+              "scripts": 31,
+              "test_files": 35,
+              "hooks": 7,
+              "skills": 8
+            },
+            "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+          }
         }
       ]
     },
@@ -6275,26 +6669,27 @@
       "title": "プロセスモデル欠陥の 4 経路を検討する",
       "category": "検証計画",
       "source_lines": "L544-L544",
-      "disposition": "対応計画あり",
-      "reason": "「走ったこと自体の印を残し、不実行と書き込み失敗を区別する」決定（ADR-119）や発火の印の対の食い違い（ADR-062）、guard_liveness_gap は、四経路のうち一部（受け取っていない・記録されていない）に触れる。しかし誤ったフィードバックの受信・警告の握り潰し・そもそも計測していない領域を毎回点検させる監査項目は索引に無い。",
+      "disposition": "UNKNOWN",
+      "reason": "状態の古び・欠測を挙げる検査は個別に在る(stale_current・source_missing・ext_anchor_broken・view_stale)し、影の正本化を見張る決定も在る(ADR-035)。だがこれらは文書の鮮度と出所の話で、原因分析に四経路（誤検出・握り潰し・遅延／未受信・未計測）の点検を課す働きとは別であり、そうした規則が在るかは索引からは判らない。",
       "evidence": [
-        "ADR-119",
-        "ADR-062",
-        "guard_liveness_gap",
-        "ADR-117"
+        "stale_current",
+        "source_missing",
+        "ext_anchor_broken",
+        "view_stale",
+        "ADR-035"
       ],
-      "recheck_trigger": "プロセスモデル欠陥の経路別欄が事故分析の様式に入り、機械が空欄を挙げるようになったとき。",
-      "gap": "四経路を毎回点検させる分析欄・検査が無い。個別の検出が在るだけで、経路の網羅は機械が守っていない。",
+      "recheck_trigger": "原因分析の様式に四経路の点検欄が現れるか、未計測領域を挙げる検査が索引に載ったとき。",
+      "gap": null,
       "confidence": "medium",
-      "assigned_at": "2026-08-15T14:06:31Z",
+      "assigned_at": "2026-08-15T18:13:37Z",
       "assigned_by": {
         "model": "claude-opus-5",
         "effort": "high",
-        "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
-        "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+        "prompt_sha256": "87fe69ac4511eee5d24ddbc6da34b90bb9fcbd7310fb5c25ec0d64563d400812",
+        "index_sha256": "1c2ac94f1d99b52b148024cd5ba4b4195865add7ad498bbfe6fed9093fed01f9",
         "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
         "category_sha256": {
-          "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+          "documents": "06976e642bee0dd769896682acca347253188c23880ff388a0ad67b12a46e08b",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
           "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
@@ -6303,7 +6698,7 @@
           "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
         },
         "category_counts": {
-          "documents": 306,
+          "documents": 307,
           "audit_checks": 40,
           "linter_codes": 24,
           "scripts": 31,
@@ -6311,7 +6706,7 @@
           "hooks": 7,
           "skills": 8
         },
-        "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+        "git_sha": "fc3b9709ead18a215bf49ef342c2d10174000973"
       },
       "reassessments": [
         {
@@ -6583,6 +6978,45 @@
             },
             "git_sha": "428469efbd0ed480d395be30b56cd8146e9fe5c3"
           }
+        },
+        {
+          "disposition": "対応計画あり",
+          "reason": "「走ったこと自体の印を残し、不実行と書き込み失敗を区別する」決定（ADR-119）や発火の印の対の食い違い（ADR-062）、guard_liveness_gap は、四経路のうち一部（受け取っていない・記録されていない）に触れる。しかし誤ったフィードバックの受信・警告の握り潰し・そもそも計測していない領域を毎回点検させる監査項目は索引に無い。",
+          "evidence": [
+            "ADR-119",
+            "ADR-062",
+            "guard_liveness_gap",
+            "ADR-117"
+          ],
+          "gap": "四経路を毎回点検させる分析欄・検査が無い。個別の検出が在るだけで、経路の網羅は機械が守っていない。",
+          "confidence": "medium",
+          "assigned_at": "2026-08-15T14:06:31Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
+            "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+            "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
+            "category_sha256": {
+              "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+              "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+              "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
+              "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
+              "test_files": "4ce7bbd9022f4aacb440cfccdb01bb9e15fead3fcfe0f68e23785ceb35c90aa3",
+              "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+              "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
+            },
+            "category_counts": {
+              "documents": 306,
+              "audit_checks": 40,
+              "linter_codes": 24,
+              "scripts": 31,
+              "test_files": 35,
+              "hooks": 7,
+              "skills": 8
+            },
+            "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+          }
         }
       ]
     },
@@ -6592,24 +7026,26 @@
       "category": "証拠と記録",
       "source_lines": "L552-L552",
       "disposition": "対応計画あり",
-      "reason": "事象を台帳へ積む時点で証拠の宣言を要し正本の検査が機械で検める決定（ADR-141）と、不具合の検出は機械・送信は人の二層（ADR-074）が在り、報告に形式の要求が課されている。だが要求されているのは証拠の宣言であって、どの入力・どの欠測からその誤判定に至ったかの経路の記述ではない。",
+      "reason": "事象は台帳へ積む時点で証拠の宣言を要し正本の検査が機械で検めるという決定(ADR-141)と、証拠の照合を主張単位で行う決定(ADR-121)、不具合報告の二層(ADR-074・CHANGE-005)が在る。だが「どの入力・どの欠測からその判定に至ったか」の経路の記載を必須化し、欠ければ弾く機構は索引に無く、ADR-141 の言う検査に当たる検査名・ファイルも索引から特定できない。",
       "evidence": [
         "ADR-141",
+        "ADR-121",
         "ADR-074",
+        "CHANGE-005",
         "ADR-117"
       ],
-      "recheck_trigger": "事象台帳に生成経路の欄が加わり、正本の検査がその欠落を挙げるようになったとき。",
-      "gap": "誤判定の生成経路（受け取った情報とその欠如）を必須記載とし、欠けたら咎める検査が無い。",
+      "recheck_trigger": "報告様式に経路欄が必須化され、その欠落を挙げる検査名またはファイルが索引に現れたとき。",
+      "gap": "誤判定の生成経路（受け取った入力・欠測）の記載を必須にし、その充足を機械が検める機構が索引に無い。",
       "confidence": "medium",
-      "assigned_at": "2026-08-15T14:06:31Z",
+      "assigned_at": "2026-08-15T18:13:37Z",
       "assigned_by": {
         "model": "claude-opus-5",
         "effort": "high",
-        "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
-        "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+        "prompt_sha256": "87fe69ac4511eee5d24ddbc6da34b90bb9fcbd7310fb5c25ec0d64563d400812",
+        "index_sha256": "1c2ac94f1d99b52b148024cd5ba4b4195865add7ad498bbfe6fed9093fed01f9",
         "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
         "category_sha256": {
-          "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+          "documents": "06976e642bee0dd769896682acca347253188c23880ff388a0ad67b12a46e08b",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
           "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
@@ -6618,7 +7054,7 @@
           "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
         },
         "category_counts": {
-          "documents": 306,
+          "documents": 307,
           "audit_checks": 40,
           "linter_codes": 24,
           "scripts": 31,
@@ -6626,7 +7062,7 @@
           "hooks": 7,
           "skills": 8
         },
-        "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+        "git_sha": "fc3b9709ead18a215bf49ef342c2d10174000973"
       },
       "reassessments": [
         {
@@ -6885,6 +7321,44 @@
             },
             "git_sha": "428469efbd0ed480d395be30b56cd8146e9fe5c3"
           }
+        },
+        {
+          "disposition": "対応計画あり",
+          "reason": "事象を台帳へ積む時点で証拠の宣言を要し正本の検査が機械で検める決定（ADR-141）と、不具合の検出は機械・送信は人の二層（ADR-074）が在り、報告に形式の要求が課されている。だが要求されているのは証拠の宣言であって、どの入力・どの欠測からその誤判定に至ったかの経路の記述ではない。",
+          "evidence": [
+            "ADR-141",
+            "ADR-074",
+            "ADR-117"
+          ],
+          "gap": "誤判定の生成経路（受け取った情報とその欠如）を必須記載とし、欠けたら咎める検査が無い。",
+          "confidence": "medium",
+          "assigned_at": "2026-08-15T14:06:31Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
+            "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+            "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
+            "category_sha256": {
+              "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+              "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+              "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
+              "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
+              "test_files": "4ce7bbd9022f4aacb440cfccdb01bb9e15fead3fcfe0f68e23785ceb35c90aa3",
+              "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+              "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
+            },
+            "category_counts": {
+              "documents": 306,
+              "audit_checks": 40,
+              "linter_codes": 24,
+              "scripts": 31,
+              "test_files": 35,
+              "hooks": 7,
+              "skills": 8
+            },
+            "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+          }
         }
       ]
     },
@@ -6894,24 +7368,25 @@
       "category": "不適合と是正",
       "source_lines": "L568-L568",
       "disposition": "対応計画あり",
-      "reason": "事象を閉じてよいのは照合を通った統制欠陥と先行指標を持つ事故分析が揃ったときだけとする決定（ADR-117）と、クローズの語彙（ADR-144）・推奨の処遇（ADR-125）が、まさに「説明が揃うまで閉じない」を定めている。しかし説明の欠けたまま閉じられる事象を拒む機械の門は索引に無く、決定が働いている証拠を指せない。",
+      "reason": "閉じてよい条件は明文で決まっている（照合を通った統制欠陥と先行指標を持つ事故分析が揃ったときだけ ADR-117、クローズの語彙 ADR-144、推奨は terminal まで挙がり続ける ADR-125）。だが「検出器がなぜ鳴らなかったか」の説明の充足を門として検める機構（検査名・スクリプト・試験ファイル）は索引に無い。",
       "evidence": [
         "ADR-117",
         "ADR-144",
-        "ADR-125"
+        "ADR-125",
+        "ADR-141"
       ],
-      "recheck_trigger": "クローズ条件を機械で検める検査が正本に実装され、試験ファイルで指せるようになったとき。",
-      "gap": "「検出器がなぜ鳴らなかったか」の説明の有無を検め、欠けたらクローズを拒む機構が無い（決定は在るが門が無い）。",
+      "recheck_trigger": "クローズ条件の充足を検める検査またはスクリプトが索引に現れたとき。",
+      "gap": "閉じる条件は決めたが、それを機械の門として働かせる証拠を索引で指せない。",
       "confidence": "medium",
-      "assigned_at": "2026-08-15T14:06:31Z",
+      "assigned_at": "2026-08-15T18:13:37Z",
       "assigned_by": {
         "model": "claude-opus-5",
         "effort": "high",
-        "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
-        "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+        "prompt_sha256": "87fe69ac4511eee5d24ddbc6da34b90bb9fcbd7310fb5c25ec0d64563d400812",
+        "index_sha256": "1c2ac94f1d99b52b148024cd5ba4b4195865add7ad498bbfe6fed9093fed01f9",
         "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
         "category_sha256": {
-          "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+          "documents": "06976e642bee0dd769896682acca347253188c23880ff388a0ad67b12a46e08b",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
           "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
@@ -6920,7 +7395,7 @@
           "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
         },
         "category_counts": {
-          "documents": 306,
+          "documents": 307,
           "audit_checks": 40,
           "linter_codes": 24,
           "scripts": 31,
@@ -6928,7 +7403,7 @@
           "hooks": 7,
           "skills": 8
         },
-        "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+        "git_sha": "fc3b9709ead18a215bf49ef342c2d10174000973"
       },
       "reassessments": [
         {
@@ -7184,6 +7659,44 @@
             },
             "git_sha": "428469efbd0ed480d395be30b56cd8146e9fe5c3"
           }
+        },
+        {
+          "disposition": "対応計画あり",
+          "reason": "事象を閉じてよいのは照合を通った統制欠陥と先行指標を持つ事故分析が揃ったときだけとする決定（ADR-117）と、クローズの語彙（ADR-144）・推奨の処遇（ADR-125）が、まさに「説明が揃うまで閉じない」を定めている。しかし説明の欠けたまま閉じられる事象を拒む機械の門は索引に無く、決定が働いている証拠を指せない。",
+          "evidence": [
+            "ADR-117",
+            "ADR-144",
+            "ADR-125"
+          ],
+          "gap": "「検出器がなぜ鳴らなかったか」の説明の有無を検め、欠けたらクローズを拒む機構が無い（決定は在るが門が無い）。",
+          "confidence": "medium",
+          "assigned_at": "2026-08-15T14:06:31Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
+            "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+            "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
+            "category_sha256": {
+              "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+              "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+              "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
+              "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
+              "test_files": "4ce7bbd9022f4aacb440cfccdb01bb9e15fead3fcfe0f68e23785ceb35c90aa3",
+              "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+              "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
+            },
+            "category_counts": {
+              "documents": 306,
+              "audit_checks": 40,
+              "linter_codes": 24,
+              "scripts": 31,
+              "test_files": 35,
+              "hooks": 7,
+              "skills": 8
+            },
+            "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+          }
         }
       ]
     },
@@ -7193,26 +7706,27 @@
       "category": "安全性と危険要因",
       "source_lines": "L603-L603",
       "disposition": "対応計画あり",
-      "reason": "注入境界のサニタイズ（ADR-040）、統治の設定を指紋で見張る決定（ADR-096）、外部アンカーの hash 検査（ADR-039・ext_anchor_broken・source_drift）といった個別の堅牢化は在り、一部は機械が守っている。しかし原則が求めるのは、識別したフィードバックが投入・改ざん・傍受・開示される経路をシナリオに追加して検討することであり、その列挙を要求・検査する機構は索引に無い。",
+      "reason": "入力の改ざんに対する統制は現に在る（注入境界のサニタイズと引用データ・指示の分離 ADR-040 と inject-contract.py、統治の設定を指紋で見張る ADR-096、フック境界は沈黙して開かない ADR-075 と _hookio.py・test_hook_boundary.py）。ただしこれは個々の統制であって、識別したフィードバックごとに投入・改ざん・傍受・開示の経路を常設項目として検討させる働きではない。",
       "evidence": [
         "ADR-040",
         "ADR-096",
-        "ADR-039",
-        "ext_anchor_broken",
-        "source_drift"
+        "ADR-075",
+        "plugin/scripts/inject-contract.py",
+        "plugin/scripts/_hookio.py",
+        "plugin/tests/test_hook_boundary.py"
       ],
-      "recheck_trigger": "シナリオ台帳に敵対経路の欄が常設され、その欠落を機械が挙げるようになったとき。",
-      "gap": "敵対経路を脅威項目として常設し、欠落を挙げる機構が無い。堅牢化の実装は在るが、検討の網羅は担保されていない。",
+      "recheck_trigger": "設定・Hook・CI 変数の改ざん経路を項目として点検する監査検査が加わったとき。",
+      "gap": "入力ごとの改ざん経路を常設の脅威項目として列挙・点検させ、欠落を挙げる仕組みが索引に無い。",
       "confidence": "medium",
-      "assigned_at": "2026-08-15T14:06:31Z",
+      "assigned_at": "2026-08-15T18:13:37Z",
       "assigned_by": {
         "model": "claude-opus-5",
         "effort": "high",
-        "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
-        "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+        "prompt_sha256": "87fe69ac4511eee5d24ddbc6da34b90bb9fcbd7310fb5c25ec0d64563d400812",
+        "index_sha256": "1c2ac94f1d99b52b148024cd5ba4b4195865add7ad498bbfe6fed9093fed01f9",
         "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
         "category_sha256": {
-          "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+          "documents": "06976e642bee0dd769896682acca347253188c23880ff388a0ad67b12a46e08b",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
           "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
@@ -7221,7 +7735,7 @@
           "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
         },
         "category_counts": {
-          "documents": 306,
+          "documents": 307,
           "audit_checks": 40,
           "linter_codes": 24,
           "scripts": 31,
@@ -7229,7 +7743,7 @@
           "hooks": 7,
           "skills": 8
         },
-        "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+        "git_sha": "fc3b9709ead18a215bf49ef342c2d10174000973"
       },
       "reassessments": [
         {
@@ -7504,6 +8018,46 @@
             },
             "git_sha": "428469efbd0ed480d395be30b56cd8146e9fe5c3"
           }
+        },
+        {
+          "disposition": "対応計画あり",
+          "reason": "注入境界のサニタイズ（ADR-040）、統治の設定を指紋で見張る決定（ADR-096）、外部アンカーの hash 検査（ADR-039・ext_anchor_broken・source_drift）といった個別の堅牢化は在り、一部は機械が守っている。しかし原則が求めるのは、識別したフィードバックが投入・改ざん・傍受・開示される経路をシナリオに追加して検討することであり、その列挙を要求・検査する機構は索引に無い。",
+          "evidence": [
+            "ADR-040",
+            "ADR-096",
+            "ADR-039",
+            "ext_anchor_broken",
+            "source_drift"
+          ],
+          "gap": "敵対経路を脅威項目として常設し、欠落を挙げる機構が無い。堅牢化の実装は在るが、検討の網羅は担保されていない。",
+          "confidence": "medium",
+          "assigned_at": "2026-08-15T14:06:31Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
+            "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+            "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
+            "category_sha256": {
+              "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+              "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+              "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
+              "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
+              "test_files": "4ce7bbd9022f4aacb440cfccdb01bb9e15fead3fcfe0f68e23785ceb35c90aa3",
+              "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+              "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
+            },
+            "category_counts": {
+              "documents": 306,
+              "audit_checks": 40,
+              "linter_codes": 24,
+              "scripts": 31,
+              "test_files": 35,
+              "hooks": 7,
+              "skills": 8
+            },
+            "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+          }
         }
       ]
     },
@@ -7513,24 +8067,25 @@
       "category": "安全性と危険要因",
       "source_lines": "L603-L603",
       "disposition": "対応計画あり",
-      "reason": "故障注入の記録に故障族を常に持たせる決定（ADR-142）と失敗仮説の創出の口（ADR-140）が在り、原因候補を体系立てて集める枠は在る。だが故障族に敵対起因（偽装・遮断・遅延・無効化）を含めることを求める規定や、攻撃者起因の原因が一件も無いシナリオ集を挙げる検査は索引に無い。",
+      "reason": "故障注入の記録が findings・residual_risks・故障族を常に持つ決定(ADR-142)と、失敗仮説を独立批判を経て取り込む口(ADR-140)が在り、注入境界のサニタイズ(ADR-040)や非目標の明記(ADR-064)もある。だが故障族に敵対的原因（偽装・遮断・遅延・無効化）を必ず含めることを求め、皆無を挙げる機構は索引に無い。",
       "evidence": [
         "ADR-142",
         "ADR-140",
-        "ADR-040"
+        "ADR-040",
+        "ADR-064"
       ],
-      "recheck_trigger": "故障族の語彙に敵対起因の族が定義され、正本の検査が不在を咎めるようになったとき。",
-      "gap": "敵対的原因を原因候補として列挙させる規定と、その欠落を挙げる検査の双方が無い。",
+      "recheck_trigger": "故障族の語彙に敵対系が明記され、その欠落を検める検査が加わったとき。",
+      "gap": "敵対的原因の列挙を必須化し、シナリオ集に一件も無いことを機械が挙げる仕組みが無い。",
       "confidence": "medium",
-      "assigned_at": "2026-08-15T14:06:31Z",
+      "assigned_at": "2026-08-15T18:13:37Z",
       "assigned_by": {
         "model": "claude-opus-5",
         "effort": "high",
-        "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
-        "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+        "prompt_sha256": "87fe69ac4511eee5d24ddbc6da34b90bb9fcbd7310fb5c25ec0d64563d400812",
+        "index_sha256": "1c2ac94f1d99b52b148024cd5ba4b4195865add7ad498bbfe6fed9093fed01f9",
         "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
         "category_sha256": {
-          "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+          "documents": "06976e642bee0dd769896682acca347253188c23880ff388a0ad67b12a46e08b",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
           "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
@@ -7539,7 +8094,7 @@
           "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
         },
         "category_counts": {
-          "documents": 306,
+          "documents": 307,
           "audit_checks": 40,
           "linter_codes": 24,
           "scripts": 31,
@@ -7547,7 +8102,7 @@
           "hooks": 7,
           "skills": 8
         },
-        "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+        "git_sha": "fc3b9709ead18a215bf49ef342c2d10174000973"
       },
       "reassessments": [
         {
@@ -7805,6 +8360,44 @@
             },
             "git_sha": "428469efbd0ed480d395be30b56cd8146e9fe5c3"
           }
+        },
+        {
+          "disposition": "対応計画あり",
+          "reason": "故障注入の記録に故障族を常に持たせる決定（ADR-142）と失敗仮説の創出の口（ADR-140）が在り、原因候補を体系立てて集める枠は在る。だが故障族に敵対起因（偽装・遮断・遅延・無効化）を含めることを求める規定や、攻撃者起因の原因が一件も無いシナリオ集を挙げる検査は索引に無い。",
+          "evidence": [
+            "ADR-142",
+            "ADR-140",
+            "ADR-040"
+          ],
+          "gap": "敵対的原因を原因候補として列挙させる規定と、その欠落を挙げる検査の双方が無い。",
+          "confidence": "medium",
+          "assigned_at": "2026-08-15T14:06:31Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
+            "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+            "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
+            "category_sha256": {
+              "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+              "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+              "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
+              "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
+              "test_files": "4ce7bbd9022f4aacb440cfccdb01bb9e15fead3fcfe0f68e23785ceb35c90aa3",
+              "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+              "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
+            },
+            "category_counts": {
+              "documents": 306,
+              "audit_checks": 40,
+              "linter_codes": 24,
+              "scripts": 31,
+              "test_files": 35,
+              "hooks": 7,
+              "skills": 8
+            },
+            "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+          }
         }
       ]
     },
@@ -7913,24 +8506,25 @@
       "category": "試験設計",
       "source_lines": "L642-L642",
       "disposition": "対応計画あり",
-      "reason": "フックは発火の印を残し対の食い違いから拒否経路の欠落を疑う決定（ADR-062）、監査が走ったこと自体の印を残す決定（ADR-119）、guard_liveness_gap が在る。ただしこれらは「鳴るはずが鳴らなかった」側を見る機構であり、指示が無いのに統治アクションが走る側（幽霊実行）を挙げる検査は索引に無い。",
+      "reason": "発火の印を残して対の食い違いを疑う決定と検査は在る（ADR-062、guard_liveness_gap、監査自身の実行の印 ADR-119、生存性の受入試験 test_liveness_capture.py）。だが索引が述べる向きは「拒否経路の欠落を疑う」ことであり、指示が無いのに走った実行を挙げる向きが同じ機構で果たされるかは索引から読み取れない。",
       "evidence": [
         "ADR-062",
+        "guard_liveness_gap",
         "ADR-119",
-        "guard_liveness_gap"
+        "plugin/tests/test_liveness_capture.py"
       ],
-      "recheck_trigger": "トリガ記録と実行記録の突合で余分な発火を挙げる検査が加わったとき。",
-      "gap": "対応する指示・トリガ記録の無い実行を検出する検査が無い（印は欠落の側にしか効いていない）。",
+      "recheck_trigger": "トリガ記録の無い統治アクションの実行を挙げる検査が明示されたとき。",
+      "gap": "無指示の発火（幽霊実行）を挙げる向きの検査を索引で名指せない。対の食い違いの検出が両向きに効くかが不明。",
       "confidence": "medium",
-      "assigned_at": "2026-08-15T14:06:31Z",
+      "assigned_at": "2026-08-15T18:13:37Z",
       "assigned_by": {
         "model": "claude-opus-5",
         "effort": "high",
-        "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
-        "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+        "prompt_sha256": "87fe69ac4511eee5d24ddbc6da34b90bb9fcbd7310fb5c25ec0d64563d400812",
+        "index_sha256": "1c2ac94f1d99b52b148024cd5ba4b4195865add7ad498bbfe6fed9093fed01f9",
         "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
         "category_sha256": {
-          "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+          "documents": "06976e642bee0dd769896682acca347253188c23880ff388a0ad67b12a46e08b",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
           "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
@@ -7939,7 +8533,7 @@
           "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
         },
         "category_counts": {
-          "documents": 306,
+          "documents": 307,
           "audit_checks": 40,
           "linter_codes": 24,
           "scripts": 31,
@@ -7947,7 +8541,7 @@
           "hooks": 7,
           "skills": 8
         },
-        "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+        "git_sha": "fc3b9709ead18a215bf49ef342c2d10174000973"
       },
       "reassessments": [
         {
@@ -8204,6 +8798,44 @@
             },
             "git_sha": "428469efbd0ed480d395be30b56cd8146e9fe5c3"
           }
+        },
+        {
+          "disposition": "対応計画あり",
+          "reason": "フックは発火の印を残し対の食い違いから拒否経路の欠落を疑う決定（ADR-062）、監査が走ったこと自体の印を残す決定（ADR-119）、guard_liveness_gap が在る。ただしこれらは「鳴るはずが鳴らなかった」側を見る機構であり、指示が無いのに統治アクションが走る側（幽霊実行）を挙げる検査は索引に無い。",
+          "evidence": [
+            "ADR-062",
+            "ADR-119",
+            "guard_liveness_gap"
+          ],
+          "gap": "対応する指示・トリガ記録の無い実行を検出する検査が無い（印は欠落の側にしか効いていない）。",
+          "confidence": "medium",
+          "assigned_at": "2026-08-15T14:06:31Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
+            "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+            "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
+            "category_sha256": {
+              "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+              "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+              "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
+              "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
+              "test_files": "4ce7bbd9022f4aacb440cfccdb01bb9e15fead3fcfe0f68e23785ceb35c90aa3",
+              "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+              "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
+            },
+            "category_counts": {
+              "documents": 306,
+              "audit_checks": 40,
+              "linter_codes": 24,
+              "scripts": 31,
+              "test_files": 35,
+              "hooks": 7,
+              "skills": 8
+            },
+            "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+          }
         }
       ]
     },
@@ -8213,25 +8845,25 @@
       "category": "試験設計",
       "source_lines": "L666-L666",
       "disposition": "対応計画あり",
-      "reason": "PostToolUse の事前状態を raw 全文で復元する決定（ADR-004）と PostToolUse に載る policy-guard、投影が正本と食い違うことを挙げる projection_drift、不実行と書き込み失敗を区別する鮮度警告（ADR-119）は、無効化のいくつかの形を機械で捉える。しかし原則が求めるのは失効要因（上書き・入力欠落・環境条件・経年）を識別して洗い出すことであり、その枠は索引に無い。",
+      "reason": "「ガードが拒否できる状態かは検出しない」と明記し、機能カナリアを次の版に分けた決定が現に在る(ADR-050)。リンタは助言のみで結果を強制しない設計(IMPL-007)であり、正本と投影のずれは projection_drift が挙げるが、統治の動作が別ツールや上位設定に上書きされて効かない場合を独立の失効要因として検める機構は決定の上で次版送りになっている。",
       "evidence": [
-        "ADR-004",
-        "plugin/scripts/policy-guard.py",
+        "ADR-050",
+        "IMPL-007",
         "projection_drift",
-        "ADR-119"
+        "ADR-062"
       ],
-      "recheck_trigger": "実行成功と最終状態の不一致を独立に点検する検査が加わったとき。",
-      "gap": "統治アクションが成功しても効かない要因を独立に洗い出す点検の枠が無い。検出は個々の検査に散っている。",
+      "recheck_trigger": "機能カナリアが実装され、スクリプトまたは試験ファイルとして索引に現れたとき。",
+      "gap": "拒否・修正が実際に効いたかを確かめる機能カナリアが索引に実装として無い（成功終了と最終状態の反映の突合が無い）。",
       "confidence": "medium",
-      "assigned_at": "2026-08-15T14:06:31Z",
+      "assigned_at": "2026-08-15T18:13:37Z",
       "assigned_by": {
         "model": "claude-opus-5",
         "effort": "high",
-        "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
-        "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+        "prompt_sha256": "87fe69ac4511eee5d24ddbc6da34b90bb9fcbd7310fb5c25ec0d64563d400812",
+        "index_sha256": "1c2ac94f1d99b52b148024cd5ba4b4195865add7ad498bbfe6fed9093fed01f9",
         "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
         "category_sha256": {
-          "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+          "documents": "06976e642bee0dd769896682acca347253188c23880ff388a0ad67b12a46e08b",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
           "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
@@ -8240,7 +8872,7 @@
           "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
         },
         "category_counts": {
-          "documents": 306,
+          "documents": 307,
           "audit_checks": 40,
           "linter_codes": 24,
           "scripts": 31,
@@ -8248,7 +8880,7 @@
           "hooks": 7,
           "skills": 8
         },
-        "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+        "git_sha": "fc3b9709ead18a215bf49ef342c2d10174000973"
       },
       "reassessments": [
         {
@@ -8520,6 +9152,45 @@
             },
             "git_sha": "428469efbd0ed480d395be30b56cd8146e9fe5c3"
           }
+        },
+        {
+          "disposition": "対応計画あり",
+          "reason": "PostToolUse の事前状態を raw 全文で復元する決定（ADR-004）と PostToolUse に載る policy-guard、投影が正本と食い違うことを挙げる projection_drift、不実行と書き込み失敗を区別する鮮度警告（ADR-119）は、無効化のいくつかの形を機械で捉える。しかし原則が求めるのは失効要因（上書き・入力欠落・環境条件・経年）を識別して洗い出すことであり、その枠は索引に無い。",
+          "evidence": [
+            "ADR-004",
+            "plugin/scripts/policy-guard.py",
+            "projection_drift",
+            "ADR-119"
+          ],
+          "gap": "統治アクションが成功しても効かない要因を独立に洗い出す点検の枠が無い。検出は個々の検査に散っている。",
+          "confidence": "medium",
+          "assigned_at": "2026-08-15T14:06:31Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
+            "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+            "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
+            "category_sha256": {
+              "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+              "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+              "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
+              "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
+              "test_files": "4ce7bbd9022f4aacb440cfccdb01bb9e15fead3fcfe0f68e23785ceb35c90aa3",
+              "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+              "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
+            },
+            "category_counts": {
+              "documents": 306,
+              "audit_checks": 40,
+              "linter_codes": 24,
+              "scripts": 31,
+              "test_files": 35,
+              "hooks": 7,
+              "skills": 8
+            },
+            "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+          }
         }
       ]
     },
@@ -8529,24 +9200,25 @@
       "category": "試験設計",
       "source_lines": "L682-L682",
       "disposition": "対応計画あり",
-      "reason": "事故分析に統制欠陥と先行指標を求める決定（ADR-117）、故障注入の記録の必須項目（ADR-142）、推奨の処遇（ADR-125）が在り、単なる所見の羅列で終わらせない意図は決定に在る。だが監査の findings は検査名つきの項目形（ADR-156）で出るのが正本の形であり、要因の相互作用と経過を含む筋書きを要求・検査する機構は索引に無い。",
+      "reason": "事故分析に統制欠陥と先行指標を求める決定(ADR-117)、故障注入の記録の必須項目(ADR-142)、推奨の処遇(ADR-125)は在る。だが監査の findings は項目形で返ると宣言されており(ADR-156)、要因の相互作用と経過を含む筋書きの形を機械が求める箇所は索引に無い。",
       "evidence": [
         "ADR-117",
         "ADR-142",
+        "ADR-125",
         "ADR-156"
       ],
-      "recheck_trigger": "シナリオの記述様式（相互作用と経過）が正本に定義され、機械が形を検めるようになったとき。",
-      "gap": "分析成果物が要因の羅列で終わっていないことを検める機構が無い。記述の形を要求する規定も見当たらない。",
-      "confidence": "low",
-      "assigned_at": "2026-08-15T14:06:31Z",
+      "recheck_trigger": "事故分析の様式に経過・相互作用の必須欄が入り、その充足を検める検査が加わったとき。",
+      "gap": "分析成果物が要因の羅列でなく相互作用を述べた筋書きであることを検める機構が無い。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-15T18:13:37Z",
       "assigned_by": {
         "model": "claude-opus-5",
         "effort": "high",
-        "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
-        "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+        "prompt_sha256": "87fe69ac4511eee5d24ddbc6da34b90bb9fcbd7310fb5c25ec0d64563d400812",
+        "index_sha256": "1c2ac94f1d99b52b148024cd5ba4b4195865add7ad498bbfe6fed9093fed01f9",
         "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
         "category_sha256": {
-          "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+          "documents": "06976e642bee0dd769896682acca347253188c23880ff388a0ad67b12a46e08b",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
           "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
@@ -8555,7 +9227,7 @@
           "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
         },
         "category_counts": {
-          "documents": 306,
+          "documents": 307,
           "audit_checks": 40,
           "linter_codes": 24,
           "scripts": 31,
@@ -8563,7 +9235,7 @@
           "hooks": 7,
           "skills": 8
         },
-        "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+        "git_sha": "fc3b9709ead18a215bf49ef342c2d10174000973"
       },
       "reassessments": [
         {
@@ -8855,6 +9527,44 @@
               "skills": 8
             },
             "git_sha": "428469efbd0ed480d395be30b56cd8146e9fe5c3"
+          }
+        },
+        {
+          "disposition": "対応計画あり",
+          "reason": "事故分析に統制欠陥と先行指標を求める決定（ADR-117）、故障注入の記録の必須項目（ADR-142）、推奨の処遇（ADR-125）が在り、単なる所見の羅列で終わらせない意図は決定に在る。だが監査の findings は検査名つきの項目形（ADR-156）で出るのが正本の形であり、要因の相互作用と経過を含む筋書きを要求・検査する機構は索引に無い。",
+          "evidence": [
+            "ADR-117",
+            "ADR-142",
+            "ADR-156"
+          ],
+          "gap": "分析成果物が要因の羅列で終わっていないことを検める機構が無い。記述の形を要求する規定も見当たらない。",
+          "confidence": "low",
+          "assigned_at": "2026-08-15T14:06:31Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
+            "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+            "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
+            "category_sha256": {
+              "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+              "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+              "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
+              "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
+              "test_files": "4ce7bbd9022f4aacb440cfccdb01bb9e15fead3fcfe0f68e23785ceb35c90aa3",
+              "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+              "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
+            },
+            "category_counts": {
+              "documents": 306,
+              "audit_checks": 40,
+              "linter_codes": 24,
+              "scripts": 31,
+              "test_files": 35,
+              "hooks": 7,
+              "skills": 8
+            },
+            "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
           }
         }
       ]
@@ -9151,25 +9861,25 @@
       "category": "検証計画",
       "source_lines": "L817-L817",
       "disposition": "対応計画あり",
-      "reason": "体系は決定論を強く採り、門の判定を三値とする決定（ADR-129）、監査の決定性（SPEC-011）、発火を決定論の状態機械で制御する決定（ADR-115）が在る。しかし要求文が確率・割合で書かれていないことを咎める機械の検査は無く、テスト不能記述の判定は ADR-020 により doc-review（人と判断の層）に委ねられている。",
+      "reason": "単一の実行で合否が付く形は決めてある（門の判定は三値で検査が成立していなければ数えない ADR-129、被覆の各行は実効を示す試験を名指すか未証と明示 ADR-084、保証限界の明示 REQ-013）。だがテスト不能記述の判定は監査でなく doc-review が担うと決めてあり(ADR-020)、確率や割合で書かれた要求文を弾く機械の検査は索引に無い。",
       "evidence": [
         "ADR-129",
-        "SPEC-011",
-        "ADR-115",
+        "ADR-084",
+        "REQ-013",
         "ADR-020"
       ],
-      "recheck_trigger": "要求文の確率表現を咎めるリンタの検査コードが加わったとき。",
-      "gap": "確率表現の要求文を弾く検査コード・検査名が無い。決定論は道具の側で守られており、要求の書き方の側では守られていない。",
+      "recheck_trigger": "確率表現・割合表現の要求を咎めるリンタコードまたは監査検査が現れたとき。",
+      "gap": "要求文が非確率的・判定可能な挙動として書かれていることを機械が検める検査が無い。",
       "confidence": "medium",
-      "assigned_at": "2026-08-15T14:06:31Z",
+      "assigned_at": "2026-08-15T18:13:37Z",
       "assigned_by": {
         "model": "claude-opus-5",
         "effort": "high",
-        "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
-        "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+        "prompt_sha256": "87fe69ac4511eee5d24ddbc6da34b90bb9fcbd7310fb5c25ec0d64563d400812",
+        "index_sha256": "1c2ac94f1d99b52b148024cd5ba4b4195865add7ad498bbfe6fed9093fed01f9",
         "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
         "category_sha256": {
-          "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+          "documents": "06976e642bee0dd769896682acca347253188c23880ff388a0ad67b12a46e08b",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
           "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
@@ -9178,7 +9888,7 @@
           "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
         },
         "category_counts": {
-          "documents": 306,
+          "documents": 307,
           "audit_checks": 40,
           "linter_codes": 24,
           "scripts": 31,
@@ -9186,7 +9896,7 @@
           "hooks": 7,
           "skills": 8
         },
-        "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+        "git_sha": "fc3b9709ead18a215bf49ef342c2d10174000973"
       },
       "reassessments": [
         {
@@ -9445,6 +10155,45 @@
             },
             "git_sha": "428469efbd0ed480d395be30b56cd8146e9fe5c3"
           }
+        },
+        {
+          "disposition": "対応計画あり",
+          "reason": "体系は決定論を強く採り、門の判定を三値とする決定（ADR-129）、監査の決定性（SPEC-011）、発火を決定論の状態機械で制御する決定（ADR-115）が在る。しかし要求文が確率・割合で書かれていないことを咎める機械の検査は無く、テスト不能記述の判定は ADR-020 により doc-review（人と判断の層）に委ねられている。",
+          "evidence": [
+            "ADR-129",
+            "SPEC-011",
+            "ADR-115",
+            "ADR-020"
+          ],
+          "gap": "確率表現の要求文を弾く検査コード・検査名が無い。決定論は道具の側で守られており、要求の書き方の側では守られていない。",
+          "confidence": "medium",
+          "assigned_at": "2026-08-15T14:06:31Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
+            "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+            "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
+            "category_sha256": {
+              "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+              "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+              "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
+              "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
+              "test_files": "4ce7bbd9022f4aacb440cfccdb01bb9e15fead3fcfe0f68e23785ceb35c90aa3",
+              "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+              "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
+            },
+            "category_counts": {
+              "documents": 306,
+              "audit_checks": 40,
+              "linter_codes": 24,
+              "scripts": 31,
+              "test_files": 35,
+              "hooks": 7,
+              "skills": 8
+            },
+            "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+          }
         }
       ]
     },
@@ -9648,8 +10397,8 @@
       "category": "組織と力量",
       "source_lines": "L722-L722",
       "disposition": "対応計画あり",
-      "reason": "変更フローの段数を決定の有無で分ける決定（ADR-051）が在り、上流の欠落は adr_not_landed・reverse_orphan_req_no_spec・reverse_orphan_spec_no_test が事後に挙げる。だがこれらはすべて検出であって阻止ではない。原則は上流を省いたプロセスで作らないことを求めており、ガードは不変・ICD依存・削除安全の三つに限られ、上流の欠落を書き込み前に拒む門は索引に無い。",
-      "recheck_trigger": "上流文書の不在を PreToolUse で拒むガードか CI の門が加わったとき。",
+      "reason": "変更フローの段数を決定の有無で分ける決定(ADR-051)が在り、上流の欠落は事後に挙がる(adr_not_landed・reverse_orphan_req_no_spec・reverse_orphan_spec_no_test、監査は plugin/tests/test_audit.py が検める)。だが原則が求めるのは上流を省いた作業をさせないことであり、事前に止める門は索引に無い（PreToolUse の policy-guard.py が判ずるのは不変・ICD 依存・削除安全の三ガード）。",
+      "recheck_trigger": "上流文書の不在を PreToolUse で拒否する経路が加わったとき。",
       "reassessments": [
         {
           "disposition": "対応計画あり",
@@ -9916,25 +10665,66 @@
             },
             "git_sha": "428469efbd0ed480d395be30b56cd8146e9fe5c3"
           }
+        },
+        {
+          "disposition": "対応計画あり",
+          "reason": "変更フローの段数を決定の有無で分ける決定（ADR-051）が在り、上流の欠落は adr_not_landed・reverse_orphan_req_no_spec・reverse_orphan_spec_no_test が事後に挙げる。だがこれらはすべて検出であって阻止ではない。原則は上流を省いたプロセスで作らないことを求めており、ガードは不変・ICD依存・削除安全の三つに限られ、上流の欠落を書き込み前に拒む門は索引に無い。",
+          "evidence": [
+            "ADR-051",
+            "adr_not_landed",
+            "reverse_orphan_req_no_spec",
+            "SPEC-003"
+          ],
+          "gap": "検出は在るが阻止が無い。上流文書を欠いた統治ルール追加を書き込む前に止める門が無い。",
+          "confidence": "high",
+          "assigned_at": "2026-08-15T14:06:31Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
+            "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+            "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
+            "category_sha256": {
+              "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+              "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+              "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
+              "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
+              "test_files": "4ce7bbd9022f4aacb440cfccdb01bb9e15fead3fcfe0f68e23785ceb35c90aa3",
+              "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+              "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
+            },
+            "category_counts": {
+              "documents": 306,
+              "audit_checks": 40,
+              "linter_codes": 24,
+              "scripts": 31,
+              "test_files": 35,
+              "hooks": 7,
+              "skills": 8
+            },
+            "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+          }
         }
       ],
       "evidence": [
         "ADR-051",
         "adr_not_landed",
         "reverse_orphan_req_no_spec",
-        "SPEC-003"
+        "reverse_orphan_spec_no_test",
+        "plugin/tests/test_audit.py",
+        "plugin/scripts/policy-guard.py"
       ],
-      "gap": "検出は在るが阻止が無い。上流文書を欠いた統治ルール追加を書き込む前に止める門が無い。",
-      "confidence": "high",
-      "assigned_at": "2026-08-15T14:06:31Z",
+      "gap": "検出は在るが阻止が無い。目的・対象損失の先行記述を経ていない統治ルール追加を、書き込み前に止める門が索引に無い。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-15T18:13:37Z",
       "assigned_by": {
         "model": "claude-opus-5",
         "effort": "high",
-        "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
-        "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+        "prompt_sha256": "87fe69ac4511eee5d24ddbc6da34b90bb9fcbd7310fb5c25ec0d64563d400812",
+        "index_sha256": "1c2ac94f1d99b52b148024cd5ba4b4195865add7ad498bbfe6fed9093fed01f9",
         "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
         "category_sha256": {
-          "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+          "documents": "06976e642bee0dd769896682acca347253188c23880ff388a0ad67b12a46e08b",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
           "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
@@ -9943,7 +10733,7 @@
           "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
         },
         "category_counts": {
-          "documents": 306,
+          "documents": 307,
           "audit_checks": 40,
           "linter_codes": 24,
           "scripts": 31,
@@ -9951,7 +10741,7 @@
           "hooks": 7,
           "skills": 8
         },
-        "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+        "git_sha": "fc3b9709ead18a215bf49ef342c2d10174000973"
       }
     },
     {
@@ -10101,25 +10891,26 @@
       "category": "検証計画",
       "source_lines": "L867-L867",
       "disposition": "対応計画あり",
-      "reason": "紐づけの欠落は MISSING_TRACE・trace_missing_impl・trace_undeclared_impl・adr_not_landed が事後に挙げ、変更フローの段数も決定の有無で分かれる（ADR-051）。しかし原則が求めるのは順序（要求分析の完了が設計に先行すること）であり、時間順を強いる門も、履歴の順序を見る検査も索引に無い。",
+      "reason": "要求→仕様→試験→コードの対応の欠落は監査が事後に挙げる(reverse_orphan_req_no_spec・reverse_orphan_spec_no_test・trace_missing_impl・trace_undeclared_impl、双方向トレースの決定は ADR-048)。だが「先に済ませる」という順序を、実装の投入前に止める門も、履歴の前後で検める検査も索引に無い。",
       "evidence": [
-        "MISSING_TRACE",
+        "reverse_orphan_req_no_spec",
+        "reverse_orphan_spec_no_test",
         "trace_missing_impl",
-        "adr_not_landed",
-        "ADR-051"
+        "trace_undeclared_impl",
+        "ADR-048"
       ],
-      "recheck_trigger": "要求の追加が実装に先行することを CI の門が検めるようになったとき。",
-      "gap": "検出は在るが先行の強制が無い。実装が対応する要求より先に入ったことを咎める機構が索引に無い。",
+      "recheck_trigger": "要求記述より先の実装投入を止める門、または履歴の前後関係を検める検査が加わったとき。",
+      "gap": "検出されるのは対応の有無だけで、順序（要求が先）を強いる事前の門も時系列の検めも無い。",
       "confidence": "medium",
-      "assigned_at": "2026-08-15T14:06:31Z",
+      "assigned_at": "2026-08-15T18:13:37Z",
       "assigned_by": {
         "model": "claude-opus-5",
         "effort": "high",
-        "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
-        "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+        "prompt_sha256": "87fe69ac4511eee5d24ddbc6da34b90bb9fcbd7310fb5c25ec0d64563d400812",
+        "index_sha256": "1c2ac94f1d99b52b148024cd5ba4b4195865add7ad498bbfe6fed9093fed01f9",
         "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
         "category_sha256": {
-          "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+          "documents": "06976e642bee0dd769896682acca347253188c23880ff388a0ad67b12a46e08b",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
           "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
@@ -10128,7 +10919,7 @@
           "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
         },
         "category_counts": {
-          "documents": 306,
+          "documents": 307,
           "audit_checks": 40,
           "linter_codes": 24,
           "scripts": 31,
@@ -10136,7 +10927,7 @@
           "hooks": 7,
           "skills": 8
         },
-        "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+        "git_sha": "fc3b9709ead18a215bf49ef342c2d10174000973"
       },
       "reassessments": [
         {
@@ -10406,6 +11197,45 @@
             },
             "git_sha": "428469efbd0ed480d395be30b56cd8146e9fe5c3"
           }
+        },
+        {
+          "disposition": "対応計画あり",
+          "reason": "紐づけの欠落は MISSING_TRACE・trace_missing_impl・trace_undeclared_impl・adr_not_landed が事後に挙げ、変更フローの段数も決定の有無で分かれる（ADR-051）。しかし原則が求めるのは順序（要求分析の完了が設計に先行すること）であり、時間順を強いる門も、履歴の順序を見る検査も索引に無い。",
+          "evidence": [
+            "MISSING_TRACE",
+            "trace_missing_impl",
+            "adr_not_landed",
+            "ADR-051"
+          ],
+          "gap": "検出は在るが先行の強制が無い。実装が対応する要求より先に入ったことを咎める機構が索引に無い。",
+          "confidence": "medium",
+          "assigned_at": "2026-08-15T14:06:31Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
+            "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+            "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
+            "category_sha256": {
+              "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+              "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+              "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
+              "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
+              "test_files": "4ce7bbd9022f4aacb440cfccdb01bb9e15fead3fcfe0f68e23785ceb35c90aa3",
+              "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+              "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
+            },
+            "category_counts": {
+              "documents": 306,
+              "audit_checks": 40,
+              "linter_codes": 24,
+              "scripts": 31,
+              "test_files": 35,
+              "hooks": 7,
+              "skills": 8
+            },
+            "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+          }
         }
       ]
     },
@@ -10465,26 +11295,26 @@
       "category": "供給者と再利用",
       "source_lines": "L851-L851",
       "disposition": "対応計画あり",
-      "reason": "雛形は型ごとに正本化され（SPEC-017）、雛形の検証一式（plugin/tests/test_templates.py）と placeholder 系の検査（PLACEHOLDER_VALUE・template_placeholder）が機械で守っている。導入先への無影響保証（ADR-047）と他所の土地に触れない決定（ADR-022）も在る。だが雛形に特定リポジトリ固有の経路や道具名が埋め込まれていないことを検める機構は索引に無く、再利用時の空振りを事前に防ぐ側が欠けている。",
+      "reason": "雛形は正本として在り、雛形の指示文の残りや置き換え漏れは機械が咎める(ADR-098・template_placeholder、雛形の節の検めは ADR-090、正本は SPEC-017)。だがこれは残骸の検出であって、雛形に固有パスやツール名が埋まっていないこと（実装非依存の維持）を検める働きではない。統治の範囲はリポジトリ一つの内側に閉じる決定(ADR-057)も在り、再利用は配布物の側の話になる。",
       "evidence": [
         "SPEC-017",
-        "plugin/tests/test_templates.py",
-        "PLACEHOLDER_VALUE",
-        "ADR-047",
-        "ADR-022"
+        "ADR-090",
+        "ADR-098",
+        "template_placeholder",
+        "ADR-057"
       ],
-      "recheck_trigger": "雛形内の固有経路・固有道具名を咎める検査が加わったとき。",
-      "gap": "配布雛形の実装非依存性（固有の経路・道具名の不在）を検める検査が無い。",
-      "confidence": "low",
-      "assigned_at": "2026-08-15T14:06:31Z",
+      "recheck_trigger": "雛形の実装非依存性（固有パス・ツール名）を検める検査が加わったとき。",
+      "gap": "雛形・モデルへの固有パス／ツール名の混入を検める検査が無く、他プロジェクトで空振りする形を機械が挙げない。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-15T18:13:37Z",
       "assigned_by": {
         "model": "claude-opus-5",
         "effort": "high",
-        "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
-        "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+        "prompt_sha256": "87fe69ac4511eee5d24ddbc6da34b90bb9fcbd7310fb5c25ec0d64563d400812",
+        "index_sha256": "1c2ac94f1d99b52b148024cd5ba4b4195865add7ad498bbfe6fed9093fed01f9",
         "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
         "category_sha256": {
-          "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+          "documents": "06976e642bee0dd769896682acca347253188c23880ff388a0ad67b12a46e08b",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
           "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
@@ -10493,7 +11323,7 @@
           "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
         },
         "category_counts": {
-          "documents": 306,
+          "documents": 307,
           "audit_checks": 40,
           "linter_codes": 24,
           "scripts": 31,
@@ -10501,7 +11331,7 @@
           "hooks": 7,
           "skills": 8
         },
-        "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+        "git_sha": "fc3b9709ead18a215bf49ef342c2d10174000973"
       },
       "reassessments": [
         {
@@ -10777,6 +11607,46 @@
             },
             "git_sha": "428469efbd0ed480d395be30b56cd8146e9fe5c3"
           }
+        },
+        {
+          "disposition": "対応計画あり",
+          "reason": "雛形は型ごとに正本化され（SPEC-017）、雛形の検証一式（plugin/tests/test_templates.py）と placeholder 系の検査（PLACEHOLDER_VALUE・template_placeholder）が機械で守っている。導入先への無影響保証（ADR-047）と他所の土地に触れない決定（ADR-022）も在る。だが雛形に特定リポジトリ固有の経路や道具名が埋め込まれていないことを検める機構は索引に無く、再利用時の空振りを事前に防ぐ側が欠けている。",
+          "evidence": [
+            "SPEC-017",
+            "plugin/tests/test_templates.py",
+            "PLACEHOLDER_VALUE",
+            "ADR-047",
+            "ADR-022"
+          ],
+          "gap": "配布雛形の実装非依存性（固有の経路・道具名の不在）を検める検査が無い。",
+          "confidence": "low",
+          "assigned_at": "2026-08-15T14:06:31Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
+            "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+            "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
+            "category_sha256": {
+              "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+              "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+              "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
+              "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
+              "test_files": "4ce7bbd9022f4aacb440cfccdb01bb9e15fead3fcfe0f68e23785ceb35c90aa3",
+              "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+              "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
+            },
+            "category_counts": {
+              "documents": 306,
+              "audit_checks": 40,
+              "linter_codes": 24,
+              "scripts": 31,
+              "test_files": 35,
+              "hooks": 7,
+              "skills": 8
+            },
+            "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+          }
         }
       ]
     },
@@ -10835,26 +11705,26 @@
       "category": "組織と力量",
       "source_lines": "L861-L861",
       "disposition": "対応計画あり",
-      "reason": "各成果物が予防・検出・委ねるを書く要求（REQ-013）、被覆マトリクスの発火経路と証跡（SPEC-025）、発火点は走らせ手を持つか未実装と明記するかの二択（ADR-128）、所有者判断の六類型の名指し（ADR-127）が、責任と経路の割当を体系の語で定めている。だが各規則が実行主体と通知先を持つことを機械が検める検査は索引に無く、MISSING_SECTION は節の有無を見るだけで内容は見ない。",
+      "reason": "割当の形は決定と仕様として揃っている（各成果物が予防・検出・委ねるを書く REQ-013、統治要求×発火経路×証跡 SPEC-025、行は試験を名指すか未証と明示 ADR-084、発火点は走らせ手を持つか未実装と明記 ADR-128、所有者判断の六類型 ADR-127）。だがこれらを機械が検める検査名・スクリプト・試験ファイルを索引から特定できない。",
       "evidence": [
         "REQ-013",
         "SPEC-025",
+        "ADR-084",
         "ADR-128",
-        "ADR-127",
-        "MISSING_SECTION"
+        "ADR-127"
       ],
-      "recheck_trigger": "走らせ手・通知先の欠落を挙げる検査が監査またはリンタに実装されたとき。",
-      "gap": "実行主体・通知先の記載を機械が検める検査が無い。決定と仕様は在るが、働いている証拠を指せない。",
+      "recheck_trigger": "被覆マトリクスの行や規則の実行主体・通知先の充足を検める検査またはスクリプトが索引に現れたとき。",
+      "gap": "各規則が実行主体と通知経路を持つことを機械が検める機構を索引で指せない（TEST-025 は計画文書）。",
       "confidence": "medium",
-      "assigned_at": "2026-08-15T14:06:31Z",
+      "assigned_at": "2026-08-15T18:13:37Z",
       "assigned_by": {
         "model": "claude-opus-5",
         "effort": "high",
-        "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
-        "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+        "prompt_sha256": "87fe69ac4511eee5d24ddbc6da34b90bb9fcbd7310fb5c25ec0d64563d400812",
+        "index_sha256": "1c2ac94f1d99b52b148024cd5ba4b4195865add7ad498bbfe6fed9093fed01f9",
         "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
         "category_sha256": {
-          "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+          "documents": "06976e642bee0dd769896682acca347253188c23880ff388a0ad67b12a46e08b",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
           "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
@@ -10863,7 +11733,7 @@
           "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
         },
         "category_counts": {
-          "documents": 306,
+          "documents": 307,
           "audit_checks": 40,
           "linter_codes": 24,
           "scripts": 31,
@@ -10871,7 +11741,7 @@
           "hooks": 7,
           "skills": 8
         },
-        "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+        "git_sha": "fc3b9709ead18a215bf49ef342c2d10174000973"
       },
       "reassessments": [
         {
@@ -11170,6 +12040,46 @@
             },
             "git_sha": "428469efbd0ed480d395be30b56cd8146e9fe5c3"
           }
+        },
+        {
+          "disposition": "対応計画あり",
+          "reason": "各成果物が予防・検出・委ねるを書く要求（REQ-013）、被覆マトリクスの発火経路と証跡（SPEC-025）、発火点は走らせ手を持つか未実装と明記するかの二択（ADR-128）、所有者判断の六類型の名指し（ADR-127）が、責任と経路の割当を体系の語で定めている。だが各規則が実行主体と通知先を持つことを機械が検める検査は索引に無く、MISSING_SECTION は節の有無を見るだけで内容は見ない。",
+          "evidence": [
+            "REQ-013",
+            "SPEC-025",
+            "ADR-128",
+            "ADR-127",
+            "MISSING_SECTION"
+          ],
+          "gap": "実行主体・通知先の記載を機械が検める検査が無い。決定と仕様は在るが、働いている証拠を指せない。",
+          "confidence": "medium",
+          "assigned_at": "2026-08-15T14:06:31Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
+            "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+            "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
+            "category_sha256": {
+              "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+              "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+              "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
+              "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
+              "test_files": "4ce7bbd9022f4aacb440cfccdb01bb9e15fead3fcfe0f68e23785ceb35c90aa3",
+              "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+              "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
+            },
+            "category_counts": {
+              "documents": 306,
+              "audit_checks": 40,
+              "linter_codes": 24,
+              "scripts": 31,
+              "test_files": 35,
+              "hooks": 7,
+              "skills": 8
+            },
+            "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+          }
         }
       ]
     },
@@ -11229,8 +12139,8 @@
       "category": "独立性",
       "source_lines": "L931-L931",
       "disposition": "対応計画あり",
-      "reason": "Hook 事象の集合を数で凍らせず能力で検める決定（ADR-078）と、外部の仕様への依存を EXT 型のアンカーとして明示し検める枠（ADR-026・EXT-001・ext_anchor_broken）が在り、道具への依存を露わにする設計は取られている。しかし規範の記述が特定ツールのオプション名に直結していないこと、すなわち「危険が先・手段が後」の順序を検める機構は索引に無い。",
-      "recheck_trigger": "規範層の記述が特定ツールの語に直結していることを咎める検査が加わったとき。",
+      "reason": "外部の実装手段への依存は EXT 型のアンカーとして名指され、実在と唯一の見張りの緩さを監査が挙げる(ADR-026・EXT-001・ext_anchor_broken・ext_sole_guard_missing・ext_sole_guard_loose)。統治の対象を層に限る決定(ADR-015)も在る。だがこれは依存の可視化であって、規範記述そのものが特定ツールの選択肢名に縛られていないことを検める働きとは別。",
+      "recheck_trigger": "規範記述のツール固有名への結合を挙げる検査が加わったとき。",
       "reassessments": [
         {
           "disposition": "対応計画あり",
@@ -11506,25 +12416,65 @@
             },
             "git_sha": "428469efbd0ed480d395be30b56cd8146e9fe5c3"
           }
+        },
+        {
+          "disposition": "対応計画あり",
+          "reason": "Hook 事象の集合を数で凍らせず能力で検める決定（ADR-078）と、外部の仕様への依存を EXT 型のアンカーとして明示し検める枠（ADR-026・EXT-001・ext_anchor_broken）が在り、道具への依存を露わにする設計は取られている。しかし規範の記述が特定ツールのオプション名に直結していないこと、すなわち「危険が先・手段が後」の順序を検める機構は索引に無い。",
+          "evidence": [
+            "ADR-078",
+            "ADR-026",
+            "EXT-001",
+            "ext_anchor_broken"
+          ],
+          "gap": "規範記述の設計解非依存性を検める検査が無い。外部依存の明示は在るが、依存の混入そのものを咎めてはいない。",
+          "confidence": "low",
+          "assigned_at": "2026-08-15T14:06:31Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
+            "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+            "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
+            "category_sha256": {
+              "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+              "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+              "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
+              "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
+              "test_files": "4ce7bbd9022f4aacb440cfccdb01bb9e15fead3fcfe0f68e23785ceb35c90aa3",
+              "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+              "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
+            },
+            "category_counts": {
+              "documents": 306,
+              "audit_checks": 40,
+              "linter_codes": 24,
+              "scripts": 31,
+              "test_files": 35,
+              "hooks": 7,
+              "skills": 8
+            },
+            "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+          }
         }
       ],
       "evidence": [
-        "ADR-078",
         "ADR-026",
         "EXT-001",
-        "ext_anchor_broken"
+        "ext_anchor_broken",
+        "ext_sole_guard_missing",
+        "ADR-015"
       ],
-      "gap": "規範記述の設計解非依存性を検める検査が無い。外部依存の明示は在るが、依存の混入そのものを咎めてはいない。",
-      "confidence": "low",
-      "assigned_at": "2026-08-15T14:06:31Z",
+      "gap": "規範の設計解非依存性（ツール置換で規範が失われるか）を検める機構が索引に無い。",
+      "confidence": "medium",
+      "assigned_at": "2026-08-15T18:13:37Z",
       "assigned_by": {
         "model": "claude-opus-5",
         "effort": "high",
-        "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
-        "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+        "prompt_sha256": "87fe69ac4511eee5d24ddbc6da34b90bb9fcbd7310fb5c25ec0d64563d400812",
+        "index_sha256": "1c2ac94f1d99b52b148024cd5ba4b4195865add7ad498bbfe6fed9093fed01f9",
         "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
         "category_sha256": {
-          "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+          "documents": "06976e642bee0dd769896682acca347253188c23880ff388a0ad67b12a46e08b",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
           "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
@@ -11533,7 +12483,7 @@
           "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
         },
         "category_counts": {
-          "documents": 306,
+          "documents": 307,
           "audit_checks": 40,
           "linter_codes": 24,
           "scripts": 31,
@@ -11541,7 +12491,7 @@
           "hooks": 7,
           "skills": 8
         },
-        "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+        "git_sha": "fc3b9709ead18a215bf49ef342c2d10174000973"
       }
     },
     {
@@ -11841,26 +12791,26 @@
       "category": "試験設計",
       "source_lines": "L993-L993",
       "disposition": "対応計画あり",
-      "reason": "実行系評価を開発専用レーンへ隔離し配布物へ依存を持ち込まない決定（ADR-114）、試験は実時計を読まず固定を機械が要求する決定（ADR-094）、試験走行の証跡（SPEC-028）、CI 定義への依存の明示（EXT-004）と全件検査の CI 委譲（ADR-046）が在り、試験・CI 側の個別の堅牢化は取られている。しかし試験環境を別のコントロールストラクチャとして立て、そこ固有のハザードと逸脱を解析する枠は索引に無い。",
+      "reason": "試験環境に固有の危険のうち一点は機械が守っている（試験は実時計を読まない・固定を機械が要求する ADR-094、コード層の検算 code-audit.py と test_code_audit.py）。評価の実行系は開発専用レーンへ隔離され配布物へ依存を持ち込まない(ADR-114)、導入先への無影響も決めてある(ADR-047)。だが CI・サンドボックス自体を統治対象として、そこ固有の逸脱を洗う解析は索引に無い。",
       "evidence": [
-        "ADR-114",
         "ADR-094",
-        "SPEC-028",
-        "EXT-004",
-        "ADR-046"
+        "plugin/scripts/code-audit.py",
+        "plugin/tests/test_code_audit.py",
+        "ADR-114",
+        "ADR-047"
       ],
-      "recheck_trigger": "CI・サンドボックス環境を対象にした逸脱解析の台帳や検査が新設されたとき。",
-      "gap": "試験・CI 環境固有のハザード解析（環境差に起因する統治木の破損経路の列挙）を要求・検査する機構が無い。",
+      "recheck_trigger": "CI・サンドボックス環境の自動修正が本番の正本を書き換える経路を検める検査または解析文書が索引に現れたとき。",
+      "gap": "押さえられているのは実時計など一点で、試験環境の統制構造を対象にした危険の洗い出し（環境差による本番規範の書き換え経路）が無い。",
       "confidence": "medium",
-      "assigned_at": "2026-08-15T14:06:31Z",
+      "assigned_at": "2026-08-15T18:13:37Z",
       "assigned_by": {
         "model": "claude-opus-5",
         "effort": "high",
-        "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
-        "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+        "prompt_sha256": "87fe69ac4511eee5d24ddbc6da34b90bb9fcbd7310fb5c25ec0d64563d400812",
+        "index_sha256": "1c2ac94f1d99b52b148024cd5ba4b4195865add7ad498bbfe6fed9093fed01f9",
         "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
         "category_sha256": {
-          "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+          "documents": "06976e642bee0dd769896682acca347253188c23880ff388a0ad67b12a46e08b",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
           "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
@@ -11869,7 +12819,7 @@
           "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
         },
         "category_counts": {
-          "documents": 306,
+          "documents": 307,
           "audit_checks": 40,
           "linter_codes": 24,
           "scripts": 31,
@@ -11877,7 +12827,7 @@
           "hooks": 7,
           "skills": 8
         },
-        "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+        "git_sha": "fc3b9709ead18a215bf49ef342c2d10174000973"
       },
       "reassessments": [
         {
@@ -12156,6 +13106,46 @@
             },
             "git_sha": "428469efbd0ed480d395be30b56cd8146e9fe5c3"
           }
+        },
+        {
+          "disposition": "対応計画あり",
+          "reason": "実行系評価を開発専用レーンへ隔離し配布物へ依存を持ち込まない決定（ADR-114）、試験は実時計を読まず固定を機械が要求する決定（ADR-094）、試験走行の証跡（SPEC-028）、CI 定義への依存の明示（EXT-004）と全件検査の CI 委譲（ADR-046）が在り、試験・CI 側の個別の堅牢化は取られている。しかし試験環境を別のコントロールストラクチャとして立て、そこ固有のハザードと逸脱を解析する枠は索引に無い。",
+          "evidence": [
+            "ADR-114",
+            "ADR-094",
+            "SPEC-028",
+            "EXT-004",
+            "ADR-046"
+          ],
+          "gap": "試験・CI 環境固有のハザード解析（環境差に起因する統治木の破損経路の列挙）を要求・検査する機構が無い。",
+          "confidence": "medium",
+          "assigned_at": "2026-08-15T14:06:31Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "f6626b47d5cf3f452c4ccb997799e5ef65c04a912c944ef47a4f80d483f89e42",
+            "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+            "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
+            "category_sha256": {
+              "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+              "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+              "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
+              "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
+              "test_files": "4ce7bbd9022f4aacb440cfccdb01bb9e15fead3fcfe0f68e23785ceb35c90aa3",
+              "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+              "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
+            },
+            "category_counts": {
+              "documents": 306,
+              "audit_checks": 40,
+              "linter_codes": 24,
+              "scripts": 31,
+              "test_files": 35,
+              "hooks": 7,
+              "skills": 8
+            },
+            "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+          }
         }
       ]
     },
@@ -12213,31 +13203,34 @@
       "category": "運用と保守",
       "source_lines": "L1001-L1001",
       "disposition": "対応計画あり",
-      "reason": "「保証が寄りかかる前提は想定として名指しし、失効の先行指標を併記する」ことは ADR-126 が決めており、ADR-144 は想定の観測を機械が追記すると定める。生存性の側では SPEC-021（統治ハートビート）と監査の guard_liveness_gap・ext_anchor_broken・source_drift が、外部アンカーの消失や監査の古びという「前提の崩れ」の一部を機械で挙げている。しかし原則が求める『運用中の先行指標を設定し、損失前に前提崩壊の時点を特定する』の中核 —— 各想定に先行指標が実際に書かれているか、その指標が観測され続けているかを機械が検める —— に対応する検査は、40 件の監査検査名にも 24 件のリンタ検査コードにも無い。当てはめ仮説が挙げる「空振り率・抑止率の継続監視」に至っては、ADR-050 が『ガードが拒否できる状態かは検出しない』と明記して非目標側に置いている。決定と仕様は在るが、それを働かせる機構が索引に無い部分が残るため、緑には倒さない。",
+      "reason": "索引には「保証が寄りかかる想定を想定として名指しし、失効の先行指標を併記する」という決定（ADR-126）と、想定の観測を機械が追記すると定めた決定（ADR-144）、期限が唯一の見張りなら期限を短くするという決定（ADR-086）、横断の退行監視の台帳（WATCH-001）が在る。前提の崩れを事後に挙げる機構も現に動いている：統治ハートビート（SPEC-021 / plugin/scripts/gov-heartbeat.py）が監査の鮮度・定例の期限・外部アンカーの存在を鼓動ごとに照合し、監査は外部アンカーの断絶（ext_anchor_broken）・宣言した出所の変化と不在（source_drift / source_missing）・鮮度切れ（stale_current, review_by_overrun）・ガードの生存の欠落（guard_liveness_gap）を挙げる。ここまでは機械が守っており、証拠も指せる。しかし原則が求めるのは「運用中の指標を、設計前提が崩れる時点を損失発生前に特定する目的で設定する」ことであり、索引の機構は前提の崩れの一部の面（外部アンカー・出所・期限）しか測っていない。当てはめ仮説が挙げる規則の空振り率・抑止率の継続監視に相当するものは索引に無く、むしろ ADR-050 が「ガードが拒否できる状態かは検出しない」と明記して機能カナリアを次の版へ分けている。よって一部しか果たしていないと見て「対応計画あり」とする。",
       "evidence": [
         "ADR-126",
         "ADR-144",
+        "ADR-086",
         "ADR-050",
         "SPEC-021",
-        "guard_liveness_gap",
+        "WATCH-001",
+        "plugin/scripts/gov-heartbeat.py",
         "ext_anchor_broken",
         "source_drift",
-        "plugin/scripts/gov-heartbeat.py",
-        "plugin/tests/test_liveness_capture.py",
-        "WATCH-001"
+        "source_missing",
+        "guard_liveness_gap",
+        "review_by_overrun",
+        "plugin/tests/test_liveness_capture.py"
       ],
-      "recheck_trigger": "想定の先行指標の記載や観測を検める監査検査名（または対応するリンタ検査コード・スクリプト）が索引に現れたら、この割当を見直す。",
-      "gap": "(1) ADR-126 が要求する『想定に先行指標を併記する』ことを強制・検出する監査検査／リンタ検査コードが索引に無い（想定が指標を欠いたまま積まれても機械は黙る）。(2) ADR-144 の『想定の観測は機械が追記する』を果たすスクリプト名・検査名が索引に現れない。(3) 規則の空振り率・誤検知率のような指標の継続監視は存在せず、ADR-050 が拒否能力の検出を明示的に非目標としている。既存の guard_liveness_gap・ext_anchor_broken・SPEC-021 は外部アンカーと鮮度という一部の前提しか覆っていない。",
+      "recheck_trigger": "ADR-126 の想定台帳の先行指標が実際に観測されているかを検める監査の検査名（または機能カナリアの実装）が索引に現れたとき。",
+      "gap": "想定（ADR-126）の先行指標が実際に観測され失効を告げているかを機械が検める検査が索引に無い。規則が長期間ヒットゼロである／実効を失っているかを測る指標（空振り率・抑止率）は、ADR-050 が「拒否できる状態かは検出しない」と明記して機能カナリアを次の版へ送っており未実装。既存の ext_anchor_broken・source_drift・stale_current・guard_liveness_gap は前提の崩れの一部の面しか覆っていない。",
       "confidence": "medium",
-      "assigned_at": "2026-08-15T14:06:31Z",
+      "assigned_at": "2026-08-15T18:13:37Z",
       "assigned_by": {
         "model": "claude-opus-5",
         "effort": "high",
-        "prompt_sha256": "f34e9a7ffae5359c92b299ab5ea03f18cf4db048f49fa639e3d721b02e95a240",
-        "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+        "prompt_sha256": "908d183816b1092c4a7bd1e8a4d66d9d0bb3029f88a69aabc0524709c230c040",
+        "index_sha256": "1c2ac94f1d99b52b148024cd5ba4b4195865add7ad498bbfe6fed9093fed01f9",
         "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
         "category_sha256": {
-          "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+          "documents": "06976e642bee0dd769896682acca347253188c23880ff388a0ad67b12a46e08b",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
           "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
@@ -12246,7 +13239,7 @@
           "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
         },
         "category_counts": {
-          "documents": 306,
+          "documents": 307,
           "audit_checks": 40,
           "linter_codes": 24,
           "scripts": 31,
@@ -12254,7 +13247,7 @@
           "hooks": 7,
           "skills": 8
         },
-        "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+        "git_sha": "fc3b9709ead18a215bf49ef342c2d10174000973"
       },
       "reassessments": [
         {
@@ -12555,6 +13548,51 @@
               "skills": 8
             },
             "git_sha": "428469efbd0ed480d395be30b56cd8146e9fe5c3"
+          }
+        },
+        {
+          "disposition": "対応計画あり",
+          "reason": "「保証が寄りかかる前提は想定として名指しし、失効の先行指標を併記する」ことは ADR-126 が決めており、ADR-144 は想定の観測を機械が追記すると定める。生存性の側では SPEC-021（統治ハートビート）と監査の guard_liveness_gap・ext_anchor_broken・source_drift が、外部アンカーの消失や監査の古びという「前提の崩れ」の一部を機械で挙げている。しかし原則が求める『運用中の先行指標を設定し、損失前に前提崩壊の時点を特定する』の中核 —— 各想定に先行指標が実際に書かれているか、その指標が観測され続けているかを機械が検める —— に対応する検査は、40 件の監査検査名にも 24 件のリンタ検査コードにも無い。当てはめ仮説が挙げる「空振り率・抑止率の継続監視」に至っては、ADR-050 が『ガードが拒否できる状態かは検出しない』と明記して非目標側に置いている。決定と仕様は在るが、それを働かせる機構が索引に無い部分が残るため、緑には倒さない。",
+          "evidence": [
+            "ADR-126",
+            "ADR-144",
+            "ADR-050",
+            "SPEC-021",
+            "guard_liveness_gap",
+            "ext_anchor_broken",
+            "source_drift",
+            "plugin/scripts/gov-heartbeat.py",
+            "plugin/tests/test_liveness_capture.py",
+            "WATCH-001"
+          ],
+          "gap": "(1) ADR-126 が要求する『想定に先行指標を併記する』ことを強制・検出する監査検査／リンタ検査コードが索引に無い（想定が指標を欠いたまま積まれても機械は黙る）。(2) ADR-144 の『想定の観測は機械が追記する』を果たすスクリプト名・検査名が索引に現れない。(3) 規則の空振り率・誤検知率のような指標の継続監視は存在せず、ADR-050 が拒否能力の検出を明示的に非目標としている。既存の guard_liveness_gap・ext_anchor_broken・SPEC-021 は外部アンカーと鮮度という一部の前提しか覆っていない。",
+          "confidence": "medium",
+          "assigned_at": "2026-08-15T14:06:31Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "f34e9a7ffae5359c92b299ab5ea03f18cf4db048f49fa639e3d721b02e95a240",
+            "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+            "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
+            "category_sha256": {
+              "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+              "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+              "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
+              "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
+              "test_files": "4ce7bbd9022f4aacb440cfccdb01bb9e15fead3fcfe0f68e23785ceb35c90aa3",
+              "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+              "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
+            },
+            "category_counts": {
+              "documents": 306,
+              "audit_checks": 40,
+              "linter_codes": 24,
+              "scripts": 31,
+              "test_files": 35,
+              "hooks": 7,
+              "skills": 8
+            },
+            "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
           }
         }
       ]
@@ -13298,31 +14336,30 @@
       "title": "上位ハザードを運用フェーズ別に詳細化する",
       "category": "安全性と危険要因",
       "source_lines": "L1257-L1257",
-      "disposition": "対応計画あり",
-      "reason": "運用局面ごとに扱いを分ける決定は現に在る：導入・据付の局面は ADR-041（導入直後を警告で始めない・状態の種蒔き）と ADR-046（初回監査前は警告でなく案内）、版上げ・オーバーホールの局面は ADR-066（版の切替の検出と Level 昇格の一度きりの案内）と ADR-019（.docs-level による自主停止）、移行の局面は ADR-034（移行の台帳を分類の記録から導出）と ADR-065（紐づけ整理のキャンペーン駆動）、統治木が無い土地という局面は ADR-036・ADR-103、誤りの是正という保守の局面は ADR-044（不変の ADR の正規の直し方）が担う。しかし原則が求めているのは『上位ハザードを局面別のサブハザードへ分割する』という解析の作業そのものであり、索引にはその分割の成果物（局面別に割った失敗モードの一覧）も、局面ごとに検査が掛かっているかを検める機構も無い。個々の局面決定は在っても、想定 oracle が言う『移行・緊急修正・保守の経路が監査対象外になっていないか』を機械が検める検査は 40 件の監査検査名に見当たらない。",
+      "disposition": "非該当で理由あり",
+      "reason": "境界の根拠は ADR-081（検証は証拠の提示である。証跡の形だけを採り、ハザード層と過程適合は採らない）に在る。この体系は保証の枠組みから「証跡の形」だけを取り込むと決めており、危険源を階層として持つ層（ハザード層）を意図して採っていない。本原則は「上位ハザードを運用フェーズ別のサブハザードへ分割する」という、ハザード層が体系内に在ることを前提とした細分化の手順であるため、分割すべき上位ハザードという対象そのものが doctrine には存在しない。単に語彙が違うだけではない：doctrine が持つのは要求×発火経路×証跡の被覆（SPEC-025）と試験走行の証跡（SPEC-028）であり、危険源の分解木ではない。なお運用局面の差は別の軸で扱われている——統治木の有無（ADR-036 / ADR-103）、段差 .docs-level（ADR-019）、導入直後（ADR-041 / ADR-046）、版の切替と Level 昇格（ADR-066）——が、これらはハザードの細分化ではなく発火条件の場合分けであり、話題が近いだけの機構を証拠にはしない。",
       "evidence": [
+        "ADR-081",
+        "SPEC-025",
+        "SPEC-028",
+        "ADR-019",
         "ADR-041",
         "ADR-046",
-        "ADR-066",
-        "ADR-034",
-        "ADR-044",
         "ADR-036",
-        "ADR-019",
-        "SPEC-025",
-        "TEST-025"
+        "ADR-066"
       ],
-      "recheck_trigger": "運用局面別に割った失敗モードの正本（または局面ごとの被覆欠落を挙げる監査検査名）が索引に現れたら、この割当を見直す。",
-      "gap": "上位の失敗モードを運用局面（通常編集・移行/リファクタ・緊急修正・据付/版上げ・保守点検）へ割った正本が索引に無く、局面ごとの被覆の欠落を挙げる監査検査も無い。SPEC-025（被覆マトリクス）は統治要求×発火経路×証跡の軸であって運用局面の軸を持たない。既存の ADR-041/046/066/034/044 は個別の局面への対処であり、分割の網羅を担保しない。",
+      "recheck_trigger": "ADR-081 が superseded となり、ハザード層（危険源の階層分解）を体系に採る決定が landed したとき。",
+      "gap": null,
       "confidence": "medium",
-      "assigned_at": "2026-08-15T14:06:31Z",
+      "assigned_at": "2026-08-15T18:13:37Z",
       "assigned_by": {
         "model": "claude-opus-5",
         "effort": "high",
-        "prompt_sha256": "f34e9a7ffae5359c92b299ab5ea03f18cf4db048f49fa639e3d721b02e95a240",
-        "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+        "prompt_sha256": "908d183816b1092c4a7bd1e8a4d66d9d0bb3029f88a69aabc0524709c230c040",
+        "index_sha256": "1c2ac94f1d99b52b148024cd5ba4b4195865add7ad498bbfe6fed9093fed01f9",
         "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
         "category_sha256": {
-          "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+          "documents": "06976e642bee0dd769896682acca347253188c23880ff388a0ad67b12a46e08b",
           "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
           "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
           "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
@@ -13331,7 +14368,7 @@
           "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
         },
         "category_counts": {
-          "documents": 306,
+          "documents": 307,
           "audit_checks": 40,
           "linter_codes": 24,
           "scripts": 31,
@@ -13339,7 +14376,7 @@
           "hooks": 7,
           "skills": 8
         },
-        "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
+        "git_sha": "fc3b9709ead18a215bf49ef342c2d10174000973"
       },
       "reassessments": [
         {
@@ -13626,6 +14663,50 @@
               "skills": 8
             },
             "git_sha": "428469efbd0ed480d395be30b56cd8146e9fe5c3"
+          }
+        },
+        {
+          "disposition": "対応計画あり",
+          "reason": "運用局面ごとに扱いを分ける決定は現に在る：導入・据付の局面は ADR-041（導入直後を警告で始めない・状態の種蒔き）と ADR-046（初回監査前は警告でなく案内）、版上げ・オーバーホールの局面は ADR-066（版の切替の検出と Level 昇格の一度きりの案内）と ADR-019（.docs-level による自主停止）、移行の局面は ADR-034（移行の台帳を分類の記録から導出）と ADR-065（紐づけ整理のキャンペーン駆動）、統治木が無い土地という局面は ADR-036・ADR-103、誤りの是正という保守の局面は ADR-044（不変の ADR の正規の直し方）が担う。しかし原則が求めているのは『上位ハザードを局面別のサブハザードへ分割する』という解析の作業そのものであり、索引にはその分割の成果物（局面別に割った失敗モードの一覧）も、局面ごとに検査が掛かっているかを検める機構も無い。個々の局面決定は在っても、想定 oracle が言う『移行・緊急修正・保守の経路が監査対象外になっていないか』を機械が検める検査は 40 件の監査検査名に見当たらない。",
+          "evidence": [
+            "ADR-041",
+            "ADR-046",
+            "ADR-066",
+            "ADR-034",
+            "ADR-044",
+            "ADR-036",
+            "ADR-019",
+            "SPEC-025",
+            "TEST-025"
+          ],
+          "gap": "上位の失敗モードを運用局面（通常編集・移行/リファクタ・緊急修正・据付/版上げ・保守点検）へ割った正本が索引に無く、局面ごとの被覆の欠落を挙げる監査検査も無い。SPEC-025（被覆マトリクス）は統治要求×発火経路×証跡の軸であって運用局面の軸を持たない。既存の ADR-041/046/066/034/044 は個別の局面への対処であり、分割の網羅を担保しない。",
+          "confidence": "medium",
+          "assigned_at": "2026-08-15T14:06:31Z",
+          "assigned_by": {
+            "model": "claude-opus-5",
+            "effort": "high",
+            "prompt_sha256": "f34e9a7ffae5359c92b299ab5ea03f18cf4db048f49fa639e3d721b02e95a240",
+            "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d",
+            "rubric_sha256": "08a22e549b1b376496ce6e8d0e9978f7bc7e115dbba050f82e1ec78d01d81fde",
+            "category_sha256": {
+              "documents": "15b438cc3b72a98752b40812fa02525bce3a29c9ce63e05f2ba6ad266272ae69",
+              "audit_checks": "8b30e00e5a29738f48e0e4950a228343ef7d85de417cde381b742816b9dee4cb",
+              "linter_codes": "90b87fa1e64840b05e4b6266783090ce59322eeebc808c97521c212ff3754e16",
+              "scripts": "d2c4580f20f8c489f5fab1134281ed8e2496194e0c032f214ee1beb5544ad34a",
+              "test_files": "4ce7bbd9022f4aacb440cfccdb01bb9e15fead3fcfe0f68e23785ceb35c90aa3",
+              "hooks": "7ab7557797d721a57b728802ea78410cb691b3e13708a14afeeda0af4580435c",
+              "skills": "ca6ec4a76dc9298ea209107ae2b63dd649791a601aa38ac9f6f671da3a8905ba"
+            },
+            "category_counts": {
+              "documents": 306,
+              "audit_checks": 40,
+              "linter_codes": 24,
+              "scripts": 31,
+              "test_files": 35,
+              "hooks": 7,
+              "skills": 8
+            },
+            "git_sha": "1e5a8bb0b7be7b3cf75027ca70462b348706b4b8"
           }
         }
       ]
@@ -13977,5 +15058,5 @@
       }
     }
   ],
-  "index_sha256": "45c489123e745646709c319cde4f61a0944c0897f54cdf672ef875f556a8077d"
+  "index_sha256": "1c2ac94f1d99b52b148024cd5ba4b4195865add7ad498bbfe6fed9093fed01f9"
 }
