@@ -2432,6 +2432,65 @@
       "state": "pending",
       "note": "ADR-139 の独立検証の実施。未実施（ledger/verify に INC-029 の記録は無い）。なお試験の合計は当時の 1267 件から 1432 件へ増えている。fixed:true にしない現在の扱いは維持されている。",
       "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の読みと独立オラクルの突き合わせ）"
+    },
+    {
+      "incident_id": "INC-030-assurance-lane-not-gated-by-ci",
+      "index": 0,
+      "state": "pending",
+      "note": "対象網羅のメタ検査。未実装だが、**推奨が求める差分を一度手で取った。**検査資産を三分すると: CI が名指す 8 件・試験が触れる 35 件・**どちらでもない 2 件**。(a) assurance/harness/smoke.py —— 文書と orchestrator から名指されるが試験ファイルが無い。実 SDK と credential を要するので CI では走らせられない（理由付き除外の候補。CI で走らせるなら『外部費用や credential』の所有者判断に触れる）。(b) scripts/consistency-reminder.py —— .claude/settings.local.json に UserPromptSubmit として配線され**毎ターン走る**。配布物の hooks.json には無く、試験も CI も無い。壊れても沈黙する経路であり、INC-032（hook の境界が沈黙して開く）と同じ族である。**この測定の途中で私の照合が一度誤った** —— formalize.py を『どちらでもない』に数えたが、test_formalize.py が実在した。直に確かめて 3 件から 2 件へ直した。メタ検査を実装するときは、この誤り方（照合の側が漏らす）自体が罠になる。",
+      "evidence_ref": ".github/workflows/checks.yml",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の走査と実物確認）"
+    },
+    {
+      "incident_id": "INC-030-assurance-lane-not-gated-by-ci",
+      "index": 1,
+      "state": "pending",
+      "note": "統制の新設・改廃に対して門への接続を着地条件とする手順。未実装 —— orchestrator の validate に『門のどの段で走るか』を検める段は無い（grep で不在を確認）。#0 のメタ検査が在って初めて『接続された』を機械で言えるので、#0 が先。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の走査と実物確認）"
+    },
+    {
+      "incident_id": "INC-030-assurance-lane-not-gated-by-ci",
+      "index": 2,
+      "state": "pending",
+      "note": "変異注入で門が『実際に止められる』ことを継続して確かめる。未実装。現在の attack_evaluator が攻めるのは**評価器**であって門ではない。門への変異注入（レーン試験を故意に壊して CI が赤を返すか）は別の機構が要る。なお本セッションで、門が実際に止めた実例が二度在る（INC-045 の本体試験の赤・release-check が __pycache__ を捕まえた件）。これは偶発の観測であって継続の測定ではない。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の走査と実物確認）"
+    },
+    {
+      "incident_id": "INC-030-assurance-lane-not-gated-by-ci",
+      "index": 3,
+      "state": "pending",
+      "note": "台帳の証拠記述に『門のどの段で走るか』の欄を必須化する。未実装 —— recommendation-status の行に該当の欄は無い（evidence_ref はポインタであって段ではない）。遡って埋める 4 件の特定も未着手。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の走査と実物確認）"
+    },
+    {
+      "incident_id": "INC-030-assurance-lane-not-gated-by-ci",
+      "index": 4,
+      "state": "pending",
+      "note": "安全上の想定を決定事実として記録し、先行指標を対で書く。**部分的に在る** —— assurance/ledger/assumptions.json に 6 件（ASM-001〜006）が在り、いずれも先行指標を持つ。ただし推奨が挙げる想定（レーンの試験が退行を止める・ガードが違反を拒む・注入が統治を生かす）はこの 6 件に含まれていない。**残っているのは『門そのものについての想定』である。**",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の走査と実物確認）"
+    },
+    {
+      "incident_id": "INC-030-assurance-lane-not-gated-by-ci",
+      "index": 5,
+      "state": "owner",
+      "note": "map-draft-check.py の接続方式。gitignore 対象の下書きに対する fixture を正本側へ置くか、検査対象の定義を正本側へ移すか、接続しないと決めて理由を残すか。評価者は配布境界と復旧不能な設計判断に触れると申告しており、実際 fixture を正本へ置く案は配布物の中身を変える。類型は『配布境界や保証範囲の変更』。",
+      "owner_decision_kind": "配布境界や保証範囲の変更",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の走査と実物確認）"
+    },
+    {
+      "incident_id": "INC-030-assurance-lane-not-gated-by-ci",
+      "index": 6,
+      "state": "pending",
+      "note": "ADR-139 の独立検証。未実施（ledger/verify に INC-030 の記録は無い）。合格条件（変異注入で赤になること・clean env で走ること）を事前に書く、という順は #2 の機構が先に要る。fixed:true にしない現在の扱いは維持されている。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の走査と実物確認）"
+    },
+    {
+      "incident_id": "INC-030-assurance-lane-not-gated-by-ci",
+      "index": 7,
+      "state": "pending",
+      "note": "hook 群の『自分が動いていることを体系側から検出しない』共通原因の個別調査。未実施。**#0 の測定でその一例が出た** —— consistency-reminder.py は毎ターン走るが、試験も CI も無く、壊れても沈黙する。NONGOAL-001 が受容している範囲（ガードが実際に違反を拒否できることは検出しない）と、この受容が今も成り立つかの再評価は未着手である。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の走査と実物確認）"
     }
   ]
 }
