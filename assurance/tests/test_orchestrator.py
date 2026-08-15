@@ -703,8 +703,17 @@ class IncidentEvidenceGateTest(unittest.TestCase):
 
     def test_resolving_ref_is_green(self):
         self.assertEqual(self._gate(
-            {"id": "INC-099-x", "evidence_refs": ["good", "bad"]},
+            {"id": "INC-099-x", "evidence_refs": ["good"]},
             resolve=lambda ptr: "file" if ptr == "good" else None), [])
+
+    def test_a_resolving_ref_no_longer_excuses_the_others(self):
+        """ADR-166 で規則が変わった。以前は ["good", "bad"] が緑だった ——
+        『一つでも解決すれば緑』は証拠の宣言としての十分性の判定であって、
+        書いた参照の実在を免除する意味ではない（INC-041）。"""
+        problems = self._gate(
+            {"id": "INC-099-x", "evidence_refs": ["good", "bad"]},
+            resolve=lambda ptr: "file" if ptr == "good" else None)
+        self.assertTrue(any("ADR-166" in p for p in problems), problems)
 
     def test_declared_external_kind_is_green(self):
         for kind in orchestrator.EXTERNAL_EVIDENCE_KINDS:

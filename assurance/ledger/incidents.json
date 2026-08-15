@@ -784,8 +784,8 @@
       "evidence_kind": "measurement",
       "evidence_note": "同一セッションで二度実測した。(1) 本再監査後半の文書・技能・試験の追加で 265 件が古び、再判定に約 83 分。(2) 文書 2 件だけの追加で 257 件が古び、再判定に約 78 分。(2) は文書以外を一切変えていないので、文書軸だけの効果である。",
       "evidence_refs": [
-        "assurance/harness/system_index.py の build（category_sha256 は種別ごとに全件を畳む）",
-        "doctrine_docs/packaging/decisions/ADR-134-scoped-staleness.md",
+        "assurance/harness/system_index.py",
+        "doctrine_docs/packaging/decisions/ADR-134-staleness-is-scoped-to-what-the-judgement-cited.md",
         "assurance/ledger/catalogs/cast-coverage.json"
       ],
       "impact": "文書を書くことに時間の税が掛かる。実測で 1 回の追加につき約 78〜83 分の再判定である。帰結は二つあり、どちらも安全側ではない。(a) 文書を足すのを避ける誘因が生まれる —— 統治の体系が文書化を罰する形になっている。(b) 税を払わずに済ませると古びが積み上がり、正本は MAP_COVERAGE を名指し続け、他の行動（REPRODUCE_RED 29 件・DISCOVER 42 件）が先頭に来ない。本再監査でも、終端の直前に 78 分を二度払った。ADR-134 の意図（『関係の無い変更が全件を古びさせる』のを止める）は、種別の粒度までしか実現していない。文書は最も件数が多く最も多く引かれる種別なので、そこに残った分が最も高くつく。",
@@ -797,7 +797,8 @@
       ],
       "cast_analysis": "done",
       "cast_analysis_ref": "assurance/ledger/cast/INC-040-document-axis-invalidates-wholesale.json",
-      "cast_analyzed_at": "2026-08-14T21:31:24Z"
+      "cast_analyzed_at": "2026-08-14T21:31:24Z",
+      "refs_repaired_2026-08-15": "ADR-166 の門を立てるにあたり、解決しない参照 2 件を実体へ直した。直す前の記録: [\"assurance/harness/system_index.py の build（category_sha256 は種別ごとに全件を畳む）\", \"doctrine_docs/packaging/decisions/ADR-134-scoped-staleness.md\", \"assurance/ledger/catalogs/cast-coverage.json\"]。前者は実在ファイルに和文の注釈を継ぎ足した形（注釈の内容は evidence_note に在る）。後者はこの名のファイルが存在したことがなく、実体は ADR-134-staleness-is-scoped-to-what-the-judgement-cited.md である。2026-08-15 の事故分析はこの修正の前の姿を見ており、記録された incident_sha256 は以後この行と食い違う。その指紋は書かれるだけで一度も照合されない（INC-041 の残余）。"
     },
     {
       "id": "INC-041-declared-evidence-skips-pointer-resolution",
@@ -818,7 +819,11 @@
       "residual": [
         "解決は実証ではない（既知。orchestrator の docstring と NONGOAL-001 第1項）。実在するファイルを引く捏造は本件の是正でも止まらない。止まるのは『実在しない名を引く』形だけである。",
         "自由文の evidence／evidence_note は今回も走査しない。偶然の一致を証拠と取り違えない設計（cast_analysis の docstring）を変えない。"
-      ]
+      ],
+      "cast_analysis": "done",
+      "cast_analysis_ref": "assurance/ledger/cast/INC-041-declared-evidence-skips-pointer-resolution.json",
+      "cast_analyzed_at": "2026-08-15T12:49:07Z",
+      "correction_2026-08-15": "本事象の当初の記述（2026-08-14）は、INC-040 が門を通った理由を 『evidence_kind の早期 continue』一つに帰していた。これは不完全で、自分の仮説を自分で反証した。実際には独立した二つの経路が、それぞれ単独で通す。(1) kind が語彙に在れば continue（refs を一切見ない）。(2) その分岐を消しても、判定は `if not any(resolve(r) for r in refs)` であり、**一つでも解決すれば緑**になる。INC-040 の refs 3 件のうち `assurance/ledger/catalogs/cast-coverage.json` は解決するので、(1) を直すだけではこの事象は今も検出されない。凍結されている規則は assurance/tests/test_orchestrator.py の test_resolving_ref_is_green。したがって是正は『宣言による免除』と『部分解決の許容』の両方を対象にする。2026-08-15 の CAST 分析は (1) だけを見ており（入力が当初の記述だったため）、(2) は分析の射程外である —— 評価者の見落としではなく、こちらの入力の不足による。"
     }
   ]
 }

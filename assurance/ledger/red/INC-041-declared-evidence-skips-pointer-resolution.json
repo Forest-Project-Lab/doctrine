@@ -1,0 +1,35 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "reproduce-red",
+  "incident_id": "INC-041-declared-evidence-skips-pointer-resolution",
+  "generated_at": "2026-08-15T13:05:00Z",
+  "git_sha": "ca8ac5a",
+  "phase": "before-fix",
+  "command": "python3 -m unittest discover -s assurance/tests -p test_evidence_ref_resolution_gap.py",
+  "returncode": 1,
+  "expect": "修正前に FAIL すること（最初から緑は再現と認めない）",
+  "observed_failures": [
+    "FAIL: test_declared_kind_still_checks_the_refs_that_were_written — evidence_kind を宣言した行の evidence_refs は一度も見られない（problems は []）",
+    "FAIL: test_one_resolving_ref_does_not_excuse_the_others — 一つでも解決すれば残りの実在は問われない（problems は []）",
+    "FAIL: test_the_record_that_actually_slipped_through_is_caught — INC-040 を積まれた当時の姿のまま通すと problems は []",
+    "ERROR: test_a_flaw_whose_evidence_ref_does_not_resolve_is_marked — verify_cast_analysis に resolve の口が無い（TypeError）",
+    "ERROR: test_a_resolving_evidence_ref_leaves_no_mark — 同上（TypeError）"
+  ],
+  "green_before_fix": [
+    "test_declaring_a_kind_without_refs_stays_green — 免除の単位を『体系外の実体』に保つ側。是正後も緑のままであることを要求する（過剰是正の歯止め）"
+  ],
+  "measured": {
+    "ran": 6,
+    "failures": 3,
+    "errors": 2,
+    "passed": 1,
+    "gate_rule_before": "kind in EXTERNAL_EVIDENCE_KINDS -> continue / else: not any(resolve(r) for r in refs)",
+    "flaw_check_before": "control_element_id と normative_refs のみ照合。evidence_ref は照合対象外",
+    "real_ledger_unresolved_rows": 1,
+    "days_undetected": 4
+  },
+  "two_independent_paths": "宣言による免除と部分解決の許容は独立で、どちらか一方だけを直しても INC-040 は検出されない。(1) を消しても (2) が cast-coverage.json の解決で通す。当初 INC-041 の記述は (1) だけを原因としていた。誤りは incidents.json の correction_2026-08-15 に記録した。",
+  "interaction_to_handle_at_fix": "既存の test_orchestrator.py::test_current_real_ledger_passes は『実台帳の全事象が門を通る』を要求する。是正が入ると INC-040 の 2 件の unresolved が problems に現れ、この試験が赤くなる。したがって FIX と同じ変更で INC-040 の参照を実体へ直す必要がある（`ADR-134-staleness-is-scoped-to-what-the-judgement-cited.md` または id 形の `ADR-134`、および `assurance/harness/system_index.py` から和文の注釈を外す）。その修正は評価器が見た incident_sha256 と食い違うが、その指紋は書かれるだけで一度も照合されない（INC-041 の射程）。",
+  "undecided": "赤へ倒すか助言へ倒すかは未決（分析の推奨#4。所有者判断の申告つき）。本試験は赤の形で凍結してある。ADR が助言を選ぶなら、判定の宛先をその channel へ移す。移すのは宛先であって『解決しない参照を surface する』という要件ではない。",
+  "note": "INC-041 の CAST 分析（2026-08-15・real-sdk・opus-5・high・$1.1797）の推奨#1 に従う。分析が指した形は『見逃しは検査の不足ではなく、検査結果と判定の間の接続の欠落』—— unresolved は既に算出されていた。"
+}

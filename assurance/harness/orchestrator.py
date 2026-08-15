@@ -1792,6 +1792,13 @@ def _validate_incident_evidence(incidents=None, resolve=None):
     - evidence_kind が体系の外の証拠として宣言されている
       （EXTERNAL_EVIDENCE_KINDS の語彙そのまま。語彙の外の語は赤）
 
+    **書いた参照は宣言の有無に関わらず全件が解決することを要す**（ADR-166）。
+    免除の単位は体系外の実体であって行ではない —— 宣言して refs を一つも
+    書かない行は緑のままだが、書いた refs が解決しないときは赤にし、どれが
+    解決しないかを名指しする。宣言が在れば refs を見ずに通す形は、実在しない
+    ADR の名を 4 日間座らせた（INC-040 → INC-041）。「一つでも解決すれば緑」も
+    独立に通していたので、両方を閉じないと当の 1 件が検出されない。
+
     索引が組めない環境では refs の解決を判じられない。そのときは
     evidence_kind を持たない行だけを「確かめられない（UNKNOWN）」として
     報せる —— 前提の欠如で全件を赤に倒さない（緑へも倒さない）。
@@ -1826,22 +1833,29 @@ def _validate_incident_evidence(incidents=None, resolve=None):
                 "事象 %s の evidence_kind %r が語彙に無い（%s のいずれか）"
                 % (iid, kind, " / ".join(EXTERNAL_EVIDENCE_KINDS)))
             continue
-        if kind in EXTERNAL_EVIDENCE_KINDS:
-            continue
+        declared = kind in EXTERNAL_EVIDENCE_KINDS
         if not refs:
-            problems.append(
-                "事象 %s に証拠の宣言が無い（evidence_refs も evidence_kind も"
-                "無い。事象は台帳へ積む時点で証拠の宣言を要す。ADR-141）" % iid)
+            if not declared:
+                problems.append(
+                    "事象 %s に証拠の宣言が無い（evidence_refs も evidence_kind も"
+                    "無い。事象は台帳へ積む時点で証拠の宣言を要す。ADR-141）" % iid)
             continue
         if not index_ok:
-            problems.append(
-                "事象 %s の evidence_refs を確かめられない（索引が組めない環境。"
-                "UNKNOWN。evidence_kind の宣言も無い）" % iid)
+            if not declared:
+                problems.append(
+                    "事象 %s の evidence_refs を確かめられない（索引が組めない環境。"
+                    "UNKNOWN。evidence_kind の宣言も無い）" % iid)
             continue
-        if not any(resolve(r) for r in refs):
+        unresolved = [r for r in refs if not resolve(r)]
+        if unresolved and len(unresolved) == len(refs) and not declared:
             problems.append(
                 "事象 %s の evidence_refs がどれも解決しない（%s）。実在しない"
                 "機構を指す事象は台帳に積めない（ADR-141）" % (iid, refs[:3]))
+        elif unresolved:
+            problems.append(
+                "事象 %s の evidence_refs に解決しない参照が %d 件ある（%s）。"
+                "書いた参照は宣言の有無に関わらず全件が解決することを要す"
+                "（ADR-166）" % (iid, len(unresolved), unresolved[:3]))
     return problems
 
 
