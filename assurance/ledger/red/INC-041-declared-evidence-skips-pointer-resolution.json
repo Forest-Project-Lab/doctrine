@@ -1,0 +1,62 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "reproduce-red",
+  "incident_id": "INC-041-declared-evidence-skips-pointer-resolution",
+  "generated_at": "2026-08-15T13:05:00Z",
+  "git_sha": "ca8ac5a",
+  "phase": "before-fix",
+  "command": "python3 -m unittest discover -s assurance/tests -p test_evidence_ref_resolution_gap.py",
+  "returncode": 1,
+  "expect": "修正前に FAIL すること（最初から緑は再現と認めない）",
+  "observed_failures": [
+    "FAIL: test_declared_kind_still_checks_the_refs_that_were_written",
+    "FAIL: test_one_resolving_ref_does_not_excuse_the_others",
+    "FAIL: test_the_record_that_actually_slipped_through_is_caught"
+  ],
+  "green_before_fix": [
+    "test_declaring_a_kind_without_refs_stays_green — 免除の単位を『体系外の実体』に保つ側。是正後も緑のままであることを要求する（過剰是正の歯止め）"
+  ],
+  "measured": {
+    "ran": 5,
+    "failures": 3,
+    "errors": 0,
+    "passed": 2,
+    "gate_rule_before": "kind in EXTERNAL_EVIDENCE_KINDS -> continue / else: not any(resolve(r) for r in refs)",
+    "flaw_check_before": "control_element_id と normative_refs のみ照合。evidence_ref は照合対象外",
+    "real_ledger_unresolved_rows": 1,
+    "days_undetected": 4
+  },
+  "two_independent_paths": "宣言による免除と部分解決の許容は独立で、どちらか一方だけを直しても INC-040 は検出されない。(1) を消しても (2) が cast-coverage.json の解決で通す。当初 INC-041 の記述は (1) だけを原因としていた。誤りは incidents.json の correction_2026-08-15 に記録した。",
+  "interaction_to_handle_at_fix": "既存の test_orchestrator.py::test_current_real_ledger_passes は『実台帳の全事象が門を通る』を要求する。是正が入ると INC-040 の 2 件の unresolved が problems に現れ、この試験が赤くなる。したがって FIX と同じ変更で INC-040 の参照を実体へ直す必要がある（`ADR-134-staleness-is-scoped-to-what-the-judgement-cited.md` または id 形の `ADR-134`、および `assurance/harness/system_index.py` から和文の注釈を外す）。その修正は評価器が見た incident_sha256 と食い違うが、その指紋は書かれるだけで一度も照合されない（INC-041 の射程）。",
+  "undecided": "赤へ倒すか助言へ倒すかは未決（分析の推奨#4。所有者判断の申告つき）。本試験は赤の形で凍結してある。ADR が助言を選ぶなら、判定の宛先をその channel へ移す。移すのは宛先であって『解決しない参照を surface する』という要件ではない。",
+  "note": "INC-041 の CAST 分析（2026-08-15・real-sdk・opus-5・high・$1.1797）の推奨#1 に従う。分析が指した形は『見逃しは検査の不足ではなく、検査結果と判定の間の接続の欠落』—— unresolved は既に算出されていた。",
+  "measured_against_shipped_file": {
+    "note": "出す試験ファイルそのものを、修正前の樹（origin/main = ca8ac5a）へ複写して走らせた。worktree を切って測っている。**赤の記録と出す試験は同じ 5 件でなければならない** —— 初回の測定（下の superseded_measurement）は欠陥の側の試験 2 件を含む上位集合に対するもので、その 2 件は本反復では直さず試験ファイルからも外した。独立検証はこの食い違いを 『赤かった試験の削除による緑』と観測上区別できないと指摘した（FAIL）。指摘は正しい。",
+    "tree": "origin/main (ca8ac5a) + 出す試験ファイルのみ複写",
+    "ran": 5,
+    "failures": 3,
+    "errors": 0,
+    "passed": 2,
+    "red": [
+      "FAIL: test_declared_kind_still_checks_the_refs_that_were_written",
+      "FAIL: test_one_resolving_ref_does_not_excuse_the_others",
+      "FAIL: test_the_record_that_actually_slipped_through_is_caught"
+    ],
+    "green_before_and_after": [
+      "test_declaring_a_kind_without_refs_stays_green —— 免除の単位を体系外の実体に保つ側。是正で過剰に赤くしないことの歯止めであり、赤→緑の観測ではない。",
+      "test_the_real_ledger_has_no_unresolving_ref —— 修正前も緑（旧い門は参照を見なかったので problems は []）。是正後の緑は INC-040 の参照をデータとして直したことに依る。**機構が効いたことの証拠ではない**（独立検証の指摘#3。そのとおりである）。門が立った後に今の台帳がそれを通ることの確認として置く（ADR-166 の帰結）。"
+    ]
+  },
+  "superseded_measurement": {
+    "note": "初回（2026-08-15T13:05Z）の測定。欠陥の側の試験 2 件を含む上位集合に対するもの。その 2 件（verify_cast_analysis に resolve の口が無く TypeError）は本反復では直さず、試験ファイルからも外した。修正は一度に一つ（§2）。次の反復で入れる。",
+    "ran": 6,
+    "failures": 3,
+    "errors": 2,
+    "passed": 1,
+    "errors_deferred": [
+      "test_a_flaw_whose_evidence_ref_does_not_resolve_is_marked",
+      "test_a_resolving_evidence_ref_leaves_no_mark"
+    ]
+  },
+  "oracle_change_in_the_same_diff": "test_orchestrator.py::test_resolving_ref_is_green の入力を [\"good\", \"bad\"] から [\"good\"] へ変えた。独立検証は『oracle が同じ diff で弱められている』と指摘した。弱めたのではなく、ADR-166 が規則を変えたので旧い期待値が成り立たなくなった —— 同じ位置に、[\"good\", \"bad\"] が赤になることを要求する test_a_resolving_ref_no_longer_excuses_the_others を足してある。ただし『決定で規則を変えた』と『都合の悪い期待値を外した』は外から見て同じ形であり、区別を担保しているのは ADR-166 の存在だけである。これは残余として記す。"
+}

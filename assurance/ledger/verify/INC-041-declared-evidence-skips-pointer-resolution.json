@@ -1,0 +1,43 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "verify-record",
+  "target_id": "INC-041-declared-evidence-skips-pointer-resolution",
+  "generated_at": "2026-08-15T13:09:58Z",
+  "git_sha": "715d29ee47c547383e3db67421bde6fa98d71fa9",
+  "diff_range": "origin/main..HEAD",
+  "diff_sha256": "3ffcdd9a86ecabf54cfe06b746320458659c03d30692e4c6089a91728c573169",
+  "red_sha256": "918a39becad6ba1d0e32600b1f869e63c5ae293784ea7027b3c2fa14e26af9b3",
+  "prompt_sha256": "0f68d83a046d1816300c45ecf1fc4845b5ec9b77c63b09eee9ba9f015b8dc95f",
+  "model": "claude-opus-5",
+  "effort": "high",
+  "cost_usd": 0.929,
+  "record": {
+    "target_id": "INC-041-declared-evidence-skips-pointer-resolution",
+    "verdict": "UNKNOWN",
+    "reasons": [
+      "red_was_red=PASS: 赤の記録 measured_against_shipped_file は『出荷される試験ファイルそのもの』を ca8ac5a へ複写して測っており、ran=5/failures=3/passed=2 の構成が diff 内の試験ファイルに実在する 5 個の test メソッドと一致する。FAIL 3 件の名前（declared_kind_still_checks…／one_resolving_ref_does_not_excuse…／the_record_that_actually_slipped_through…）は post-fix の red_to_green 3 件と完全に一致する。前反復の食い違い（欠陥側 2 件を含む 6 件の上位集合）は superseded_measurement として分離開示され、赤の記録と出荷物の集合は同一になっている。",
+      "試験総数の算術も『赤かった試験の削除による緑』を否定する側に働く: 488 → 494（+6 = 新設試験ファイル 5 + test_orchestrator.py 新設 1）。既存試験の削除は差分の数として現れていない。",
+      "ただし赤・緑いずれの観測も実装者の自己申告であり、本レーンは再走行していない。以下の判定はこの記録の内的整合性の検査であって、独立再現ではない。",
+      "green_is_green=UNKNOWN（判定基準が同じ diff で書き換えられている）: test_orchestrator.py::test_resolving_ref_is_green の入力が [\"good\",\"bad\"] → [\"good\"] へ変えられており、これは既存 oracle の弱化と外形が同じである。緩和ではないことの担保は (a) 同位置に [\"good\",\"bad\"] が赤になることを要求する新設試験があり被覆が失われていないこと、(b) ADR-166 が規則変更を宣言していること、の二つだが、(b) の ADR 自身が同じ diff で新規導入されている。『決定で規則を変えた』と『都合の悪い期待値を外した』を区別する材料が diff の外に無い。よって PASS とは書けず、被覆が保たれている点で FAIL とも断じない。",
+      "green_is_green の第二の理由: test_the_real_ledger_has_no_unresolving_ref の緑は同じ diff の incidents.json（INC-040 の evidence_refs 2 件）のデータ修正に依るもので、機構の効きの観測ではない。実装者は not_a_red_to_green として明記しており、その申告は観測と整合する（修正前は旧い門が参照を見ないので緑、修正後はデータが直ったので緑）。既存 test_current_real_ledger_passes の緑も同じくデータ側に依存する。",
+      "single_change=PASS: 機能変更は orchestrator._validate_incident_evidence の 1 箇所に限られ、他（red／post-fix／CAST の記録、ADR-166、PROC-001、overview 索引）は同一主題の記録・文書である。incidents.json のデータ修正は第二の変更だが、既存試験との相互作用として赤の記録で事前に開示されており、かつ赤→緑を主張する 3 件はすべて fixture（INC_040_AS_FILED と偽 resolve）に対する試験で実台帳データに依存しない。したがって『どの変更が効いたか』は当の 3 件については分離できている。",
+      "diff のロジックは主張と整合して読める（declared でも unresolved があれば ADR-166 の problem、refs を書かない宣言行は緑、部分解決も赤、全件不解決かつ非宣言は従来の ADR-141 文言）。3 件の assert（ADR-134-scoped-staleness の名指し、ADR-166 文字列の存在）も分岐の文面と対応する。ただしこれは私のコード読解であって観測ではない。",
+      "主張の限定が一つ漏れている: 索引が組めない環境（not index_ok）では宣言行の refs は修正後も一切検められず、problem も UNKNOWN 報告も出ない。『宣言が在っても書いた refs は全件が解決することを検める』は索引が組める環境に限った成立である。ADR-141 の据え置きとして diff 内には書かれているが、claim の文面はこの限定を含んでいない。"
+    ],
+    "checks": {
+      "red_was_red": "PASS",
+      "green_is_green": "UNKNOWN",
+      "single_change": "PASS"
+    },
+    "residual_risks": [
+      "赤・緑のすべての測定が実装者の自己申告であり、本レーンによる独立再走行を行っていない（ran 数・returncode・FAIL 名はいずれも記録の中でのみ整合している）。",
+      "oracle 変更の正当性を担保する ADR-166 が同じ diff で導入されているため、規則変更と期待値緩和を外から区別できない（実装者も同旨を残余として記載）。",
+      "同じ diff で追加された CAST 分析ファイルの evidence_ref（例『事象の記録 INC-041 summary / fix_note(1)』）は解決しない形の文字列だが、新しい門は incidents.json の evidence_refs のみを対象とし、欠陥側（verify_cast_analysis）は射程外のまま。すなわち本 diff は、閉じた形と同型の未検査参照を台帳へ同時に足している。",
+      "INC-040 のデータ修正により記録済み incident_sha256 と行の実体が食い違う。その指紋は照合されないため機械には見えない（開示済み・INC-041 の残余）。",
+      "赤へ倒すか助言へ倒すかは未決（推奨#4、所有者判断）。門は赤の形で凍結されており、ADR が助言を選べば試験の宛先を変える必要がある。",
+      "宣言行の免除範囲が意図どおり狭まったことの正の証拠は、過剰是正の歯止め 1 件（緑→緑）と fixture 試験 3 件に限られ、実台帳に対する機構の効きを測る観測は存在しない。"
+    ]
+  },
+  "sdk_status": "PASS",
+  "reason": null
+}

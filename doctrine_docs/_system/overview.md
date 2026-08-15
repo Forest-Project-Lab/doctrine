@@ -5,7 +5,7 @@ type: OVERVIEW
 domain: _system
 status: current
 owner: render-projection
-updated: 2026-08-14
+updated: 2026-08-15
 llm_context: always
 sources: []
 ---
@@ -281,6 +281,7 @@ sources: []
 | ADR-150 | ADR | packaging | SessionEnd は監査を予約する（口には負債だけを置く） |
 | ADR-151 | ADR | packaging | 2026-08-13 の一括波（#294 の受け）の権限を恒久記録する |
 | ADR-152 | ADR | packaging | 外部読み口の進化規約 — 鍵の追加は互換、壊す変更は版上げ、診断は標準エラー |
+| ADR-166 | ADR | packaging | 書いた参照は宣言の有無に関わらず全件が解決することを要し、免除の単位は体系外の実体に戻す |
 | CHANGE-001 | CHANGE | packaging | 導入済みプラグインの版の遅れを生存性として照合する |
 | CHANGE-002 | CHANGE | packaging | リリースの整合を CI の門で検める — 変更履歴の書き忘れを止める |
 | CHANGE-005 | CHANGE | packaging | 不具合の兆候を記録し、承認を経た issue 報告を促す |

@@ -1,0 +1,42 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "post-fix-observation",
+  "target_id": "INC-041-declared-evidence-skips-pointer-resolution",
+  "generated_at": "2026-08-15T13:45:00Z",
+  "tree": "62313ff (本 PR の HEAD)",
+  "commands": [
+    "python3 -m unittest discover -s assurance/tests -p test_evidence_ref_resolution_gap.py",
+    "python3 -m unittest discover -s assurance/tests -p test_orchestrator.py",
+    "python3 -m unittest discover -s assurance/tests"
+  ],
+  "results": [
+    {
+      "command": "test_evidence_ref_resolution_gap.py",
+      "ran": 5,
+      "returncode": 0,
+      "detail": "赤で FAIL していた 3 件が ok。緑だった 2 件は緑のまま（過剰是正なし）"
+    },
+    {
+      "command": "test_orchestrator.py",
+      "ran": 109,
+      "returncode": 0,
+      "detail": "既存の門の試験一式。ADR-166 で書き換えた test_resolving_ref_is_green と、新設の test_a_resolving_ref_no_longer_excuses_the_others を含む"
+    },
+    {
+      "command": "assurance/tests 全件",
+      "ran": 494,
+      "returncode": 0,
+      "detail": "修正前は 488 件。差の 6 件は新設 5 件と test_orchestrator.py の新設 1 件"
+    }
+  ],
+  "red_to_green": [
+    "test_declared_kind_still_checks_the_refs_that_were_written: FAIL -> ok",
+    "test_one_resolving_ref_does_not_excuse_the_others: FAIL -> ok",
+    "test_the_record_that_actually_slipped_through_is_caught: FAIL -> ok"
+  ],
+  "not_a_red_to_green": [
+    "test_declaring_a_kind_without_refs_stays_green: ok -> ok（過剰是正の歯止め）",
+    "test_the_real_ledger_has_no_unresolving_ref: ok -> ok。修正前の緑は旧い門が参照を見なかったことに依り、修正後の緑は INC-040 の参照をデータとして直したことに依る。機構の効きを測る観測ではない。"
+  ],
+  "known_gap": "欠陥の側（verify_cast_analysis が evidence_ref を照合しない同型）は直していない。その赤は superseded_measurement に残してあり、次の反復で扱う。"
+}

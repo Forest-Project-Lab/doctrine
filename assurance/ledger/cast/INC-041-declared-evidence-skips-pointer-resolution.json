@@ -1,0 +1,710 @@
+{
+  "accepted_flaws": [
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "事象の記録によれば、_validate_incident_evidence は evidence_kind が語彙に在れば即 continue し、その行の evidence_refs を一切見ない。evidence_kind の宣言が意味するのは『証拠が体系の外に在る』ことだが、実装上の免除範囲は『この行の参照検査を全部飛ばす』になっている。宣言の意味範囲（体系外の実体を体系内の索引で照合できない）と、免除の作用範囲（体系内の参照文字列の解決可否まで免除）が食い違う。免除の単位が『宣言』ではなく『行』になっている。",
+      "evidence_ref": "事象の記録 INC-041 summary / fix_note(1)（実物のコードは未確認。unknowns#1 参照）",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "宣言された設計と実動作の突合",
+        "公式設計と実動作の二重評価",
+        "designer-vs-operator-mental-model"
+      ],
+      "why_it_seemed_adequate": "体系の外に在る証拠を体系内の索引で照合できないのは事実であり、そこで赤を立てないことは、原理的に満たせない要求を課さないという正しい配慮だった。宣言の意味と免除の作用範囲は同じ一つの分岐で表現されるため、コード上では両者が区別として現れない。宣言行が少数のうちは、免除の広さが観測されるほどの材料も出なかった。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "cast_analysis.incident_evidence_status は unresolved を 2 件計上していた。同じ走行で verifiable は evidence_kind=measurement によって True になった。二つの手掛かりが同一対象について反対のことを述べているのに、突き合わせる規約が無く、下流の門は verifiable だけを読んだ。既に算出されている『解決しない参照が在る』という情報が、要約値によって埋没している。",
+      "evidence_ref": "事象の記録 INC-041 detected_by",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "リスク情報の不透明な集約禁止",
+        "要約統計偏重による傾向情報の喪失",
+        "情報システム保有と有用性の乖離"
+      ],
+      "why_it_seemed_adequate": "verifiable は『検証の道筋が在るか』を表す語として設計され、evidence_kind の宣言はまさにその道筋の宣言だった。unresolved は別系統が出す詳細で、両者は用途が違うものとして並存していた。個々には正しい二つの値が、同じ判断に同時に読まれる場面が想定されていない。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "欠陥の側でも同じ形が現れる。prompts.verify_cast_analysis は control_element_id と normative_refs を照合するが evidence_ref を照合しない。照合器の対象が『参照の集合』ではなく『特定フィールドの集合』として定義されているため、未照合の参照は成果物へ素通りする。なお、この照合器に対応する要素 id は与えられた統制構造に存在せず（unknowns#2）、ここでは実体 assurance/harness/ を持つ ASSURANCE_LANE に暫定的に帰属させている。",
+      "evidence_ref": "事象の記録 INC-041 summary / impact(b)",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "監査の検出力評価",
+        "監査のすり抜け時に監査手順を是正",
+        "include-information-supplier-defect"
+      ],
+      "why_it_seemed_adequate": "照合器の目的は『憶測の出典を書かせない』であり、出典は normative_refs、対象は control_element_id という二つの語彙で尽きると設計時には見えた。evidence_ref は自由記述に近い補助情報として位置づけられ、語彙照合という枠に入る種類の値だと認識されなかった。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "2026-08-10 から 4 日間、validate は 0 件の problems を返し続けた。この 0 は『見て問題が無い』ではなく『見ていない』に由来していたが、出力の上で両者は同じ 0 として現れる。門が自分の検査範囲を報せないため、沈黙が健全の証拠として読まれ続けた。検出できなかったのは INC-040 の 1 行だけでなく、門の検出力そのものである。",
+      "evidence_ref": "事象の記録 INC-041 evidence_note（4 日間 problems 0 件）",
+      "flaw_type": "統制自身の劣化を検出できない",
+      "normative_refs": [
+        "検出失敗の原因調査",
+        "安全立証でなく非安全状態の探索",
+        "分析が管理システムの弱点を暴く"
+      ],
+      "why_it_seemed_adequate": "problems=0 を健全の表示とするのは自然であり、出力を短く保つうえで合理的だった。検査した件数を併記しない設計は、通常時のノイズを減らす選択として筋が通っていた。門が見ていない範囲を門自身が報告するという要求は、門の設計時には出ていない。"
+    },
+    {
+      "control_element_id": "OWNER",
+      "description": "OWNER の手掛かりの一つは台帳 assurance/ledger/ である。台帳は機械が検めた成果物として提示されるが、どの参照が実際に検査され、どの参照が宣言によって検査を免除されたかは台帳の表示に現れない。したがって OWNER が台帳から得るプロセスモデル（載っている参照は在るものである）は、実状態（宣言行の参照は未検査）と乖離する。OWNER の側に不注意は無く、情報を提供する側の設計欠陥である。",
+      "evidence_ref": "統制構造 OWNER 手掛かり『台帳 assurance/ledger/』／事象の記録 impact(a)",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "プロセスモデルと実状態の不整合",
+        "defects-in-information-providing-systems",
+        "全体健全性と部分健全性の分離評価"
+      ],
+      "why_it_seemed_adequate": "人が個々の参照を開いて確かめない前提を置くことは、機械照合を導入した目的そのものであり、正しい分業だった。台帳の表示を簡潔に保つために検査範囲のメタ情報を載せない判断も、当時は表示設計の妥当な選択に見えた。"
+    },
+    {
+      "control_element_id": "WARNING_BACKLOG",
+      "description": "unresolved の一覧は算出されていたが、それを異常とする条件も、閉じる責任の割当も未定である（この要素の既知の穴として明記されている）。結果として、算出済みの信号は赤にもならず、誰の手元にも滞留しないまま消えた。所有者判断が保留されている間、信号を保持する場所が構造上どこにも無い。",
+      "evidence_ref": "統制構造 WARNING_BACKLOG 既知の穴／事象の記録 detected_by（どの門も反応しなかった）",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "audit-findings-must-be-closed",
+        "指摘欠点の是正完了追跡",
+        "責任の空白は構造再設計",
+        "監視責任の空白排除"
+      ],
+      "why_it_seemed_adequate": "門を warn まで広げるか別経路にするかは所有者判断であり（INC-039 推奨#4）、判断が下りる前に自動で赤に倒さないことは越権を避ける正しい保留だった。保留それ自体が信号の消失を意味することは、保留を決めた時点の視界には入らない。"
+    },
+    {
+      "control_element_id": "CI_RELEASE_CHECK",
+      "description": "台帳の参照が解決するかは、リポジトリ正本だけで決まる機械判定であり、CI が原理的に実行できる範囲に在る。しかし merge 前に赤で止める検査項目にそれは無く、fix_note が示すとおり REPRODUCE_RED（現台帳で解決しない参照が素通りすることを FAIL として固定する試験）はまだ存在しない。CI が見るのは正本であるという既知の制約は、ここではむしろ有利に働くのに使われていない。",
+      "evidence_ref": "事象の記録 fix_note（先に REPRODUCE_RED を作る）／統制構造 CI_RELEASE_CHECK 制御",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "最低限準拠を超える安全活動の実効性",
+        "監査の検出力評価",
+        "計画外変化の検出手段"
+      ],
+      "why_it_seemed_adequate": "CI の対象は本体試験・監査・release-check であり、台帳は試験の対象ではなく試験や分析の成果物だという区分が自然だった。台帳の内容の健全性は ASSURANCE_LANE の責任として明記されているため、CI 側で重ねて検査しないことは責任の重複を避ける整理に見えた。"
+    },
+    {
+      "control_element_id": "GOVERNANCE_TREE",
+      "description": "問題の参照は台帳から統治木の文書（ADR-134）へ向かう外向きの参照である。GOVERNANCE_TREE の手掛かりは docs-audit の findings と dep-graph の逆依存だが、これらは統治木配下の文書どうしの依存を対象としていると読める。台帳→統治木の参照は、参照される側の統治の目にも入らない。つまり参照の両端（台帳側の validate と統治木側の逆依存）がどちらも自分の側だけを見ており、境界を跨ぐ参照が誰の視野にも入らない。ただし docs-audit と dep-graph の走査対象に assurance/ledger が含まれるかは記述から確定できず（unknowns#3）、この欠陥は他より確度が低い。",
+      "evidence_ref": "統制構造 GOVERNANCE_TREE 手掛かり／事象の記録 evidence_note（ADR-134 の実ファイル名）",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "設計上と実際の伝達経路の照合",
+        "横断的な体系的要因の特定",
+        "変化ドリフトの事前検出"
+      ],
+      "why_it_seemed_adequate": "統治木の健全性を統治木の中で閉じて検査するのは、走査対象を明確に区切るうえで妥当な設計だった。外から統治木を引く者が現れることは、台帳が後から育つにつれて生じた変化であり、逆依存の設計時点の想定には無かった。"
+    }
+  ],
+  "analysis": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "事象の記録によれば、_validate_incident_evidence は evidence_kind が語彙に在れば即 continue し、その行の evidence_refs を一切見ない。evidence_kind の宣言が意味するのは『証拠が体系の外に在る』ことだが、実装上の免除範囲は『この行の参照検査を全部飛ばす』になっている。宣言の意味範囲（体系外の実体を体系内の索引で照合できない）と、免除の作用範囲（体系内の参照文字列の解決可否まで免除）が食い違う。免除の単位が『宣言』ではなく『行』になっている。",
+        "evidence_ref": "事象の記録 INC-041 summary / fix_note(1)（実物のコードは未確認。unknowns#1 参照）",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "宣言された設計と実動作の突合",
+          "公式設計と実動作の二重評価",
+          "designer-vs-operator-mental-model"
+        ],
+        "why_it_seemed_adequate": "体系の外に在る証拠を体系内の索引で照合できないのは事実であり、そこで赤を立てないことは、原理的に満たせない要求を課さないという正しい配慮だった。宣言の意味と免除の作用範囲は同じ一つの分岐で表現されるため、コード上では両者が区別として現れない。宣言行が少数のうちは、免除の広さが観測されるほどの材料も出なかった。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "cast_analysis.incident_evidence_status は unresolved を 2 件計上していた。同じ走行で verifiable は evidence_kind=measurement によって True になった。二つの手掛かりが同一対象について反対のことを述べているのに、突き合わせる規約が無く、下流の門は verifiable だけを読んだ。既に算出されている『解決しない参照が在る』という情報が、要約値によって埋没している。",
+        "evidence_ref": "事象の記録 INC-041 detected_by",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "リスク情報の不透明な集約禁止",
+          "要約統計偏重による傾向情報の喪失",
+          "情報システム保有と有用性の乖離"
+        ],
+        "why_it_seemed_adequate": "verifiable は『検証の道筋が在るか』を表す語として設計され、evidence_kind の宣言はまさにその道筋の宣言だった。unresolved は別系統が出す詳細で、両者は用途が違うものとして並存していた。個々には正しい二つの値が、同じ判断に同時に読まれる場面が想定されていない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "欠陥の側でも同じ形が現れる。prompts.verify_cast_analysis は control_element_id と normative_refs を照合するが evidence_ref を照合しない。照合器の対象が『参照の集合』ではなく『特定フィールドの集合』として定義されているため、未照合の参照は成果物へ素通りする。なお、この照合器に対応する要素 id は与えられた統制構造に存在せず（unknowns#2）、ここでは実体 assurance/harness/ を持つ ASSURANCE_LANE に暫定的に帰属させている。",
+        "evidence_ref": "事象の記録 INC-041 summary / impact(b)",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "監査の検出力評価",
+          "監査のすり抜け時に監査手順を是正",
+          "include-information-supplier-defect"
+        ],
+        "why_it_seemed_adequate": "照合器の目的は『憶測の出典を書かせない』であり、出典は normative_refs、対象は control_element_id という二つの語彙で尽きると設計時には見えた。evidence_ref は自由記述に近い補助情報として位置づけられ、語彙照合という枠に入る種類の値だと認識されなかった。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "2026-08-10 から 4 日間、validate は 0 件の problems を返し続けた。この 0 は『見て問題が無い』ではなく『見ていない』に由来していたが、出力の上で両者は同じ 0 として現れる。門が自分の検査範囲を報せないため、沈黙が健全の証拠として読まれ続けた。検出できなかったのは INC-040 の 1 行だけでなく、門の検出力そのものである。",
+        "evidence_ref": "事象の記録 INC-041 evidence_note（4 日間 problems 0 件）",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "検出失敗の原因調査",
+          "安全立証でなく非安全状態の探索",
+          "分析が管理システムの弱点を暴く"
+        ],
+        "why_it_seemed_adequate": "problems=0 を健全の表示とするのは自然であり、出力を短く保つうえで合理的だった。検査した件数を併記しない設計は、通常時のノイズを減らす選択として筋が通っていた。門が見ていない範囲を門自身が報告するという要求は、門の設計時には出ていない。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "OWNER の手掛かりの一つは台帳 assurance/ledger/ である。台帳は機械が検めた成果物として提示されるが、どの参照が実際に検査され、どの参照が宣言によって検査を免除されたかは台帳の表示に現れない。したがって OWNER が台帳から得るプロセスモデル（載っている参照は在るものである）は、実状態（宣言行の参照は未検査）と乖離する。OWNER の側に不注意は無く、情報を提供する側の設計欠陥である。",
+        "evidence_ref": "統制構造 OWNER 手掛かり『台帳 assurance/ledger/』／事象の記録 impact(a)",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "プロセスモデルと実状態の不整合",
+          "defects-in-information-providing-systems",
+          "全体健全性と部分健全性の分離評価"
+        ],
+        "why_it_seemed_adequate": "人が個々の参照を開いて確かめない前提を置くことは、機械照合を導入した目的そのものであり、正しい分業だった。台帳の表示を簡潔に保つために検査範囲のメタ情報を載せない判断も、当時は表示設計の妥当な選択に見えた。"
+      },
+      {
+        "control_element_id": "WARNING_BACKLOG",
+        "description": "unresolved の一覧は算出されていたが、それを異常とする条件も、閉じる責任の割当も未定である（この要素の既知の穴として明記されている）。結果として、算出済みの信号は赤にもならず、誰の手元にも滞留しないまま消えた。所有者判断が保留されている間、信号を保持する場所が構造上どこにも無い。",
+        "evidence_ref": "統制構造 WARNING_BACKLOG 既知の穴／事象の記録 detected_by（どの門も反応しなかった）",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "audit-findings-must-be-closed",
+          "指摘欠点の是正完了追跡",
+          "責任の空白は構造再設計",
+          "監視責任の空白排除"
+        ],
+        "why_it_seemed_adequate": "門を warn まで広げるか別経路にするかは所有者判断であり（INC-039 推奨#4）、判断が下りる前に自動で赤に倒さないことは越権を避ける正しい保留だった。保留それ自体が信号の消失を意味することは、保留を決めた時点の視界には入らない。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "台帳の参照が解決するかは、リポジトリ正本だけで決まる機械判定であり、CI が原理的に実行できる範囲に在る。しかし merge 前に赤で止める検査項目にそれは無く、fix_note が示すとおり REPRODUCE_RED（現台帳で解決しない参照が素通りすることを FAIL として固定する試験）はまだ存在しない。CI が見るのは正本であるという既知の制約は、ここではむしろ有利に働くのに使われていない。",
+        "evidence_ref": "事象の記録 fix_note（先に REPRODUCE_RED を作る）／統制構造 CI_RELEASE_CHECK 制御",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "最低限準拠を超える安全活動の実効性",
+          "監査の検出力評価",
+          "計画外変化の検出手段"
+        ],
+        "why_it_seemed_adequate": "CI の対象は本体試験・監査・release-check であり、台帳は試験の対象ではなく試験や分析の成果物だという区分が自然だった。台帳の内容の健全性は ASSURANCE_LANE の責任として明記されているため、CI 側で重ねて検査しないことは責任の重複を避ける整理に見えた。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "問題の参照は台帳から統治木の文書（ADR-134）へ向かう外向きの参照である。GOVERNANCE_TREE の手掛かりは docs-audit の findings と dep-graph の逆依存だが、これらは統治木配下の文書どうしの依存を対象としていると読める。台帳→統治木の参照は、参照される側の統治の目にも入らない。つまり参照の両端（台帳側の validate と統治木側の逆依存）がどちらも自分の側だけを見ており、境界を跨ぐ参照が誰の視野にも入らない。ただし docs-audit と dep-graph の走査対象に assurance/ledger が含まれるかは記述から確定できず（unknowns#3）、この欠陥は他より確度が低い。",
+        "evidence_ref": "統制構造 GOVERNANCE_TREE 手掛かり／事象の記録 evidence_note（ADR-134 の実ファイル名）",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "設計上と実際の伝達経路の照合",
+          "横断的な体系的要因の特定",
+          "変化ドリフトの事前検出"
+        ],
+        "why_it_seemed_adequate": "統治木の健全性を統治木の中で閉じて検査するのは、走査対象を明確に区切るうえで妥当な設計だった。外から統治木を引く者が現れることは、台帳が後から育つにつれて生じた変化であり、逆依存の設計時点の想定には無かった。"
+      }
+    ],
+    "hazard": "保証系が、参照解決の検査を一度も受けていない evidence ポインタを、検査済みと同じ表示のまま台帳および分析成果物に保持し、後続の読み手（人・評価器）がそれを検証済みの根拠として読める状態。これは環境ではなく自分たちのコントロール下にある状態であり、「解決検査の結果を算出しながら判定に接続しない」という設計上の選択によって生じている。",
+    "incident_id": "INC-041-declared-evidence-skips-pointer-resolution",
+    "leading_indicators": [
+      {
+        "indicator": "台帳全件走査における未解決 evidence_ref の件数と、それを持つ事象 id",
+        "observable": "台帳走査が出力する unresolved 一覧の長さ（現在値は INC-040 の 1 件、参照 2 本）",
+        "threshold": "unresolved が 0 でない状態のまま新しい事象が台帳へ積まれたら異常。基準線はまず 0 へ落とすこと。",
+        "version_independent": true,
+        "where": "保証レーンの台帳走査出力（リポジトリ正本側、assurance/ledger/ を入力とする）",
+        "why_version_independent": "正本の台帳と正本のハーネスだけで算出でき、利用者環境の導入複製の版に依存しない。"
+      },
+      {
+        "indicator": "verifiable と unresolved の論理矛盾行数",
+        "observable": "verifiable=True かつ unresolved>0 である台帳行の数",
+        "threshold": ">0 で異常。本来ゼロであるべき矛盾なので、1 件でも警告に値する。",
+        "version_independent": true,
+        "where": "同上（台帳走査出力。二つの値を同じ行で突き合わせて数える）",
+        "why_version_independent": "両方の値が正本側の同一走行で算出され、導入複製を経由しない。"
+      },
+      {
+        "indicator": "沈黙の門（『見ていない』由来の problems=0）",
+        "observable": "validate の走行ごとの problems 件数と、その走行で実際に解決検査を通した ref の件数の対",
+        "threshold": "新規行が積まれた走行で problems=0 かつ 検査した ref 件数=0 が観測されたら異常。problems=0 単独では指標として使わない。",
+        "version_independent": true,
+        "where": "validate の出力（現状は problems 件数のみ。ref 検査件数の併記が前提条件となる）",
+        "why_version_independent": "正本側のハーネスの自己申告であり、複製の版に依存しない。"
+      },
+      {
+        "indicator": "分析成果物における evidence_ref の未照合率と citation_defect の不一致",
+        "observable": "成果物の evidence_ref のうち索引で解決しなかったものの割合と、同成果物の citation_defect 件数",
+        "threshold": "未照合率>0 なのに citation_defect=0 という組み合わせが 1 度でも出たら異常。",
+        "version_independent": true,
+        "where": "評価器成果物（rejected_flaws / citation_defect が刻まれるのと同じ場所）",
+        "why_version_independent": "照合も成果物も正本側のハーネスで生成される。ただし verify 側が evidence_ref を照合する実装になるまで、この指標は算出できない（是正#2 の従属指標）。"
+      },
+      {
+        "indicator": "台帳系の警告が導入複製の鼓動まで到達しているか",
+        "observable": ".claude/.cache/last-audit.json の totals / top_findings に台帳の未解決参照に関する finding が現れるか",
+        "threshold": "正本側で unresolved>0 が続いている期間に、鼓動の警告へ一度も現れなければ伝達経路の欠落として扱う。",
+        "version_independent": false,
+        "where": ".claude/.cache/last-audit.json（利用者環境の導入複製の側）",
+        "why_version_independent": "検出器も要約も導入複製の側で動くため、複製の版が遅れれば指標も遅れる。HEARTBEAT の既知の穴（古びの検出器が古びる）と PLUGIN_DISTRIBUTION の既知の穴（複製が何世代遅れているかを正本から観測できない）に由来する共通原因故障で、INC-005 と同型である。"
+      }
+    ],
+    "loss": "保証系が示す「根拠」の信頼性が損なわれた状態。実在しないファイルを指す証拠ポインタ（INC-040 の evidence_refs[1] `doctrine_docs/packaging/decisions/ADR-134-scoped-staleness.md`）が 2026-08-10 から台帳に残り、2026-08-14 にはそのまま評価器の成果物（統制欠陥#1 の evidence_ref）へ複写されて、rejected_flaws 0・citation_defect 無しで受理された。結果、OWNER が可否判断の手掛かりとする台帳と、後続の評価器が読む分析成果物の双方に、「機械照合を通った」という表示の下で未照合の根拠が混ざっている。損失は事故の発生そのものではなく、判断根拠の真偽が体系内で区別できなくなったことにある。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "宣言行と非宣言行で同じ種類・同じ件数の problems が返れば、免除は refs に限定されており本仮説は否定される。",
+        "hypothesis": "evidence_kind の宣言が在る行では、refs 解決以外の必須検査（事象 id の重複、日付の形式、必須欄の欠落など）も同じ continue で飛ばされている。免除は refs に限定されていない。",
+        "oracle": "同一の壊れた値（重複 id、不正な日付）を、宣言行と非宣言行の両方へ注入し、validate が返す problems の内訳を比較する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "早期 continue を含む分岐が evidence_kind の一箇所だけであれば否定される。",
+        "hypothesis": "同じ『宣言で分岐して検査を飛ばす』形が evidence_kind 以外の語彙（fixed、residual の有無、事象の種別など）にも存在し、本件は一例にすぎない。",
+        "oracle": "台帳走査コードの全分岐を、分岐の条件となる語彙ごとに列挙し、各分岐が飛ばす検査の集合を表にする。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "rejected_flaws が立つか、関連性についての指摘が出れば否定される。",
+        "hypothesis": "欠陥の側では control_element_id が『一覧に在る』ことだけが照合され、その要素が当該事象に関係する要素かは照合されない。実在するが無関係な id を差した分析が通る。",
+        "oracle": "明らかに無関係な既存要素 id（例：CAPTURE_NUDGE）を統制欠陥に差した分析を投入し、rejected_flaws が立つかを見る。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "支持率が抽出前の予想と有意に変わらず、かつ読み手が unresolved=0 を『実証済み』と解釈しないことが確認できれば否定される。",
+        "hypothesis": "本件の是正後、unresolved=0 という表示が『照合済み』として読まれ、実在するファイルを引くが内容が主張を支えない参照（residual に挙げられた形）の誤読をかえって強める。",
+        "oracle": "是正後に unresolved=0 となった台帳から refs を無作為抽出し、人が実際に開いて主張を支持しているかの比率を測る。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "件数が既知の 2 件から大きく増えなければ否定される。",
+        "hypothesis": "和文の注釈を継ぎ足した参照（`assurance/harness/system_index.py の build（…）`）の形は台帳の各所に存在し、解決規則の厳格化によって大量の新規 unresolved が一度に立ち、警告の氾濫で信号が再び埋没する。",
+        "oracle": "是正前に、現行の解決規則を全 40 件へ適用したときの unresolved 件数を先に数える。",
+        "severity": "P2"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "リポジトリ正本を手元に置き、_validate_incident_evidence の分岐、prompts.verify_cast_analysis の照合対象フィールド、cast_analysis.py の incident_evidence_status 算出、および docs-audit / dep-graph の走査対象に assurance/ledger が含まれるかを実物で確認する。確認が済むまで本分析の統制欠陥はすべて仮説として扱い、是正の実装より先に実在確認を置く。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "REPRODUCE_RED を先に作る。現在の台帳（INC-040 の 2 件の unresolved を含む状態）で、解決しない参照が validate を素通りすることを FAIL として固定する試験を置き、是正前に赤であることを確認する。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "evidence_kind が在っても refs の解決は検める。ただし evidence_kind の意味（体系の外に証拠が在る）は保つため、『refs が一つも無い』ことは今までどおり赤にせず、赤にするのは『refs を書いておきながらそれが解決しない』場合に限る。免除の単位を『行』から『体系外の実体そのもの』へ戻す。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "verify_cast_analysis の照合対象に evidence_ref を加え、解決しないものは主張を保ったまま citation_defect として刻む（ADR-117 の既定の向きに合わせる）。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "上記二つの是正を赤に倒すか助言に倒すかを決める。事象の側と欠陥の側で倒し方を揃えるか分けるかも含めて、ADR を先に置いてから実装する。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "validate の出力で『見ていない』と『見て問題が無い』を区別する。problems 件数に加えて、その走行で解決検査を通した ref 件数と、宣言により免除した ref 件数を併記し、problems=0 単独では健全の表示として読めないようにする。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "verifiable=True かつ unresolved>0 という論理矛盾の件数を、台帳走査のたびに独立した数値として出力し、先行指標#2 として監視する。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "evidence_kind の語彙定義に、宣言の意味範囲を明記する——『証拠の実体が体系の外に在る』ことを表し、『体系内に書いた参照文字列の正しさ』は免除しない。語彙定義の側に書くことで、実装が免除範囲を広げたときに突合の相手が存在する状態にする。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "WARNING_BACKLOG について、算出済みだが赤ではない信号（unresolved を含む）を異常とみなす条件と、閉じる責任の割当を決める。INC-039 推奨#4 と同じ空白であり、本件で二度目の作用が観測された。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "ADR-141 が閉じた穴について、同型の別入口（宣言・語彙・分岐によって検査が飛ぶ箇所）を全数で洗い出す走査を一度行い、症状単位の是正から体系単位の是正へ引き上げる。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "台帳から統治木への外向き参照について、参照する側と参照される側のどちらが解決を検める責任を持つかを明記する。責任が未割当であること自体を構造の再設計対象として扱う。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      }
+    ],
+    "systemic_factors": [
+      "宣言が検査の免除に化ける形。同じ形が事象の側（evidence_kind → refs 検査の飛ばし）と欠陥の側（照合対象フィールドの限定 → evidence_ref の不照合）に独立して現れている。二つの偶発ではなく、共通する設計様式である。",
+      "算出済みの信号を判定に接続しない。unresolved は在るのに verifiable が上書きし、citation_defect の語彙に evidence_ref が入っていない。検査の不足ではなく接続の欠落。",
+      "0 という出力が『見ていない』と『見て問題が無い』を同じ表示に畳む。沈黙を健全と読む余地が構造に残っている。",
+      "照合器が『引用が実在するか』を見て『対象が実在するか』を見ない。この盲点は故障注入 A2 で一度観測されて分析指示に組み込まれたが、同じ盲点が evidence_ref の側に残っていた。教訓の適用範囲が、それが見つかった箇所に限定された。",
+      "所有者判断待ちの信号に滞留先が無い。WARNING_BACKLOG の既知の穴であり、INC-039 推奨#4 と同じ空白がここでも作用した。",
+      "是正が症状の単位で行われ、塞いだ穴と同型の別入口を探す手順が無い。ADR-141 の是正がこの形の典型である。",
+      "参照の検査責任が、参照する側（保証レーン）と参照される側（統治木）のどちらにも明示的に割り当てられておらず、境界を跨ぐ参照が両者の視野の間に落ちる。"
+    ],
+    "unknowns": [
+      "【実在の未確認・最重要】本分析の入力が名指す機構——orchestrator.py の _validate_incident_evidence、prompts.py の verify_cast_analysis、assurance/harness/cast_analysis.py、および incident_evidence_status という集計——は、与えられた統制構造には要素として現れない。構造上の裏付けは ASSURANCE_LANE の実体が assurance/harness/orchestrator.py であることだけであり、当該関数・当該プロンプト・当該ファイルの実在は確認していない。作業ディレクトリ /tmp/assurance-cast-xwz65f70 は空でリポジトリが置かれておらず、実物を開けなかった。以下すべての統制欠陥は、事象の記録を真として組み立てた仮説である。この理由により confidence は low とする。",
+      "評価器の成果物を生成する主体（verify_cast_analysis を回す controller）に対応する要素 id が統制構造に無い。統制欠陥#3 は暫定的に ASSURANCE_LANE へ帰属させたが、実際には別の主体か、あるいは同一主体の別の局面かもしれない。帰属が誤っていれば、是正を差し込む位置も変わる。",
+      "docs-audit（SESSION_END_AUDIT）と dep-graph の逆依存が assurance/ledger を走査対象に含むかは、与えられた記述から確定できない。含むのであれば統制欠陥#8 は成立しない。",
+      "INC-040 の evidence_refs[1] に長い実ファイル名ではなく短縮形の名が入った経緯（どの生成経路で、id 形と path 形が混用されたか）は判らない。『ADR-134 の id 形なら解決する』という記述から書式の混用が疑われるが、確認していない。",
+      "台帳 40 件を走査して unresolved を持つのが INC-040 の 1 件のみという結果が、evidence_kind 宣言行を含む全件を対象にした集計なのか、宣言行を除いた集計なのかが判らない。除いた集計であれば、実際の未解決はこれより多い可能性がある。",
+      "『解決する／しない』の判定規則（id 形での解決、path 形での解決、和文注釈を継ぎ足した形の扱い）がどこにどう定義されているかを確認していない。規則が緩ければ、解決率が改善しても根拠の質は増えない。",
+      "台帳から評価器成果物へ写った未照合の参照が、後続のどの判断に実際に使われたかは追跡していない。影響の広さは不明である。",
+      "ADR-141 の本文を読んでいないため、本件が『ADR-141 が閉じた穴と同型』であるという判断は事象の記録の主張に依存しており、独立には検証していない。",
+      "本分析の入力は事象の記録のみで会話履歴が無いため、2026-08-14 の INC-040 分析時に統制欠陥#1 へ参照が複写された経緯を、当時の判断の側から確かめる材料が無い。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は、参照の検査可否を「宣言の有無」で分岐させ、宣言が在る行では解決結果を算出しながら判定に接続しない。だから門の出力は正しく 0 problems であり、その 0 が「見ていない」に由来することを区別する表示が無い。ADR-141 は「実在しない機構を指す捏造事象を積ませない」という別の入口を塞いだが、同型の穴が evidence_kind の分岐にも在ることは、塞いだ側の記録からは見えない。是正が症状の単位で行われ、同じ形の別入口を探す手順が無い。さらに欠陥の側でも、照合器の対象が「参照の集合」ではなく control_element_id と normative_refs という二つの特定フィールドとして定義されているため、evidence_ref は照合を受ける対象という枠に最初から入っていない。加えて、算出済みの unresolved を受け取って異常と判定する責任がどの要素にも割り当てられていない（WARNING_BACKLOG の既知の穴）ため、機械が持っていた材料が誰の判断にも届かなかった。要するに、見逃しは検査の不足ではなく、検査結果と判定の間の接続の欠落である。"
+  },
+  "control_structure_ids": [
+    "OWNER",
+    "CI_RELEASE_CHECK",
+    "SESSION_START_CONTRACT",
+    "HEARTBEAT",
+    "PRE_TOOL_GUARD",
+    "POST_TOOL_LINTER",
+    "SESSION_END_AUDIT",
+    "WARNING_BACKLOG",
+    "CAPTURE_NUDGE",
+    "PLUGIN_DISTRIBUTION",
+    "ASSURANCE_LANE",
+    "GOVERNANCE_TREE"
+  ],
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "duration_ms": 327347,
+  "errors": [],
+  "execution_kind": "real-sdk",
+  "flaws_with_citation_defect": [],
+  "generated_at": "2026-08-15T12:49:07Z",
+  "git_dirty": false,
+  "git_sha": "ca8ac5ab64acdf6758ba5b7a27e84eb4e136c644",
+  "incident_evidence": {
+    "kind": null,
+    "refs": [
+      "assurance/harness/orchestrator.py",
+      "assurance/harness/cast_analysis.py",
+      "assurance/harness/prompts.py",
+      "assurance/ledger/cast/INC-040-document-axis-invalidates-wholesale.json",
+      "assurance/ledger/incidents.json"
+    ],
+    "resolved": [
+      "assurance/harness/orchestrator.py",
+      "assurance/harness/cast_analysis.py",
+      "assurance/harness/prompts.py",
+      "assurance/ledger/cast/INC-040-document-axis-invalidates-wholesale.json",
+      "assurance/ledger/incidents.json"
+    ],
+    "unresolved": [],
+    "verifiable": true
+  },
+  "incident_id": "INC-041-declared-evidence-skips-pointer-resolution",
+  "incident_sha256": "c2d08745dacc77827d016593ef0abf3940fa5c74d68de6d25ea400cd1b217c91",
+  "init": {
+    "claude_code_version": "2.1.221",
+    "model": "claude-opus-5",
+    "session_id": "bef631f3-6b6e-46b9-83da-bb761070bd83",
+    "tools_count": 27
+  },
+  "kind": "cast-analysis",
+  "leading_indicators_defined": true,
+  "options": {
+    "allowed_tools": [],
+    "cwd": "/tmp/assurance-cast-xwz65f70",
+    "effort": "high",
+    "max_budget_usd": 4.0,
+    "max_turns": 8,
+    "model": "claude-opus-5",
+    "setting_sources": [],
+    "timeout_s": 900
+  },
+  "oracle": "structured_output がレーン側再検証にも適合",
+  "principles_offered": 337,
+  "prompt_sha256": "45eb3b0f65da4f9e660840e072037dbddcf8aabede1d6f89bed0bea8995659a3",
+  "rejected_flaws": [],
+  "result_meta": {
+    "duration_api_ms": 319761,
+    "is_error": false,
+    "num_turns": 4,
+    "session_id": "bef631f3-6b6e-46b9-83da-bb761070bd83",
+    "subtype": "success",
+    "total_cost_usd": 1.1797375,
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 57801,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 57801,
+      "cache_read_input_tokens": 114875,
+      "inference_geo": "not_available",
+      "input_tokens": 6,
+      "iterations": "list",
+      "output_tokens": 20251,
+      "server_tool_use": {
+        "web_fetch_requests": 0,
+        "web_search_requests": 0
+      },
+      "service_tier": "standard",
+      "speed": "standard"
+    }
+  },
+  "schema_sha256": "0d1643d5e16353723405302c1f6ffcf753915e2a4f27a3530e8ef9a9ee45cb46",
+  "sdk_version": "0.2.129",
+  "settled": true,
+  "status": "PASS",
+  "structured_output": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "事象の記録によれば、_validate_incident_evidence は evidence_kind が語彙に在れば即 continue し、その行の evidence_refs を一切見ない。evidence_kind の宣言が意味するのは『証拠が体系の外に在る』ことだが、実装上の免除範囲は『この行の参照検査を全部飛ばす』になっている。宣言の意味範囲（体系外の実体を体系内の索引で照合できない）と、免除の作用範囲（体系内の参照文字列の解決可否まで免除）が食い違う。免除の単位が『宣言』ではなく『行』になっている。",
+        "evidence_ref": "事象の記録 INC-041 summary / fix_note(1)（実物のコードは未確認。unknowns#1 参照）",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "宣言された設計と実動作の突合",
+          "公式設計と実動作の二重評価",
+          "designer-vs-operator-mental-model"
+        ],
+        "why_it_seemed_adequate": "体系の外に在る証拠を体系内の索引で照合できないのは事実であり、そこで赤を立てないことは、原理的に満たせない要求を課さないという正しい配慮だった。宣言の意味と免除の作用範囲は同じ一つの分岐で表現されるため、コード上では両者が区別として現れない。宣言行が少数のうちは、免除の広さが観測されるほどの材料も出なかった。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "cast_analysis.incident_evidence_status は unresolved を 2 件計上していた。同じ走行で verifiable は evidence_kind=measurement によって True になった。二つの手掛かりが同一対象について反対のことを述べているのに、突き合わせる規約が無く、下流の門は verifiable だけを読んだ。既に算出されている『解決しない参照が在る』という情報が、要約値によって埋没している。",
+        "evidence_ref": "事象の記録 INC-041 detected_by",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "リスク情報の不透明な集約禁止",
+          "要約統計偏重による傾向情報の喪失",
+          "情報システム保有と有用性の乖離"
+        ],
+        "why_it_seemed_adequate": "verifiable は『検証の道筋が在るか』を表す語として設計され、evidence_kind の宣言はまさにその道筋の宣言だった。unresolved は別系統が出す詳細で、両者は用途が違うものとして並存していた。個々には正しい二つの値が、同じ判断に同時に読まれる場面が想定されていない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "欠陥の側でも同じ形が現れる。prompts.verify_cast_analysis は control_element_id と normative_refs を照合するが evidence_ref を照合しない。照合器の対象が『参照の集合』ではなく『特定フィールドの集合』として定義されているため、未照合の参照は成果物へ素通りする。なお、この照合器に対応する要素 id は与えられた統制構造に存在せず（unknowns#2）、ここでは実体 assurance/harness/ を持つ ASSURANCE_LANE に暫定的に帰属させている。",
+        "evidence_ref": "事象の記録 INC-041 summary / impact(b)",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "監査の検出力評価",
+          "監査のすり抜け時に監査手順を是正",
+          "include-information-supplier-defect"
+        ],
+        "why_it_seemed_adequate": "照合器の目的は『憶測の出典を書かせない』であり、出典は normative_refs、対象は control_element_id という二つの語彙で尽きると設計時には見えた。evidence_ref は自由記述に近い補助情報として位置づけられ、語彙照合という枠に入る種類の値だと認識されなかった。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "2026-08-10 から 4 日間、validate は 0 件の problems を返し続けた。この 0 は『見て問題が無い』ではなく『見ていない』に由来していたが、出力の上で両者は同じ 0 として現れる。門が自分の検査範囲を報せないため、沈黙が健全の証拠として読まれ続けた。検出できなかったのは INC-040 の 1 行だけでなく、門の検出力そのものである。",
+        "evidence_ref": "事象の記録 INC-041 evidence_note（4 日間 problems 0 件）",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "検出失敗の原因調査",
+          "安全立証でなく非安全状態の探索",
+          "分析が管理システムの弱点を暴く"
+        ],
+        "why_it_seemed_adequate": "problems=0 を健全の表示とするのは自然であり、出力を短く保つうえで合理的だった。検査した件数を併記しない設計は、通常時のノイズを減らす選択として筋が通っていた。門が見ていない範囲を門自身が報告するという要求は、門の設計時には出ていない。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "OWNER の手掛かりの一つは台帳 assurance/ledger/ である。台帳は機械が検めた成果物として提示されるが、どの参照が実際に検査され、どの参照が宣言によって検査を免除されたかは台帳の表示に現れない。したがって OWNER が台帳から得るプロセスモデル（載っている参照は在るものである）は、実状態（宣言行の参照は未検査）と乖離する。OWNER の側に不注意は無く、情報を提供する側の設計欠陥である。",
+        "evidence_ref": "統制構造 OWNER 手掛かり『台帳 assurance/ledger/』／事象の記録 impact(a)",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "プロセスモデルと実状態の不整合",
+          "defects-in-information-providing-systems",
+          "全体健全性と部分健全性の分離評価"
+        ],
+        "why_it_seemed_adequate": "人が個々の参照を開いて確かめない前提を置くことは、機械照合を導入した目的そのものであり、正しい分業だった。台帳の表示を簡潔に保つために検査範囲のメタ情報を載せない判断も、当時は表示設計の妥当な選択に見えた。"
+      },
+      {
+        "control_element_id": "WARNING_BACKLOG",
+        "description": "unresolved の一覧は算出されていたが、それを異常とする条件も、閉じる責任の割当も未定である（この要素の既知の穴として明記されている）。結果として、算出済みの信号は赤にもならず、誰の手元にも滞留しないまま消えた。所有者判断が保留されている間、信号を保持する場所が構造上どこにも無い。",
+        "evidence_ref": "統制構造 WARNING_BACKLOG 既知の穴／事象の記録 detected_by（どの門も反応しなかった）",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "audit-findings-must-be-closed",
+          "指摘欠点の是正完了追跡",
+          "責任の空白は構造再設計",
+          "監視責任の空白排除"
+        ],
+        "why_it_seemed_adequate": "門を warn まで広げるか別経路にするかは所有者判断であり（INC-039 推奨#4）、判断が下りる前に自動で赤に倒さないことは越権を避ける正しい保留だった。保留それ自体が信号の消失を意味することは、保留を決めた時点の視界には入らない。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "台帳の参照が解決するかは、リポジトリ正本だけで決まる機械判定であり、CI が原理的に実行できる範囲に在る。しかし merge 前に赤で止める検査項目にそれは無く、fix_note が示すとおり REPRODUCE_RED（現台帳で解決しない参照が素通りすることを FAIL として固定する試験）はまだ存在しない。CI が見るのは正本であるという既知の制約は、ここではむしろ有利に働くのに使われていない。",
+        "evidence_ref": "事象の記録 fix_note（先に REPRODUCE_RED を作る）／統制構造 CI_RELEASE_CHECK 制御",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "最低限準拠を超える安全活動の実効性",
+          "監査の検出力評価",
+          "計画外変化の検出手段"
+        ],
+        "why_it_seemed_adequate": "CI の対象は本体試験・監査・release-check であり、台帳は試験の対象ではなく試験や分析の成果物だという区分が自然だった。台帳の内容の健全性は ASSURANCE_LANE の責任として明記されているため、CI 側で重ねて検査しないことは責任の重複を避ける整理に見えた。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "問題の参照は台帳から統治木の文書（ADR-134）へ向かう外向きの参照である。GOVERNANCE_TREE の手掛かりは docs-audit の findings と dep-graph の逆依存だが、これらは統治木配下の文書どうしの依存を対象としていると読める。台帳→統治木の参照は、参照される側の統治の目にも入らない。つまり参照の両端（台帳側の validate と統治木側の逆依存）がどちらも自分の側だけを見ており、境界を跨ぐ参照が誰の視野にも入らない。ただし docs-audit と dep-graph の走査対象に assurance/ledger が含まれるかは記述から確定できず（unknowns#3）、この欠陥は他より確度が低い。",
+        "evidence_ref": "統制構造 GOVERNANCE_TREE 手掛かり／事象の記録 evidence_note（ADR-134 の実ファイル名）",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "設計上と実際の伝達経路の照合",
+          "横断的な体系的要因の特定",
+          "変化ドリフトの事前検出"
+        ],
+        "why_it_seemed_adequate": "統治木の健全性を統治木の中で閉じて検査するのは、走査対象を明確に区切るうえで妥当な設計だった。外から統治木を引く者が現れることは、台帳が後から育つにつれて生じた変化であり、逆依存の設計時点の想定には無かった。"
+      }
+    ],
+    "hazard": "保証系が、参照解決の検査を一度も受けていない evidence ポインタを、検査済みと同じ表示のまま台帳および分析成果物に保持し、後続の読み手（人・評価器）がそれを検証済みの根拠として読める状態。これは環境ではなく自分たちのコントロール下にある状態であり、「解決検査の結果を算出しながら判定に接続しない」という設計上の選択によって生じている。",
+    "incident_id": "INC-041-declared-evidence-skips-pointer-resolution",
+    "leading_indicators": [
+      {
+        "indicator": "台帳全件走査における未解決 evidence_ref の件数と、それを持つ事象 id",
+        "observable": "台帳走査が出力する unresolved 一覧の長さ（現在値は INC-040 の 1 件、参照 2 本）",
+        "threshold": "unresolved が 0 でない状態のまま新しい事象が台帳へ積まれたら異常。基準線はまず 0 へ落とすこと。",
+        "version_independent": true,
+        "where": "保証レーンの台帳走査出力（リポジトリ正本側、assurance/ledger/ を入力とする）",
+        "why_version_independent": "正本の台帳と正本のハーネスだけで算出でき、利用者環境の導入複製の版に依存しない。"
+      },
+      {
+        "indicator": "verifiable と unresolved の論理矛盾行数",
+        "observable": "verifiable=True かつ unresolved>0 である台帳行の数",
+        "threshold": ">0 で異常。本来ゼロであるべき矛盾なので、1 件でも警告に値する。",
+        "version_independent": true,
+        "where": "同上（台帳走査出力。二つの値を同じ行で突き合わせて数える）",
+        "why_version_independent": "両方の値が正本側の同一走行で算出され、導入複製を経由しない。"
+      },
+      {
+        "indicator": "沈黙の門（『見ていない』由来の problems=0）",
+        "observable": "validate の走行ごとの problems 件数と、その走行で実際に解決検査を通した ref の件数の対",
+        "threshold": "新規行が積まれた走行で problems=0 かつ 検査した ref 件数=0 が観測されたら異常。problems=0 単独では指標として使わない。",
+        "version_independent": true,
+        "where": "validate の出力（現状は problems 件数のみ。ref 検査件数の併記が前提条件となる）",
+        "why_version_independent": "正本側のハーネスの自己申告であり、複製の版に依存しない。"
+      },
+      {
+        "indicator": "分析成果物における evidence_ref の未照合率と citation_defect の不一致",
+        "observable": "成果物の evidence_ref のうち索引で解決しなかったものの割合と、同成果物の citation_defect 件数",
+        "threshold": "未照合率>0 なのに citation_defect=0 という組み合わせが 1 度でも出たら異常。",
+        "version_independent": true,
+        "where": "評価器成果物（rejected_flaws / citation_defect が刻まれるのと同じ場所）",
+        "why_version_independent": "照合も成果物も正本側のハーネスで生成される。ただし verify 側が evidence_ref を照合する実装になるまで、この指標は算出できない（是正#2 の従属指標）。"
+      },
+      {
+        "indicator": "台帳系の警告が導入複製の鼓動まで到達しているか",
+        "observable": ".claude/.cache/last-audit.json の totals / top_findings に台帳の未解決参照に関する finding が現れるか",
+        "threshold": "正本側で unresolved>0 が続いている期間に、鼓動の警告へ一度も現れなければ伝達経路の欠落として扱う。",
+        "version_independent": false,
+        "where": ".claude/.cache/last-audit.json（利用者環境の導入複製の側）",
+        "why_version_independent": "検出器も要約も導入複製の側で動くため、複製の版が遅れれば指標も遅れる。HEARTBEAT の既知の穴（古びの検出器が古びる）と PLUGIN_DISTRIBUTION の既知の穴（複製が何世代遅れているかを正本から観測できない）に由来する共通原因故障で、INC-005 と同型である。"
+      }
+    ],
+    "loss": "保証系が示す「根拠」の信頼性が損なわれた状態。実在しないファイルを指す証拠ポインタ（INC-040 の evidence_refs[1] `doctrine_docs/packaging/decisions/ADR-134-scoped-staleness.md`）が 2026-08-10 から台帳に残り、2026-08-14 にはそのまま評価器の成果物（統制欠陥#1 の evidence_ref）へ複写されて、rejected_flaws 0・citation_defect 無しで受理された。結果、OWNER が可否判断の手掛かりとする台帳と、後続の評価器が読む分析成果物の双方に、「機械照合を通った」という表示の下で未照合の根拠が混ざっている。損失は事故の発生そのものではなく、判断根拠の真偽が体系内で区別できなくなったことにある。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "宣言行と非宣言行で同じ種類・同じ件数の problems が返れば、免除は refs に限定されており本仮説は否定される。",
+        "hypothesis": "evidence_kind の宣言が在る行では、refs 解決以外の必須検査（事象 id の重複、日付の形式、必須欄の欠落など）も同じ continue で飛ばされている。免除は refs に限定されていない。",
+        "oracle": "同一の壊れた値（重複 id、不正な日付）を、宣言行と非宣言行の両方へ注入し、validate が返す problems の内訳を比較する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "早期 continue を含む分岐が evidence_kind の一箇所だけであれば否定される。",
+        "hypothesis": "同じ『宣言で分岐して検査を飛ばす』形が evidence_kind 以外の語彙（fixed、residual の有無、事象の種別など）にも存在し、本件は一例にすぎない。",
+        "oracle": "台帳走査コードの全分岐を、分岐の条件となる語彙ごとに列挙し、各分岐が飛ばす検査の集合を表にする。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "rejected_flaws が立つか、関連性についての指摘が出れば否定される。",
+        "hypothesis": "欠陥の側では control_element_id が『一覧に在る』ことだけが照合され、その要素が当該事象に関係する要素かは照合されない。実在するが無関係な id を差した分析が通る。",
+        "oracle": "明らかに無関係な既存要素 id（例：CAPTURE_NUDGE）を統制欠陥に差した分析を投入し、rejected_flaws が立つかを見る。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "支持率が抽出前の予想と有意に変わらず、かつ読み手が unresolved=0 を『実証済み』と解釈しないことが確認できれば否定される。",
+        "hypothesis": "本件の是正後、unresolved=0 という表示が『照合済み』として読まれ、実在するファイルを引くが内容が主張を支えない参照（residual に挙げられた形）の誤読をかえって強める。",
+        "oracle": "是正後に unresolved=0 となった台帳から refs を無作為抽出し、人が実際に開いて主張を支持しているかの比率を測る。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "件数が既知の 2 件から大きく増えなければ否定される。",
+        "hypothesis": "和文の注釈を継ぎ足した参照（`assurance/harness/system_index.py の build（…）`）の形は台帳の各所に存在し、解決規則の厳格化によって大量の新規 unresolved が一度に立ち、警告の氾濫で信号が再び埋没する。",
+        "oracle": "是正前に、現行の解決規則を全 40 件へ適用したときの unresolved 件数を先に数える。",
+        "severity": "P2"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "リポジトリ正本を手元に置き、_validate_incident_evidence の分岐、prompts.verify_cast_analysis の照合対象フィールド、cast_analysis.py の incident_evidence_status 算出、および docs-audit / dep-graph の走査対象に assurance/ledger が含まれるかを実物で確認する。確認が済むまで本分析の統制欠陥はすべて仮説として扱い、是正の実装より先に実在確認を置く。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "REPRODUCE_RED を先に作る。現在の台帳（INC-040 の 2 件の unresolved を含む状態）で、解決しない参照が validate を素通りすることを FAIL として固定する試験を置き、是正前に赤であることを確認する。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "evidence_kind が在っても refs の解決は検める。ただし evidence_kind の意味（体系の外に証拠が在る）は保つため、『refs が一つも無い』ことは今までどおり赤にせず、赤にするのは『refs を書いておきながらそれが解決しない』場合に限る。免除の単位を『行』から『体系外の実体そのもの』へ戻す。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "verify_cast_analysis の照合対象に evidence_ref を加え、解決しないものは主張を保ったまま citation_defect として刻む（ADR-117 の既定の向きに合わせる）。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "上記二つの是正を赤に倒すか助言に倒すかを決める。事象の側と欠陥の側で倒し方を揃えるか分けるかも含めて、ADR を先に置いてから実装する。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "validate の出力で『見ていない』と『見て問題が無い』を区別する。problems 件数に加えて、その走行で解決検査を通した ref 件数と、宣言により免除した ref 件数を併記し、problems=0 単独では健全の表示として読めないようにする。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "verifiable=True かつ unresolved>0 という論理矛盾の件数を、台帳走査のたびに独立した数値として出力し、先行指標#2 として監視する。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "evidence_kind の語彙定義に、宣言の意味範囲を明記する——『証拠の実体が体系の外に在る』ことを表し、『体系内に書いた参照文字列の正しさ』は免除しない。語彙定義の側に書くことで、実装が免除範囲を広げたときに突合の相手が存在する状態にする。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "WARNING_BACKLOG について、算出済みだが赤ではない信号（unresolved を含む）を異常とみなす条件と、閉じる責任の割当を決める。INC-039 推奨#4 と同じ空白であり、本件で二度目の作用が観測された。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "ADR-141 が閉じた穴について、同型の別入口（宣言・語彙・分岐によって検査が飛ぶ箇所）を全数で洗い出す走査を一度行い、症状単位の是正から体系単位の是正へ引き上げる。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "台帳から統治木への外向き参照について、参照する側と参照される側のどちらが解決を検める責任を持つかを明記する。責任が未割当であること自体を構造の再設計対象として扱う。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      }
+    ],
+    "systemic_factors": [
+      "宣言が検査の免除に化ける形。同じ形が事象の側（evidence_kind → refs 検査の飛ばし）と欠陥の側（照合対象フィールドの限定 → evidence_ref の不照合）に独立して現れている。二つの偶発ではなく、共通する設計様式である。",
+      "算出済みの信号を判定に接続しない。unresolved は在るのに verifiable が上書きし、citation_defect の語彙に evidence_ref が入っていない。検査の不足ではなく接続の欠落。",
+      "0 という出力が『見ていない』と『見て問題が無い』を同じ表示に畳む。沈黙を健全と読む余地が構造に残っている。",
+      "照合器が『引用が実在するか』を見て『対象が実在するか』を見ない。この盲点は故障注入 A2 で一度観測されて分析指示に組み込まれたが、同じ盲点が evidence_ref の側に残っていた。教訓の適用範囲が、それが見つかった箇所に限定された。",
+      "所有者判断待ちの信号に滞留先が無い。WARNING_BACKLOG の既知の穴であり、INC-039 推奨#4 と同じ空白がここでも作用した。",
+      "是正が症状の単位で行われ、塞いだ穴と同型の別入口を探す手順が無い。ADR-141 の是正がこの形の典型である。",
+      "参照の検査責任が、参照する側（保証レーン）と参照される側（統治木）のどちらにも明示的に割り当てられておらず、境界を跨ぐ参照が両者の視野の間に落ちる。"
+    ],
+    "unknowns": [
+      "【実在の未確認・最重要】本分析の入力が名指す機構——orchestrator.py の _validate_incident_evidence、prompts.py の verify_cast_analysis、assurance/harness/cast_analysis.py、および incident_evidence_status という集計——は、与えられた統制構造には要素として現れない。構造上の裏付けは ASSURANCE_LANE の実体が assurance/harness/orchestrator.py であることだけであり、当該関数・当該プロンプト・当該ファイルの実在は確認していない。作業ディレクトリ /tmp/assurance-cast-xwz65f70 は空でリポジトリが置かれておらず、実物を開けなかった。以下すべての統制欠陥は、事象の記録を真として組み立てた仮説である。この理由により confidence は low とする。",
+      "評価器の成果物を生成する主体（verify_cast_analysis を回す controller）に対応する要素 id が統制構造に無い。統制欠陥#3 は暫定的に ASSURANCE_LANE へ帰属させたが、実際には別の主体か、あるいは同一主体の別の局面かもしれない。帰属が誤っていれば、是正を差し込む位置も変わる。",
+      "docs-audit（SESSION_END_AUDIT）と dep-graph の逆依存が assurance/ledger を走査対象に含むかは、与えられた記述から確定できない。含むのであれば統制欠陥#8 は成立しない。",
+      "INC-040 の evidence_refs[1] に長い実ファイル名ではなく短縮形の名が入った経緯（どの生成経路で、id 形と path 形が混用されたか）は判らない。『ADR-134 の id 形なら解決する』という記述から書式の混用が疑われるが、確認していない。",
+      "台帳 40 件を走査して unresolved を持つのが INC-040 の 1 件のみという結果が、evidence_kind 宣言行を含む全件を対象にした集計なのか、宣言行を除いた集計なのかが判らない。除いた集計であれば、実際の未解決はこれより多い可能性がある。",
+      "『解決する／しない』の判定規則（id 形での解決、path 形での解決、和文注釈を継ぎ足した形の扱い）がどこにどう定義されているかを確認していない。規則が緩ければ、解決率が改善しても根拠の質は増えない。",
+      "台帳から評価器成果物へ写った未照合の参照が、後続のどの判断に実際に使われたかは追跡していない。影響の広さは不明である。",
+      "ADR-141 の本文を読んでいないため、本件が『ADR-141 が閉じた穴と同型』であるという判断は事象の記録の主張に依存しており、独立には検証していない。",
+      "本分析の入力は事象の記録のみで会話履歴が無いため、2026-08-14 の INC-040 分析時に統制欠陥#1 へ参照が複写された経緯を、当時の判断の側から確かめる材料が無い。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は、参照の検査可否を「宣言の有無」で分岐させ、宣言が在る行では解決結果を算出しながら判定に接続しない。だから門の出力は正しく 0 problems であり、その 0 が「見ていない」に由来することを区別する表示が無い。ADR-141 は「実在しない機構を指す捏造事象を積ませない」という別の入口を塞いだが、同型の穴が evidence_kind の分岐にも在ることは、塞いだ側の記録からは見えない。是正が症状の単位で行われ、同じ形の別入口を探す手順が無い。さらに欠陥の側でも、照合器の対象が「参照の集合」ではなく control_element_id と normative_refs という二つの特定フィールドとして定義されているため、evidence_ref は照合を受ける対象という枠に最初から入っていない。加えて、算出済みの unresolved を受け取って異常と判定する責任がどの要素にも割り当てられていない（WARNING_BACKLOG の既知の穴）ため、機械が持っていた材料が誰の判断にも届かなかった。要するに、見逃しは検査の不足ではなく、検査結果と判定の間の接続の欠落である。"
+  }
+}
