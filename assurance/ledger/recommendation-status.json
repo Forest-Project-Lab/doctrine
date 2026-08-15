@@ -2622,6 +2622,76 @@
       "state": "pending",
       "note": "導入複製の側から『案内コマンドが使用法の誤りになった』を配布側へ戻す報告経路。未実施。評価者は監視の追加として挙げ、同時に『複製の版に依存するので正本側の覆い測定の代替にならない』と限定を付けている（INC-005 と同型の共通原因故障）。限定つきで pending。",
       "investigated": "2026-08-15 本反復（APPLY_FINDINGS）"
+    },
+    {
+      "incident_id": "INC-032-hook-boundary-opens-silently",
+      "index": 0,
+      "state": "owner",
+      "note": "**半分は着地、半分は意図的に逆を採っている。**共有解決器 _auditcache.project_dir() は実在し、静的検査（test_the_resolver_is_shared_not_redefined）が『_auditcache 以外の script が CLAUDE_PROJECT_DIR と .cache を自前で扱う』ことを咎める。ここまでは推奨どおり。しかし推奨の後半『与えられていないへ倒すのではなく使用法の誤りとして停止させる』は**採られていない** —— 現行は信じられない値を作業ディレクトリへ倒し、その選択を docstring で明文化している（黙って広げない、という向き）。採ると、相対の CLAUDE_PROJECT_DIR で今まで動いていた導入先の hook が失敗するようになる。配布物の振る舞いが後方非互換に変わるので、六類型の『互換性を壊す変更』に当たる。",
+      "owner_decision_kind": "互換性を壊す変更",
+      "evaluator_owner_required": false,
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実物確認）"
+    },
+    {
+      "incident_id": "INC-032-hook-boundary-opens-silently",
+      "index": 1,
+      "state": "pending",
+      "note": "境界試験は**実在する** —— plugin/tests/test_hook_boundary.py に 10 件（空の root_from・実在する root_from・引数なし・空変数での summary_out・相対 project_dir・不在 project_dir・ファイルを指す project_dir・共有解決器の再定義・絶対と空・空白入りの往復）。CI の赤にも接続済み。**未着地なのは『表駆動で展開し、新しい起動点を登録しないと通らない構成』**の部分である。現状は個別の試験なので、起動点が増えても誰も登録を強いられない。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実物確認）"
+    },
+    {
+      "incident_id": "INC-032-hook-boundary-opens-silently",
+      "index": 2,
+      "state": "pending",
+      "note": "実効境界を要約に載せる件。**半分在る** —— 要約は root（実際に歩いた根）を記録する。**書いた要約の絶対パスは記録していない**し、注入された既定との不一致を鼓動が警告する経路も無い。INC-047 の分析が指した『真偽に圧縮された信号は対象集合の大きさに不変』と同じ形で、沈黙した成功と正常な成功を出力から区別できない。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実物確認）"
+    },
+    {
+      "incident_id": "INC-032-hook-boundary-opens-silently",
+      "index": 3,
+      "state": "pending",
+      "note": "作業木に印ファイルが複数出現していないかを CI と鼓動の双方から観測する。未実施。なお本セッションで release-check が二度 __pycache__ を捕まえており、『作業木に生えた物を咎める』検査は配布物の衛生の側には在る。印ファイルの割れは別である。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実物確認）"
+    },
+    {
+      "incident_id": "INC-032-hook-boundary-opens-silently",
+      "index": 4,
+      "state": "owner",
+      "note": "確定事実12 と WATCH-001 第9項に対応する安全制約を一対一で書き下し、強制責任を負う統制要素を明記する。フックの配線を統制構造の要素として追加するか、既存要素へ責任を割り当てるかの判断。**統制構造の要素を増やすかどうかは保証の範囲の定義に触れる。**",
+      "owner_decision_kind": "配布境界や保証範囲の変更",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実物確認）"
+    },
+    {
+      "incident_id": "INC-032-hook-boundary-opens-silently",
+      "index": 5,
+      "state": "owner",
+      "note": "fixed:false のまま配布複製へ是正を配るか、ADR-139 の独立検証まで待つか。併せて境界に関わる是正を含む版であることを利用者へ告げる経路を設けるか。**配ることそのものの判断**であり、六類型の『配布境界や保証範囲の変更』に当たる。なお現行は v0.13.0 で、INC-032 の是正は既に配られている（fix_note は『独立検証未実施のため fixed:true とは書かない』としている）。",
+      "owner_decision_kind": "配布境界や保証範囲の変更",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実物確認）"
+    },
+    {
+      "incident_id": "INC-032-hook-boundary-opens-silently",
+      "index": 6,
+      "state": "landed",
+      "note": "名指しされた機構の実在を確認した: 配線ファイル（plugin/hooks/hooks.json）・共有解決器（_auditcache.project_dir）・境界試験（test_hook_boundary.py の 10 件）は**実在**。独立再監査は ledger/recheck-*.json として 4 件在る。**カオス行列だけは、コードにも試験にも実体が無い** —— 名は運転手順（SKILL.md）と事象記録の中にしか現れず、385 プローブを再走したという記述の再現手段が体系に無い。事象記録の側を訂正するか、機構を作るかは #7 と同じ主題。",
+      "evidence_ref": "plugin/tests/test_hook_boundary.py",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実物確認）"
+    },
+    {
+      "incident_id": "INC-032-hook-boundary-opens-silently",
+      "index": 7,
+      "state": "pending",
+      "note": "カオス行列の母集団定義の確認と『値の与えられ方』の軸の追加。**#6 で判ったとおり、カオス行列は体系に実体を持たない**（名だけが記録に在る）。したがって母集団定義を確認する対象が無い。過去の導入複製で境界が開いていた期間の痕跡探索も未実施。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実物確認）"
+    },
+    {
+      "incident_id": "INC-032-hook-boundary-opens-silently",
+      "index": 8,
+      "state": "pending",
+      "note": "境界の宣言ごとに『その反例を探す検査が在るか』の対応表を作る。未実施。**これは INC-047 の推奨#6（覆いが自称より狭い同形の全数調査）と同じ主題**であり、宣言の側から検査を引く向きの調査である。まとめて扱うのが筋。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実物確認）"
     }
   ]
 }
