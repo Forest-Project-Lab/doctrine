@@ -30,9 +30,11 @@ REPRODUCE_RED である。**是正の前に赤であることが要件**で、�
 INC-040 の参照が直った後もこの試験は同じことを言い続ける必要がある。
 """
 import os
+import subprocess
 import sys
 import unittest
 
+_REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from harness import orchestrator  # noqa: E402
 
@@ -97,6 +99,29 @@ class TheRepairedLedgerStaysGreen(unittest.TestCase):
 
     def test_the_real_ledger_has_no_unresolving_ref(self):
         self.assertEqual(orchestrator._validate_incident_evidence(), [])
+
+    def test_no_ref_points_at_something_the_repository_does_not_carry(self):
+        """参照はリポジトリが持つ物だけを指す（ADR-166 第5項）。
+
+        実行時の状態（`.claude/.cache/` の下）を指す参照は、それを作った機械の
+        上でだけ解決する。門を立てた最初の走行で、手元は緑・CI は赤という形で
+        現れた —— 参照の解決が環境に依ることは、門を立てるまで見えなかった。
+        追跡されている物か、追跡されている物を含む場所だけを許す。
+        """
+        tracked = set(subprocess.run(
+            ["git", "ls-files"], capture_output=True, text=True,
+            cwd=_REPO).stdout.splitlines())
+        dirs = {os.path.dirname(p) for p in tracked}
+        dirs.discard("")
+        offenders = []
+        for inc in orchestrator.load_incidents():
+            for ref in (inc.get("evidence_refs") or []):
+                if "/" not in ref:      # 文書 id・Hook の口の名・検査名
+                    continue
+                if ref in tracked or ref in dirs:
+                    continue
+                offenders.append((inc.get("id"), ref))
+        self.assertEqual(offenders, [], "リポジトリが持たない場所を指している")
 
 
 if __name__ == "__main__":

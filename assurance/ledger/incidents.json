@@ -18,14 +18,14 @@
       "cast_analysis_ref": "assurance/ledger/cast/INC-001-sessionend-audit-gap.json",
       "cast_analyzed_at": "2026-08-05T05:22:19Z",
       "evidence_refs": [
-        ".claude/.cache/last-audit.json",
         "SessionEnd"
       ],
       "refuted_2026-08-06": "上の gap_still_open_2026-08-05 の根拠が成り立たない。『導入複製は 0.10.0 に追いついている(hook-stamps の hook_inject_version)ので版とは無関係』と書いたが、0.10.0 という版番号は 15 コミットにわたって同じであり、複製の同一性を判定しない。実際の複製は gitCommitSha 67475de(HEAD b00e085 より 15 コミット前)である。版の遅れ説は反証されていない。この取り違えは INC-019 として分離した。",
       "assumption_refs": [
         "ASM-001-sessionend-always-fires"
       ],
-      "next_step": "OPEN のまま。緩和は着地: 想定観測器（observe_assumptions.py が last-audit を stat・連続 N=2 の先行指標・ASM-001 に 2026-08-08 FAIL 記録）。根本原因（不発火 vs 旧版実行）の切り分けは UNKNOWN のまま —— 複製の同一性判定（INC-019）が前提"
+      "next_step": "OPEN のまま。緩和は着地: 想定観測器（observe_assumptions.py が last-audit を stat・連続 N=2 の先行指標・ASM-001 に 2026-08-08 FAIL 記録）。根本原因（不発火 vs 旧版実行）の切り分けは UNKNOWN のまま —— 複製の同一性判定（INC-019）が前提",
+      "evidence_note": "当初の evidence_refs は `.claude/.cache/last-audit.json` を含んでいた。これは**実行時の状態**であり（DECIDED-001。配布物の中に置かず ${CLAUDE_PROJECT_DIR}/.claude/.cache に限る）、リポジトリが持つ物ではない —— 作った機械の上でだけ解決し、清浄な checkout では解決しない。ADR-166 の門を立てたところ、ローカルでは緑・CI では赤という形で現れた（2026-08-15）。観測の内容は残す: 2026-08-04 の時点で当該 cache の要約は 2026-07-28 のままであり、checks_run も旧世代だった。参照としては hook の口の名 SessionEnd を残す。"
     },
     {
       "id": "INC-002-termcheck-ascii-substring",
