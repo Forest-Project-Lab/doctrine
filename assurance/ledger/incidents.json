@@ -863,8 +863,33 @@
       "fixed": false,
       "fix_note": "未修正。方向は三つ。(a) `--today` を試験専用と明記し、本番の走らせ手では『固定した日付で証拠を書く』ことを拒む（または警告を出す）。(b) 証拠に『刻印が固定されたものか実時計か』の別を持たせ、固定された刻印を鮮度の判定に使わない（UNKNOWN へ倒す）。(c) 鮮度の判定を刻印ではなく git のcommit 時刻など外から与えられる値で行う。(b) が INC-023 の向き（前提が欠けたら PASS ではなく前提欠如へ倒す）と揃う。先に REPRODUCE_RED（固定日付の証拠が鮮度を満たさないことを FAIL として固定）を作る。",
       "residual": [
-        "本件は運転する側の誤用で起きた。機構を直しても、証拠の刻印を人が選べる口が他にも在れば同じ形は残る（docs-audit の要約・inject-contract・gov-heartbeat はいずれも --today を持つ）。それらが鮮度の判定に使われているかは未調査である。",
+        "**調べた（2026-08-15 の同じ反復）。**--today を受け付ける口は 10 箇所（docs-audit・inject-contract・map-draft-check・scaffold・gov-heartbeat・attack_evaluator・discover・formalize・independent_recheck・observe_assumptions）。そのうち刻印を書き、かつその刻印が鮮度の判定に入るのは attack_evaluator（右辺）と independent_recheck（左辺）である。**左辺に同型が在り、そちらは危険側だった** —— INC-044 として別に積んだ。",
+        "配布側（hook）の経路は白。SessionEnd の配線は docs-audit を --today なしで呼ぶ（plugin/hooks/hooks.json）。要約の today を鮮度に使う gov-heartbeat も、要約が実時計で書かれる限り本件の形にはならない。手で --summary-in-project と --today を同時に渡した場合だけ同じ形になりうるが、配線された経路には無い。",
+        "formalize.py は generated_at に実時点を入れており当たらない。discover.py は --today を持つが generated_at を刻まない。そちらが鮮度の左辺に入るかは未調査のまま残る。",
         "一度目と二度目の走行は内容が同じとは限らない。A1・A2 は SDK を使うので、同じ入力でも出力が揺れうる。二つの記録を同一視しない。"
+      ],
+      "cast_analysis": "done",
+      "cast_analysis_ref": "assurance/ledger/cast/INC-043-fixed-date-option-backdates-production-evidence.json",
+      "cast_analyzed_at": "2026-08-15T16:11:17Z"
+    },
+    {
+      "id": "INC-044-evaluator-output-backdated-to-day-start-is-unsafe",
+      "date": "2026-08-15",
+      "summary": "鮮度の比較は「評価器の成果物 > 故障注入の証拠 なら未攻撃」である。INC-023 の是正は『日付だけの証拠はその日の始まりとして並ぶ』と決めたが、**その向きが安全側なのは右辺（攻撃証拠）だけ**である。左辺（評価器の成果物）をその日の始まりへ押し下げると、同じ日に**先に**走った攻撃が、後から走った評価器を覆ってしまう。independent_recheck.py は generated_at を常に `<--today>T00:00:00Z` と刻むので、独立再監査の成果物は必ず真夜中に並ぶ。",
+      "detected_by": "2026-08-15 の反復。INC-043（固定日付が証拠を後退させる）の残余として 『--today を持つ他の口が鮮度の判定に使われているか』を決定論で追った結果。台帳の実データ: recheck-jerg-2026-08-07・recheck-stpa-2026-08-07・recheck-cast-2026-08-09・recheck-jerg-2026-08-09 の 4 件はすべて generated_at が T00:00:00Z。同じ日の攻撃証拠は mutations-2026-08-07 が 18:52:02Z、mutations-2026-08-09 が 23:06:31Z。正本はこの 4 件を『攻撃済み』と読むが、実際にどちらが先だったかは記録から判らない。",
+      "evidence_refs": [
+        "assurance/harness/independent_recheck.py",
+        "assurance/harness/orchestrator.py",
+        "assurance/ledger/recheck-cast-2026-08-09.json",
+        "assurance/ledger/mutations-2026-08-09.json"
+      ],
+      "evidence_note": "機構: independent_recheck.py:160 は --today を required=True とし、:263 が `\"generated_at\": \"%sT00:00:00Z\" % args.today` と無条件に刻む。実時点を記録する道が無い。orchestrator の evaluator_outputs_latest は recheck の generated_at を左辺へ入れ、attack_evidence_latest（右辺）と _max_instant で比べる。",
+      "impact": "**INC-043 と根は同じで、安全の向きが逆である。**INC-043 は右辺を押し下げて過剰報告（走ったのに『まだ』と言う）を生んだ —— うるさいが安全側だった。本件は左辺を押し下げて**過少報告**を生む —— 攻撃していない評価器を『攻撃済み』と読む。ADR-120 が守ろうとした性質（評価器が欠陥を捕まえられることは、壊してみて非緑になることでしか言えない）が、その評価器については確かめられていないのに、確かめたことになる。現に 4 件の独立再監査の成果物がこの状態で並んでいる。影響は『攻撃されていない評価器が在る』ことであって、『判定が間違っている』ことではない—— 攻撃していれば通ったかもしれないし、通らなかったかもしれない。判らないことが問題である。",
+      "fixed": false,
+      "fix_note": "未修正。方向: 鮮度の比較は**辺ごとに安全側の丸め方が違う**ことを明示し、左辺（評価器の成果物）で日付しか判らない値はその日の**終わり**（23:59:59Z）として並べ、右辺（攻撃証拠）は今までどおりその日の**始まり**として並べる。あわせて independent_recheck.py が実時点を刻めるようにする（--today は日付の入力であって刻印の指定ではない、と分ける。INC-043 の (b) と同じ整理）。先に REPRODUCE_RED（左辺が真夜中の記録を、同じ日の先行する攻撃が覆ってしまうことを FAIL として固定）を作る。既存の 4 件は刻印を作り直せない（実時点が残っていない）ので、**遡って直すのではなく UNKNOWN として扱う** —— 証拠が消えた PASS は UNKNOWN へ戻す（§5）。",
+      "residual": [
+        "INC-043 の残余のうち、配布側（hook）の経路は調べて白だった。SessionEnd の配線は docs-audit を --today なしで呼ぶ（plugin/hooks/hooks.json）。要約の today を鮮度に使う gov-heartbeat も、その要約が実時計で書かれる限り本件の形にはならない。手で --summary-in-project と --today を同時に渡した場合だけ同じ形になりうるが、配線された経路には無い。",
+        "formalize.py は generated_at に実時点（now）を入れており、本件に当たらない。discover.py は --today を持つが generated_at を刻まない（scenarios の日付で並ぶ）。そちらが鮮度の左辺に入るかは未調査である。"
       ]
     }
   ]

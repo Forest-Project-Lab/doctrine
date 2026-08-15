@@ -2231,6 +2231,14 @@
       "state": "pending",
       "note": "索引の各カテゴリの計数に独立オラクル対照を義務づける件。**試験軸だけ landed 相当で、残り 6 軸は無い。**現状: assurance/tests/test_system_index_counts.py の test_the_total_matches_what_unittest_actually_collects が unittest の loader を第三の対照に置き、test_files の合計を照合する。documents・audit_checks・linter_codes・scripts・hooks・skills の 6 軸には独立オラクルが無く、`len(idx[name])` が唯一の事実源である。推奨が求める『差が 0 でなければプロンプト生成を進めず CI でも赤にする』も未実装 —— 現状の照合は試験の中だけで、生成経路の門にはなっていない。**この推奨は、私が二反復前に『次の最危険仮説』として挙げた形と同じ物である**（手で書いた数字を機械の同じ数字と突き合わせる段が無い）。是正の対象として筋が良い。本反復では着手しない —— 6 軸それぞれに独立オラクルを定める設計判断が要り、一つの主題として別に扱う。",
       "investigated": "2026-08-15 本反復（APPLY_FINDINGS。next_actions の先頭が名指す推奨）"
+    },
+    {
+      "incident_id": "INC-043-fixed-date-option-backdates-production-evidence",
+      "index": 5,
+      "state": "landed",
+      "note": "--today を受け付ける口を棚卸しし、刻印を書くか・その刻印が鮮度判定の入力になるかの対応表を作った。口は 10 箇所。刻印を書き鮮度に入るのは attack_evaluator（右辺＝故障注入の証拠）と independent_recheck（左辺＝評価器の成果物）の二つ。**左辺の同型が見つかり、そちらは安全の向きが逆だった**（同じ日に先に走った攻撃が、後から走った評価器を覆う）。INC-044 として積んだ。配布側の hook 経路は白（SessionEnd は --today なしで docs-audit を呼ぶ）。discover.py が鮮度の左辺に入るかは未調査として残した。",
+      "evidence_ref": "assurance/harness/independent_recheck.py",
+      "investigated": "2026-08-15 本反復（決定論の走査。評価セッションを買っていない）"
     }
   ]
 }

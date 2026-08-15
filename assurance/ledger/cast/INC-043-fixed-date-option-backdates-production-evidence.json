@@ -1,0 +1,781 @@
+{
+  "accepted_flaws": [
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "次の行動を決定論で導く導出は、証拠の generated_at と評価器成果物の時点比較に依っている。generated_at は走らせ手に渡した `--today` によって 00:00:00Z へ固定できるため、同じ日に実施した攻撃評価が同じ日の評価器成果物より古く並び、導出は実施済みの行動を未実施として提示し続けた。導出そのものは決定論で正しく動いており、誤っていたのは導出が受け取った手掛かりの側である。",
+      "evidence_ref": "assurance/harness/orchestrator.py（未確認）・ADR-120（未確認）",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "プロセスモデルと実状態の不整合",
+        "process-model-inconsistency-causes-unsafe-control",
+        "モデル一致のためのフィードバック提供",
+        "defects-in-information-providing-systems"
+      ],
+      "why_it_seemed_adequate": "時点比較は順序を機械的に決められる唯一の共通尺度であり、日付だけの証拠を『その日の始まり』へ倒す向きは INC-023 の是正で安全側として明示的に選ばれたものだった。刻印が実時計から来るという想定は、その決定の時点では書き留める必要のないほど自明に見えた。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "保証レーンは決定論試験の成否を手掛かりに持つが、それが保つのは『同じ入力から同じ導出が出ること』であって『導出の入力が実状態を表すこと』ではない。固定日付の証拠が鮮度判定を通らないことを FAIL として固定する試験（fix_note が先に作ると述べる REPRODUCE_RED）は現時点で存在しない。結果、鮮度判定機構それ自体の誤りは体系側から観測されない。",
+      "evidence_ref": "assurance/harness/orchestrator.py（未確認）",
+      "flaw_type": "統制自身の劣化を検出できない",
+      "normative_refs": [
+        "安全立証でなく非安全状態の探索",
+        "監査のすり抜け時に監査手順を是正",
+        "全体健全性と部分健全性の分離評価"
+      ],
+      "why_it_seemed_adequate": "決定論試験は導出の再現性という最も壊れやすい性質を押さえており、その緑は導出全体の健全性の代理として読めた。入力の出所を疑う試験は、入力が機械生成である限り冗長に見えた。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "§2 が既知の失敗として名指す『ATTACK_EVALUATOR が5反復飛ばされた形』と、本件の『走らせたのに未実施と表示される形』は、正本の表示上まったく同一である。両者を区別する手掛かりが台帳にも status にも無いため、真に飛ばされた場合と刻印が古い場合のどちらであるかを読み手が判別できない。既知の失敗形が、それとは別の原因で偽造されうる。",
+      "flaw_type": "統制どうしの調整の欠如",
+      "normative_refs": [
+        "共通の体系的要因による多重防護の無効化",
+        "systemic-cause-across-all-events",
+        "失敗記述に違反制約の明記"
+      ],
+      "why_it_seemed_adequate": "『評価器の成果物が証拠より新しければ未攻撃』という一本の規則で両方の状況を覆えることは、規則の簡潔さとして利点に見えた。二つの原因が同一表示になることは、規則を書いた時点では現れていなかった。"
+    },
+    {
+      "control_element_id": "SESSION_END_AUDIT",
+      "description": "運転手順 §0 は docs-audit について『--today は必ず渡す』と定める。この指示は監査の再現性という docs-audit 固有の性質から出ているが、条文は口の名前ではなく操作の一律化として読める形で書かれている。`--today` を持つ口が docs-audit・inject-contract・gov-heartbeat・攻撃評価器に横断して存在するため、指示の適用範囲は読み手の一般化に委ねられ、証拠を生む走らせ手にも及んだ。手順と機構の境界が機構の側で表現されていない。",
+      "evidence_ref": "plugin/scripts/docs-audit.py（未確認）・運転手順 §0（未確認）",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "機械的遵守が前提の指示は自動化",
+        "determine-why-rule-was-violated",
+        "monitor-procedure-practice-gap",
+        "エラー誘発設計要因の排除"
+      ],
+      "why_it_seemed_adequate": "再現性のために日付を固定するのは監査の走行では正しく、その正しさは他の口でも同型に見えた。同じ名前の引数が同じ意味を持つという読みは、CLI の設計慣習として自然である。"
+    },
+    {
+      "control_element_id": "HEARTBEAT",
+      "description": "鼓動は監査の古びと版の遅れをターンごとに警告するが、観測しているのは last-audit.json の時点と導入複製の版であり、成果物の刻印が実時計由来か固定由来かは見ていない。00:00:00Z という実時計ではまず生じない刻印が台帳に入っても、鼓動は鳴らない。沈黙して効く本件の経路に対応する感知器が構造に存在しない。",
+      "evidence_ref": "plugin/scripts/gov-heartbeat.py（未確認）",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "計画外変化の検出手段",
+        "リスク先行指標による監査",
+        "全コントロールループにフィードバック必須"
+      ],
+      "why_it_seemed_adequate": "鼓動の設計目的は『古いこと』の警告であり、本件の証拠は日付としては最新（当日）である。刻印が当日であれば古びの観点からは何も異常でなく、時刻の粒度を疑う理由が設計時には無かった。"
+    },
+    {
+      "control_element_id": "CI_RELEASE_CHECK",
+      "description": "CI は merge 前に赤で止める権能を持つが、本件の走行は終了コード 0・findings 0・記録在りで通過する。証拠の刻印の出所を問う判定が無いため、刻印が固定された証拠と実時計の証拠は CI から区別できず、赤にする根拠が生じない。止める力はあるが、止めるべき状態を認識する入力が無い。",
+      "evidence_ref": ".github/workflows（未確認）",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "検出失敗の原因調査",
+        "安全立証でなく非安全状態の探索",
+        "each-component-enforces-its-constraints"
+      ],
+      "why_it_seemed_adequate": "CI の役割は正本の試験と監査の結果を赤緑で伝えることであり、成果物のメタデータの妥当性は成果物を生む側の責任として分担されていた。境界の引き方としては合理的である。"
+    },
+    {
+      "control_element_id": "PRE_TOOL_GUARD",
+      "description": "ADR-166 の門は、本事象の初稿が引いた存在しない ADR 経路を積む時点で捕まえた。門が検査しているのは引用の綴りと経路の実在であり、引用が指す機構そのものの実在ではない。したがって、実在しない機構について書かれた事象や分析は、経路の綴りさえ整えば門を通る。本分析の作業環境ではリポジトリ自体が見えず、evidence_refs のいずれも実在を確認できていない（unknowns 参照）。",
+      "evidence_ref": "plugin/scripts/policy-guard.py（未確認）",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "安全立証でなく非安全状態の探索",
+        "include-information-supplier-defect",
+        "verify-decomposition-assumptions"
+      ],
+      "why_it_seemed_adequate": "経路の実在検査は機械的に確実で、統治木の壊れたリンクという実際に頻出する故障を確実に潰す。対象の実在検査は経路検査の自然な上位に見えず、追加すべき別種の検査として意識されていなかった。"
+    },
+    {
+      "control_element_id": "GOVERNANCE_TREE",
+      "description": "ADR-120 は『評価器の成果物が故障注入の証拠より新しければ未攻撃』という規則を定めるが、その規則が成り立つための前提（証拠の刻印は実時計に由来し、実行者が選べない）を文書として記録していない。前提が記録されていないため、前提が失効したことを示す先行指標も定義されず、失効は事象が起きるまで観測されない。",
+      "evidence_ref": "ADR-120（未確認）",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "安全想定の記録と失効先行指標の定義",
+        "想定の記録と変更時再検査",
+        "破られた想定の再検討"
+      ],
+      "why_it_seemed_adequate": "規則は観測可能な二つの時点だけで書かれており、外部前提を持たない自足した規則に見えた。刻印の出所は実装の詳細であって決定の前提ではない、という切り分けが自然だった。"
+    },
+    {
+      "control_element_id": "OWNER",
+      "description": "所有者が読む進捗報告・PR の diff・台帳のいずれも、『攻撃評価を走らせた』事実と『正本が未実施と表示する』状態を矛盾なく同時に含みうる。既知の穴（報告が実施ではなく意図を書いていても人からは見分けにくい）は、本件では逆向きに効いた——実施したのに未実施と見える。加えて fix_note の (a)(b)(c) は互いに排他的な設計選択であり所有者判断を要するが、その判断を要求する経路は起動していない（fixed: false）。",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "controller-needs-concrete-feedback-channels",
+        "feedback-enables-improvement-of-controls",
+        "許容可否判断はステークホルダー"
+      ],
+      "why_it_seemed_adequate": "台帳・報告・diff の三系統は互いに独立した手掛かりとして設計されており、三つが揃えば実状態を再構成できると期待できた。三つとも同じ刻印を上流に持つことは、経路の図の上では見えない。"
+    },
+    {
+      "control_element_id": "WARNING_BACKLOG",
+      "description": "本件は fixed: false のまま台帳に積まれ、残余として『他の --today を持つ口が鮮度判定に使われているかは未調査』が残る。滞留を異常とする条件と閉じる責任の割当が未定であるため、この未調査項目がいつまで開いていてよいかの基準が無く、是正完了の追跡が起動しない。",
+      "evidence_ref": "doctrine_docs/packaging/procedures/PROC-001-development-norms.md（未確認）",
+      "flaw_type": "制御動作が遅い",
+      "normative_refs": [
+        "audit-findings-must-be-closed",
+        "指摘欠点の是正完了追跡",
+        "是正措置の責任割当と追跡"
+      ],
+      "why_it_seemed_adequate": "契約注入が要約の先頭 5 件を運ぶため読み手は確保されており、警告は『読まれれば閉じる』と期待できた。門を warn まで広げるか別経路にするかは所有者判断として保留されており、保留は決定の一形態として妥当だった。"
+    }
+  ],
+  "analysis": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "次の行動を決定論で導く導出は、証拠の generated_at と評価器成果物の時点比較に依っている。generated_at は走らせ手に渡した `--today` によって 00:00:00Z へ固定できるため、同じ日に実施した攻撃評価が同じ日の評価器成果物より古く並び、導出は実施済みの行動を未実施として提示し続けた。導出そのものは決定論で正しく動いており、誤っていたのは導出が受け取った手掛かりの側である。",
+        "evidence_ref": "assurance/harness/orchestrator.py（未確認）・ADR-120（未確認）",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "プロセスモデルと実状態の不整合",
+          "process-model-inconsistency-causes-unsafe-control",
+          "モデル一致のためのフィードバック提供",
+          "defects-in-information-providing-systems"
+        ],
+        "why_it_seemed_adequate": "時点比較は順序を機械的に決められる唯一の共通尺度であり、日付だけの証拠を『その日の始まり』へ倒す向きは INC-023 の是正で安全側として明示的に選ばれたものだった。刻印が実時計から来るという想定は、その決定の時点では書き留める必要のないほど自明に見えた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "保証レーンは決定論試験の成否を手掛かりに持つが、それが保つのは『同じ入力から同じ導出が出ること』であって『導出の入力が実状態を表すこと』ではない。固定日付の証拠が鮮度判定を通らないことを FAIL として固定する試験（fix_note が先に作ると述べる REPRODUCE_RED）は現時点で存在しない。結果、鮮度判定機構それ自体の誤りは体系側から観測されない。",
+        "evidence_ref": "assurance/harness/orchestrator.py（未確認）",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "安全立証でなく非安全状態の探索",
+          "監査のすり抜け時に監査手順を是正",
+          "全体健全性と部分健全性の分離評価"
+        ],
+        "why_it_seemed_adequate": "決定論試験は導出の再現性という最も壊れやすい性質を押さえており、その緑は導出全体の健全性の代理として読めた。入力の出所を疑う試験は、入力が機械生成である限り冗長に見えた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "§2 が既知の失敗として名指す『ATTACK_EVALUATOR が5反復飛ばされた形』と、本件の『走らせたのに未実施と表示される形』は、正本の表示上まったく同一である。両者を区別する手掛かりが台帳にも status にも無いため、真に飛ばされた場合と刻印が古い場合のどちらであるかを読み手が判別できない。既知の失敗形が、それとは別の原因で偽造されうる。",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "共通の体系的要因による多重防護の無効化",
+          "systemic-cause-across-all-events",
+          "失敗記述に違反制約の明記"
+        ],
+        "why_it_seemed_adequate": "『評価器の成果物が証拠より新しければ未攻撃』という一本の規則で両方の状況を覆えることは、規則の簡潔さとして利点に見えた。二つの原因が同一表示になることは、規則を書いた時点では現れていなかった。"
+      },
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "運転手順 §0 は docs-audit について『--today は必ず渡す』と定める。この指示は監査の再現性という docs-audit 固有の性質から出ているが、条文は口の名前ではなく操作の一律化として読める形で書かれている。`--today` を持つ口が docs-audit・inject-contract・gov-heartbeat・攻撃評価器に横断して存在するため、指示の適用範囲は読み手の一般化に委ねられ、証拠を生む走らせ手にも及んだ。手順と機構の境界が機構の側で表現されていない。",
+        "evidence_ref": "plugin/scripts/docs-audit.py（未確認）・運転手順 §0（未確認）",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "機械的遵守が前提の指示は自動化",
+          "determine-why-rule-was-violated",
+          "monitor-procedure-practice-gap",
+          "エラー誘発設計要因の排除"
+        ],
+        "why_it_seemed_adequate": "再現性のために日付を固定するのは監査の走行では正しく、その正しさは他の口でも同型に見えた。同じ名前の引数が同じ意味を持つという読みは、CLI の設計慣習として自然である。"
+      },
+      {
+        "control_element_id": "HEARTBEAT",
+        "description": "鼓動は監査の古びと版の遅れをターンごとに警告するが、観測しているのは last-audit.json の時点と導入複製の版であり、成果物の刻印が実時計由来か固定由来かは見ていない。00:00:00Z という実時計ではまず生じない刻印が台帳に入っても、鼓動は鳴らない。沈黙して効く本件の経路に対応する感知器が構造に存在しない。",
+        "evidence_ref": "plugin/scripts/gov-heartbeat.py（未確認）",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "計画外変化の検出手段",
+          "リスク先行指標による監査",
+          "全コントロールループにフィードバック必須"
+        ],
+        "why_it_seemed_adequate": "鼓動の設計目的は『古いこと』の警告であり、本件の証拠は日付としては最新（当日）である。刻印が当日であれば古びの観点からは何も異常でなく、時刻の粒度を疑う理由が設計時には無かった。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "CI は merge 前に赤で止める権能を持つが、本件の走行は終了コード 0・findings 0・記録在りで通過する。証拠の刻印の出所を問う判定が無いため、刻印が固定された証拠と実時計の証拠は CI から区別できず、赤にする根拠が生じない。止める力はあるが、止めるべき状態を認識する入力が無い。",
+        "evidence_ref": ".github/workflows（未確認）",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "検出失敗の原因調査",
+          "安全立証でなく非安全状態の探索",
+          "each-component-enforces-its-constraints"
+        ],
+        "why_it_seemed_adequate": "CI の役割は正本の試験と監査の結果を赤緑で伝えることであり、成果物のメタデータの妥当性は成果物を生む側の責任として分担されていた。境界の引き方としては合理的である。"
+      },
+      {
+        "control_element_id": "PRE_TOOL_GUARD",
+        "description": "ADR-166 の門は、本事象の初稿が引いた存在しない ADR 経路を積む時点で捕まえた。門が検査しているのは引用の綴りと経路の実在であり、引用が指す機構そのものの実在ではない。したがって、実在しない機構について書かれた事象や分析は、経路の綴りさえ整えば門を通る。本分析の作業環境ではリポジトリ自体が見えず、evidence_refs のいずれも実在を確認できていない（unknowns 参照）。",
+        "evidence_ref": "plugin/scripts/policy-guard.py（未確認）",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "安全立証でなく非安全状態の探索",
+          "include-information-supplier-defect",
+          "verify-decomposition-assumptions"
+        ],
+        "why_it_seemed_adequate": "経路の実在検査は機械的に確実で、統治木の壊れたリンクという実際に頻出する故障を確実に潰す。対象の実在検査は経路検査の自然な上位に見えず、追加すべき別種の検査として意識されていなかった。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "ADR-120 は『評価器の成果物が故障注入の証拠より新しければ未攻撃』という規則を定めるが、その規則が成り立つための前提（証拠の刻印は実時計に由来し、実行者が選べない）を文書として記録していない。前提が記録されていないため、前提が失効したことを示す先行指標も定義されず、失効は事象が起きるまで観測されない。",
+        "evidence_ref": "ADR-120（未確認）",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "安全想定の記録と失効先行指標の定義",
+          "想定の記録と変更時再検査",
+          "破られた想定の再検討"
+        ],
+        "why_it_seemed_adequate": "規則は観測可能な二つの時点だけで書かれており、外部前提を持たない自足した規則に見えた。刻印の出所は実装の詳細であって決定の前提ではない、という切り分けが自然だった。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者が読む進捗報告・PR の diff・台帳のいずれも、『攻撃評価を走らせた』事実と『正本が未実施と表示する』状態を矛盾なく同時に含みうる。既知の穴（報告が実施ではなく意図を書いていても人からは見分けにくい）は、本件では逆向きに効いた——実施したのに未実施と見える。加えて fix_note の (a)(b)(c) は互いに排他的な設計選択であり所有者判断を要するが、その判断を要求する経路は起動していない（fixed: false）。",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "controller-needs-concrete-feedback-channels",
+          "feedback-enables-improvement-of-controls",
+          "許容可否判断はステークホルダー"
+        ],
+        "why_it_seemed_adequate": "台帳・報告・diff の三系統は互いに独立した手掛かりとして設計されており、三つが揃えば実状態を再構成できると期待できた。三つとも同じ刻印を上流に持つことは、経路の図の上では見えない。"
+      },
+      {
+        "control_element_id": "WARNING_BACKLOG",
+        "description": "本件は fixed: false のまま台帳に積まれ、残余として『他の --today を持つ口が鮮度判定に使われているかは未調査』が残る。滞留を異常とする条件と閉じる責任の割当が未定であるため、この未調査項目がいつまで開いていてよいかの基準が無く、是正完了の追跡が起動しない。",
+        "evidence_ref": "doctrine_docs/packaging/procedures/PROC-001-development-norms.md（未確認）",
+        "flaw_type": "制御動作が遅い",
+        "normative_refs": [
+          "audit-findings-must-be-closed",
+          "指摘欠点の是正完了追跡",
+          "是正措置の責任割当と追跡"
+        ],
+        "why_it_seemed_adequate": "契約注入が要約の先頭 5 件を運ぶため読み手は確保されており、警告は『読まれれば閉じる』と期待できた。門を warn まで広げるか別経路にするかは所有者判断として保留されており、保留は決定の一形態として妥当だった。"
+      }
+    ],
+    "hazard": "証拠の刻印（generated_at）を実行者が任意に選べる状態のまま、その刻印の時点比較だけを「実施済みか否か」の唯一の根拠にしている統制状態。すなわち、統制側のプロセスモデル（何が走ったか）を、実行者の入力で自由に曲げられる値から組み立てている状態。",
+    "incident_id": "INC-043-fixed-date-option-backdates-production-evidence",
+    "leading_indicators": [
+      {
+        "indicator": "証拠成果物の刻印が真夜中ちょうどである件数",
+        "observable": "generated_at の時刻部分が 00:00:00Z である成果物・台帳記録の数",
+        "threshold": "1 件でも 0 を超えたら異常として扱う（実時計で秒まで真夜中に揃う確率は無視できる）",
+        "version_independent": true,
+        "where": "assurance/ledger/ 配下の記録および証拠を生む走らせ手の出力ディレクトリ",
+        "why_version_independent": "リポジトリ正本側の成果物を直接読むだけで判定でき、利用者環境へ導入された複製の版に依存しない。"
+      },
+      {
+        "indicator": "証拠の刻印と、同記録の git_sha の commit 時刻との乖離",
+        "observable": "generated_at − (git_sha の committer date) の符号と絶対値",
+        "threshold": "負（証拠が commit より古い）、または絶対値が 12 時間を超えたら異常",
+        "version_independent": true,
+        "where": "台帳の記録と git log の突合（CI もしくは台帳健全性検査の中）",
+        "why_version_independent": "git の commit 時刻は走らせ手の引数から与えられない外部値であり、リポジトリ側だけで突合できる。"
+      },
+      {
+        "indicator": "証拠を書く口のうち --today を受け付けるものの数",
+        "observable": "CLI 引数定義の棚卸しと、その口が成果物に刻印を書くかの対応表",
+        "threshold": "『証拠を書く』かつ『--today を受ける』口が 1 つでも在れば異常",
+        "version_independent": true,
+        "where": "リポジトリ内の各走らせ手の引数定義（docs-audit・inject-contract・gov-heartbeat・攻撃評価器を含む）",
+        "why_version_independent": "正本のソースを走査するだけで数えられ、導入複製の版に依存しない。"
+      },
+      {
+        "indicator": "status の next_actions と成果物の実在の食い違い",
+        "observable": "orchestrator status が挙げる行動について、対応する成果物が存在しかつ PASS である件数",
+        "threshold": "1 反復でも食い違いが 1 件以上あれば異常",
+        "version_independent": true,
+        "where": "orchestrator status の出力と成果物ディレクトリの突合（反復ごと）",
+        "why_version_independent": "リポジトリ正本の状態のみを比較する。"
+      },
+      {
+        "indicator": "固定日付の証拠を FAIL として固定する試験（REPRODUCE_RED）の存在と実行状態",
+        "observable": "該当試験の有無、および直近の実行が赤／緑／skip のいずれか",
+        "threshold": "試験が存在しない、または存在しても skip されているなら異常",
+        "version_independent": true,
+        "where": "決定論試験の一覧と CI ジョブの結果",
+        "why_version_independent": "試験定義と CI の結果はリポジトリ正本側に在り、複製の版に依存しない。"
+      },
+      {
+        "indicator": "鼓動が刻印の固定を警告した比率（警告機構を追加した場合）",
+        "observable": "gov-heartbeat が『刻印が固定されている』旨を出したターン数 ÷ 証拠が生成されたターン数",
+        "threshold": "固定刻印の証拠が存在するのに警告率が 1 未満なら異常",
+        "version_independent": false,
+        "where": "導入複製側の .claude/.cache および鼓動の出力",
+        "why_version_independent": "鼓動は導入複製の側で動くため、複製の版が遅れればこの検出器も遅れる（INC-005 の共通原因故障。古びの検出器が古びる形をこの指標も継承する）。正本側の指標 1〜5 の代替にはならない。"
+      }
+    ],
+    "loss": "保証キャンペーンの読み手（所有者および後続セッション）が、実施済みの攻撃評価を「未実施」と読み、次の行動判断と保証状態の像を実状態からずらす。赤が一つも立たないまま正本が ATTACK_EVALUATOR を挙げ続けるため、ずれは検出されずに反復をまたいで持続する。逆向き（未実施を実施済みと読ませる）も同じ口から成立しうる。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "未来日付の証拠を置いても status が該当行動を挙げ続ける場合、鮮度判定は刻印以外の値も参照しており仮説は誤り。",
+        "hypothesis": "未来の日付を --today に渡して証拠を書くと、実際には走らせていない注入が status の next_actions から落ち、『済み』と読まれる。",
+        "oracle": "隔離環境で、注入を実行せずに未来日付の証拠だけを置き、orchestrator status が該当行動を挙げなくなるかを観測する。",
+        "severity": "P0"
+      },
+      {
+        "falsification_signal": "両者の警告が一致するなら、鼓動は要約の刻印ではなく別の値で古びを判定しており仮説は誤り。",
+        "hypothesis": "docs-audit の要約が --today で真夜中刻印になり、鼓動の古び判定が最大一日ぶんずれる（甘くも厳しくもなりうる）。",
+        "oracle": "--today を渡した監査走行の直後に鼓動を走らせ、警告の有無が --today を渡さない走行と一致するかを比較する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "複数回の走行で findings と残余が常に一致するなら、揺れは実測上無視でき仮説は誤り。",
+        "hypothesis": "一度目と二度目の走行を同一視して扱う運用が、SDK 依存の揺れ（A1・A2）による結果差を隠す。二度目が PASS なら一度目の未確認の差異が問われなくなる。",
+        "oracle": "同一入力で攻撃評価器を複数回走らせ、findings と残余の集合が一致するかを比較する。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "負債の印が残るか鼓動が警告するなら、二重の脱落は成立せず仮説は誤り。",
+        "hypothesis": "刻印の固定と SessionEnd 不発火（INC-001）が重なると、負債の印も鮮度を満たす証拠も無い区間ができ、その区間の実施が統治の目から二重に落ちる。",
+        "oracle": "SessionEnd を発火させずに終了したセッションで固定日付の証拠を書き、次セッションの注入と鼓動が何を報告するかを観測する。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "三点すべてが実在すれば仮説は棄却され、本分析の confidence は引き上げられる。",
+        "hypothesis": "実在しない機構を名指す事象記録に対して、現行の分析工程は統制欠陥を生成しうる（A2 の故障注入が示した形）。本分析自身がその再現である可能性を排除できていない。",
+        "oracle": "リポジトリを参照できる環境で evidence_refs の三点と ATTACK_EVALUATOR の実在を確認し、確認結果を本分析へ差し戻す。",
+        "severity": "P1"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "事象が名指す機構の実在を、統制欠陥を書く前に確認する工程を分析手順に組み込む。ADR-166 の門を、引用経路の綴りの検査に加えて『事象が名指す統制要素が統制構造の一覧に存在するか』の検査まで広げる。存在しない場合は分析を阻むのではなく、unknowns の先頭への記載を強制する。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "証拠を生む走らせ手において、固定した日付で証拠を書くことを拒む（または刻印を実時計で上書きする）。--today は試験専用の口として型・名前の両方で分離し、証拠生成の経路からは到達不能にする（fix_note の方向 a）。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "証拠に『刻印が実時計由来か固定由来か』の別を持たせ、固定由来の刻印は鮮度判定に使わず UNKNOWN（前提欠如）へ倒す。INC-023 の向き（前提が欠けたら PASS ではなく前提欠如へ倒す）と揃う（fix_note の方向 b）。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "REPRODUCE_RED を先に作る。固定日付で書いた証拠が鮮度判定を満たさないことを FAIL として固定し、決定論試験の一覧に載せて CI で走らせる。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "generated_at が 00:00:00Z である成果物、および generated_at が git_sha の commit 時刻より古い成果物を検出する門を、台帳健全性検査と CI の双方へ追加する。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "--today を受け付けるすべての口を棚卸しし、各口が成果物に刻印を書くか、その刻印が鮮度判定の入力になるかの対応表を作る（docs-audit の要約・inject-contract・gov-heartbeat を含む。事象の残余が未調査と明記している）。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "ADR-120 に、鮮度規則が成り立つための前提（証拠の刻印は実時計に由来し実行者が選べない）を明記し、その前提の失効を示す先行指標を併記する。運転手順 §0 には --today の適用範囲を口の名前で限定して書く。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "status の表示において『成果物が無い』と『成果物は在るが鮮度判定を通らない』を別の文言で区別し、§2 の既知失敗形と本件の形を読み手が判別できるようにする。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "fix_note の (a)(b)(c) のどれを採るか、および WARNING_BACKLOG の滞留を異常とする条件と閉じる責任の割当を決める。後者は INC-039 推奨#4 から継続して未決である。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "未来日付を渡した場合に未実施の攻撃が『済み』と読まれるかを、隔離環境で実証または反証する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "「時刻」という単一の入力が --today として複数の口（監査・鼓動・契約注入・攻撃評価器）に横断して開いており、独立に設計された防護が一つの入力で同時に曲がる共通原因を作っている。",
+      "再現性のための機構（固定日付・決定論）と、実施の証拠を作る機構が同じ実行経路と同じ引数名を共有し、試験専用の口と本番の口が型でも名前でも区別されていない。",
+      "「鮮度（時点の前後）」を「実施の有無」の代理として使っている。時点比較は順序しか語れず、走ったかどうかを語る能力を持たない代理指標である。",
+      "手順文書（運転手順 §0）が機構の性質ではなく操作の一律化として書かれ、適用範囲の判断が読み手の一般化に委ねられている。",
+      "統制構造の既知の穴の多くが「検出しない」と自認しており（NONGOAL-001・WATCH-001・INC-005・INC-039）、緑のまま誤る沈黙型の故障に対する感知器が構造全体で薄い。",
+      "門は引用の綴りと経路の実在を検査するが、指示対象そのものの実在を検査しない。この非対称は本事象の初稿だけでなく、事象記録を入力とする分析工程全体に及ぶ。",
+      "是正の方向（fix_note の a/b/c）が所有者判断を要するのに、判断を要求する経路が滞留側（WARNING_BACKLOG）に閉じ責任が未定のまま置かれている。"
+    ],
+    "unknowns": [
+      "【最優先】本分析の作業ディレクトリ（/tmp/assurance-cast-139c00b7）にはリポジトリが存在せず、evidence_refs が挙げる assurance/harness/attack_evaluator.py・assurance/harness/orchestrator.py・ADR-120 のいずれも実在を確認できなかった。さらに ATTACK_EVALUATOR という統制要素、`--today` という口、ADR-120 の鮮度規則は、与えられた統制構造の要素一覧に一つも現れない（orchestrator.py だけが ASSURANCE_LANE の実体として現れる）。事象の記録は与えられた入力であって実在の証明ではない。以下の統制欠陥は実在が確認された要素 id にのみ紐づけてあるが、事象が名指す機構が実在するという前提の上に立っている。この前提が偽なら分析全体が無効である。confidence を low としたのはこの理由による。",
+      "鮮度判定が generated_at 以外の値（git_sha の commit 時刻など）も参照しているかは未確認。参照していれば欠陥の形は変わる。",
+      "--today を持つ他の口（docs-audit の要約・inject-contract・gov-heartbeat）の出力が鮮度判定の入力に使われているかは未調査（事象自身が残余として挙げている）。",
+      "一度目と二度目の走行の内容が同一かは不明。A1・A2 は SDK を使うため同じ入力でも出力が揺れうる。二つの記録を同一視できない以上、二度目の PASS が一度目の PASS を再現したとは言えない。",
+      "運転手順 §0 の原文と、その適用範囲がどう記述されているかは未確認。『docs-audit について』と限定されているのか、走らせ手一般に及ぶ書き方なのかで、手順側の欠陥の性質が変わる。",
+      "未来日付を渡した場合の逆向きの誤り（未実施を実施済みと読ませる）が実際に成立するかは未検証。事象は『口は同じ』と述べるが実証していない。",
+      "ADR-166 の門が何を検査しているか（経路文字列の実在か、ADR id の形式か、その両方か）は未確認。",
+      "本件の表示のずれを所有者が許容できないと判断するかは未確認。許容可否の判断はステークホルダーに属する。",
+      "INC-023 の是正が『日付だけの証拠をその日の始まりへ倒す』向きを選んだ際、刻印が人の選択に開く可能性が検討されたかどうかの記録は未確認。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は「赤が立つこと」を検出の手段に置いている。本件の経路は終了コード 0・findings 0・記録在り・注入三件とも PASS で、どの門にも赤を作らない。決定論試験が保つのは導出の再現性であって導出の入力の真正性ではなく、CI が見るのはリポジトリ正本であって成果物の刻印の出所ではなく、鼓動が見るのは日付の古びであって時刻の粒度ではない。三者は独立した防護に見えるが、いずれも「刻印は実時計から来る」という同一の未記録の前提の上に立っており、その前提が曲がると三つとも同時に沈黙する。ADR-166 の門が本事象の初稿を捕まえたのは引用経路の綴りゆえであり、規則が指す対象の実在を確かめたためではない。さらに、評価器を走らせた者と正本の表示を読む者が同一であったため、「走らせた」という記憶が「未実施表示」の異常性を打ち消し、6 反復ぶりの実行という間隔の長さが比較の基準を失わせた。"
+  },
+  "control_structure_ids": [
+    "OWNER",
+    "CI_RELEASE_CHECK",
+    "SESSION_START_CONTRACT",
+    "HEARTBEAT",
+    "PRE_TOOL_GUARD",
+    "POST_TOOL_LINTER",
+    "SESSION_END_AUDIT",
+    "WARNING_BACKLOG",
+    "CAPTURE_NUDGE",
+    "PLUGIN_DISTRIBUTION",
+    "ASSURANCE_LANE",
+    "GOVERNANCE_TREE"
+  ],
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "duration_ms": 275460,
+  "errors": [],
+  "execution_kind": "real-sdk",
+  "flaws_with_citation_defect": [],
+  "generated_at": "2026-08-15T16:11:17Z",
+  "git_dirty": true,
+  "git_sha": "5471236319e0f840fa13af6dc1422abd8b586f17",
+  "incident_evidence": {
+    "kind": null,
+    "refs": [
+      "assurance/harness/attack_evaluator.py",
+      "assurance/harness/orchestrator.py",
+      "ADR-120"
+    ],
+    "resolved": [
+      "assurance/harness/attack_evaluator.py",
+      "assurance/harness/orchestrator.py",
+      "ADR-120"
+    ],
+    "unresolved": [],
+    "verifiable": true
+  },
+  "incident_id": "INC-043-fixed-date-option-backdates-production-evidence",
+  "incident_sha256": "016988ef7d46cef71937298c53c30ffffe09d40eafac09de0a20c1def775cf20",
+  "init": {
+    "claude_code_version": "2.1.221",
+    "model": "claude-opus-5",
+    "session_id": "9b8c03d9-7ee9-4d64-8bf6-4cf563731516",
+    "tools_count": 27
+  },
+  "kind": "cast-analysis",
+  "leading_indicators_defined": true,
+  "options": {
+    "allowed_tools": [],
+    "cwd": "/tmp/assurance-cast-139c00b7",
+    "effort": "high",
+    "max_budget_usd": 4.0,
+    "max_turns": 8,
+    "model": "claude-opus-5",
+    "setting_sources": [],
+    "timeout_s": 900
+  },
+  "oracle": "structured_output がレーン側再検証にも適合",
+  "principles_offered": 337,
+  "prompt_sha256": "0ea5eddc2768c028784e86e628d0cbde34b3f05bd27f3528491c2bc01b34dc44",
+  "rejected_flaws": [],
+  "result_meta": {
+    "duration_api_ms": 267938,
+    "is_error": false,
+    "num_turns": 4,
+    "session_id": "9b8c03d9-7ee9-4d64-8bf6-4cf563731516",
+    "subtype": "success",
+    "total_cost_usd": 0.9342585,
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 41998,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 41998,
+      "cache_read_input_tokens": 131431,
+      "inference_geo": "not_available",
+      "input_tokens": 6,
+      "iterations": "list",
+      "output_tokens": 16422,
+      "server_tool_use": {
+        "web_fetch_requests": 0,
+        "web_search_requests": 0
+      },
+      "service_tier": "standard",
+      "speed": "standard"
+    }
+  },
+  "schema_sha256": "0d1643d5e16353723405302c1f6ffcf753915e2a4f27a3530e8ef9a9ee45cb46",
+  "sdk_version": "0.2.129",
+  "settled": true,
+  "status": "PASS",
+  "structured_output": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "次の行動を決定論で導く導出は、証拠の generated_at と評価器成果物の時点比較に依っている。generated_at は走らせ手に渡した `--today` によって 00:00:00Z へ固定できるため、同じ日に実施した攻撃評価が同じ日の評価器成果物より古く並び、導出は実施済みの行動を未実施として提示し続けた。導出そのものは決定論で正しく動いており、誤っていたのは導出が受け取った手掛かりの側である。",
+        "evidence_ref": "assurance/harness/orchestrator.py（未確認）・ADR-120（未確認）",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "プロセスモデルと実状態の不整合",
+          "process-model-inconsistency-causes-unsafe-control",
+          "モデル一致のためのフィードバック提供",
+          "defects-in-information-providing-systems"
+        ],
+        "why_it_seemed_adequate": "時点比較は順序を機械的に決められる唯一の共通尺度であり、日付だけの証拠を『その日の始まり』へ倒す向きは INC-023 の是正で安全側として明示的に選ばれたものだった。刻印が実時計から来るという想定は、その決定の時点では書き留める必要のないほど自明に見えた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "保証レーンは決定論試験の成否を手掛かりに持つが、それが保つのは『同じ入力から同じ導出が出ること』であって『導出の入力が実状態を表すこと』ではない。固定日付の証拠が鮮度判定を通らないことを FAIL として固定する試験（fix_note が先に作ると述べる REPRODUCE_RED）は現時点で存在しない。結果、鮮度判定機構それ自体の誤りは体系側から観測されない。",
+        "evidence_ref": "assurance/harness/orchestrator.py（未確認）",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "安全立証でなく非安全状態の探索",
+          "監査のすり抜け時に監査手順を是正",
+          "全体健全性と部分健全性の分離評価"
+        ],
+        "why_it_seemed_adequate": "決定論試験は導出の再現性という最も壊れやすい性質を押さえており、その緑は導出全体の健全性の代理として読めた。入力の出所を疑う試験は、入力が機械生成である限り冗長に見えた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "§2 が既知の失敗として名指す『ATTACK_EVALUATOR が5反復飛ばされた形』と、本件の『走らせたのに未実施と表示される形』は、正本の表示上まったく同一である。両者を区別する手掛かりが台帳にも status にも無いため、真に飛ばされた場合と刻印が古い場合のどちらであるかを読み手が判別できない。既知の失敗形が、それとは別の原因で偽造されうる。",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "共通の体系的要因による多重防護の無効化",
+          "systemic-cause-across-all-events",
+          "失敗記述に違反制約の明記"
+        ],
+        "why_it_seemed_adequate": "『評価器の成果物が証拠より新しければ未攻撃』という一本の規則で両方の状況を覆えることは、規則の簡潔さとして利点に見えた。二つの原因が同一表示になることは、規則を書いた時点では現れていなかった。"
+      },
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "運転手順 §0 は docs-audit について『--today は必ず渡す』と定める。この指示は監査の再現性という docs-audit 固有の性質から出ているが、条文は口の名前ではなく操作の一律化として読める形で書かれている。`--today` を持つ口が docs-audit・inject-contract・gov-heartbeat・攻撃評価器に横断して存在するため、指示の適用範囲は読み手の一般化に委ねられ、証拠を生む走らせ手にも及んだ。手順と機構の境界が機構の側で表現されていない。",
+        "evidence_ref": "plugin/scripts/docs-audit.py（未確認）・運転手順 §0（未確認）",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "機械的遵守が前提の指示は自動化",
+          "determine-why-rule-was-violated",
+          "monitor-procedure-practice-gap",
+          "エラー誘発設計要因の排除"
+        ],
+        "why_it_seemed_adequate": "再現性のために日付を固定するのは監査の走行では正しく、その正しさは他の口でも同型に見えた。同じ名前の引数が同じ意味を持つという読みは、CLI の設計慣習として自然である。"
+      },
+      {
+        "control_element_id": "HEARTBEAT",
+        "description": "鼓動は監査の古びと版の遅れをターンごとに警告するが、観測しているのは last-audit.json の時点と導入複製の版であり、成果物の刻印が実時計由来か固定由来かは見ていない。00:00:00Z という実時計ではまず生じない刻印が台帳に入っても、鼓動は鳴らない。沈黙して効く本件の経路に対応する感知器が構造に存在しない。",
+        "evidence_ref": "plugin/scripts/gov-heartbeat.py（未確認）",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "計画外変化の検出手段",
+          "リスク先行指標による監査",
+          "全コントロールループにフィードバック必須"
+        ],
+        "why_it_seemed_adequate": "鼓動の設計目的は『古いこと』の警告であり、本件の証拠は日付としては最新（当日）である。刻印が当日であれば古びの観点からは何も異常でなく、時刻の粒度を疑う理由が設計時には無かった。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "CI は merge 前に赤で止める権能を持つが、本件の走行は終了コード 0・findings 0・記録在りで通過する。証拠の刻印の出所を問う判定が無いため、刻印が固定された証拠と実時計の証拠は CI から区別できず、赤にする根拠が生じない。止める力はあるが、止めるべき状態を認識する入力が無い。",
+        "evidence_ref": ".github/workflows（未確認）",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "検出失敗の原因調査",
+          "安全立証でなく非安全状態の探索",
+          "each-component-enforces-its-constraints"
+        ],
+        "why_it_seemed_adequate": "CI の役割は正本の試験と監査の結果を赤緑で伝えることであり、成果物のメタデータの妥当性は成果物を生む側の責任として分担されていた。境界の引き方としては合理的である。"
+      },
+      {
+        "control_element_id": "PRE_TOOL_GUARD",
+        "description": "ADR-166 の門は、本事象の初稿が引いた存在しない ADR 経路を積む時点で捕まえた。門が検査しているのは引用の綴りと経路の実在であり、引用が指す機構そのものの実在ではない。したがって、実在しない機構について書かれた事象や分析は、経路の綴りさえ整えば門を通る。本分析の作業環境ではリポジトリ自体が見えず、evidence_refs のいずれも実在を確認できていない（unknowns 参照）。",
+        "evidence_ref": "plugin/scripts/policy-guard.py（未確認）",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "安全立証でなく非安全状態の探索",
+          "include-information-supplier-defect",
+          "verify-decomposition-assumptions"
+        ],
+        "why_it_seemed_adequate": "経路の実在検査は機械的に確実で、統治木の壊れたリンクという実際に頻出する故障を確実に潰す。対象の実在検査は経路検査の自然な上位に見えず、追加すべき別種の検査として意識されていなかった。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "ADR-120 は『評価器の成果物が故障注入の証拠より新しければ未攻撃』という規則を定めるが、その規則が成り立つための前提（証拠の刻印は実時計に由来し、実行者が選べない）を文書として記録していない。前提が記録されていないため、前提が失効したことを示す先行指標も定義されず、失効は事象が起きるまで観測されない。",
+        "evidence_ref": "ADR-120（未確認）",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "安全想定の記録と失効先行指標の定義",
+          "想定の記録と変更時再検査",
+          "破られた想定の再検討"
+        ],
+        "why_it_seemed_adequate": "規則は観測可能な二つの時点だけで書かれており、外部前提を持たない自足した規則に見えた。刻印の出所は実装の詳細であって決定の前提ではない、という切り分けが自然だった。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者が読む進捗報告・PR の diff・台帳のいずれも、『攻撃評価を走らせた』事実と『正本が未実施と表示する』状態を矛盾なく同時に含みうる。既知の穴（報告が実施ではなく意図を書いていても人からは見分けにくい）は、本件では逆向きに効いた——実施したのに未実施と見える。加えて fix_note の (a)(b)(c) は互いに排他的な設計選択であり所有者判断を要するが、その判断を要求する経路は起動していない（fixed: false）。",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "controller-needs-concrete-feedback-channels",
+          "feedback-enables-improvement-of-controls",
+          "許容可否判断はステークホルダー"
+        ],
+        "why_it_seemed_adequate": "台帳・報告・diff の三系統は互いに独立した手掛かりとして設計されており、三つが揃えば実状態を再構成できると期待できた。三つとも同じ刻印を上流に持つことは、経路の図の上では見えない。"
+      },
+      {
+        "control_element_id": "WARNING_BACKLOG",
+        "description": "本件は fixed: false のまま台帳に積まれ、残余として『他の --today を持つ口が鮮度判定に使われているかは未調査』が残る。滞留を異常とする条件と閉じる責任の割当が未定であるため、この未調査項目がいつまで開いていてよいかの基準が無く、是正完了の追跡が起動しない。",
+        "evidence_ref": "doctrine_docs/packaging/procedures/PROC-001-development-norms.md（未確認）",
+        "flaw_type": "制御動作が遅い",
+        "normative_refs": [
+          "audit-findings-must-be-closed",
+          "指摘欠点の是正完了追跡",
+          "是正措置の責任割当と追跡"
+        ],
+        "why_it_seemed_adequate": "契約注入が要約の先頭 5 件を運ぶため読み手は確保されており、警告は『読まれれば閉じる』と期待できた。門を warn まで広げるか別経路にするかは所有者判断として保留されており、保留は決定の一形態として妥当だった。"
+      }
+    ],
+    "hazard": "証拠の刻印（generated_at）を実行者が任意に選べる状態のまま、その刻印の時点比較だけを「実施済みか否か」の唯一の根拠にしている統制状態。すなわち、統制側のプロセスモデル（何が走ったか）を、実行者の入力で自由に曲げられる値から組み立てている状態。",
+    "incident_id": "INC-043-fixed-date-option-backdates-production-evidence",
+    "leading_indicators": [
+      {
+        "indicator": "証拠成果物の刻印が真夜中ちょうどである件数",
+        "observable": "generated_at の時刻部分が 00:00:00Z である成果物・台帳記録の数",
+        "threshold": "1 件でも 0 を超えたら異常として扱う（実時計で秒まで真夜中に揃う確率は無視できる）",
+        "version_independent": true,
+        "where": "assurance/ledger/ 配下の記録および証拠を生む走らせ手の出力ディレクトリ",
+        "why_version_independent": "リポジトリ正本側の成果物を直接読むだけで判定でき、利用者環境へ導入された複製の版に依存しない。"
+      },
+      {
+        "indicator": "証拠の刻印と、同記録の git_sha の commit 時刻との乖離",
+        "observable": "generated_at − (git_sha の committer date) の符号と絶対値",
+        "threshold": "負（証拠が commit より古い）、または絶対値が 12 時間を超えたら異常",
+        "version_independent": true,
+        "where": "台帳の記録と git log の突合（CI もしくは台帳健全性検査の中）",
+        "why_version_independent": "git の commit 時刻は走らせ手の引数から与えられない外部値であり、リポジトリ側だけで突合できる。"
+      },
+      {
+        "indicator": "証拠を書く口のうち --today を受け付けるものの数",
+        "observable": "CLI 引数定義の棚卸しと、その口が成果物に刻印を書くかの対応表",
+        "threshold": "『証拠を書く』かつ『--today を受ける』口が 1 つでも在れば異常",
+        "version_independent": true,
+        "where": "リポジトリ内の各走らせ手の引数定義（docs-audit・inject-contract・gov-heartbeat・攻撃評価器を含む）",
+        "why_version_independent": "正本のソースを走査するだけで数えられ、導入複製の版に依存しない。"
+      },
+      {
+        "indicator": "status の next_actions と成果物の実在の食い違い",
+        "observable": "orchestrator status が挙げる行動について、対応する成果物が存在しかつ PASS である件数",
+        "threshold": "1 反復でも食い違いが 1 件以上あれば異常",
+        "version_independent": true,
+        "where": "orchestrator status の出力と成果物ディレクトリの突合（反復ごと）",
+        "why_version_independent": "リポジトリ正本の状態のみを比較する。"
+      },
+      {
+        "indicator": "固定日付の証拠を FAIL として固定する試験（REPRODUCE_RED）の存在と実行状態",
+        "observable": "該当試験の有無、および直近の実行が赤／緑／skip のいずれか",
+        "threshold": "試験が存在しない、または存在しても skip されているなら異常",
+        "version_independent": true,
+        "where": "決定論試験の一覧と CI ジョブの結果",
+        "why_version_independent": "試験定義と CI の結果はリポジトリ正本側に在り、複製の版に依存しない。"
+      },
+      {
+        "indicator": "鼓動が刻印の固定を警告した比率（警告機構を追加した場合）",
+        "observable": "gov-heartbeat が『刻印が固定されている』旨を出したターン数 ÷ 証拠が生成されたターン数",
+        "threshold": "固定刻印の証拠が存在するのに警告率が 1 未満なら異常",
+        "version_independent": false,
+        "where": "導入複製側の .claude/.cache および鼓動の出力",
+        "why_version_independent": "鼓動は導入複製の側で動くため、複製の版が遅れればこの検出器も遅れる（INC-005 の共通原因故障。古びの検出器が古びる形をこの指標も継承する）。正本側の指標 1〜5 の代替にはならない。"
+      }
+    ],
+    "loss": "保証キャンペーンの読み手（所有者および後続セッション）が、実施済みの攻撃評価を「未実施」と読み、次の行動判断と保証状態の像を実状態からずらす。赤が一つも立たないまま正本が ATTACK_EVALUATOR を挙げ続けるため、ずれは検出されずに反復をまたいで持続する。逆向き（未実施を実施済みと読ませる）も同じ口から成立しうる。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "未来日付の証拠を置いても status が該当行動を挙げ続ける場合、鮮度判定は刻印以外の値も参照しており仮説は誤り。",
+        "hypothesis": "未来の日付を --today に渡して証拠を書くと、実際には走らせていない注入が status の next_actions から落ち、『済み』と読まれる。",
+        "oracle": "隔離環境で、注入を実行せずに未来日付の証拠だけを置き、orchestrator status が該当行動を挙げなくなるかを観測する。",
+        "severity": "P0"
+      },
+      {
+        "falsification_signal": "両者の警告が一致するなら、鼓動は要約の刻印ではなく別の値で古びを判定しており仮説は誤り。",
+        "hypothesis": "docs-audit の要約が --today で真夜中刻印になり、鼓動の古び判定が最大一日ぶんずれる（甘くも厳しくもなりうる）。",
+        "oracle": "--today を渡した監査走行の直後に鼓動を走らせ、警告の有無が --today を渡さない走行と一致するかを比較する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "複数回の走行で findings と残余が常に一致するなら、揺れは実測上無視でき仮説は誤り。",
+        "hypothesis": "一度目と二度目の走行を同一視して扱う運用が、SDK 依存の揺れ（A1・A2）による結果差を隠す。二度目が PASS なら一度目の未確認の差異が問われなくなる。",
+        "oracle": "同一入力で攻撃評価器を複数回走らせ、findings と残余の集合が一致するかを比較する。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "負債の印が残るか鼓動が警告するなら、二重の脱落は成立せず仮説は誤り。",
+        "hypothesis": "刻印の固定と SessionEnd 不発火（INC-001）が重なると、負債の印も鮮度を満たす証拠も無い区間ができ、その区間の実施が統治の目から二重に落ちる。",
+        "oracle": "SessionEnd を発火させずに終了したセッションで固定日付の証拠を書き、次セッションの注入と鼓動が何を報告するかを観測する。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "三点すべてが実在すれば仮説は棄却され、本分析の confidence は引き上げられる。",
+        "hypothesis": "実在しない機構を名指す事象記録に対して、現行の分析工程は統制欠陥を生成しうる（A2 の故障注入が示した形）。本分析自身がその再現である可能性を排除できていない。",
+        "oracle": "リポジトリを参照できる環境で evidence_refs の三点と ATTACK_EVALUATOR の実在を確認し、確認結果を本分析へ差し戻す。",
+        "severity": "P1"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "事象が名指す機構の実在を、統制欠陥を書く前に確認する工程を分析手順に組み込む。ADR-166 の門を、引用経路の綴りの検査に加えて『事象が名指す統制要素が統制構造の一覧に存在するか』の検査まで広げる。存在しない場合は分析を阻むのではなく、unknowns の先頭への記載を強制する。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "証拠を生む走らせ手において、固定した日付で証拠を書くことを拒む（または刻印を実時計で上書きする）。--today は試験専用の口として型・名前の両方で分離し、証拠生成の経路からは到達不能にする（fix_note の方向 a）。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "証拠に『刻印が実時計由来か固定由来か』の別を持たせ、固定由来の刻印は鮮度判定に使わず UNKNOWN（前提欠如）へ倒す。INC-023 の向き（前提が欠けたら PASS ではなく前提欠如へ倒す）と揃う（fix_note の方向 b）。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "REPRODUCE_RED を先に作る。固定日付で書いた証拠が鮮度判定を満たさないことを FAIL として固定し、決定論試験の一覧に載せて CI で走らせる。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "generated_at が 00:00:00Z である成果物、および generated_at が git_sha の commit 時刻より古い成果物を検出する門を、台帳健全性検査と CI の双方へ追加する。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "--today を受け付けるすべての口を棚卸しし、各口が成果物に刻印を書くか、その刻印が鮮度判定の入力になるかの対応表を作る（docs-audit の要約・inject-contract・gov-heartbeat を含む。事象の残余が未調査と明記している）。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "ADR-120 に、鮮度規則が成り立つための前提（証拠の刻印は実時計に由来し実行者が選べない）を明記し、その前提の失効を示す先行指標を併記する。運転手順 §0 には --today の適用範囲を口の名前で限定して書く。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "status の表示において『成果物が無い』と『成果物は在るが鮮度判定を通らない』を別の文言で区別し、§2 の既知失敗形と本件の形を読み手が判別できるようにする。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "fix_note の (a)(b)(c) のどれを採るか、および WARNING_BACKLOG の滞留を異常とする条件と閉じる責任の割当を決める。後者は INC-039 推奨#4 から継続して未決である。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "未来日付を渡した場合に未実施の攻撃が『済み』と読まれるかを、隔離環境で実証または反証する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "「時刻」という単一の入力が --today として複数の口（監査・鼓動・契約注入・攻撃評価器）に横断して開いており、独立に設計された防護が一つの入力で同時に曲がる共通原因を作っている。",
+      "再現性のための機構（固定日付・決定論）と、実施の証拠を作る機構が同じ実行経路と同じ引数名を共有し、試験専用の口と本番の口が型でも名前でも区別されていない。",
+      "「鮮度（時点の前後）」を「実施の有無」の代理として使っている。時点比較は順序しか語れず、走ったかどうかを語る能力を持たない代理指標である。",
+      "手順文書（運転手順 §0）が機構の性質ではなく操作の一律化として書かれ、適用範囲の判断が読み手の一般化に委ねられている。",
+      "統制構造の既知の穴の多くが「検出しない」と自認しており（NONGOAL-001・WATCH-001・INC-005・INC-039）、緑のまま誤る沈黙型の故障に対する感知器が構造全体で薄い。",
+      "門は引用の綴りと経路の実在を検査するが、指示対象そのものの実在を検査しない。この非対称は本事象の初稿だけでなく、事象記録を入力とする分析工程全体に及ぶ。",
+      "是正の方向（fix_note の a/b/c）が所有者判断を要するのに、判断を要求する経路が滞留側（WARNING_BACKLOG）に閉じ責任が未定のまま置かれている。"
+    ],
+    "unknowns": [
+      "【最優先】本分析の作業ディレクトリ（/tmp/assurance-cast-139c00b7）にはリポジトリが存在せず、evidence_refs が挙げる assurance/harness/attack_evaluator.py・assurance/harness/orchestrator.py・ADR-120 のいずれも実在を確認できなかった。さらに ATTACK_EVALUATOR という統制要素、`--today` という口、ADR-120 の鮮度規則は、与えられた統制構造の要素一覧に一つも現れない（orchestrator.py だけが ASSURANCE_LANE の実体として現れる）。事象の記録は与えられた入力であって実在の証明ではない。以下の統制欠陥は実在が確認された要素 id にのみ紐づけてあるが、事象が名指す機構が実在するという前提の上に立っている。この前提が偽なら分析全体が無効である。confidence を low としたのはこの理由による。",
+      "鮮度判定が generated_at 以外の値（git_sha の commit 時刻など）も参照しているかは未確認。参照していれば欠陥の形は変わる。",
+      "--today を持つ他の口（docs-audit の要約・inject-contract・gov-heartbeat）の出力が鮮度判定の入力に使われているかは未調査（事象自身が残余として挙げている）。",
+      "一度目と二度目の走行の内容が同一かは不明。A1・A2 は SDK を使うため同じ入力でも出力が揺れうる。二つの記録を同一視できない以上、二度目の PASS が一度目の PASS を再現したとは言えない。",
+      "運転手順 §0 の原文と、その適用範囲がどう記述されているかは未確認。『docs-audit について』と限定されているのか、走らせ手一般に及ぶ書き方なのかで、手順側の欠陥の性質が変わる。",
+      "未来日付を渡した場合の逆向きの誤り（未実施を実施済みと読ませる）が実際に成立するかは未検証。事象は『口は同じ』と述べるが実証していない。",
+      "ADR-166 の門が何を検査しているか（経路文字列の実在か、ADR id の形式か、その両方か）は未確認。",
+      "本件の表示のずれを所有者が許容できないと判断するかは未確認。許容可否の判断はステークホルダーに属する。",
+      "INC-023 の是正が『日付だけの証拠をその日の始まりへ倒す』向きを選んだ際、刻印が人の選択に開く可能性が検討されたかどうかの記録は未確認。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は「赤が立つこと」を検出の手段に置いている。本件の経路は終了コード 0・findings 0・記録在り・注入三件とも PASS で、どの門にも赤を作らない。決定論試験が保つのは導出の再現性であって導出の入力の真正性ではなく、CI が見るのはリポジトリ正本であって成果物の刻印の出所ではなく、鼓動が見るのは日付の古びであって時刻の粒度ではない。三者は独立した防護に見えるが、いずれも「刻印は実時計から来る」という同一の未記録の前提の上に立っており、その前提が曲がると三つとも同時に沈黙する。ADR-166 の門が本事象の初稿を捕まえたのは引用経路の綴りゆえであり、規則が指す対象の実在を確かめたためではない。さらに、評価器を走らせた者と正本の表示を読む者が同一であったため、「走らせた」という記憶が「未実施表示」の異常性を打ち消し、6 反復ぶりの実行という間隔の長さが比較の基準を失わせた。"
+  }
+}
