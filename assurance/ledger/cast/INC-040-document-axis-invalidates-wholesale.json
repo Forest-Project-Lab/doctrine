@@ -1,0 +1,763 @@
+{
+  "accepted_flaws": [
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "『次の行動を決定論で導く』制御が依拠する失効の意味論において、証拠を持つ判定の失効鍵が種別単位（category_sha256 が種別内の全件を畳む）である。安全制約『網羅判定の失効は、その判定が依拠した証拠が変化したときに限る』が強制されておらず、無関係な文書 2 件の追加で 606 件中 257 件（42%）が失効した。無関係さの度合いは効かない — 種別の指紋が変わった時点で内容に関わらず全部が古びる。",
+      "evidence_ref": "assurance/harness/system_index.py の build（category_sha256 は種別ごとに全件を畳む）／文書 2 件のみ追加で 257 件失効・約78分の実測",
+      "flaw_type": "制御動作が誤っている",
+      "normative_refs": [
+        "accidents-from-inadequate-constraint-enforcement",
+        "trace-why-design-flaw-was-introduced",
+        "refine-generic-constraints-to-specific-loss"
+      ],
+      "why_it_seemed_adequate": "ADR-134 の時点で観測されていた実害は INC-025（試験軸で全件が古びる）であり、指紋を種別ごとに分けるだけでその観測害は消えた。種別粒度は実装が単純で決定論を保ち、失効の意味論を弱めない方向（過剰に失効させる側）なので安全側の選択に見えた。過剰失効は緑を偽らないため、当時の判断としては合理的である。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "ADR-134 による是正が『症状の出た軸（試験）』の範囲で閉じられ、同型の構造（種別ごとに全件を畳む指紋）が文書軸・技能軸に残った。是正の適用範囲を同型構造の全軸へ広げる手順が無く、最も件数が多く最も多く引かれる文書軸に、最も高くつく残余が残っている。INC-025 と同一形状の損失が別の軸で再発した。",
+      "evidence_ref": "doctrine_docs/packaging/decisions/ADR-134-scoped-staleness.md（意図は全件失効の停止、実現は種別粒度まで）",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "symptom-vs-systemic-cause",
+        "omitted-cause-recurrence",
+        "systemic-cause-across-all-events"
+      ],
+      "why_it_seemed_adequate": "ADR-134 は『関係の無い変更が全件を古びさせる』を止める意図で書かれ、その意図は宣言としては全軸を覆っている。試験軸で赤が消えたことで是正は完了したように見え、他軸の残余を測る実験（一軸だけを分離して足す）は行われていなかった。残余は測らなければ見えない種類のものである。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "制御アクション（失効の発火）に対応するフィードバックが無い。『この変更で何件が古びたか』『そのうち何件が実際にその変更を証拠として引いていたか』『再判定に何分かかったか』が定常の手掛かり（assurance/ledger／決定論試験の成否）に現れない。42% という比率と78〜83分という額は、2026-08-10 の独立再監査が分離実験を行って初めて数値になった。",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "control-action-requires-feedback",
+        "全コントロールループにフィードバック必須",
+        "要約統計偏重による傾向情報の喪失"
+      ],
+      "why_it_seemed_adequate": "台帳が持つべき手掛かりは『判定が有効か古びたか』であり、その真偽は正しく記録されている。失効は正常動作であって異常ではないので、量を数える必要は設計時に見えなかった。過剰失効は時間としてしか現れず、時間は台帳の記録対象ではない。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "税の額は現在の 606 件・3 冊という規模での実測であり、台帳が育てば伸びる。この『規模の増加という計画された変化によって統制の費用が悪化する』劣化を検出する閾値も、想定（何件までなら許容できるか）の記録も無い。想定が破れたことを判定する先行指標が定義されていないため、劣化は次の分離実験まで表面化しない。",
+      "flaw_type": "統制自身の劣化を検出できない",
+      "normative_refs": [
+        "安全想定の記録と失効先行指標の定義",
+        "設計時想定の運用中再検査",
+        "計画外変化の検出手段"
+      ],
+      "why_it_seemed_adequate": "台帳の成長は統制が健全に働いている証拠であり、成長そのものを危険信号として扱う理由は当時なかった。費用の非線形な悪化は、規模が小さいうちは観測できない。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "失効の量が、次の行動の優先順位へ無検査で変換されている。古びが積み上がると正本は MAP_COVERAGE を名指し続け、REPRODUCE_RED 29 件・DISCOVER 42 件が先頭に来ない。すなわち『再判定という手続き的作業』が『赤の再現・未探索領域の発見という非安全状態の探索』を押し出す。リスクの高い行動へ資源を優先配分する規範と逆向きの序列が、決定論の結果として生じる。",
+      "flaw_type": "制御動作が誤っている",
+      "normative_refs": [
+        "高リスク活動への監督資源の優先配分",
+        "安全立証でなく非安全状態の探索",
+        "リスク情報の不透明な集約禁止"
+      ],
+      "why_it_seemed_adequate": "『網羅の地図が古いなら地図を直してから進む』は健全な順序であり、決定論で導くという要件も満たしている。古びが無関係な原因で生じているという情報が順位付けの入力に無いため、順位付け自体には誤りが見えない。"
+    },
+    {
+      "control_element_id": "GOVERNANCE_TREE",
+      "description": "統治木は決定と事実を文書として残すことを前提に置く一方、失効機構は文書を足す行為に時間の税を課す。方針（文書化せよ）と機構（文書化には78〜83分かかる）の向きが逆であり、報告・記録という安全に必要な振る舞いのコンテキストが、その振る舞いを抑制する形になっている。是正が他の運用目的（作業を終端まで進めること）と競合するため、税を払わない選択が時間とともに常態化しうる。",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "fix-reporting-system-design",
+        "change-system-to-change-behavior",
+        "control-includes-indirect-policy-and-culture",
+        "競合する是正の形骸化評価"
+      ],
+      "why_it_seemed_adequate": "文書化の規範と索引の指紋設計は別々の関心事として設計されており、両者の相互作用（文書を足すと網羅判定が古びる）は、どちらの設計文書からも見えない位置にある。文書化を罰する意図を持った要素はどこにも無い。"
+    },
+    {
+      "control_element_id": "OWNER",
+      "description": "所有者の手掛かり（進捗報告・PR の diff・台帳）に、文書追加あたりの再判定コストと、失効の意味論を弱める変更に伴う過少失効のリスクが現れない。本件は『過剰失効（時間を食う）と過少失効（緑を偽る）のどちらをどこまで許すか』という所有者判断を要するが、その判断に必要な二つの量が定型の報告経路に載っていない。",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "controller-needs-concrete-feedback-channels",
+        "feedback-enables-improvement-of-controls",
+        "defects-in-information-providing-systems"
+      ],
+      "why_it_seemed_adequate": "報告は実施した行動と台帳の状態を伝える形式で設計されており、実施に要した時間の内訳や、実施しなかった選択の費用は報告項目ではない。既知の穴（報告が意図を書いていても見分けにくい）と同じ面に、費用が現れないという穴が並んでいる。"
+    },
+    {
+      "control_element_id": "CI_RELEASE_CHECK",
+      "description": "CI は merge 前に赤で止めるが、『無関係な変更が網羅判定を大量に失効させる』性質は赤にならない。決定論試験は現行の（種別粒度の）失効意味論を期待値として固定しているため、同型の欠陥は試験の通過条件と矛盾せず、門を素通りする。ADR-134 の適用漏れを検出する試験（一軸だけを足して、無関係な判定が古びないことを確かめる）が存在しない。",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "監査のすり抜け時に監査手順を是正",
+        "verify-all-hazard-preventing-systems",
+        "検出失敗の原因調査"
+      ],
+      "why_it_seemed_adequate": "決定論試験の役割は実装が仕様どおりに振る舞うことの確認であり、仕様（種別粒度で失効する）自体の妥当性は試験の対象外である。過剰失効は仕様どおりの動作なので、赤にする根拠が門の側に無い。"
+    },
+    {
+      "control_element_id": "POST_TOOL_LINTER",
+      "description": "リンタは編集された一つの文書だけを点検して助言を返す。書き手が受け取る手掛かりの粒度（一文書）と、その編集が引き起こす失効の粒度（種別全体・257 件）が食い違うため、書き手の持つモデル（『小さな文書を一つ足しただけ』）と系の実状態（『文書を引く判定が全部古びた』）が乖離する。乖離は再判定の段（終端の直前）まで表面化しない。",
+      "flaw_type": "手掛かりが遅い",
+      "normative_refs": [
+        "designer-vs-operator-mental-model",
+        "process-model-inconsistency-causes-unsafe-control",
+        "モデル一致のためのフィードバック提供"
+      ],
+      "why_it_seemed_adequate": "リンタは PostToolUse の一編集ごとに走る設計であり、一編集の外側にある索引全体の影響を知る立場にない。decision を出さず助言に留める設計（WATCH-001）とも整合しており、範囲を広げる理由は当時見えていなかった。"
+    },
+    {
+      "control_element_id": "WARNING_BACKLOG",
+      "description": "本件のような『修正の方向は在るが急いで入れない』欠陥は、warn でも赤でもなく、行動キューの先頭が固定されるという形でしか現れない。滞留を異常とする条件と閉じる責任の割当が未定（既知の穴、INC-039 推奨#4 が所有者判断のまま）であるため、時間の税と ADR-134 の適用漏れは、どの主体の追跡対象にもならないまま残りうる。監査で指摘された欠陥を是正完了まで追跡する経路が、この種の指摘に対して割り当てられていない。",
+      "flaw_type": "統制どうしの調整の欠如",
+      "normative_refs": [
+        "audit-findings-must-be-closed",
+        "指摘欠点の是正完了追跡",
+        "監視責任の空白排除"
+      ],
+      "why_it_seemed_adequate": "門を warn まで広げると偽陽性で作業が止まる恐れがあり、別経路にするか門を広げるかは慎重な所有者判断として未決に置かれた。未決のまま置くこと自体は、拙速に決めるより安全に見える選択である。"
+    }
+  ],
+  "analysis": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "『次の行動を決定論で導く』制御が依拠する失効の意味論において、証拠を持つ判定の失効鍵が種別単位（category_sha256 が種別内の全件を畳む）である。安全制約『網羅判定の失効は、その判定が依拠した証拠が変化したときに限る』が強制されておらず、無関係な文書 2 件の追加で 606 件中 257 件（42%）が失効した。無関係さの度合いは効かない — 種別の指紋が変わった時点で内容に関わらず全部が古びる。",
+        "evidence_ref": "assurance/harness/system_index.py の build（category_sha256 は種別ごとに全件を畳む）／文書 2 件のみ追加で 257 件失効・約78分の実測",
+        "flaw_type": "制御動作が誤っている",
+        "normative_refs": [
+          "accidents-from-inadequate-constraint-enforcement",
+          "trace-why-design-flaw-was-introduced",
+          "refine-generic-constraints-to-specific-loss"
+        ],
+        "why_it_seemed_adequate": "ADR-134 の時点で観測されていた実害は INC-025（試験軸で全件が古びる）であり、指紋を種別ごとに分けるだけでその観測害は消えた。種別粒度は実装が単純で決定論を保ち、失効の意味論を弱めない方向（過剰に失効させる側）なので安全側の選択に見えた。過剰失効は緑を偽らないため、当時の判断としては合理的である。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "ADR-134 による是正が『症状の出た軸（試験）』の範囲で閉じられ、同型の構造（種別ごとに全件を畳む指紋）が文書軸・技能軸に残った。是正の適用範囲を同型構造の全軸へ広げる手順が無く、最も件数が多く最も多く引かれる文書軸に、最も高くつく残余が残っている。INC-025 と同一形状の損失が別の軸で再発した。",
+        "evidence_ref": "doctrine_docs/packaging/decisions/ADR-134-scoped-staleness.md（意図は全件失効の停止、実現は種別粒度まで）",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "symptom-vs-systemic-cause",
+          "omitted-cause-recurrence",
+          "systemic-cause-across-all-events"
+        ],
+        "why_it_seemed_adequate": "ADR-134 は『関係の無い変更が全件を古びさせる』を止める意図で書かれ、その意図は宣言としては全軸を覆っている。試験軸で赤が消えたことで是正は完了したように見え、他軸の残余を測る実験（一軸だけを分離して足す）は行われていなかった。残余は測らなければ見えない種類のものである。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "制御アクション（失効の発火）に対応するフィードバックが無い。『この変更で何件が古びたか』『そのうち何件が実際にその変更を証拠として引いていたか』『再判定に何分かかったか』が定常の手掛かり（assurance/ledger／決定論試験の成否）に現れない。42% という比率と78〜83分という額は、2026-08-10 の独立再監査が分離実験を行って初めて数値になった。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "control-action-requires-feedback",
+          "全コントロールループにフィードバック必須",
+          "要約統計偏重による傾向情報の喪失"
+        ],
+        "why_it_seemed_adequate": "台帳が持つべき手掛かりは『判定が有効か古びたか』であり、その真偽は正しく記録されている。失効は正常動作であって異常ではないので、量を数える必要は設計時に見えなかった。過剰失効は時間としてしか現れず、時間は台帳の記録対象ではない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "税の額は現在の 606 件・3 冊という規模での実測であり、台帳が育てば伸びる。この『規模の増加という計画された変化によって統制の費用が悪化する』劣化を検出する閾値も、想定（何件までなら許容できるか）の記録も無い。想定が破れたことを判定する先行指標が定義されていないため、劣化は次の分離実験まで表面化しない。",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "安全想定の記録と失効先行指標の定義",
+          "設計時想定の運用中再検査",
+          "計画外変化の検出手段"
+        ],
+        "why_it_seemed_adequate": "台帳の成長は統制が健全に働いている証拠であり、成長そのものを危険信号として扱う理由は当時なかった。費用の非線形な悪化は、規模が小さいうちは観測できない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "失効の量が、次の行動の優先順位へ無検査で変換されている。古びが積み上がると正本は MAP_COVERAGE を名指し続け、REPRODUCE_RED 29 件・DISCOVER 42 件が先頭に来ない。すなわち『再判定という手続き的作業』が『赤の再現・未探索領域の発見という非安全状態の探索』を押し出す。リスクの高い行動へ資源を優先配分する規範と逆向きの序列が、決定論の結果として生じる。",
+        "flaw_type": "制御動作が誤っている",
+        "normative_refs": [
+          "高リスク活動への監督資源の優先配分",
+          "安全立証でなく非安全状態の探索",
+          "リスク情報の不透明な集約禁止"
+        ],
+        "why_it_seemed_adequate": "『網羅の地図が古いなら地図を直してから進む』は健全な順序であり、決定論で導くという要件も満たしている。古びが無関係な原因で生じているという情報が順位付けの入力に無いため、順位付け自体には誤りが見えない。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "統治木は決定と事実を文書として残すことを前提に置く一方、失効機構は文書を足す行為に時間の税を課す。方針（文書化せよ）と機構（文書化には78〜83分かかる）の向きが逆であり、報告・記録という安全に必要な振る舞いのコンテキストが、その振る舞いを抑制する形になっている。是正が他の運用目的（作業を終端まで進めること）と競合するため、税を払わない選択が時間とともに常態化しうる。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "fix-reporting-system-design",
+          "change-system-to-change-behavior",
+          "control-includes-indirect-policy-and-culture",
+          "競合する是正の形骸化評価"
+        ],
+        "why_it_seemed_adequate": "文書化の規範と索引の指紋設計は別々の関心事として設計されており、両者の相互作用（文書を足すと網羅判定が古びる）は、どちらの設計文書からも見えない位置にある。文書化を罰する意図を持った要素はどこにも無い。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者の手掛かり（進捗報告・PR の diff・台帳）に、文書追加あたりの再判定コストと、失効の意味論を弱める変更に伴う過少失効のリスクが現れない。本件は『過剰失効（時間を食う）と過少失効（緑を偽る）のどちらをどこまで許すか』という所有者判断を要するが、その判断に必要な二つの量が定型の報告経路に載っていない。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "controller-needs-concrete-feedback-channels",
+          "feedback-enables-improvement-of-controls",
+          "defects-in-information-providing-systems"
+        ],
+        "why_it_seemed_adequate": "報告は実施した行動と台帳の状態を伝える形式で設計されており、実施に要した時間の内訳や、実施しなかった選択の費用は報告項目ではない。既知の穴（報告が意図を書いていても見分けにくい）と同じ面に、費用が現れないという穴が並んでいる。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "CI は merge 前に赤で止めるが、『無関係な変更が網羅判定を大量に失効させる』性質は赤にならない。決定論試験は現行の（種別粒度の）失効意味論を期待値として固定しているため、同型の欠陥は試験の通過条件と矛盾せず、門を素通りする。ADR-134 の適用漏れを検出する試験（一軸だけを足して、無関係な判定が古びないことを確かめる）が存在しない。",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "監査のすり抜け時に監査手順を是正",
+          "verify-all-hazard-preventing-systems",
+          "検出失敗の原因調査"
+        ],
+        "why_it_seemed_adequate": "決定論試験の役割は実装が仕様どおりに振る舞うことの確認であり、仕様（種別粒度で失効する）自体の妥当性は試験の対象外である。過剰失効は仕様どおりの動作なので、赤にする根拠が門の側に無い。"
+      },
+      {
+        "control_element_id": "POST_TOOL_LINTER",
+        "description": "リンタは編集された一つの文書だけを点検して助言を返す。書き手が受け取る手掛かりの粒度（一文書）と、その編集が引き起こす失効の粒度（種別全体・257 件）が食い違うため、書き手の持つモデル（『小さな文書を一つ足しただけ』）と系の実状態（『文書を引く判定が全部古びた』）が乖離する。乖離は再判定の段（終端の直前）まで表面化しない。",
+        "flaw_type": "手掛かりが遅い",
+        "normative_refs": [
+          "designer-vs-operator-mental-model",
+          "process-model-inconsistency-causes-unsafe-control",
+          "モデル一致のためのフィードバック提供"
+        ],
+        "why_it_seemed_adequate": "リンタは PostToolUse の一編集ごとに走る設計であり、一編集の外側にある索引全体の影響を知る立場にない。decision を出さず助言に留める設計（WATCH-001）とも整合しており、範囲を広げる理由は当時見えていなかった。"
+      },
+      {
+        "control_element_id": "WARNING_BACKLOG",
+        "description": "本件のような『修正の方向は在るが急いで入れない』欠陥は、warn でも赤でもなく、行動キューの先頭が固定されるという形でしか現れない。滞留を異常とする条件と閉じる責任の割当が未定（既知の穴、INC-039 推奨#4 が所有者判断のまま）であるため、時間の税と ADR-134 の適用漏れは、どの主体の追跡対象にもならないまま残りうる。監査で指摘された欠陥を是正完了まで追跡する経路が、この種の指摘に対して割り当てられていない。",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "audit-findings-must-be-closed",
+          "指摘欠点の是正完了追跡",
+          "監視責任の空白排除"
+        ],
+        "why_it_seemed_adequate": "門を warn まで広げると偽陽性で作業が止まる恐れがあり、別経路にするか門を広げるかは慎重な所有者判断として未決に置かれた。未決のまま置くこと自体は、拙速に決めるより安全に見える選択である。"
+      }
+    ],
+    "hazard": "網羅判定の失効（古び）が、その判定が依拠した証拠と因果的に無関係な変更によって発火する状態。索引の指紋が種別単位で畳まれているため、文書軸の内容が一片でも変われば、文書を引く全判定が内容に関わらず一斉に無効となる。この状態では、有効な網羅判定の在庫が実際の証拠状態から切り離されて枯れ、次の行動の順序が実リスクではなく失効の量で決まる。",
+    "incident_id": "INC-040-document-axis-invalidates-wholesale",
+    "leading_indicators": [
+      {
+        "indicator": "因果的に無関係な失効件数（1 変更あたり）",
+        "observable": "変更で古びた判定の集合から、その変更で足された／変わった証拠を実際に引いていた判定を除いた残りの件数。再判定を実行する前に、索引の指紋と各判定の証拠参照の突き合わせだけで算出できる。",
+        "threshold": "1 件でも非ゼロなら異常。規範は『証拠が変わった判定だけが古びる』であり、無関係な失効の許容値はゼロである。暫定運用するなら、1 変更あたり 5 件超で所有者へ上申。",
+        "version_independent": true,
+        "where": "assurance/ledger/catalogs/cast-coverage.json の各判定の証拠参照と、assurance/harness/system_index.py が算出する種別指紋の差分（リポジトリ正本側）",
+        "why_version_independent": "リポジトリ正本の索引と台帳だけで算出でき、利用者環境へ導入された複製の版に依存しない。"
+      },
+      {
+        "indicator": "種別単位で畳まれた指紋を失効鍵に使っている軸の数",
+        "observable": "証拠を持つ判定の失効鍵が、種別全体の指紋か、引いた id ごとの指紋か。軸（文書・技能・試験・その他）ごとに数える。",
+        "threshold": "証拠を持つ判定について種別単位の鍵が残る軸が 1 つでも在る間は、同型欠陥の在庫ありとして扱う。ゼロになるまで閉じない。",
+        "version_independent": true,
+        "where": "assurance/harness/system_index.py の build（category_sha256 の算出単位）",
+        "why_version_independent": "正本のコードを読むだけで判定でき、導入複製の更新状況と無関係である。"
+      },
+      {
+        "indicator": "再判定の所要時間と台帳件数の対",
+        "observable": "1 回の再判定に要した実時間（分）と、その時点の判定総件数・冊数。両方を毎回の再監査で記録する。",
+        "threshold": "606 件・約78〜83分を基準線とし、件数比で線形を超える伸び、または 1 セッションあたり 90 分超で異常。",
+        "version_independent": true,
+        "where": "assurance/ledger/ に再監査ごとの計測として追記（現在は残っていない可能性がある）",
+        "why_version_independent": "正本の台帳規模と実測時間だけで成立し、複製の版に依存しない。"
+      },
+      {
+        "indicator": "MAP_COVERAGE が next_actions の先頭を占め続けたセッション数と、押し出された行動の滞留",
+        "observable": "連続してキュー先頭が MAP_COVERAGE であったセッション数、および同期間の REPRODUCE_RED・DISCOVER の未消化件数の推移。",
+        "threshold": "連続 2 セッション以上先頭を占める、または REPRODUCE_RED の未消化件数が 29 件から減らないまま増加へ転じた時点で異常。",
+        "version_independent": true,
+        "where": "assurance/harness/orchestrator.py の next_actions 出力と assurance/ledger/ の行動履歴",
+        "why_version_independent": "リポジトリ正本の台帳とオーケストレータ出力のみで観測できる。"
+      },
+      {
+        "indicator": "単位期間あたりの新規文書追加数（文書化を避ける誘因が効き始めた兆候）",
+        "observable": "doctrine_docs 配下への新規文書の追加件数の時系列。税が誘因として効き始めれば、機構を変えていないのに追加率が下がる。",
+        "threshold": "直前の同期間比で追加率が 3 割以上低下し、かつ捕捉されなかった決定のメモ（CAPTURE_NUDGE の退避メモ）が同期間に増えている場合に異常。",
+        "version_independent": true,
+        "where": "統治木（doctrine_docs 配下）の git 履歴",
+        "why_version_independent": "正本の履歴のみで算出でき、導入複製の版に依存しない。"
+      },
+      {
+        "indicator": "鼓動が報じる古びの警告と、正本側で算出した実際の失効件数の乖離",
+        "observable": "HEARTBEAT が .claude/.cache/last-audit.json と導入複製の版から出す警告の内容と、正本側で算出した無関係な失効件数の差。",
+        "threshold": "乖離が 1 セッションでも生じた時点で、指標そのものを信用しない扱いに切り替える。",
+        "version_independent": false,
+        "where": "plugin/scripts/gov-heartbeat.py の警告出力と .claude/.cache/last-audit.json（導入複製の側）",
+        "why_version_independent": "検出器自身が導入複製の側で動くため、版が遅れれば閾値も古い定義のまま動き、指標の遅れが欠陥の遅れと同じ向きに揃う（INC-005 の共通原因故障）。この指標は上の版非依存な指標の補助としてのみ用いる。"
+      }
+    ],
+    "loss": "統治の体系が、文書を一件足す行為に約78〜83分の再判定を課している状態。帰結は二つあり、いずれも安全側ではない。(a) 文書化を控える誘因が生まれ、統治が自らの記録行為を罰する。(b) 税を払わない場合は古びが積み上がり、正本は MAP_COVERAGE を名指し続け、REPRODUCE_RED 29 件・DISCOVER 42 件といったより危険側の行動が先頭に来ない。許容可否は所有者（ステークホルダー）が判定する事項であり、本分析は許容できない可能性のある損失として扱う。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "古びたのが当該技能を実際に引く判定だけであれば、技能軸には同型が無い。",
+        "hypothesis": "技能軸にも同型が残っており、無関係な技能を 1 件足すだけで技能を引く判定が内容に関わらず全部古びる。",
+        "oracle": "技能 1 件のみを追加し（他の軸は一切変えない）、古びた判定数と、その技能を証拠として引いている判定数を比較する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "差分に含まれる全判定で結論が変わらなければ、過少失効の懸念はこの範囲では否定される。",
+        "hypothesis": "失効鍵を id ごとの指紋に変えると、直接引いてはいないが逆依存経由で結論が変わる判定が古びなくなる（過少失効・緑を偽る）。",
+        "oracle": "両方式を並走させ、id 方式では古びないが種別方式では古びた判定を人手で再判定し、結論が実際に変わるものが在るか調べる。",
+        "severity": "P0"
+      },
+      {
+        "falsification_signal": "時間が件数に対して線形以下で伸びるなら、規模による悪化は当面の主リスクではない。",
+        "hypothesis": "再判定の所要時間が台帳件数に対して線形を超えて伸びる（規模が倍になると税は倍を超える）。",
+        "oracle": "判定件数を人工的に増やした複製上で再判定時間を測り、件数と時間の関係を取る。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "未消化件数に減少局面が在れば、押し出しは常態化していない。",
+        "hypothesis": "MAP_COVERAGE の先頭固定により、REPRODUCE_RED の未消化件数が単調に増えている。",
+        "oracle": "過去セッションの next_actions 先頭と、REPRODUCE_RED・DISCOVER の未消化件数の時系列を突き合わせる。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "追加率に有意な低下が無く、退避メモも増えていなければ、抑制はまだ起きていない。",
+        "hypothesis": "税が誘因として既に効いており、機構を変えていないのに文書の追加率が下がっている。",
+        "oracle": "doctrine_docs 配下への新規文書追加数の時系列を、税が実測された時期の前後で比較し、同期間の退避メモ（捕捉されたが文書化されなかった決定）の数も見る。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "いずれかのジョブが赤になる、または docs-audit の findings に該当する指摘が出れば、門は本件を捉えている。",
+        "hypothesis": "CI の決定論試験は現行の失効意味論を期待値として固定しているため、無関係な変更で 42% が古びても赤にならない。",
+        "oracle": "無関係な文書 1 件を足した状態で CI を通し、ジョブの成否と docs-audit の JSON に異常が現れるかを見る。",
+        "severity": "P1"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "証拠を持つ判定の失効鍵を『引いた文書の id ごとの指紋』に変え、証拠を持たない不在の主張（機構が索引に無い）は従来どおり種別の件数が増えたときだけ失効させる。投入前に、ADR-134 の後継 ADR と、両方向の試験（id 指紋で確かに古びる／件数の増加で確かに古びる）を先に揃える。長い作業の終端には入れない。過少失効は緑を偽るため、過剰失効より危険側である。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "過剰失効（時間の税）と過少失効（緑を偽る）のどちらをどこまで許すかの裁定基準を明示し、機構変更の受入条件として先に置く。安全に関わる判断が作業の納期都合に押されないよう、裁定は変更投入とは別の時点で行う。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "1 変更あたりの『因果的に無関係な失効件数』を再判定の実行前に算出して台帳へ記録し、非ゼロを異常として扱う監視を追加する。これは修正前でも導入でき、残余の大きさを継続的に可視化する。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "再判定の所要時間と、その時点の判定件数・冊数の対を毎回の再監査で記録し、規模に対する伸びを追跡する。想定（現在の規模での 78〜83 分）が成立しなくなる時点を先行して掴む。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "種別単位で畳まれた指紋を失効鍵に使っている軸を全数で洗い出し、軸ごとに一覧として残す（文書・技能・試験・その他）。同型欠陥の在庫を数えられる形にし、ゼロになるまで閉じない。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "ADR-134 の適用範囲が種別の粒度までであったこと、および文書軸・技能軸に残る残余を、後継 ADR または ADR-134 の追記として明記する。是正の未完了を、記録上見える状態のまま残す。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "失効した 257 件のうち、追加文書を実際に証拠として引いていた件数を測る。粒度変更の効き幅と、逆依存経由の間接影響（過少失効の候補）を同時に見積もる。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "本件のように『機構は動作しているが費用が高い』種類の指摘を受け取り、閉じるまで追跡する責任の所在を決める（INC-039 推奨#4 の未決に本件を接続する）。門を warn まで広げるか別経路にするかを含む。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "以上の推奨それぞれに実施責任者・実施状況の検査・有効性のフィードバック（無関係な失効件数がゼロへ向かうこと）を割り当て、実施済みで終えず有効性まで確認する。",
+        "kind": "監視の追加",
+        "owner_decision_required": true
+      }
+    ],
+    "systemic_factors": [
+      "是正の適用範囲が『症状の出た軸』で閉じられ、同型構造を持つ他の軸へ横展開することを要求する手順が無い（INC-025→ADR-134 の是正が文書軸に届かなかった）。",
+      "過剰な失効は緑を偽らないため安全側と見なされ、費用としてしか現れない。結果として、どの検出器にも『失効が多すぎる』を異常とする閾値が置かれていない。",
+      "方針（決定と事実を文書に残す）と機構（文書を足すと再判定が要る）の向きが逆であり、統治が自らの記録行為に課金する構造になっている。",
+      "失効の量が行動優先度へ無検査で変換され、手続き的作業（再判定）が非安全状態の探索（赤の再現・未探索領域の発見）を押し出す。",
+      "時間の費用が台帳の記録対象になっておらず、測ったときにしか存在しない。定常の手掛かりが真偽（古びたか）だけを運び、量と費用を運ばない。",
+      "台帳規模の増加という予見可能で計画された変化に対して、設計時の想定（606 件・3 冊の規模で成立する費用）を再評価する手順が無い。",
+      "一編集ごとに走る統制（リンタ・ガード）と、種別全体を畳む統制（索引の指紋）の粒度が食い違い、書き手のモデルと系の実状態が構造的に乖離する。",
+      "本件のような『機構は動いているが費用が高い』欠陥を受け取る滞留の器（WARNING_BACKLOG）に、異常の条件と閉じる責任が割り当てられていない。"
+    ],
+    "unknowns": [
+      "【実在の未確認・最優先】本分析の実行環境は空の作業ディレクトリであり、assurance/harness/system_index.py・doctrine_docs/packaging/decisions/ADR-134-scoped-staleness.md・assurance/ledger/catalogs/cast-coverage.json のいずれの実在も確認できていない。加えて、与えられた統制構造には system_index.py や category_sha256 を実体とする要素が存在せず、最も近い ASSURANCE_LANE の実体は orchestrator.py である。以下の統制欠陥は『索引の指紋機構が ASSURANCE_LANE の内部に在る』という帰属仮定の上に立つ暫定の分析であり、機構の実在と帰属が確認されるまで結論として扱ってはならない。confidence を low としたのはこの理由による。",
+      "INC-025 と ADR-134 の実在および内容（試験軸で何をどう直したか、適用範囲が明示的に試験軸に限定されていたのか、全軸を意図しつつ実装が届かなかったのか）は未確認である。後者なら欠陥は実装の届かなさ、前者なら是正範囲の設計判断であり、推奨の向きが変わる。",
+      "失効した 257 件のうち、追加した SPEC-030・TEST-030 を実際に証拠として引いていた判定が何件あったかは未測定である。0 に近いと推定されるが確認していない。粒度変更の効き幅はこの数に依存する。",
+      "過少失効のリスクの大きさが未見積もりである。id ごとの指紋にしたとき、その文書を直接引いてはいないが結論が影響を受ける判定（間接依存・逆依存）が存在するかどうかは、dep-graph の逆依存を用いた確認が要る。",
+      "78〜83 分の内訳（判定 1 件あたりの費用、直列実行か並列か、律速がどこか）が不明である。粒度変更以外の対策（増分化・並列化・キャッシュ）でどこまで下がるかを比較できない。",
+      "技能軸およびその他の種別に同型が残っているかは未確認である。実測が分離できたのは文書軸のみである。",
+      "本件のように『方向は在るが急がない』欠陥を、どの主体が、どの手掛かりで、いつ閉じるのかが決まっていない（WARNING_BACKLOG の既知の穴）。この未決が本件の追跡に与える影響は未評価である。",
+      "税を避ける振る舞い（文書化の抑制、再判定の先送り）が既に起きているかどうかは、実際の行動の観測が無く判らない。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は『古びているか』を見る設計であって『古びが因果的に妥当か』を見る設計ではない。過剰失効は緑を偽らない（安全側に倒れる）ため、どの検出器にも異常とする閾値が置かれていない — 監査・鼓動・リンタ・決定論試験のいずれも、失効件数の多さを異常として扱う根拠を持たない。加えて決定論試験は現行の失効意味論を期待値として固定するので、同型の欠陥は定義上赤にならない。ADR-134 は INC-025 を『試験軸の症状』として閉じ、是正の適用範囲が症状の出た軸に限定されたため、同型構造の他軸への横展開を要求する経路も残らなかった。税は毎回払われて時間としてのみ現れ、時間は台帳の記録対象ではない。結果として、無関係な 2 文書だけを足すという分離実験を独立再監査が行うまで、この欠陥は数値として存在しなかった。修正が未了であること自体は分析の欠如ではないが、修正の方向が定まっていても、それを追跡し閉じる責任の割当が無いままである点は保証側の穴として残る。"
+  },
+  "control_structure_ids": [
+    "OWNER",
+    "CI_RELEASE_CHECK",
+    "SESSION_START_CONTRACT",
+    "HEARTBEAT",
+    "PRE_TOOL_GUARD",
+    "POST_TOOL_LINTER",
+    "SESSION_END_AUDIT",
+    "WARNING_BACKLOG",
+    "CAPTURE_NUDGE",
+    "PLUGIN_DISTRIBUTION",
+    "ASSURANCE_LANE",
+    "GOVERNANCE_TREE"
+  ],
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "duration_ms": 310862,
+  "errors": [],
+  "execution_kind": "real-sdk",
+  "flaws_with_citation_defect": [],
+  "generated_at": "2026-08-14T21:31:24Z",
+  "git_dirty": false,
+  "git_sha": "a5b9462189b751b5208a7b69520df1e8ae25076f",
+  "incident_evidence": {
+    "kind": "measurement",
+    "refs": [
+      "assurance/harness/system_index.py の build（category_sha256 は種別ごとに全件を畳む）",
+      "doctrine_docs/packaging/decisions/ADR-134-scoped-staleness.md",
+      "assurance/ledger/catalogs/cast-coverage.json"
+    ],
+    "resolved": [
+      "assurance/ledger/catalogs/cast-coverage.json"
+    ],
+    "unresolved": [
+      "assurance/harness/system_index.py の build（category_sha256 は種別ごとに全件を畳む）",
+      "doctrine_docs/packaging/decisions/ADR-134-scoped-staleness.md"
+    ],
+    "verifiable": true
+  },
+  "incident_id": "INC-040-document-axis-invalidates-wholesale",
+  "incident_sha256": "566f5493da3c5f380081022c5d491910ba0ba1a9412dd982f05650fc2cc47f8f",
+  "init": {
+    "claude_code_version": "2.1.221",
+    "model": "claude-opus-5",
+    "session_id": "9acf7b5e-05e5-4ead-9711-cf595324f263",
+    "tools_count": 27
+  },
+  "kind": "cast-analysis",
+  "leading_indicators_defined": true,
+  "options": {
+    "allowed_tools": [],
+    "cwd": "/tmp/assurance-cast-rpm6k7_5",
+    "effort": "high",
+    "max_budget_usd": 4.0,
+    "max_turns": 8,
+    "model": "claude-opus-5",
+    "setting_sources": [],
+    "timeout_s": 900
+  },
+  "oracle": "structured_output がレーン側再検証にも適合",
+  "principles_offered": 337,
+  "prompt_sha256": "0546b778626d2b2de22573ef50bbff2ceb22334663f693bcbffeed2677a6aae5",
+  "rejected_flaws": [],
+  "result_meta": {
+    "duration_api_ms": 300337,
+    "is_error": false,
+    "num_turns": 5,
+    "session_id": "9acf7b5e-05e5-4ead-9711-cf595324f263",
+    "subtype": "success",
+    "total_cost_usd": 1.1394695000000001,
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 57858,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 57858,
+      "cache_read_input_tokens": 114511,
+      "inference_geo": "not_available",
+      "input_tokens": 6,
+      "iterations": "list",
+      "output_tokens": 18634,
+      "server_tool_use": {
+        "web_fetch_requests": 0,
+        "web_search_requests": 0
+      },
+      "service_tier": "standard",
+      "speed": "standard"
+    }
+  },
+  "schema_sha256": "0d1643d5e16353723405302c1f6ffcf753915e2a4f27a3530e8ef9a9ee45cb46",
+  "sdk_version": "0.2.129",
+  "settled": true,
+  "status": "PASS",
+  "structured_output": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "『次の行動を決定論で導く』制御が依拠する失効の意味論において、証拠を持つ判定の失効鍵が種別単位（category_sha256 が種別内の全件を畳む）である。安全制約『網羅判定の失効は、その判定が依拠した証拠が変化したときに限る』が強制されておらず、無関係な文書 2 件の追加で 606 件中 257 件（42%）が失効した。無関係さの度合いは効かない — 種別の指紋が変わった時点で内容に関わらず全部が古びる。",
+        "evidence_ref": "assurance/harness/system_index.py の build（category_sha256 は種別ごとに全件を畳む）／文書 2 件のみ追加で 257 件失効・約78分の実測",
+        "flaw_type": "制御動作が誤っている",
+        "normative_refs": [
+          "accidents-from-inadequate-constraint-enforcement",
+          "trace-why-design-flaw-was-introduced",
+          "refine-generic-constraints-to-specific-loss"
+        ],
+        "why_it_seemed_adequate": "ADR-134 の時点で観測されていた実害は INC-025（試験軸で全件が古びる）であり、指紋を種別ごとに分けるだけでその観測害は消えた。種別粒度は実装が単純で決定論を保ち、失効の意味論を弱めない方向（過剰に失効させる側）なので安全側の選択に見えた。過剰失効は緑を偽らないため、当時の判断としては合理的である。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "ADR-134 による是正が『症状の出た軸（試験）』の範囲で閉じられ、同型の構造（種別ごとに全件を畳む指紋）が文書軸・技能軸に残った。是正の適用範囲を同型構造の全軸へ広げる手順が無く、最も件数が多く最も多く引かれる文書軸に、最も高くつく残余が残っている。INC-025 と同一形状の損失が別の軸で再発した。",
+        "evidence_ref": "doctrine_docs/packaging/decisions/ADR-134-scoped-staleness.md（意図は全件失効の停止、実現は種別粒度まで）",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "symptom-vs-systemic-cause",
+          "omitted-cause-recurrence",
+          "systemic-cause-across-all-events"
+        ],
+        "why_it_seemed_adequate": "ADR-134 は『関係の無い変更が全件を古びさせる』を止める意図で書かれ、その意図は宣言としては全軸を覆っている。試験軸で赤が消えたことで是正は完了したように見え、他軸の残余を測る実験（一軸だけを分離して足す）は行われていなかった。残余は測らなければ見えない種類のものである。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "制御アクション（失効の発火）に対応するフィードバックが無い。『この変更で何件が古びたか』『そのうち何件が実際にその変更を証拠として引いていたか』『再判定に何分かかったか』が定常の手掛かり（assurance/ledger／決定論試験の成否）に現れない。42% という比率と78〜83分という額は、2026-08-10 の独立再監査が分離実験を行って初めて数値になった。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "control-action-requires-feedback",
+          "全コントロールループにフィードバック必須",
+          "要約統計偏重による傾向情報の喪失"
+        ],
+        "why_it_seemed_adequate": "台帳が持つべき手掛かりは『判定が有効か古びたか』であり、その真偽は正しく記録されている。失効は正常動作であって異常ではないので、量を数える必要は設計時に見えなかった。過剰失効は時間としてしか現れず、時間は台帳の記録対象ではない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "税の額は現在の 606 件・3 冊という規模での実測であり、台帳が育てば伸びる。この『規模の増加という計画された変化によって統制の費用が悪化する』劣化を検出する閾値も、想定（何件までなら許容できるか）の記録も無い。想定が破れたことを判定する先行指標が定義されていないため、劣化は次の分離実験まで表面化しない。",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "安全想定の記録と失効先行指標の定義",
+          "設計時想定の運用中再検査",
+          "計画外変化の検出手段"
+        ],
+        "why_it_seemed_adequate": "台帳の成長は統制が健全に働いている証拠であり、成長そのものを危険信号として扱う理由は当時なかった。費用の非線形な悪化は、規模が小さいうちは観測できない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "失効の量が、次の行動の優先順位へ無検査で変換されている。古びが積み上がると正本は MAP_COVERAGE を名指し続け、REPRODUCE_RED 29 件・DISCOVER 42 件が先頭に来ない。すなわち『再判定という手続き的作業』が『赤の再現・未探索領域の発見という非安全状態の探索』を押し出す。リスクの高い行動へ資源を優先配分する規範と逆向きの序列が、決定論の結果として生じる。",
+        "flaw_type": "制御動作が誤っている",
+        "normative_refs": [
+          "高リスク活動への監督資源の優先配分",
+          "安全立証でなく非安全状態の探索",
+          "リスク情報の不透明な集約禁止"
+        ],
+        "why_it_seemed_adequate": "『網羅の地図が古いなら地図を直してから進む』は健全な順序であり、決定論で導くという要件も満たしている。古びが無関係な原因で生じているという情報が順位付けの入力に無いため、順位付け自体には誤りが見えない。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "統治木は決定と事実を文書として残すことを前提に置く一方、失効機構は文書を足す行為に時間の税を課す。方針（文書化せよ）と機構（文書化には78〜83分かかる）の向きが逆であり、報告・記録という安全に必要な振る舞いのコンテキストが、その振る舞いを抑制する形になっている。是正が他の運用目的（作業を終端まで進めること）と競合するため、税を払わない選択が時間とともに常態化しうる。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "fix-reporting-system-design",
+          "change-system-to-change-behavior",
+          "control-includes-indirect-policy-and-culture",
+          "競合する是正の形骸化評価"
+        ],
+        "why_it_seemed_adequate": "文書化の規範と索引の指紋設計は別々の関心事として設計されており、両者の相互作用（文書を足すと網羅判定が古びる）は、どちらの設計文書からも見えない位置にある。文書化を罰する意図を持った要素はどこにも無い。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者の手掛かり（進捗報告・PR の diff・台帳）に、文書追加あたりの再判定コストと、失効の意味論を弱める変更に伴う過少失効のリスクが現れない。本件は『過剰失効（時間を食う）と過少失効（緑を偽る）のどちらをどこまで許すか』という所有者判断を要するが、その判断に必要な二つの量が定型の報告経路に載っていない。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "controller-needs-concrete-feedback-channels",
+          "feedback-enables-improvement-of-controls",
+          "defects-in-information-providing-systems"
+        ],
+        "why_it_seemed_adequate": "報告は実施した行動と台帳の状態を伝える形式で設計されており、実施に要した時間の内訳や、実施しなかった選択の費用は報告項目ではない。既知の穴（報告が意図を書いていても見分けにくい）と同じ面に、費用が現れないという穴が並んでいる。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "CI は merge 前に赤で止めるが、『無関係な変更が網羅判定を大量に失効させる』性質は赤にならない。決定論試験は現行の（種別粒度の）失効意味論を期待値として固定しているため、同型の欠陥は試験の通過条件と矛盾せず、門を素通りする。ADR-134 の適用漏れを検出する試験（一軸だけを足して、無関係な判定が古びないことを確かめる）が存在しない。",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "監査のすり抜け時に監査手順を是正",
+          "verify-all-hazard-preventing-systems",
+          "検出失敗の原因調査"
+        ],
+        "why_it_seemed_adequate": "決定論試験の役割は実装が仕様どおりに振る舞うことの確認であり、仕様（種別粒度で失効する）自体の妥当性は試験の対象外である。過剰失効は仕様どおりの動作なので、赤にする根拠が門の側に無い。"
+      },
+      {
+        "control_element_id": "POST_TOOL_LINTER",
+        "description": "リンタは編集された一つの文書だけを点検して助言を返す。書き手が受け取る手掛かりの粒度（一文書）と、その編集が引き起こす失効の粒度（種別全体・257 件）が食い違うため、書き手の持つモデル（『小さな文書を一つ足しただけ』）と系の実状態（『文書を引く判定が全部古びた』）が乖離する。乖離は再判定の段（終端の直前）まで表面化しない。",
+        "flaw_type": "手掛かりが遅い",
+        "normative_refs": [
+          "designer-vs-operator-mental-model",
+          "process-model-inconsistency-causes-unsafe-control",
+          "モデル一致のためのフィードバック提供"
+        ],
+        "why_it_seemed_adequate": "リンタは PostToolUse の一編集ごとに走る設計であり、一編集の外側にある索引全体の影響を知る立場にない。decision を出さず助言に留める設計（WATCH-001）とも整合しており、範囲を広げる理由は当時見えていなかった。"
+      },
+      {
+        "control_element_id": "WARNING_BACKLOG",
+        "description": "本件のような『修正の方向は在るが急いで入れない』欠陥は、warn でも赤でもなく、行動キューの先頭が固定されるという形でしか現れない。滞留を異常とする条件と閉じる責任の割当が未定（既知の穴、INC-039 推奨#4 が所有者判断のまま）であるため、時間の税と ADR-134 の適用漏れは、どの主体の追跡対象にもならないまま残りうる。監査で指摘された欠陥を是正完了まで追跡する経路が、この種の指摘に対して割り当てられていない。",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "audit-findings-must-be-closed",
+          "指摘欠点の是正完了追跡",
+          "監視責任の空白排除"
+        ],
+        "why_it_seemed_adequate": "門を warn まで広げると偽陽性で作業が止まる恐れがあり、別経路にするか門を広げるかは慎重な所有者判断として未決に置かれた。未決のまま置くこと自体は、拙速に決めるより安全に見える選択である。"
+      }
+    ],
+    "hazard": "網羅判定の失効（古び）が、その判定が依拠した証拠と因果的に無関係な変更によって発火する状態。索引の指紋が種別単位で畳まれているため、文書軸の内容が一片でも変われば、文書を引く全判定が内容に関わらず一斉に無効となる。この状態では、有効な網羅判定の在庫が実際の証拠状態から切り離されて枯れ、次の行動の順序が実リスクではなく失効の量で決まる。",
+    "incident_id": "INC-040-document-axis-invalidates-wholesale",
+    "leading_indicators": [
+      {
+        "indicator": "因果的に無関係な失効件数（1 変更あたり）",
+        "observable": "変更で古びた判定の集合から、その変更で足された／変わった証拠を実際に引いていた判定を除いた残りの件数。再判定を実行する前に、索引の指紋と各判定の証拠参照の突き合わせだけで算出できる。",
+        "threshold": "1 件でも非ゼロなら異常。規範は『証拠が変わった判定だけが古びる』であり、無関係な失効の許容値はゼロである。暫定運用するなら、1 変更あたり 5 件超で所有者へ上申。",
+        "version_independent": true,
+        "where": "assurance/ledger/catalogs/cast-coverage.json の各判定の証拠参照と、assurance/harness/system_index.py が算出する種別指紋の差分（リポジトリ正本側）",
+        "why_version_independent": "リポジトリ正本の索引と台帳だけで算出でき、利用者環境へ導入された複製の版に依存しない。"
+      },
+      {
+        "indicator": "種別単位で畳まれた指紋を失効鍵に使っている軸の数",
+        "observable": "証拠を持つ判定の失効鍵が、種別全体の指紋か、引いた id ごとの指紋か。軸（文書・技能・試験・その他）ごとに数える。",
+        "threshold": "証拠を持つ判定について種別単位の鍵が残る軸が 1 つでも在る間は、同型欠陥の在庫ありとして扱う。ゼロになるまで閉じない。",
+        "version_independent": true,
+        "where": "assurance/harness/system_index.py の build（category_sha256 の算出単位）",
+        "why_version_independent": "正本のコードを読むだけで判定でき、導入複製の更新状況と無関係である。"
+      },
+      {
+        "indicator": "再判定の所要時間と台帳件数の対",
+        "observable": "1 回の再判定に要した実時間（分）と、その時点の判定総件数・冊数。両方を毎回の再監査で記録する。",
+        "threshold": "606 件・約78〜83分を基準線とし、件数比で線形を超える伸び、または 1 セッションあたり 90 分超で異常。",
+        "version_independent": true,
+        "where": "assurance/ledger/ に再監査ごとの計測として追記（現在は残っていない可能性がある）",
+        "why_version_independent": "正本の台帳規模と実測時間だけで成立し、複製の版に依存しない。"
+      },
+      {
+        "indicator": "MAP_COVERAGE が next_actions の先頭を占め続けたセッション数と、押し出された行動の滞留",
+        "observable": "連続してキュー先頭が MAP_COVERAGE であったセッション数、および同期間の REPRODUCE_RED・DISCOVER の未消化件数の推移。",
+        "threshold": "連続 2 セッション以上先頭を占める、または REPRODUCE_RED の未消化件数が 29 件から減らないまま増加へ転じた時点で異常。",
+        "version_independent": true,
+        "where": "assurance/harness/orchestrator.py の next_actions 出力と assurance/ledger/ の行動履歴",
+        "why_version_independent": "リポジトリ正本の台帳とオーケストレータ出力のみで観測できる。"
+      },
+      {
+        "indicator": "単位期間あたりの新規文書追加数（文書化を避ける誘因が効き始めた兆候）",
+        "observable": "doctrine_docs 配下への新規文書の追加件数の時系列。税が誘因として効き始めれば、機構を変えていないのに追加率が下がる。",
+        "threshold": "直前の同期間比で追加率が 3 割以上低下し、かつ捕捉されなかった決定のメモ（CAPTURE_NUDGE の退避メモ）が同期間に増えている場合に異常。",
+        "version_independent": true,
+        "where": "統治木（doctrine_docs 配下）の git 履歴",
+        "why_version_independent": "正本の履歴のみで算出でき、導入複製の版に依存しない。"
+      },
+      {
+        "indicator": "鼓動が報じる古びの警告と、正本側で算出した実際の失効件数の乖離",
+        "observable": "HEARTBEAT が .claude/.cache/last-audit.json と導入複製の版から出す警告の内容と、正本側で算出した無関係な失効件数の差。",
+        "threshold": "乖離が 1 セッションでも生じた時点で、指標そのものを信用しない扱いに切り替える。",
+        "version_independent": false,
+        "where": "plugin/scripts/gov-heartbeat.py の警告出力と .claude/.cache/last-audit.json（導入複製の側）",
+        "why_version_independent": "検出器自身が導入複製の側で動くため、版が遅れれば閾値も古い定義のまま動き、指標の遅れが欠陥の遅れと同じ向きに揃う（INC-005 の共通原因故障）。この指標は上の版非依存な指標の補助としてのみ用いる。"
+      }
+    ],
+    "loss": "統治の体系が、文書を一件足す行為に約78〜83分の再判定を課している状態。帰結は二つあり、いずれも安全側ではない。(a) 文書化を控える誘因が生まれ、統治が自らの記録行為を罰する。(b) 税を払わない場合は古びが積み上がり、正本は MAP_COVERAGE を名指し続け、REPRODUCE_RED 29 件・DISCOVER 42 件といったより危険側の行動が先頭に来ない。許容可否は所有者（ステークホルダー）が判定する事項であり、本分析は許容できない可能性のある損失として扱う。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "古びたのが当該技能を実際に引く判定だけであれば、技能軸には同型が無い。",
+        "hypothesis": "技能軸にも同型が残っており、無関係な技能を 1 件足すだけで技能を引く判定が内容に関わらず全部古びる。",
+        "oracle": "技能 1 件のみを追加し（他の軸は一切変えない）、古びた判定数と、その技能を証拠として引いている判定数を比較する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "差分に含まれる全判定で結論が変わらなければ、過少失効の懸念はこの範囲では否定される。",
+        "hypothesis": "失効鍵を id ごとの指紋に変えると、直接引いてはいないが逆依存経由で結論が変わる判定が古びなくなる（過少失効・緑を偽る）。",
+        "oracle": "両方式を並走させ、id 方式では古びないが種別方式では古びた判定を人手で再判定し、結論が実際に変わるものが在るか調べる。",
+        "severity": "P0"
+      },
+      {
+        "falsification_signal": "時間が件数に対して線形以下で伸びるなら、規模による悪化は当面の主リスクではない。",
+        "hypothesis": "再判定の所要時間が台帳件数に対して線形を超えて伸びる（規模が倍になると税は倍を超える）。",
+        "oracle": "判定件数を人工的に増やした複製上で再判定時間を測り、件数と時間の関係を取る。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "未消化件数に減少局面が在れば、押し出しは常態化していない。",
+        "hypothesis": "MAP_COVERAGE の先頭固定により、REPRODUCE_RED の未消化件数が単調に増えている。",
+        "oracle": "過去セッションの next_actions 先頭と、REPRODUCE_RED・DISCOVER の未消化件数の時系列を突き合わせる。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "追加率に有意な低下が無く、退避メモも増えていなければ、抑制はまだ起きていない。",
+        "hypothesis": "税が誘因として既に効いており、機構を変えていないのに文書の追加率が下がっている。",
+        "oracle": "doctrine_docs 配下への新規文書追加数の時系列を、税が実測された時期の前後で比較し、同期間の退避メモ（捕捉されたが文書化されなかった決定）の数も見る。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "いずれかのジョブが赤になる、または docs-audit の findings に該当する指摘が出れば、門は本件を捉えている。",
+        "hypothesis": "CI の決定論試験は現行の失効意味論を期待値として固定しているため、無関係な変更で 42% が古びても赤にならない。",
+        "oracle": "無関係な文書 1 件を足した状態で CI を通し、ジョブの成否と docs-audit の JSON に異常が現れるかを見る。",
+        "severity": "P1"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "証拠を持つ判定の失効鍵を『引いた文書の id ごとの指紋』に変え、証拠を持たない不在の主張（機構が索引に無い）は従来どおり種別の件数が増えたときだけ失効させる。投入前に、ADR-134 の後継 ADR と、両方向の試験（id 指紋で確かに古びる／件数の増加で確かに古びる）を先に揃える。長い作業の終端には入れない。過少失効は緑を偽るため、過剰失効より危険側である。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "過剰失効（時間の税）と過少失効（緑を偽る）のどちらをどこまで許すかの裁定基準を明示し、機構変更の受入条件として先に置く。安全に関わる判断が作業の納期都合に押されないよう、裁定は変更投入とは別の時点で行う。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "1 変更あたりの『因果的に無関係な失効件数』を再判定の実行前に算出して台帳へ記録し、非ゼロを異常として扱う監視を追加する。これは修正前でも導入でき、残余の大きさを継続的に可視化する。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "再判定の所要時間と、その時点の判定件数・冊数の対を毎回の再監査で記録し、規模に対する伸びを追跡する。想定（現在の規模での 78〜83 分）が成立しなくなる時点を先行して掴む。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "種別単位で畳まれた指紋を失効鍵に使っている軸を全数で洗い出し、軸ごとに一覧として残す（文書・技能・試験・その他）。同型欠陥の在庫を数えられる形にし、ゼロになるまで閉じない。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "ADR-134 の適用範囲が種別の粒度までであったこと、および文書軸・技能軸に残る残余を、後継 ADR または ADR-134 の追記として明記する。是正の未完了を、記録上見える状態のまま残す。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "失効した 257 件のうち、追加文書を実際に証拠として引いていた件数を測る。粒度変更の効き幅と、逆依存経由の間接影響（過少失効の候補）を同時に見積もる。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "本件のように『機構は動作しているが費用が高い』種類の指摘を受け取り、閉じるまで追跡する責任の所在を決める（INC-039 推奨#4 の未決に本件を接続する）。門を warn まで広げるか別経路にするかを含む。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "以上の推奨それぞれに実施責任者・実施状況の検査・有効性のフィードバック（無関係な失効件数がゼロへ向かうこと）を割り当て、実施済みで終えず有効性まで確認する。",
+        "kind": "監視の追加",
+        "owner_decision_required": true
+      }
+    ],
+    "systemic_factors": [
+      "是正の適用範囲が『症状の出た軸』で閉じられ、同型構造を持つ他の軸へ横展開することを要求する手順が無い（INC-025→ADR-134 の是正が文書軸に届かなかった）。",
+      "過剰な失効は緑を偽らないため安全側と見なされ、費用としてしか現れない。結果として、どの検出器にも『失効が多すぎる』を異常とする閾値が置かれていない。",
+      "方針（決定と事実を文書に残す）と機構（文書を足すと再判定が要る）の向きが逆であり、統治が自らの記録行為に課金する構造になっている。",
+      "失効の量が行動優先度へ無検査で変換され、手続き的作業（再判定）が非安全状態の探索（赤の再現・未探索領域の発見）を押し出す。",
+      "時間の費用が台帳の記録対象になっておらず、測ったときにしか存在しない。定常の手掛かりが真偽（古びたか）だけを運び、量と費用を運ばない。",
+      "台帳規模の増加という予見可能で計画された変化に対して、設計時の想定（606 件・3 冊の規模で成立する費用）を再評価する手順が無い。",
+      "一編集ごとに走る統制（リンタ・ガード）と、種別全体を畳む統制（索引の指紋）の粒度が食い違い、書き手のモデルと系の実状態が構造的に乖離する。",
+      "本件のような『機構は動いているが費用が高い』欠陥を受け取る滞留の器（WARNING_BACKLOG）に、異常の条件と閉じる責任が割り当てられていない。"
+    ],
+    "unknowns": [
+      "【実在の未確認・最優先】本分析の実行環境は空の作業ディレクトリであり、assurance/harness/system_index.py・doctrine_docs/packaging/decisions/ADR-134-scoped-staleness.md・assurance/ledger/catalogs/cast-coverage.json のいずれの実在も確認できていない。加えて、与えられた統制構造には system_index.py や category_sha256 を実体とする要素が存在せず、最も近い ASSURANCE_LANE の実体は orchestrator.py である。以下の統制欠陥は『索引の指紋機構が ASSURANCE_LANE の内部に在る』という帰属仮定の上に立つ暫定の分析であり、機構の実在と帰属が確認されるまで結論として扱ってはならない。confidence を low としたのはこの理由による。",
+      "INC-025 と ADR-134 の実在および内容（試験軸で何をどう直したか、適用範囲が明示的に試験軸に限定されていたのか、全軸を意図しつつ実装が届かなかったのか）は未確認である。後者なら欠陥は実装の届かなさ、前者なら是正範囲の設計判断であり、推奨の向きが変わる。",
+      "失効した 257 件のうち、追加した SPEC-030・TEST-030 を実際に証拠として引いていた判定が何件あったかは未測定である。0 に近いと推定されるが確認していない。粒度変更の効き幅はこの数に依存する。",
+      "過少失効のリスクの大きさが未見積もりである。id ごとの指紋にしたとき、その文書を直接引いてはいないが結論が影響を受ける判定（間接依存・逆依存）が存在するかどうかは、dep-graph の逆依存を用いた確認が要る。",
+      "78〜83 分の内訳（判定 1 件あたりの費用、直列実行か並列か、律速がどこか）が不明である。粒度変更以外の対策（増分化・並列化・キャッシュ）でどこまで下がるかを比較できない。",
+      "技能軸およびその他の種別に同型が残っているかは未確認である。実測が分離できたのは文書軸のみである。",
+      "本件のように『方向は在るが急がない』欠陥を、どの主体が、どの手掛かりで、いつ閉じるのかが決まっていない（WARNING_BACKLOG の既知の穴）。この未決が本件の追跡に与える影響は未評価である。",
+      "税を避ける振る舞い（文書化の抑制、再判定の先送り）が既に起きているかどうかは、実際の行動の観測が無く判らない。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は『古びているか』を見る設計であって『古びが因果的に妥当か』を見る設計ではない。過剰失効は緑を偽らない（安全側に倒れる）ため、どの検出器にも異常とする閾値が置かれていない — 監査・鼓動・リンタ・決定論試験のいずれも、失効件数の多さを異常として扱う根拠を持たない。加えて決定論試験は現行の失効意味論を期待値として固定するので、同型の欠陥は定義上赤にならない。ADR-134 は INC-025 を『試験軸の症状』として閉じ、是正の適用範囲が症状の出た軸に限定されたため、同型構造の他軸への横展開を要求する経路も残らなかった。税は毎回払われて時間としてのみ現れ、時間は台帳の記録対象ではない。結果として、無関係な 2 文書だけを足すという分離実験を独立再監査が行うまで、この欠陥は数値として存在しなかった。修正が未了であること自体は分析の欠如ではないが、修正の方向が定まっていても、それを追跡し閉じる責任の割当が無いままである点は保証側の穴として残る。"
+  }
+}

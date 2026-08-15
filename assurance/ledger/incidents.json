@@ -794,6 +794,30 @@
       "residual": [
         "税の額（78〜83 分）は現在の 606 件・3 冊の規模での実測である。台帳が育てば伸びる。",
         "42% という比率は、足した文書が何を引かれているかに依らない —— 文書軸の指紋が変わった時点で、文書を引く判定は内容に関わらず全部古びる。無関係さの度合いは効かない。"
+      ],
+      "cast_analysis": "done",
+      "cast_analysis_ref": "assurance/ledger/cast/INC-040-document-axis-invalidates-wholesale.json",
+      "cast_analyzed_at": "2026-08-14T21:31:24Z"
+    },
+    {
+      "id": "INC-041-declared-evidence-skips-pointer-resolution",
+      "date": "2026-08-14",
+      "summary": "証拠が『体系の外』と宣言された事象では、evidence_refs の解決が一度も検められない。orchestrator の _validate_incident_evidence は evidence_kind が語彙に在れば即 continue し、refs を見ない。同じ形が欠陥の側にも在り、prompts.verify_cast_analysis は control_element_id と normative_refs だけを照合して evidence_ref を照合しない。結果として、実在しないファイルを指す証拠ポインタが台帳に座り、そのまま評価器の成果物へ写る。",
+      "detected_by": "2026-08-14 の INC-040 の CAST_ANALYSIS。cast_analysis.incident_evidence_status が unresolved を 2 件計上したが、verifiable は evidence_kind=measurement によって True になり、どの門も反応しなかった。台帳 40 件を走査すると、解決しない refs を持つのは INC-040 の 1 件のみ。",
+      "evidence_refs": [
+        "assurance/harness/orchestrator.py",
+        "assurance/harness/cast_analysis.py",
+        "assurance/harness/prompts.py",
+        "assurance/ledger/cast/INC-040-document-axis-invalidates-wholesale.json",
+        "assurance/ledger/incidents.json"
+      ],
+      "evidence_note": "実在しない参照の実物: INC-040 の evidence_refs[1] `doctrine_docs/packaging/decisions/ADR-134-scoped-staleness.md`。この名のファイルは存在したことがなく、実体は `ADR-134-staleness-is-scoped-to-what-the-judgement-cited.md` である（`ADR-134` の id 形なら解決する）。2026-08-10 に積まれてから 4 日間、validate は 0 件の problems を返し続けた。さらに 2026-08-14 の分析で、この同じ文字列が 統制欠陥#1 の evidence_ref へ複写され、rejected_flaws 0・citation_defect 無しで受理された。もう 1 件の unresolved（`assurance/harness/system_index.py の build（…）`）は実在ファイルに和文の注釈を継ぎ足した形で、これも解決しない。",
+      "impact": "ADR-141 が閉じた穴（実在しない機構を指す捏造事象を台帳に積ませない）は、evidence_kind を宣言した行では開いたままである。宣言は『体系の外に証拠が在る』の意味であって『体系の中の参照が出鱈目でよい』の意味ではないが、実装は後者として振る舞う。帰結は二つ。(a) 解決しない参照が台帳に残り、後の読み手（人も評価器も）がそれを実在の根拠と読む。(b) 参照は評価器の成果物へ写り、そこでも照合されないので、『機械照合を通った分析』という表示の下に未照合の証拠が混ざる。捏造の検出そのものは NONGOAL-001 第1項の外だが、本件は意味の判断ではなく『在るか無いか』の機械判定であり、現に機械が持っている資料（unresolved の一覧）を捨てているだけである。",
+      "fixed": false,
+      "fix_note": "未修正。方向は二つとも『既に算出している unresolved を捨てない』の形になる。(1) 事象の側: evidence_kind が在っても refs の解決は検め、解決しない refs を持つ行を報せる。ただし evidence_kind の意味（体系の外に証拠が在る）は保つので、『refs が一つも無い』ことは今までどおり赤にしない —— 赤にするのは『refs を書いておきながらそれが解決しない』場合に限る。(2) 欠陥の側: verify_cast_analysis が evidence_ref も索引で照合し、解決しないものは citation_defect として刻む（主張は保つ。ADR-117 の既定の向きに合わせる）。どちらも赤／助言のどちらに倒すかは決定を要するので、ADR を先に置くこと。先に REPRODUCE_RED（現在の台帳で解決しない参照が素通りすることを FAIL として固定）を作る。",
+      "residual": [
+        "解決は実証ではない（既知。orchestrator の docstring と NONGOAL-001 第1項）。実在するファイルを引く捏造は本件の是正でも止まらない。止まるのは『実在しない名を引く』形だけである。",
+        "自由文の evidence／evidence_note は今回も走査しない。偶然の一致を証拠と取り違えない設計（cast_analysis の docstring）を変えない。"
       ]
     }
   ]
