@@ -2775,6 +2775,77 @@
       "owner_decision_kind": "互換性を壊す変更",
       "evaluator_owner_required": true,
       "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実物確認と AST 走査）"
+    },
+    {
+      "incident_id": "INC-034-ci-turns-red-on-a-date-with-no-change",
+      "index": 0,
+      "state": "pending",
+      "note": "CI から --today を明示的に渡す件。**未実装であることを実物で確かめた** —— checks.yml:50 の起動は `docs-audit.py --root doctrine_docs --fail-on error` で、--today を渡していない。門は今も壁時計を読む。**なお現行の緩和は別の道を採っている** —— ADR-149 が検査の側で暦由来の判定を弱めた。推奨#0（日付を commit から固定する）はその代案であり、両方を採るか片方かは推奨#6 の所有者判断と絡む。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。未来日掃引と実物確認）"
+    },
+    {
+      "incident_id": "INC-034-ci-turns-red-on-a-date-with-no-change",
+      "index": 2,
+      "state": "landed",
+      "note": "未来日掃引を実施した（常設ジョブではなく一回きりの測定）。2026-08-15 error 0 warn 0 ／ 2026-09-15 error 0 warn 2 ／ 2026-11-15 error 0 warn 20 ／ **2027-02-05 で error 2（orphan: RESEARCH-002・RESEARCH-003）** ／ 2027-08-15 error 2 warn 122。二分探索で error の出ない最後の日は 2027-02-04、出る最初の日は 2027-02-05 と特定した。**リポジトリを一切変えなくても、その日に main の CI が赤くなる。**常設の観測へ移す部分は未実施。",
+      "evidence_ref": "plugin/scripts/docs-audit.py",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。未来日掃引と実物確認）"
+    },
+    {
+      "incident_id": "INC-034-ci-turns-red-on-a-date-with-no-change",
+      "index": 7,
+      "state": "pending",
+      "note": "ADR-149 の独立検証。**掃引の数字は再現した** —— 分析が記録する『2027-02-05 で error 2』と私の測定が完全に一致した。ただし**これは独立検証ではない**（実施者と同じ経路の再測定であり、§4 の独立性を満たさない）。ledger/verify に INC-034 の記録は無い。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。未来日掃引と実物確認）"
+    },
+    {
+      "incident_id": "INC-034-ci-turns-red-on-a-date-with-no-change",
+      "index": 3,
+      "state": "pending",
+      "note": "review_by を持つ全文書の棚卸し。**件数は分析の記述どおり 14 件で変わっていない。**逆参照件数と reproducible フラグの組み合わせの棚卸しと、在庫ゼロを維持する検査は未実施。**現に火種は 2 件残っている**（RESEARCH-002・RESEARCH-003 が 2027-02-05 に孤児の三条件を満たす）。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。未来日掃引と実物確認）"
+    },
+    {
+      "incident_id": "INC-034-ci-turns-red-on-a-date-with-no-change",
+      "index": 8,
+      "state": "landed",
+      "note": "名指しされた下位機構の実在を確認した。--today（docs-audit・gov-heartbeat）・review_by_overrun（inject-contract・docs-audit）・reproducible（_depgraph・docs-audit）・--reverse-refs（dep-graph）はいずれも**実在**。孤児の陳腐化の閾値も実在する（DEFAULT_ORPHAN_STALE_DAYS = 180）。本分析の前提は成り立っている。",
+      "evidence_ref": "plugin/scripts/docs-audit.py",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。未来日掃引と実物確認）"
+    },
+    {
+      "incident_id": "INC-034-ci-turns-red-on-a-date-with-no-change",
+      "index": 4,
+      "state": "pending",
+      "note": "WATCH-001 第11項から導かれる制約（門の判定は暦に依存しない）を、凍結事象とは別に検査可能な制約として文書化する。未実施。**本反復の掃引が示したとおり、制約は現に破れている**（2027-02-05）。凍結事象を閉じる条件に『導かれた制約を検査へ変換したか』を含める部分も未実施。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。未来日掃引と実物確認）"
+    },
+    {
+      "incident_id": "INC-034-ci-turns-red-on-a-date-with-no-change",
+      "index": 1,
+      "state": "owner",
+      "note": "各検査に『判定式が日付/時刻を読むか』の属性を持たせ、真なら error を出せない（warn が上限）と機械的に強制する。**現行で error を出している暦由来の検査（orphan）が warn へ落ちる。**配布した道具が返す所見の重さが変わるので、六類型の『配布境界や保証範囲の変更』に当たる。",
+      "owner_decision_kind": "配布境界や保証範囲の変更",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。未来日掃引と実物確認）"
+    },
+    {
+      "incident_id": "INC-034-ci-turns-red-on-a-date-with-no-change",
+      "index": 5,
+      "state": "owner",
+      "note": "是正作業を変更管理の対象に含め、既存の凍結事象が示す制約への適合を審査する工程を置く。**開発の手順そのものを変える**（PROC-001 の改訂に当たる）。評価者は所有者判断を印しており、工程の新設は保証の範囲の定義に触れる。",
+      "owner_decision_kind": "配布境界や保証範囲の変更",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。未来日掃引と実物確認）"
+    },
+    {
+      "incident_id": "INC-034-ci-turns-red-on-a-date-with-no-change",
+      "index": 6,
+      "state": "owner",
+      "note": "時で起きる curation の促しを、変更の門で届けてよいか。**本反復の測定が判断の材料を与える** ——2027-02-05 に RESEARCH-002・RESEARCH-003 の 2 件で main が赤くなる。『判断が出るまで暦由来の findings は門を赤にしない側へ倒しておく』という評価者の但し書きは、現状では実現していない（orphan は今も error を出せる）。",
+      "owner_decision_kind": "配布境界や保証範囲の変更",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。未来日掃引と実物確認）"
     }
   ]
 }
