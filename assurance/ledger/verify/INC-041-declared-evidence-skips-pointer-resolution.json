@@ -1,0 +1,42 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "verify-record",
+  "target_id": "INC-041-declared-evidence-skips-pointer-resolution",
+  "generated_at": "2026-08-15T13:04:26Z",
+  "git_sha": "62313ff0bb8aeb1465b10fcf18012665f642479c",
+  "diff_range": "origin/main..HEAD",
+  "diff_sha256": "fec470e69fd319b0395b91396853e6a5aea004fee3e3f75a61a8d42abfc9e21d",
+  "red_sha256": "32cc437772b12b82258111372edc21f0fc8dfc80c360476444149c6a9586e755",
+  "prompt_sha256": "2b2d228696f44d9d4b9fe8021af9b7655b63feba39217261120a69cfb061a6e9",
+  "model": "claude-opus-5",
+  "effort": "high",
+  "cost_usd": 0.8946,
+  "record": {
+    "target_id": "INC-041-declared-evidence-skips-pointer-resolution",
+    "verdict": "FAIL",
+    "reasons": [
+      "post_fix_observation が null である。修正後に何かを走らせた観測が一つも無い。したがって『赤で FAIL した当の観測が、この diff によって PASS へ変わった』という事実は、与えられた観測のどこにも存在しない。主張の緑は diff の読みからの推論でしかない。",
+      "赤の記録は同一ファイル（test_evidence_ref_resolution_gap.py）で 6 件走行（failures 3 / errors 2 / passed 1）と測っているが、diff が新規追加する当のファイルには試験が 5 件しか無い。赤で ERROR だった test_a_flaw_whose_evidence_ref_does_not_resolve_is_marked と test_a_resolving_evidence_ref_leaves_no_mark は、追加されたファイルに存在しない。赤の 5 件の不合格のうち 2 件は、直されたのではなく試験の側から消えている。射程外であることが申告されていても、観測上は『赤かった試験の削除による緑』の形と区別できない。",
+      "同じ diff が凍結する赤の台帳 assurance/ledger/red/INC-041-….json は 6 件走行・errors 2 をそのまま記録している。この diff の後の樹から当の command を走らせても 5 件しか集まらず、凍結した赤の記録を再現できない。赤の証拠と shipped の試験が食い違ったまま同時に積まれている。",
+      "逆に shipped のファイルには赤の記録のどこにも現れない試験 test_the_real_ledger_has_no_unresolving_ref が在る。赤の記録の gate_rule_before に従えば、この試験は修正前も problems=[] で緑だったはずであり、赤→緑の観測にはならない。さらにこの試験の緑は incidents.json の INC-040 の evidence_refs を実体へ書き換えたこと（データの編集）に依存する。機構が効いたのかデータを直したのかを、この観測は区別しない。",
+      "oracle の側が同じ diff で書き換えられている。test_orchestrator.py::test_resolving_ref_is_green の入力が [\"good\", \"bad\"] から [\"good\"] へ弱められた。同じ位置に ADR-166 を要求する新しい試験が足されており、正味の方向は厳格化だが、判定基準を動かした diff の緑は『動かした後の基準に対する緑』であって、動かす前の基準を満たした証明ではない。観測が無い以上、この差は埋まらない。",
+      "新しい門は台帳の全行に効くが、宣言行を含む全件で unresolved が INC-040 の 1 件だけかは未確認である。同じ diff が積む CAST 分析の unknowns#5 が『40 件の集計が宣言行を含むか除くか判らない』と自ら書いており、measured.real_ledger_unresolved_rows=1 はこの新しい規則の下での測定ではない。『実台帳が新しい門を通る』は未観測の主張である。",
+      "機構の変更（orchestrator.py の一箇所）は、赤の記録が名指す gate_rule_before（kind in EXTERNAL_EVIDENCE_KINDS -> continue / not any(resolve(r) for r in refs)）を diff の前像として実際に含んでおり、赤の 3 件の FAIL の説明と論理的に突き合う。赤の記録と diff の前像が独立に一致する点だけは、赤が赤だったことの根拠として認める。",
+      "一主題性については、変更は INC-041 / ADR-166 という一つの主題に収まっており、無関係な変更の混入は見当たらない。機構の変更が効いたかどうかは、fixture と注入 resolve で判ずる 3 件については incidents.json の編集から分離できる。よって single_change は FAIL にしない。ただし実台帳を対象とする観測だけは、機構の変更とデータの書き換えのどちらが効いたか判別できない。"
+    ],
+    "checks": {
+      "red_was_red": "PASS",
+      "green_is_green": "FAIL",
+      "single_change": "PASS"
+    },
+    "residual_risks": [
+      "索引が組めない環境（index_ok が偽）で、宣言が在り refs も書かれている行は、新しい規則でも黙って continue する。diff の文脈行からはこの分岐が正しく閉じているかまでしか読めず、宣言行の未検査という当の形が別条件で残る可能性は観測で否定されていない。",
+      "欠陥の側（verify_cast_analysis が evidence_ref を照合しない同型）は申告どおり未修正であり、赤の 2 件の ERROR が指した穴は開いたままである。加えてその赤を凍結する試験自体が shipped のファイルに無いため、次の反復で赤から始めることもできない。",
+      "INC-040 の refs を書き換えた結果、記録済みの incident_sha256 と台帳の実体が食い違う。この指紋は照合されないと申告されているが、その『照合されない』こと自体は本 diff の観測では確かめられていない。",
+      "二権威（ADR-118/123）の解決規則の実体が diff に現れない。試験は _resolve_like_the_real_index という代替の注入で判じており、実索引の解決規則が緩ければ、新しい門の厳しさは試験が示す通りにはならない。",
+      "新しく台帳へ積まれた INC-041 の行自身の evidence_refs が diff の文脈に現れず、それが新しい門を通るかは未観測である。"
+    ]
+  },
+  "sdk_status": "PASS",
+  "reason": null
+}
