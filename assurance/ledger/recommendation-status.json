@@ -2002,6 +2002,228 @@
       "state": "pending",
       "note": "『緑は期待値の由来を保証しない』の明文化と、期待値変更に決定 id を添える記法。統治木への追記であり、推奨#0（運用規約をどちらに倒すか）の所有者判断が先に要る —— 先に記法だけ書くと、決定の順序を変えない選択と噛み合わない。",
       "investigated": "2026-08-15 本反復"
+    },
+    {
+      "incident_id": "INC-040-document-axis-invalidates-wholesale",
+      "index": 0,
+      "state": "pending",
+      "note": "失効鍵を文書 id ごとの指紋へ変える機構変更。INC-040 の fix_note が『急いで入れる種類の変更ではない』（誤ると古びるべき判定が古びない）と定めており、後継 ADR と両方向の試験を揃えてから入れる。評価者は所有者判断を印したが、六類型のどれにも当たらない（ADR-127）。",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "六類型（互換性・配布境界や保証範囲・復旧不能な削除・外部費用や credential・評価 model 最低線・版番号とリリース）のどれにも当たらない。保証レーン内部の失効判定の粒度であり、配布物にも保証範囲にも触れない。類型を名指せない以上、所有者判断ではない（ADR-127）。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の読みと本セッションの成果の突き合わせ）"
+    },
+    {
+      "incident_id": "INC-040-document-axis-invalidates-wholesale",
+      "index": 1,
+      "state": "owner",
+      "note": "過剰失効（時間の税）と過少失効（緑を偽る）のどちらをどこまで許すかの裁定。過少失効を許すことは『判定が古びるべきときに古びない』を許すことであり、台帳が示す保証の範囲そのものを動かす。六類型の『配布境界や保証範囲の変更』に当たる。",
+      "owner_decision_kind": "配布境界や保証範囲の変更",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の読みと本セッションの成果の突き合わせ）"
+    },
+    {
+      "incident_id": "INC-040-document-axis-invalidates-wholesale",
+      "index": 2,
+      "state": "pending",
+      "note": "『1 変更あたりの因果的に無関係な失効件数』の監視。走らせ手を足すなら正本が読む段も同時に要る（§2。INC-012・INC-015 の形）。本反復では両方を入れる余地が無い。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の読みと本セッションの成果の突き合わせ）"
+    },
+    {
+      "incident_id": "INC-040-document-axis-invalidates-wholesale",
+      "index": 3,
+      "state": "pending",
+      "note": "再判定の所要時間と件数の対の記録。2026-08-15 に三冊 251 件・評価 12 本・約75分の実測をINC-040 へ残したが、これは一回きりの記録であって毎回の追跡ではない。追跡にするには #2 と同じく正本が読む段が要る。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の読みと本セッションの成果の突き合わせ）"
+    },
+    {
+      "incident_id": "INC-040-document-axis-invalidates-wholesale",
+      "index": 4,
+      "state": "landed",
+      "note": "種別単位で畳まれた指紋を失効鍵に使っている軸を全数で洗い出した。system_index.build の category_sha256 は documents・audit_checks・linter_codes・scripts・test_files・hooks・skills の **7 軸すべて**を種別単位で畳んでいる。ADR-134 は粒度を種別までしか下げておらず、id 単位まで下げた軸は一つも無い。同型欠陥の在庫は 7 軸（うち文書軸が最も高くつく）。",
+      "evidence_ref": "assurance/harness/system_index.py",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の読みと本セッションの成果の突き合わせ）"
+    },
+    {
+      "incident_id": "INC-040-document-axis-invalidates-wholesale",
+      "index": 5,
+      "state": "pending",
+      "note": "ADR-134 の適用範囲が種別粒度までであったことの明記。ADR-166 は別の主題（参照の解決）であり、この明記は含んでいない。#0 の後継 ADR と同じ変更で書くのが筋なので、そこまで保留する。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の読みと本セッションの成果の突き合わせ）"
+    },
+    {
+      "incident_id": "INC-040-document-axis-invalidates-wholesale",
+      "index": 6,
+      "state": "pending",
+      "note": "失効した 257 件のうち実際に追加文書を証拠として引いていた件数の測定。2026-08-10 の状態を再現しないと測れず、現在の台帳は既に再判定済みで当時の姿が残っていない。同型の測定は次に失効が起きた時点で取れる（#2 の監視が入れば自動で取れる）。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の読みと本セッションの成果の突き合わせ）"
+    },
+    {
+      "incident_id": "INC-040-document-axis-invalidates-wholesale",
+      "index": 7,
+      "state": "pending",
+      "note": "『機構は動作しているが費用が高い』種類の指摘を閉じるまで追跡する責任の所在。評価者は所有者判断を印したが六類型に当たらない。INC-039 推奨#4・INC-041 推奨#8・INC-042 推奨#1 と同じ空白の四度目であり、個別に決めるのではなく一度にまとめて決める。",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "六類型のどれにも当たらない。運用上の責任割当であって、配布境界・保証範囲・互換性・費用・model 最低線・版番号のいずれにも触れない（ADR-127）。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の読みと本セッションの成果の突き合わせ）"
+    },
+    {
+      "incident_id": "INC-040-document-axis-invalidates-wholesale",
+      "index": 8,
+      "state": "pending",
+      "note": "推奨ごとに実施責任者・実施状況の検査・有効性のフィードバックを割り当てる。#7 と同じ空白の一部であり、まとめて扱う。",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "六類型のどれにも当たらない（#7 と同じ理由）。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の読みと本セッションの成果の突き合わせ）"
+    },
+    {
+      "incident_id": "INC-041-declared-evidence-skips-pointer-resolution",
+      "index": 0,
+      "state": "landed",
+      "note": "リポジトリ正本で分岐と照合対象を実物確認した。_validate_incident_evidence は evidence_kind が語彙に在れば continue し refs を見ない／判定は not any(...) で一つ解決すれば緑／verify_cast_analysis は control_element_id と normative_refs だけを照合する、を確認済み。この確認から、当初の記述が原因を一つに帰していた誤りも見つかった。",
+      "evidence_ref": "assurance/harness/orchestrator.py",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の読みと本セッションの成果の突き合わせ）"
+    },
+    {
+      "incident_id": "INC-041-declared-evidence-skips-pointer-resolution",
+      "index": 1,
+      "state": "landed",
+      "note": "REPRODUCE_RED を先に作った。出す試験ファイルそのものを修正前の樹へ複写して測り直し、5 件走行・3 FAIL・2 緑を記録した（初回の 6 件の測定は superseded_measurement として残す）。",
+      "evidence_ref": "assurance/ledger/red/INC-041-declared-evidence-skips-pointer-resolution.json",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の読みと本セッションの成果の突き合わせ）"
+    },
+    {
+      "incident_id": "INC-041-declared-evidence-skips-pointer-resolution",
+      "index": 2,
+      "state": "landed",
+      "note": "ADR-166 として着地。宣言の有無に関わらず書いた refs は全件が解決することを要し、refs を一つも書かない宣言行は緑のまま（免除の単位を体系外の実体へ戻した）。部分解決も赤にした。",
+      "evidence_ref": "doctrine_docs/packaging/decisions/ADR-166-written-refs-resolve-regardless-of-declaration.md",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の読みと本セッションの成果の突き合わせ）"
+    },
+    {
+      "incident_id": "INC-041-declared-evidence-skips-pointer-resolution",
+      "index": 3,
+      "state": "pending",
+      "note": "verify_cast_analysis の照合対象に evidence_ref を加える。**未実施。**修正は一度に一つ（§2）なので次の反復へ回した。赤の証拠は red/INC-041-….json の superseded_measurement に在る。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の読みと本セッションの成果の突き合わせ）"
+    },
+    {
+      "incident_id": "INC-041-declared-evidence-skips-pointer-resolution",
+      "index": 4,
+      "state": "landed",
+      "note": "赤へ倒すと決め、ADR-166 の『却下した選択肢』に助言案を却下した理由を書いた（算出済みの unresolved は 4 日間どの門にも届かず、同じ信号を責任の割当が無い別の置き場へ移すだけになる）。事象の側と欠陥の側は同じ向きに揃える。",
+      "evidence_ref": "doctrine_docs/packaging/decisions/ADR-166-written-refs-resolve-regardless-of-declaration.md",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "六類型のどれにも当たらない。保証レーン内部の validate を**厳しくする**変更であり、配布物にも保証範囲の縮小にも触れない（緩める向きなら保証範囲の変更に当たり得るが、これは逆向き）。決定は ADR-166 として統治木に残してある（ADR-127）。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の読みと本セッションの成果の突き合わせ）"
+    },
+    {
+      "incident_id": "INC-041-declared-evidence-skips-pointer-resolution",
+      "index": 5,
+      "state": "pending",
+      "note": "validate の出力で『見ていない』と『見て問題が無い』を区別する。**この穴は ADR-166 でも塞がっていない** —— 宣言行の refs は検めるようになったが、索引が組めない環境では今も黙って飛ばし、problems=0 と『見ていない 0』は同じ 0 として出る。独立検証もこの限定漏れを指摘した。次の反復の候補。",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "六類型のどれにも当たらない。出力の情報量を増やす変更である（ADR-127）。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の読みと本セッションの成果の突き合わせ）"
+    },
+    {
+      "incident_id": "INC-041-declared-evidence-skips-pointer-resolution",
+      "index": 6,
+      "state": "pending",
+      "note": "verifiable=True かつ unresolved>0 の件数を独立した数値として出す監視。ADR-166 でこの論理矛盾自体は赤になったので、残るのは『矛盾の件数を先行指標として追う』側。走らせ手と正本が読む段の両方が要る（§2）。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の読みと本セッションの成果の突き合わせ）"
+    },
+    {
+      "incident_id": "INC-041-declared-evidence-skips-pointer-resolution",
+      "index": 7,
+      "state": "pending",
+      "note": "evidence_kind の語彙定義に宣言の意味範囲を明記する。ADR-166 第5項と PROC-001 へは書いたが、**語彙定義そのもの（EXTERNAL_EVIDENCE_KINDS の側）には書いていない。**推奨が求めているのは『実装が免除範囲を広げたときに突合の相手が存在する状態』なので、語彙の側に書くまでは果たしていない。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の読みと本セッションの成果の突き合わせ）"
+    },
+    {
+      "incident_id": "INC-041-declared-evidence-skips-pointer-resolution",
+      "index": 8,
+      "state": "pending",
+      "note": "WARNING_BACKLOG の異常条件と責任割当。INC-040 推奨#7・INC-039 推奨#4・INC-042 推奨#1 と同じ空白であり、まとめて扱う。",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "六類型のどれにも当たらない（INC-040 推奨#7 と同じ理由。ADR-127）。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の読みと本セッションの成果の突き合わせ）"
+    },
+    {
+      "incident_id": "INC-041-declared-evidence-skips-pointer-resolution",
+      "index": 9,
+      "state": "pending",
+      "note": "ADR-141 が閉じた穴の同型の別入口（宣言・語彙・分岐によって検査が飛ぶ箇所）の全数走査。未実施。決定論で走査できる形（validate 系の早期 continue を機械で拾う）なので、次の反復の候補として費用の要らない仕事である。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の読みと本セッションの成果の突き合わせ）"
+    },
+    {
+      "incident_id": "INC-041-declared-evidence-skips-pointer-resolution",
+      "index": 10,
+      "state": "pending",
+      "note": "台帳から統治木への外向き参照の解決責任をどちらが持つか。ADR-166 は台帳側に責任を置いた（書いた参照は台帳の validate が検める）が、統治木側の逆依存が台帳を見ない点は変えていない。明記としては半分。",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "六類型のどれにも当たらない。責任の所在の明記であり、配布境界にも保証範囲にも触れない（ADR-127）。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の読みと本セッションの成果の突き合わせ）"
+    },
+    {
+      "incident_id": "INC-028-verify-record-cannot-agree-with-its-own-diff",
+      "index": 0,
+      "state": "pending",
+      "note": "verify 記録の格納位置の三案（(a) merge 後の別 commit／(b) 記録は台帳の外 runs/ へ置き台帳には diff_sha256 だけ／(c) 検証プロンプトで記録を対象外と宣言）から選ぶ判断。**六類型のどれにも当たらない**ので所有者判断ではない（ADR-127）。ただし (b) を選ぶ場合に限り、台帳が持つ証拠の範囲と SessionEnd の走査対象が動くので、その一案は『配布境界や保証範囲の変更』に触れる —— 選択が (b) に決まった時点で所有者へ回す。本反復では決めない。理由は、この事象と同型の食い違いを本セッションで実際に踏んだから（2026-08-15 の INC-041 の PR で、検証記録の diff_sha256 が最終 diff と一致しなくなった。検証後に台帳の行を足したため）。**踏んだ実例を持っているので、次に扱うときは三案を机上で比べるのではなく、実例に対して各案がどう振る舞ったかで比べられる。**それを持って一つの主題として扱うほうが、いま急いで決めるより良い。",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "三案から選ぶこと自体は六類型のどれにも当たらない（保証レーン内部の記録の置き場所である）。(b) を選んだ場合だけ『配布境界や保証範囲の変更』に触れるので、そのときに所有者へ回す。類型を名指せないものを所有者棚へ置くと、誰にも読まれない棚が育つ（ADR-127）。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。next_actions の先頭が名指す推奨を処遇した）"
+    },
+    {
+      "incident_id": "INC-028-verify-record-cannot-agree-with-its-own-diff",
+      "index": 1,
+      "state": "pending",
+      "note": "verify 記録に diff_sha256 と基点 sha を必須項目として持たせ、門の判定を『PASS の記録が存在する』から『PASS の記録が判定対象の変更集合と照合一致する』へ変える。**現状は前者である。**本セッションで実際に、検証後に台帳の行を足して diff_sha256 が最終 diff と食い違ったまま merge した（PR #308。食い違いは PR 本文に明記した）。#0 の格納位置の決定と同じ変更で入れるのが筋。",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "機構の変更であり、六類型のどれにも当たらない（ADR-127）。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。next_actions の先頭が名指す推奨を処遇した）"
+    },
+    {
+      "incident_id": "INC-028-verify-record-cannot-agree-with-its-own-diff",
+      "index": 2,
+      "state": "pending",
+      "note": "記録の主張対象とその記録を含む commit の親との照合を決定論試験として CI へ追加する。#1 の必須項目が先に要る（照合する値が無ければ試験も書けない）。#0・#1 と同じ主題。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。next_actions の先頭が名指す推奨を処遇した）"
+    },
+    {
+      "incident_id": "INC-028-verify-record-cannot-agree-with-its-own-diff",
+      "index": 3,
+      "state": "pending",
+      "note": "verify/ と他パスの同居割合、および PASS を得ながら fixed:false のまま滞留する事象の件数と滞留期間の算出。走らせ手を足すなら正本が読む段も同時に要る（§2）。なお現在 verify 記録は 3 件（INC-027・INC-039・INC-041）しか無く、割合を語れる母数が無い。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。next_actions の先頭が名指す推奨を処遇した）"
+    },
+    {
+      "incident_id": "INC-028-verify-record-cannot-agree-with-its-own-diff",
+      "index": 4,
+      "state": "pending",
+      "note": "独立検証の指摘テキストを分類・集計し、同種指摘が直近 5 回中 2 回以上で構造の再検討を起動する。母数は 3 件で足りない（#3 と同じ）。ただし**指摘の再出現は既に起きている** —— 『UNKNOWN/warn を異常とする条件と責任の割当が無い』は INC-039 推奨#4・INC-040 推奨#7・INC-041 推奨#8・INC-042 推奨#1 の四度目である。機械の集計より先に、この一件を扱うほうが早い。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。next_actions の先頭が名指す推奨を処遇した）"
+    },
+    {
+      "incident_id": "INC-028-verify-record-cannot-agree-with-its-own-diff",
+      "index": 5,
+      "state": "pending",
+      "note": "ADR-139 に安全上の想定（検証記録は検証対象の外にある／PASS の記録の存在は当該変更集合の検証を意味する）とその失効の先行指標を明記する。#0 の決定が先に要る —— 想定を書く前に、どの案を採るかで想定の中身が変わる。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。next_actions の先頭が名指す推奨を処遇した）"
+    },
+    {
+      "incident_id": "INC-028-verify-record-cannot-agree-with-its-own-diff",
+      "index": 6,
+      "state": "pending",
+      "note": "記録が自らの対象の内側に入る配置の棚卸し（事象台帳・CAST_ANALYSIS の記録・docs-audit のキャッシュ・SessionEnd の要約）。決定論で走査できる形なので費用は要らない。次の反復の候補。本セッションで少なくとも二つは確認済み: CAST_ANALYSIS の記録は incident_sha256 を書くが照合しない（INC-041 の残余）、verify 記録は diff_sha256 を書くが照合しない（本件）。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。next_actions の先頭が名指す推奨を処遇した）"
+    },
+    {
+      "incident_id": "INC-028-verify-record-cannot-agree-with-its-own-diff",
+      "index": 7,
+      "state": "landed",
+      "note": "evidence_refs 三つの実在をリポジトリ正本に対して確認した。assurance/ledger/verify/INC-027-ledger-write-not-atomic.json・assurance/harness/verify_fix.py・doctrine_docs/packaging/decisions/ADR-139-verify-runner-and-fixed-gate.md はいずれも二権威で解決する（ADR-166 の門にも掛けた）。本分析の結論を仮定付きとして扱う必要は無い。",
+      "evidence_ref": "assurance/harness/verify_fix.py",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。next_actions の先頭が名指す推奨を処遇した）"
     }
   ]
 }
