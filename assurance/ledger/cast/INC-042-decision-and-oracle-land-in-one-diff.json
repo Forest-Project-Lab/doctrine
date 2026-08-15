@@ -1,0 +1,673 @@
+{
+  "accepted_flaws": [
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "統治木は変更フローの順序を『決定 → 仕様 → 実装 → 試験』と定めており、この順序が守られていれば ADR は実装 PR から見て diff の外の材料になる。一方で保証レーンは一反復＝一 PR で進行を回し、次の行動が空にならないことを保つ制御を持つ。この二つの制御は同じ変更に同時に効くが、衝突したときにどちらを優先するかを裁定する機構が構造上どこにも無い。結果として、順序制約は進行の粒度に押し潰され、決定と実装は常に同じ diff に入る。",
+      "evidence_ref": "assurance/ledger/verify/INC-041-declared-evidence-skips-pointer-resolution.json",
+      "flaw_type": "統制どうしの調整の欠如",
+      "normative_refs": [
+        "全体構造の分析",
+        "安全と納期の対立裁定手順",
+        "変更後に事故が起きる前提の変更管理"
+      ],
+      "why_it_seemed_adequate": "一反復＝一 PR は、事象が台帳に積まれてから閉じるまでを一筆で辿れるようにする設計であり、進捗の停止を観測する制御とも噛み合っていた。順序の規定は文書の生成順を指すものと読め、『同じ PR に入っていても順序は守っている』という読みが自然に成り立つ。順序が検証材料の供給経路でもあるという二重の役割は、どちらの制御の記述にも書かれていない。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "レーンが持つ手掛かりは台帳と決定論試験の成否である。試験の成否は、その試験の期待値が同じ変更で書き換わったかどうかを何も語らない。期待値の由来（どの決定に基づいて変わったか）を示す信号が、制御ループのどこにも流れていない。独立検証が UNKNOWN を返したのは、この信号の不在を正しく報告した結果である。",
+      "evidence_ref": "assurance/tests/test_orchestrator.py",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "control-action-requires-feedback",
+        "全コントロールループにフィードバック必須",
+        "安全立証でなく非安全状態の探索",
+        "何をとなぜのトレース文書化"
+      ],
+      "why_it_seemed_adequate": "決定論試験は再現性のある信号であり、緑／赤という二値は判定として十分に見える。期待値は試験の一部であって、試験の外から検める対象だとは扱われてこなかった。判定基準そのものが変更対象になる場面は、規則を変える是正でしか現れないため、通常運転では穴が露出しない。"
+    },
+    {
+      "control_element_id": "GOVERNANCE_TREE",
+      "description": "統治木は変更フローの順序を定めるが、その順序を着地時点で強制する主体・時点が構造上どこにも割り当てられていない。ガードは違反する編集を拒むが着地の順序は見ず、CI は正本の状態を見るが『この ADR が同じ diff で新規に入ったこと』を条件に持たない。規定は在るが、強制の所在が無い。",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "責任の空白は構造再設計",
+        "手順の存在確認でなく適用確認",
+        "each-component-enforces-its-constraints"
+      ],
+      "why_it_seemed_adequate": "順序は開発の作法として書かれており、書かれていれば従われるという前提が置かれていた。統治木の他の規定（配布境界・削除の可否など）はガードや所有者判断に紐づいているため、順序も同様に担保されているように見えた。"
+    },
+    {
+      "control_element_id": "CI_RELEASE_CHECK",
+      "description": "CI は merge 前に赤で止めるが、既存試験の assert が弱まった箇所（期待集合の要素削減、断言の削除）を差分から拾う門を持たない。入力が [\"good\",\"bad\"] から [\"good\"] へ変わり同位置に新しい期待値が足された変更は、CI から見れば単に緑である。緑は被覆が保たれたことを意味せず、被覆の定義が変わったことも意味しない。",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "クリティカル条項の静かな削除の検出",
+        "漸進的変更の専門家レビュー",
+        "監査の検出力評価"
+      ],
+      "why_it_seemed_adequate": "CI の役割は『赤で止める』と定義されており、緑を疑う門は役割の外にある。期待値の変更は開発の正当な行為であり、機械が当否を判断できない領域だと理解されていたため、拾うところまでを機械にする選択肢が検討対象に上がっていない。"
+    },
+    {
+      "control_element_id": "POST_TOOL_LINTER",
+      "description": "リンタは編集された一つの文書だけを点検する設計であり、『試験ファイルの期待値が変わったこと』と『同一変更の中で ADR が新規に導入されたこと』という二つの編集の関係を見る位置に無い。本件のハザードは単一文書の性質ではなく二文書の同時性にあるため、単一文書粒度が検査を構造的に排除している。",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "verify-decomposition-assumptions",
+        "単一コンポーネント集中の回避",
+        "全体健全性と部分健全性の分離評価"
+      ],
+      "why_it_seemed_adequate": "一文書ずつの点検は、編集の直後に助言を返せる唯一の粒度であり、応答の速さと引き換えに範囲を狭める設計判断は明示されていた（decision を出さない設計、拒否はガード頼み）。関係の検査は監査の仕事だという分担が成り立っているように見えた。"
+    },
+    {
+      "control_element_id": "WARNING_BACKLOG",
+      "description": "本件の検出は『独立検証が UNKNOWN を返した』という形でしか現れない。UNKNOWN や warn を異常として扱う条件と、それを閉じる責任の割当が未定であるため、検出は滞留に変わる。同じ空白は INC-039 推奨#4、INC-041 分析の推奨#8 に続き三度目の作用であり、指摘が繰り返されても閉じないこと自体が構造の性質になっている。",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "audit-findings-must-be-closed",
+        "未回答の質問を明示保持",
+        "監視責任の空白排除",
+        "是正措置の責任割当と追跡"
+      ],
+      "why_it_seemed_adequate": "読み手は存在する（契約注入が要約の先頭 5 件を運ぶ）ため、情報は届いているという理解が成り立つ。門を warn まで広げると進行が止まるという運用上の懸念があり、判断を所有者に預ける形が慎重な扱いに見えた。預けた先で判断が下されるまでの滞留を異常とする条件は、預けた側にも預かった側にも無い。"
+    },
+    {
+      "control_element_id": "OWNER",
+      "description": "所有者の主な手掛かりは PR の diff と台帳である。決定と実装が同一 diff にある限り、diff は『決定に基づいて規則を変えた変更』と『期待値を都合よく外した変更』を同一の見た目で提示する。所有者が保持するプロセスモデルは『diff を読めば当否が判る』という想定に立っており、実状態（diff が両者を区別する情報を含まない）と食い違う。手掛かりの欠陥は所有者の側ではなく、手掛かりを供給する変更フローの側にある。",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "プロセスモデルと実状態の不整合",
+        "defects-in-information-providing-systems",
+        "形式承認の禁止・実質審査の証跡"
+      ],
+      "why_it_seemed_adequate": "diff は最も具体的で改竄しにくい一次資料であり、既知の穴として挙げられているのは『報告が意図を書いていても見分けにくい』であって diff 自体の欠落ではない。ADR が同じ diff に含まれていれば、むしろ根拠が添付されていて丁寧に見える。根拠が同時に着地したことが根拠の独立性を消すという反転は、diff を読む位置からは見えない。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "『規則を変える是正はどれも green_is_green を PASS にできない』という帰結は、一件ずつ見れば単発の UNKNOWN にしか見えず、レーン自身はこの構造的な検出力低下を観測できない。UNKNOWN の連続数・比率・同一理由での再出現を集計する手掛かりが台帳の読み方として定義されていないため、劣化は事象の記録が積み上がった後にしか判らない。",
+      "flaw_type": "統制自身の劣化を検出できない",
+      "normative_refs": [
+        "監査のすり抜け時に監査手順を是正",
+        "検出失敗の原因調査",
+        "要約統計偏重による傾向情報の喪失"
+      ],
+      "why_it_seemed_adequate": "台帳は一事象一件で完結する設計であり、事象ごとに分析が済むまで閉じない規律が既に効いている。個々が正しく処理されていれば全体も健全だという読みは、件ごとの規律が強いほど自然になる。傾向を見る視点は、件ごとの規律と別に用意しなければ発生しない。"
+    }
+  ],
+  "analysis": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "統治木は変更フローの順序を『決定 → 仕様 → 実装 → 試験』と定めており、この順序が守られていれば ADR は実装 PR から見て diff の外の材料になる。一方で保証レーンは一反復＝一 PR で進行を回し、次の行動が空にならないことを保つ制御を持つ。この二つの制御は同じ変更に同時に効くが、衝突したときにどちらを優先するかを裁定する機構が構造上どこにも無い。結果として、順序制約は進行の粒度に押し潰され、決定と実装は常に同じ diff に入る。",
+        "evidence_ref": "assurance/ledger/verify/INC-041-declared-evidence-skips-pointer-resolution.json",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "全体構造の分析",
+          "安全と納期の対立裁定手順",
+          "変更後に事故が起きる前提の変更管理"
+        ],
+        "why_it_seemed_adequate": "一反復＝一 PR は、事象が台帳に積まれてから閉じるまでを一筆で辿れるようにする設計であり、進捗の停止を観測する制御とも噛み合っていた。順序の規定は文書の生成順を指すものと読め、『同じ PR に入っていても順序は守っている』という読みが自然に成り立つ。順序が検証材料の供給経路でもあるという二重の役割は、どちらの制御の記述にも書かれていない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "レーンが持つ手掛かりは台帳と決定論試験の成否である。試験の成否は、その試験の期待値が同じ変更で書き換わったかどうかを何も語らない。期待値の由来（どの決定に基づいて変わったか）を示す信号が、制御ループのどこにも流れていない。独立検証が UNKNOWN を返したのは、この信号の不在を正しく報告した結果である。",
+        "evidence_ref": "assurance/tests/test_orchestrator.py",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "control-action-requires-feedback",
+          "全コントロールループにフィードバック必須",
+          "安全立証でなく非安全状態の探索",
+          "何をとなぜのトレース文書化"
+        ],
+        "why_it_seemed_adequate": "決定論試験は再現性のある信号であり、緑／赤という二値は判定として十分に見える。期待値は試験の一部であって、試験の外から検める対象だとは扱われてこなかった。判定基準そのものが変更対象になる場面は、規則を変える是正でしか現れないため、通常運転では穴が露出しない。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "統治木は変更フローの順序を定めるが、その順序を着地時点で強制する主体・時点が構造上どこにも割り当てられていない。ガードは違反する編集を拒むが着地の順序は見ず、CI は正本の状態を見るが『この ADR が同じ diff で新規に入ったこと』を条件に持たない。規定は在るが、強制の所在が無い。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "責任の空白は構造再設計",
+          "手順の存在確認でなく適用確認",
+          "each-component-enforces-its-constraints"
+        ],
+        "why_it_seemed_adequate": "順序は開発の作法として書かれており、書かれていれば従われるという前提が置かれていた。統治木の他の規定（配布境界・削除の可否など）はガードや所有者判断に紐づいているため、順序も同様に担保されているように見えた。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "CI は merge 前に赤で止めるが、既存試験の assert が弱まった箇所（期待集合の要素削減、断言の削除）を差分から拾う門を持たない。入力が [\"good\",\"bad\"] から [\"good\"] へ変わり同位置に新しい期待値が足された変更は、CI から見れば単に緑である。緑は被覆が保たれたことを意味せず、被覆の定義が変わったことも意味しない。",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "クリティカル条項の静かな削除の検出",
+          "漸進的変更の専門家レビュー",
+          "監査の検出力評価"
+        ],
+        "why_it_seemed_adequate": "CI の役割は『赤で止める』と定義されており、緑を疑う門は役割の外にある。期待値の変更は開発の正当な行為であり、機械が当否を判断できない領域だと理解されていたため、拾うところまでを機械にする選択肢が検討対象に上がっていない。"
+      },
+      {
+        "control_element_id": "POST_TOOL_LINTER",
+        "description": "リンタは編集された一つの文書だけを点検する設計であり、『試験ファイルの期待値が変わったこと』と『同一変更の中で ADR が新規に導入されたこと』という二つの編集の関係を見る位置に無い。本件のハザードは単一文書の性質ではなく二文書の同時性にあるため、単一文書粒度が検査を構造的に排除している。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "verify-decomposition-assumptions",
+          "単一コンポーネント集中の回避",
+          "全体健全性と部分健全性の分離評価"
+        ],
+        "why_it_seemed_adequate": "一文書ずつの点検は、編集の直後に助言を返せる唯一の粒度であり、応答の速さと引き換えに範囲を狭める設計判断は明示されていた（decision を出さない設計、拒否はガード頼み）。関係の検査は監査の仕事だという分担が成り立っているように見えた。"
+      },
+      {
+        "control_element_id": "WARNING_BACKLOG",
+        "description": "本件の検出は『独立検証が UNKNOWN を返した』という形でしか現れない。UNKNOWN や warn を異常として扱う条件と、それを閉じる責任の割当が未定であるため、検出は滞留に変わる。同じ空白は INC-039 推奨#4、INC-041 分析の推奨#8 に続き三度目の作用であり、指摘が繰り返されても閉じないこと自体が構造の性質になっている。",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "audit-findings-must-be-closed",
+          "未回答の質問を明示保持",
+          "監視責任の空白排除",
+          "是正措置の責任割当と追跡"
+        ],
+        "why_it_seemed_adequate": "読み手は存在する（契約注入が要約の先頭 5 件を運ぶ）ため、情報は届いているという理解が成り立つ。門を warn まで広げると進行が止まるという運用上の懸念があり、判断を所有者に預ける形が慎重な扱いに見えた。預けた先で判断が下されるまでの滞留を異常とする条件は、預けた側にも預かった側にも無い。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者の主な手掛かりは PR の diff と台帳である。決定と実装が同一 diff にある限り、diff は『決定に基づいて規則を変えた変更』と『期待値を都合よく外した変更』を同一の見た目で提示する。所有者が保持するプロセスモデルは『diff を読めば当否が判る』という想定に立っており、実状態（diff が両者を区別する情報を含まない）と食い違う。手掛かりの欠陥は所有者の側ではなく、手掛かりを供給する変更フローの側にある。",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "プロセスモデルと実状態の不整合",
+          "defects-in-information-providing-systems",
+          "形式承認の禁止・実質審査の証跡"
+        ],
+        "why_it_seemed_adequate": "diff は最も具体的で改竄しにくい一次資料であり、既知の穴として挙げられているのは『報告が意図を書いていても見分けにくい』であって diff 自体の欠落ではない。ADR が同じ diff に含まれていれば、むしろ根拠が添付されていて丁寧に見える。根拠が同時に着地したことが根拠の独立性を消すという反転は、diff を読む位置からは見えない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "『規則を変える是正はどれも green_is_green を PASS にできない』という帰結は、一件ずつ見れば単発の UNKNOWN にしか見えず、レーン自身はこの構造的な検出力低下を観測できない。UNKNOWN の連続数・比率・同一理由での再出現を集計する手掛かりが台帳の読み方として定義されていないため、劣化は事象の記録が積み上がった後にしか判らない。",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "監査のすり抜け時に監査手順を是正",
+          "検出失敗の原因調査",
+          "要約統計偏重による傾向情報の喪失"
+        ],
+        "why_it_seemed_adequate": "台帳は一事象一件で完結する設計であり、事象ごとに分析が済むまで閉じない規律が既に効いている。個々が正しく処理されていれば全体も健全だという読みは、件ごとの規律が強いほど自然になる。傾向を見る視点は、件ごとの規律と別に用意しなければ発生しない。"
+      }
+    ],
+    "hazard": "決定（ADR）と、その決定によって書き換わる判定基準（既存試験の期待値）が、同一の変更単位（一 PR ＝ 一反復）の中で同時に着地し、判定基準の変更を担保する根拠が当該 diff の外に存在しない状態。この状態では、緑であることは「期待値が緑を返す」以上を意味しない。",
+    "incident_id": "INC-042-decision-and-oracle-land-in-one-diff",
+    "leading_indicators": [
+      {
+        "indicator": "同一 PR に『ADR の新規追加』と『既存試験の期待値変更』が同居した件数",
+        "observable": "PR の diff における新規 doctrine_docs/**/decisions/ADR-*.md の追加と、assurance/tests/** の既存行変更の共起",
+        "threshold": "1 件でも共起したらその PR に印を付ける（正常値は 0）。共起は違反ではなく、独立検証が PASS を出せない状態に入ったことの合図として扱う",
+        "version_independent": true,
+        "where": "CI_RELEASE_CHECK のジョブ（リポジトリ正本の git diff --name-status）",
+        "why_version_independent": "観測対象はリポジトリ正本の diff であり、利用者環境へ導入された複製の版に依存しない"
+      },
+      {
+        "indicator": "既存試験における断言の純減（assert 行数、期待集合の要素数、パラメータ化ケース数）",
+        "observable": "assurance/tests/** の diff における assert 行・期待値要素の増減",
+        "threshold": "同一ファイル内で純減が 1 以上、かつ本文に根拠となる決定 id の参照が無い場合に人へ回す。拾うところまでが機械、当否は人",
+        "version_independent": true,
+        "where": "CI_RELEASE_CHECK のジョブ、または PR の diff を走査する検査",
+        "why_version_independent": "正本の試験ファイルを対象とするため、導入複製の更新状況と無関係に観測できる"
+      },
+      {
+        "indicator": "green_is_green が UNKNOWN で終わった判定の比率と連続回数",
+        "observable": "assurance/ledger/verify/*.json の判定値",
+        "threshold": "直近 5 件中 2 件以上が UNKNOWN、または同一理由の UNKNOWN が 2 回連続した時点で異常として next_actions に載せる",
+        "version_independent": true,
+        "where": "ASSURANCE_LANE（assurance/ledger/verify/）",
+        "why_version_independent": "台帳はリポジトリ側にあり、集計はレーン内で完結する"
+      },
+      {
+        "indicator": "UNKNOWN / warn の未クローズ滞留期間",
+        "observable": "台帳の当該事象が閉じないまま経過した反復数、および last-audit.json の totals・top_findings に同じ指摘が残り続ける回数",
+        "threshold": "同一指摘が 3 反復または 7 日を超えて残ったら、閉じる責任の割当が無いこと自体を事象として立てる",
+        "version_independent": true,
+        "where": "WARNING_BACKLOG（.claude/.cache/last-audit.json）と ASSURANCE_LANE（assurance/ledger/）",
+        "why_version_independent": "滞留の観測は正本側の台帳と要約で完結する"
+      },
+      {
+        "indicator": "規則を変える是正のうち、ADR 単独 PR が先行した割合",
+        "observable": "是正の PR 系列（ADR のみの PR → 実装 PR）の有無",
+        "threshold": "規則変更を伴う是正のうち先行率が 100% 未満なら、一反復＝一 PR と順序規定の衝突が解けていない。運用を変えた後の遵守指標として使う",
+        "version_independent": true,
+        "where": "CI_RELEASE_CHECK / OWNER が見る PR 履歴",
+        "why_version_independent": "リポジトリの PR 履歴から観測でき、導入複製に依存しない"
+      },
+      {
+        "indicator": "期待値切り下げ検出器を導入複製側（hook）で動かす場合の版遅れ世代数",
+        "observable": "HEARTBEAT が読む導入複製の版と正本の版の差",
+        "threshold": "1 世代でも遅れていれば、その検出器が出した『異常なし』を根拠として採用しない",
+        "version_independent": false,
+        "where": "HEARTBEAT（plugin/scripts/gov-heartbeat.py）／PLUGIN_DISTRIBUTION",
+        "why_version_independent": "検出器自身が導入複製の側で動くため、版が遅れると検出も遅れる（古びの検出器が古びる共通原因故障、INC-005）。この指標を採るなら検出は正本側の CI に置くべきで、hook 側に置く限り指標の値そのものが遅れる"
+      }
+    ],
+    "loss": "是正の当否を外から確かめる材料が失われた状態。判定基準（試験の期待値）を書き換える是正について、独立検証は「決定で規則を変えた」と「都合の悪い期待値を外した」を区別できず、規則を変える是正はどれも green_is_green を PASS にできない。逆向きに、期待値を都合よく外す変更が来ても被覆が保たれていれば FAIL と断じられない。すなわち保証レーンの検出力が、本件に限らず同じ形の是正すべてについて失われている。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "ファイル削除を伴う diff でも被覆総数の減少が捉えられ、印が付く",
+        "hypothesis": "期待値の弱化を『既存試験の断言の純減』で検出しても、旧試験ファイルの削除と新規ファイルの追加という形をとれば純減として現れず、検出を素通りする。",
+        "oracle": "試験ファイルの削除・リネームを含む diff について、ファイル単位ではなく体系全体の断言総数・被覆総数の増減を測る",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "実装 PR で ADR 本文が変更されない運用が実際に観測される",
+        "hypothesis": "ADR を先行 PR に分けても、先行 ADR の本文が実装 PR の段階で書き換われば、根拠は再び diff の内側に戻り同じ穴が再発する。",
+        "oracle": "実装 PR の時点で、参照している ADR の内容ハッシュが先行 PR 着地時と一致するかを検める",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "割合に有意な変化が無い",
+        "hypothesis": "UNKNOWN を異常として門にすると、UNKNOWN を避けるために試験に触れない歪んだ是正（期待値を変えずに実装だけ迂回する）が増え、検出力の穴が別の形へ移動する。",
+        "oracle": "門の導入前後で、ADR を伴う是正の件数と、試験を一切変更しない是正の割合を比較する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "一致率が高く、判定が版に依存しない",
+        "hypothesis": "独立検証が同系 model であるため、UNKNOWN という判定自体が model の版や effort で揺れ、同じ diff が別の機会には PASS と判定される。",
+        "oracle": "同一 diff を異なる版・異なる effort で再判定し、判定の一致率を測る",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "共起が試験ファイルに限られる",
+        "hypothesis": "同型の同時着地は試験と ADR の組に限らず、仕様文書と実装、あるいは決定と決定済事実（decided-facts.md）の間でも起きており、そちらは検出の対象にすらなっていない。",
+        "oracle": "過去の PR で、doctrine_docs 配下の規範文書の新規追加と、その規範に依存する既存記述の変更が同居した件数を数える",
+        "severity": "P2"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "『規則（判定基準）を変える是正は反復を二つ使う』——ADR だけの PR を先に着地させ、実装は次の PR にする——を運用規約として採るか、代わりに期待値変更を検める門を一つ増やすかを決める。一反復＝一 PR と順序規定が衝突していることは構造の性質であり、どちらかを明示的に降ろさない限り解けない。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "UNKNOWN / warn を異常として扱う条件（閾値・滞留期間）と、閉じる責任の割当先を決める。三度目の空白であり、次の是正もこの空白の上に落ちる。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "同一 diff に『ADR の新規追加』と『既存試験の期待値変更』が同居した場合に PR へ印を付ける検査を CI 側（正本を見る位置）に置く。拾うところまでを機械にし、当否の判断は人に残す。hook 側（導入複製）には置かない——版が遅れれば検出も遅れる。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "既存試験の断言の純減（assert 行数・期待集合の要素数・ケース数）を diff から算出し、本文に根拠となる決定 id の参照が無い純減を人へ回す。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "green_is_green の判定値の分布（UNKNOWN の比率・連続回数・同一理由の再出現）を台帳から集計し、閾値超過を next_actions に載せる。件ごとの規律とは別に、傾向を見る視点を明示的に用意する。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "『緑は期待値の由来を保証しない』ことと、期待値を変更する際は根拠となる決定 id を試験本文または PR 本文に記す記法を、統治木に明記する。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "過去の是正のうち、決定と判定基準の変更が同一 diff に入っていた件数を台帳から遡って数え、本件が単発か構造的な定常かを確定する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "本分析が前提とした機構（verify_fix / green_is_green の判定、順序規定、一反復＝一 PR）の実在と所在を、統制構造の記述に要素として追加するか、実在しないなら本分析の該当部分を撤回する。",
+        "kind": "調査の継続",
+        "owner_decision_required": true
+      }
+    ],
+    "systemic_factors": [
+      "進行の効率化（一反復＝一 PR）が、順序に依存して供給されていた検証材料を静かに消した。効率化は明示的な統制の削除としては現れないため、統制の経時的な崩れとして記録されない。",
+      "緑であることが保証の代理指標として使われており、判定基準自体の由来は検証対象に入っていない。目的を確実に達成すること（試験が通ること）と、判定が信用できること（期待値が正当な根拠で変わったこと）が同一視されている。",
+      "『異常として扱う条件』の空白が同じ場所で三度作用している（INC-039 推奨#4、INC-041 推奨#8、本件）。空白は毎回正しく指摘されるが、閉じる責任がどの要素にも割り当たっていないため、指摘の反復自体が構造の定常状態になっている。",
+      "検出が UNKNOWN（判断保留）という形でしか現れない。保留は滞留と外形が同じであり、保留を数える仕組みが無い限り、正しい保留と放置は区別できない。",
+      "評価者が同系 model であるという共通原因が、独立の外観を持つ検証にも残る。独立検証が UNKNOWN を返した判断そのものの再現性は、レーンの外から確かめられていない。",
+      "単一文書粒度（リンタ）・単一事象粒度（台帳）・単一ジョブ粒度（CI）という三つの粒度が揃って『関係』を見ない側に寄っており、二つの編集の同時性というハザードは、どの粒度からも構造的に不可視である。"
+    ],
+    "unknowns": [
+      "【実在の未確認】事象が名指しする green_is_green / verify_fix という判定機構は、与えられた統制構造のどの要素にも名前として現れない。ASSURANCE_LANE（assurance/harness/orchestrator.py、手掛かりに assurance/ledger/）が最も近いが、PASS / UNKNOWN / FAIL の判定を出す独立検証そのものは列挙されていない。同様に『決定 → 仕様 → 実装 → 試験』の順序規定と『一反復＝一 PR』の運用規約は、GOVERNANCE_TREE / ASSURANCE_LANE の記述のどこにも制御として現れない。加えて作業ディレクトリにリポジトリが存在せず（/tmp の空ディレクトリ）、assurance/harness/orchestrator.py・assurance/ledger/verify/・ADR-166・assurance/tests/test_orchestrator.py のいずれも実在を確認できなかった。以下の分析はこれらが実在するという前提の上に立っており、その前提が崩れれば控除される。confidence を low としたのはこの一点による。",
+      "『決定 → 仕様 → 実装 → 試験』の順序が、どの文書のどの条項として規定され、誰が強制する責任を負うのか。統制構造の記述からは特定できない。",
+      "green_is_green が UNKNOWN で終わった判定が現在何件滞留しているか、本件が初回か既に反復しているか。",
+      "INC-039 推奨#4 と INC-041 推奨#8 が未実施のまま残っている理由。提案が出ているのに閉じないのは、判断待ちなのか、判断の依頼が届いていないのか、依頼の経路が無いのかで是正が変わる。",
+      "期待値の弱化を機械が拾う場合の偽陽性率。正当なリファクタ（試験の再編・重複削除）と緩和を、拾う段階でどこまで分離できるか。",
+      "独立検証が同系 model であるため（ASSURANCE_LANE の既知の穴）、UNKNOWN という判定自体がどの程度再現するか。別の版・別の effort で同じ diff を判定したときの一致率は測られていない。",
+      "ADR を先行 PR に分けた場合、先行した ADR 本文が実装 PR の時点で書き換わらない保証があるか。根拠が可変なら、先行させても diff の外の材料としての性質は保たれない可能性がある。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は二つの軸で組まれている。試験が緑であること（CI・決定論試験）と、事象が台帳で閉じないこと（保証レーン）である。どちらも判定基準そのものの正しさを対象に取らない。緑は期待値が緑を返すことしか意味せず、台帳は判定が下ることを求めるが、判定不能という結果を異常として扱う条件を持たない。加えて本件は『是正が緩和だった』事例ではなく『緩和かどうかを区別できない』事例であるため、どの門にも赤い信号が立たない。独立検証は穴を正しく報告した（UNKNOWN）が、報告が構造を動かす経路（UNKNOWN を異常とする条件、閉じる責任の割当）が三度にわたり空白のままであるため、正しい検出が正しく滞留した。なお本件は未修正であり、修正が分析の代わりになる余地は無い。同時に、修正の方向（決定を先に着地させる／期待値の書き換えを機械が拾う）はどちらも運用の順序を変えるか門を一つ増やすかであって、いずれも所有者判断を要する。"
+  },
+  "control_structure_ids": [
+    "OWNER",
+    "CI_RELEASE_CHECK",
+    "SESSION_START_CONTRACT",
+    "HEARTBEAT",
+    "PRE_TOOL_GUARD",
+    "POST_TOOL_LINTER",
+    "SESSION_END_AUDIT",
+    "WARNING_BACKLOG",
+    "CAPTURE_NUDGE",
+    "PLUGIN_DISTRIBUTION",
+    "ASSURANCE_LANE",
+    "GOVERNANCE_TREE"
+  ],
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "duration_ms": 281290,
+  "errors": [],
+  "execution_kind": "real-sdk",
+  "flaws_with_citation_defect": [],
+  "generated_at": "2026-08-15T13:35:01Z",
+  "git_dirty": false,
+  "git_sha": "392b6db8fea993ceb0b8270840ef2e4cd45854e2",
+  "incident_evidence": {
+    "kind": null,
+    "refs": [
+      "assurance/ledger/verify/INC-041-declared-evidence-skips-pointer-resolution.json",
+      "assurance/ledger/red/INC-041-declared-evidence-skips-pointer-resolution.json",
+      "doctrine_docs/packaging/decisions/ADR-166-written-refs-resolve-regardless-of-declaration.md",
+      "assurance/tests/test_orchestrator.py"
+    ],
+    "resolved": [
+      "assurance/ledger/verify/INC-041-declared-evidence-skips-pointer-resolution.json",
+      "assurance/ledger/red/INC-041-declared-evidence-skips-pointer-resolution.json",
+      "doctrine_docs/packaging/decisions/ADR-166-written-refs-resolve-regardless-of-declaration.md",
+      "assurance/tests/test_orchestrator.py"
+    ],
+    "unresolved": [],
+    "verifiable": true
+  },
+  "incident_id": "INC-042-decision-and-oracle-land-in-one-diff",
+  "incident_sha256": "6b259480c03bc02bd10be6db9641ed4eb76e5587aba737804ae761baf36f1e4a",
+  "init": {
+    "claude_code_version": "2.1.221",
+    "model": "claude-opus-5",
+    "session_id": "6c8905a9-83ce-4c0d-b82c-81392a200198",
+    "tools_count": 27
+  },
+  "kind": "cast-analysis",
+  "leading_indicators_defined": true,
+  "options": {
+    "allowed_tools": [],
+    "cwd": "/tmp/assurance-cast-pevxjzqs",
+    "effort": "high",
+    "max_budget_usd": 4.0,
+    "max_turns": 8,
+    "model": "claude-opus-5",
+    "setting_sources": [],
+    "timeout_s": 900
+  },
+  "oracle": "structured_output がレーン側再検証にも適合",
+  "principles_offered": 337,
+  "prompt_sha256": "7cd1952f722d11f8ae714174be2e703bf2b578740fe3004f0c3b03f85fa21f26",
+  "rejected_flaws": [],
+  "result_meta": {
+    "duration_api_ms": 273054,
+    "is_error": false,
+    "num_turns": 5,
+    "session_id": "6c8905a9-83ce-4c0d-b82c-81392a200198",
+    "subtype": "success",
+    "total_cost_usd": 0.969367,
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 41583,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 41583,
+      "cache_read_input_tokens": 187730,
+      "inference_geo": "not_available",
+      "input_tokens": 8,
+      "iterations": "list",
+      "output_tokens": 16880,
+      "server_tool_use": {
+        "web_fetch_requests": 0,
+        "web_search_requests": 0
+      },
+      "service_tier": "standard",
+      "speed": "standard"
+    }
+  },
+  "schema_sha256": "0d1643d5e16353723405302c1f6ffcf753915e2a4f27a3530e8ef9a9ee45cb46",
+  "sdk_version": "0.2.129",
+  "settled": true,
+  "status": "PASS",
+  "structured_output": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "統治木は変更フローの順序を『決定 → 仕様 → 実装 → 試験』と定めており、この順序が守られていれば ADR は実装 PR から見て diff の外の材料になる。一方で保証レーンは一反復＝一 PR で進行を回し、次の行動が空にならないことを保つ制御を持つ。この二つの制御は同じ変更に同時に効くが、衝突したときにどちらを優先するかを裁定する機構が構造上どこにも無い。結果として、順序制約は進行の粒度に押し潰され、決定と実装は常に同じ diff に入る。",
+        "evidence_ref": "assurance/ledger/verify/INC-041-declared-evidence-skips-pointer-resolution.json",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "全体構造の分析",
+          "安全と納期の対立裁定手順",
+          "変更後に事故が起きる前提の変更管理"
+        ],
+        "why_it_seemed_adequate": "一反復＝一 PR は、事象が台帳に積まれてから閉じるまでを一筆で辿れるようにする設計であり、進捗の停止を観測する制御とも噛み合っていた。順序の規定は文書の生成順を指すものと読め、『同じ PR に入っていても順序は守っている』という読みが自然に成り立つ。順序が検証材料の供給経路でもあるという二重の役割は、どちらの制御の記述にも書かれていない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "レーンが持つ手掛かりは台帳と決定論試験の成否である。試験の成否は、その試験の期待値が同じ変更で書き換わったかどうかを何も語らない。期待値の由来（どの決定に基づいて変わったか）を示す信号が、制御ループのどこにも流れていない。独立検証が UNKNOWN を返したのは、この信号の不在を正しく報告した結果である。",
+        "evidence_ref": "assurance/tests/test_orchestrator.py",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "control-action-requires-feedback",
+          "全コントロールループにフィードバック必須",
+          "安全立証でなく非安全状態の探索",
+          "何をとなぜのトレース文書化"
+        ],
+        "why_it_seemed_adequate": "決定論試験は再現性のある信号であり、緑／赤という二値は判定として十分に見える。期待値は試験の一部であって、試験の外から検める対象だとは扱われてこなかった。判定基準そのものが変更対象になる場面は、規則を変える是正でしか現れないため、通常運転では穴が露出しない。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "統治木は変更フローの順序を定めるが、その順序を着地時点で強制する主体・時点が構造上どこにも割り当てられていない。ガードは違反する編集を拒むが着地の順序は見ず、CI は正本の状態を見るが『この ADR が同じ diff で新規に入ったこと』を条件に持たない。規定は在るが、強制の所在が無い。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "責任の空白は構造再設計",
+          "手順の存在確認でなく適用確認",
+          "each-component-enforces-its-constraints"
+        ],
+        "why_it_seemed_adequate": "順序は開発の作法として書かれており、書かれていれば従われるという前提が置かれていた。統治木の他の規定（配布境界・削除の可否など）はガードや所有者判断に紐づいているため、順序も同様に担保されているように見えた。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "CI は merge 前に赤で止めるが、既存試験の assert が弱まった箇所（期待集合の要素削減、断言の削除）を差分から拾う門を持たない。入力が [\"good\",\"bad\"] から [\"good\"] へ変わり同位置に新しい期待値が足された変更は、CI から見れば単に緑である。緑は被覆が保たれたことを意味せず、被覆の定義が変わったことも意味しない。",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "クリティカル条項の静かな削除の検出",
+          "漸進的変更の専門家レビュー",
+          "監査の検出力評価"
+        ],
+        "why_it_seemed_adequate": "CI の役割は『赤で止める』と定義されており、緑を疑う門は役割の外にある。期待値の変更は開発の正当な行為であり、機械が当否を判断できない領域だと理解されていたため、拾うところまでを機械にする選択肢が検討対象に上がっていない。"
+      },
+      {
+        "control_element_id": "POST_TOOL_LINTER",
+        "description": "リンタは編集された一つの文書だけを点検する設計であり、『試験ファイルの期待値が変わったこと』と『同一変更の中で ADR が新規に導入されたこと』という二つの編集の関係を見る位置に無い。本件のハザードは単一文書の性質ではなく二文書の同時性にあるため、単一文書粒度が検査を構造的に排除している。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "verify-decomposition-assumptions",
+          "単一コンポーネント集中の回避",
+          "全体健全性と部分健全性の分離評価"
+        ],
+        "why_it_seemed_adequate": "一文書ずつの点検は、編集の直後に助言を返せる唯一の粒度であり、応答の速さと引き換えに範囲を狭める設計判断は明示されていた（decision を出さない設計、拒否はガード頼み）。関係の検査は監査の仕事だという分担が成り立っているように見えた。"
+      },
+      {
+        "control_element_id": "WARNING_BACKLOG",
+        "description": "本件の検出は『独立検証が UNKNOWN を返した』という形でしか現れない。UNKNOWN や warn を異常として扱う条件と、それを閉じる責任の割当が未定であるため、検出は滞留に変わる。同じ空白は INC-039 推奨#4、INC-041 分析の推奨#8 に続き三度目の作用であり、指摘が繰り返されても閉じないこと自体が構造の性質になっている。",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "audit-findings-must-be-closed",
+          "未回答の質問を明示保持",
+          "監視責任の空白排除",
+          "是正措置の責任割当と追跡"
+        ],
+        "why_it_seemed_adequate": "読み手は存在する（契約注入が要約の先頭 5 件を運ぶ）ため、情報は届いているという理解が成り立つ。門を warn まで広げると進行が止まるという運用上の懸念があり、判断を所有者に預ける形が慎重な扱いに見えた。預けた先で判断が下されるまでの滞留を異常とする条件は、預けた側にも預かった側にも無い。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者の主な手掛かりは PR の diff と台帳である。決定と実装が同一 diff にある限り、diff は『決定に基づいて規則を変えた変更』と『期待値を都合よく外した変更』を同一の見た目で提示する。所有者が保持するプロセスモデルは『diff を読めば当否が判る』という想定に立っており、実状態（diff が両者を区別する情報を含まない）と食い違う。手掛かりの欠陥は所有者の側ではなく、手掛かりを供給する変更フローの側にある。",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "プロセスモデルと実状態の不整合",
+          "defects-in-information-providing-systems",
+          "形式承認の禁止・実質審査の証跡"
+        ],
+        "why_it_seemed_adequate": "diff は最も具体的で改竄しにくい一次資料であり、既知の穴として挙げられているのは『報告が意図を書いていても見分けにくい』であって diff 自体の欠落ではない。ADR が同じ diff に含まれていれば、むしろ根拠が添付されていて丁寧に見える。根拠が同時に着地したことが根拠の独立性を消すという反転は、diff を読む位置からは見えない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "『規則を変える是正はどれも green_is_green を PASS にできない』という帰結は、一件ずつ見れば単発の UNKNOWN にしか見えず、レーン自身はこの構造的な検出力低下を観測できない。UNKNOWN の連続数・比率・同一理由での再出現を集計する手掛かりが台帳の読み方として定義されていないため、劣化は事象の記録が積み上がった後にしか判らない。",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "監査のすり抜け時に監査手順を是正",
+          "検出失敗の原因調査",
+          "要約統計偏重による傾向情報の喪失"
+        ],
+        "why_it_seemed_adequate": "台帳は一事象一件で完結する設計であり、事象ごとに分析が済むまで閉じない規律が既に効いている。個々が正しく処理されていれば全体も健全だという読みは、件ごとの規律が強いほど自然になる。傾向を見る視点は、件ごとの規律と別に用意しなければ発生しない。"
+      }
+    ],
+    "hazard": "決定（ADR）と、その決定によって書き換わる判定基準（既存試験の期待値）が、同一の変更単位（一 PR ＝ 一反復）の中で同時に着地し、判定基準の変更を担保する根拠が当該 diff の外に存在しない状態。この状態では、緑であることは「期待値が緑を返す」以上を意味しない。",
+    "incident_id": "INC-042-decision-and-oracle-land-in-one-diff",
+    "leading_indicators": [
+      {
+        "indicator": "同一 PR に『ADR の新規追加』と『既存試験の期待値変更』が同居した件数",
+        "observable": "PR の diff における新規 doctrine_docs/**/decisions/ADR-*.md の追加と、assurance/tests/** の既存行変更の共起",
+        "threshold": "1 件でも共起したらその PR に印を付ける（正常値は 0）。共起は違反ではなく、独立検証が PASS を出せない状態に入ったことの合図として扱う",
+        "version_independent": true,
+        "where": "CI_RELEASE_CHECK のジョブ（リポジトリ正本の git diff --name-status）",
+        "why_version_independent": "観測対象はリポジトリ正本の diff であり、利用者環境へ導入された複製の版に依存しない"
+      },
+      {
+        "indicator": "既存試験における断言の純減（assert 行数、期待集合の要素数、パラメータ化ケース数）",
+        "observable": "assurance/tests/** の diff における assert 行・期待値要素の増減",
+        "threshold": "同一ファイル内で純減が 1 以上、かつ本文に根拠となる決定 id の参照が無い場合に人へ回す。拾うところまでが機械、当否は人",
+        "version_independent": true,
+        "where": "CI_RELEASE_CHECK のジョブ、または PR の diff を走査する検査",
+        "why_version_independent": "正本の試験ファイルを対象とするため、導入複製の更新状況と無関係に観測できる"
+      },
+      {
+        "indicator": "green_is_green が UNKNOWN で終わった判定の比率と連続回数",
+        "observable": "assurance/ledger/verify/*.json の判定値",
+        "threshold": "直近 5 件中 2 件以上が UNKNOWN、または同一理由の UNKNOWN が 2 回連続した時点で異常として next_actions に載せる",
+        "version_independent": true,
+        "where": "ASSURANCE_LANE（assurance/ledger/verify/）",
+        "why_version_independent": "台帳はリポジトリ側にあり、集計はレーン内で完結する"
+      },
+      {
+        "indicator": "UNKNOWN / warn の未クローズ滞留期間",
+        "observable": "台帳の当該事象が閉じないまま経過した反復数、および last-audit.json の totals・top_findings に同じ指摘が残り続ける回数",
+        "threshold": "同一指摘が 3 反復または 7 日を超えて残ったら、閉じる責任の割当が無いこと自体を事象として立てる",
+        "version_independent": true,
+        "where": "WARNING_BACKLOG（.claude/.cache/last-audit.json）と ASSURANCE_LANE（assurance/ledger/）",
+        "why_version_independent": "滞留の観測は正本側の台帳と要約で完結する"
+      },
+      {
+        "indicator": "規則を変える是正のうち、ADR 単独 PR が先行した割合",
+        "observable": "是正の PR 系列（ADR のみの PR → 実装 PR）の有無",
+        "threshold": "規則変更を伴う是正のうち先行率が 100% 未満なら、一反復＝一 PR と順序規定の衝突が解けていない。運用を変えた後の遵守指標として使う",
+        "version_independent": true,
+        "where": "CI_RELEASE_CHECK / OWNER が見る PR 履歴",
+        "why_version_independent": "リポジトリの PR 履歴から観測でき、導入複製に依存しない"
+      },
+      {
+        "indicator": "期待値切り下げ検出器を導入複製側（hook）で動かす場合の版遅れ世代数",
+        "observable": "HEARTBEAT が読む導入複製の版と正本の版の差",
+        "threshold": "1 世代でも遅れていれば、その検出器が出した『異常なし』を根拠として採用しない",
+        "version_independent": false,
+        "where": "HEARTBEAT（plugin/scripts/gov-heartbeat.py）／PLUGIN_DISTRIBUTION",
+        "why_version_independent": "検出器自身が導入複製の側で動くため、版が遅れると検出も遅れる（古びの検出器が古びる共通原因故障、INC-005）。この指標を採るなら検出は正本側の CI に置くべきで、hook 側に置く限り指標の値そのものが遅れる"
+      }
+    ],
+    "loss": "是正の当否を外から確かめる材料が失われた状態。判定基準（試験の期待値）を書き換える是正について、独立検証は「決定で規則を変えた」と「都合の悪い期待値を外した」を区別できず、規則を変える是正はどれも green_is_green を PASS にできない。逆向きに、期待値を都合よく外す変更が来ても被覆が保たれていれば FAIL と断じられない。すなわち保証レーンの検出力が、本件に限らず同じ形の是正すべてについて失われている。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "ファイル削除を伴う diff でも被覆総数の減少が捉えられ、印が付く",
+        "hypothesis": "期待値の弱化を『既存試験の断言の純減』で検出しても、旧試験ファイルの削除と新規ファイルの追加という形をとれば純減として現れず、検出を素通りする。",
+        "oracle": "試験ファイルの削除・リネームを含む diff について、ファイル単位ではなく体系全体の断言総数・被覆総数の増減を測る",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "実装 PR で ADR 本文が変更されない運用が実際に観測される",
+        "hypothesis": "ADR を先行 PR に分けても、先行 ADR の本文が実装 PR の段階で書き換われば、根拠は再び diff の内側に戻り同じ穴が再発する。",
+        "oracle": "実装 PR の時点で、参照している ADR の内容ハッシュが先行 PR 着地時と一致するかを検める",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "割合に有意な変化が無い",
+        "hypothesis": "UNKNOWN を異常として門にすると、UNKNOWN を避けるために試験に触れない歪んだ是正（期待値を変えずに実装だけ迂回する）が増え、検出力の穴が別の形へ移動する。",
+        "oracle": "門の導入前後で、ADR を伴う是正の件数と、試験を一切変更しない是正の割合を比較する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "一致率が高く、判定が版に依存しない",
+        "hypothesis": "独立検証が同系 model であるため、UNKNOWN という判定自体が model の版や effort で揺れ、同じ diff が別の機会には PASS と判定される。",
+        "oracle": "同一 diff を異なる版・異なる effort で再判定し、判定の一致率を測る",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "共起が試験ファイルに限られる",
+        "hypothesis": "同型の同時着地は試験と ADR の組に限らず、仕様文書と実装、あるいは決定と決定済事実（decided-facts.md）の間でも起きており、そちらは検出の対象にすらなっていない。",
+        "oracle": "過去の PR で、doctrine_docs 配下の規範文書の新規追加と、その規範に依存する既存記述の変更が同居した件数を数える",
+        "severity": "P2"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "『規則（判定基準）を変える是正は反復を二つ使う』——ADR だけの PR を先に着地させ、実装は次の PR にする——を運用規約として採るか、代わりに期待値変更を検める門を一つ増やすかを決める。一反復＝一 PR と順序規定が衝突していることは構造の性質であり、どちらかを明示的に降ろさない限り解けない。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "UNKNOWN / warn を異常として扱う条件（閾値・滞留期間）と、閉じる責任の割当先を決める。三度目の空白であり、次の是正もこの空白の上に落ちる。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "同一 diff に『ADR の新規追加』と『既存試験の期待値変更』が同居した場合に PR へ印を付ける検査を CI 側（正本を見る位置）に置く。拾うところまでを機械にし、当否の判断は人に残す。hook 側（導入複製）には置かない——版が遅れれば検出も遅れる。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "既存試験の断言の純減（assert 行数・期待集合の要素数・ケース数）を diff から算出し、本文に根拠となる決定 id の参照が無い純減を人へ回す。",
+        "kind": "機構の変更",
+        "owner_decision_required": true
+      },
+      {
+        "action": "green_is_green の判定値の分布（UNKNOWN の比率・連続回数・同一理由の再出現）を台帳から集計し、閾値超過を next_actions に載せる。件ごとの規律とは別に、傾向を見る視点を明示的に用意する。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "『緑は期待値の由来を保証しない』ことと、期待値を変更する際は根拠となる決定 id を試験本文または PR 本文に記す記法を、統治木に明記する。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "過去の是正のうち、決定と判定基準の変更が同一 diff に入っていた件数を台帳から遡って数え、本件が単発か構造的な定常かを確定する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "本分析が前提とした機構（verify_fix / green_is_green の判定、順序規定、一反復＝一 PR）の実在と所在を、統制構造の記述に要素として追加するか、実在しないなら本分析の該当部分を撤回する。",
+        "kind": "調査の継続",
+        "owner_decision_required": true
+      }
+    ],
+    "systemic_factors": [
+      "進行の効率化（一反復＝一 PR）が、順序に依存して供給されていた検証材料を静かに消した。効率化は明示的な統制の削除としては現れないため、統制の経時的な崩れとして記録されない。",
+      "緑であることが保証の代理指標として使われており、判定基準自体の由来は検証対象に入っていない。目的を確実に達成すること（試験が通ること）と、判定が信用できること（期待値が正当な根拠で変わったこと）が同一視されている。",
+      "『異常として扱う条件』の空白が同じ場所で三度作用している（INC-039 推奨#4、INC-041 推奨#8、本件）。空白は毎回正しく指摘されるが、閉じる責任がどの要素にも割り当たっていないため、指摘の反復自体が構造の定常状態になっている。",
+      "検出が UNKNOWN（判断保留）という形でしか現れない。保留は滞留と外形が同じであり、保留を数える仕組みが無い限り、正しい保留と放置は区別できない。",
+      "評価者が同系 model であるという共通原因が、独立の外観を持つ検証にも残る。独立検証が UNKNOWN を返した判断そのものの再現性は、レーンの外から確かめられていない。",
+      "単一文書粒度（リンタ）・単一事象粒度（台帳）・単一ジョブ粒度（CI）という三つの粒度が揃って『関係』を見ない側に寄っており、二つの編集の同時性というハザードは、どの粒度からも構造的に不可視である。"
+    ],
+    "unknowns": [
+      "【実在の未確認】事象が名指しする green_is_green / verify_fix という判定機構は、与えられた統制構造のどの要素にも名前として現れない。ASSURANCE_LANE（assurance/harness/orchestrator.py、手掛かりに assurance/ledger/）が最も近いが、PASS / UNKNOWN / FAIL の判定を出す独立検証そのものは列挙されていない。同様に『決定 → 仕様 → 実装 → 試験』の順序規定と『一反復＝一 PR』の運用規約は、GOVERNANCE_TREE / ASSURANCE_LANE の記述のどこにも制御として現れない。加えて作業ディレクトリにリポジトリが存在せず（/tmp の空ディレクトリ）、assurance/harness/orchestrator.py・assurance/ledger/verify/・ADR-166・assurance/tests/test_orchestrator.py のいずれも実在を確認できなかった。以下の分析はこれらが実在するという前提の上に立っており、その前提が崩れれば控除される。confidence を low としたのはこの一点による。",
+      "『決定 → 仕様 → 実装 → 試験』の順序が、どの文書のどの条項として規定され、誰が強制する責任を負うのか。統制構造の記述からは特定できない。",
+      "green_is_green が UNKNOWN で終わった判定が現在何件滞留しているか、本件が初回か既に反復しているか。",
+      "INC-039 推奨#4 と INC-041 推奨#8 が未実施のまま残っている理由。提案が出ているのに閉じないのは、判断待ちなのか、判断の依頼が届いていないのか、依頼の経路が無いのかで是正が変わる。",
+      "期待値の弱化を機械が拾う場合の偽陽性率。正当なリファクタ（試験の再編・重複削除）と緩和を、拾う段階でどこまで分離できるか。",
+      "独立検証が同系 model であるため（ASSURANCE_LANE の既知の穴）、UNKNOWN という判定自体がどの程度再現するか。別の版・別の effort で同じ diff を判定したときの一致率は測られていない。",
+      "ADR を先行 PR に分けた場合、先行した ADR 本文が実装 PR の時点で書き換わらない保証があるか。根拠が可変なら、先行させても diff の外の材料としての性質は保たれない可能性がある。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は二つの軸で組まれている。試験が緑であること（CI・決定論試験）と、事象が台帳で閉じないこと（保証レーン）である。どちらも判定基準そのものの正しさを対象に取らない。緑は期待値が緑を返すことしか意味せず、台帳は判定が下ることを求めるが、判定不能という結果を異常として扱う条件を持たない。加えて本件は『是正が緩和だった』事例ではなく『緩和かどうかを区別できない』事例であるため、どの門にも赤い信号が立たない。独立検証は穴を正しく報告した（UNKNOWN）が、報告が構造を動かす経路（UNKNOWN を異常とする条件、閉じる責任の割当）が三度にわたり空白のままであるため、正しい検出が正しく滞留した。なお本件は未修正であり、修正が分析の代わりになる余地は無い。同時に、修正の方向（決定を先に着地させる／期待値の書き換えを機械が拾う）はどちらも運用の順序を変えるか門を一つ増やすかであって、いずれも所有者判断を要する。"
+  }
+}
