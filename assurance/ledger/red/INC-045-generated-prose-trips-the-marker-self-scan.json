@@ -1,0 +1,22 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "reproduce-red",
+  "incident_id": "INC-045-generated-prose-trips-the-marker-self-scan",
+  "generated_at": "2026-08-15T18:30:00Z",
+  "git_sha": "ae8fdad",
+  "phase": "before-fix",
+  "command": "一時領域の試験を直に走らせた（試験ファイルをリポジトリへ置くと、その原文自身が自己走査を赤にするため）",
+  "returncode": 1,
+  "expect": "修正前に FAIL すること（最初から緑は再現と認めない）",
+  "observed_failures": [
+    "FAIL: test_declared_file_quoting_the_word_raises_no_suspect — 2 行目で統治外を宣言しているファイルなのに、3 行目の引用が trace_marker_suspect として挙がる（path=ledger.json line=3）"
+  ],
+  "how_it_was_reproduced": "一時ディレクトリに JSON を 1 件だけ作った。2 行目は行頭から『印の語 + exempt』の形で統治外を宣言し、3 行目は散文の括弧の中で同じ連なりを引用する。_tracescan.scan_tree をその木へ当てると、3 行目だけが疑いとして返る。**台帳にも評価器にも依存しない。**宣言の照合は行頭に錨を持つので括弧の中の引用に当たらず、疑いの照合は行のどこでも拾う。",
+  "why_the_test_is_not_in_the_tree": "この試験の原文自身が印の形を含むので、リポジトリへ置くと test_self_scan_of_this_repository_has_no_suspects が赤になる —— **再現の試験を置くこと自体が再現になる。**是正が入るまで木の外に置き、是正と同じ変更で持ち込む。証拠としてはこの記録と、PR #317 の CI の赤（実物の一件）が残る。",
+  "measured_on_main": {
+    "ledger_lines_matching_the_suspect": 0,
+    "ledger_files_quoting_governance_ids": 49,
+    "note": "main の台帳に疑いへ一致する行は無い。実物の一件は PR #317 のブランチにだけ在る。ただし統治の識別子を引用する台帳ファイルは 49 件あり、母集団は広い（推奨#6 の計数。潜在は 0 だが、母集団が広いので次に起きるのは時間の問題である）。"
+  },
+  "note": "分析（2026-08-15・$1.0681）の why_missed が指した形: **緑であった期間は『射程が正しい』ことの証拠ではなく『たまたま射程外の文字列が母集団に入っていなかった』ことの帰結だった。**"
+}
