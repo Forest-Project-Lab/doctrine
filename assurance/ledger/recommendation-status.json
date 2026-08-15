@@ -2846,6 +2846,74 @@
       "owner_decision_kind": "配布境界や保証範囲の変更",
       "evaluator_owner_required": true,
       "investigated": "2026-08-15 本反復（APPLY_FINDINGS。未来日掃引と実物確認）"
+    },
+    {
+      "incident_id": "INC-035-provenance-gate-passes-fabricated-sources",
+      "index": 0,
+      "state": "landed",
+      "note": "門の所属と起動経路を確定した。実装は plugin/scripts/map-draft-check.py（SPEC-029 の追跡印つき）で、統制構造の 12 要素（OWNER・CI_RELEASE_CHECK・SESSION_START_CONTRACT・HEARTBEAT・PRE_TOOL_GUARD・POST_TOOL_LINTER・SESSION_END_AUDIT・WARNING_BACKLOG・CAPTURE_NUDGE・PLUGIN_DISTRIBUTION・ASSURANCE_LANE・GOVERNANCE_TREE）**のどれにも対応しない**。**起動経路は『技能の手順を辿る主体』だけである** —— checks.yml にも hooks.json にもsettings.local.json にも現れず、plugin/skills/system-map-draft/SKILL.md の中でだけ案内されている（INC-030 の測定でも『CI が名指さない』側に在った）。つまりこの門は、誰かが技能どおりに進めたときにだけ起動する。統制構造へ要素として足すか、既存要素（PLUGIN_DISTRIBUTION か GOVERNANCE_TREE）へ責任を割り当てるかは、INC-032 推奨#4 と同じ主題（所有者判断）である。",
+      "evidence_ref": "plugin/scripts/map-draft-check.py",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実物確認）"
+    },
+    {
+      "incident_id": "INC-035-provenance-gate-passes-fabricated-sources",
+      "index": 1,
+      "state": "pending",
+      "note": "門の出口を三値にする件。**半分は着地している。**出力（text と JSON の両方）は『所見: N 件 / 機械検証不能: M 件 / 出所: K 件』を出しており、**件数は分母つきで載る**（_totals が findings・unverifiable・sources を返す）。**未着地は出口そのもの** —— main の最後は `return 1 if findings else 0` で、機械検証不能が何件在っても終了コードは 0（緑）になる。事象のハザードが言う『二つを同一の記号へ畳む』は、出口の水準では今も成り立っている。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実物確認）"
+    },
+    {
+      "incident_id": "INC-035-provenance-gate-passes-fabricated-sources",
+      "index": 2,
+      "state": "pending",
+      "note": "門とは別実装の独立走査を CI に置く件。未実施（checks.yml にも scripts/ にも該当は無い）。**なお門そのものが CI に無い** —— 独立走査を置く前に、門を CI へ接続するかどうかが先に来る（INC-030 推奨#0 の『理由付き除外』の対象でもある）。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実物確認）"
+    },
+    {
+      "incident_id": "INC-035-provenance-gate-passes-fabricated-sources",
+      "index": 3,
+      "state": "pending",
+      "note": "先行指標 6 項目を CI の成果物と台帳に載せ、閾値超過で赤にする。未実施。#2 と同じ主題。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実物確認）"
+    },
+    {
+      "incident_id": "INC-035-provenance-gate-passes-fabricated-sources",
+      "index": 4,
+      "state": "pending",
+      "note": "SPEC-029 に『検出する形／通す形／原理的に測れないと宣言する形』を並べて記述する。未実施。**素材は在る** —— test_mapdraft_hardening.py（24 件）が『約 35 の素通り経路』を塞いだ記録を持ち、test_mapdraft.py（29 件）が機械検証不能の三形（git 無しの @rev・URL・散文）を凍結している。文書へ写す作業が残っている。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実物確認）"
+    },
+    {
+      "incident_id": "INC-035-provenance-gate-passes-fabricated-sources",
+      "index": 5,
+      "state": "pending",
+      "note": "外部公開文の全称主張に門の覆い一覧への参照を必須とする配布前チェック。未実施。**INC-047 の『覆いが自称より狭い』と同じ族**であり、公開文の側から覆いを引く向きである。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実物確認）"
+    },
+    {
+      "incident_id": "INC-035-provenance-gate-passes-fabricated-sources",
+      "index": 8,
+      "state": "pending",
+      "note": "B5・B5b（実在ファイルから一語を拾って『読んだ』と称する形）が塞がれたか残余かの実測。**未確定** —— test_mapdraft_hardening.py に B5 の名も『一語』の観点も現れない。fixture を足して実測する必要がある。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実物確認）"
+    },
+    {
+      "incident_id": "INC-035-provenance-gate-passes-fabricated-sources",
+      "index": 6,
+      "state": "owner",
+      "note": "v0.11.0 を導入済みの利用者へ、主張の限定と修正版の存在を配布経路で能動的に通知するか。**配布経路を使って利用者へ働きかける判断**であり、六類型の『配布境界や保証範囲の変更』に当たる。なお同型の判断が INC-031#4・INC-032#5 にも在り、**三件とも『配ったものについてどう告げるか』**である。",
+      "owner_decision_kind": "配布境界や保証範囲の変更",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実物確認）"
+    },
+    {
+      "incident_id": "INC-035-provenance-gate-passes-fabricated-sources",
+      "index": 7,
+      "state": "owner",
+      "note": "独立検証に責任者・期限・受入条件を割り当て、完了まで閉じない。検証者の選定条件（門の実装に関与していないこと）を受入条件に含める、という指定も含む。**誰が検証するかの割当**は保証の範囲を定める判断であり、現状 §4 は『評価者不在は PASS でなく UNASSESSED』としか定めていない。",
+      "owner_decision_kind": "配布境界や保証範囲の変更",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実物確認）"
     }
   ]
 }
