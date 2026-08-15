@@ -2554,6 +2554,74 @@
       "note": "事象が名指す三つのファイルの実在を確認した（plugin/tests/test_skill_commands_run.py・plugin/skills/system-map-draft/SKILL.md・plugin/scripts/dep-graph.py はいずれも実在）。SESSION_END_AUDIT の走査対象は docs-audit の --root（統治木）であり、**plugin/skills/** は含まれない** —— 配布技能の文書は監査の視野の外に在る。統制欠陥の記述はこの点で正しい。",
       "evidence_ref": "plugin/tests/test_skill_commands_run.py",
       "investigated": "2026-08-15 本反復（APPLY_FINDINGS。二通りの数え方で突き合わせた）"
+    },
+    {
+      "incident_id": "INC-047-skill-command-guard-drops-every-call-with-a-placeholder",
+      "index": 3,
+      "state": "landed",
+      "note": "覆いを広げた状態で一度実測した（修正の確定より先）。拾えた 15 件・意図的な除外 8 件・走らせられる 7 件・**使用法の誤り 0 件**。『INC-031 の当の欠陥が他の技能にも在った』証拠は出なかったので、別事象は積まない。機構の欠陥は実在するが実害は現れていない（INC-044 と同じ形）。残る危険は将来の側 —— 占位を含む誤った呼び出しが後から書かれても、今の覆いは捕まえない。",
+      "evidence_ref": "assurance/ledger/incidents.json",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS）"
+    },
+    {
+      "incident_id": "INC-047-skill-command-guard-drops-every-call-with-a-placeholder",
+      "index": 0,
+      "state": "pending",
+      "note": "REPRODUCE_RED を正規表現の修正より先に入れる。未実施。占位を含む呼び出しが 1 件でも抽出されない状態を FAIL とする検査を置き、修正後も残す。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS）"
+    },
+    {
+      "incident_id": "INC-047-skill-command-guard-drops-every-call-with-a-placeholder",
+      "index": 1,
+      "state": "pending",
+      "note": "抽出結果の三つ組（拾えた件数・覆いの外の件数・除外の内訳）の必須出力。未実施。**本反復の測定はこの三つ組を手で出したものである** —— 機構にすれば偶然に依らなくなる。正規表現の修正と同一の変更に含める（件数を出さない限り同じ穴がまた沈黙する）。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS）"
+    },
+    {
+      "incident_id": "INC-047-skill-command-guard-drops-every-call-with-a-placeholder",
+      "index": 2,
+      "state": "pending",
+      "note": "試験自身の抽出とは別実装の独立走査を CI に常設し、件数差が 0 でなければ赤にする。**本件を検出した『二通りで数える』行為を、偶然から常設の統制へ移す**という提案であり、私がこのセッションで繰り返している規律そのものを機構にするものである。未実施。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS）"
+    },
+    {
+      "incident_id": "INC-047-skill-command-guard-drops-every-call-with-a-placeholder",
+      "index": 4,
+      "state": "pending",
+      "note": "_SKIP_SCRIPTS の 9 本に除外理由を併記し、理由の無い要素と要素数の増加を異常として扱う。未実施。本反復の測定で、除外 8 件のうち render-projection.py が 5 件を占めることが判った。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS）"
+    },
+    {
+      "incident_id": "INC-047-skill-command-guard-drops-every-call-with-a-placeholder",
+      "index": 6,
+      "state": "pending",
+      "note": "『覆いが自称より狭い』同形を他の決定論試験・監査で全数調査する。未実施。対象は『自分の対象集合を自分で定義している検出器』すべて。**前反復の INC-030 で『CI に接続されているか』は数えたが、覆いの広さは数えていない。**",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS）"
+    },
+    {
+      "incident_id": "INC-047-skill-command-guard-drops-every-call-with-a-placeholder",
+      "index": 5,
+      "state": "owner",
+      "note": "台帳の閉じる条件に『是正として検出機構を追加した事象は、その機構の覆いの実測値を証拠に持つこと』を加え、既存の閉じた事象も遡って測る。**閉じる条件の変更は保証の範囲を動かす** ——満たさない事象が next_actions へ戻るので、何を『済んだ』と呼ぶかが変わる。",
+      "owner_decision_kind": "配布境界や保証範囲の変更",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS）"
+    },
+    {
+      "incident_id": "INC-047-skill-command-guard-drops-every-call-with-a-placeholder",
+      "index": 7,
+      "state": "owner",
+      "note": "防護の有効量を体系側から測らないという方針（NONGOAL-001 の射程）を、どこまで維持しどこから測るかの判断。NONGOAL-001 は明文の非目標であり、その射程を動かすのは保証範囲の変更そのものである。未測定の防護の一覧を先に作る、という順序の提案も含む。",
+      "owner_decision_kind": "配布境界や保証範囲の変更",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS）"
+    },
+    {
+      "incident_id": "INC-047-skill-command-guard-drops-every-call-with-a-placeholder",
+      "index": 8,
+      "state": "pending",
+      "note": "導入複製の側から『案内コマンドが使用法の誤りになった』を配布側へ戻す報告経路。未実施。評価者は監視の追加として挙げ、同時に『複製の版に依存するので正本側の覆い測定の代替にならない』と限定を付けている（INC-005 と同型の共通原因故障）。限定つきで pending。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS）"
     }
   ]
 }
