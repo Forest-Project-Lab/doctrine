@@ -798,7 +798,8 @@
       "cast_analysis": "done",
       "cast_analysis_ref": "assurance/ledger/cast/INC-040-document-axis-invalidates-wholesale.json",
       "cast_analyzed_at": "2026-08-14T21:31:24Z",
-      "refs_repaired_2026-08-15": "ADR-166 の門を立てるにあたり、解決しない参照 2 件を実体へ直した。直す前の記録: [\"assurance/harness/system_index.py の build（category_sha256 は種別ごとに全件を畳む）\", \"doctrine_docs/packaging/decisions/ADR-134-scoped-staleness.md\", \"assurance/ledger/catalogs/cast-coverage.json\"]。前者は実在ファイルに和文の注釈を継ぎ足した形（注釈の内容は evidence_note に在る）。後者はこの名のファイルが存在したことがなく、実体は ADR-134-staleness-is-scoped-to-what-the-judgement-cited.md である。2026-08-15 の事故分析はこの修正の前の姿を見ており、記録された incident_sha256 は以後この行と食い違う。その指紋は書かれるだけで一度も照合されない（INC-041 の残余）。"
+      "refs_repaired_2026-08-15": "ADR-166 の門を立てるにあたり、解決しない参照 2 件を実体へ直した。直す前の記録: [\"assurance/harness/system_index.py の build（category_sha256 は種別ごとに全件を畳む）\", \"doctrine_docs/packaging/decisions/ADR-134-scoped-staleness.md\", \"assurance/ledger/catalogs/cast-coverage.json\"]。前者は実在ファイルに和文の注釈を継ぎ足した形（注釈の内容は evidence_note に在る）。後者はこの名のファイルが存在したことがなく、実体は ADR-134-staleness-is-scoped-to-what-the-judgement-cited.md である。2026-08-15 の事故分析はこの修正の前の姿を見ており、記録された incident_sha256 は以後この行と食い違う。その指紋は書かれるだけで一度も照合されない（INC-041 の残余）。",
+      "measurement_2026-08-15": "税が何を買ったかを実測した。索引が動いたことで失効していた jerg 66 件・stpa 28 件を再判定（評価 5 本・$4.5511・所要 約30分）。**五値が動いた項は 0 件**（jerg 158 件・stpa 110 件を修正前後で突き合わせ、全件同値）。降格 0・却下 0。解釈の限定を二つ置く。(1) これは『再判定に価値が無い』ことを示さない —— 現在の索引に対して割当が今も成り立つことを確かめ直しており、確認そのものは成果である。示したのは『この回に限り、失効の引き金となった索引の動きは、判定の中身を一つも変えなかった』ことだけである。(2) 次の索引の動きでも 0 とは限らない。それでも INC-040 の主張（因果的に無関係な変更が判定を一斉に失効させる）と整合する方向の数字であり、税の額（1 変更あたり約 78〜83 分）に対して買えた変化がこの回は 0 だった。cast の 157 件は本反復では手を付けていない（目安の 10 本・60 分を超えるため）。"
     },
     {
       "id": "INC-041-declared-evidence-skips-pointer-resolution",
