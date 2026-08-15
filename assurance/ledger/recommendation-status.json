@@ -2371,6 +2371,67 @@
       "owner_decision_kind": "互換性を壊す変更",
       "evaluator_owner_required": true,
       "investigated": "2026-08-15 本反復（APPLY_FINDINGS）"
+    },
+    {
+      "incident_id": "INC-029-index-counts-no-tests",
+      "index": 1,
+      "state": "pending",
+      "note": "as_prompt_text の注入前ガード。**未実装であることを実物で確かめた。**system_index.as_prompt_text は監査の検査名・リンタの検査コード・試験の合計件数をそのまま並べるだけで、0 件を『真の 0』と『検出失敗』に分ける段は無い。INC-029 の当の欠陥（試験が 0 件と告げられた）は、この経路をそのまま通った。実装は #2・#4 と同じ主題（プロンプトが供給する情報の質）なのでまとめて扱う。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の読みと独立オラクルの突き合わせ）"
+    },
+    {
+      "incident_id": "INC-029-index-counts-no-tests",
+      "index": 7,
+      "state": "landed",
+      "note": "形状依存の検出器を棚卸しした。system_index.py に **7 つ**（frontmatter の抽出／リンタ検査コードの大文字リテラル／試験定義の def 行／frontmatter の鍵の行判定／docstring 一行目／監査検査名の CHECKS タプル／Hook の配線のスクリプト名）。沈黙して取りこぼす経路が二つ在る: (a) 監査検査名の正規表現 `CHECKS\\s*=\\s*\\(` は**錨が無く** `AUDIT_CHECKS` に部分一致で当たっている（今は正しいが、より前に別の `*CHECKS = (` が現れれば黙って別物を数える）。(b) Hook の配線は `[a-z0-9-]+\\.py` で**下線を含む名を拾えない**。**両方とも独立オラクルで実害が無いことを確かめた** —— 監査検査名は AST で数えて 40=40・集合も一致、Hook は下線を許す照合で 8=8・取りこぼしゼロ。現在の件数: documents 307・audit_checks 40・linter_codes 24・scripts 31・test_files 35（試験の合計 1432）・hooks 7・skills 8。すべて非ゼロである。",
+      "evidence_ref": "assurance/harness/system_index.py",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の読みと独立オラクルの突き合わせ）"
+    },
+    {
+      "incident_id": "INC-029-index-counts-no-tests",
+      "index": 2,
+      "state": "pending",
+      "note": "評価プロンプトに試験名を載せる件。現状は**試験ファイルの場所と件数までは載っている**が、rubric が要求するポインタ形式そのもの（試験名）は載っていない。#1・#4 と同じ主題。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の読みと独立オラクルの突き合わせ）"
+    },
+    {
+      "incident_id": "INC-029-index-counts-no-tests",
+      "index": 3,
+      "state": "pending",
+      "note": "生成された評価プロンプト本文を判定レコードと対にして保存する。未実装。評価者は prompt_sha256 だけを記録しており、本文は残らない。六類型のどれにも当たらないので所有者判断ではない（ADR-127）。なお INC-046 が示した『証拠ポインタ自体が不安定』の追跡には、この本文が要る。",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "台帳へ入力を保存する変更であり、六類型（互換性・配布境界や保証範囲・復旧不能な削除・外部費用や credential・評価 model 最低線・版番号とリリース）のどれにも当たらない（ADR-127）。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の読みと独立オラクルの突き合わせ）"
+    },
+    {
+      "incident_id": "INC-029-index-counts-no-tests",
+      "index": 4,
+      "state": "pending",
+      "note": "先行指標 1〜5 を CI とレーンに実装する。未実装（CI の workflow に該当する段が無い）。走らせ手を足すなら正本が読む段も同時に要る（§2）。#1・#2 と同じ主題。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の読みと独立オラクルの突き合わせ）"
+    },
+    {
+      "incident_id": "INC-029-index-counts-no-tests",
+      "index": 5,
+      "state": "pending",
+      "note": "当該 240 件へ『偽の索引入力に由来する未再判定』の印を付ける件。**INC-046 の測定で前提が変わった** —— 五値も証拠集合も反復ごとに動くので、『未再判定』と『再判定したが揺れた』を印で分けても、下流が読む値の安定性は上がらない。INC-046 推奨#2（安定性を値とは別軸で持つか）の所有者判断と揃えて扱うべきである。",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "台帳へ印を足す変更であり六類型に当たらない。ただし INC-046 推奨#2 の所有者判断（五値の語彙をどうするか）と同じ設計上の争点なので、そちらへ束ねる（ADR-127）。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の読みと独立オラクルの突き合わせ）"
+    },
+    {
+      "incident_id": "INC-029-index-counts-no-tests",
+      "index": 6,
+      "state": "pending",
+      "note": "ハーネスが評価者へ供給する自己記述の一覧と、各々の安全上の想定の文書化。未実施。#7 の棚卸しがその素材の半分（何を数えているか）を作った。残りは『何を数えていないか』と想定の失効を示す先行指標である。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の読みと独立オラクルの突き合わせ）"
+    },
+    {
+      "incident_id": "INC-029-index-counts-no-tests",
+      "index": 8,
+      "state": "pending",
+      "note": "ADR-139 の独立検証の実施。未実施（ledger/verify に INC-029 の記録は無い）。なお試験の合計は当時の 1267 件から 1432 件へ増えている。fixed:true にしない現在の扱いは維持されている。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の読みと独立オラクルの突き合わせ）"
     }
   ]
 }
