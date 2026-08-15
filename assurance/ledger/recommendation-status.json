@@ -2239,6 +2239,24 @@
       "note": "--today を受け付ける口を棚卸しし、刻印を書くか・その刻印が鮮度判定の入力になるかの対応表を作った。口は 10 箇所。刻印を書き鮮度に入るのは attack_evaluator（右辺＝故障注入の証拠）と independent_recheck（左辺＝評価器の成果物）の二つ。**左辺の同型が見つかり、そちらは安全の向きが逆だった**（同じ日に先に走った攻撃が、後から走った評価器を覆う）。INC-044 として積んだ。配布側の hook 経路は白（SessionEnd は --today なしで docs-audit を呼ぶ）。discover.py が鮮度の左辺に入るかは未調査として残した。",
       "evidence_ref": "assurance/harness/independent_recheck.py",
       "investigated": "2026-08-15 本反復（決定論の走査。評価セッションを買っていない）"
+    },
+    {
+      "incident_id": "INC-042-decision-and-oracle-land-in-one-diff",
+      "index": 0,
+      "state": "pending",
+      "note": "「規則を変える是正は反復を二つ使う」を採るか、期待値変更を検める門を増やすか。**本反復で前者を一度だけ試している** —— ADR-167 を決定だけで着地させ、実装と試験は次の反復へ回した。測る形も置いた: 次の変更に対する独立検証が green_is_green を UNKNOWN でなく PASS で返せば、『決定を先に着地させれば区別が付く』の証拠になる。返さなければ、この向きは効かないと判る。**結果を見てから規約にするかを決める。**六類型のどれにも当たらないので所有者判断ではない（ADR-127）。",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "運用の順序の選択であり、六類型（互換性・配布境界や保証範囲・復旧不能な削除・外部費用や credential・評価 model 最低線・版番号とリリース）のどれにも当たらない（ADR-127）。",
+      "investigated": "2026-08-15 本反復"
+    },
+    {
+      "incident_id": "INC-044-evaluator-output-backdated-to-day-start-is-unsafe",
+      "index": 4,
+      "state": "owner",
+      "note": "既存 4 件を UNKNOWN へ戻すことと、UNKNOWN の滞留を異常とする条件・閉じる責任の割当。前半（遡って作り直さず UNKNOWN とする）は ADR-167 の決定に含めた。後半（滞留を異常とする条件と責任の割当）は INC-039 推奨#4 と同じ判断で、門の判定基準を warn まで広げるかは既存の緑を赤にしうる。**五度目の空白**（INC-039#4・INC-040#7・INC-041#8・INC-042#1・本件）。",
+      "owner_decision_kind": "互換性を壊す変更",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-15 本反復"
     }
   ]
 }

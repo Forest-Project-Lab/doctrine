@@ -1,0 +1,657 @@
+{
+  "accepted_flaws": [
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "鮮度の比較（評価器の成果物 > 攻撃証拠 なら未攻撃）において、日付精度しか持たない値の丸め規則が両辺へ同一に適用され、左辺もその日の始まり（T00:00:00Z）へ並べられる。左辺を押し下げる向きは過少報告側であり、同じ日に先に走った攻撃証拠（mutations-2026-08-07 18:52:02Z・mutations-2026-08-09 23:06:31Z）が、後から走ったかもしれない評価器の成果物を覆う。結果、変異を当てていない評価器が『攻撃済み』として並ぶ。",
+      "evidence_ref": "assurance/harness/orchestrator.py（evaluator_outputs_latest / attack_evidence_latest / _max_instant）",
+      "flaw_type": "制御動作が誤っている",
+      "normative_refs": [
+        "破られた想定の再検討",
+        "symptom-vs-systemic-cause",
+        "refine-generic-constraints-to-specific-loss",
+        "安全立証でなく非安全状態の探索"
+      ],
+      "why_it_seemed_adequate": "INC-023 の是正時点では、丸めの向きは右辺（攻撃証拠）についてだけ検討されていた。右辺を日の始まりへ押し下げると『攻撃はもっと前に在ったかもしれない』と読むことになり、過剰報告（走ったのに『まだ』と言う）に倒れる。うるさいが安全側であり、規則をひとつに揃えることは決定論的で単純に見えた。比較の辺ごとに安全側の向きが逆であるという性質は、規則を『日付だけの証拠はその日の始まりとして並ぶ』という一文へ要約した時点で記述から落ちている。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "台帳（手掛かり: assurance/ledger/）に積まれる独立再監査の成果物の generated_at が、実時点ではなく外部から与えた日付の刻印であり、事象記録の evidence_note によれば independent_recheck.py:263 が `\"%sT00:00:00Z\" % args.today` を無条件に刻む。判定に必要な『いつ走ったか』を運べない手掛かりが、判定の左辺として使われている。情報を提供する側（刻印の設計）の欠陥であって、それを読む側の読み違いではない。",
+      "evidence_ref": "assurance/harness/independent_recheck.py:160,:263（事象記録の evidence_note による。本セッションでは未検証）",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "defects-in-information-providing-systems",
+        "include-information-supplier-defect",
+        "情報システム保有と有用性の乖離",
+        "要約統計偏重による傾向情報の喪失"
+      ],
+      "why_it_seemed_adequate": "--today を必須にする設計は、決定論での再現（同じ入力から同じ台帳）を保つための機能である。日付を入力として受け取る口では、その日付を刻むことが一貫していて自然に見える。刻印が『入力の日付』なのか『実行の時点』なのかという区別は、鮮度の比較に使われるまでは差が出ず、区別する必要が現れなかった。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "決定論試験（手掛かり: 決定論試験の成否）は、実装と同じ丸め規則を期待値に持つため、左辺の丸めが過少報告を生むことを非緑として現さない。INC-023 の是正が右辺で安全側だったことを固定する試験は在っても、辺ごとの向きを分けて固定する REPRODUCE_RED は無い。是正の有効性を証拠で判定する経路が、この性質については開いていない。",
+      "flaw_type": "統制自身の劣化を検出できない",
+      "normative_refs": [
+        "是正措置の有効性証拠の収集",
+        "監査のすり抜け時に監査手順を是正",
+        "監査の検出力評価",
+        "勧告の実施と有効性確認"
+      ],
+      "why_it_seemed_adequate": "是正が入った時点では観測された症状（右辺の丸め）が消え、試験は緑になった。緑は是正の有効性の証拠に見える。丸めを『共通の規則』として実装したことで、右辺で確かめた安全性が左辺にも及ぶという理解が自然に成立し、辺ごとに確かめ直す動機が生じなかった。"
+    },
+    {
+      "control_element_id": "CI_RELEASE_CHECK",
+      "description": "merge 前に赤で止める門の手掛かりは、ジョブの成否と docs-audit の JSON である。台帳に積まれた判定が『順序を決められない記録に基づく』ことは、どちらの手掛かりにも現れない。刻印が実時点を持たない成果物が台帳へ入ることも、鮮度比較の左辺に日付精度の値が入ることも、門の対象外にある。",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "全体健全性と部分健全性の分離評価",
+        "安全活動の独立確認",
+        "監督機構自体のレビューと再設計",
+        "最低限準拠を超える安全活動の実効性"
+      ],
+      "why_it_seemed_adequate": "CI の役割はリポジトリ正本の試験と監査であり、台帳は保証レーンの成果物として保証レーン自身が健全性を保つ（ASSURANCE_LANE の制御: 台帳の健全性を保つ）ものと分業されている。読めない台帳を名指す健全性検査は在るので、台帳は見られていると理解しやすい。『読める』ことと『判定に足る情報を持つ』ことの差は、この分業の記述に現れていない。"
+    },
+    {
+      "control_element_id": "WARNING_BACKLOG",
+      "description": "過少報告は静かである。『攻撃されていない評価器が在る』という状態は、警告としても滞留としても現れず、last-audit.json の totals にも top_findings にも入らない。既存の 4 件を UNKNOWN へ戻したとしても、UNKNOWN の滞留を異常とする条件と、それを閉じる責任の割当が未定であるため（既知の穴）、戻した先で止まる。",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "audit-findings-must-be-closed",
+        "指摘欠点の是正完了追跡",
+        "リスク情報の不透明な集約禁止",
+        "計画外変化の検出手段"
+      ],
+      "why_it_seemed_adequate": "滞留の仕組みは、警告として現れた事柄を取りこぼさないために設計されている。現れなかった事柄を拾う設計にはなっていない。過剰報告（うるさい側）の欠陥はこの仕組みで捕まってきたので、同じ仕組みが過少報告も捕まえるように見える。"
+    },
+    {
+      "control_element_id": "OWNER",
+      "description": "所有者の手掛かりである台帳には、結論（この評価器は攻撃済み）は残るが、その結論を支える時刻の前後関係が決められないという性質は残らない。既知の穴『報告が実施ではなく意図を書いていても人からは見分けにくい』と同型で、ここでは台帳が実施を主張し、実施の有無が記録から決められない。所有者のリスク認識は、根拠の在る PASS と根拠の決められない PASS を区別できない。",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "プロセスモデルと実状態の不整合",
+        "コントローラのリスク認識の検証",
+        "controller-needs-concrete-feedback-channels",
+        "分析出力の客観性を僭称しない"
+      ],
+      "why_it_seemed_adequate": "台帳は決定論で機械が書くものであり、人の報告より確からしいと理解される。機械が書いた PASS を疑う手掛かりは、台帳の外側に無い。"
+    },
+    {
+      "control_element_id": "GOVERNANCE_TREE",
+      "description": "ADR-120 が守ろうとした性質（評価器が欠陥を捕まえられることは、壊してみて非緑になることでしか言えない）と、鮮度比較の丸め規則との間にトレースが無い。統治木の側に性質が在り、ハーネスの側に規則が在り、規則の変更（INC-023 の是正）が性質を損なうかどうかを照合する経路が構造に現れていない。dep-graph の逆依存は文書間の依存を辿るが、文書の性質と実装の規則の対応は辿らない。",
+      "flaw_type": "統制どうしの調整の欠如",
+      "normative_refs": [
+        "何をとなぜのトレース文書化",
+        "変更時の想定再評価をMOCで強制",
+        "全変更のハザード分析と承認",
+        "systemic-cause-across-all-events"
+      ],
+      "why_it_seemed_adequate": "INC-023 の是正は、鮮度の丸めという局所の規則の修正として扱える大きさに見えた。ADR-120 は評価器の検証方法についての決定であり、丸めの向きという実装の細部とは別の層に在ると理解するのが自然である。"
+    }
+  ],
+  "analysis": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "鮮度の比較（評価器の成果物 > 攻撃証拠 なら未攻撃）において、日付精度しか持たない値の丸め規則が両辺へ同一に適用され、左辺もその日の始まり（T00:00:00Z）へ並べられる。左辺を押し下げる向きは過少報告側であり、同じ日に先に走った攻撃証拠（mutations-2026-08-07 18:52:02Z・mutations-2026-08-09 23:06:31Z）が、後から走ったかもしれない評価器の成果物を覆う。結果、変異を当てていない評価器が『攻撃済み』として並ぶ。",
+        "evidence_ref": "assurance/harness/orchestrator.py（evaluator_outputs_latest / attack_evidence_latest / _max_instant）",
+        "flaw_type": "制御動作が誤っている",
+        "normative_refs": [
+          "破られた想定の再検討",
+          "symptom-vs-systemic-cause",
+          "refine-generic-constraints-to-specific-loss",
+          "安全立証でなく非安全状態の探索"
+        ],
+        "why_it_seemed_adequate": "INC-023 の是正時点では、丸めの向きは右辺（攻撃証拠）についてだけ検討されていた。右辺を日の始まりへ押し下げると『攻撃はもっと前に在ったかもしれない』と読むことになり、過剰報告（走ったのに『まだ』と言う）に倒れる。うるさいが安全側であり、規則をひとつに揃えることは決定論的で単純に見えた。比較の辺ごとに安全側の向きが逆であるという性質は、規則を『日付だけの証拠はその日の始まりとして並ぶ』という一文へ要約した時点で記述から落ちている。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "台帳（手掛かり: assurance/ledger/）に積まれる独立再監査の成果物の generated_at が、実時点ではなく外部から与えた日付の刻印であり、事象記録の evidence_note によれば independent_recheck.py:263 が `\"%sT00:00:00Z\" % args.today` を無条件に刻む。判定に必要な『いつ走ったか』を運べない手掛かりが、判定の左辺として使われている。情報を提供する側（刻印の設計）の欠陥であって、それを読む側の読み違いではない。",
+        "evidence_ref": "assurance/harness/independent_recheck.py:160,:263（事象記録の evidence_note による。本セッションでは未検証）",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "defects-in-information-providing-systems",
+          "include-information-supplier-defect",
+          "情報システム保有と有用性の乖離",
+          "要約統計偏重による傾向情報の喪失"
+        ],
+        "why_it_seemed_adequate": "--today を必須にする設計は、決定論での再現（同じ入力から同じ台帳）を保つための機能である。日付を入力として受け取る口では、その日付を刻むことが一貫していて自然に見える。刻印が『入力の日付』なのか『実行の時点』なのかという区別は、鮮度の比較に使われるまでは差が出ず、区別する必要が現れなかった。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "決定論試験（手掛かり: 決定論試験の成否）は、実装と同じ丸め規則を期待値に持つため、左辺の丸めが過少報告を生むことを非緑として現さない。INC-023 の是正が右辺で安全側だったことを固定する試験は在っても、辺ごとの向きを分けて固定する REPRODUCE_RED は無い。是正の有効性を証拠で判定する経路が、この性質については開いていない。",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "是正措置の有効性証拠の収集",
+          "監査のすり抜け時に監査手順を是正",
+          "監査の検出力評価",
+          "勧告の実施と有効性確認"
+        ],
+        "why_it_seemed_adequate": "是正が入った時点では観測された症状（右辺の丸め）が消え、試験は緑になった。緑は是正の有効性の証拠に見える。丸めを『共通の規則』として実装したことで、右辺で確かめた安全性が左辺にも及ぶという理解が自然に成立し、辺ごとに確かめ直す動機が生じなかった。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "merge 前に赤で止める門の手掛かりは、ジョブの成否と docs-audit の JSON である。台帳に積まれた判定が『順序を決められない記録に基づく』ことは、どちらの手掛かりにも現れない。刻印が実時点を持たない成果物が台帳へ入ることも、鮮度比較の左辺に日付精度の値が入ることも、門の対象外にある。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "全体健全性と部分健全性の分離評価",
+          "安全活動の独立確認",
+          "監督機構自体のレビューと再設計",
+          "最低限準拠を超える安全活動の実効性"
+        ],
+        "why_it_seemed_adequate": "CI の役割はリポジトリ正本の試験と監査であり、台帳は保証レーンの成果物として保証レーン自身が健全性を保つ（ASSURANCE_LANE の制御: 台帳の健全性を保つ）ものと分業されている。読めない台帳を名指す健全性検査は在るので、台帳は見られていると理解しやすい。『読める』ことと『判定に足る情報を持つ』ことの差は、この分業の記述に現れていない。"
+      },
+      {
+        "control_element_id": "WARNING_BACKLOG",
+        "description": "過少報告は静かである。『攻撃されていない評価器が在る』という状態は、警告としても滞留としても現れず、last-audit.json の totals にも top_findings にも入らない。既存の 4 件を UNKNOWN へ戻したとしても、UNKNOWN の滞留を異常とする条件と、それを閉じる責任の割当が未定であるため（既知の穴）、戻した先で止まる。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "audit-findings-must-be-closed",
+          "指摘欠点の是正完了追跡",
+          "リスク情報の不透明な集約禁止",
+          "計画外変化の検出手段"
+        ],
+        "why_it_seemed_adequate": "滞留の仕組みは、警告として現れた事柄を取りこぼさないために設計されている。現れなかった事柄を拾う設計にはなっていない。過剰報告（うるさい側）の欠陥はこの仕組みで捕まってきたので、同じ仕組みが過少報告も捕まえるように見える。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者の手掛かりである台帳には、結論（この評価器は攻撃済み）は残るが、その結論を支える時刻の前後関係が決められないという性質は残らない。既知の穴『報告が実施ではなく意図を書いていても人からは見分けにくい』と同型で、ここでは台帳が実施を主張し、実施の有無が記録から決められない。所有者のリスク認識は、根拠の在る PASS と根拠の決められない PASS を区別できない。",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "プロセスモデルと実状態の不整合",
+          "コントローラのリスク認識の検証",
+          "controller-needs-concrete-feedback-channels",
+          "分析出力の客観性を僭称しない"
+        ],
+        "why_it_seemed_adequate": "台帳は決定論で機械が書くものであり、人の報告より確からしいと理解される。機械が書いた PASS を疑う手掛かりは、台帳の外側に無い。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "ADR-120 が守ろうとした性質（評価器が欠陥を捕まえられることは、壊してみて非緑になることでしか言えない）と、鮮度比較の丸め規則との間にトレースが無い。統治木の側に性質が在り、ハーネスの側に規則が在り、規則の変更（INC-023 の是正）が性質を損なうかどうかを照合する経路が構造に現れていない。dep-graph の逆依存は文書間の依存を辿るが、文書の性質と実装の規則の対応は辿らない。",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "何をとなぜのトレース文書化",
+          "変更時の想定再評価をMOCで強制",
+          "全変更のハザード分析と承認",
+          "systemic-cause-across-all-events"
+        ],
+        "why_it_seemed_adequate": "INC-023 の是正は、鮮度の丸めという局所の規則の修正として扱える大きさに見えた。ADR-120 は評価器の検証方法についての決定であり、丸めの向きという実装の細部とは別の層に在ると理解するのが自然である。"
+      }
+    ],
+    "hazard": "保証レーンが、評価器の成果物と攻撃証拠の前後関係を実際には決定できない記録（日付精度しか持たない刻印）を入力として、「この評価器は変異で検証済み」というプロセスモデルを保持し、その状態のまま次の行動を導ける状態。すなわち、鮮度比較の左辺（評価器の成果物）に、実時点より前へ押し下げられた刻印が入り、同日に先行した攻撃証拠がそれを覆える状態にあること。",
+    "incident_id": "INC-044-evaluator-output-backdated-to-day-start-is-unsafe",
+    "leading_indicators": [
+      {
+        "indicator": "鮮度比較の左辺に入りうる成果物のうち、generated_at が T00:00:00Z（秒精度の実時点を持たない）ものの件数",
+        "observable": "assurance/ledger/ 配下の全 JSON の generated_at を走査し、時刻部分が 00:00:00Z である成果物を数える",
+        "threshold": "1 件でも在れば異常。左辺に入る種別（recheck 等）では 0 件を保つ",
+        "version_independent": true,
+        "where": "ASSURANCE_LANE の台帳健全性検査（orchestrator.py）に追加し、CI_RELEASE_CHECK のジョブでも走らせる",
+        "why_version_independent": "リポジトリ正本の台帳を正本側の検査が読むため、利用者環境の導入複製の版に依存しない"
+      },
+      {
+        "indicator": "同一日付内で、左辺（評価器の成果物）の刻印が右辺（攻撃証拠）の刻印以下となり、前後を決定できない組の件数",
+        "observable": "鮮度比較を行う際に、比較した二つの刻印の精度と大小を記録し、決定不能な組を UNKNOWN として数える",
+        "threshold": "0 件を保つ。1 件でも出たら PASS へ丸めず UNKNOWN として台帳へ残す",
+        "version_independent": true,
+        "where": "ASSURANCE_LANE の鮮度判定（orchestrator.py の evaluator_outputs_latest / attack_evidence_latest の比較点）",
+        "why_version_independent": "判定そのものの内部状態を数えるので、配布された複製の版とは無関係に正本側で観測できる"
+      },
+      {
+        "indicator": "外部から与えた日付（--today 等）が、成果物の generated_at の生成へ流れ込む口の数",
+        "observable": "assurance/harness 配下で、引数の today を generated_at の文字列生成に用いている箇所を静的に走査した件数",
+        "threshold": "0 件。1 件でも増えたら赤で止める（日付は入力、刻印は実時点、という分離を機械で保つ）",
+        "version_independent": true,
+        "where": "CI_RELEASE_CHECK の決定論試験に静的検査として追加",
+        "why_version_independent": "正本のソースに対する静的走査であり、導入複製の版に依存しない"
+      },
+      {
+        "indicator": "鮮度比較の各辺について、丸めの向きが宣言され、その向きを固定する REPRODUCE_RED 試験が存在する辺の割合",
+        "observable": "比較に用いる辺の一覧と、それぞれに対応する赤試験の有無の対応表",
+        "threshold": "100% 未満は異常。新しい辺が増えたのに赤試験が無い状態を許さない",
+        "version_independent": true,
+        "where": "ASSURANCE_LANE の試験一覧（決定論試験の成否の手掛かり）",
+        "why_version_independent": "正本の試験資産の網羅性を数えるため、複製の版に依存しない"
+      },
+      {
+        "indicator": "根拠が復元できないため UNKNOWN へ戻された判定の件数と、その滞留期間",
+        "observable": "台帳内で UNKNOWN 状態の判定と、その状態になってから経過したセッション数",
+        "threshold": "2 セッションを超えて閉じないものが 1 件でも在れば所有者へ上げる（閉じる責任の割当は所有者判断）",
+        "version_independent": true,
+        "where": "ASSURANCE_LANE の台帳と WARNING_BACKLOG（last-audit.json の totals / top_findings へ載せる）",
+        "why_version_independent": "正本の台帳と正本側の監査要約で観測でき、配布経路を通らない"
+      },
+      {
+        "indicator": "HEARTBEAT が保証台帳の鮮度異常（左辺が真夜中である成果物の存在）をターンごとに警告するよう拡張した場合の、その警告の到達率",
+        "observable": "導入複製で走る gov-heartbeat.py が当該警告を出しているかどうか",
+        "threshold": "警告の欠如をもって健全とみなさない。複製の版がリポジトリ正本より 1 世代でも遅れている場合、この指標は無効として扱う",
+        "version_independent": false,
+        "where": "HEARTBEAT（plugin/scripts/gov-heartbeat.py）と導入複製の版",
+        "why_version_independent": "検出器自身が導入複製の側で動くため、版が遅れれば検出器も遅れる（INC-005 の共通原因故障）。鮮度の欠陥をこの経路だけで見張ると、古びの検出器が古びる形をそのまま引き継ぐ"
+      }
+    ],
+    "loss": "欠陥を捕まえられるかどうかが変異（故障注入）で確かめられていない評価器の判定が、確かめられたものとして保証キャンペーンの根拠に用いられる。所有者は台帳を読んで「この評価器は攻撃済み」と理解するが、その理解を支える根拠は台帳に残っていない。事象記録によれば独立再監査の成果物 4 件（recheck-jerg-2026-08-07・recheck-stpa-2026-08-07・recheck-cast-2026-08-09・recheck-jerg-2026-08-09）が現にこの状態で並んでいる。損失は「判定が誤っている」ことではなく、「判定の根拠が在るか無いかを誰も決められない状態のまま、根拠が在る側へ丸められている」ことである。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "tie が UNKNOWN へ落ちることがコードと試験で示されれば否定される",
+        "hypothesis": "鮮度比較で刻印が同一秒（tie）になったとき、比較が > か >= かによって判定が反転し、丸め方向を辺ごとに分けても同型の過少報告が残る",
+        "oracle": "左辺と右辺に同一の刻印を与えたときの判定を、決定論試験で固定する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "discover.py の出力が左辺に入らないことをコード経路で示せれば否定される",
+        "hypothesis": "discover.py の scenarios 日付が鮮度比較の左辺に入り、recheck と同型の過少報告を生む",
+        "oracle": "discover.py の出力を左辺に置き、同じ日に先行する攻撃証拠と比較したときに『攻撃済み』になるかを試す",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "日跨ぎでは日付の大小のみで決まり、丸めが結果を変えないことを示せれば否定される",
+        "hypothesis": "左辺を日の終わりへ丸める是正を入れると、翌日の攻撃証拠との比較で今度は過剰報告ではなく別の過少報告が生じる（左辺が実際より後ろへ押し出され、後続の攻撃を覆う）",
+        "oracle": "左辺が日付精度、右辺が翌日未明の刻印という組で判定を確認する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "要約の today が鮮度に使われない、または実時計で上書きされることを示せれば否定される",
+        "hypothesis": "手で --summary-in-project と --today を同時に渡す経路（配線には無いが可能）で、gov-heartbeat の古び判定に本件と同型の押し下げが起きる",
+        "oracle": "当該引数の組み合わせで鼓動を走らせ、古びの判定が実時計より前へずれるかを見る",
+        "severity": "P3"
+      },
+      {
+        "falsification_signal": "鮮度判定が台帳の並びではなく刻印だけを読むことを示せれば、並びの入れ替えは影響しない",
+        "hypothesis": "台帳への同時書き込み（ASM-006）により、刻印の前後と台帳上の並びが食い違い、鮮度判定の入力が入れ替わる",
+        "oracle": "同一日に二つの書き込みを競合させ、台帳の並びと刻印の順序の一致を確認する",
+        "severity": "P3"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "鮮度比較の丸めを、規則ひとつではなく辺ごとの規則として実装し直す。左辺（評価器の成果物）で日付精度しか無い値はその日の終わり（23:59:59Z）として並べ、右辺（攻撃証拠）は従来どおり日の始まりとして並べる。両辺の丸め方向を、比較関数の呼び出し側ではなく型（辺）に結びつけて、後から辺が増えたときに向きの指定を省略できないようにする。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "実装より先に REPRODUCE_RED を作る：左辺が真夜中の刻印を持つ成果物と、同じ日に先行する攻撃証拠を並べたとき、判定が『攻撃済み』になることを FAIL として固定する試験を追加する。是正の有効性はこの試験の色でのみ判定する。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "independent_recheck.py が実時点を generated_at に刻めるようにし、--today は日付の入力に限定して刻印の指定から分離する（INC-043 の (b) と同じ整理）。あわせて、外部から与えた日付が generated_at の生成へ流れ込む箇所を CI の静的検査で 0 件に保つ。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "丸めで救えない場合は PASS へ倒さず UNKNOWN を返す経路を鮮度判定に設ける。前後を決定できない組は、丸め方向にかかわらず UNKNOWN として台帳に残し、結論と一緒に『根拠が決定できない』ことを記録する。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "既存の 4 件を UNKNOWN へ戻す（遡って刻印を作り直さない）。UNKNOWN の滞留を異常とする条件と、閉じる責任の割当を決める。門を warn まで広げるか別経路にするかを含め、ここは所有者の判断を要する（WARNING_BACKLOG の既知の穴、INC-039 推奨#4 と同じ空白）。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "鮮度比較の各辺と、その辺の安全側の丸め方向・理由・対応する赤試験を統治木へ記録し、ADR-120 が守る性質との対応（トレース）を明示する。規則を一文へ要約するときに適用範囲を落とさない書式にする。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "discover.py をはじめ、鮮度比較の左辺に入りうる成果物の書き口を全数調べ、日付精度しか持たない刻印が左辺に入る経路を洗い出す。同時に、刻印が同一秒になった場合の比較（> か >= か）を確認する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "事象記録が名指す機構（independent_recheck.py・orchestrator の鮮度判定）の実在と行番号、台帳 4 件の実データを、リポジトリを参照できる環境で確認する。確認できるまで本分析の結論は暫定として扱う。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "『安全側の丸め』は比較の辺ごとに向きが逆になるが、INC-023 の是正はそれを『日付だけの証拠はその日の始まりとして並ぶ』という一文へ要約し、適用範囲（どちらの辺か）を伴わずに規則として残った。要約が適用条件を落とす形は、他の規則にも同じように起こりうる。",
+      "過剰報告と過少報告で発見のされやすさが構造的に非対称である。うるさい欠陥は次の行動に現れて直され、静かな欠陥は残る。統制の手掛かりが『現れた事柄』だけを運ぶ設計になっているため、この非対称は時間とともに静かな欠陥を蓄積させる。",
+      "日付の入力（--today）と刻印（generated_at）が同じ引数で兼務されている。決定論の再現性のために導入した機能が、実時点という別の情報を消す。INC-043 と本件はこの兼務を共通の原因として持ち、片方を直しても他方は残る。",
+      "是正が、是正の有効性を固定する赤試験より先に実装へ入る順序が繰り返されている（INC-023 の是正がそうであり、本件の fix_note は逆順を意図している）。実装が先だと、緑は『規則どおり』であることしか示さない。",
+      "保証の結論（PASS／攻撃済み）は台帳に残るが、結論の根拠の不確かさは同じ場所に残らない。下流の統制（CI・所有者・鼓動）はいずれも結論を手掛かりとするため、根拠の欠落はどこからも観測されない。",
+      "評価器の検証に関する性質（ADR-120）と、それを実現する実装の規則との間にトレースが無く、規則の局所的な変更が性質を損なうことを照合する経路が統制構造に現れていない。"
+    ],
+    "unknowns": [
+      "【実在の確認ができていない】事象記録が名指す independent_recheck.py と、orchestrator の evaluator_outputs_latest / attack_evidence_latest / _max_instant は、与えられた統制構造の要素として列挙されていない（列挙されているのは ASSURANCE_LANE の実体としての orchestrator.py のみ）。本セッションの作業ディレクトリは /tmp/assurance-cast-duhgqd27 で空であり、リポジトリを参照できないため、当該ファイル・行番号（:160, :263）・台帳の 4 件（recheck-jerg-2026-08-07 等）・攻撃証拠の刻印（18:52:02Z, 23:06:31Z）のいずれも確認していない。以下の分析はすべて、事象記録の記述を仮に真としたときの統制構造の読みであり、機構の実在が確認されるまで結論として扱えない。confidence を low としたのはこのためである。",
+      "ADR-120・INC-023・INC-043・INC-005・§5（証拠が消えた PASS は UNKNOWN へ戻す）は事象記録が参照しているが、与えられた統制構造と検証原則の一覧には現れない。これらの決定が実在し、記述どおりの内容であるかを確認していない。",
+      "4 件の独立再監査について、評価器と攻撃のどちらが実際に先だったかは記録から復元できない。したがって、これらの評価器が変異で非緑になったか否かは今後も判らない（刻印を作り直す道が無い）。",
+      "discover.py は --today を持ち generated_at を刻まないため scenarios の日付で並ぶとされるが、その並びが鮮度比較の左辺に入るかは未調査である（事象記録の residual が明記している）。左辺に入るなら同型の過少報告が在りうる。",
+      "recheck 以外に、左辺へ入る成果物を書く口が他に何口あるかを数えていない。左辺の全数が判らないため、影響範囲の下限（4 件）は判るが上限は判らない。",
+      "刻印が同一秒になった場合（tie）の比較が > か >= かを確認していない。ここで向きが反転すれば、丸め方向を直しても同じ形の過少報告が残りうる。",
+      "台帳への同時書き込み（ASM-006）が刻印の順序に影響するかは、本件の範囲では調べていない。",
+      "4 件を UNKNOWN へ戻したあと、それを閉じる責任を誰が負うかは統制構造上未定である（WARNING_BACKLOG の既知の穴）。所有者判断の対象であり、分析側では決められない。"
+    ],
+    "why_existing_assurance_missed": "三つの理由が重なっている。(1) 決定論試験は実装と同じ丸め規則を期待値に持つため、左辺の丸めは『規則どおり』として緑になる。INC-023 の是正で固定されたのは右辺の振る舞いであり、辺ごとに安全側の向きが逆であるという性質は試験にも規則の記述にも現れていない。(2) 過少報告は静かである。過剰報告（INC-043）は走ったのに『まだ』と言うので次の行動に現れて目に触れたが、本件は確かめていないものを『確かめた』と言うだけなので、次の行動にも警告にも滞留にも現れない。発見のされやすさが安全の向きと逆に非対称であり、静かな側だけが残る。(3) 台帳には結論が残り、結論の根拠の不確かさ（同日のどちらが先だったか決められないこと）は同じ場所に残らない。CI・所有者・鼓動のいずれの手掛かりも結論だけを運ぶため、根拠の欠落は下流のどこからも観測できない。加えて本件は INC-043 の残余を決定論で追った結果として見つかっており、事象を追う人手が入らなければ現れなかった。すなわち、この形の欠陥に対する検出は現時点で機構ではなく調査に依存している。"
+  },
+  "control_structure_ids": [
+    "OWNER",
+    "CI_RELEASE_CHECK",
+    "SESSION_START_CONTRACT",
+    "HEARTBEAT",
+    "PRE_TOOL_GUARD",
+    "POST_TOOL_LINTER",
+    "SESSION_END_AUDIT",
+    "WARNING_BACKLOG",
+    "CAPTURE_NUDGE",
+    "PLUGIN_DISTRIBUTION",
+    "ASSURANCE_LANE",
+    "GOVERNANCE_TREE"
+  ],
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "duration_ms": 259407,
+  "errors": [],
+  "execution_kind": "real-sdk",
+  "flaws_with_citation_defect": [],
+  "generated_at": "2026-08-15T16:41:18Z",
+  "git_dirty": false,
+  "git_sha": "4a4b161efce406d76c16e5ff1f522886e5258515",
+  "incident_evidence": {
+    "kind": null,
+    "refs": [
+      "assurance/harness/independent_recheck.py",
+      "assurance/harness/orchestrator.py",
+      "assurance/ledger/recheck-cast-2026-08-09.json",
+      "assurance/ledger/mutations-2026-08-09.json"
+    ],
+    "resolved": [
+      "assurance/harness/independent_recheck.py",
+      "assurance/harness/orchestrator.py",
+      "assurance/ledger/recheck-cast-2026-08-09.json",
+      "assurance/ledger/mutations-2026-08-09.json"
+    ],
+    "unresolved": [],
+    "verifiable": true
+  },
+  "incident_id": "INC-044-evaluator-output-backdated-to-day-start-is-unsafe",
+  "incident_sha256": "7a7379d3915154e68896d8045f8968f409ac371009a510660436f71e8bacd5e0",
+  "init": {
+    "claude_code_version": "2.1.221",
+    "model": "claude-opus-5",
+    "session_id": "aba1d675-33be-4ccc-a6d6-41a951af8dce",
+    "tools_count": 27
+  },
+  "kind": "cast-analysis",
+  "leading_indicators_defined": true,
+  "options": {
+    "allowed_tools": [],
+    "cwd": "/tmp/assurance-cast-duhgqd27",
+    "effort": "high",
+    "max_budget_usd": 4.0,
+    "max_turns": 8,
+    "model": "claude-opus-5",
+    "setting_sources": [],
+    "timeout_s": 900
+  },
+  "oracle": "structured_output がレーン側再検証にも適合",
+  "principles_offered": 337,
+  "prompt_sha256": "02d31c9c25d54aaba4cfa83a69ba80ec7d9cf510e9013597a633f68ef169d8b5",
+  "rejected_flaws": [],
+  "result_meta": {
+    "duration_api_ms": 251672,
+    "is_error": false,
+    "num_turns": 7,
+    "session_id": "aba1d675-33be-4ccc-a6d6-41a951af8dce",
+    "subtype": "success",
+    "total_cost_usd": 0.9332050000000001,
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 42128,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 42128,
+      "cache_read_input_tokens": 189526,
+      "inference_geo": "not_available",
+      "input_tokens": 8,
+      "iterations": "list",
+      "output_tokens": 15157,
+      "server_tool_use": {
+        "web_fetch_requests": 0,
+        "web_search_requests": 0
+      },
+      "service_tier": "standard",
+      "speed": "standard"
+    }
+  },
+  "schema_sha256": "0d1643d5e16353723405302c1f6ffcf753915e2a4f27a3530e8ef9a9ee45cb46",
+  "sdk_version": "0.2.129",
+  "settled": true,
+  "status": "PASS",
+  "structured_output": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "鮮度の比較（評価器の成果物 > 攻撃証拠 なら未攻撃）において、日付精度しか持たない値の丸め規則が両辺へ同一に適用され、左辺もその日の始まり（T00:00:00Z）へ並べられる。左辺を押し下げる向きは過少報告側であり、同じ日に先に走った攻撃証拠（mutations-2026-08-07 18:52:02Z・mutations-2026-08-09 23:06:31Z）が、後から走ったかもしれない評価器の成果物を覆う。結果、変異を当てていない評価器が『攻撃済み』として並ぶ。",
+        "evidence_ref": "assurance/harness/orchestrator.py（evaluator_outputs_latest / attack_evidence_latest / _max_instant）",
+        "flaw_type": "制御動作が誤っている",
+        "normative_refs": [
+          "破られた想定の再検討",
+          "symptom-vs-systemic-cause",
+          "refine-generic-constraints-to-specific-loss",
+          "安全立証でなく非安全状態の探索"
+        ],
+        "why_it_seemed_adequate": "INC-023 の是正時点では、丸めの向きは右辺（攻撃証拠）についてだけ検討されていた。右辺を日の始まりへ押し下げると『攻撃はもっと前に在ったかもしれない』と読むことになり、過剰報告（走ったのに『まだ』と言う）に倒れる。うるさいが安全側であり、規則をひとつに揃えることは決定論的で単純に見えた。比較の辺ごとに安全側の向きが逆であるという性質は、規則を『日付だけの証拠はその日の始まりとして並ぶ』という一文へ要約した時点で記述から落ちている。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "台帳（手掛かり: assurance/ledger/）に積まれる独立再監査の成果物の generated_at が、実時点ではなく外部から与えた日付の刻印であり、事象記録の evidence_note によれば independent_recheck.py:263 が `\"%sT00:00:00Z\" % args.today` を無条件に刻む。判定に必要な『いつ走ったか』を運べない手掛かりが、判定の左辺として使われている。情報を提供する側（刻印の設計）の欠陥であって、それを読む側の読み違いではない。",
+        "evidence_ref": "assurance/harness/independent_recheck.py:160,:263（事象記録の evidence_note による。本セッションでは未検証）",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "defects-in-information-providing-systems",
+          "include-information-supplier-defect",
+          "情報システム保有と有用性の乖離",
+          "要約統計偏重による傾向情報の喪失"
+        ],
+        "why_it_seemed_adequate": "--today を必須にする設計は、決定論での再現（同じ入力から同じ台帳）を保つための機能である。日付を入力として受け取る口では、その日付を刻むことが一貫していて自然に見える。刻印が『入力の日付』なのか『実行の時点』なのかという区別は、鮮度の比較に使われるまでは差が出ず、区別する必要が現れなかった。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "決定論試験（手掛かり: 決定論試験の成否）は、実装と同じ丸め規則を期待値に持つため、左辺の丸めが過少報告を生むことを非緑として現さない。INC-023 の是正が右辺で安全側だったことを固定する試験は在っても、辺ごとの向きを分けて固定する REPRODUCE_RED は無い。是正の有効性を証拠で判定する経路が、この性質については開いていない。",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "是正措置の有効性証拠の収集",
+          "監査のすり抜け時に監査手順を是正",
+          "監査の検出力評価",
+          "勧告の実施と有効性確認"
+        ],
+        "why_it_seemed_adequate": "是正が入った時点では観測された症状（右辺の丸め）が消え、試験は緑になった。緑は是正の有効性の証拠に見える。丸めを『共通の規則』として実装したことで、右辺で確かめた安全性が左辺にも及ぶという理解が自然に成立し、辺ごとに確かめ直す動機が生じなかった。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "merge 前に赤で止める門の手掛かりは、ジョブの成否と docs-audit の JSON である。台帳に積まれた判定が『順序を決められない記録に基づく』ことは、どちらの手掛かりにも現れない。刻印が実時点を持たない成果物が台帳へ入ることも、鮮度比較の左辺に日付精度の値が入ることも、門の対象外にある。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "全体健全性と部分健全性の分離評価",
+          "安全活動の独立確認",
+          "監督機構自体のレビューと再設計",
+          "最低限準拠を超える安全活動の実効性"
+        ],
+        "why_it_seemed_adequate": "CI の役割はリポジトリ正本の試験と監査であり、台帳は保証レーンの成果物として保証レーン自身が健全性を保つ（ASSURANCE_LANE の制御: 台帳の健全性を保つ）ものと分業されている。読めない台帳を名指す健全性検査は在るので、台帳は見られていると理解しやすい。『読める』ことと『判定に足る情報を持つ』ことの差は、この分業の記述に現れていない。"
+      },
+      {
+        "control_element_id": "WARNING_BACKLOG",
+        "description": "過少報告は静かである。『攻撃されていない評価器が在る』という状態は、警告としても滞留としても現れず、last-audit.json の totals にも top_findings にも入らない。既存の 4 件を UNKNOWN へ戻したとしても、UNKNOWN の滞留を異常とする条件と、それを閉じる責任の割当が未定であるため（既知の穴）、戻した先で止まる。",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "audit-findings-must-be-closed",
+          "指摘欠点の是正完了追跡",
+          "リスク情報の不透明な集約禁止",
+          "計画外変化の検出手段"
+        ],
+        "why_it_seemed_adequate": "滞留の仕組みは、警告として現れた事柄を取りこぼさないために設計されている。現れなかった事柄を拾う設計にはなっていない。過剰報告（うるさい側）の欠陥はこの仕組みで捕まってきたので、同じ仕組みが過少報告も捕まえるように見える。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者の手掛かりである台帳には、結論（この評価器は攻撃済み）は残るが、その結論を支える時刻の前後関係が決められないという性質は残らない。既知の穴『報告が実施ではなく意図を書いていても人からは見分けにくい』と同型で、ここでは台帳が実施を主張し、実施の有無が記録から決められない。所有者のリスク認識は、根拠の在る PASS と根拠の決められない PASS を区別できない。",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "プロセスモデルと実状態の不整合",
+          "コントローラのリスク認識の検証",
+          "controller-needs-concrete-feedback-channels",
+          "分析出力の客観性を僭称しない"
+        ],
+        "why_it_seemed_adequate": "台帳は決定論で機械が書くものであり、人の報告より確からしいと理解される。機械が書いた PASS を疑う手掛かりは、台帳の外側に無い。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "ADR-120 が守ろうとした性質（評価器が欠陥を捕まえられることは、壊してみて非緑になることでしか言えない）と、鮮度比較の丸め規則との間にトレースが無い。統治木の側に性質が在り、ハーネスの側に規則が在り、規則の変更（INC-023 の是正）が性質を損なうかどうかを照合する経路が構造に現れていない。dep-graph の逆依存は文書間の依存を辿るが、文書の性質と実装の規則の対応は辿らない。",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "何をとなぜのトレース文書化",
+          "変更時の想定再評価をMOCで強制",
+          "全変更のハザード分析と承認",
+          "systemic-cause-across-all-events"
+        ],
+        "why_it_seemed_adequate": "INC-023 の是正は、鮮度の丸めという局所の規則の修正として扱える大きさに見えた。ADR-120 は評価器の検証方法についての決定であり、丸めの向きという実装の細部とは別の層に在ると理解するのが自然である。"
+      }
+    ],
+    "hazard": "保証レーンが、評価器の成果物と攻撃証拠の前後関係を実際には決定できない記録（日付精度しか持たない刻印）を入力として、「この評価器は変異で検証済み」というプロセスモデルを保持し、その状態のまま次の行動を導ける状態。すなわち、鮮度比較の左辺（評価器の成果物）に、実時点より前へ押し下げられた刻印が入り、同日に先行した攻撃証拠がそれを覆える状態にあること。",
+    "incident_id": "INC-044-evaluator-output-backdated-to-day-start-is-unsafe",
+    "leading_indicators": [
+      {
+        "indicator": "鮮度比較の左辺に入りうる成果物のうち、generated_at が T00:00:00Z（秒精度の実時点を持たない）ものの件数",
+        "observable": "assurance/ledger/ 配下の全 JSON の generated_at を走査し、時刻部分が 00:00:00Z である成果物を数える",
+        "threshold": "1 件でも在れば異常。左辺に入る種別（recheck 等）では 0 件を保つ",
+        "version_independent": true,
+        "where": "ASSURANCE_LANE の台帳健全性検査（orchestrator.py）に追加し、CI_RELEASE_CHECK のジョブでも走らせる",
+        "why_version_independent": "リポジトリ正本の台帳を正本側の検査が読むため、利用者環境の導入複製の版に依存しない"
+      },
+      {
+        "indicator": "同一日付内で、左辺（評価器の成果物）の刻印が右辺（攻撃証拠）の刻印以下となり、前後を決定できない組の件数",
+        "observable": "鮮度比較を行う際に、比較した二つの刻印の精度と大小を記録し、決定不能な組を UNKNOWN として数える",
+        "threshold": "0 件を保つ。1 件でも出たら PASS へ丸めず UNKNOWN として台帳へ残す",
+        "version_independent": true,
+        "where": "ASSURANCE_LANE の鮮度判定（orchestrator.py の evaluator_outputs_latest / attack_evidence_latest の比較点）",
+        "why_version_independent": "判定そのものの内部状態を数えるので、配布された複製の版とは無関係に正本側で観測できる"
+      },
+      {
+        "indicator": "外部から与えた日付（--today 等）が、成果物の generated_at の生成へ流れ込む口の数",
+        "observable": "assurance/harness 配下で、引数の today を generated_at の文字列生成に用いている箇所を静的に走査した件数",
+        "threshold": "0 件。1 件でも増えたら赤で止める（日付は入力、刻印は実時点、という分離を機械で保つ）",
+        "version_independent": true,
+        "where": "CI_RELEASE_CHECK の決定論試験に静的検査として追加",
+        "why_version_independent": "正本のソースに対する静的走査であり、導入複製の版に依存しない"
+      },
+      {
+        "indicator": "鮮度比較の各辺について、丸めの向きが宣言され、その向きを固定する REPRODUCE_RED 試験が存在する辺の割合",
+        "observable": "比較に用いる辺の一覧と、それぞれに対応する赤試験の有無の対応表",
+        "threshold": "100% 未満は異常。新しい辺が増えたのに赤試験が無い状態を許さない",
+        "version_independent": true,
+        "where": "ASSURANCE_LANE の試験一覧（決定論試験の成否の手掛かり）",
+        "why_version_independent": "正本の試験資産の網羅性を数えるため、複製の版に依存しない"
+      },
+      {
+        "indicator": "根拠が復元できないため UNKNOWN へ戻された判定の件数と、その滞留期間",
+        "observable": "台帳内で UNKNOWN 状態の判定と、その状態になってから経過したセッション数",
+        "threshold": "2 セッションを超えて閉じないものが 1 件でも在れば所有者へ上げる（閉じる責任の割当は所有者判断）",
+        "version_independent": true,
+        "where": "ASSURANCE_LANE の台帳と WARNING_BACKLOG（last-audit.json の totals / top_findings へ載せる）",
+        "why_version_independent": "正本の台帳と正本側の監査要約で観測でき、配布経路を通らない"
+      },
+      {
+        "indicator": "HEARTBEAT が保証台帳の鮮度異常（左辺が真夜中である成果物の存在）をターンごとに警告するよう拡張した場合の、その警告の到達率",
+        "observable": "導入複製で走る gov-heartbeat.py が当該警告を出しているかどうか",
+        "threshold": "警告の欠如をもって健全とみなさない。複製の版がリポジトリ正本より 1 世代でも遅れている場合、この指標は無効として扱う",
+        "version_independent": false,
+        "where": "HEARTBEAT（plugin/scripts/gov-heartbeat.py）と導入複製の版",
+        "why_version_independent": "検出器自身が導入複製の側で動くため、版が遅れれば検出器も遅れる（INC-005 の共通原因故障）。鮮度の欠陥をこの経路だけで見張ると、古びの検出器が古びる形をそのまま引き継ぐ"
+      }
+    ],
+    "loss": "欠陥を捕まえられるかどうかが変異（故障注入）で確かめられていない評価器の判定が、確かめられたものとして保証キャンペーンの根拠に用いられる。所有者は台帳を読んで「この評価器は攻撃済み」と理解するが、その理解を支える根拠は台帳に残っていない。事象記録によれば独立再監査の成果物 4 件（recheck-jerg-2026-08-07・recheck-stpa-2026-08-07・recheck-cast-2026-08-09・recheck-jerg-2026-08-09）が現にこの状態で並んでいる。損失は「判定が誤っている」ことではなく、「判定の根拠が在るか無いかを誰も決められない状態のまま、根拠が在る側へ丸められている」ことである。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "tie が UNKNOWN へ落ちることがコードと試験で示されれば否定される",
+        "hypothesis": "鮮度比較で刻印が同一秒（tie）になったとき、比較が > か >= かによって判定が反転し、丸め方向を辺ごとに分けても同型の過少報告が残る",
+        "oracle": "左辺と右辺に同一の刻印を与えたときの判定を、決定論試験で固定する",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "discover.py の出力が左辺に入らないことをコード経路で示せれば否定される",
+        "hypothesis": "discover.py の scenarios 日付が鮮度比較の左辺に入り、recheck と同型の過少報告を生む",
+        "oracle": "discover.py の出力を左辺に置き、同じ日に先行する攻撃証拠と比較したときに『攻撃済み』になるかを試す",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "日跨ぎでは日付の大小のみで決まり、丸めが結果を変えないことを示せれば否定される",
+        "hypothesis": "左辺を日の終わりへ丸める是正を入れると、翌日の攻撃証拠との比較で今度は過剰報告ではなく別の過少報告が生じる（左辺が実際より後ろへ押し出され、後続の攻撃を覆う）",
+        "oracle": "左辺が日付精度、右辺が翌日未明の刻印という組で判定を確認する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "要約の today が鮮度に使われない、または実時計で上書きされることを示せれば否定される",
+        "hypothesis": "手で --summary-in-project と --today を同時に渡す経路（配線には無いが可能）で、gov-heartbeat の古び判定に本件と同型の押し下げが起きる",
+        "oracle": "当該引数の組み合わせで鼓動を走らせ、古びの判定が実時計より前へずれるかを見る",
+        "severity": "P3"
+      },
+      {
+        "falsification_signal": "鮮度判定が台帳の並びではなく刻印だけを読むことを示せれば、並びの入れ替えは影響しない",
+        "hypothesis": "台帳への同時書き込み（ASM-006）により、刻印の前後と台帳上の並びが食い違い、鮮度判定の入力が入れ替わる",
+        "oracle": "同一日に二つの書き込みを競合させ、台帳の並びと刻印の順序の一致を確認する",
+        "severity": "P3"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "鮮度比較の丸めを、規則ひとつではなく辺ごとの規則として実装し直す。左辺（評価器の成果物）で日付精度しか無い値はその日の終わり（23:59:59Z）として並べ、右辺（攻撃証拠）は従来どおり日の始まりとして並べる。両辺の丸め方向を、比較関数の呼び出し側ではなく型（辺）に結びつけて、後から辺が増えたときに向きの指定を省略できないようにする。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "実装より先に REPRODUCE_RED を作る：左辺が真夜中の刻印を持つ成果物と、同じ日に先行する攻撃証拠を並べたとき、判定が『攻撃済み』になることを FAIL として固定する試験を追加する。是正の有効性はこの試験の色でのみ判定する。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "independent_recheck.py が実時点を generated_at に刻めるようにし、--today は日付の入力に限定して刻印の指定から分離する（INC-043 の (b) と同じ整理）。あわせて、外部から与えた日付が generated_at の生成へ流れ込む箇所を CI の静的検査で 0 件に保つ。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "丸めで救えない場合は PASS へ倒さず UNKNOWN を返す経路を鮮度判定に設ける。前後を決定できない組は、丸め方向にかかわらず UNKNOWN として台帳に残し、結論と一緒に『根拠が決定できない』ことを記録する。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "既存の 4 件を UNKNOWN へ戻す（遡って刻印を作り直さない）。UNKNOWN の滞留を異常とする条件と、閉じる責任の割当を決める。門を warn まで広げるか別経路にするかを含め、ここは所有者の判断を要する（WARNING_BACKLOG の既知の穴、INC-039 推奨#4 と同じ空白）。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "鮮度比較の各辺と、その辺の安全側の丸め方向・理由・対応する赤試験を統治木へ記録し、ADR-120 が守る性質との対応（トレース）を明示する。規則を一文へ要約するときに適用範囲を落とさない書式にする。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "discover.py をはじめ、鮮度比較の左辺に入りうる成果物の書き口を全数調べ、日付精度しか持たない刻印が左辺に入る経路を洗い出す。同時に、刻印が同一秒になった場合の比較（> か >= か）を確認する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "事象記録が名指す機構（independent_recheck.py・orchestrator の鮮度判定）の実在と行番号、台帳 4 件の実データを、リポジトリを参照できる環境で確認する。確認できるまで本分析の結論は暫定として扱う。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "『安全側の丸め』は比較の辺ごとに向きが逆になるが、INC-023 の是正はそれを『日付だけの証拠はその日の始まりとして並ぶ』という一文へ要約し、適用範囲（どちらの辺か）を伴わずに規則として残った。要約が適用条件を落とす形は、他の規則にも同じように起こりうる。",
+      "過剰報告と過少報告で発見のされやすさが構造的に非対称である。うるさい欠陥は次の行動に現れて直され、静かな欠陥は残る。統制の手掛かりが『現れた事柄』だけを運ぶ設計になっているため、この非対称は時間とともに静かな欠陥を蓄積させる。",
+      "日付の入力（--today）と刻印（generated_at）が同じ引数で兼務されている。決定論の再現性のために導入した機能が、実時点という別の情報を消す。INC-043 と本件はこの兼務を共通の原因として持ち、片方を直しても他方は残る。",
+      "是正が、是正の有効性を固定する赤試験より先に実装へ入る順序が繰り返されている（INC-023 の是正がそうであり、本件の fix_note は逆順を意図している）。実装が先だと、緑は『規則どおり』であることしか示さない。",
+      "保証の結論（PASS／攻撃済み）は台帳に残るが、結論の根拠の不確かさは同じ場所に残らない。下流の統制（CI・所有者・鼓動）はいずれも結論を手掛かりとするため、根拠の欠落はどこからも観測されない。",
+      "評価器の検証に関する性質（ADR-120）と、それを実現する実装の規則との間にトレースが無く、規則の局所的な変更が性質を損なうことを照合する経路が統制構造に現れていない。"
+    ],
+    "unknowns": [
+      "【実在の確認ができていない】事象記録が名指す independent_recheck.py と、orchestrator の evaluator_outputs_latest / attack_evidence_latest / _max_instant は、与えられた統制構造の要素として列挙されていない（列挙されているのは ASSURANCE_LANE の実体としての orchestrator.py のみ）。本セッションの作業ディレクトリは /tmp/assurance-cast-duhgqd27 で空であり、リポジトリを参照できないため、当該ファイル・行番号（:160, :263）・台帳の 4 件（recheck-jerg-2026-08-07 等）・攻撃証拠の刻印（18:52:02Z, 23:06:31Z）のいずれも確認していない。以下の分析はすべて、事象記録の記述を仮に真としたときの統制構造の読みであり、機構の実在が確認されるまで結論として扱えない。confidence を low としたのはこのためである。",
+      "ADR-120・INC-023・INC-043・INC-005・§5（証拠が消えた PASS は UNKNOWN へ戻す）は事象記録が参照しているが、与えられた統制構造と検証原則の一覧には現れない。これらの決定が実在し、記述どおりの内容であるかを確認していない。",
+      "4 件の独立再監査について、評価器と攻撃のどちらが実際に先だったかは記録から復元できない。したがって、これらの評価器が変異で非緑になったか否かは今後も判らない（刻印を作り直す道が無い）。",
+      "discover.py は --today を持ち generated_at を刻まないため scenarios の日付で並ぶとされるが、その並びが鮮度比較の左辺に入るかは未調査である（事象記録の residual が明記している）。左辺に入るなら同型の過少報告が在りうる。",
+      "recheck 以外に、左辺へ入る成果物を書く口が他に何口あるかを数えていない。左辺の全数が判らないため、影響範囲の下限（4 件）は判るが上限は判らない。",
+      "刻印が同一秒になった場合（tie）の比較が > か >= かを確認していない。ここで向きが反転すれば、丸め方向を直しても同じ形の過少報告が残りうる。",
+      "台帳への同時書き込み（ASM-006）が刻印の順序に影響するかは、本件の範囲では調べていない。",
+      "4 件を UNKNOWN へ戻したあと、それを閉じる責任を誰が負うかは統制構造上未定である（WARNING_BACKLOG の既知の穴）。所有者判断の対象であり、分析側では決められない。"
+    ],
+    "why_existing_assurance_missed": "三つの理由が重なっている。(1) 決定論試験は実装と同じ丸め規則を期待値に持つため、左辺の丸めは『規則どおり』として緑になる。INC-023 の是正で固定されたのは右辺の振る舞いであり、辺ごとに安全側の向きが逆であるという性質は試験にも規則の記述にも現れていない。(2) 過少報告は静かである。過剰報告（INC-043）は走ったのに『まだ』と言うので次の行動に現れて目に触れたが、本件は確かめていないものを『確かめた』と言うだけなので、次の行動にも警告にも滞留にも現れない。発見のされやすさが安全の向きと逆に非対称であり、静かな側だけが残る。(3) 台帳には結論が残り、結論の根拠の不確かさ（同日のどちらが先だったか決められないこと）は同じ場所に残らない。CI・所有者・鼓動のいずれの手掛かりも結論だけを運ぶため、根拠の欠落は下流のどこからも観測できない。加えて本件は INC-043 の残余を決定論で追った結果として見つかっており、事象を追う人手が入らなければ現れなかった。すなわち、この形の欠陥に対する検出は現時点で機構ではなく調査に依存している。"
+  }
+}
