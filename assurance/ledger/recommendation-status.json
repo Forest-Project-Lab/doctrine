@@ -2296,6 +2296,81 @@
       "state": "pending",
       "note": "CI の赤について失敗行の著者（実装者／評価器）を区別して記録する。**是正権限が受け手に無い赤**という類型は本件で初めて現れた。門は緩めない。実装は #1 の決定が先に要る（どちらへ倒すかで記録の意味が変わる）。",
       "investigated": "2026-08-15 本反復（APPLY_FINDINGS）"
+    },
+    {
+      "incident_id": "INC-046-coverage-judgements-oscillate-between-rounds",
+      "index": 4,
+      "state": "landed",
+      "note": "『系の側が変わっていない』の根拠を機械の突き合わせへ移した。ADR-167 を証拠に引いた項は cast 338 件中 0 件（失効の起票はこの回 100% 空振り）。加えて、五値が同じ 330 件でも証拠集合の平均 Jaccard は 0.76・完全一致 59%・共通ゼロが 10 件で、**値が安定して見える項でも証拠は入れ替わっている**ことが判った。測定は incidents.json の measurement_2026-08-15 に在る。",
+      "evidence_ref": "assurance/ledger/incidents.json",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS）"
+    },
+    {
+      "incident_id": "INC-046-coverage-judgements-oscillate-between-rounds",
+      "index": 0,
+      "state": "pending",
+      "note": "REPRODUCE_RED（逆戻りが起きても正本が見ないことを FAIL として固定）。未実施。赤にする量（逆戻り率）が正本に無いので、量を置く変更（推奨#1）と同じ主題になる。**先に赤を作る**という順は守れる —— 量を足す前に『量が無いこと』を赤にできる。次の反復。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS）"
+    },
+    {
+      "incident_id": "INC-046-coverage-judgements-oscillate-between-rounds",
+      "index": 1,
+      "state": "pending",
+      "note": "台帳に判定の履歴（反復ごとの値と証拠集合）を持たせ、正本の手掛かりへ『前回と反対向きに動いた項』を加える。走らせ手と正本が読む段の両方が要る（§2）。#0 と同じ主題。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS）"
+    },
+    {
+      "incident_id": "INC-046-coverage-judgements-oscillate-between-rounds",
+      "index": 5,
+      "state": "pending",
+      "note": "INC-040 の 17 件を、揺れによる変化と系の変化へ分解する。今回と同じ手法（当時の追加文書を証拠に引いた項が在るか）で分解できる見込み。分解できない分は分解できないものとして残す。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS）"
+    },
+    {
+      "incident_id": "INC-046-coverage-judgements-oscillate-between-rounds",
+      "index": 6,
+      "state": "pending",
+      "note": "jerg を再判定して比較の対を作る。現在 jerg の stale_open は 0 なので、比較の対を作るには再判定を買う必要がある（3 束・約 $3）。cast 固有か横断かが判るまで、本件の射程は cast に限る。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS）"
+    },
+    {
+      "incident_id": "INC-046-coverage-judgements-oscillate-between-rounds",
+      "index": 7,
+      "state": "pending",
+      "note": "失効の起票規則と、その射程が判定証拠と一致していたかの実績。**今回の回については測った**（空振り率 100%）が、一回きりの測定であって継続の記録ではない。継続にするには #1 と同じく走らせ手と読む段の両方が要る。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS）"
+    },
+    {
+      "incident_id": "INC-046-coverage-judgements-oscillate-between-rounds",
+      "index": 8,
+      "state": "pending",
+      "note": "『多数決は同系 model の共通原因故障には効かない』ことと『残余リスクの受理は検出器の設置を免除しない』ことの明文化。後者は分析の why_missed が指した核心である。統治木への追記であり、#2 の所有者判断（五値の語彙をどうするか）が先に要る。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS）"
+    },
+    {
+      "incident_id": "INC-046-coverage-judgements-oscillate-between-rounds",
+      "index": 9,
+      "state": "pending",
+      "note": "判定がサブエージェントで走るか主セッションで走るかの記録。判定は sdk_lane.run_one_shot で走るので主セッションではないが、それが NONGOAL-001 の『サブエージェントへの契約注入はしない』とどう当たるかは確かめていない。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS）"
+    },
+    {
+      "incident_id": "INC-046-coverage-judgements-oscillate-between-rounds",
+      "index": 2,
+      "state": "owner",
+      "note": "五値の語彙に『判定が安定しない』を加えるか、値とは別軸の安定性属性として持たせるか。五値は台帳の schema であり、語彙を増やすと既存の読み手（validate・coverage stats・next_actions）の解釈が変わる。類型は『互換性を壊す変更』。",
+      "owner_decision_kind": "互換性を壊す変更",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS）"
+    },
+    {
+      "incident_id": "INC-046-coverage-judgements-oscillate-between-rounds",
+      "index": 3,
+      "state": "owner",
+      "note": "UNKNOWN 滞留条件の導入を、UNKNOWN 件数の反復間変動幅が閾値未満に収まるまで保留する、という判断。**これは五度目の空白（INC-039#4・INC-040#7・INC-041#8・INC-042#1・INC-044#4）へ『まだ置くな』という新しい向きの入力である。**基準線が定まらない量の上に条件を置かない、という理屈は筋が通る。所有者判断の材料として、この保留の当否も併せて渡す。",
+      "owner_decision_kind": "互換性を壊す変更",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS）"
     }
   ]
 }
