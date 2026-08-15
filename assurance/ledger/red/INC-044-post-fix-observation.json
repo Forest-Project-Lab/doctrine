@@ -1,0 +1,42 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "post-fix-observation",
+  "target_id": "INC-044-evaluator-output-backdated-to-day-start-is-unsafe",
+  "generated_at": "2026-08-15T17:25:00Z",
+  "tree": "49b3ecc (本 PR の HEAD)",
+  "commands": [
+    "python3 -m unittest discover -s assurance/tests -p test_freshness_rounding_by_side.py",
+    "python3 -m unittest discover -s assurance/tests -p test_orchestrator.py",
+    "python3 -m unittest discover -s assurance/tests"
+  ],
+  "results": [
+    {
+      "command": "test_freshness_rounding_by_side.py",
+      "ran": 4,
+      "returncode": 0,
+      "detail": "赤で FAIL していた 2 件が ok。緑だった歯止め 2 件は緑のまま"
+    },
+    {
+      "command": "test_orchestrator.py",
+      "ran": 109,
+      "returncode": 0,
+      "detail": "INC-023 が固定した右辺の振る舞い（AttackFreshnessPrecisionTest 4 件）を含めて全件 ok。右辺は変えていない"
+    },
+    {
+      "command": "assurance/tests 全件",
+      "ran": 499,
+      "returncode": 0,
+      "detail": "修正前は 495 件。差の 4 件は新設の試験ファイル"
+    }
+  ],
+  "red_to_green": [
+    "test_day_only_output_is_not_covered_by_an_earlier_same_day_attack: FAIL -> ok",
+    "test_both_day_only_on_the_same_day_stays_unattacked: FAIL -> ok"
+  ],
+  "green_before_and_after": [
+    "test_a_later_attack_still_covers_a_day_only_output: ok -> ok（過剰是正の歯止め）",
+    "test_the_right_side_rounding_is_unchanged: ok -> ok（右辺は INC-023 のまま）"
+  ],
+  "decision_is_outside_this_diff": "ADR-167 は PR #315 で main へ着地済みであり、本 diff には含まれない。既存試験の期待値は一つも書き換えていない（新設 4 件を足しただけ）。INC-042 が記録した『決定と判定基準が同じ差分に入ると区別できない』形を、意図的にほどいた配置である。",
+  "known_gap": "independent_recheck.py が実時点を刻めるようにする（ADR-167 決定#2）は本変更に含めていない。修正は一度に一つ（§2）。既存の recheck 4 件は UNKNOWN のまま残る。"
+}
