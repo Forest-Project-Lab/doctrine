@@ -2224,6 +2224,13 @@
       "note": "evidence_refs 三つの実在をリポジトリ正本に対して確認した。assurance/ledger/verify/INC-027-ledger-write-not-atomic.json・assurance/harness/verify_fix.py・doctrine_docs/packaging/decisions/ADR-139-verify-runner-and-fixed-gate.md はいずれも二権威で解決する（ADR-166 の門にも掛けた）。本分析の結論を仮定付きとして扱う必要は無い。",
       "evidence_ref": "assurance/harness/verify_fix.py",
       "investigated": "2026-08-15 本反復（APPLY_FINDINGS。next_actions の先頭が名指す推奨を処遇した）"
+    },
+    {
+      "incident_id": "INC-029-index-counts-no-tests",
+      "index": 0,
+      "state": "pending",
+      "note": "索引の各カテゴリの計数に独立オラクル対照を義務づける件。**試験軸だけ landed 相当で、残り 6 軸は無い。**現状: assurance/tests/test_system_index_counts.py の test_the_total_matches_what_unittest_actually_collects が unittest の loader を第三の対照に置き、test_files の合計を照合する。documents・audit_checks・linter_codes・scripts・hooks・skills の 6 軸には独立オラクルが無く、`len(idx[name])` が唯一の事実源である。推奨が求める『差が 0 でなければプロンプト生成を進めず CI でも赤にする』も未実装 —— 現状の照合は試験の中だけで、生成経路の門にはなっていない。**この推奨は、私が二反復前に『次の最危険仮説』として挙げた形と同じ物である**（手で書いた数字を機械の同じ数字と突き合わせる段が無い）。是正の対象として筋が良い。本反復では着手しない —— 6 軸それぞれに独立オラクルを定める設計判断が要り、一つの主題として別に扱う。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。next_actions の先頭が名指す推奨）"
     }
   ]
 }
