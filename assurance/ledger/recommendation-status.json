@@ -2491,6 +2491,69 @@
       "state": "pending",
       "note": "hook 群の『自分が動いていることを体系側から検出しない』共通原因の個別調査。未実施。**#0 の測定でその一例が出た** —— consistency-reminder.py は毎ターン走るが、試験も CI も無く、壊れても沈黙する。NONGOAL-001 が受容している範囲（ガードが実際に違反を拒否できることは検出しない）と、この受容が今も成り立つかの再評価は未着手である。",
       "investigated": "2026-08-15 本反復（APPLY_FINDINGS。決定論の走査と実物確認）"
+    },
+    {
+      "incident_id": "INC-031-skill-documents-a-command-that-does-not-run",
+      "index": 0,
+      "state": "landed",
+      "note": "試験は CI が merge を止める段に接続されている。plugin/tests/test_skill_commands_run.py が実在し、CI の `plugin/run_tests.py` が収集する（独立に unittest の loader で数えて 3 件を確認）。**ただし接続されていることと覆えていることは別である** —— 覆いが 20% しか無いことを本反復で見つけ、INC-047 として積んだ。",
+      "evidence_ref": "plugin/tests/test_skill_commands_run.py",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。二通りの数え方で突き合わせた）"
+    },
+    {
+      "incident_id": "INC-031-skill-documents-a-command-that-does-not-run",
+      "index": 1,
+      "state": "pending",
+      "note": "『数えなかった』呼び出しの件数と内訳の出力。**未実装であり、その不在が INC-047 を沈黙させていた。**試験は「拾えた数と走らせられた数を先に示す」と自称するが、実際に示すのは非空の主張だけで、件数も内訳も出さない。覆いが 3 件でも 15 件でも外からは同じ緑に見える。INC-047 の是正と同じ変更で入れる。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。二通りの数え方で突き合わせた）"
+    },
+    {
+      "incident_id": "INC-031-skill-documents-a-command-that-does-not-run",
+      "index": 2,
+      "state": "pending",
+      "note": "docs-audit に locator 例の解決検査を足す。未実装。本反復の測定は技能の文書に限っており、統治木側の locator 例は見ていない。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。二通りの数え方で突き合わせた）"
+    },
+    {
+      "incident_id": "INC-031-skill-documents-a-command-that-does-not-run",
+      "index": 3,
+      "state": "pending",
+      "note": "配布技能文書の実行可能性について、どの統制要素が責任・権限・フィードバックを持つかの明記。未実施。INC-030 推奨#3（証拠に『門のどの段で走るか』の欄）と同じ主題である。",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。二通りの数え方で突き合わせた）"
+    },
+    {
+      "incident_id": "INC-031-skill-documents-a-command-that-does-not-run",
+      "index": 4,
+      "state": "owner",
+      "note": "fixed:false のまま v0.11.0 が利用者環境に在る状態への対処（警告するか・次版を早めるか・当該技能の使用を控えるよう案内するか）。**利用者へ配ったものについての判断であり、配布境界に触れる。**なお現行は v0.13.0 で、INC-031 の当の欠陥そのものは是正済み。残っているのは『覆いが狭かったので他にも同型が在るかもしれない』という新しい問い（INC-047）である。",
+      "owner_decision_kind": "配布境界や保証範囲の変更",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。二通りの数え方で突き合わせた）"
+    },
+    {
+      "incident_id": "INC-031-skill-documents-a-command-that-does-not-run",
+      "index": 5,
+      "state": "owner",
+      "note": "ADR-139 の独立検証を実施者以外の立場から行うまで台帳を閉じない。評価者は所有者判断を印しているが、検証を**実施すること**自体は六類型に当たらない。ただし本件は INC-047 で前提が変わった —— 覆いが 20% だった以上、『PR #271 の是正が有効』の検証は覆いを広げてから行うべきである。順序の判断として所有者へ回す。",
+      "owner_decision_kind": "配布境界や保証範囲の変更",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。二通りの数え方で突き合わせた）"
+    },
+    {
+      "incident_id": "INC-031-skill-documents-a-command-that-does-not-run",
+      "index": 6,
+      "state": "landed",
+      "note": "覆いの外に残る呼び出しの全件測定を実施した。旗を伴う呼び出しは 15 件、試験が拾うのは 3 件。差の 12 件はすべて占位を含む形で、正規表現の `>` 除外に当たって落ちていた（INC-047）。references 配下は os.walk が再帰なので走査対象に入っており、**そこが穴なのではない**。_SKIP_SCRIPTS の 9 本は意図的な除外で、本件とは別である。",
+      "evidence_ref": "assurance/ledger/incidents.json",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。二通りの数え方で突き合わせた）"
+    },
+    {
+      "incident_id": "INC-031-skill-documents-a-command-that-does-not-run",
+      "index": 7,
+      "state": "landed",
+      "note": "事象が名指す三つのファイルの実在を確認した（plugin/tests/test_skill_commands_run.py・plugin/skills/system-map-draft/SKILL.md・plugin/scripts/dep-graph.py はいずれも実在）。SESSION_END_AUDIT の走査対象は docs-audit の --root（統治木）であり、**plugin/skills/** は含まれない** —— 配布技能の文書は監査の視野の外に在る。統制欠陥の記述はこの点で正しい。",
+      "evidence_ref": "plugin/tests/test_skill_commands_run.py",
+      "investigated": "2026-08-15 本反復（APPLY_FINDINGS。二通りの数え方で突き合わせた）"
     }
   ]
 }
