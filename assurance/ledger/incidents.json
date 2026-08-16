@@ -1089,8 +1089,31 @@
       ],
       "evidence_note": "該当は 2 箇所。(1) `_check_wordtrap` の `re.compile(r\"\\b\" + en_low + r\"\\b\")`（CALQUE_WORDTRAP）。(2) `_SPECIAL_TERM_RE = re.compile(r\"\\b([A-Z]{2,}[0-9]*|[A-Za-z]+[0-9]+)\\b\")`（UNDEFINED_TERM）。直接確認: `re.search(r'\\bstatus\\b', 'はstatusを')` は False、`' status '` と `'「status」'` は True —— **鉤括弧や空白があれば効く。効かないのは仮名・漢字に密着したときだけ**である。`re.match(r'\\w','は')` は True。禁止同義語（和文）は `\\b` を使わないので影響しない。",
       "impact": "**INC-002 の鏡像**である。根は同じ「日本語に語の境界が無い」だが、INC-002 は部分文字列照合による**偽陽性**、こちらは `\\b` による**偽陰性**。偽陽性は書き手が気付いて騒ぐが、**偽陰性は誰も気付かない** —— 検査器が黙るので、統治文書に一語訳の罠や未定義の略語が和文密着で書かれている限り通り続ける。既に `_GLUE` は「軸であって固定の一覧ではない」と制度化され `test_identifier_glue_axis_is_covered` が守っているが、その軸は**接着文字**であって**文字体系**ではなかった。軸の一覧に文字体系が無かったので、同じ族の二つ目が残っていた。",
-      "fixed": false,
+      "fixed": true,
       "control_flaw_hint": "既知類型（語境界の取り違え）を軸へ展開する段が手順に無く、展開が実装者の思いつきに委ねられていた。接着文字の軸は誰かが気付いて制度化したが、文字体系の軸は気付かれなかった。INC-002 推奨#2 がまさにこの段を求めている。",
+      "evidence_kind": "measurement",
+      "cast_analysis": "done",
+      "cast_analysis_ref": "assurance/ledger/cast/INC-053-word-boundary-fails-against-japanese-adjacency.json",
+      "cast_analyzed_at": "2026-08-16T10:11:52Z",
+      "fix_commit": "bb056f7",
+      "verify_ref": "assurance/ledger/verify/INC-053-word-boundary-fails-against-japanese-adjacency.json",
+      "fix_note": "語境界を `\\b` から明示の境界 (?<![0-9A-Za-z_]) … (?![0-9A-Za-z_]) へ改めた。`_` は語文字のまま残す（MISSING_KEY の断片を名指さない拠り所）。あわせて失敗様式の軸を関数の表 AXES として持たせた。検算は verify_fix.py が PASS（三 checks とも・$0.6529）。**同じ依存が他所に 3 箇所残っており INC-054 として起票した** —— 本件の是正は当該 2 規則に限る。"
+    },
+    {
+      "id": "INC-054-word-boundary-dependency-replicated-elsewhere",
+      "date": "2026-08-16",
+      "summary": "INC-053 と同じ「`\\b` が和文密着で成立しない」形が、用語チェッカーの外に**あと 2 箇所**在る。(1) `docs-linter.py` の `_REQ_ID_RE = re.compile(r\"\\bREQ-\\d+\\b\")` —— 「この要求はREQ-001を満たす。」で拾わない（空白や鉤括弧が在れば拾う）。(2) `map-draft-check.py` の `LOC_LINE_RE` の `[Ll](\\d+)\\b` —— 「はL12を」で拾わない。あわせて `_tracescan.py` の印の正規表現が `[^\\w]*` で行末を囲んでおり、**和文の註釈が付いた印を印と認めない**（註釈記号 + 開始の印 + id の後ろに和文の註釈を置くと不一致になる）。",
+      "detected_by": "2026-08-16 の反復。INC-053 の CAST 分析の推奨#7『英語圏の正規表現既定（\\w / \\b）への依存が用語チェッカー以外に複製されていないか棚卸しする』を実施した。配布物の全スクリプトを走査し、当たった 3 箇所を実際の入力で確かめた。",
+      "evidence_refs": [
+        "plugin/scripts/docs-linter.py",
+        "plugin/scripts/map-draft-check.py",
+        "plugin/scripts/_tracescan.py",
+        "assurance/ledger/cast/INC-053-word-boundary-fails-against-japanese-adjacency.json"
+      ],
+      "evidence_note": "実測: `re.compile(r'\\bREQ-\\d+\\b').findall('この要求はREQ-001を満たす。')` → `[]`、`'この要求は REQ-001 を満たす。'` → `['REQ-001']`。`LOC_LINE_RE.findall('はL12を')` → `[]`、`'L12'` → 一致。印の正規表現（行頭 `[^\\w]*` + 印の語 + id + 行末 `[^\\w]*`）は、id の後ろに和文の註釈が付いた行に**不一致**（英字の括弧註釈でも不一致）。三つとも根は同じで、Python の `\\w` が和文を含むことに由来する。",
+      "impact": "INC-053 は用語チェッカーの 2 規則を直したが、**同じ依存が他所に残っている**。(1) は REQ の参照が和文密着で書かれると追跡から落ちる。(2) は下書き検査の位置指定が落ちる。(3) は追跡の印の行に和文の註釈を付けると印として読まれず、**印が在るのに『印なし』と数えられる**（追跡の悉皆モードの数え落とし）。いずれも**偽陰性であり、黙る**。INC-053 の是正は当該箇所だけを直しており、族としての棚卸しは本反復まで行われていなかった —— 推奨#7 が求めたのはまさにそれである。",
+      "fixed": false,
+      "control_flaw_hint": "英語圏の正規表現既定（\\w が和文を含む）への依存が、規則ごとに複製されている。INC-053 の推奨#1 が『語境界の照合を共有の一関数に集約し、規則が自前で書くことを静的検査で禁じる』と言うのはこの形への対処だが、未実装である。",
       "evidence_kind": "measurement"
     }
   ]

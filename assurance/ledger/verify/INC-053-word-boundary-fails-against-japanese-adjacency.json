@@ -1,0 +1,46 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "verify-record",
+  "target_id": "INC-053-word-boundary-fails-against-japanese-adjacency",
+  "generated_at": "2026-08-16T10:14:55Z",
+  "git_sha": "bb056f727c73d4951d8cb66c39ad28b3b439d484",
+  "diff_range": "27718b1..bb056f7",
+  "diff_sha256": "c56ad5600437f87a9dd259702ae1b97390ff5a68d5e6d9ea3e137981aeff0557",
+  "red_sha256": "9d1110ab24670326a76f004cd1c7c9159e7bc9514e1f9a8251a1da505db77362",
+  "prompt_sha256": "c9b1b9e6b295def81925fa127eeb1ae420faba9de37b9d83ca5fe7fe6f792902",
+  "model": "claude-opus-5",
+  "effort": "high",
+  "cost_usd": 0.6529,
+  "record": {
+    "target_id": "INC-053-word-boundary-fails-against-japanese-adjacency",
+    "verdict": "PASS",
+    "checks": {
+      "red_was_red": "PASS",
+      "green_is_green": "PASS",
+      "single_change": "PASS"
+    },
+    "reasons": [
+      "red_was_red=PASS: 赤の記録は修正前の樹（HEAD=27718b1）へ **出す試験ファイルそのもの**を複写して走らせ、returncode 1・ran 4 / failures 1 を測っている。『最初から緑』ではない。失敗は test_every_rule_holds_on_every_axis の 1 件で、『仮名・漢字に密着』の軸で CALQUE_WORDTRAP と UNDEFINED_TERM の 2 規則を外す、と特定されている。",
+      "red_was_red の内部整合: 記録が言う 4 件と、diff で新規追加された試験ファイルの試験メソッド 4 件（test_every_rule_holds_on_every_axis / test_the_axis_table_is_not_a_case_list / test_the_japanese_adjacent_axis_is_present / test_a_word_that_should_not_be_flagged_stays_unflagged）が一致する。緑のままの 3 件も名指しで申告されており、**赤→緑の観測はその 1 件だけである**と記録自身が限定している（試験件数で赤を水増ししていない）。",
+      "green_is_green=PASS: 修正後の観測が、**赤で失敗した当の観測**の反転を直接示している。赤は『仮名・漢字に密着』の軸での取りこぼしであり、post_fix は「この文書はstatusを扱う。」→CALQUE_WORDTRAP、「まずTDDから始める。」→UNDEFINED_TERM と、同じ軸・同じ 2 規則の検出を挙げる。本体試験 1456 件 OK に『新規 4 件を含む』と明記され、失敗していた試験自体が通ったと読める。",
+      "green_is_green: oracle 緩和の疑いは晴れる。diff が書き換えている `_termcheck.py` は**検査対象の実装**であって判定基準ではない。判定基準にあたる試験は新規で、しかも**修正前の樹へ複写して赤を出した後**に着地している（試験先行の順序が記録で担保されている）。既存の試験（test_termcheck_corpus 等）は 1 行も改変されておらず、閾値の緩和・試験の削除・条件のゆるめは diff に見当たらない。",
+      "green_is_green: 機序が変更と噛み合う。Python の `\\w` が和文を含むため `\\b` は和文密着で境界が立たず（記録の直接測定: `re.search(r'\\bstatus\\b','はstatusを')` は False、`' status '`・`'「status」'` は True）、境界を `(?<![0-9A-Za-z_])` … `(?![0-9A-Za-z_])` へ明示した変更は**まさに非 ASCII 語文字が隣接する場合だけ**挙動を変える。純 ASCII 文脈では `\\b` と等価に働くので、緑が『偶然』『別の理由』で来た筋は薄い。",
+      "green_is_green: 偽陽性側の歯止めも観測されている。`substatus` を咎めない・`MISSING_KEY` の断片を名指さない、が post_fix と新規試験の両方で押さえられ、しかも記録は**過剰是正（`_` を境界から外した最初の直し）を既存コーパス試験 2 件が捕らえた**経緯を自己申告している。都合の悪い中間状態まで残している点は証拠の質として加点材料である。",
+      "single_change=PASS: 実行時の挙動を変える変更は `_termcheck.py` の一箇所（共有定数 _ASCII_BEFORE/_ASCII_AFTER の導入と、それを使う 2 規則の境界差し替え）だけであり、一主題である。他の 5 ファイル（CHANGELOG.md・incidents.json・recommendation-status.json・red 記録・新規試験）は台帳と証拠であって挙動に影響しない。したがって『どの変更が緑をもたらしたか』の帰属は曖昧にならない。",
+      "ただし single_change には注記が要る。recommendation-status.json の INC-002 推奨#2 を pending→**landed** へ進める変更は、INC-053 の修正とは別の統治判断であり、同じ diff に同梱されている。しかも同じ note が『閉じ条件へ含める側は未着手』『その半分は残っている』と述べ、evaluator_owner_required=true と旧 owner_override_reason をそのまま残したまま landed にしている。挙動には無関係なので帰属は壊れないが、**状態遷移としては自己申告と矛盾ぎみで、本件の検証範囲外の決定**である。",
+      "台帳の不整合: incidents.json の INC-053 エントリは `\"fixed\": false` のまま追加されているが、同じ diff が当の修正を含んでいる。証拠としての読み違いを招く記載であり、後続の集計（未修正件数など）が誤る。検証判定は変えないが、修正されるべき記帳上の欠陥である。",
+      "検証の限界（明示）: 当環境に対象木は存在せず（plugin/ も assurance/ も無い）、サンドボックスにより Python での再実測も許可されなかった。よって 1456 件 OK・307 文書 ERROR なし・監査 0/0/0 は**再現していない**。判定は与えられた観測の内部整合と機序の妥当性に基づく。post_fix 側は赤の記録と違い command/returncode/git_sha を持たない散文であり、赤ほどの形式的厳密さは無い。"
+    ],
+    "residual_risks": [
+      "post_fix の数値（本体試験 1456 OK、統治木 307 文書に新指摘なし、監査 error/warn/advisory 0）は再実行で確認していない。command・returncode・git_sha を伴う実行記録ではなく散文の申告である。",
+      "検出を広げた修正であるのに統治木 307 文書で新しい指摘が 0 件、という結果の説明が観測に無い。『和文密着の見落としは常態でありうる』という主張と、実運用文書での影響 0 は緊張関係にある（文書側が実際に清いのか、実効範囲が説明より狭いのかが判別できない）。",
+      "`_check_wordtrap` は `re.escape(en_low)` の**前後**に境界を付ける。罠語が非英数字で始まる／終わる語彙（記号や空白を含む複合語）だと、`\\b`（語文字側にしか立たない）と新しい先読み・後読みでは挙動が一致しない。用語集の中身が観測に無いため、この差が現実に出るかは判定できない。",
+      "新規試験の対象語は `sorted(glossary.wordtrap)[0]` と固定文字列 'TDD' に依存する。用語集の並び順や中身が変われば、試験が当てる語も変わる（弱くなりうる）。軸の表は歯止めがあるが、規則側の選び方には歯止めが無い。",
+      "残余として記録自身が認める通り、軸は 5 通りの置き方のみで網羅ではない。全角英字（ｓｔａｔｕｓ）と正規化（NFC/NFD）の軸は未着手で、同族の欠陥が残っている可能性がある。",
+      "recommendation-status.json の pending→landed は本件の赤／緑いずれの観測でも裏づけられていない別主題の状態遷移であり、owner 判断の要否（evaluator_owner_required=true が据え置き）も未解決のまま同梱されている。",
+      "incidents.json の INC-053 が `\"fixed\": false` のままで、同一 diff の修正内容と食い違う。"
+    ]
+  },
+  "sdk_status": "PASS",
+  "reason": null
+}
