@@ -138,14 +138,15 @@
     {
       "incident_id": "INC-001-sessionend-audit-gap",
       "index": 7,
-      "state": "pending",
-      "note": "機械照合は入った —— observe_asm_001 が要約より新しいセッション印を閾値 N=2 で判じ assumptions.json へ追記(2026-08-08 FAIL。observe_assumptions.py:107)。ただし入力は session-flags/edits-* と hook_session_end_* 印で、Stop/PreCompact 退避メモとの突合ではなく、編集の無いセッションは検出外。",
+      "state": "landed",
+      "note": "**着地。**推奨は「終端は起きたが監査は走っていないセッションを検出する照合を台帳側に追加する」。**その直接の証拠は既に在った** —— INC-039 の是正が入れた負債の印は、まさに「SessionEnd は発火したが監査が完走しなかった」をファイルの実在として残す。ところが `observe_asm_001` はそれを読んでいなかった（`read_due` の参照ゼロ）。読んでいたのは last-audit.json の刻印・hook-stamps・`session-flags/edits-*` の三つで、**編集の無いセッションは検出外**、しかも「終端は起きたか」を編集の有無から推し量っていた。\n**INC-039 は書き手と配布側の読み手を同時に入れたが、保証レーンの観測器は読む段を持たないままだった** ——運転手順 §2 の族（INC-012・INC-015・INC-048）がレーンの側で再演していた。\n`read_audit_debt` を足し、負債が一件でも在れば先行指標を立てる（編集の印と違い、印は現行セッションで説明のつく事象ではない）。読めない印も数に含める —— 「在るが読めない」を「無い」と読み替えない。\n**印の在処は二重定義になる**（レーンは配布物を import しない。import の副作用で配布ディレクトリに実行時生成物が残る。DECIDED-001）。代わりに`test_the_directory_matches_the_canonical_one` が `_auditcache.due_dir` との一致を機械で確かめる —— ずれたまま黙ると、観測器は永遠に「負債 0 件」を報せ続ける（無いのではなく、見ていない）。\n**初回の実測（このリポジトリ自身）で、旧い信号にはできない区別が出た**: state=FAIL・編集の印 2 件・**負債の印 0 件**。負債 0 は「SessionEnd が始まって完走しなかった」のではないことを言う（始まっていれば印が残り、殺された子はそれを消せない）。つまり残る筋は「SessionEnd がそもそも発火していない」か「当該セッションがまだ開いている」で、**どちらかはこちらからは判じられない（UNKNOWN）**。旧い信号（編集の印だけ）はこの二つを区別できなかった。",
       "investigated": {
-        "observed_at": "2026-08-08",
+        "observed_at": "2026-08-16",
         "observed_by": "ASSURANCE_LANE",
-        "method": "移行時に自由型から構造化。観測日は原文に書かれていた日付を機械抽出した（推測ではない）。",
-        "claim": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
-      }
+        "method": "observe_assumptions.py を読んで read_due の参照が無いことを確かめ、赤を測ってから読み手を足し、このリポジトリ自身に対して走らせた。",
+        "claim": "観測器は負債の印を読んでいなかった。足した結果、初回の実測で編集の印 2 件・負債の印 0 件という区別が出た。"
+      },
+      "evidence_ref": "assurance/harness/observe_assumptions.py の read_audit_debt / assurance/tests/test_observer_reads_the_debt.py / plugin/scripts/_auditcache.py の due_dir"
     },
     {
       "incident_id": "INC-001-sessionend-audit-gap",
