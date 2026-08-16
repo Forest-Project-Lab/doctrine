@@ -5888,6 +5888,106 @@
         "method": "CAST 分析（real-sdk・opus-5・high・$0.9875）直後に、現物のコードを読み・一時ディレクトリで挙動を実測して処遇した。",
         "claim": "clear_due は鍵一致で一件だけ消す。write_due は os.replace で上書きしていた。呼び手は write_due の返り値を捨てていた。"
       }
+    },
+    {
+      "incident_id": "INC-053-word-boundary-fails-against-japanese-adjacency",
+      "index": 0,
+      "state": "landed",
+      "note": "**部分的に着地。**軸を関数の表（AXES）として持たせ、軸 × 規則で反例を機械生成する形は入った。**ただし「軸を追加した時点で既存の全規則に未検査マスが発生して赤になる」までは実装していない** ——現在の表は軸ごとに全規則を回すが、未検査マスという概念（軸×規則の直積の網羅）は持たない。接着文字の軸（_GLUE）とは別々の表のままで、掛け合わせ（例: 全角の接着文字）は誰も見ていない。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$1.1262）直後に、噴き出しの予測を統治木 307 文書で実測し、\\b/\\w への依存を配布物の全スクリプトで棚卸しした。",
+        "claim": "噴き出しは 78→81（+3）で起きない。\\b/\\w への同じ依存は他所に 3 箇所在る。"
+      },
+      "evidence_ref": "plugin/tests/test_script_boundary_axis.py の AXES"
+    },
+    {
+      "incident_id": "INC-053-word-boundary-fails-against-japanese-adjacency",
+      "index": 1,
+      "state": "pending",
+      "note": "語境界の照合を共有の一関数へ集約し、規則が自前で書くことを静的検査で禁じる。**INC-054 の根そのもの** —— 本反復の棚卸しで、同じ依存が用語チェッカーの外に 3 箇所残っていることが分かった。集約されていれば一箇所直せば済んだ。未着手。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$1.1262）直後に、噴き出しの予測を統治木 307 文書で実測し、\\b/\\w への依存を配布物の全スクリプトで棚卸しした。",
+        "claim": "噴き出しは 78→81（+3）で起きない。\\b/\\w への同じ依存は他所に 3 箇所在る。"
+      }
+    },
+    {
+      "incident_id": "INC-053-word-boundary-fails-against-japanese-adjacency",
+      "index": 2,
+      "state": "pending",
+      "note": "原文と「英字語の前後に空白を挿入した写し」の二重測定で偽陰性候補を報告する。**本反復の噴き出し測定（78→81）が事実上この手法の一回限りの実施**にあたるが、走査への常設は未着手。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$1.1262）直後に、噴き出しの予測を統治木 307 文書で実測し、\\b/\\w への依存を配布物の全スクリプトで棚卸しした。",
+        "claim": "噴き出しは 78→81（+3）で起きない。\\b/\\w への同じ依存は他所に 3 箇所在る。"
+      }
+    },
+    {
+      "incident_id": "INC-053-word-boundary-fails-against-japanese-adjacency",
+      "index": 3,
+      "state": "pending",
+      "note": "`\\b` を含む正規表現の新規追加に、同一変更内の和文密着の反例試験を要求する門。推奨#1 が入れば `\\b` 自体を禁じられるので、そちらが先。未着手。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$1.1262）直後に、噴き出しの予測を統治木 307 文書で実測し、\\b/\\w への依存を配布物の全スクリプトで棚卸しした。",
+        "claim": "噴き出しは 78→81（+3）で起きない。\\b/\\w への同じ依存は他所に 3 箇所在る。"
+      }
+    },
+    {
+      "incident_id": "INC-053-word-boundary-fails-against-japanese-adjacency",
+      "index": 4,
+      "state": "pending",
+      "note": "「日本語に語の境界が無い」を安全上の想定として登記し、依存する検査規則の一覧と失効の先行指標を併記する。assumptions.json への登記は未着手。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$1.1262）直後に、噴き出しの予測を統治木 307 文書で実測し、\\b/\\w への依存を配布物の全スクリプトで棚卸しした。",
+        "claim": "噴き出しは 78→81（+3）で起きない。\\b/\\w への同じ依存は他所に 3 箇所在る。"
+      }
+    },
+    {
+      "incident_id": "INC-053-word-boundary-fails-against-japanese-adjacency",
+      "index": 5,
+      "state": "owner",
+      "note": "**前提を実測で反証した。**推奨は「照合を是正すると既存の統治文書から一斉に用語違反が噴き出す」を前提に、滞留の処遇・門の広げ方・期日の裁定を求めている。統治木 307 文書で修正前後を数えたところ **78 → 81（+3）**（UNDEFINED_TERM 72→74・CALQUE_WORDTRAP 6→7）で、**噴き出しは起きなかった**。評価者は空の一時 cwd で走るのでコーパスを数えられない（分析の unknowns にも実在未確認が挙がっている）。ただし裁定そのもの（WARNING_BACKLOG の滞留を異常とする条件と閉じる責任）は INC-039 推奨#4 以来繰り返し要求されている生きた問いなので、owner の棚には残す —— **緊急性は下がった**という事実を添えて。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$1.1262）直後に、噴き出しの予測を統治木 307 文書で実測し、\\b/\\w への依存を配布物の全スクリプトで棚卸しした。",
+        "claim": "噴き出しは 78→81（+3）で起きない。\\b/\\w への同じ依存は他所に 3 箇所在る。"
+      },
+      "owner_decision_kind": "配布境界や保証範囲の変更",
+      "evidence_ref": "配布境界や保証範囲の変更"
+    },
+    {
+      "incident_id": "INC-053-word-boundary-fails-against-japanese-adjacency",
+      "index": 6,
+      "state": "pending",
+      "note": "用語チェッカーが統制構造のどの要素の実体かを確認し、記述へ明記する。未着手。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$1.1262）直後に、噴き出しの予測を統治木 307 文書で実測し、\\b/\\w への依存を配布物の全スクリプトで棚卸しした。",
+        "claim": "噴き出しは 78→81（+3）で起きない。\\b/\\w への同じ依存は他所に 3 箇所在る。"
+      }
+    },
+    {
+      "incident_id": "INC-053-word-boundary-fails-against-japanese-adjacency",
+      "index": 7,
+      "state": "landed",
+      "note": "**棚卸しを実施した。同じ依存が 3 箇所見つかり、INC-054 として起票した。**\n(1) `docs-linter.py` の `_REQ_ID_RE = r\"\\bREQ-\\d+\\b\"` —— 「この要求はREQ-001を満たす。」で拾わない。\n(2) `map-draft-check.py` の `LOC_LINE_RE` の `[Ll](\\d+)\\b` —— 「はL12を」で拾わない。\n(3) `_tracescan.py` の印の正規表現が `[^\\w]*` で行末を囲んでおり、**和文の註釈が付いた印を印と認めない**（id の後ろに和文の註釈を置くと不一致）——印が在るのに「印なし」と数えられる。\nいずれも偽陰性であり黙る。本反復では起票までとし、是正は INC-054 の分析を経てから行う。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$1.1262）直後に、噴き出しの予測を統治木 307 文書で実測し、\\b/\\w への依存を配布物の全スクリプトで棚卸しした。",
+        "claim": "噴き出しは 78→81（+3）で起きない。\\b/\\w への同じ依存は他所に 3 箇所在る。"
+      },
+      "evidence_ref": "assurance/ledger/incidents.json の INC-054"
     }
   ]
 }
