@@ -117,10 +117,24 @@ assurance/.venv/bin/python assurance/harness/map_coverage.py --book jerg       #
 assurance/.venv/bin/python assurance/harness/discover.py                      # 創出と独立批判
 assurance/.venv/bin/python assurance/harness/attack_evaluator.py               # 評価器への故障注入 (ADR-120)
 assurance/.venv/bin/python assurance/harness/smoke.py            # 実 SDK 煙試験 (0/2/3/4)
+```
+
+門（§7.1 の2・§8）。**引数まで含めて一つの門である** —— 落とすと覆う範囲が変わる（INC-049）:
+
+```bash
 python3 -m unittest discover -s assurance/tests                  # レーン決定論試験
 python3 plugin/run_tests.py                                      # 本体試験
-python3 plugin/scripts/docs-audit.py --root doctrine_docs --json # 監査
+python3 plugin/scripts/docs-audit.py --root doctrine_docs --json --today <今日>  # 監査
+python3 plugin/scripts/docs-linter.py --batch                    # linter 一括
+python3 plugin/scripts/render-projection.py all --check          # 投影
+python3 scripts/consistency-check.py                             # linter と audit の一致
+python3 plugin/scripts/code-audit.py --fail-on error             # コードの監査
+python3 scripts/release-check.py --diff-base origin/main         # 版・衛生・記録の義務
+assurance/.venv/bin/python assurance/harness/orchestrator.py validate  # 正本の自己整合
 ```
+
+`--today` を落とすと壁時計を読み、`--diff-base` を落とすと記録の義務を検めない。
+どちらも**手元が緑でも CI が赤くなる**形である（WATCH-001 第11項・INC-049）。
 
 ## 7. してはならないこと
 
@@ -139,7 +153,10 @@ python3 plugin/scripts/docs-audit.py --root doctrine_docs --json # 監査
 1. 変更が本反復の一つの主題に収まっている（`CONTRIBUTING.md`「一つの主題に絞る」）。
    主題が二つ終わったら **PR を二つ**に分ける。一つの反復で複数 PR を出してよい。
 2. §8 の全門が緑（レーン試験・本体試験・linter 一括・監査・投影・release-check・
-   consistency-check・code-audit）。
+   consistency-check・code-audit）。**門は名前でなく呼び方まで含めて指す** ——
+   `release-check.py` は `--diff-base origin/main` を渡したときだけ記録の義務
+   （`plugin/` に触れる差分は CHANGELOG.md に触れること）を検める。渡さずに
+   走らせた緑は CI の緑を意味しない（INC-049。`--today` と同じ族）。
 3. PR の CI が pass。merge 直前の判定は `merge_gate.py` の三値による（適合だけを
    適合とし、走れない CI は前提欠如で待機。ADR-129）。**赤いまま merge しない。
    赤を避けるために門を緩めない。**
@@ -161,7 +178,8 @@ PR を出し、merge して閉じる。分量の目安は**評価セッション
 
 - CURATE: 重複 scenario・重複原則の統合、superseded の整理、平時コンテキストの最小化。
   各ループ終端で全門（レーン試験・本体試験・linter 一括・監査・投影・release-check・
-  consistency-check・code-audit）を緑にする。
+  consistency-check・code-audit）を緑にする。呼び方は §6 の一覧に従う
+  （引数を落とすと覆う範囲が変わる門が在る。§7.1 の2）。
 - **「テストが緑」を理由に止まらない。**次の反復で扱うことを台帳へ積んでから閉じる。
 
 ### 反復を閉じてよい条件（どれか一つ）
