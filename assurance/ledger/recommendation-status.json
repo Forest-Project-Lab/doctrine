@@ -3221,6 +3221,41 @@
       "owner_decision_kind": "外部費用や credential",
       "evaluator_owner_required": true,
       "investigated": "2026-08-16 本反復（APPLY_FINDINGS。実物確認）"
+    },
+    {
+      "incident_id": "INC-042-decision-and-oracle-land-in-one-diff",
+      "index": 1,
+      "state": "owner",
+      "note": "UNKNOWN/warn を異常として扱う条件と閉じる責任の割当。**同じ決定が 12 件の推奨・10 事象から立っていることを機械で数えた**（incidents.json の consolidation_2026-08-16 に一覧と各件の材料を残した）。門の判定基準を warn まで広げると既存の緑が赤になりうるので、類型は『互換性を壊す変更』（INC-039#4 の分類に揃える）。**INC-046#3 だけが反対向きの入力** —— 基準線（UNKNOWN 件数の反復間変動）が定まるまで保留せよ、という順序の主張である。判断は『何を条件とするか』と『いつ決めるか』の二段になる。",
+      "owner_decision_kind": "互換性を壊す変更",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。機械走査で 12 件を確定し、束ねた）"
+    },
+    {
+      "incident_id": "INC-042-decision-and-oracle-land-in-one-diff",
+      "index": 7,
+      "state": "landed",
+      "note": "本分析が前提とした機構の実在を確認した。**一つは実在せず、分析の該当部分は撤回に当たる。**(a) verify_fix / green_is_green: **実在**（verify_fix.py と、verify 記録の record.checks に green_is_green が在る。main の記録は 3 件）。(b) 順序規定（決定 → 仕様 → 実装 → 試験）: **実在**（plugin/skills/change-impact/SKILL.md が『the mandated order — decision (ADR) first, then current spec (SPEC), then implementation, then test』と定める）。(c) **『保証レーンは一反復＝一 PR で回している』: 実在しない。**運転手順 §7.1.1 は明示的に『主題が二つ終わったら PR を二つに分ける。一つの反復で複数 PR を出してよい』と書いている。**私は現に一反復で PR を二つ出した**（#316 と #317）。したがって統制欠陥#0 が言う『二つの制御が構造的に衝突する』の前提は成り立たない —— 衝突は無く、単に**決定を先に出す運びを採っていなかっただけ**である。実際 ADR-167 で決定と実装を分けたところ、独立検証の green_is_green は UNKNOWN から PASS へ変わった（本セッションの測定）。**評価者の判定そのものは書き換えない（§4）** —— 撤回に当たる旨を処遇として記録するにとどめる。なお統制構造の 12 要素に verify_fix も順序規定も含まれていないので、要素として足すかは INC-032#4・INC-035#0 と同じ主題である。",
+      "evidence_ref": ".claude/skills/assurance-loop/SKILL.md",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。前提の実在確認）"
+    },
+    {
+      "incident_id": "INC-042-decision-and-oracle-land-in-one-diff",
+      "index": 2,
+      "state": "pending",
+      "note": "同一 diff に『ADR の新規追加』と『既存試験の期待値変更』が同居した場合に PR へ印を付ける検査。未実施。**#7 で前提が崩れたので、この推奨の価値も読み直しが要る** —— 衝突が構造的でないなら、印は『運びを誤った』ことの検出であって、構造の是正ではない。**ただし検出そのものは今も要る** —— 本セッションで測ったとおり、同居した差分では独立検証が green_is_green を PASS にできない（INC-041 で実測）。評価者は所有者判断を印したが、CI に検査を足すこと自体は六類型に当たらない（ADR-127）。実装は INC-036#3（何を検めた緑かの範囲を出す）と同じ設計に乗る。",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "CI に検査を一つ足す変更であり、六類型（互換性・配布境界や保証範囲・復旧不能な削除・外部費用や credential・評価 model 最低線・版番号とリリース）のどれにも当たらない。既存の緑を赤にするかは実装時の設計事項で、印を付けるだけなら互換性に触れない（ADR-127）。",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。前提の実在確認）"
+    },
+    {
+      "incident_id": "INC-042-decision-and-oracle-land-in-one-diff",
+      "index": 3,
+      "state": "pending",
+      "note": "既存試験の断言の純減を diff から算出し、根拠となる決定 id の参照が無い純減を人へ回す。未実施。**本セッションの測定が対象の大きさを示している** —— 直近 200 コミットで ADR 追加と既存試験の変更が同居したのは 83 件、うち assert が純減したのは 1 件だけ（INC-042 の測定）。騒音にならない見込みは立っている。#2 と同じ変更に乗る。",
+      "evaluator_owner_required": true,
+      "owner_override_reason": "diff から量を算出して人へ回す検査であり、六類型のどれにも当たらない（ADR-127）。",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。前提の実在確認）"
     }
   ]
 }
