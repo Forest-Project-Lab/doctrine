@@ -1,0 +1,45 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "reproduce-red",
+  "incident_id": "INC-050-triage-notes-are-read-as-current-state",
+  "recommendation": "#0 —— investigated 欄を自由型から構造（observed_at・observed_by・method・claim）へ移し、str/bool/None をそのまま受け付けない検査を決定論試験に加える。既存 429 件は移行時に observed_at 不明として明示的に印を付け、欠測を欠測として残す（true を日付へ推測変換しない）。",
+  "generated_at": "2026-08-16T07:20:00Z",
+  "git_sha": "612ecab",
+  "phase": "before-fix",
+  "command": "python3 -m unittest discover -s assurance/tests -p test_investigated_is_an_observation.py",
+  "returncode": 1,
+  "expect": "修正前に FAIL すること（最初から緑は再現と認めない）",
+  "measured_against_shipped_file": {
+    "note": "出す試験ファイルそのものを、修正前の樹（HEAD = 612ecab）へ複写して走らせた。worktree を切って測っている。赤の記録と出す試験は同じ 7 件である。",
+    "tree": "HEAD (612ecab) + assurance/tests/test_investigated_is_an_observation.py のみ複写",
+    "ran": 7,
+    "failures": 4,
+    "errors": 0,
+    "passed": 3
+  },
+  "observed_failures": [
+    "FAIL: test_the_real_ledger_has_no_free_form_investigated —— 実台帳に自由型 412 件（str 389・bool 23）",
+    "FAIL: test_the_canon_rejects_a_free_form_observation —— 正本が自由型を咎めない",
+    "FAIL: test_the_canon_rejects_an_observation_missing_a_field —— 正本が欄の欠落を咎めない",
+    "FAIL: test_the_canon_rejects_a_missing_date_without_a_reason —— 正本が理由なき欠測を咎めない"
+  ],
+  "green_before_and_after": [
+    "test_every_observation_carries_the_four_fields —— 修正前は構造の所見が 0 件なので空虚に緑（vacuously true）。**是正後の緑とは意味が違う。**移行後は 412 件に対して実際に検めている。",
+    "test_an_absent_field_is_not_an_offence —— 欄が無い処遇（26 件）を咎めないこと。過剰是正の歯止めであり赤→緑の観測ではない。",
+    "test_a_missing_date_is_marked_not_guessed —— 修正前は構造が 0 件なので空虚に緑。移行後は真偽値由来の 23 件に対して実際に検めている。"
+  ],
+  "migration": {
+    "文字列→構造（日付あり）": 389,
+    "真偽値→構造（観測日は欠測のまま）": 23,
+    "欄なし（そのまま）": 26,
+    "合計": 438,
+    "date_extraction": "文字列 389 件は**全件が原文に YYYY-MM-DD を含んでいた**ので、それを機械抽出して observed_at に置いた。原文は claim に残してある。抽出であって推測ではない。",
+    "no_guessing": "真偽値 23 件は observed_at を null のままにし、method に『元の値は真偽値で、いつ何を見たかを持たない』と書いた。日付へ推測変換すれば古びの計算が嘘の値を返す（推奨#0 の明示的な要求）。"
+  },
+  "found_during_the_fix": {
+    "claim": "`investigated` を読む機構は**一つも無かった**。orchestrator・レーン試験・scripts のいずれも参照しておらず、書くだけの欄だった。`next_actions` の『調査済み未着手 265 件』は処遇行の有無から導いており、この欄を見ていない。",
+    "how_measured": "assurance/harness/*.py・assurance/tests/*.py・scripts/*.py を grep。ヒットは本反復で足した _validate_observation だけ。",
+    "family": "INC-048（rubric_sha256 を刻むが読まない）・INC-012・INC-015 と同じ『書き手を足したが読む段を足さなかった』族。",
+    "residual": "本反復で足した読み手は**形**だけを読む。observed_at の経過日数を読む機構は推奨#2 の側にあり、未着手である。したがって『いつ見たか』はまだ誰も問うていない。"
+  }
+}
