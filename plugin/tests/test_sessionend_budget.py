@@ -332,3 +332,80 @@ class DebtMarkerIsPerRunTest(unittest.TestCase):
         _auditcache.write_due(b, proj=self.proj)
         self.assertEqual(len(_auditcache.read_due(proj=self.proj)), 2,
                          "長い識別子で切り詰められ、別の実行が同じ名になった")
+
+
+class DueMarkNeverOverwritesTest(unittest.TestCase):
+    """印は既存を上書きしない。衝突したら別鍵で新規に置く（INC-052 推奨#0）。
+
+    鍵は実行ごとに一意な値を渡す約束だが、**約束は機構ではない**。同じ鍵が
+    二度来たときに上書きすると、二つの実行が一つの負債に潰れ、片方の完走が
+    両方を消す（INC-052 そのもの）。ここでは上書きを構造で禁じ、衝突時は
+    別鍵で新規に置いて件数を保つ。
+
+    セッションの識別は**印の中身**が持つ。鍵が担うのは実行の同一性である。
+    """
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+
+    def test_the_same_key_twice_leaves_two_marks(self):
+        a = _auditcache.write_due("same-key", proj=self.tmp)
+        b = _auditcache.write_due("same-key", proj=self.tmp)
+        self.assertTrue(a and b)
+        self.assertNotEqual(a, b, "同じ鍵の二度目が一度目を上書きした")
+        self.assertEqual(len(_auditcache.read_due(proj=self.tmp)), 2)
+
+    def test_clearing_the_first_leaves_the_second(self):
+        a = _auditcache.write_due("same-key", proj=self.tmp)
+        _auditcache.write_due("same-key", proj=self.tmp)
+        _auditcache.clear_due(os.path.basename(a)[:-5], proj=self.tmp)
+        self.assertEqual(len(_auditcache.read_due(proj=self.tmp)), 1)
+
+    def test_the_caller_can_learn_the_key_that_was_used(self):
+        """呼び手は使われた鍵を返り値から知れる（子へ渡す鍵が実物と一致する）。"""
+        path = _auditcache.write_due("k", proj=self.tmp)
+        _auditcache.write_due("k", proj=self.tmp)
+        used = os.path.basename(path)[:-5]
+        self.assertTrue(_auditcache.clear_due(used, proj=self.tmp),
+                        "返り値から導いた鍵で消せない")
+
+    def test_the_mark_carries_the_session(self):
+        os.environ["CLAUDE_SESSION_ID"] = "sess-XYZ"
+        self.addCleanup(os.environ.pop, "CLAUDE_SESSION_ID", None)
+        path = _auditcache.write_due("k", proj=self.tmp)
+        with open(path, encoding="utf-8") as fh:
+            body = json.load(fh)
+        self.assertEqual(body.get("session"), "sess-XYZ")
+
+    def test_the_mark_omits_the_session_when_there_is_none(self):
+        os.environ.pop("CLAUDE_SESSION_ID", None)
+        os.environ.pop("CLAUDE_CODE_SESSION_ID", None)
+        path = _auditcache.write_due("k", proj=self.tmp)
+        with open(path, encoding="utf-8") as fh:
+            body = json.load(fh)
+        self.assertNotIn("session", body,
+                         "取れないときに埋めてはならない（INC-001 推奨#0 と同じ）")
+
+
+class ChildClearsTheKeyThatWasActuallyUsedTest(unittest.TestCase):
+    """子へ渡す鍵は、印に実際に使われた鍵である（INC-052 推奨#0 の帰結）。
+
+    `write_due` は衝突時に別鍵で置く。呼び手が**入力の**鍵を子へ渡すと、
+    子は存在しない鍵を消しに行き、印は永久に残る —— 今度は過大計数になる。
+    上書きを禁じただけでは足りず、返り値を読む段が要る。
+    """
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+
+    def test_the_key_comes_from_the_written_path(self):
+        _auditcache.write_due("dup", proj=self.tmp)          # 先客を置く
+        path = _auditcache.write_due("dup", proj=self.tmp)   # 衝突 → 別鍵
+        key = docs_audit._due_key_from_path(path, "dup")
+        self.assertNotEqual(key, "dup")
+        self.assertTrue(_auditcache.clear_due(key, proj=self.tmp))
+        self.assertEqual(len(_auditcache.read_due(proj=self.tmp)), 1)
+
+    def test_it_falls_back_to_the_input_when_nothing_was_written(self):
+        """印が置けなかったときも子は走る（鍵は入力のまま。消せなくてもよい）。"""
+        self.assertEqual(docs_audit._due_key_from_path(None, "tok"), "tok")

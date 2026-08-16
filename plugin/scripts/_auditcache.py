@@ -237,8 +237,17 @@ def due_dir(proj=None):
 def write_due(token, proj=None, now=None):
     """負債の印を置く。最善努力(決して例外を投げない)。返り値はパスか None。
 
-    token はセッションの識別子。無ければ呼び出し側が時刻から作る。ファイル名に
-    使うので、英数とハイフン以外は落とす(ファイル名による注入を作らない)。
+    token は**実行ごとに一意**な鍵。ファイル名に使うので、英数とハイフン以外は
+    落とす(ファイル名による注入を作らない)。
+
+    **既存を上書きしない**(INC-052 推奨#0)。鍵の一意は呼び手の約束だが、約束は
+    機構ではない —— 同じ鍵が二度来たときに上書きすると、二つの実行が一つの負債に
+    潰れ、片方の完走が両方を消す。衝突したら別鍵(接尾を足す)で新規に置き、件数を
+    保つ。**呼び手は返り値のパスから、実際に使われた鍵を知る**（子へ渡す
+    `--clear-due` の値は入力ではなくこちらでなければならない）。
+
+    セッションの識別は鍵ではなく**中身**が持つ。取れないときは載せない
+    (時刻などで埋めると別のセッションと見分けが付かない。INC-001 推奨#0 と同じ)。
     """
     safe = re.sub(r"[^A-Za-z0-9_-]", "", str(token or ""))[:64]
     if not safe:
@@ -246,16 +255,28 @@ def write_due(token, proj=None, now=None):
     try:
         d = due_dir(proj)
         os.makedirs(d, exist_ok=True)
-        path = os.path.join(d, safe + ".json")
         stamp = (now or datetime.datetime.now(datetime.timezone.utc)).strftime(
             "%Y-%m-%dT%H:%M:%SZ")
-        # 一時名に pid を混ぜる(ADR-075)。write_stamp と同じ形。
-        tmp = "%s.%d.tmp" % (path, os.getpid())
-        with open(tmp, "w", encoding="utf-8") as fh:
-            fh.write(json.dumps({"token": safe, "queued_at": stamp},
-                                ensure_ascii=False))
-        os.replace(tmp, path)
-        return path
+        session = session_token()
+        for attempt in range(64):
+            key = safe if attempt == 0 else "%s-%d" % (safe[:60], attempt)
+            path = os.path.join(d, key + ".json")
+            body = {"token": key, "queued_at": stamp}
+            if session:
+                body["session"] = session
+            # 一時名に pid を混ぜる(ADR-075)。write_stamp と同じ形。
+            tmp = "%s.%d.tmp" % (path, os.getpid())
+            with open(tmp, "w", encoding="utf-8") as fh:
+                fh.write(json.dumps(body, ensure_ascii=False))
+            try:
+                # O_EXCL 相当。既存が在れば置き換えずに次の鍵へ。
+                os.link(tmp, path)
+            except OSError:
+                os.remove(tmp)
+                continue
+            os.remove(tmp)
+            return path
+        return None
     except OSError:
         return None
 
