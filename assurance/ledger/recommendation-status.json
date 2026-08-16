@@ -159,16 +159,17 @@
     {
       "incident_id": "INC-002-termcheck-ascii-substring",
       "index": 2,
-      "state": "pending",
-      "note": "閉じ条件に軸展開の段は無い —— SKILL.md・ADR-117・cast_analysis.py とも『失敗様式の軸へ展開して反例集合へ変換する』段の grep 該当なし。INC-011#1 と重複統合のまま。手順追加は ADR-127 六類型に当たらずレーン内裁量で、owner ではない。",
+      "state": "landed",
+      "note": "**着地。ただし手順へ散文を足すのではなく、軸を機械の表として持たせた。**\n`test_script_boundary_axis.py` の `AXES` が失敗様式の軸（置き方）を関数の表として持ち、軸を足すと既存の全規則にその軸の反例が自動で生まれる（`_GLUE` が接着文字の軸をそう持っているのと同じ形。あちらの軸は接着文字、こちらは文字体系）。散文の段は書き手の記憶に依存するが、表は消えれば赤くなる。\n**軸を当てた結果、実際に欠陥が出た（INC-053）。**`\\b` は Python の `\\w` が和文を含むため和文密着で成立せず、`CALQUE_WORDTRAP` と `UNDEFINED_TERM` の 2 規則が黙って外していた。大小文字・全角半角の軸では異常なし、**語境界 × 文字体系**の軸で当たった。手順へ散文を足すだけでは見つからなかった。\n**閉じ条件へ含める側（推奨の後半）は未着手。**ADR-117/121 の四条件の改訂は統治木の決定の変更であり ADR を要する。評価者は本推奨に owner_decision_required=true を立てており、2026-08-08 の処遇がそれを覆していた（owner_override_reason 在り）。**軸の表を置くところまではレーン内裁量で正しいが、閉じ条件の改訂はやはり所有者判断である** ——その半分は残っている。",
       "investigated": {
-        "observed_at": "2026-08-08",
+        "observed_at": "2026-08-16",
         "observed_by": "ASSURANCE_LANE",
-        "method": "移行時に自由型から構造化。観測日は原文に書かれていた日付を機械抽出した（推測ではない）。",
-        "claim": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+        "method": "手順へ散文を足す前に、推奨が挙げる軸（大小文字・全角半角・語境界×文字体系）で検査器を直接測った。語境界の軸で 2 規則の偽陰性が出たので INC-053 として起票し、軸を機械の表として実装した。",
+        "claim": "軸の段は手順にも実装にも無かった。軸を当てると実際に欠陥が出た。"
       },
       "evaluator_owner_required": true,
-      "owner_override_reason": "閉じ条件に軸展開の段は無い —— SKILL.md・ADR-117・cast_analysis.py とも『失敗様式の軸へ展開して反例集合へ変換する』段の grep 該当なし。INC-011#1 と重複統合のまま。手順追加は ADR-127 六類型に当たらずレーン内裁量で、owner ではない。"
+      "owner_override_reason": "閉じ条件に軸展開の段は無い —— SKILL.md・ADR-117・cast_analysis.py とも『失敗様式の軸へ展開して反例集合へ変換する』段の grep 該当なし。INC-011#1 と重複統合のまま。手順追加は ADR-127 六類型に当たらずレーン内裁量で、owner ではない。",
+      "evidence_ref": "plugin/tests/test_script_boundary_axis.py の AXES / plugin/scripts/_termcheck.py の _ASCII_BEFORE / assurance/ledger/red/INC-053-word-boundary-fails-against-japanese-adjacency.json"
     },
     {
       "incident_id": "INC-002-termcheck-ascii-substring",

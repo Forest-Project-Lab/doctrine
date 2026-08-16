@@ -1076,6 +1076,22 @@
       "fix_note": "#344 で鍵を実行ごとに一意（マイクロ秒 + pid + セッション、一意な側を先頭）にし、本反復でさらに `write_due` を**上書きしえない生成**（os.link による O_EXCL 相当。衝突時は別鍵で新規）へ改め、セッション識別子を鍵ではなく**印の中身**へ移した。あわせて呼び手が**実際に使われた鍵**を返り値から受け取るようにした —— 上書きを禁じただけでは、衝突時に子が存在しない鍵を消しに行き、今度は印が永久に残って**過大計数**になる。検算は verify_fix.py が PASS（red_was_red / green_is_green / single_change の三 checks とも PASS。$0.3949）。",
       "fix_commit": "839039a",
       "verify_ref": "assurance/ledger/verify/INC-052-debt-marker-collides-when-keyed-by-session.json"
+    },
+    {
+      "id": "INC-053-word-boundary-fails-against-japanese-adjacency",
+      "date": "2026-08-16",
+      "summary": "用語チェッカーの二つの規則が `\\b`（正規表現の語境界）で英字語を囲んでいるが、**Python の `\\w` は和文を含む**ので、英字語が仮名・漢字に密着していると境界が成立せず**検出しない**。実測: 「この文書はstatusを扱う。」→ 咎めない ／「この文書は status を扱う。」→ CALQUE_WORDTRAP。「まずTDDから始める。」→ 咎めない ／「まず TDD から始める。」→ UNDEFINED_TERM。日本語の散文で英字語を空白なしに書くのは普通なので、**この形の見落としは常態でありうる**。",
+      "detected_by": "2026-08-16 の反復。INC-002 推奨#2（既知類型を失敗様式の軸へ展開して反例集合へ変換する）に着手し、手順へ散文を足す前に**軸そのもので検査器を測った**。大小文字・全角半角の軸では異常が出ず（`_check_wordtrap` は case-insensitive）、**語境界 × 文字体系**の軸で当たった。軸を一つずつ当てなければ見つからなかった。",
+      "evidence_refs": [
+        "plugin/scripts/_termcheck.py",
+        "plugin/tests/test_termcheck_mandated_words.py",
+        "assurance/ledger/cast/INC-002-termcheck-ascii-substring.json"
+      ],
+      "evidence_note": "該当は 2 箇所。(1) `_check_wordtrap` の `re.compile(r\"\\b\" + en_low + r\"\\b\")`（CALQUE_WORDTRAP）。(2) `_SPECIAL_TERM_RE = re.compile(r\"\\b([A-Z]{2,}[0-9]*|[A-Za-z]+[0-9]+)\\b\")`（UNDEFINED_TERM）。直接確認: `re.search(r'\\bstatus\\b', 'はstatusを')` は False、`' status '` と `'「status」'` は True —— **鉤括弧や空白があれば効く。効かないのは仮名・漢字に密着したときだけ**である。`re.match(r'\\w','は')` は True。禁止同義語（和文）は `\\b` を使わないので影響しない。",
+      "impact": "**INC-002 の鏡像**である。根は同じ「日本語に語の境界が無い」だが、INC-002 は部分文字列照合による**偽陽性**、こちらは `\\b` による**偽陰性**。偽陽性は書き手が気付いて騒ぐが、**偽陰性は誰も気付かない** —— 検査器が黙るので、統治文書に一語訳の罠や未定義の略語が和文密着で書かれている限り通り続ける。既に `_GLUE` は「軸であって固定の一覧ではない」と制度化され `test_identifier_glue_axis_is_covered` が守っているが、その軸は**接着文字**であって**文字体系**ではなかった。軸の一覧に文字体系が無かったので、同じ族の二つ目が残っていた。",
+      "fixed": false,
+      "control_flaw_hint": "既知類型（語境界の取り違え）を軸へ展開する段が手順に無く、展開が実装者の思いつきに委ねられていた。接着文字の軸は誰かが気付いて制度化したが、文字体系の軸は気付かれなかった。INC-002 推奨#2 がまさにこの段を求めている。",
+      "evidence_kind": "measurement"
     }
   ]
 }
