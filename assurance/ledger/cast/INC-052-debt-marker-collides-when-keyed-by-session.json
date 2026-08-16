@@ -1,0 +1,831 @@
+{
+  "accepted_flaws": [
+    {
+      "control_element_id": "SESSION_END_AUDIT",
+      "description": "負債の印は token をそのままファイル名にする（_auditcache.write_due）。#338 の変更で token が『時刻から作る一意な値（queued-%Y%m%dT%H%M%SZ）』から『セッション識別子』へ変わり、同一セッション内の 2 回目の write_due が 1 回目の印と同じ名前へ書く。実測では 2 回の write_due に対し read_due は 1 件、clear_due 1 回で 0 件になる。すなわち『予約を置く』という制御動作が、既存の予約を消す動作を兼ねてしまっている。印の鍵が要求しているのは実行ごとの一意性であり、投入された値の一意性の粒度はセッションである（粒度の不一致）。",
+      "evidence_ref": "plugin/scripts/_auditcache.py（write_due / session_token）、evidence_note の一時ディレクトリ実証",
+      "flaw_type": "制御動作が誤っている",
+      "normative_refs": [
+        "process-model-inconsistency-causes-unsafe-control",
+        "プロセスモデルと実状態の不整合",
+        "software-does-not-fail-requirements-defect",
+        "causality-as-inadequate-control-not-failure",
+        "why-it-made-sense-at-the-time"
+      ],
+      "why_it_seemed_adequate": "セッション識別子は要約に載せる文脈情報として実際に有用であり、『一つのセッション＝一つの SessionEnd ＝一つの監査』という素朴なプロセスモデルの下では、鍵としても自然で読みやすい値に見えた。旧 token は秒精度の時刻であり同一秒内の二重呼び出しで衝突しうる既知の弱さを持っていたため、セッション識別子はむしろ安定した鍵への改善に見えた。鍵に必要な一意性の粒度は要求としてどこにも書かれておらず、値の置換時に照合すべき制約が存在しなかった。"
+    },
+    {
+      "control_element_id": "SESSION_END_AUDIT",
+      "description": "『要約を書けたときだけ印を消す』という制御は在るが、置いた予約の件数と現存する印の件数を突き合わせる手掛かりが無い。write_due が既存の印を上書きしたことも、clear_due 一回が二件分の負債を消したことも、どこにも記録されず、事後に差分として読める痕跡が残らない。制御アクション（予約する／消す）に対応するフィードバック（予約はいくつ在るべきか）が対で設計されていない。",
+      "evidence_ref": "plugin/scripts/_auditcache.py（read_due / clear_due）",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "control-action-requires-feedback",
+        "全コントロールループにフィードバック必須",
+        "モデル一致のためのフィードバック提供"
+      ],
+      "why_it_seemed_adequate": "印はファイルの存在そのものが状態であり、置く／消すの二動作しかない単純な機構に見えた。単純な機構には突き合わせが要らないという前提が置かれ、実際に鍵が実行ごとに一意である限りその前提は成立していた。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "変更が過去の是正の前提を破っていないかを、変更の時点で再評価する段（変更管理に相当する段）が無い。#338 は識別子の生成規則を変えたが、その識別子が INC-039 の是正（負債の印）の一意性前提を支えていたことを照合する契機が置かれていない。同様に、diff が触った経路に対応する試験が在るかを検める段も無く、決定論試験の成否という手掛かりは『在る試験が緑である』ことしか言わない。",
+      "evidence_ref": "assurance/harness/orchestrator.py、plugin/tests/test_sessionend_budget.py",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "変更時の想定再評価をMOCで強制",
+        "変更管理手順の強制と変更時の前提再評価",
+        "全変更のハザード分析と承認",
+        "変更後に事故が起きる前提の変更管理",
+        "trace-why-design-flaw-was-introduced"
+      ],
+      "why_it_seemed_adequate": "#338 の宣言された目的は『要約に session を載せる』ことであり、その目的に対応する試験は実際に書かれていた。同じ diff が別の要求（印の鍵の一意性）に触れていることは、要求として明文化されていなかったため、変更の範囲としては目的どおり閉じているように見えた。台帳は事象を閉じるまで追跡する設計になっており、追跡は十分に手厚く見えた。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "過去の是正が後続の変更を生き延びているかを再検査する段が無い。INC-039 の是正は『走らなかった監査が負債として残る』という性質だったが、その性質を退行監視の対象として登録し、以後の変更のたびに検め直す経路が置かれていない。台帳は事象を閉じるが、是正の耐久性は監視していないため、塞いだ穴が後で部分的に開き直したことを体系側は言えない。",
+      "evidence_ref": "assurance/ledger/incidents.json（INC-039）",
+      "flaw_type": "統制自身の劣化を検出できない",
+      "normative_refs": [
+        "是正措置の有効性証拠の収集",
+        "勧告の実施と有効性確認",
+        "推奨事項の責任割当実施検査フィードバック",
+        "audit-findings-must-be-closed",
+        "symptom-vs-systemic-cause"
+      ],
+      "why_it_seemed_adequate": "是正が済み事象が閉じた時点で、その事象に関する仕事は完了したと読むのが自然であり、閉じた事象を再び監視対象として保持し続ける負荷は、当時の利得が見えにくかった。是正の有効性は『修正が入ったこと』で示されたと見なせた。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "一つの値（session token）が二つの利用側に同時に供されている。要約の側は『どのセッションの監査か』という文脈識別子を求め、負債の印の側は『どの実行の予約か』という実行ごとの識別子を求める。二つの要求は両立しないが、値を共有する二者の要求を突き合わせる場が構造上どこにも無く、片方の要求に合わせた変更が他方の要求を黙って破った。",
+      "evidence_ref": "plugin/scripts/_auditcache.py、plugin/scripts/docs-audit.py",
+      "flaw_type": "統制どうしの調整の欠如",
+      "normative_refs": [
+        "verify-decomposition-assumptions",
+        "control-both-behavior-and-interaction",
+        "単一コンポーネント集中の回避",
+        "破られた想定の再検討"
+      ],
+      "why_it_seemed_adequate": "同じ概念（セッション）を指す値を一つにまとめることは重複を減らす良い整理に見え、二つの利用側は同じ意味の値を欲しているように読めた。要求の差（一意性の粒度）は値の見た目には現れない。"
+    },
+    {
+      "control_element_id": "CI_RELEASE_CHECK",
+      "description": "merge 前に赤で止める権能は在るが、『変更された経路に対応する試験が在るか』を示す手掛かりが無い。負債の経路には試験が 19 件在り被覆されているように見えるが、#338 が変えた token 生成の経路だけが覆われていない。ジョブの成否は『書かれている試験が通ったこと』を言うのみで、『書かれていない試験の不在』は表現できない。同一セッションで write_due が二度起きる筋書き自体が試験の集合に存在しなかった。",
+      "evidence_ref": "plugin/tests/test_sessionend_budget.py、.github/workflows",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "監査の検出力評価",
+        "検出失敗の原因調査",
+        "監査のすり抜け時に監査手順を是正",
+        "最低限準拠を超える安全活動の実効性",
+        "信頼性と安全性の分離"
+      ],
+      "why_it_seemed_adequate": "19 件という試験の厚みは、その経路が十分に検められている証左として読めた。試験の件数と経路の被覆は日常的に同一視され、緑のジョブは安全の表明として機能してきた（信頼性と安全性の混同）。"
+    },
+    {
+      "control_element_id": "SESSION_START_CONTRACT",
+      "description": "契約注入は audit-due を読んで『監査の負債 N 件』を告げるが、上書きが起きた場合の N は実際の未実行数より小さい。注入自体は正常に動作し、値は自信を持って提示されるため、過少な数が正しい数として下流（読み手のメンタルモデル）に入る。情報を提供する側の設計欠陥が、受け手には検出不能な形で伝播する。",
+      "evidence_ref": "plugin/scripts/inject-contract.py、.claude/.cache/audit-due/",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "defects-in-information-providing-systems",
+        "include-information-supplier-defect",
+        "リスク情報の不透明な集約禁止"
+      ],
+      "why_it_seemed_adequate": "注入は印の件数を素直に数えて伝えるだけであり、数え方に解釈の余地は無いように見えた。印が実際の未実行数と一対一で対応することは、印を置く側の責任として完結していると読めた。"
+    },
+    {
+      "control_element_id": "HEARTBEAT",
+      "description": "鼓動は last-audit.json の古びと導入複製の版遅れを警告するが、『走らなかった監査が数から落ちたこと』は古びとして現れない。片方の子が完走すれば要約は新しくなり、もう片方の未実行が消えていても指標は新鮮を示す。すなわち現在の指標は、在るものの新しさを測っており、無くなったものを測っていない（対象リスクと因果的に対応しない代理指標になっている）。",
+      "evidence_ref": "plugin/scripts/gov-heartbeat.py、.claude/.cache/last-audit.json",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "先行指標の妥当性・代理指標の禁止",
+        "全体健全性と部分健全性の分離評価",
+        "要約統計偏重による傾向情報の喪失"
+      ],
+      "why_it_seemed_adequate": "監査の健全性を『最後に走った時刻の新しさ』で測ることは、監査が走らない事象を捉える指標として直観に合い、INC-005 以来この指標で実際に版遅れを検出できていた。"
+    },
+    {
+      "control_element_id": "WARNING_BACKLOG",
+      "description": "負債・警告の滞留を異常とする条件と、閉じる責任の割当が未定であるため、負債件数が減ることは常に良化として読める。数え落としによる減少と、監査完走による正当な減少を区別する基準が構造上存在せず、この事象が生む減少は滞留統制の視野の外に落ちる。",
+      "evidence_ref": "doctrine_docs/packaging/procedures/PROC-001-development-norms.md",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "指摘欠点の是正完了追跡",
+        "監視責任の空白排除",
+        "責任の空白は構造再設計",
+        "audit-findings-must-be-closed"
+      ],
+      "why_it_seemed_adequate": "滞留の閾値と責任の割当は所有者判断として意図的に保留されていた（INC-039 推奨#4）。保留は判断待ちであって欠落ではないため、当面は件数の推移を読むだけで足りると見えた。"
+    },
+    {
+      "control_element_id": "PLUGIN_DISTRIBUTION",
+      "description": "この欠陥は導入複製の側で実行される機構に在り、修正が入っても複製が更新されるまで過少計数は続く。リポジトリ側からは、どの複製がどの世代の鍵生成規則で動いているかを観測できないため、『いつ過少計数が止まったか』を体系側は言えない。同時に、この事象に対する検出器を複製側に置くと、版が遅れた複製では検出器も遅れる（INC-005 と同型の共通原因）。",
+      "evidence_ref": ".claude-plugin/marketplace.json",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "共通の体系的要因による多重防護の無効化",
+        "供給者による変更の明示通知",
+        "計画外変化の検出手段"
+      ],
+      "why_it_seemed_adequate": "配布は利用者の操作に依存するという性質は既知の穴として受け入れられており、機能の追加については妥当な割り切りだった。負債の計数のような統治の生存に関わる値が同じ経路に載っていることは、機能と統治の区別として明示されていなかった。"
+    }
+  ],
+  "analysis": {
+    "confidence": "medium",
+    "control_flaws": [
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "負債の印は token をそのままファイル名にする（_auditcache.write_due）。#338 の変更で token が『時刻から作る一意な値（queued-%Y%m%dT%H%M%SZ）』から『セッション識別子』へ変わり、同一セッション内の 2 回目の write_due が 1 回目の印と同じ名前へ書く。実測では 2 回の write_due に対し read_due は 1 件、clear_due 1 回で 0 件になる。すなわち『予約を置く』という制御動作が、既存の予約を消す動作を兼ねてしまっている。印の鍵が要求しているのは実行ごとの一意性であり、投入された値の一意性の粒度はセッションである（粒度の不一致）。",
+        "evidence_ref": "plugin/scripts/_auditcache.py（write_due / session_token）、evidence_note の一時ディレクトリ実証",
+        "flaw_type": "制御動作が誤っている",
+        "normative_refs": [
+          "process-model-inconsistency-causes-unsafe-control",
+          "プロセスモデルと実状態の不整合",
+          "software-does-not-fail-requirements-defect",
+          "causality-as-inadequate-control-not-failure",
+          "why-it-made-sense-at-the-time"
+        ],
+        "why_it_seemed_adequate": "セッション識別子は要約に載せる文脈情報として実際に有用であり、『一つのセッション＝一つの SessionEnd ＝一つの監査』という素朴なプロセスモデルの下では、鍵としても自然で読みやすい値に見えた。旧 token は秒精度の時刻であり同一秒内の二重呼び出しで衝突しうる既知の弱さを持っていたため、セッション識別子はむしろ安定した鍵への改善に見えた。鍵に必要な一意性の粒度は要求としてどこにも書かれておらず、値の置換時に照合すべき制約が存在しなかった。"
+      },
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "『要約を書けたときだけ印を消す』という制御は在るが、置いた予約の件数と現存する印の件数を突き合わせる手掛かりが無い。write_due が既存の印を上書きしたことも、clear_due 一回が二件分の負債を消したことも、どこにも記録されず、事後に差分として読める痕跡が残らない。制御アクション（予約する／消す）に対応するフィードバック（予約はいくつ在るべきか）が対で設計されていない。",
+        "evidence_ref": "plugin/scripts/_auditcache.py（read_due / clear_due）",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "control-action-requires-feedback",
+          "全コントロールループにフィードバック必須",
+          "モデル一致のためのフィードバック提供"
+        ],
+        "why_it_seemed_adequate": "印はファイルの存在そのものが状態であり、置く／消すの二動作しかない単純な機構に見えた。単純な機構には突き合わせが要らないという前提が置かれ、実際に鍵が実行ごとに一意である限りその前提は成立していた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "変更が過去の是正の前提を破っていないかを、変更の時点で再評価する段（変更管理に相当する段）が無い。#338 は識別子の生成規則を変えたが、その識別子が INC-039 の是正（負債の印）の一意性前提を支えていたことを照合する契機が置かれていない。同様に、diff が触った経路に対応する試験が在るかを検める段も無く、決定論試験の成否という手掛かりは『在る試験が緑である』ことしか言わない。",
+        "evidence_ref": "assurance/harness/orchestrator.py、plugin/tests/test_sessionend_budget.py",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "変更時の想定再評価をMOCで強制",
+          "変更管理手順の強制と変更時の前提再評価",
+          "全変更のハザード分析と承認",
+          "変更後に事故が起きる前提の変更管理",
+          "trace-why-design-flaw-was-introduced"
+        ],
+        "why_it_seemed_adequate": "#338 の宣言された目的は『要約に session を載せる』ことであり、その目的に対応する試験は実際に書かれていた。同じ diff が別の要求（印の鍵の一意性）に触れていることは、要求として明文化されていなかったため、変更の範囲としては目的どおり閉じているように見えた。台帳は事象を閉じるまで追跡する設計になっており、追跡は十分に手厚く見えた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "過去の是正が後続の変更を生き延びているかを再検査する段が無い。INC-039 の是正は『走らなかった監査が負債として残る』という性質だったが、その性質を退行監視の対象として登録し、以後の変更のたびに検め直す経路が置かれていない。台帳は事象を閉じるが、是正の耐久性は監視していないため、塞いだ穴が後で部分的に開き直したことを体系側は言えない。",
+        "evidence_ref": "assurance/ledger/incidents.json（INC-039）",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "是正措置の有効性証拠の収集",
+          "勧告の実施と有効性確認",
+          "推奨事項の責任割当実施検査フィードバック",
+          "audit-findings-must-be-closed",
+          "symptom-vs-systemic-cause"
+        ],
+        "why_it_seemed_adequate": "是正が済み事象が閉じた時点で、その事象に関する仕事は完了したと読むのが自然であり、閉じた事象を再び監視対象として保持し続ける負荷は、当時の利得が見えにくかった。是正の有効性は『修正が入ったこと』で示されたと見なせた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "一つの値（session token）が二つの利用側に同時に供されている。要約の側は『どのセッションの監査か』という文脈識別子を求め、負債の印の側は『どの実行の予約か』という実行ごとの識別子を求める。二つの要求は両立しないが、値を共有する二者の要求を突き合わせる場が構造上どこにも無く、片方の要求に合わせた変更が他方の要求を黙って破った。",
+        "evidence_ref": "plugin/scripts/_auditcache.py、plugin/scripts/docs-audit.py",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "verify-decomposition-assumptions",
+          "control-both-behavior-and-interaction",
+          "単一コンポーネント集中の回避",
+          "破られた想定の再検討"
+        ],
+        "why_it_seemed_adequate": "同じ概念（セッション）を指す値を一つにまとめることは重複を減らす良い整理に見え、二つの利用側は同じ意味の値を欲しているように読めた。要求の差（一意性の粒度）は値の見た目には現れない。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "merge 前に赤で止める権能は在るが、『変更された経路に対応する試験が在るか』を示す手掛かりが無い。負債の経路には試験が 19 件在り被覆されているように見えるが、#338 が変えた token 生成の経路だけが覆われていない。ジョブの成否は『書かれている試験が通ったこと』を言うのみで、『書かれていない試験の不在』は表現できない。同一セッションで write_due が二度起きる筋書き自体が試験の集合に存在しなかった。",
+        "evidence_ref": "plugin/tests/test_sessionend_budget.py、.github/workflows",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "監査の検出力評価",
+          "検出失敗の原因調査",
+          "監査のすり抜け時に監査手順を是正",
+          "最低限準拠を超える安全活動の実効性",
+          "信頼性と安全性の分離"
+        ],
+        "why_it_seemed_adequate": "19 件という試験の厚みは、その経路が十分に検められている証左として読めた。試験の件数と経路の被覆は日常的に同一視され、緑のジョブは安全の表明として機能してきた（信頼性と安全性の混同）。"
+      },
+      {
+        "control_element_id": "SESSION_START_CONTRACT",
+        "description": "契約注入は audit-due を読んで『監査の負債 N 件』を告げるが、上書きが起きた場合の N は実際の未実行数より小さい。注入自体は正常に動作し、値は自信を持って提示されるため、過少な数が正しい数として下流（読み手のメンタルモデル）に入る。情報を提供する側の設計欠陥が、受け手には検出不能な形で伝播する。",
+        "evidence_ref": "plugin/scripts/inject-contract.py、.claude/.cache/audit-due/",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "defects-in-information-providing-systems",
+          "include-information-supplier-defect",
+          "リスク情報の不透明な集約禁止"
+        ],
+        "why_it_seemed_adequate": "注入は印の件数を素直に数えて伝えるだけであり、数え方に解釈の余地は無いように見えた。印が実際の未実行数と一対一で対応することは、印を置く側の責任として完結していると読めた。"
+      },
+      {
+        "control_element_id": "HEARTBEAT",
+        "description": "鼓動は last-audit.json の古びと導入複製の版遅れを警告するが、『走らなかった監査が数から落ちたこと』は古びとして現れない。片方の子が完走すれば要約は新しくなり、もう片方の未実行が消えていても指標は新鮮を示す。すなわち現在の指標は、在るものの新しさを測っており、無くなったものを測っていない（対象リスクと因果的に対応しない代理指標になっている）。",
+        "evidence_ref": "plugin/scripts/gov-heartbeat.py、.claude/.cache/last-audit.json",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "先行指標の妥当性・代理指標の禁止",
+          "全体健全性と部分健全性の分離評価",
+          "要約統計偏重による傾向情報の喪失"
+        ],
+        "why_it_seemed_adequate": "監査の健全性を『最後に走った時刻の新しさ』で測ることは、監査が走らない事象を捉える指標として直観に合い、INC-005 以来この指標で実際に版遅れを検出できていた。"
+      },
+      {
+        "control_element_id": "WARNING_BACKLOG",
+        "description": "負債・警告の滞留を異常とする条件と、閉じる責任の割当が未定であるため、負債件数が減ることは常に良化として読める。数え落としによる減少と、監査完走による正当な減少を区別する基準が構造上存在せず、この事象が生む減少は滞留統制の視野の外に落ちる。",
+        "evidence_ref": "doctrine_docs/packaging/procedures/PROC-001-development-norms.md",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "指摘欠点の是正完了追跡",
+          "監視責任の空白排除",
+          "責任の空白は構造再設計",
+          "audit-findings-must-be-closed"
+        ],
+        "why_it_seemed_adequate": "滞留の閾値と責任の割当は所有者判断として意図的に保留されていた（INC-039 推奨#4）。保留は判断待ちであって欠落ではないため、当面は件数の推移を読むだけで足りると見えた。"
+      },
+      {
+        "control_element_id": "PLUGIN_DISTRIBUTION",
+        "description": "この欠陥は導入複製の側で実行される機構に在り、修正が入っても複製が更新されるまで過少計数は続く。リポジトリ側からは、どの複製がどの世代の鍵生成規則で動いているかを観測できないため、『いつ過少計数が止まったか』を体系側は言えない。同時に、この事象に対する検出器を複製側に置くと、版が遅れた複製では検出器も遅れる（INC-005 と同型の共通原因）。",
+        "evidence_ref": ".claude-plugin/marketplace.json",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "共通の体系的要因による多重防護の無効化",
+          "供給者による変更の明示通知",
+          "計画外変化の検出手段"
+        ],
+        "why_it_seemed_adequate": "配布は利用者の操作に依存するという性質は既知の穴として受け入れられており、機能の追加については妥当な割り切りだった。負債の計数のような統治の生存に関わる値が同じ経路に載っていることは、機能と統治の区別として明示されていなかった。"
+      }
+    ],
+    "hazard": "未実行監査を表す印の集合（.claude/.cache/audit-due/）が、実際の未実行監査より少ない件数を示したまま、その件数を唯一の正本として契約注入と鼓動が読み、体系側にはその不足を示す手掛かりが何も現れない状態。（印の鍵が「実行ごとに一意」を要する位置にありながら「セッションごとに一意」な値で満たされているため、上書きと一括消去が起こりうる状態を含む。）",
+    "incident_id": "INC-052-debt-marker-collides-when-keyed-by-session",
+    "leading_indicators": [
+      {
+        "indicator": "同一セッション内で write_due が複数回呼ばれた回数と、audit-due に現存する印の件数の差",
+        "observable": "write_due の呼び出し記録（呼び出しごとに追記される痕跡）と .claude/.cache/audit-due/ の実ファイル数",
+        "threshold": "差が 1 以上（write_due 回数 > 印の件数）で異常。1 件でも許容しない",
+        "version_independent": false,
+        "where": "導入複製の .claude/.cache/audit-due/ と _auditcache の呼び出し痕跡",
+        "why_version_independent": "呼び出し痕跡を残すのは導入複製側の _auditcache であり、複製の版が古いと痕跡自体が出力されず指標が沈黙する（INC-005 と同型の共通原因）"
+      },
+      {
+        "indicator": "clear_due 一回あたりに消えた印の件数",
+        "observable": "clear_due 実行の直前直後で audit-due のファイル数を差分にとった値",
+        "threshold": "1 回の clear_due で 2 件以上減ったら異常（設計上は常に 1）",
+        "version_independent": false,
+        "where": "導入複製の .claude/.cache/audit-due/",
+        "why_version_independent": "差分を取る計測が複製側の監査プロセスに同居するため、版が遅れると計測も遅れる"
+      },
+      {
+        "indicator": "一つのセッション識別子が印または要約に二度以上現れる割合",
+        "observable": "audit-due の印の名前および last-audit.json の session 欄に現れる識別子の重複",
+        "threshold": "重複が観測された時点（割合 > 0）で、衝突条件が実運用で成立していると判定する",
+        "version_independent": false,
+        "where": "導入複製の .claude/.cache/",
+        "why_version_independent": "要約に session を記録する挙動自体が #338 以降の版でのみ現れるため、それ以前の複製では観測不能"
+      },
+      {
+        "indicator": "負債件数の減少量と、その間に完走した監査の件数の不一致",
+        "observable": "SessionStart 注入が告げた N の推移と、last-audit.json に記録された完走要約の件数",
+        "threshold": "減少量 > 完走件数 となった回が 1 回でもあれば異常",
+        "version_independent": false,
+        "where": "導入複製の .claude/.cache/last-audit.json と注入の出力",
+        "why_version_independent": "両方の値を生成するのが複製側の機構であり、版が遅れると比較そのものが成立しない"
+      },
+      {
+        "indicator": "負債の印の鍵生成関数に対する一意性の試験の有無",
+        "observable": "『同一 CLAUDE_SESSION_ID で write_due を 2 回 → read_due 2 件 → clear_due 1 回 → 1 件残る』を検める試験がリポジトリ正本に存在するか",
+        "threshold": "存在しない状態が 1 度でも観測されたら異常（存在を merge の前提とする）",
+        "version_independent": true,
+        "where": "リポジトリ正本 plugin/tests/ と CI（.github/workflows）",
+        "why_version_independent": "CI がリポジトリ正本を見る指標であり、導入複製の版に依存しない"
+      },
+      {
+        "indicator": "diff が触れた関数のうち、試験から参照されていない関数の件数",
+        "observable": "変更された関数名の集合と、試験ファイルが参照する関数名の集合の差",
+        "threshold": "1 件でも被覆されない関数が在る PR は警告を出す（門にするか否かは所有者判断）",
+        "version_independent": true,
+        "where": "CI（.github/workflows）の release-check 段",
+        "why_version_independent": "リポジトリ正本の diff と試験を突き合わせる指標であり、複製の版に依存しない"
+      },
+      {
+        "indicator": "過去の是正（INC-039 等）に紐づく退行監視項目の登録数と、その項目が最後に検められてからの経過",
+        "observable": "台帳の是正項目と、それに対応する決定論試験の対応表",
+        "threshold": "是正済み事象のうち対応する退行試験が無いものが 1 件でも在れば異常",
+        "version_independent": true,
+        "where": "assurance/ledger/ と assurance/harness/orchestrator.py",
+        "why_version_independent": "保証レーンの正本側で完結する指標である"
+      }
+    ],
+    "loss": "INC-039 が確立していた保証（走らなかった監査は負債の印として残り、走ったことにされない）が部分的に失われ、同一セッションで SessionEnd が二度起きた場合に未実行の監査が負債の数から静かに落ちる。結果として SessionStart の注入と鼓動が告げる「監査の負債 N 件」が実際より小さくなり、統治の生存（R11）の信号が実態より健全に見える状態が利用者環境で継続する。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "他方の印が残っていれば本仮説は否定され、影響は同一セッション内に限定される。",
+        "hypothesis": "clear_due は鍵一致ではなく audit-due ディレクトリを一括で掃く実装であり、無関係な別セッションの負債の印も同時に消える。",
+        "oracle": "二つの異なるセッション識別子で印を置き、一方の子から clear_due を一度呼んだ後、他方の印が残っているかを数える。",
+        "severity": "P0"
+      },
+      {
+        "falsification_signal": "要約が追記されるか別名で保存され、両方の記録が残っていれば否定される。",
+        "hypothesis": "要約の書き出し（last-audit.json）も同じ鍵設計に依存しており、同一セッションで二度監査が走ると 2 回目が 1 回目の要約を上書きし、走った監査の記録自体も失われる。",
+        "oracle": "同一 CLAUDE_SESSION_ID で監査を 2 回完走させ、残った要約の件数と内容を数える。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "プロセスごとに異なる値が返るなら否定される。",
+        "hypothesis": "CLAUDE_SESSION_ID はサブエージェントや再接続をまたいで共有され、同時並行の複数プロセスが同じ印へ書くため、衝突は同一セッション内の逐次二回に留まらない。",
+        "oracle": "サブエージェント起動時と再接続時に session_token() が返す値を採取し、親と一致するかを比較する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "全ての変更経路に対応する試験が存在すれば否定される。",
+        "hypothesis": "『変更した経路に試験が在るかを検めない』という構造的欠落は #338 に固有ではなく、他の hook 群の diff にも同型の被覆漏れを残している。",
+        "oracle": "直近の複数 PR について、変更された関数と試験が参照する関数を突き合わせ、被覆されない変更経路の件数を数える。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "同一識別子の複数回発火が観測されなければ、影響は稀な条件に限られる。",
+        "hypothesis": "現在の利用者環境の負債件数は既に実際より小さく、過少計数は例外ではなく常態である（/clear によるセッション中の SessionEnd が日常的に起きているため）。",
+        "oracle": "現行の .claude/.cache/ に残る印と要約から、同一セッション識別子が複数回現れた痕跡を数える。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "少なくとも 1 件の印が必ず残るなら、保証の完全喪失は否定される。",
+        "hypothesis": "切り離した子がホストのプロセス群回収で消える事象（既知の穴）と本衝突が重なると、印が残るはずの経路でも印が消え、INC-039 の保証が完全に無効になる組み合わせが存在する。",
+        "oracle": "同一セッションで write_due を 2 回行い、片方の子だけを完走させ他方を強制終了させたときの残存印を数える。",
+        "severity": "P1"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "負債の印の鍵を実行ごとに一意な値（セッション識別子＋単調カウンタ、または予約ごとの乱数）にし、セッション識別子は鍵ではなく印の中身として保持する。write_due は既存ファイルを上書きしえない生成（O_EXCL 相当）にし、衝突時は別鍵で新規作成する。clear_due は鍵ではなく当該実行の予約識別子で一件だけ消す。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "『同一 CLAUDE_SESSION_ID で write_due を 2 回 → read_due が 2 件 → clear_due 1 回で 1 件残る』を決定論試験として追加し、INC-039 の是正に紐づく退行監視項目として台帳に登録する。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "diff が触れた関数と、試験から参照されている関数を突き合わせ、被覆されていない変更経路を CI で列挙して報告する段を設ける（変更経路の被覆検査）。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "『負債の印の鍵は実行ごとに一意でなければならない』という安全上の想定を文書として記録し、その想定が失効しうる先行指標（鍵生成関数の変更、印の件数と予約回数の差）を併記する。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "閉じた事象の是正が後続変更を生き延びているかを再検査する段を保証レーンに設ける（是正ごとに退行試験を対応付け、対応の無い是正を異常として名指す）。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "負債の過少計数（write_due 回数と印の件数の不一致）を merge の門で赤として止めるか、警告に留めるかを決める。併せて WARNING_BACKLOG の滞留を異常とする条件と閉じる責任の割当（INC-039 推奨#4 の保留分）を決める。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "clear_due の実装が鍵一致で一件だけ消すのか、due ディレクトリを一括で掃くのかを確認し、後者であれば他セッションの負債への波及範囲を実測する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "サブエージェント・再接続・並行セッションで CLAUDE_SESSION_ID が共有されうるかを実測し、衝突条件が同一セッション内に留まるかを確かめる。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "導入複製側で過少計数を観測する手段が版に依存する（検出器も一緒に古びる）ことを踏まえ、複製の版に依らずに負債の計数の健全性を確かめられる手段が在りうるかを調査する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "一つの値に二つの役目（文脈識別子と実行ごとの識別子）を負わせる設計が、要求としても型としても試験としても表現されておらず、値の置換時にどの制約が破れるかを見る手立てが無い。",
+      "変更の時点で過去の是正の前提を再評価する段（変更管理に相当する段）が保証レーンに無く、変更は宣言された意図の範囲でのみ検められる。",
+      "是正の耐久性を追跡する仕組みが無い。台帳は事象を閉じるが、閉じた是正が後続変更を生き延びているかは誰も監視しない。塞いだ穴が開き直すことが構造的に検出されない。",
+      "体系のすべての sensor が『在るものの新しさ』（last-audit.json の鮮度、版の遅れ）を測っており、『無くなったもの』（数から落ちた負債）を測る手掛かりが一つも無い。過少計数は全ての防護を同時にすり抜ける。",
+      "試験の件数（19 件）が経路の被覆と同一視されており、緑のジョブが安全の表明として読まれている（信頼性と安全性の混同）。",
+      "統治の生存に関わる値（負債件数）が、機能と同じ配布経路・同じ実行環境に載っており、複製の版が遅れると値も検出器も同時に遅れる共通原因が残る。",
+      "この種の欠陥の検出が、人が試験群を読み比べる偶発的な精読に依存しており、構造化された被覆検査に依っていない。検出できたこと自体が再現可能な機構によるものではない。",
+      "滞留・負債の異常条件と閉じる責任の割当が所有者判断として保留されており、保留期間中は件数の減少が常に良化として読まれる。"
+    ],
+    "unknowns": [
+      "本分析の実行環境にはリポジトリの実体が無く（作業ディレクトリは空の一時領域で、plugin/ も .git も存在しない）、plugin/scripts/_auditcache.py・docs-audit.py・plugin/tests/test_sessionend_budget.py の実在と内容をこちら側では確認していない。統制構造は SESSION_END_AUDIT として『負債の印を置く』機構と .claude/.cache/audit-due/ を明示的に宣言しており事象の記述と整合するが、_auditcache.py・session_token()・write_due/clear_due は統制構造に要素として名指されていない下位部品であり、その実在は事象の記録（測定として申告された実証）に依っている。以下の分析はその申告を前提に組み立てている。",
+      "#338 の変更前に『印の鍵は実行ごとに一意である』という制約がどこかに文書化されていたか（要求として存在したが照合されなかったのか、そもそも存在しなかったのか）は未確認である。",
+      "SessionEnd が一セッション内で複数回発火する実際の頻度（/clear の利用頻度など）は未計測であり、過少計数が現在どの程度起きているかの規模は不明である。",
+      "clear_due が鍵一致で一件だけ消す実装なのか、due ディレクトリを一括で掃く実装なのかは、実測結果（両方の負債が消える）からは区別できない。前者なら影響は同一セッション内に限られるが、後者なら他セッションの負債にも及ぶ。",
+      "旧 token（秒精度の時刻）の時代に同一秒内の二重 write_due が実際に発生していたかは不明である。この穴は #338 以前から程度の差で存在していた可能性がある。",
+      "サブエージェント・再接続・並行セッションで CLAUDE_SESSION_ID が共有されうるかは不明であり、共有されるなら衝突の範囲は同一セッション内に留まらない。",
+      "負債の経路を覆うとされる試験 19 件が、それぞれどの経路を検めているかの一覧は本分析では未確認である。",
+      "切り離した子がホストのプロセス群回収を生き延びる確率（既知の穴）と、この衝突が重なった場合の合成的な数え落としの大きさは評価していない。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は三つの理由で通した。第一に、#338 の宣言された意図（要約に session を載せる）に対応する試験は実際に書かれ緑であり、CI の手掛かりは『書かれた試験が通ったこと』しか表現できないため、同じ diff が触れた別の経路（印の鍵）の試験不在は赤として現れなかった。第二に、破られた制約（印の鍵は実行ごとに一意）はどこにも要求として書かれておらず、書かれていない制約は照合の対象になりえなかった。第三に、この故障は静かで、注入も鼓動も要約も正常に動き続け、last-audit.json はむしろ新鮮なままになるため、すべての sensor が『在るものの新しさ』を測る設計であることによって、『無くなったもの』を誰も測らなかった。加えて INC-039 の是正には、その是正が後続変更を生き延びているかを再検査する段が付いておらず、事象が閉じた時点で監視の対象から外れていた。検出は結局、負債の経路の試験 19 件を人が読み比べる偶発的な精読に依存しており、構造化された被覆の検査に依っていない。"
+  },
+  "control_structure_ids": [
+    "OWNER",
+    "CI_RELEASE_CHECK",
+    "SESSION_START_CONTRACT",
+    "HEARTBEAT",
+    "PRE_TOOL_GUARD",
+    "POST_TOOL_LINTER",
+    "SESSION_END_AUDIT",
+    "WARNING_BACKLOG",
+    "CAPTURE_NUDGE",
+    "PLUGIN_DISTRIBUTION",
+    "ASSURANCE_LANE",
+    "GOVERNANCE_TREE"
+  ],
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "duration_ms": 307482,
+  "errors": [],
+  "execution_kind": "real-sdk",
+  "flaws_with_citation_defect": [],
+  "generated_at": "2026-08-16T07:42:05Z",
+  "git_dirty": true,
+  "git_sha": "839039a7abc08e820b3a42580a342381b451d530",
+  "incident_evidence": {
+    "kind": "measurement",
+    "refs": [
+      "plugin/scripts/_auditcache.py",
+      "plugin/scripts/docs-audit.py",
+      "plugin/tests/test_sessionend_budget.py",
+      "assurance/ledger/incidents.json"
+    ],
+    "resolved": [
+      "plugin/scripts/_auditcache.py",
+      "plugin/scripts/docs-audit.py",
+      "plugin/tests/test_sessionend_budget.py",
+      "assurance/ledger/incidents.json"
+    ],
+    "unresolved": [],
+    "verifiable": true
+  },
+  "incident_id": "INC-052-debt-marker-collides-when-keyed-by-session",
+  "incident_sha256": "a63592f1bb8cd1221f3bd59e2589db8f349c817efba5fa197dcd4731edf1b376",
+  "init": {
+    "claude_code_version": "2.1.221",
+    "model": "claude-opus-5",
+    "session_id": "a6dd1348-6812-4cf6-b194-1441489761dd",
+    "tools_count": 27
+  },
+  "kind": "cast-analysis",
+  "leading_indicators_defined": true,
+  "options": {
+    "allowed_tools": [],
+    "cwd": "/tmp/assurance-cast-rllq9imq",
+    "effort": "high",
+    "max_budget_usd": 4.0,
+    "max_turns": 8,
+    "model": "claude-opus-5",
+    "setting_sources": [],
+    "timeout_s": 900
+  },
+  "oracle": "structured_output がレーン側再検証にも適合",
+  "principles_offered": 337,
+  "prompt_sha256": "42a153120bfe3b71ce2ab89348b31c64a74ddf6496ffb5915240afa34ff84de8",
+  "rejected_flaws": [],
+  "result_meta": {
+    "duration_api_ms": 299365,
+    "is_error": false,
+    "num_turns": 5,
+    "session_id": "a6dd1348-6812-4cf6-b194-1441489761dd",
+    "subtype": "success",
+    "total_cost_usd": 0.9875164999999999,
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 41594,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 41594,
+      "cache_read_input_tokens": 130227,
+      "inference_geo": "not_available",
+      "input_tokens": 6,
+      "iterations": "list",
+      "output_tokens": 18757,
+      "server_tool_use": {
+        "web_fetch_requests": 0,
+        "web_search_requests": 0
+      },
+      "service_tier": "standard",
+      "speed": "standard"
+    }
+  },
+  "schema_sha256": "0d1643d5e16353723405302c1f6ffcf753915e2a4f27a3530e8ef9a9ee45cb46",
+  "sdk_version": "0.2.129",
+  "settled": true,
+  "status": "PASS",
+  "structured_output": {
+    "confidence": "medium",
+    "control_flaws": [
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "負債の印は token をそのままファイル名にする（_auditcache.write_due）。#338 の変更で token が『時刻から作る一意な値（queued-%Y%m%dT%H%M%SZ）』から『セッション識別子』へ変わり、同一セッション内の 2 回目の write_due が 1 回目の印と同じ名前へ書く。実測では 2 回の write_due に対し read_due は 1 件、clear_due 1 回で 0 件になる。すなわち『予約を置く』という制御動作が、既存の予約を消す動作を兼ねてしまっている。印の鍵が要求しているのは実行ごとの一意性であり、投入された値の一意性の粒度はセッションである（粒度の不一致）。",
+        "evidence_ref": "plugin/scripts/_auditcache.py（write_due / session_token）、evidence_note の一時ディレクトリ実証",
+        "flaw_type": "制御動作が誤っている",
+        "normative_refs": [
+          "process-model-inconsistency-causes-unsafe-control",
+          "プロセスモデルと実状態の不整合",
+          "software-does-not-fail-requirements-defect",
+          "causality-as-inadequate-control-not-failure",
+          "why-it-made-sense-at-the-time"
+        ],
+        "why_it_seemed_adequate": "セッション識別子は要約に載せる文脈情報として実際に有用であり、『一つのセッション＝一つの SessionEnd ＝一つの監査』という素朴なプロセスモデルの下では、鍵としても自然で読みやすい値に見えた。旧 token は秒精度の時刻であり同一秒内の二重呼び出しで衝突しうる既知の弱さを持っていたため、セッション識別子はむしろ安定した鍵への改善に見えた。鍵に必要な一意性の粒度は要求としてどこにも書かれておらず、値の置換時に照合すべき制約が存在しなかった。"
+      },
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "『要約を書けたときだけ印を消す』という制御は在るが、置いた予約の件数と現存する印の件数を突き合わせる手掛かりが無い。write_due が既存の印を上書きしたことも、clear_due 一回が二件分の負債を消したことも、どこにも記録されず、事後に差分として読める痕跡が残らない。制御アクション（予約する／消す）に対応するフィードバック（予約はいくつ在るべきか）が対で設計されていない。",
+        "evidence_ref": "plugin/scripts/_auditcache.py（read_due / clear_due）",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "control-action-requires-feedback",
+          "全コントロールループにフィードバック必須",
+          "モデル一致のためのフィードバック提供"
+        ],
+        "why_it_seemed_adequate": "印はファイルの存在そのものが状態であり、置く／消すの二動作しかない単純な機構に見えた。単純な機構には突き合わせが要らないという前提が置かれ、実際に鍵が実行ごとに一意である限りその前提は成立していた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "変更が過去の是正の前提を破っていないかを、変更の時点で再評価する段（変更管理に相当する段）が無い。#338 は識別子の生成規則を変えたが、その識別子が INC-039 の是正（負債の印）の一意性前提を支えていたことを照合する契機が置かれていない。同様に、diff が触った経路に対応する試験が在るかを検める段も無く、決定論試験の成否という手掛かりは『在る試験が緑である』ことしか言わない。",
+        "evidence_ref": "assurance/harness/orchestrator.py、plugin/tests/test_sessionend_budget.py",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "変更時の想定再評価をMOCで強制",
+          "変更管理手順の強制と変更時の前提再評価",
+          "全変更のハザード分析と承認",
+          "変更後に事故が起きる前提の変更管理",
+          "trace-why-design-flaw-was-introduced"
+        ],
+        "why_it_seemed_adequate": "#338 の宣言された目的は『要約に session を載せる』ことであり、その目的に対応する試験は実際に書かれていた。同じ diff が別の要求（印の鍵の一意性）に触れていることは、要求として明文化されていなかったため、変更の範囲としては目的どおり閉じているように見えた。台帳は事象を閉じるまで追跡する設計になっており、追跡は十分に手厚く見えた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "過去の是正が後続の変更を生き延びているかを再検査する段が無い。INC-039 の是正は『走らなかった監査が負債として残る』という性質だったが、その性質を退行監視の対象として登録し、以後の変更のたびに検め直す経路が置かれていない。台帳は事象を閉じるが、是正の耐久性は監視していないため、塞いだ穴が後で部分的に開き直したことを体系側は言えない。",
+        "evidence_ref": "assurance/ledger/incidents.json（INC-039）",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "是正措置の有効性証拠の収集",
+          "勧告の実施と有効性確認",
+          "推奨事項の責任割当実施検査フィードバック",
+          "audit-findings-must-be-closed",
+          "symptom-vs-systemic-cause"
+        ],
+        "why_it_seemed_adequate": "是正が済み事象が閉じた時点で、その事象に関する仕事は完了したと読むのが自然であり、閉じた事象を再び監視対象として保持し続ける負荷は、当時の利得が見えにくかった。是正の有効性は『修正が入ったこと』で示されたと見なせた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "一つの値（session token）が二つの利用側に同時に供されている。要約の側は『どのセッションの監査か』という文脈識別子を求め、負債の印の側は『どの実行の予約か』という実行ごとの識別子を求める。二つの要求は両立しないが、値を共有する二者の要求を突き合わせる場が構造上どこにも無く、片方の要求に合わせた変更が他方の要求を黙って破った。",
+        "evidence_ref": "plugin/scripts/_auditcache.py、plugin/scripts/docs-audit.py",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "verify-decomposition-assumptions",
+          "control-both-behavior-and-interaction",
+          "単一コンポーネント集中の回避",
+          "破られた想定の再検討"
+        ],
+        "why_it_seemed_adequate": "同じ概念（セッション）を指す値を一つにまとめることは重複を減らす良い整理に見え、二つの利用側は同じ意味の値を欲しているように読めた。要求の差（一意性の粒度）は値の見た目には現れない。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "merge 前に赤で止める権能は在るが、『変更された経路に対応する試験が在るか』を示す手掛かりが無い。負債の経路には試験が 19 件在り被覆されているように見えるが、#338 が変えた token 生成の経路だけが覆われていない。ジョブの成否は『書かれている試験が通ったこと』を言うのみで、『書かれていない試験の不在』は表現できない。同一セッションで write_due が二度起きる筋書き自体が試験の集合に存在しなかった。",
+        "evidence_ref": "plugin/tests/test_sessionend_budget.py、.github/workflows",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "監査の検出力評価",
+          "検出失敗の原因調査",
+          "監査のすり抜け時に監査手順を是正",
+          "最低限準拠を超える安全活動の実効性",
+          "信頼性と安全性の分離"
+        ],
+        "why_it_seemed_adequate": "19 件という試験の厚みは、その経路が十分に検められている証左として読めた。試験の件数と経路の被覆は日常的に同一視され、緑のジョブは安全の表明として機能してきた（信頼性と安全性の混同）。"
+      },
+      {
+        "control_element_id": "SESSION_START_CONTRACT",
+        "description": "契約注入は audit-due を読んで『監査の負債 N 件』を告げるが、上書きが起きた場合の N は実際の未実行数より小さい。注入自体は正常に動作し、値は自信を持って提示されるため、過少な数が正しい数として下流（読み手のメンタルモデル）に入る。情報を提供する側の設計欠陥が、受け手には検出不能な形で伝播する。",
+        "evidence_ref": "plugin/scripts/inject-contract.py、.claude/.cache/audit-due/",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "defects-in-information-providing-systems",
+          "include-information-supplier-defect",
+          "リスク情報の不透明な集約禁止"
+        ],
+        "why_it_seemed_adequate": "注入は印の件数を素直に数えて伝えるだけであり、数え方に解釈の余地は無いように見えた。印が実際の未実行数と一対一で対応することは、印を置く側の責任として完結していると読めた。"
+      },
+      {
+        "control_element_id": "HEARTBEAT",
+        "description": "鼓動は last-audit.json の古びと導入複製の版遅れを警告するが、『走らなかった監査が数から落ちたこと』は古びとして現れない。片方の子が完走すれば要約は新しくなり、もう片方の未実行が消えていても指標は新鮮を示す。すなわち現在の指標は、在るものの新しさを測っており、無くなったものを測っていない（対象リスクと因果的に対応しない代理指標になっている）。",
+        "evidence_ref": "plugin/scripts/gov-heartbeat.py、.claude/.cache/last-audit.json",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "先行指標の妥当性・代理指標の禁止",
+          "全体健全性と部分健全性の分離評価",
+          "要約統計偏重による傾向情報の喪失"
+        ],
+        "why_it_seemed_adequate": "監査の健全性を『最後に走った時刻の新しさ』で測ることは、監査が走らない事象を捉える指標として直観に合い、INC-005 以来この指標で実際に版遅れを検出できていた。"
+      },
+      {
+        "control_element_id": "WARNING_BACKLOG",
+        "description": "負債・警告の滞留を異常とする条件と、閉じる責任の割当が未定であるため、負債件数が減ることは常に良化として読める。数え落としによる減少と、監査完走による正当な減少を区別する基準が構造上存在せず、この事象が生む減少は滞留統制の視野の外に落ちる。",
+        "evidence_ref": "doctrine_docs/packaging/procedures/PROC-001-development-norms.md",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "指摘欠点の是正完了追跡",
+          "監視責任の空白排除",
+          "責任の空白は構造再設計",
+          "audit-findings-must-be-closed"
+        ],
+        "why_it_seemed_adequate": "滞留の閾値と責任の割当は所有者判断として意図的に保留されていた（INC-039 推奨#4）。保留は判断待ちであって欠落ではないため、当面は件数の推移を読むだけで足りると見えた。"
+      },
+      {
+        "control_element_id": "PLUGIN_DISTRIBUTION",
+        "description": "この欠陥は導入複製の側で実行される機構に在り、修正が入っても複製が更新されるまで過少計数は続く。リポジトリ側からは、どの複製がどの世代の鍵生成規則で動いているかを観測できないため、『いつ過少計数が止まったか』を体系側は言えない。同時に、この事象に対する検出器を複製側に置くと、版が遅れた複製では検出器も遅れる（INC-005 と同型の共通原因）。",
+        "evidence_ref": ".claude-plugin/marketplace.json",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "共通の体系的要因による多重防護の無効化",
+          "供給者による変更の明示通知",
+          "計画外変化の検出手段"
+        ],
+        "why_it_seemed_adequate": "配布は利用者の操作に依存するという性質は既知の穴として受け入れられており、機能の追加については妥当な割り切りだった。負債の計数のような統治の生存に関わる値が同じ経路に載っていることは、機能と統治の区別として明示されていなかった。"
+      }
+    ],
+    "hazard": "未実行監査を表す印の集合（.claude/.cache/audit-due/）が、実際の未実行監査より少ない件数を示したまま、その件数を唯一の正本として契約注入と鼓動が読み、体系側にはその不足を示す手掛かりが何も現れない状態。（印の鍵が「実行ごとに一意」を要する位置にありながら「セッションごとに一意」な値で満たされているため、上書きと一括消去が起こりうる状態を含む。）",
+    "incident_id": "INC-052-debt-marker-collides-when-keyed-by-session",
+    "leading_indicators": [
+      {
+        "indicator": "同一セッション内で write_due が複数回呼ばれた回数と、audit-due に現存する印の件数の差",
+        "observable": "write_due の呼び出し記録（呼び出しごとに追記される痕跡）と .claude/.cache/audit-due/ の実ファイル数",
+        "threshold": "差が 1 以上（write_due 回数 > 印の件数）で異常。1 件でも許容しない",
+        "version_independent": false,
+        "where": "導入複製の .claude/.cache/audit-due/ と _auditcache の呼び出し痕跡",
+        "why_version_independent": "呼び出し痕跡を残すのは導入複製側の _auditcache であり、複製の版が古いと痕跡自体が出力されず指標が沈黙する（INC-005 と同型の共通原因）"
+      },
+      {
+        "indicator": "clear_due 一回あたりに消えた印の件数",
+        "observable": "clear_due 実行の直前直後で audit-due のファイル数を差分にとった値",
+        "threshold": "1 回の clear_due で 2 件以上減ったら異常（設計上は常に 1）",
+        "version_independent": false,
+        "where": "導入複製の .claude/.cache/audit-due/",
+        "why_version_independent": "差分を取る計測が複製側の監査プロセスに同居するため、版が遅れると計測も遅れる"
+      },
+      {
+        "indicator": "一つのセッション識別子が印または要約に二度以上現れる割合",
+        "observable": "audit-due の印の名前および last-audit.json の session 欄に現れる識別子の重複",
+        "threshold": "重複が観測された時点（割合 > 0）で、衝突条件が実運用で成立していると判定する",
+        "version_independent": false,
+        "where": "導入複製の .claude/.cache/",
+        "why_version_independent": "要約に session を記録する挙動自体が #338 以降の版でのみ現れるため、それ以前の複製では観測不能"
+      },
+      {
+        "indicator": "負債件数の減少量と、その間に完走した監査の件数の不一致",
+        "observable": "SessionStart 注入が告げた N の推移と、last-audit.json に記録された完走要約の件数",
+        "threshold": "減少量 > 完走件数 となった回が 1 回でもあれば異常",
+        "version_independent": false,
+        "where": "導入複製の .claude/.cache/last-audit.json と注入の出力",
+        "why_version_independent": "両方の値を生成するのが複製側の機構であり、版が遅れると比較そのものが成立しない"
+      },
+      {
+        "indicator": "負債の印の鍵生成関数に対する一意性の試験の有無",
+        "observable": "『同一 CLAUDE_SESSION_ID で write_due を 2 回 → read_due 2 件 → clear_due 1 回 → 1 件残る』を検める試験がリポジトリ正本に存在するか",
+        "threshold": "存在しない状態が 1 度でも観測されたら異常（存在を merge の前提とする）",
+        "version_independent": true,
+        "where": "リポジトリ正本 plugin/tests/ と CI（.github/workflows）",
+        "why_version_independent": "CI がリポジトリ正本を見る指標であり、導入複製の版に依存しない"
+      },
+      {
+        "indicator": "diff が触れた関数のうち、試験から参照されていない関数の件数",
+        "observable": "変更された関数名の集合と、試験ファイルが参照する関数名の集合の差",
+        "threshold": "1 件でも被覆されない関数が在る PR は警告を出す（門にするか否かは所有者判断）",
+        "version_independent": true,
+        "where": "CI（.github/workflows）の release-check 段",
+        "why_version_independent": "リポジトリ正本の diff と試験を突き合わせる指標であり、複製の版に依存しない"
+      },
+      {
+        "indicator": "過去の是正（INC-039 等）に紐づく退行監視項目の登録数と、その項目が最後に検められてからの経過",
+        "observable": "台帳の是正項目と、それに対応する決定論試験の対応表",
+        "threshold": "是正済み事象のうち対応する退行試験が無いものが 1 件でも在れば異常",
+        "version_independent": true,
+        "where": "assurance/ledger/ と assurance/harness/orchestrator.py",
+        "why_version_independent": "保証レーンの正本側で完結する指標である"
+      }
+    ],
+    "loss": "INC-039 が確立していた保証（走らなかった監査は負債の印として残り、走ったことにされない）が部分的に失われ、同一セッションで SessionEnd が二度起きた場合に未実行の監査が負債の数から静かに落ちる。結果として SessionStart の注入と鼓動が告げる「監査の負債 N 件」が実際より小さくなり、統治の生存（R11）の信号が実態より健全に見える状態が利用者環境で継続する。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "他方の印が残っていれば本仮説は否定され、影響は同一セッション内に限定される。",
+        "hypothesis": "clear_due は鍵一致ではなく audit-due ディレクトリを一括で掃く実装であり、無関係な別セッションの負債の印も同時に消える。",
+        "oracle": "二つの異なるセッション識別子で印を置き、一方の子から clear_due を一度呼んだ後、他方の印が残っているかを数える。",
+        "severity": "P0"
+      },
+      {
+        "falsification_signal": "要約が追記されるか別名で保存され、両方の記録が残っていれば否定される。",
+        "hypothesis": "要約の書き出し（last-audit.json）も同じ鍵設計に依存しており、同一セッションで二度監査が走ると 2 回目が 1 回目の要約を上書きし、走った監査の記録自体も失われる。",
+        "oracle": "同一 CLAUDE_SESSION_ID で監査を 2 回完走させ、残った要約の件数と内容を数える。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "プロセスごとに異なる値が返るなら否定される。",
+        "hypothesis": "CLAUDE_SESSION_ID はサブエージェントや再接続をまたいで共有され、同時並行の複数プロセスが同じ印へ書くため、衝突は同一セッション内の逐次二回に留まらない。",
+        "oracle": "サブエージェント起動時と再接続時に session_token() が返す値を採取し、親と一致するかを比較する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "全ての変更経路に対応する試験が存在すれば否定される。",
+        "hypothesis": "『変更した経路に試験が在るかを検めない』という構造的欠落は #338 に固有ではなく、他の hook 群の diff にも同型の被覆漏れを残している。",
+        "oracle": "直近の複数 PR について、変更された関数と試験が参照する関数を突き合わせ、被覆されない変更経路の件数を数える。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "同一識別子の複数回発火が観測されなければ、影響は稀な条件に限られる。",
+        "hypothesis": "現在の利用者環境の負債件数は既に実際より小さく、過少計数は例外ではなく常態である（/clear によるセッション中の SessionEnd が日常的に起きているため）。",
+        "oracle": "現行の .claude/.cache/ に残る印と要約から、同一セッション識別子が複数回現れた痕跡を数える。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "少なくとも 1 件の印が必ず残るなら、保証の完全喪失は否定される。",
+        "hypothesis": "切り離した子がホストのプロセス群回収で消える事象（既知の穴）と本衝突が重なると、印が残るはずの経路でも印が消え、INC-039 の保証が完全に無効になる組み合わせが存在する。",
+        "oracle": "同一セッションで write_due を 2 回行い、片方の子だけを完走させ他方を強制終了させたときの残存印を数える。",
+        "severity": "P1"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "負債の印の鍵を実行ごとに一意な値（セッション識別子＋単調カウンタ、または予約ごとの乱数）にし、セッション識別子は鍵ではなく印の中身として保持する。write_due は既存ファイルを上書きしえない生成（O_EXCL 相当）にし、衝突時は別鍵で新規作成する。clear_due は鍵ではなく当該実行の予約識別子で一件だけ消す。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "『同一 CLAUDE_SESSION_ID で write_due を 2 回 → read_due が 2 件 → clear_due 1 回で 1 件残る』を決定論試験として追加し、INC-039 の是正に紐づく退行監視項目として台帳に登録する。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "diff が触れた関数と、試験から参照されている関数を突き合わせ、被覆されていない変更経路を CI で列挙して報告する段を設ける（変更経路の被覆検査）。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "『負債の印の鍵は実行ごとに一意でなければならない』という安全上の想定を文書として記録し、その想定が失効しうる先行指標（鍵生成関数の変更、印の件数と予約回数の差）を併記する。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "閉じた事象の是正が後続変更を生き延びているかを再検査する段を保証レーンに設ける（是正ごとに退行試験を対応付け、対応の無い是正を異常として名指す）。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "負債の過少計数（write_due 回数と印の件数の不一致）を merge の門で赤として止めるか、警告に留めるかを決める。併せて WARNING_BACKLOG の滞留を異常とする条件と閉じる責任の割当（INC-039 推奨#4 の保留分）を決める。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "clear_due の実装が鍵一致で一件だけ消すのか、due ディレクトリを一括で掃くのかを確認し、後者であれば他セッションの負債への波及範囲を実測する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "サブエージェント・再接続・並行セッションで CLAUDE_SESSION_ID が共有されうるかを実測し、衝突条件が同一セッション内に留まるかを確かめる。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "導入複製側で過少計数を観測する手段が版に依存する（検出器も一緒に古びる）ことを踏まえ、複製の版に依らずに負債の計数の健全性を確かめられる手段が在りうるかを調査する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "一つの値に二つの役目（文脈識別子と実行ごとの識別子）を負わせる設計が、要求としても型としても試験としても表現されておらず、値の置換時にどの制約が破れるかを見る手立てが無い。",
+      "変更の時点で過去の是正の前提を再評価する段（変更管理に相当する段）が保証レーンに無く、変更は宣言された意図の範囲でのみ検められる。",
+      "是正の耐久性を追跡する仕組みが無い。台帳は事象を閉じるが、閉じた是正が後続変更を生き延びているかは誰も監視しない。塞いだ穴が開き直すことが構造的に検出されない。",
+      "体系のすべての sensor が『在るものの新しさ』（last-audit.json の鮮度、版の遅れ）を測っており、『無くなったもの』（数から落ちた負債）を測る手掛かりが一つも無い。過少計数は全ての防護を同時にすり抜ける。",
+      "試験の件数（19 件）が経路の被覆と同一視されており、緑のジョブが安全の表明として読まれている（信頼性と安全性の混同）。",
+      "統治の生存に関わる値（負債件数）が、機能と同じ配布経路・同じ実行環境に載っており、複製の版が遅れると値も検出器も同時に遅れる共通原因が残る。",
+      "この種の欠陥の検出が、人が試験群を読み比べる偶発的な精読に依存しており、構造化された被覆検査に依っていない。検出できたこと自体が再現可能な機構によるものではない。",
+      "滞留・負債の異常条件と閉じる責任の割当が所有者判断として保留されており、保留期間中は件数の減少が常に良化として読まれる。"
+    ],
+    "unknowns": [
+      "本分析の実行環境にはリポジトリの実体が無く（作業ディレクトリは空の一時領域で、plugin/ も .git も存在しない）、plugin/scripts/_auditcache.py・docs-audit.py・plugin/tests/test_sessionend_budget.py の実在と内容をこちら側では確認していない。統制構造は SESSION_END_AUDIT として『負債の印を置く』機構と .claude/.cache/audit-due/ を明示的に宣言しており事象の記述と整合するが、_auditcache.py・session_token()・write_due/clear_due は統制構造に要素として名指されていない下位部品であり、その実在は事象の記録（測定として申告された実証）に依っている。以下の分析はその申告を前提に組み立てている。",
+      "#338 の変更前に『印の鍵は実行ごとに一意である』という制約がどこかに文書化されていたか（要求として存在したが照合されなかったのか、そもそも存在しなかったのか）は未確認である。",
+      "SessionEnd が一セッション内で複数回発火する実際の頻度（/clear の利用頻度など）は未計測であり、過少計数が現在どの程度起きているかの規模は不明である。",
+      "clear_due が鍵一致で一件だけ消す実装なのか、due ディレクトリを一括で掃く実装なのかは、実測結果（両方の負債が消える）からは区別できない。前者なら影響は同一セッション内に限られるが、後者なら他セッションの負債にも及ぶ。",
+      "旧 token（秒精度の時刻）の時代に同一秒内の二重 write_due が実際に発生していたかは不明である。この穴は #338 以前から程度の差で存在していた可能性がある。",
+      "サブエージェント・再接続・並行セッションで CLAUDE_SESSION_ID が共有されうるかは不明であり、共有されるなら衝突の範囲は同一セッション内に留まらない。",
+      "負債の経路を覆うとされる試験 19 件が、それぞれどの経路を検めているかの一覧は本分析では未確認である。",
+      "切り離した子がホストのプロセス群回収を生き延びる確率（既知の穴）と、この衝突が重なった場合の合成的な数え落としの大きさは評価していない。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は三つの理由で通した。第一に、#338 の宣言された意図（要約に session を載せる）に対応する試験は実際に書かれ緑であり、CI の手掛かりは『書かれた試験が通ったこと』しか表現できないため、同じ diff が触れた別の経路（印の鍵）の試験不在は赤として現れなかった。第二に、破られた制約（印の鍵は実行ごとに一意）はどこにも要求として書かれておらず、書かれていない制約は照合の対象になりえなかった。第三に、この故障は静かで、注入も鼓動も要約も正常に動き続け、last-audit.json はむしろ新鮮なままになるため、すべての sensor が『在るものの新しさ』を測る設計であることによって、『無くなったもの』を誰も測らなかった。加えて INC-039 の是正には、その是正が後続変更を生き延びているかを再検査する段が付いておらず、事象が閉じた時点で監視の対象から外れていた。検出は結局、負債の経路の試験 19 件を人が読み比べる偶発的な精読に依存しており、構造化された被覆の検査に依っていない。"
+  }
+}

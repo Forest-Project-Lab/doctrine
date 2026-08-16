@@ -5770,6 +5770,117 @@
         "method": "CAST 分析（real-sdk・opus-5・high・$1.0037）直後に、台帳の各種別の最新刻印から「最後に着手した日」を数えて処遇した。",
         "claim": "DISCOVER 8 日・FORMALIZE 7 日・計画の REPRODUCE_RED 7 日（30 件中 1 件のみ）。ATTACK_EVALUATOR・CAST・事象側 REPRODUCE_RED は 0 日。"
       }
+    },
+    {
+      "incident_id": "INC-052-debt-marker-collides-when-keyed-by-session",
+      "index": 0,
+      "state": "landed",
+      "note": "**着地。**鍵は #344 で実行ごとに一意（マイクロ秒 + pid + セッション、一意な側を先頭）にした。本反復で残りを入れた —— `write_due` を **os.link による O_EXCL 相当**へ改め、既存を上書きしない。衝突時は接尾を足した別鍵で新規に置き、件数を保つ。セッション識別子は鍵ではなく**印の中身**へ移し、取れないときは載せない（INC-001 推奨#0 と同じ規律）。\n**実装して分かったこと**: 上書きを禁じただけでは足りなかった。呼び手が `write_due` の返り値を捨てて**入力の鍵**を子へ渡していたので、衝突時に子が存在しない印を消しに行き、印が永久に残って**今度は過大計数**になる。`_due_key_from_path` を足して、実際に使われた鍵を渡すようにした。推奨が言う「単調カウンタか乱数」は採らず、時刻+pid+接尾の再試行にした —— 印は最善努力の機構で状態を持てないため、カウンタの持ち場が無い。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$0.9875）直後に、現物のコードを読み・一時ディレクトリで挙動を実測して処遇した。",
+        "claim": "clear_due は鍵一致で一件だけ消す。write_due は os.replace で上書きしていた。呼び手は write_due の返り値を捨てていた。"
+      },
+      "evidence_ref": "plugin/scripts/_auditcache.py の write_due / plugin/scripts/docs-audit.py の _detach_token と _due_key_from_path / plugin/tests/test_sessionend_budget.py / assurance/ledger/verify/INC-052-debt-marker-collides-when-keyed-by-session.json"
+    },
+    {
+      "incident_id": "INC-052-debt-marker-collides-when-keyed-by-session",
+      "index": 1,
+      "state": "landed",
+      "note": "**着地。**推奨の文面どおりの試験を #344 で入れた —— `test_two_session_ends_in_one_session_leave_two_marks`（同一セッションで 2 回 → 2 件）と `test_clearing_one_does_not_clear_the_other`（clear 1 回で 1 件残る）。本反復でさらに上書き禁止と鍵の受け渡しの試験 7 件を足した（負債の経路は 19→31 件）。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$0.9875）直後に、現物のコードを読み・一時ディレクトリで挙動を実測して処遇した。",
+        "claim": "clear_due は鍵一致で一件だけ消す。write_due は os.replace で上書きしていた。呼び手は write_due の返り値を捨てていた。"
+      },
+      "evidence_ref": "plugin/scripts/_auditcache.py の write_due / plugin/scripts/docs-audit.py の _detach_token と _due_key_from_path / plugin/tests/test_sessionend_budget.py / assurance/ledger/verify/INC-052-debt-marker-collides-when-keyed-by-session.json"
+    },
+    {
+      "incident_id": "INC-052-debt-marker-collides-when-keyed-by-session",
+      "index": 2,
+      "state": "pending",
+      "note": "diff が触れた関数と試験から参照されている関数を突き合わせ、被覆されていない変更経路を CI で列挙する。**INC-052 の根であり、前反復の報告で私が「次の最危険仮説」と書いた当のもの**。本反復でも同じ形を一度踏んだ（上書き禁止を入れて、呼び手の経路を覆い忘れかけた）。未着手。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$0.9875）直後に、現物のコードを読み・一時ディレクトリで挙動を実測して処遇した。",
+        "claim": "clear_due は鍵一致で一件だけ消す。write_due は os.replace で上書きしていた。呼び手は write_due の返り値を捨てていた。"
+      }
+    },
+    {
+      "incident_id": "INC-052-debt-marker-collides-when-keyed-by-session",
+      "index": 3,
+      "state": "pending",
+      "note": "「負債の印の鍵は実行ごとに一意でなければならない」を想定として登記し、失効の先行指標（鍵生成関数の変更・印の件数と予約回数の差）を併記する。assumptions.json への登記は未着手。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$0.9875）直後に、現物のコードを読み・一時ディレクトリで挙動を実測して処遇した。",
+        "claim": "clear_due は鍵一致で一件だけ消す。write_due は os.replace で上書きしていた。呼び手は write_due の返り値を捨てていた。"
+      }
+    },
+    {
+      "incident_id": "INC-052-debt-marker-collides-when-keyed-by-session",
+      "index": 4,
+      "state": "pending",
+      "note": "閉じた事象の是正が後続変更を生き延びているかを再検査する段。是正ごとに退行試験を対応付け、対応の無い是正を異常として名指す。**INC-052 はまさに「INC-039 の是正が後続変更を生き延びなかった」事例**である。未着手。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$0.9875）直後に、現物のコードを読み・一時ディレクトリで挙動を実測して処遇した。",
+        "claim": "clear_due は鍵一致で一件だけ消す。write_due は os.replace で上書きしていた。呼び手は write_due の返り値を捨てていた。"
+      }
+    },
+    {
+      "incident_id": "INC-052-debt-marker-collides-when-keyed-by-session",
+      "index": 5,
+      "state": "owner",
+      "note": "負債の過少計数を merge の門で赤にするか警告に留めるか。併せて WARNING_BACKLOG の滞留を異常とする条件と閉じる責任（INC-039 推奨#4 の保留分）。分析が owner_decision_required=true を立てている。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$0.9875）直後に、現物のコードを読み・一時ディレクトリで挙動を実測して処遇した。",
+        "claim": "clear_due は鍵一致で一件だけ消す。write_due は os.replace で上書きしていた。呼び手は write_due の返り値を捨てていた。"
+      },
+      "owner_decision_kind": "配布境界や保証範囲の変更"
+    },
+    {
+      "incident_id": "INC-052-debt-marker-collides-when-keyed-by-session",
+      "index": 6,
+      "state": "rejected",
+      "note": "**調査した。懸念は当たらない。**`clear_due` は `os.remove(due_dir/<鍵>.json)` で**鍵一致の一件だけ**を消す。ディレクトリを一括で掃く実装ではないので、他セッションの負債への波及は無い。別事象の起票は行わない。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$0.9875）直後に、現物のコードを読み・一時ディレクトリで挙動を実測して処遇した。",
+        "claim": "clear_due は鍵一致で一件だけ消す。write_due は os.replace で上書きしていた。呼び手は write_due の返り値を捨てていた。"
+      }
+    },
+    {
+      "incident_id": "INC-052-debt-marker-collides-when-keyed-by-session",
+      "index": 7,
+      "state": "pending",
+      "note": "サブエージェント・再接続・並行セッションで CLAUDE_SESSION_ID が共有されうるかを実測し、衝突条件が同一セッション内に留まるかを確かめる。**ホストの挙動なのでこちらからは観測しづらい**が、共有されるなら衝突の条件はさらに広い。未着手。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$0.9875）直後に、現物のコードを読み・一時ディレクトリで挙動を実測して処遇した。",
+        "claim": "clear_due は鍵一致で一件だけ消す。write_due は os.replace で上書きしていた。呼び手は write_due の返り値を捨てていた。"
+      }
+    },
+    {
+      "incident_id": "INC-052-debt-marker-collides-when-keyed-by-session",
+      "index": 8,
+      "state": "pending",
+      "note": "導入複製側で過少計数を観測する手段は版に依存する（検出器も一緒に古びる。INC-005）。版に依らず負債の計数の健全性を確かめる手段が在りうるかの調査。未着手。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$0.9875）直後に、現物のコードを読み・一時ディレクトリで挙動を実測して処遇した。",
+        "claim": "clear_due は鍵一致で一件だけ消す。write_due は os.replace で上書きしていた。呼び手は write_due の返り値を捨てていた。"
+      }
     }
   ]
 }

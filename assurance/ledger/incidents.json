@@ -1066,9 +1066,15 @@
       ],
       "evidence_note": "実証（一時ディレクトリ）: CLAUDE_SESSION_ID='sess-ABC-123' を置いて session_token() を 2 回呼ぶと同じ値が返る → write_due が同じ 'sess-ABC-123.json' へ 2 回書く → read_due は 1 件 → clear_due 1 回で 0 件。旧来の token は 'queued-%Y%m%dT%H%M%SZ' で、衝突には**同一秒内の 2 回**が必要だった。#338 の変更で、衝突の条件が『同じ秒』から『同じセッション』へ緩んだ。",
       "impact": "INC-039 の是正（走らなかった監査を負債として残す）の**数え落とし**を作った。SessionEnd は `/clear` などでセッション中にも起きうるので、一セッション複数回は例外的な事象ではない。負債が過少に数えられると、SessionStart の警告が『監査の負債 N 件』を実際より小さく告げ、R11（統治の生存）の信号が弱まる。**INC-039 が塞いだ穴を、その後の変更が部分的に開け直した形**である。加えて、この経路には試験が無かったので機構は何も言わなかった —— #338 は『要約に session を載せる』ことだけを試験しており、同じ diff で触った detach の token は覆っていない。",
-      "fixed": false,
+      "fixed": true,
       "control_flaw_hint": "一つの値が二つの役目（負債の実行ごとの識別子と、セッションの識別子）を兼ねさせられた。実行ごとに一意であることを要する場所へ、セッションごとに一意な値を入れた。加えて、変更した経路に対応する試験の有無を検める段が無い。",
-      "evidence_kind": "measurement"
+      "evidence_kind": "measurement",
+      "cast_analysis": "done",
+      "cast_analysis_ref": "assurance/ledger/cast/INC-052-debt-marker-collides-when-keyed-by-session.json",
+      "cast_analyzed_at": "2026-08-16T07:42:05Z",
+      "fix_note": "#344 で鍵を実行ごとに一意（マイクロ秒 + pid + セッション、一意な側を先頭）にし、本反復でさらに `write_due` を**上書きしえない生成**（os.link による O_EXCL 相当。衝突時は別鍵で新規）へ改め、セッション識別子を鍵ではなく**印の中身**へ移した。あわせて呼び手が**実際に使われた鍵**を返り値から受け取るようにした —— 上書きを禁じただけでは、衝突時に子が存在しない鍵を消しに行き、今度は印が永久に残って**過大計数**になる。検算は verify_fix.py が PASS（red_was_red / green_is_green / single_change の三 checks とも PASS。$0.3949）。",
+      "fix_commit": "839039a",
+      "verify_ref": "assurance/ledger/verify/INC-052-debt-marker-collides-when-keyed-by-session.json"
     }
   ]
 }

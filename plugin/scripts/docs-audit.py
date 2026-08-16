@@ -1488,6 +1488,14 @@ def _detach_token():
     return "%s-%d-%s" % (stamp, os.getpid(), session)
 
 
+def _due_key_from_path(path, fallback):
+    """置かれた印のパスから、実際に使われた鍵を導く。置けなければ入力のまま。"""
+    if not path:
+        return fallback
+    name = os.path.basename(path)
+    return name[:-5] if name.endswith(".json") else fallback
+
+
 def _detach_and_queue(argv, opts):
     """負債の印を置き、監査そのものを切り離した子へ渡して即座に返る。
 
@@ -1507,7 +1515,10 @@ def _detach_and_queue(argv, opts):
     # 使う —— 識別子が取れないことを負債を置かない理由にはしない。
     token = _detach_token()
     try:
-        _auditcache.write_due(token, proj=proj)
+        # **実際に使われた鍵**を受け取る。write_due は衝突時に別鍵で置くので、
+        # 入力の鍵を子へ渡すと存在しない印を消しに行き、印が永久に残る
+        # （今度は過大計数になる。INC-052 推奨#0 の帰結）。
+        token = _due_key_from_path(_auditcache.write_due(token, proj=proj), token)
     except Exception:                                    # noqa: BLE001
         pass
     child = [sys.executable, os.path.abspath(__file__)]

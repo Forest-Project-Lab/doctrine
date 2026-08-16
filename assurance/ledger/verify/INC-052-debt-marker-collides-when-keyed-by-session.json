@@ -1,0 +1,40 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "verify-record",
+  "target_id": "INC-052-debt-marker-collides-when-keyed-by-session",
+  "generated_at": "2026-08-16T07:38:43Z",
+  "git_sha": "839039a7abc08e820b3a42580a342381b451d530",
+  "diff_range": "aa0ac93..839039a",
+  "diff_sha256": "5a70761eb89c7311ca0488243cce79cbf65347db27a2d5e71b69aa2e2c21d9a1",
+  "red_sha256": "ea671ef7098468092f1ac53d3cb2fd90c2f3eff2f9e47faee51ffd44691acfcf",
+  "prompt_sha256": "de3a94d79198ce62504bf976c01b1b3727c50ffecd99d6ae6cad9e49c62a9beb",
+  "model": "claude-opus-5",
+  "effort": "high",
+  "cost_usd": 0.3949,
+  "record": {
+    "target_id": "INC-052-debt-marker-collides-when-keyed-by-session",
+    "verdict": "PASS",
+    "reasons": [
+      "赤の観測は挙動の赤である。修正前の樹（aa0ac93）で、出す試験ファイルそのものを走らせ 5 件中 4 FAIL / returncode 1 が記録されている。しかも最初の測定（5 件すべて ERROR＝`_detach_token` が無い）を『機構の不在を突いただけで欠陥の再現ではない』として自ら棄却し、測り直している。属性欠如の赤を赤と認めない姿勢は、赤の質として妥当。",
+      "赤の 4 件が欠陥の機序と一対一に対応している。修正前の token は `session_token() or <秒粒度の時刻>` なので、(a) 同一セッションの 2 回が同値→印 1 件、(b) 片方の clear で両方消える、(c) 識別子が無いと同一秒内で衝突、(d) 64 文字切り詰めで別実行が同名、はいずれも旧実装から演繹できる帰結であり、観測された FAIL 群と矛盾しない。1 件だけ PASS した test_the_token_still_carries_the_session も、旧 token が session そのものである以上、緑であるのが必然で内的整合が取れている。",
+      "oracle の緩和は認められない。diff は判定側（既存試験・閾値・サニタイザの 64 文字制限）を一切書き換えておらず、変更は `docs-audit.py` の token 生成一箇所（`_detach_and_queue` 内の直書き→`_detach_token()`）だけである。試験は同一 diff で新設されているが、その同じ試験ファイルを修正前の樹へ複写して赤を取っている（赤→緑の対応が同一 oracle で測られている）ため、後付けで基準を作って緑にした形ではない。",
+      "緑が赤の原因へ効いたことが、集計以外の直接観測でも裏付けられている。post_fix_observation は同一セッションの 2 回の token が実値で異なること（…409185 / …409224、pid 同一）、書き込み後の印が 2 件、片方 clear 後に 1 件残ること、セッション無しでも一意であることを個別に示している。全走 24 件 OK（既存 19＋新規 5）は、赤だった 4 件を含む集合が緑へ転じたことを含意する。",
+      "diff は一主題である。CHANGELOG・incidents.json・red 台帳・試験・実装のいずれも INC-052 一件に属し、無関係な変更の混入は無い。実装の変更は token 文字列の構成のみで、どの変更が効いたかは一意に識別できる。",
+      "一意な部分を先頭に置いた理由（64 文字での切り詰め）は、`test_the_token_survives_the_filename_sanitiser`（80 文字のセッション識別子で 2 件残ること）によって試験に落とされており、主張と試験が対応している。"
+    ],
+    "checks": {
+      "red_was_red": "PASS",
+      "green_is_green": "PASS",
+      "single_change": "PASS"
+    },
+    "residual_risks": [
+      "赤は素の HEAD ではなく『HEAD + 試験 + `_detach_token()` 切り出し（挙動不変と主張）』に対して測られている。切り出しのみの版の diff は与えられておらず、切り出し前後で挙動が同一であることは主張であって観測ではない。開示はされているので隠れた足場ではないが、独立には確認できない。",
+      "新設試験の一意性は時計の粒度に依存する。同一プロセス・同一 pid での連続 2 呼び出しが同一マイクロ秒に落ちれば token は同値になり、5 件中 4 件が偽の赤（フレーク）となる。residual は pid の再利用には触れているが、この同一マイクロ秒の経路には触れていない。",
+      "64 文字での切り詰め時、名の後ろにあるセッション識別子は落ちる。『セッションの識別を捨てていない』は印の**中身**を `write_due` が書くことに依存するが、中身に session が入ることを示す観測は与えられていない（試験はファイル名側の `assertIn` のみで、しかも短い識別子の場合だけ）。",
+      "incidents.json に追加された INC-052 の項が、修正を含むこの同じ diff の中で `\"fixed\": false` のままである。台帳の状態と実際の是正が食い違っており、統治側の集計を誤らせうる（欠陥そのものではなく記録の不整合）。",
+      "`_detach_and_queue` 内に残るコメント（『どれも無ければ時刻を使う』）は、判断が `_detach_token()` へ移った後の記述として古い。挙動には影響しない。"
+    ]
+  },
+  "sdk_status": "PASS",
+  "reason": null
+}
