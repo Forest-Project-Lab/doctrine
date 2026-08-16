@@ -192,6 +192,100 @@ def _validate_nameable_states():
     return problems
 
 
+#: 各行動の駆動源と、待ち行列が有界かどうかの宣言（INC-051 推奨#1）。
+#:
+#: INC-051 は「無界の在庫駆動の下に鮮度駆動を置くと、下は決して着手されない」
+#: という形だった。APPLY_FINDINGS の待ち行列は空にならず、ATTACK_EVALUATOR は
+#: 鮮度で毎反復挙がるので、毎反復 2 番目に置かれ続けた。
+#:
+#: **ここは順序を決めない。**閾値も昇格も優先順の表の書き換えであり所有者判断
+#: である（INC-051 推奨#0・ADR-131 が表を凍結している）。ここが持つのは
+#: 「その行動が何で駆動され、待ち行列が有界か」という**事実の宣言**だけで、
+#: 表の形が飢餓の形になっていないかを `starvation_shaped_pairs` が見る。
+#:
+#: 行動を足す者は駆動源を言うこと。言えない行動は、飢えるかどうかも言えない。
+ACTION_DRIVE = {
+    "INGEST_NORMS": {
+        "drive": "在庫", "bounded": True,
+        "why": "規範3冊の原則は有限で、抽出しきれば空になる"},
+    "CAST_ANALYSIS": {
+        "drive": "在庫", "bounded": True,
+        "why": "未分析の事象の数だけであり、分析すれば減って空になる"},
+    "REVIEW_ASSUMPTION": {
+        "drive": "在庫", "bounded": True,
+        "why": "登記された想定の数だけであり、再検討すれば減る"},
+    "MAP_COVERAGE": {
+        "drive": "鮮度", "bounded": True,
+        "why": "索引の指紋が動けば古びる。ただし冊子は3つで、割当は有限"},
+    "APPLY_FINDINGS": {
+        "drive": "在庫", "bounded": False,
+        "why": "推奨は事故分析のたびに増える。**空にならない** —— "
+               "本日時点で調査済み未着手 271 件（INC-051 の実測）"},
+    "ATTACK_EVALUATOR": {
+        "drive": "鮮度", "bounded": True,
+        "why": "評価器の成果物が故障注入の証拠より新しければ挙がる（ADR-120）。"
+               "走らせれば必ず消えるので有界"},
+    "REPRODUCE_RED": {
+        "drive": "在庫", "bounded": True,
+        "why": "承認済みで赤の証拠が無い計画の数だけ。再現すれば減る"},
+    "FORMALIZE": {
+        "drive": "在庫", "bounded": True,
+        "why": "独立批判を生き延びた候補の数だけ。仕様化すれば減る"},
+    "DISCOVER": {
+        "drive": "在庫", "bounded": True,
+        "why": "未批判の候補の数だけ。批判すれば減る"},
+}
+
+
+#: 飢餓の形のまま在り、**所有者判断を待っている**対（INC-051）。
+#:
+#: 直せないから外す、ではない。**直すこと自体が優先順の表の書き換え**であり、
+#: ADR-131 が表を凍結し、INC-051 推奨#0 が owner_decision_required=true を
+#: 立てている。ここに置くのは「見えていて、裁定待ちである」という記録であり、
+#: 見えなくするための免除ではない。
+#:
+#: 免除の根拠は機械で確かめる（`_owner_pending_is_real`）—— 対応する処遇が
+#: 台帳に `owner` として在ることを要する。裁定が下りて処遇が動けば、この
+#: 免除は根拠を失って赤になる。**免除が自分の期限を持つ形にしてある。**
+STARVATION_SHAPED_OWNER_PENDING = {
+    ("APPLY_FINDINGS", "ATTACK_EVALUATOR"):
+        "INC-051-unbounded-queue-starves-the-freshness-driven-action#0",
+}
+
+
+def _owner_pending_is_real(ref, rows=None):
+    """免除が指す処遇が、実際に『所有者判断』として台帳に在るか。"""
+    incident_id, _, index = ref.rpartition("#")
+    if rows is None:
+        rows = load_recommendation_status()
+    row = rows.get((incident_id, int(index)))
+    return bool(row) and row.get("state") == "owner"
+
+
+def starvation_shaped_pairs(priority=None, drive=None):
+    """飢餓の形になっている対を返す（INC-051 推奨#1）。
+
+    形とは「**無界**と宣言された在庫駆動の**下位**に、鮮度駆動が在る」こと。
+    上が空にならない以上、下は先頭を飛ばさない限り着手されない。
+
+    宣言が無い行動はここでは判じない（その欠落は別の試験が咎める）。
+    返すのは (上に在る無界の在庫駆動, 下に在る鮮度駆動) の対の一覧。
+    """
+    priority = ACTION_PRIORITY if priority is None else priority
+    drive = ACTION_DRIVE if drive is None else drive
+    unbounded = [a for a in priority
+                 if drive.get(a, {}).get("drive") == "在庫"
+                 and drive.get(a, {}).get("bounded") is False]
+    pairs = []
+    for upper in sorted(unbounded, key=lambda a: priority[a]):
+        for lower in sorted(priority, key=lambda a: priority[a]):
+            if priority[lower] <= priority[upper]:
+                continue
+            if drive.get(lower, {}).get("drive") == "鮮度":
+                pairs.append((upper, lower))
+    return pairs
+
+
 # 条件(2)の検算を要さない出荷（祖父条項。ADR-139 の VERIFY_GRANDFATHERED と同じ形）。
 #
 # v0.11.0 の出荷 8 件は fix_commit を記録せずに積まれた。散文の fix_note から

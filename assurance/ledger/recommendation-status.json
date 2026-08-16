@@ -5644,6 +5644,132 @@
         "method": "CAST 分析（real-sdk・opus-5・high・$0.8331）直後に台帳の実型を数え、移行を実施して確かめた。",
         "claim": "investigated の型は str 389・bool 23・欄なし 26。移行後は全件が構造。"
       }
+    },
+    {
+      "incident_id": "INC-051-unbounded-queue-starves-the-freshness-driven-action",
+      "index": 0,
+      "state": "owner",
+      "note": "飢餓齢（名指しあり・着手なしの連続回数）を次行動の導出へ入れ、閾値超で先頭へ昇格させる。**優先順の表そのものの書き換え**であり、分析自身が owner_decision_required=true を立てている（ADR-131 が優先順の凍結を定めている）。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$1.0037）直後に、台帳の各種別の最新刻印から「最後に着手した日」を数えて処遇した。",
+        "claim": "DISCOVER 8 日・FORMALIZE 7 日・計画の REPRODUCE_RED 7 日（30 件中 1 件のみ）。ATTACK_EVALUATOR・CAST・事象側 REPRODUCE_RED は 0 日。"
+      },
+      "owner_decision_kind": "配布境界や保証範囲の変更"
+    },
+    {
+      "incident_id": "INC-051-unbounded-queue-starves-the-freshness-driven-action",
+      "index": 1,
+      "state": "landed",
+      "note": "**着地。**優先順の表に載る 9 行動すべてへ駆動源（在庫／鮮度）と有界性の宣言を持たせ、`starvation_shaped_pairs` が「無界の在庫駆動の下に鮮度駆動が在る」形を返す。宣言を持たない行動を足せば赤になる。\n**実装したら、事象がまだ解消していないことが分かった** —— 現在の表がそのまま (APPLY_FINDINGS, ATTACK_EVALUATOR) を返す。直すには表の書き換えが要り、ADR-131 が凍結し推奨#0 が所有者判断を立てているので、`STARVATION_SHAPED_OWNER_PENDING` に「見えていて裁定待ち」として記録した。**門は緩めていない** —— 対は依然として返り、新しい対が生えれば赤になる。免除の根拠（推奨#0 が台帳に `owner` として在ること）は機械で確かめており、裁定が下りて処遇が動けば免除は根拠を失って赤になる。免除が自分の期限を持つ。\n残余: 宣言は人が書く。`APPLY_FINDINGS` を bounded: true と書き換えれば検査は黙る。宣言の真偽（待ち行列が実際に空になるか）は台帳の実測から導けるが、本反復では入れていない。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$1.0037）直後に、台帳の各種別の最新刻印から「最後に着手した日」を数えて処遇した。",
+        "claim": "DISCOVER 8 日・FORMALIZE 7 日・計画の REPRODUCE_RED 7 日（30 件中 1 件のみ）。ATTACK_EVALUATOR・CAST・事象側 REPRODUCE_RED は 0 日。"
+      },
+      "evidence_ref": "assurance/harness/orchestrator.py の ACTION_DRIVE と starvation_shaped_pairs / assurance/tests/test_priority_declares_its_drive.py / assurance/ledger/red/INC-051-rec1-priority-declares-its-drive.json"
+    },
+    {
+      "incident_id": "INC-051-unbounded-queue-starves-the-freshness-driven-action",
+      "index": 2,
+      "state": "pending",
+      "note": "停止観測を「集合が非空」から「行動種別ごとに最終着手からの経過が閾値内」へ拡張する。next_actions が非空であることを進捗の代理として使わない。閾値の値は推奨#0 の裁定に依存するので、それ待ち。未着手。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$1.0037）直後に、台帳の各種別の最新刻印から「最後に着手した日」を数えて処遇した。",
+        "claim": "DISCOVER 8 日・FORMALIZE 7 日・計画の REPRODUCE_RED 7 日（30 件中 1 件のみ）。ATTACK_EVALUATOR・CAST・事象側 REPRODUCE_RED は 0 日。"
+      }
+    },
+    {
+      "incident_id": "INC-051-unbounded-queue-starves-the-freshness-driven-action",
+      "index": 3,
+      "state": "pending",
+      "note": "反復ごとに next_actions の全件と実際に着手した行動を台帳へ記録し、**先頭を飛ばした事実も記録対象に含める**。飢餓を系列として再構成できる量を保存する。**書き手だけ足すと「消えない行動」になる**（§2）ので、読み手（推奨#2）と同時に入れる必要がある。未着手。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$1.0037）直後に、台帳の各種別の最新刻印から「最後に着手した日」を数えて処遇した。",
+        "claim": "DISCOVER 8 日・FORMALIZE 7 日・計画の REPRODUCE_RED 7 日（30 件中 1 件のみ）。ATTACK_EVALUATOR・CAST・事象側 REPRODUCE_RED は 0 日。"
+      }
+    },
+    {
+      "incident_id": "INC-051-unbounded-queue-starves-the-freshness-driven-action",
+      "index": 4,
+      "state": "owner",
+      "note": "進捗報告の規定形式へ「名指しされたが着手されなかった行動と連続回数」の欄を設ける。報告の形式は所有者への手掛かりの定義なので所有者判断。分析が owner_decision_required=true を立てている。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$1.0037）直後に、台帳の各種別の最新刻印から「最後に着手した日」を数えて処遇した。",
+        "claim": "DISCOVER 8 日・FORMALIZE 7 日・計画の REPRODUCE_RED 7 日（30 件中 1 件のみ）。ATTACK_EVALUATOR・CAST・事象側 REPRODUCE_RED は 0 日。"
+      },
+      "owner_decision_kind": "配布境界や保証範囲の変更"
+    },
+    {
+      "incident_id": "INC-051-unbounded-queue-starves-the-freshness-driven-action",
+      "index": 5,
+      "state": "owner",
+      "note": "ADR-120 の制約を「名指しに現れること」から「N 反復以内に着手されること」へ改め、可視化を到達の代理として読んでいる箇所（停止観測・契約注入・退行記録）を統治木上で同時に更新する。受理済み ADR の帰結の変更であり所有者判断。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$1.0037）直後に、台帳の各種別の最新刻印から「最後に着手した日」を数えて処遇した。",
+        "claim": "DISCOVER 8 日・FORMALIZE 7 日・計画の REPRODUCE_RED 7 日（30 件中 1 件のみ）。ATTACK_EVALUATOR・CAST・事象側 REPRODUCE_RED は 0 日。"
+      },
+      "owner_decision_kind": "互換性を壊す変更"
+    },
+    {
+      "incident_id": "INC-051-unbounded-queue-starves-the-freshness-driven-action",
+      "index": 6,
+      "state": "owner",
+      "note": "APPLY_FINDINGS の滞留（pending 271）を異常とする条件と、閉じる責任の割当。WARNING_BACKLOG の既知の穴と同じ判断であり併せて扱えと分析が指している。**この裁定は既に 12 件の推奨・10 事象で繰り返し要求されている**（INC-042 で数えた）。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$1.0037）直後に、台帳の各種別の最新刻印から「最後に着手した日」を数えて処遇した。",
+        "claim": "DISCOVER 8 日・FORMALIZE 7 日・計画の REPRODUCE_RED 7 日（30 件中 1 件のみ）。ATTACK_EVALUATOR・CAST・事象側 REPRODUCE_RED は 0 日。"
+      },
+      "owner_decision_kind": "配布境界や保証範囲の変更"
+    },
+    {
+      "incident_id": "INC-051-unbounded-queue-starves-the-freshness-driven-action",
+      "index": 7,
+      "state": "landed",
+      "note": "**測定した。**事象は先頭 2 件しか観測していなかったので、台帳の各種別の最新刻印から「最後に着手した日」を遡って数えた（2026-08-16 基準）:\n- **DISCOVER（優先 80・最下位）: 8 日**（最新 scenarios/2026-08-08.json）。未批判の候補 75 件が待っている。\n- **FORMALIZE（70）: 7 日**（最新 formalize/ の 2026-08-09T06:35:27Z）。\n- **計画の REPRODUCE_RED（65）: 7 日**（red/SCN-D01… の 2026-08-09T23:55Z）。**承認済み 30 件のうち赤の証拠が在るのは 1 件だけ**で、残り 29 件は 2026-08-08 の承認から一度も再現されていない。\n- ATTACK_EVALUATOR（60）0 日・CAST_ANALYSIS（20）0 日・事象側の REPRODUCE_RED 0 日。\n**同名の二つを取り違えかけた** —— red/ の最新は 0 日だが、それは事象の推奨に対する赤であって、「承認済み計画の再現」ではない。行動名 REPRODUCE_RED は二つの別物を指しており、前者は毎反復踏まれ、後者は 7 日踏まれていない。**飢餓は APPLY_FINDINGS の下位で一様に起きている。**",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$1.0037）直後に、台帳の各種別の最新刻印から「最後に着手した日」を数えて処遇した。",
+        "claim": "DISCOVER 8 日・FORMALIZE 7 日・計画の REPRODUCE_RED 7 日（30 件中 1 件のみ）。ATTACK_EVALUATOR・CAST・事象側 REPRODUCE_RED は 0 日。"
+      },
+      "evidence_ref": "assurance/ledger/scenarios / assurance/ledger/formalize / assurance/ledger/red / assurance/ledger/mutations-2026-08-16.json"
+    },
+    {
+      "incident_id": "INC-051-unbounded-queue-starves-the-freshness-driven-action",
+      "index": 8,
+      "state": "pending",
+      "note": "習慣に依存している回復経路（INC-050 の欠陥[8] と本件の欠陥[10] が同型）を統治木上で列挙し、機構化の対象として一覧を維持する。未着手。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$1.0037）直後に、台帳の各種別の最新刻印から「最後に着手した日」を数えて処遇した。",
+        "claim": "DISCOVER 8 日・FORMALIZE 7 日・計画の REPRODUCE_RED 7 日（30 件中 1 件のみ）。ATTACK_EVALUATOR・CAST・事象側 REPRODUCE_RED は 0 日。"
+      }
+    },
+    {
+      "incident_id": "INC-051-unbounded-queue-starves-the-freshness-driven-action",
+      "index": 9,
+      "state": "pending",
+      "note": "HEARTBEAT へ古びの警告を足すなら、導入複製側で動くため INC-005 の共通原因故障を継承すると明記し、台帳側の版非依存な指標の補助として位置づける。未着手。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$1.0037）直後に、台帳の各種別の最新刻印から「最後に着手した日」を数えて処遇した。",
+        "claim": "DISCOVER 8 日・FORMALIZE 7 日・計画の REPRODUCE_RED 7 日（30 件中 1 件のみ）。ATTACK_EVALUATOR・CAST・事象側 REPRODUCE_RED は 0 日。"
+      }
     }
   ]
 }
