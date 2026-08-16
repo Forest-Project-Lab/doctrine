@@ -1,0 +1,40 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "reproduce-red",
+  "incident_id": "INC-001-sessionend-audit-gap",
+  "recommendation": "#7 —— Stop / PreCompact の退避メモと SessionEnd の監査記録を突き合わせ、終端は起きたが監査は走っていないセッションを検出する照合を台帳側に追加する。",
+  "generated_at": "2026-08-16T10:05:00Z",
+  "git_sha": "ac41b7a",
+  "phase": "before-fix",
+  "command": "python3 -m unittest discover -s assurance/tests -p test_observer_reads_the_debt.py",
+  "returncode": 1,
+  "expect": "修正前に FAIL すること（最初から緑は再現と認めない）",
+  "measured_against_shipped_file": {
+    "note": "出す試験ファイルそのものを、修正前の樹（HEAD = ac41b7a）へ複写して走らせた。worktree を切って測っている。赤の記録と出す試験は同じ 5 件である。",
+    "tree": "HEAD (ac41b7a) + assurance/tests/test_observer_reads_the_debt.py のみ複写",
+    "ran": 5,
+    "failures": 3,
+    "errors": 1,
+    "passed": 1
+  },
+  "observed_failures": [
+    "FAIL: test_the_observation_names_the_debt —— 観測に負債の印が現れない",
+    "FAIL: test_debt_alone_makes_the_observation_fail —— 負債が在るのに先行指標が立たない（編集の印の数だけで判じていた）",
+    "FAIL: test_an_unreadable_mark_still_counts —— 読めない印を勘定に入れない",
+    "ERROR: test_the_directory_matches_the_canonical_one —— observe_assumptions に audit_due_dir が無い"
+  ],
+  "green_before_and_after": [
+    "test_no_debt_does_not_invent_one —— 負債が無いときに立てない側。過剰是正の歯止めであり赤→緑の観測ではない。"
+  ],
+  "deviation_from_the_recommendation": "推奨は「Stop / PreCompact の退避メモと突き合わせる」と言うが、突き合わせた相手は**負債の印**（`_auditcache.write_due` が置く）である。理由は、負債の印が『SessionEnd は発火したが監査が完走しなかった』の**直接の記録**であり、退避メモからの推し量りより強いこと。退避メモとの突合は行っていない —— 推奨を満たしきってはいない。ただし推奨#7 の目的（終端は起きたが監査は走っていないセッションの検出）については、より直接の証拠で果たしている。",
+  "family": "INC-039 は書き手（印を置く）と**配布側**の読み手（SessionStart の警告）を同時に入れたが、**保証レーンの観測器は読む段を持たないままだった**。運転手順 §2「走らせ手を足すときは正本が読む段も同時に足す」の族（INC-012・INC-015・INC-048）が、レーンの側で再演していた。",
+  "first_real_measurement": {
+    "note": "足した読み手を、このリポジトリ自身に対して走らせた（2026-08-16）。**旧い信号にはできない区別が出た。**",
+    "state": "FAIL",
+    "edits_newer_than_summary": 2,
+    "debt_marks": 0,
+    "what_it_discriminates": "負債 0 は「SessionEnd が始まって完走しなかった」ではないことを言う —— 始まっていれば印が残り、殺された子はそれを消せない。残る筋は『SessionEnd がそもそも発火していない』か『当該セッションがまだ開いている』で、**どちらかはこちらからは判じられない（UNKNOWN）**。旧い信号（編集の印だけ）はこの二つを区別できなかった。",
+    "caveat": "編集の印 2 件のうち 1 件は本セッション自身である。閾値 N=2 は『一つなら現行セッションで説明がつく』という設計なので、この FAIL は残る 1 件（a44c7088…）に依っている。そのセッションが閉じたのか開いたままかは観測できない。"
+  },
+  "double_definition_and_its_guard": "印の在処（.claude/.cache/audit-due）はレーン側にも書いた。レーンは配布物を import しない（import の副作用で配布ディレクトリに実行時生成物が残る。DECIDED-001）。代わりに `test_the_directory_matches_the_canonical_one` が `_auditcache.due_dir` との一致を機械で確かめる。ずれたまま黙ると、観測器は永遠に『負債 0 件』を報せ続ける —— 無いのではなく、見ていない。"
+}

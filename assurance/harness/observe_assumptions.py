@@ -104,6 +104,48 @@ def sessions_newer_than_audit(flags_dir, generated_at):
     return out
 
 
+#: 監査の負債の印の置き場（配布側の `_auditcache.due_dir` と同じ道）。
+#: **二重定義であることを承知で置く** —— レーンは配布物を import しない
+#: （import の副作用で配布ディレクトリに実行時生成物が残る。DECIDED-001）。
+#: 代わりに `test_observer_reads_the_debt` が両者の一致を機械で確かめる。
+#: ずれた日にそこが赤くなる。ずれたまま黙ると、観測器は永遠に「負債 0 件」を
+#: 報せ続ける —— 無いのではなく、見ていない。
+AUDIT_DUE_NAME = "audit-due"
+
+
+def audit_due_dir(project_dir=None):
+    """監査の負債の印の置き場。"""
+    return os.path.join(project_dir or _project_dir(),
+                        ".claude", ".cache", AUDIT_DUE_NAME)
+
+
+def read_audit_debt(project_dir=None):
+    """未消化の負債の印を [(鍵, queued_at)] で返す。古い順。
+
+    **読めない印を「無い」と読み替えない**（`_auditcache.read_due` と同じ規律）。
+    読めなかった印は queued_at を None として残す —— 「在るが読めない」と
+    「無い」を取り違えると、走らなかった監査が黙って数から落ちる。
+    """
+    out = []
+    try:
+        names = sorted(os.listdir(audit_due_dir(project_dir)))
+    except OSError:
+        return out
+    for name in names:
+        if not name.endswith(".json"):
+            continue
+        queued = None
+        try:
+            with open(os.path.join(audit_due_dir(project_dir), name),
+                      encoding="utf-8") as fh:
+                queued = (json.load(fh) or {}).get("queued_at")
+        except (OSError, ValueError):
+            queued = None
+        out.append((name[:-5], queued if isinstance(queued, str) else None))
+    out.sort(key=lambda pair: (pair[1] or "", pair[0]))
+    return out
+
+
 def observe_asm_001(today, project_dir=None):
     """SessionEnd は必ず発火する、の観測（INC-001 推奨#2・#8）。
 
@@ -141,7 +183,20 @@ def observe_asm_001(today, project_dir=None):
         "セッションにわたって監査の記録が無ければ先行指標が立つ（INC-001 "
         "推奨#8。一つなら現行セッションで説明がつく）"
         % (len(newer), "・".join(newer) or "無し", n, n))
-    state = "FAIL" if len(newer) >= n else "PASS"
+
+    # 負債の印（INC-039 の是正が入れた直接の証拠。INC-001 推奨#7）。
+    # 編集の印からの推し量りと違い、**一件でも先行指標が立つ** ——
+    # 印は「SessionEnd は発火したが監査が完走しなかった」そのものであって、
+    # 現行セッションで説明のつく事象ではない。
+    debt = read_audit_debt(project_dir)
+    observed.append(
+        "監査の負債の印 %d 件（%s）。**終端は起きたが監査が完走しなかった"
+        "セッションの直接の記録**であり、編集の有無に依らない（INC-001 推奨#7・"
+        "INC-039）。読めない印も数に含める —— 「在るが読めない」を「無い」と"
+        "読み替えない"
+        % (len(debt), "・".join(k for k, _ in debt) or "無し"))
+
+    state = "FAIL" if (len(newer) >= n or debt) else "PASS"
     return {"id": ASM_001, "date": today, "state": state, "observed": observed}
 
 
