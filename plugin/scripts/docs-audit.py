@@ -1348,12 +1348,17 @@ def _attach_bodies(g):
 
 
 def build_summary(root, findings, today, knobs, generated_at=None,
-                  trace_coverage=None):
+                  trace_coverage=None, session=None):
     """docs-audit/1 スキーマの要約 dict を組み立てる。決定的。
 
     trace_coverage は走査が走ったときだけ渡る勘定(ADR-058)。None なら載せない
     (opt-in が無く走査していない)。キーの追加であり schema は据え置く — 読み手
     (注入・鼓動)は未知のキーを無視する前方寛容を持つ。
+
+    session はホストが与えたセッション識別子(INC-001 推奨#0)。取れなければ
+    載せない —— 時刻などで埋めると、別のセッションが書いた要約と見分けが
+    付かなくなる。載っていないことは「取れなかった」であって「走らなかった」
+    ではない。走ったかどうかは generator と checks_run が示す。
     """
     totals = {SEV_ERROR: 0, SEV_WARN: 0, SEV_ADVISORY: 0}
     counts_by_check = {}
@@ -1397,6 +1402,9 @@ def build_summary(root, findings, today, knobs, generated_at=None,
     if trace_coverage is not None:
         # 走査の勘定(ADR-058)。何を見て何を見なかったかを数として毎回残す。
         out["trace_coverage"] = trace_coverage
+    if session:
+        # どのセッションが書いたか(INC-001 推奨#0)。負債の印と突き合わせる鍵。
+        out["session"] = session
     return out
 
 
@@ -1475,13 +1483,8 @@ def _detach_and_queue(argv, opts):
     # セッション識別子はホストによって鍵の名が違う。stdin の JSON は読まない
     # (対話 CLI では待ちで止まる。main の注記と同じ理由)。どれも無ければ時刻を
     # 使う —— 識別子が取れないことを負債を置かない理由にはしない。
-    token = ""
-    for key in ("CLAUDE_SESSION_ID", "CLAUDE_CODE_SESSION_ID"):
-        token = os.environ.get(key) or ""
-        if token:
-            break
-    token = token or datetime.datetime.now(datetime.timezone.utc).strftime(
-        "queued-%Y%m%dT%H%M%SZ")
+    token = _auditcache.session_token() or datetime.datetime.now(
+        datetime.timezone.utc).strftime("queued-%Y%m%dT%H%M%SZ")
     try:
         _auditcache.write_due(token, proj=proj)
     except Exception:                                    # noqa: BLE001
@@ -1568,7 +1571,8 @@ def main(argv=None):
     try:
         findings, trace_coverage = run_audit(root, today, knobs)
         summary = build_summary(root, findings, today, knobs,
-                                trace_coverage=trace_coverage)
+                                trace_coverage=trace_coverage,
+                                session=_auditcache.session_token())
     except Exception as exc:  # 監査自身のクラッシュ。Hook 連鎖を壊さない。
         sys.stderr.write("docs-audit: internal error: %r\n" % (exc,))
         _auditcache.record_error(

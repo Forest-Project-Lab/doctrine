@@ -6,9 +6,12 @@
     {
       "incident_id": "INC-001-sessionend-audit-gap",
       "index": 0,
-      "state": "pending",
-      "note": "checks_run と実行印は着地済(docs-audit.py:1343・1500-1501)。だが鼓動の鮮度は要約の today だけで判じ(gov-heartbeat.py:185-186)、実行記録との対応は要求しない。要約に版・セッション識別子も無い(build_summary docs-audit.py:1329-1346)。",
-      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
+      "state": "owner",
+      "note": "推奨は二つの節に分かれる。**(1) 実行記録の四項目**（版・checks_run・セッション識別子・生成時刻）は本反復で揃った —— 版は generator{name,version}・checks_run・generated_at が既に在り、欠けていたセッション識別子を _auditcache.session_token() で足した。取れないときは載せない（時刻などで埋めると別セッションの要約と見分けが付かない）。**(2) 鼓動の判定を『mtime が新しいか』から『対応する実行記録が存在するか』へ変える**節は所有者判断。配布される Hook が「いつ黙るか」を変えるので、保証範囲の変更に当たる（§7）。現状は gov-heartbeat.py:185 が summary.get(\"today\") で判じたまま。",
+      "investigated": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145） / 2026-08-16 実測で再確認し (1) を着地",
+      "owner_decision_kind": "配布境界や保証範囲の変更",
+      "evidence_ref": "plugin/scripts/_auditcache.py の session_token / plugin/scripts/docs-audit.py:1405 / plugin/tests/test_audit.py の SummaryCarriesSessionTest / assurance/ledger/red/INC-001-rec0-execution-record-session.json",
+      "correction_2026-08-16": "2026-08-08 の一括トリアージの見立て「要約に版・セッション識別子も無い」は**版について誤り**だった。実測では generator{name,version} が既に載っており、欠けていたのはセッション識別子だけ。推奨の文面をそのまま実装していたら既に在る項目を二重に足すところだった。トリアージの所見を現状として信用しない（§0 第2項と同じ形）。"
     },
     {
       "incident_id": "INC-001-sessionend-audit-gap",

@@ -202,6 +202,24 @@ def project_dir(proj=None):
     return os.getcwd()
 
 
+def session_token():
+    """ホストが与えるセッション識別子。取れなければ None（INC-001 推奨#0）。
+
+    鍵の名はホストによって違うので、候補を順に見る。**取れないときに時刻で
+    埋めない** —— 要約へ載せる値は「どのセッションが書いたか」の記録であって、
+    埋めれば別のセッションと見分けが付かなくなる。負債の印（`write_due`）の
+    ように必ず一意の token が要る場面では、呼ぶ側が自前の代替を足す。
+
+    判定はここに一度だけ置く（`project_dir` と同じ原理。読み手ごとに答えを
+    割らない。DECIDED-001 事実1）。
+    """
+    for key in ("CLAUDE_SESSION_ID", "CLAUDE_CODE_SESSION_ID"):
+        value = os.environ.get(key) or ""
+        if value:
+            return value
+    return None
+
+
 DUE_NAME = "audit-due"
 
 # 監査の負債の印。SessionEnd の口は 1 秒台で返さないとホストに打ち切られるが
