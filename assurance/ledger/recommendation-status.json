@@ -3407,6 +3407,72 @@
       "owner_decision_kind": "配布境界や保証範囲の変更",
       "evaluator_owner_required": true,
       "investigated": "2026-08-16 本反復（APPLY_FINDINGS。実在確認）"
+    },
+    {
+      "incident_id": "INC-049-gate-coverage-depends-on-an-unspecified-argument",
+      "index": 0,
+      "state": "pending",
+      "note": "**部分的に着地。処遇は pending のまま残す。**`assurance/tests/test_gate_list_matches_ci.py` が 手順 §6 の一覧と `.github/workflows/checks.yml` を突き合わせ、片側にしか無い門を赤にする。初回の照合で CI の 2 門（term-check・ledger-diff-summary）が手順に無いことを検出し、足した。**ただし推奨が求める逐語一致は実装していない** —— 二つの呼び出しは目的から異なり（CI は `--fail-on error` で落としたい、手元は `--json` で数を読みたい）逐語では一致しえず、強いればどちらかを飾りの写しにするしかない。検めているのは (1) スクリプトの対応 (2) 免除の機械的検証 (3) 引数感受性の既知 2 件（`--diff-base`・`--today`）。残余: 一覧に書かれた引数が実際に通るかは検めていない（本反復で `--base` と誤記し、手で気付いた）。",
+      "investigated": "2026-08-16 の反復。CAST 分析（real-sdk・opus-5・high・$1.2231）直後に処遇。",
+      "evidence_ref": "assurance/tests/test_gate_list_matches_ci.py / assurance/ledger/red/INC-049-rec0-gate-list-vs-ci.json"
+    },
+    {
+      "incident_id": "INC-049-gate-coverage-depends-on-an-unspecified-argument",
+      "index": 1,
+      "state": "pending",
+      "note": "門を起動する単一の入口。推奨#0 の逐語一致より根治的だが、レーンから配布物側スクリプトを呼ぶ入口を作ることになるので射程が大きい。未着手。",
+      "investigated": "2026-08-16 の反復。CAST 分析（real-sdk・opus-5・high・$1.2231）直後に処遇。"
+    },
+    {
+      "incident_id": "INC-049-gate-coverage-depends-on-an-unspecified-argument",
+      "index": 2,
+      "state": "pending",
+      "note": "release-check が検めなかった範囲を実行のたびに明示する。未着手。",
+      "investigated": "2026-08-16 の反復。CAST 分析（real-sdk・opus-5・high・$1.2231）直後に処遇。"
+    },
+    {
+      "incident_id": "INC-049-gate-coverage-depends-on-an-unspecified-argument",
+      "index": 3,
+      "state": "pending",
+      "note": "進捗報告の規定形式へ「実行した門のコマンド行（引数込み）」を必須項目として加える。報告の形式は運転手順 §8 が正本なので手順の改訂で足りるが、本反復では未着手。",
+      "investigated": "2026-08-16 の反復。CAST 分析（real-sdk・opus-5・high・$1.2231）直後に処遇。"
+    },
+    {
+      "incident_id": "INC-049-gate-coverage-depends-on-an-unspecified-argument",
+      "index": 4,
+      "state": "pending",
+      "note": "先行指標 5 件の実装。指標1・2 の一部は test_gate_list_matches_ci.py が担う（一覧と CI の一致・引数感受性の残存）。指標3（報告に呼び出し行が在るか）・指標4（手元緑→CI 赤のニアミス計数）は未着手。",
+      "investigated": "2026-08-16 の反復。CAST 分析（real-sdk・opus-5・high・$1.2231）直後に処遇。"
+    },
+    {
+      "incident_id": "INC-049-gate-coverage-depends-on-an-unspecified-argument",
+      "index": 5,
+      "state": "pending",
+      "note": "WATCH-001 第11項を「引数で検査集合が変わる呼び出しの族」として書き直す。**統治木の WATCH 文書の改訂は ADR を要する**（本反復の射程外）。",
+      "investigated": "2026-08-16 の反復。CAST 分析（real-sdk・opus-5・high・$1.2231）直後に処遇。"
+    },
+    {
+      "incident_id": "INC-049-gate-coverage-depends-on-an-unspecified-argument",
+      "index": 6,
+      "state": "owner",
+      "note": "§7.1 の常設許可の条件を「§8 の全門が緑」から「§8 が定める呼び出しで全門が緑」へ改める。**許可の範囲が変わるので所有者判断**（評価者自身が owner_decision_required=true を立てている）。",
+      "investigated": "2026-08-16 の反復。CAST 分析（real-sdk・opus-5・high・$1.2231）直後に処遇。",
+      "owner_decision_kind": "配布境界や保証範囲の変更"
+    },
+    {
+      "incident_id": "INC-049-gate-coverage-depends-on-an-unspecified-argument",
+      "index": 7,
+      "state": "rejected",
+      "note": "逆向き（手元でのみ検める門）の実在を調査せよ、との推奨。**調査した結果、実在しなかった。**着手前に「CI が orchestrator validate を走らせていない」と観測して起票しかけたが、assurance/tests/test_orchestrator.py:16 が実台帳に対して validate() == [] を主張しており、レーン試験は CI で走る —— 間接に覆われていた。私の観測は反証された。別事象の起票は行わない。ただし**「見つからなかった」は「存在しない」ではない** —— 検めたのは §6 の一覧に載る 9 件だけである。この限界は test_every_procedure_gate_runs_in_ci_or_is_exempt_with_a_checked_reason が以後の追加を見張る。",
+      "investigated": "2026-08-16 の反復。CAST 分析（real-sdk・opus-5・high・$1.2231）直後に処遇。"
+    },
+    {
+      "incident_id": "INC-049-gate-coverage-depends-on-an-unspecified-argument",
+      "index": 8,
+      "state": "owner",
+      "note": "記録の義務のような二文書間の相関制約について、強制を門の一点に集中させたままにするか、編集時点で追跡の印を置く機構を設けるかを決める。評価者が owner_decision_required=true を立てている。",
+      "investigated": "2026-08-16 の反復。CAST 分析（real-sdk・opus-5・high・$1.2231）直後に処遇。",
+      "owner_decision_kind": "配布境界や保証範囲の変更"
     }
   ]
 }

@@ -130,8 +130,13 @@ python3 plugin/scripts/render-projection.py all --check          # 投影
 python3 scripts/consistency-check.py                             # linter と audit の一致
 python3 plugin/scripts/code-audit.py --fail-on error             # コードの監査
 python3 scripts/release-check.py --diff-base origin/main         # 版・衛生・記録の義務
+python3 plugin/scripts/term-check.py README.md CONTRIBUTING.md plugin/README.md CLAUDE.md AGENTS.md  # 根の文書の用語
+python3 scripts/ledger-diff-summary.py --diff-base origin/main    # 巨大な台帳 PR の要約（PR 本文へ貼る）
 assurance/.venv/bin/python assurance/harness/orchestrator.py validate  # 正本の自己整合
 ```
+
+この一覧と CI（`.github/workflows/checks.yml`）の食い違いは
+`assurance/tests/test_gate_list_matches_ci.py` が赤にする（INC-049 推奨#0）。
 
 `--today` を落とすと壁時計を読み、`--diff-base` を落とすと記録の義務を検めない。
 どちらも**手元が緑でも CI が赤くなる**形である（WATCH-001 第11項・INC-049）。

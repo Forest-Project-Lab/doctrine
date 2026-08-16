@@ -1,0 +1,672 @@
+{
+  "accepted_flaws": [
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "台帳の所見欄は「2026-08-08 に見たときこう見えた」という観測を、時制の印を持たない断定文として保持する。次反復はこの文面を現在の状態として読み、その前提で着手を決める。実測 1 件（INC-001 推奨#0）では、所見『要約に版・セッション識別子も無い』のうち版に関する部分が現物と食い違っていた（generator{name,version} は既に在った）。書式が観測と現状を区別しないため、読み手側には食い違いを疑う手掛かりが文面上に無い。",
+      "evidence_ref": "assurance/ledger/recommendation-status.json の INC-001-sessionend-audit-gap#0 correction_2026-08-16",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "defects-in-information-providing-systems",
+        "プロセスモデルと実状態の不整合",
+        "include-information-supplier-defect"
+      ],
+      "why_it_seemed_adequate": "台帳は state（pending/investigated）と所見文を持ち、進捗と根拠が同じ場所に残る形になっている。所見を観測として書いた時点では文面と現物は一致しており、区別を設ける必要は当時の情報からは見えない。書式に時制の印を足すことは、記録の速さと引き換えになる作業でもあった。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "ASSURANCE_LANE は『台帳の健全性を保つ（読めない台帳を名指し、破損を空へ写像させない）』制御を持つが、その対象は読めるか・破損していないかであり、欄の型と内容の充足は対象外である。結果として investigated の型が一様でなくなり（str 380・None 26・bool 23）、bool 23 件は「調べた」と主張しながら、いつ・何を見たかを一切持たない。観測時点を持たない記録に対しては、古びを問う操作そのものが定義できない。",
+      "evidence_ref": "assurance/ledger/recommendation-status.json（investigated の型分布 str 380 / None 26 / bool 23）",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "安全想定の記録と失効先行指標の定義",
+        "情報システム保有と有用性の乖離",
+        "要約統計偏重による傾向情報の喪失"
+      ],
+      "why_it_seemed_adequate": "台帳の健全性は「壊れた台帳が空の next_actions に化けて進捗停止を隠す」という故障モードを想定して設計されている。その想定の下では、欄が埋まっていること自体が健全さの証拠であり、true という値も「調べた」という情報を確かに運んでいる。型を強制しないことは記録の障壁を下げる選択でもあった。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "事象が名指す 2026-08-08 の一括トリアージは、単一時点の観測を多数の推奨へ同一書式で複写し、以後の再観測を要件としないまま保持した。pending 259 件中 139 件、全 429 件中 196 件が同一日由来であり、単一の観測時点が母数の過半を占める。所見を生成する費用は一括処理で下がるが、再観測して古びを確かめる費用は件数に比例して増えるため、生成と検証の間に構造的な非対称が生じている。なお本項は、一括トリアージを行った機構が与えられた統制構造に要素として現れないため、ASSURANCE_LANE の制御動作として仮に置いた（unknowns 参照）。",
+      "evidence_ref": "pending 259 中 139 件が investigated に '2026-08-08' を含む（全 429 中 196 件）",
+      "flaw_type": "制御動作が誤っている",
+      "normative_refs": [
+        "共通の体系的要因による多重防護の無効化",
+        "audit-findings-must-be-closed",
+        "指摘欠点の是正完了追跡"
+      ],
+      "why_it_seemed_adequate": "未処理の推奨が滞留している状態を一度に解消し、台帳を読める状態へ揃えることは、進捗の停止を観測するという ASSURANCE_LANE の責務に直接かなう。トリアージ時点では所見と現物は一致し得たので、複写された文面はその時点で正しい情報だった。"
+    },
+    {
+      "control_element_id": "OWNER",
+      "description": "所有者の手掛かりの一つは台帳である。しかし所見の観測日は欄の中の文字列としてしか存在せず（bool の 23 件では存在しない）、所有者から見て「調査済み」と「現に妥当」の区別がつかない。既知の穴として挙がる『報告が実施ではなく意図を書いていても人からは見分けにくい』と同型の見分けにくさが、台帳の側にも成立している —— 所見が観測なのか現状なのかを、所有者は台帳の表示から判定できない。",
+      "flaw_type": "手掛かりが遅い",
+      "normative_refs": [
+        "controller-needs-concrete-feedback-channels",
+        "リスク情報の不透明な集約禁止",
+        "control-action-requires-feedback"
+      ],
+      "why_it_seemed_adequate": "台帳は state 欄で pending/investigated を明示しており、所有者から見れば処遇の進行は追える。所見文は根拠として添えられているので、状態表示としては十分な情報量に見える。"
+    },
+    {
+      "control_element_id": "HEARTBEAT",
+      "description": "HEARTBEAT は『監査の古び・版の遅れをターンごとに警告する』が、その古びの対象は .claude/.cache/last-audit.json と導入複製の版に限られる。保証レーン自身の記録（台帳の所見）の古びは警告の対象外であり、139 件の所見が何日前の観測かはターンごとの警告に一度も現れない。古びを検出する経路は存在するが、古びうる対象の集合と一致していない。",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "計画外変化の検出手段",
+        "設計時想定の運用中再検査",
+        "リスク先行指標の検出"
+      ],
+      "why_it_seemed_adequate": "古びの警告は、統治の生存（監査が回っているか、複製が更新されているか）を守る目的で設計された。台帳は各反復で書き換えられる能動的な作業対象であり、放置されて古びる対象とは見なされていない。"
+    },
+    {
+      "control_element_id": "SESSION_END_AUDIT",
+      "description": "全件監査は統治木を走査して要約を .claude/.cache へ書くが、その要約の内容について台帳の所見が述べている主張（『要約に版・セッション識別子も無い』）と、要約の現物（generator{name,version} は在る）を照合する経路は無い。監査は自分の出力を持ちながら、自分の出力について書かれた所見が現物と一致するかを問わない。この照合は今回、機構ではなく反復側の実測によって初めて行われた。",
+      "evidence_ref": "plugin/scripts/docs-audit.py の要約 generator{name,version}",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "監査のすり抜け時に監査手順を是正",
+        "検出失敗の原因調査",
+        "feedback-enables-improvement-of-controls"
+      ],
+      "why_it_seemed_adequate": "監査の責務は統治木の findings を出すことであり、他所の文書が監査の出力についてどう述べているかは責務の外に置かれている。責務境界としては筋が通っており、二重に持たせない設計判断とも読める。"
+    },
+    {
+      "control_element_id": "WARNING_BACKLOG",
+      "description": "監査の警告の滞留について『滞留を異常とする条件と、閉じる責任の割当は未定』という穴が既に記録されている。台帳の pending 所見にも同型の未定がある —— 所見が何日で古びと見なされるか、誰が再観測を起こすかが定まっていない。二つの滞留（監査の警告と台帳の推奨）は別々の場所で同じ未定を抱えており、どちらの側も相手が閉じていると想定できる状態になっている。",
+      "flaw_type": "統制どうしの調整の欠如",
+      "normative_refs": [
+        "責任の空白は構造再設計",
+        "監視責任の空白排除",
+        "audit-findings-must-be-closed"
+      ],
+      "why_it_seemed_adequate": "滞留の扱いを門で止めるか別経路にするかは所有者判断として明示的に保留されている。保留は判断の放棄ではなく、影響範囲を見極めるための正当な待機である。台帳側の滞留は、その保留の対象として認識されていなかった。"
+    },
+    {
+      "control_element_id": "GOVERNANCE_TREE",
+      "description": "ADR-145 は統治木の決定文書として在るが、docs-audit の findings と dep-graph の逆依存が見るのは文書間の整合と依存であって、文書中の所見が名指す現物（監査要約の項目）と一致するかではない。文書の主張が対象の実態から離れても、統治木の手掛かりからは何も出ない。",
+      "evidence_ref": "ADR-145",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "宣言された設計と実動作の突合",
+        "公式設計と実動作の二重評価",
+        "監査の検出力評価"
+      ],
+      "why_it_seemed_adequate": "統治木の検査は文書どうしの矛盾と参照切れを対象に設計されている。文書が名指す外部の現物まで照合対象に広げることは、検査対象を統治木の外へ拡張することを意味し、境界の設計としては保守的に閉じているのが自然だった。"
+    }
+  ],
+  "analysis": {
+    "confidence": "medium",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "台帳の所見欄は「2026-08-08 に見たときこう見えた」という観測を、時制の印を持たない断定文として保持する。次反復はこの文面を現在の状態として読み、その前提で着手を決める。実測 1 件（INC-001 推奨#0）では、所見『要約に版・セッション識別子も無い』のうち版に関する部分が現物と食い違っていた（generator{name,version} は既に在った）。書式が観測と現状を区別しないため、読み手側には食い違いを疑う手掛かりが文面上に無い。",
+        "evidence_ref": "assurance/ledger/recommendation-status.json の INC-001-sessionend-audit-gap#0 correction_2026-08-16",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "defects-in-information-providing-systems",
+          "プロセスモデルと実状態の不整合",
+          "include-information-supplier-defect"
+        ],
+        "why_it_seemed_adequate": "台帳は state（pending/investigated）と所見文を持ち、進捗と根拠が同じ場所に残る形になっている。所見を観測として書いた時点では文面と現物は一致しており、区別を設ける必要は当時の情報からは見えない。書式に時制の印を足すことは、記録の速さと引き換えになる作業でもあった。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "ASSURANCE_LANE は『台帳の健全性を保つ（読めない台帳を名指し、破損を空へ写像させない）』制御を持つが、その対象は読めるか・破損していないかであり、欄の型と内容の充足は対象外である。結果として investigated の型が一様でなくなり（str 380・None 26・bool 23）、bool 23 件は「調べた」と主張しながら、いつ・何を見たかを一切持たない。観測時点を持たない記録に対しては、古びを問う操作そのものが定義できない。",
+        "evidence_ref": "assurance/ledger/recommendation-status.json（investigated の型分布 str 380 / None 26 / bool 23）",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "安全想定の記録と失効先行指標の定義",
+          "情報システム保有と有用性の乖離",
+          "要約統計偏重による傾向情報の喪失"
+        ],
+        "why_it_seemed_adequate": "台帳の健全性は「壊れた台帳が空の next_actions に化けて進捗停止を隠す」という故障モードを想定して設計されている。その想定の下では、欄が埋まっていること自体が健全さの証拠であり、true という値も「調べた」という情報を確かに運んでいる。型を強制しないことは記録の障壁を下げる選択でもあった。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "事象が名指す 2026-08-08 の一括トリアージは、単一時点の観測を多数の推奨へ同一書式で複写し、以後の再観測を要件としないまま保持した。pending 259 件中 139 件、全 429 件中 196 件が同一日由来であり、単一の観測時点が母数の過半を占める。所見を生成する費用は一括処理で下がるが、再観測して古びを確かめる費用は件数に比例して増えるため、生成と検証の間に構造的な非対称が生じている。なお本項は、一括トリアージを行った機構が与えられた統制構造に要素として現れないため、ASSURANCE_LANE の制御動作として仮に置いた（unknowns 参照）。",
+        "evidence_ref": "pending 259 中 139 件が investigated に '2026-08-08' を含む（全 429 中 196 件）",
+        "flaw_type": "制御動作が誤っている",
+        "normative_refs": [
+          "共通の体系的要因による多重防護の無効化",
+          "audit-findings-must-be-closed",
+          "指摘欠点の是正完了追跡"
+        ],
+        "why_it_seemed_adequate": "未処理の推奨が滞留している状態を一度に解消し、台帳を読める状態へ揃えることは、進捗の停止を観測するという ASSURANCE_LANE の責務に直接かなう。トリアージ時点では所見と現物は一致し得たので、複写された文面はその時点で正しい情報だった。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者の手掛かりの一つは台帳である。しかし所見の観測日は欄の中の文字列としてしか存在せず（bool の 23 件では存在しない）、所有者から見て「調査済み」と「現に妥当」の区別がつかない。既知の穴として挙がる『報告が実施ではなく意図を書いていても人からは見分けにくい』と同型の見分けにくさが、台帳の側にも成立している —— 所見が観測なのか現状なのかを、所有者は台帳の表示から判定できない。",
+        "flaw_type": "手掛かりが遅い",
+        "normative_refs": [
+          "controller-needs-concrete-feedback-channels",
+          "リスク情報の不透明な集約禁止",
+          "control-action-requires-feedback"
+        ],
+        "why_it_seemed_adequate": "台帳は state 欄で pending/investigated を明示しており、所有者から見れば処遇の進行は追える。所見文は根拠として添えられているので、状態表示としては十分な情報量に見える。"
+      },
+      {
+        "control_element_id": "HEARTBEAT",
+        "description": "HEARTBEAT は『監査の古び・版の遅れをターンごとに警告する』が、その古びの対象は .claude/.cache/last-audit.json と導入複製の版に限られる。保証レーン自身の記録（台帳の所見）の古びは警告の対象外であり、139 件の所見が何日前の観測かはターンごとの警告に一度も現れない。古びを検出する経路は存在するが、古びうる対象の集合と一致していない。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "計画外変化の検出手段",
+          "設計時想定の運用中再検査",
+          "リスク先行指標の検出"
+        ],
+        "why_it_seemed_adequate": "古びの警告は、統治の生存（監査が回っているか、複製が更新されているか）を守る目的で設計された。台帳は各反復で書き換えられる能動的な作業対象であり、放置されて古びる対象とは見なされていない。"
+      },
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "全件監査は統治木を走査して要約を .claude/.cache へ書くが、その要約の内容について台帳の所見が述べている主張（『要約に版・セッション識別子も無い』）と、要約の現物（generator{name,version} は在る）を照合する経路は無い。監査は自分の出力を持ちながら、自分の出力について書かれた所見が現物と一致するかを問わない。この照合は今回、機構ではなく反復側の実測によって初めて行われた。",
+        "evidence_ref": "plugin/scripts/docs-audit.py の要約 generator{name,version}",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "監査のすり抜け時に監査手順を是正",
+          "検出失敗の原因調査",
+          "feedback-enables-improvement-of-controls"
+        ],
+        "why_it_seemed_adequate": "監査の責務は統治木の findings を出すことであり、他所の文書が監査の出力についてどう述べているかは責務の外に置かれている。責務境界としては筋が通っており、二重に持たせない設計判断とも読める。"
+      },
+      {
+        "control_element_id": "WARNING_BACKLOG",
+        "description": "監査の警告の滞留について『滞留を異常とする条件と、閉じる責任の割当は未定』という穴が既に記録されている。台帳の pending 所見にも同型の未定がある —— 所見が何日で古びと見なされるか、誰が再観測を起こすかが定まっていない。二つの滞留（監査の警告と台帳の推奨）は別々の場所で同じ未定を抱えており、どちらの側も相手が閉じていると想定できる状態になっている。",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "責任の空白は構造再設計",
+          "監視責任の空白排除",
+          "audit-findings-must-be-closed"
+        ],
+        "why_it_seemed_adequate": "滞留の扱いを門で止めるか別経路にするかは所有者判断として明示的に保留されている。保留は判断の放棄ではなく、影響範囲を見極めるための正当な待機である。台帳側の滞留は、その保留の対象として認識されていなかった。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "ADR-145 は統治木の決定文書として在るが、docs-audit の findings と dep-graph の逆依存が見るのは文書間の整合と依存であって、文書中の所見が名指す現物（監査要約の項目）と一致するかではない。文書の主張が対象の実態から離れても、統治木の手掛かりからは何も出ない。",
+        "evidence_ref": "ADR-145",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "宣言された設計と実動作の突合",
+          "公式設計と実動作の二重評価",
+          "監査の検出力評価"
+        ],
+        "why_it_seemed_adequate": "統治木の検査は文書どうしの矛盾と参照切れを対象に設計されている。文書が名指す外部の現物まで照合対象に広げることは、検査対象を統治木の外へ拡張することを意味し、境界の設計としては保守的に閉じているのが自然だった。"
+      }
+    ],
+    "hazard": "台帳（assurance/ledger/recommendation-status.json）の所見が、(1) 観測時点を持たない、または型が退化して観測時点を表現できない（investigated: str 380・None 26・bool 23）、(2) 「ある時点の観測」と「現在の状態」を書式上区別しない、という状態のまま、次反復の着手判断の主要入力として提示され続けている状態。加えて pending 259 件のうち 139 件（全 429 件中 196 件）が単一日の一括トリアージ由来であり、単一時点の観測が母数の過半を占めている。",
+    "incident_id": "INC-050-triage-notes-are-read-as-current-state",
+    "leading_indicators": [
+      {
+        "indicator": "investigated 欄の型分布に str 以外が混じる",
+        "observable": "台帳の全エントリについて investigated の型別件数（str / None / bool / その他）",
+        "threshold": "bool および数値型が 1 件でも存在すれば異常。None は「未調査」を意味する規約を明文化した上で許容し、規約が無いうちは None も異常として数える（現状 bool 23・None 26）",
+        "version_independent": true,
+        "where": "assurance/ledger/recommendation-status.json（リポジトリ正本。決定論試験または CI_RELEASE_CHECK から読む）",
+        "why_version_independent": "リポジトリ正本の台帳ファイルだけを読むため、利用者環境へ導入された複製の版に依存しない"
+      },
+      {
+        "indicator": "pending 所見の観測日からの経過日数分布",
+        "observable": "state=='pending' の各エントリについて investigated 中の観測日から現在日までの日数（最古値と、閾値超の割合）",
+        "threshold": "経過 30 日超が pending の 20% を超える、または最古が 60 日を超えたら再観測を next_actions へ積む。閾値の値そのものは所有者判断で確定させる",
+        "version_independent": true,
+        "where": "assurance/ledger/recommendation-status.json。観測日を持たないエントリは「測定不能」として別枠で計数する",
+        "why_version_independent": "台帳ファイルの内容と実行日時のみから計算でき、導入複製にも監査要約にも依存しない"
+      },
+      {
+        "indicator": "単一の観測時点に由来する所見が pending に占める割合（一括由来の集中度）",
+        "observable": "pending のうち同一の観測日を持つエントリの最大群の件数と割合",
+        "threshold": "単一日由来が pending の 1/3 を超えたら異常。現状 139/259 = 約 54% で既に閾値を超えている",
+        "version_independent": true,
+        "where": "assurance/ledger/recommendation-status.json",
+        "why_version_independent": "台帳内の日付文字列の集計のみで求まる"
+      },
+      {
+        "indicator": "再観測（correction 記録）の発生頻度",
+        "observable": "直近 30 日に correction_YYYY-MM-DD 相当の再観測記録が付いたエントリ数と、そのうち現物と食い違った件数",
+        "threshold": "直近 30 日の再観測が 0 件なら「古びを測っていない」状態として異常。食い違い率は分母が小さいうちは指標として扱わず、件数のみを見る",
+        "version_independent": true,
+        "where": "assurance/ledger/recommendation-status.json の correction 欄",
+        "why_version_independent": "台帳への追記の有無を数えるだけであり、外部の版に依存しない"
+      },
+      {
+        "indicator": "台帳古び警告を導入複製側の検出器に載せた場合の、複製の版遅れ",
+        "observable": "gov-heartbeat.py を含む導入複製の版と、リポジトリ正本の版の差",
+        "threshold": "導入複製が正本より 1 世代でも遅れているとき、台帳古びの警告が出ていないことを『古びが無い』の証拠として扱わない",
+        "version_independent": false,
+        "where": "HEARTBEAT が読む導入複製の版と .claude/.cache/last-audit.json",
+        "why_version_independent": "検出器自身が導入複製の側で動くため、版が遅れれば検出器も古びる（INC-005 の共通原因故障）。この指標を採るなら、台帳古びの検出は正本側（CI_RELEASE_CHECK）に置く選択と対で判断する必要がある"
+      }
+    ],
+    "loss": "次反復の着手判断が、過去のある時点の観測を現状として読んだ結果、(a) 既に在る項目を二重に足す、(b) 既に解消した問題に手を入れる、(c) 悪化している対象を「調査済み」として据え置く、のいずれかが保証レーンの出力に混入し、統治文書と台帳の記述が現物から離れていく。本事象では 2026-08-08 の一括トリアージ由来の所見（「要約に版・セッション識別子も無い」）が版について現物と食い違い、(a) の実装直前で止まったが、止めたのは統制機構ではなく着手前に実測し直すという反復側の習慣である。習慣は統制構造の要素として存在しないため、損失は防がれたのではなく今回だけ発生しなかった。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "10 件すべてが現物と一致すれば、一括由来であることは古びの指標にならず、集中度の閾値は先行指標として棄却される。",
+        "hypothesis": "一括トリアージ由来の 139 件のうち相当数が、既に解消済み・既に実装済みの項目を未解決として述べている。",
+        "oracle": "139 件から無作為 10 件を抽出し、各所見が名指す現物を実測して一致・不一致を判定する。抽出方法と件数を測定前に固定する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "correction が所見文を置換している、または提示時に訂正が先に来るなら、この経路は成立しない。",
+        "hypothesis": "correction 欄は追記であり元の所見文面が残るため、次反復は訂正より先に古い文面を読む。",
+        "oracle": "INC-001-sessionend-audit-gap#0 の現物を読み、所見文と correction_2026-08-16 の並び順・どちらが着手判断の入力として提示されるかを確認する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "23 件のいずれも着手判断の入力に使われていない（別経路で扱われている）なら、影響は台帳の見かけに留まる。",
+        "hypothesis": "investigated: true の 23 件は、観測時点を持たないまま『調査済み』として着手判断から除外され続けている（事象 impact の (c) が既に発生している）。",
+        "oracle": "23 件の state と、直近の反復で next_actions に現れたかを照合する。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "統治木の断定がすべて版または日付を伴っているなら、古びは台帳固有の書式問題に限定される。",
+        "hypothesis": "同型の古び（観測時点を持たない断定）が台帳の外、統治木の文書（decided-facts.md 等）にも存在する。",
+        "oracle": "docs-audit の findings に、外部の現物を名指しながら観測日を持たない断定を数える検査を一時的に加えて計数する。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "導入が 2026-08-08 より前であれば、所見は当初から現物と食い違っていたことになり、必要な統制は再観測周期ではなく所見生成時の確認に移る。",
+        "hypothesis": "ADR-145 の所見は記述時点では正しく、その後 generator{name,version} が追加されたことで古びた（誤りではなく古び）。",
+        "oracle": "docs-audit.py の履歴で generator{name,version} の導入時点を特定し、2026-08-08 の前後を判定する。",
+        "severity": "P1"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "investigated 欄を自由型から構造（observed_at・observed_by・method・claim）へ移し、str/bool/None をそのまま受け付けない検査を決定論試験に加える。既存 429 件は移行時に observed_at 不明として明示的に印を付け、欠測を欠測として残す（true を日付へ推測変換しない）。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "台帳の所見を『観測（いつ見たか付き）』として書式上明示し、現状の主張として読めない形にする。所見が観測日を伴わない場合は書き込み時点で拒む。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "pending 所見の経過日数分布・単一日由来の集中度・直近の再観測件数を測る指標を追加し、閾値超で next_actions に再観測を積む。指標は台帳ファイルだけから計算し、導入複製の版に依存させない。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "一括処理で生成された所見に『未再観測』の印を付け、印が付いたままの所見を着手判断の唯一の根拠として使わない規約を設ける（実測で確かめてから印を外す）。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "所見が何日で古びと見なされるか、再観測を起こす責任をどこに置くか（ASSURANCE_LANE 側か OWNER 側か）を確定する。WARNING_BACKLOG の同型の未定（INC-039 推奨#4）と併せて一度に裁定する。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "台帳古びの検出器を、リポジトリ正本側（CI_RELEASE_CHECK・決定論試験）に置くか、導入複製側（HEARTBEAT）に置くかを決める。後者は INC-005 の共通原因故障（検出器自身が古びる）を引き継ぐため、選択の理由を記録に残す。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "一括トリアージ由来 139 件から層化抽出（例: 10 件）で再観測し、古び率を推定する。1/1 を誤り率として扱わないため、母数と抽出方法を先に決めてから測る。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "『2026-08-08 の一括トリアージ』を実施した機構が統制構造のどの要素に当たるかを確定し、当たる要素が無い場合は要素として記述に加える。当該制御動作の担い手が未特定のままでは、再発防止の宛先が定まらない。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "本事象で機能したのが『着手前に実測し直す』という反復側の習慣であったことを記録に残し、機構化されるまでは統制構造の外にある依存として明示する。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "記録の書式が時間の次元を持たない。観測と現状が同じ欄・同じ文体で表され、読み手が両者を区別する手掛かりが文面に無い。この欠落は台帳に限らず、統治木の断定文にも同型で成立しうる。",
+      "所見を生成する費用と、所見の古びを確かめる費用が非対称である。一括処理は生成側にだけ規模の経済を与え、再観測の費用は件数に比例して増える。結果として、生成された所見の総量が検証能力を超えて滞留する。",
+      "保証の検査が『在ること・読めること』の水準で設計されており、『在るものが現物と一致し続けること』の水準に届いていない。破損は検査に映るが、古びは検査に映らない。",
+      "古びを検出する器官（HEARTBEAT）が存在することが、古びうる対象すべてが見られているという印象を与える。検出器の対象集合（監査要約・複製の版）と、古びうる対象の集合（台帳の所見を含む）が一致していないことは、器官の存在からは見えない。",
+      "滞留を異常とする条件と閉じる責任の未定が、監査の警告（WARNING_BACKLOG）と台帳の推奨の二か所に同型で存在する。どちらも相手側が閉じていると想定できる形になっており、一方の未定がもう一方の未定を見えにくくする。",
+      "損失を止めたのが機構ではなく反復側の習慣であること。習慣は統制構造の要素として記述されないため、監督の対象にも劣化検出の対象にもならず、省略された時に何が失われたかが観測されない。",
+      "ASSURANCE_LANE の既知の穴（評価者が同系 model）と同じ構図が記録側にもある。所見を書く主体と、それを現状として読む主体が同一系統であり、書き手の当時の理解が読み手の前提としてそのまま通る。"
+    ],
+    "unknowns": [
+      "【機構の実在】事象が名指す『2026-08-08 の一括トリアージ（ADR-145）』を実施した機構は、与えられた統制構造のどこにも要素として現れない。台帳（recommendation-status.json）は ASSURANCE_LANE と OWNER の手掛かりとして実在し、docs-audit.py は SESSION_END_AUDIT の実体として実在するが、一括トリアージという制御動作を担う要素は列挙されていない。control_flaws の 3 番目（ASSURANCE_LANE / 制御動作が誤っている）は、この実在を確かめないまま置いた仮説である。ADR-145 が統治木の文書として実在するか、その内容が事象の記述どおりかも、本分析では確かめていない。",
+      "再観測したのは 1 件だけである。1/1 が食い違ったことは誤り率ではない。残り 138 件の一括由来所見がどれだけ現物から離れているかは測っていない（事象の evidence_note が明示する UNKNOWN）。",
+      "ADR-145 の所見が版について食い違ったのは、記述された時点から誤っていたのか、その後 generator{name,version} が追加されて古びたのかを判別していない。『当初から誤り』と『後から古びた』は別の故障であり、必要な統制も異なる（前者は所見生成時の確認、後者は再観測の周期）。",
+      "investigated が bool へ退化した時点と経緯（いつから true が書かれ始めたか、どの反復が書いたか）は測っていない。bool の 23 件はいつ調べたかを持たないため、記録自体からは復元できない。",
+      "台帳の所見欄の書式を定める文書が統治木に存在するか、存在しないかを確認していない。存在しないなら書式は暗黙の慣行であり、統制対象として現れない。",
+      "correction_2026-08-16 を追記したとき、元の所見文面が残るのか置換されるのかを確認していない。残るなら次反復が古い文面を先に読む経路が残存する。",
+      "pending 以外の 170 件（429 − 259）の所見が着手判断の入力として読まれることがあるか（例: 再開・再評価の際）は確認していない。読まれるなら古びの影響範囲は pending より広い。",
+      "今回の停止をもたらした『着手前に実測し直す習慣』が、どの反復でどの程度実行されているかは測っていない。実行率が判らないため、機構の欠如がどれだけ実際の損失に近いかも判らない。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は「記録が在ること」「記録が読めること」を検査対象にしており、「記録の主張が現物と一致し続けていること」を検査対象にしていない。ASSURANCE_LANE の台帳健全性の制御は破損（読めない／空へ写像される）を想定した故障モデルの上に立っており、内容が静かに古びる故障はその故障モデルに含まれない —— 古びた台帳は完全に読めるので、検査の目には健全に見える。investigated は型が自由なため、bool へ退化しても検査は何も言わない。欄が埋まっていることが合格条件になっており、その条件は true でも満たされる。HEARTBEAT は古びを検出する専用の器官を持つが、その対象は監査要約と導入複製の版に固定されており、保証レーン自身の記録は対象集合の外にある。docs-audit は自分の出力について書かれた所見を照合しない。結果として、今回の食い違いを見つけたのは統制構造のいずれの要素でもなく、着手前に実測し直すという反復側の習慣だった。本事象は fixed: false であり、習慣が省かれた反復では同じ食い違いがそのまま実装まで通る。"
+  },
+  "control_structure_ids": [
+    "OWNER",
+    "CI_RELEASE_CHECK",
+    "SESSION_START_CONTRACT",
+    "HEARTBEAT",
+    "PRE_TOOL_GUARD",
+    "POST_TOOL_LINTER",
+    "SESSION_END_AUDIT",
+    "WARNING_BACKLOG",
+    "CAPTURE_NUDGE",
+    "PLUGIN_DISTRIBUTION",
+    "ASSURANCE_LANE",
+    "GOVERNANCE_TREE"
+  ],
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "duration_ms": 262759,
+  "errors": [],
+  "execution_kind": "real-sdk",
+  "flaws_with_citation_defect": [],
+  "generated_at": "2026-08-16T06:05:04Z",
+  "git_dirty": true,
+  "git_sha": "f7693ccb0cb448218549af884c03093a5bfbe410",
+  "incident_evidence": {
+    "kind": "measurement",
+    "refs": [
+      "assurance/ledger/recommendation-status.json",
+      "ADR-145",
+      "plugin/scripts/docs-audit.py"
+    ],
+    "resolved": [
+      "assurance/ledger/recommendation-status.json",
+      "ADR-145",
+      "plugin/scripts/docs-audit.py"
+    ],
+    "unresolved": [],
+    "verifiable": true
+  },
+  "incident_id": "INC-050-triage-notes-are-read-as-current-state",
+  "incident_sha256": "b134472e17fd73fc01af04d4085e84fd7bb3c4cbfae070ff2220567d40574933",
+  "init": {
+    "claude_code_version": "2.1.221",
+    "model": "claude-opus-5",
+    "session_id": "358aed2b-7930-48b4-a762-5f055acd7b04",
+    "tools_count": 27
+  },
+  "kind": "cast-analysis",
+  "leading_indicators_defined": true,
+  "options": {
+    "allowed_tools": [],
+    "cwd": "/tmp/assurance-cast-e_1h1p8t",
+    "effort": "high",
+    "max_budget_usd": 4.0,
+    "max_turns": 8,
+    "model": "claude-opus-5",
+    "setting_sources": [],
+    "timeout_s": 900
+  },
+  "oracle": "structured_output がレーン側再検証にも適合",
+  "principles_offered": 337,
+  "prompt_sha256": "564e20639d43d1661cecb3fab5e88f4d200f5bfcde7fc7f445e01e53835f3d3c",
+  "rejected_flaws": [],
+  "result_meta": {
+    "duration_api_ms": 254720,
+    "is_error": false,
+    "num_turns": 2,
+    "session_id": "358aed2b-7930-48b4-a762-5f055acd7b04",
+    "subtype": "success",
+    "total_cost_usd": 0.8330895,
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 40292,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 40292,
+      "cache_read_input_tokens": 16255,
+      "inference_geo": "not_available",
+      "input_tokens": 2,
+      "iterations": "list",
+      "output_tokens": 15385,
+      "server_tool_use": {
+        "web_fetch_requests": 0,
+        "web_search_requests": 0
+      },
+      "service_tier": "standard",
+      "speed": "standard"
+    }
+  },
+  "schema_sha256": "0d1643d5e16353723405302c1f6ffcf753915e2a4f27a3530e8ef9a9ee45cb46",
+  "sdk_version": "0.2.129",
+  "settled": true,
+  "status": "PASS",
+  "structured_output": {
+    "confidence": "medium",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "台帳の所見欄は「2026-08-08 に見たときこう見えた」という観測を、時制の印を持たない断定文として保持する。次反復はこの文面を現在の状態として読み、その前提で着手を決める。実測 1 件（INC-001 推奨#0）では、所見『要約に版・セッション識別子も無い』のうち版に関する部分が現物と食い違っていた（generator{name,version} は既に在った）。書式が観測と現状を区別しないため、読み手側には食い違いを疑う手掛かりが文面上に無い。",
+        "evidence_ref": "assurance/ledger/recommendation-status.json の INC-001-sessionend-audit-gap#0 correction_2026-08-16",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "defects-in-information-providing-systems",
+          "プロセスモデルと実状態の不整合",
+          "include-information-supplier-defect"
+        ],
+        "why_it_seemed_adequate": "台帳は state（pending/investigated）と所見文を持ち、進捗と根拠が同じ場所に残る形になっている。所見を観測として書いた時点では文面と現物は一致しており、区別を設ける必要は当時の情報からは見えない。書式に時制の印を足すことは、記録の速さと引き換えになる作業でもあった。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "ASSURANCE_LANE は『台帳の健全性を保つ（読めない台帳を名指し、破損を空へ写像させない）』制御を持つが、その対象は読めるか・破損していないかであり、欄の型と内容の充足は対象外である。結果として investigated の型が一様でなくなり（str 380・None 26・bool 23）、bool 23 件は「調べた」と主張しながら、いつ・何を見たかを一切持たない。観測時点を持たない記録に対しては、古びを問う操作そのものが定義できない。",
+        "evidence_ref": "assurance/ledger/recommendation-status.json（investigated の型分布 str 380 / None 26 / bool 23）",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "安全想定の記録と失効先行指標の定義",
+          "情報システム保有と有用性の乖離",
+          "要約統計偏重による傾向情報の喪失"
+        ],
+        "why_it_seemed_adequate": "台帳の健全性は「壊れた台帳が空の next_actions に化けて進捗停止を隠す」という故障モードを想定して設計されている。その想定の下では、欄が埋まっていること自体が健全さの証拠であり、true という値も「調べた」という情報を確かに運んでいる。型を強制しないことは記録の障壁を下げる選択でもあった。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "事象が名指す 2026-08-08 の一括トリアージは、単一時点の観測を多数の推奨へ同一書式で複写し、以後の再観測を要件としないまま保持した。pending 259 件中 139 件、全 429 件中 196 件が同一日由来であり、単一の観測時点が母数の過半を占める。所見を生成する費用は一括処理で下がるが、再観測して古びを確かめる費用は件数に比例して増えるため、生成と検証の間に構造的な非対称が生じている。なお本項は、一括トリアージを行った機構が与えられた統制構造に要素として現れないため、ASSURANCE_LANE の制御動作として仮に置いた（unknowns 参照）。",
+        "evidence_ref": "pending 259 中 139 件が investigated に '2026-08-08' を含む（全 429 中 196 件）",
+        "flaw_type": "制御動作が誤っている",
+        "normative_refs": [
+          "共通の体系的要因による多重防護の無効化",
+          "audit-findings-must-be-closed",
+          "指摘欠点の是正完了追跡"
+        ],
+        "why_it_seemed_adequate": "未処理の推奨が滞留している状態を一度に解消し、台帳を読める状態へ揃えることは、進捗の停止を観測するという ASSURANCE_LANE の責務に直接かなう。トリアージ時点では所見と現物は一致し得たので、複写された文面はその時点で正しい情報だった。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者の手掛かりの一つは台帳である。しかし所見の観測日は欄の中の文字列としてしか存在せず（bool の 23 件では存在しない）、所有者から見て「調査済み」と「現に妥当」の区別がつかない。既知の穴として挙がる『報告が実施ではなく意図を書いていても人からは見分けにくい』と同型の見分けにくさが、台帳の側にも成立している —— 所見が観測なのか現状なのかを、所有者は台帳の表示から判定できない。",
+        "flaw_type": "手掛かりが遅い",
+        "normative_refs": [
+          "controller-needs-concrete-feedback-channels",
+          "リスク情報の不透明な集約禁止",
+          "control-action-requires-feedback"
+        ],
+        "why_it_seemed_adequate": "台帳は state 欄で pending/investigated を明示しており、所有者から見れば処遇の進行は追える。所見文は根拠として添えられているので、状態表示としては十分な情報量に見える。"
+      },
+      {
+        "control_element_id": "HEARTBEAT",
+        "description": "HEARTBEAT は『監査の古び・版の遅れをターンごとに警告する』が、その古びの対象は .claude/.cache/last-audit.json と導入複製の版に限られる。保証レーン自身の記録（台帳の所見）の古びは警告の対象外であり、139 件の所見が何日前の観測かはターンごとの警告に一度も現れない。古びを検出する経路は存在するが、古びうる対象の集合と一致していない。",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "計画外変化の検出手段",
+          "設計時想定の運用中再検査",
+          "リスク先行指標の検出"
+        ],
+        "why_it_seemed_adequate": "古びの警告は、統治の生存（監査が回っているか、複製が更新されているか）を守る目的で設計された。台帳は各反復で書き換えられる能動的な作業対象であり、放置されて古びる対象とは見なされていない。"
+      },
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "全件監査は統治木を走査して要約を .claude/.cache へ書くが、その要約の内容について台帳の所見が述べている主張（『要約に版・セッション識別子も無い』）と、要約の現物（generator{name,version} は在る）を照合する経路は無い。監査は自分の出力を持ちながら、自分の出力について書かれた所見が現物と一致するかを問わない。この照合は今回、機構ではなく反復側の実測によって初めて行われた。",
+        "evidence_ref": "plugin/scripts/docs-audit.py の要約 generator{name,version}",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "監査のすり抜け時に監査手順を是正",
+          "検出失敗の原因調査",
+          "feedback-enables-improvement-of-controls"
+        ],
+        "why_it_seemed_adequate": "監査の責務は統治木の findings を出すことであり、他所の文書が監査の出力についてどう述べているかは責務の外に置かれている。責務境界としては筋が通っており、二重に持たせない設計判断とも読める。"
+      },
+      {
+        "control_element_id": "WARNING_BACKLOG",
+        "description": "監査の警告の滞留について『滞留を異常とする条件と、閉じる責任の割当は未定』という穴が既に記録されている。台帳の pending 所見にも同型の未定がある —— 所見が何日で古びと見なされるか、誰が再観測を起こすかが定まっていない。二つの滞留（監査の警告と台帳の推奨）は別々の場所で同じ未定を抱えており、どちらの側も相手が閉じていると想定できる状態になっている。",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "責任の空白は構造再設計",
+          "監視責任の空白排除",
+          "audit-findings-must-be-closed"
+        ],
+        "why_it_seemed_adequate": "滞留の扱いを門で止めるか別経路にするかは所有者判断として明示的に保留されている。保留は判断の放棄ではなく、影響範囲を見極めるための正当な待機である。台帳側の滞留は、その保留の対象として認識されていなかった。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "ADR-145 は統治木の決定文書として在るが、docs-audit の findings と dep-graph の逆依存が見るのは文書間の整合と依存であって、文書中の所見が名指す現物（監査要約の項目）と一致するかではない。文書の主張が対象の実態から離れても、統治木の手掛かりからは何も出ない。",
+        "evidence_ref": "ADR-145",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "宣言された設計と実動作の突合",
+          "公式設計と実動作の二重評価",
+          "監査の検出力評価"
+        ],
+        "why_it_seemed_adequate": "統治木の検査は文書どうしの矛盾と参照切れを対象に設計されている。文書が名指す外部の現物まで照合対象に広げることは、検査対象を統治木の外へ拡張することを意味し、境界の設計としては保守的に閉じているのが自然だった。"
+      }
+    ],
+    "hazard": "台帳（assurance/ledger/recommendation-status.json）の所見が、(1) 観測時点を持たない、または型が退化して観測時点を表現できない（investigated: str 380・None 26・bool 23）、(2) 「ある時点の観測」と「現在の状態」を書式上区別しない、という状態のまま、次反復の着手判断の主要入力として提示され続けている状態。加えて pending 259 件のうち 139 件（全 429 件中 196 件）が単一日の一括トリアージ由来であり、単一時点の観測が母数の過半を占めている。",
+    "incident_id": "INC-050-triage-notes-are-read-as-current-state",
+    "leading_indicators": [
+      {
+        "indicator": "investigated 欄の型分布に str 以外が混じる",
+        "observable": "台帳の全エントリについて investigated の型別件数（str / None / bool / その他）",
+        "threshold": "bool および数値型が 1 件でも存在すれば異常。None は「未調査」を意味する規約を明文化した上で許容し、規約が無いうちは None も異常として数える（現状 bool 23・None 26）",
+        "version_independent": true,
+        "where": "assurance/ledger/recommendation-status.json（リポジトリ正本。決定論試験または CI_RELEASE_CHECK から読む）",
+        "why_version_independent": "リポジトリ正本の台帳ファイルだけを読むため、利用者環境へ導入された複製の版に依存しない"
+      },
+      {
+        "indicator": "pending 所見の観測日からの経過日数分布",
+        "observable": "state=='pending' の各エントリについて investigated 中の観測日から現在日までの日数（最古値と、閾値超の割合）",
+        "threshold": "経過 30 日超が pending の 20% を超える、または最古が 60 日を超えたら再観測を next_actions へ積む。閾値の値そのものは所有者判断で確定させる",
+        "version_independent": true,
+        "where": "assurance/ledger/recommendation-status.json。観測日を持たないエントリは「測定不能」として別枠で計数する",
+        "why_version_independent": "台帳ファイルの内容と実行日時のみから計算でき、導入複製にも監査要約にも依存しない"
+      },
+      {
+        "indicator": "単一の観測時点に由来する所見が pending に占める割合（一括由来の集中度）",
+        "observable": "pending のうち同一の観測日を持つエントリの最大群の件数と割合",
+        "threshold": "単一日由来が pending の 1/3 を超えたら異常。現状 139/259 = 約 54% で既に閾値を超えている",
+        "version_independent": true,
+        "where": "assurance/ledger/recommendation-status.json",
+        "why_version_independent": "台帳内の日付文字列の集計のみで求まる"
+      },
+      {
+        "indicator": "再観測（correction 記録）の発生頻度",
+        "observable": "直近 30 日に correction_YYYY-MM-DD 相当の再観測記録が付いたエントリ数と、そのうち現物と食い違った件数",
+        "threshold": "直近 30 日の再観測が 0 件なら「古びを測っていない」状態として異常。食い違い率は分母が小さいうちは指標として扱わず、件数のみを見る",
+        "version_independent": true,
+        "where": "assurance/ledger/recommendation-status.json の correction 欄",
+        "why_version_independent": "台帳への追記の有無を数えるだけであり、外部の版に依存しない"
+      },
+      {
+        "indicator": "台帳古び警告を導入複製側の検出器に載せた場合の、複製の版遅れ",
+        "observable": "gov-heartbeat.py を含む導入複製の版と、リポジトリ正本の版の差",
+        "threshold": "導入複製が正本より 1 世代でも遅れているとき、台帳古びの警告が出ていないことを『古びが無い』の証拠として扱わない",
+        "version_independent": false,
+        "where": "HEARTBEAT が読む導入複製の版と .claude/.cache/last-audit.json",
+        "why_version_independent": "検出器自身が導入複製の側で動くため、版が遅れれば検出器も古びる（INC-005 の共通原因故障）。この指標を採るなら、台帳古びの検出は正本側（CI_RELEASE_CHECK）に置く選択と対で判断する必要がある"
+      }
+    ],
+    "loss": "次反復の着手判断が、過去のある時点の観測を現状として読んだ結果、(a) 既に在る項目を二重に足す、(b) 既に解消した問題に手を入れる、(c) 悪化している対象を「調査済み」として据え置く、のいずれかが保証レーンの出力に混入し、統治文書と台帳の記述が現物から離れていく。本事象では 2026-08-08 の一括トリアージ由来の所見（「要約に版・セッション識別子も無い」）が版について現物と食い違い、(a) の実装直前で止まったが、止めたのは統制機構ではなく着手前に実測し直すという反復側の習慣である。習慣は統制構造の要素として存在しないため、損失は防がれたのではなく今回だけ発生しなかった。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "10 件すべてが現物と一致すれば、一括由来であることは古びの指標にならず、集中度の閾値は先行指標として棄却される。",
+        "hypothesis": "一括トリアージ由来の 139 件のうち相当数が、既に解消済み・既に実装済みの項目を未解決として述べている。",
+        "oracle": "139 件から無作為 10 件を抽出し、各所見が名指す現物を実測して一致・不一致を判定する。抽出方法と件数を測定前に固定する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "correction が所見文を置換している、または提示時に訂正が先に来るなら、この経路は成立しない。",
+        "hypothesis": "correction 欄は追記であり元の所見文面が残るため、次反復は訂正より先に古い文面を読む。",
+        "oracle": "INC-001-sessionend-audit-gap#0 の現物を読み、所見文と correction_2026-08-16 の並び順・どちらが着手判断の入力として提示されるかを確認する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "23 件のいずれも着手判断の入力に使われていない（別経路で扱われている）なら、影響は台帳の見かけに留まる。",
+        "hypothesis": "investigated: true の 23 件は、観測時点を持たないまま『調査済み』として着手判断から除外され続けている（事象 impact の (c) が既に発生している）。",
+        "oracle": "23 件の state と、直近の反復で next_actions に現れたかを照合する。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "統治木の断定がすべて版または日付を伴っているなら、古びは台帳固有の書式問題に限定される。",
+        "hypothesis": "同型の古び（観測時点を持たない断定）が台帳の外、統治木の文書（decided-facts.md 等）にも存在する。",
+        "oracle": "docs-audit の findings に、外部の現物を名指しながら観測日を持たない断定を数える検査を一時的に加えて計数する。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "導入が 2026-08-08 より前であれば、所見は当初から現物と食い違っていたことになり、必要な統制は再観測周期ではなく所見生成時の確認に移る。",
+        "hypothesis": "ADR-145 の所見は記述時点では正しく、その後 generator{name,version} が追加されたことで古びた（誤りではなく古び）。",
+        "oracle": "docs-audit.py の履歴で generator{name,version} の導入時点を特定し、2026-08-08 の前後を判定する。",
+        "severity": "P1"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "investigated 欄を自由型から構造（observed_at・observed_by・method・claim）へ移し、str/bool/None をそのまま受け付けない検査を決定論試験に加える。既存 429 件は移行時に observed_at 不明として明示的に印を付け、欠測を欠測として残す（true を日付へ推測変換しない）。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "台帳の所見を『観測（いつ見たか付き）』として書式上明示し、現状の主張として読めない形にする。所見が観測日を伴わない場合は書き込み時点で拒む。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "pending 所見の経過日数分布・単一日由来の集中度・直近の再観測件数を測る指標を追加し、閾値超で next_actions に再観測を積む。指標は台帳ファイルだけから計算し、導入複製の版に依存させない。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "一括処理で生成された所見に『未再観測』の印を付け、印が付いたままの所見を着手判断の唯一の根拠として使わない規約を設ける（実測で確かめてから印を外す）。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "所見が何日で古びと見なされるか、再観測を起こす責任をどこに置くか（ASSURANCE_LANE 側か OWNER 側か）を確定する。WARNING_BACKLOG の同型の未定（INC-039 推奨#4）と併せて一度に裁定する。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "台帳古びの検出器を、リポジトリ正本側（CI_RELEASE_CHECK・決定論試験）に置くか、導入複製側（HEARTBEAT）に置くかを決める。後者は INC-005 の共通原因故障（検出器自身が古びる）を引き継ぐため、選択の理由を記録に残す。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "一括トリアージ由来 139 件から層化抽出（例: 10 件）で再観測し、古び率を推定する。1/1 を誤り率として扱わないため、母数と抽出方法を先に決めてから測る。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "『2026-08-08 の一括トリアージ』を実施した機構が統制構造のどの要素に当たるかを確定し、当たる要素が無い場合は要素として記述に加える。当該制御動作の担い手が未特定のままでは、再発防止の宛先が定まらない。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "本事象で機能したのが『着手前に実測し直す』という反復側の習慣であったことを記録に残し、機構化されるまでは統制構造の外にある依存として明示する。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "記録の書式が時間の次元を持たない。観測と現状が同じ欄・同じ文体で表され、読み手が両者を区別する手掛かりが文面に無い。この欠落は台帳に限らず、統治木の断定文にも同型で成立しうる。",
+      "所見を生成する費用と、所見の古びを確かめる費用が非対称である。一括処理は生成側にだけ規模の経済を与え、再観測の費用は件数に比例して増える。結果として、生成された所見の総量が検証能力を超えて滞留する。",
+      "保証の検査が『在ること・読めること』の水準で設計されており、『在るものが現物と一致し続けること』の水準に届いていない。破損は検査に映るが、古びは検査に映らない。",
+      "古びを検出する器官（HEARTBEAT）が存在することが、古びうる対象すべてが見られているという印象を与える。検出器の対象集合（監査要約・複製の版）と、古びうる対象の集合（台帳の所見を含む）が一致していないことは、器官の存在からは見えない。",
+      "滞留を異常とする条件と閉じる責任の未定が、監査の警告（WARNING_BACKLOG）と台帳の推奨の二か所に同型で存在する。どちらも相手側が閉じていると想定できる形になっており、一方の未定がもう一方の未定を見えにくくする。",
+      "損失を止めたのが機構ではなく反復側の習慣であること。習慣は統制構造の要素として記述されないため、監督の対象にも劣化検出の対象にもならず、省略された時に何が失われたかが観測されない。",
+      "ASSURANCE_LANE の既知の穴（評価者が同系 model）と同じ構図が記録側にもある。所見を書く主体と、それを現状として読む主体が同一系統であり、書き手の当時の理解が読み手の前提としてそのまま通る。"
+    ],
+    "unknowns": [
+      "【機構の実在】事象が名指す『2026-08-08 の一括トリアージ（ADR-145）』を実施した機構は、与えられた統制構造のどこにも要素として現れない。台帳（recommendation-status.json）は ASSURANCE_LANE と OWNER の手掛かりとして実在し、docs-audit.py は SESSION_END_AUDIT の実体として実在するが、一括トリアージという制御動作を担う要素は列挙されていない。control_flaws の 3 番目（ASSURANCE_LANE / 制御動作が誤っている）は、この実在を確かめないまま置いた仮説である。ADR-145 が統治木の文書として実在するか、その内容が事象の記述どおりかも、本分析では確かめていない。",
+      "再観測したのは 1 件だけである。1/1 が食い違ったことは誤り率ではない。残り 138 件の一括由来所見がどれだけ現物から離れているかは測っていない（事象の evidence_note が明示する UNKNOWN）。",
+      "ADR-145 の所見が版について食い違ったのは、記述された時点から誤っていたのか、その後 generator{name,version} が追加されて古びたのかを判別していない。『当初から誤り』と『後から古びた』は別の故障であり、必要な統制も異なる（前者は所見生成時の確認、後者は再観測の周期）。",
+      "investigated が bool へ退化した時点と経緯（いつから true が書かれ始めたか、どの反復が書いたか）は測っていない。bool の 23 件はいつ調べたかを持たないため、記録自体からは復元できない。",
+      "台帳の所見欄の書式を定める文書が統治木に存在するか、存在しないかを確認していない。存在しないなら書式は暗黙の慣行であり、統制対象として現れない。",
+      "correction_2026-08-16 を追記したとき、元の所見文面が残るのか置換されるのかを確認していない。残るなら次反復が古い文面を先に読む経路が残存する。",
+      "pending 以外の 170 件（429 − 259）の所見が着手判断の入力として読まれることがあるか（例: 再開・再評価の際）は確認していない。読まれるなら古びの影響範囲は pending より広い。",
+      "今回の停止をもたらした『着手前に実測し直す習慣』が、どの反復でどの程度実行されているかは測っていない。実行率が判らないため、機構の欠如がどれだけ実際の損失に近いかも判らない。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は「記録が在ること」「記録が読めること」を検査対象にしており、「記録の主張が現物と一致し続けていること」を検査対象にしていない。ASSURANCE_LANE の台帳健全性の制御は破損（読めない／空へ写像される）を想定した故障モデルの上に立っており、内容が静かに古びる故障はその故障モデルに含まれない —— 古びた台帳は完全に読めるので、検査の目には健全に見える。investigated は型が自由なため、bool へ退化しても検査は何も言わない。欄が埋まっていることが合格条件になっており、その条件は true でも満たされる。HEARTBEAT は古びを検出する専用の器官を持つが、その対象は監査要約と導入複製の版に固定されており、保証レーン自身の記録は対象集合の外にある。docs-audit は自分の出力について書かれた所見を照合しない。結果として、今回の食い違いを見つけたのは統制構造のいずれの要素でもなく、着手前に実測し直すという反復側の習慣だった。本事象は fixed: false であり、習慣が省かれた反復では同じ食い違いがそのまま実装まで通る。"
+  }
+}

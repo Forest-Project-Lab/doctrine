@@ -1,0 +1,660 @@
+{
+  "accepted_flaws": [
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "レーンは「次の行動を決定論で導く」責任を負うが、門の起動については名前の水準までを導き、検査集合を決める引数を決定論の外（手順文書の文面と、それを読む側の書き写し）に置いている。門の同一性は名前ではなく引数を含む呼び出しにあるため、レーンが導いた行動と実際に実行された検めの範囲が一致することは保証されていない。結果として、レーンが台帳と所有者へ渡す「整合」の意味が、呼び出しごとに変動する。",
+      "evidence_ref": "assurance/harness/orchestrator.py（制御:「次の行動を決定論で導く」）／.claude/skills/assurance-loop/SKILL.md §8",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "信頼性と安全性の分離",
+        "機械的遵守が前提の指示は自動化",
+        "プロセスモデルと実状態の不整合",
+        "software-does-not-fail-requirements-defect"
+      ],
+      "why_it_seemed_adequate": "門は一つのスクリプトに一つの名前が対応しており、名前で一意に指せるという語彙が手順・レーン・許可条件に共通して用いられていた。release-check.py は docstring どおりに振る舞い、引数なしでも「整合」を返すため、呼び出し側から見て範囲が欠けている兆候が返らない。決定論で導く対象を「どの門を、どの順で」に置くことは、それ自体としては一貫した設計に見える。"
+    },
+    {
+      "control_element_id": "CI_RELEASE_CHECK",
+      "description": "CI は `--diff-base <ref>` を伴う呼び出しで記録の義務を含む集合を検め、手元は引数なしの呼び出しで狭い集合を検める。二つの実行は同じ門の名前を共有するが、検査集合の差を突き合わせる経路が存在しない。CI 側の呼び出しが変わっても、手順文書が指す呼び出しとの差が検出される仕組みは無く、両者の一致は偶然に依存する。今回は広い側が CI にあったため安全側に倒れたが、同じ構造は逆向き（手元でのみ検める項目が CI に無い）にも成立する。",
+      "evidence_ref": ".github/workflows/checks.yml と scripts/release-check.py の実測（引数なし→4項目／--diff-base origin/main→5項目）",
+      "flaw_type": "統制どうしの調整の欠如",
+      "normative_refs": [
+        "設計上と実際の伝達経路の照合",
+        "宣言された設計と実動作の突合",
+        "control-action-requires-feedback",
+        "全体健全性と部分健全性の分離評価"
+      ],
+      "why_it_seemed_adequate": "CI は merge 前に赤で止める最終の門であり、手元実行は前倒しの利便として位置づけられていた。両者が同じスクリプトを走らせている以上、同じことを検めているという理解が自然に成り立つ。範囲の差はスクリプトの出力文言（末尾に「・記録の義務」が加わるか）に現れていたが、その差を読み分ける要求はどちらの側にも置かれていない。"
+    },
+    {
+      "control_element_id": "OWNER",
+      "description": "所有者へ届く手掛かり（規定形式の進捗報告・PR の diff・台帳）は「全門が緑」という結果を運ぶが、どの呼び出しで得た緑かを運ばない。§7.1 の常設許可は「§8 の全門が緑」を条件に置いているため、条件の充足判定に必要な情報（呼び出しに含まれる引数）が、判定を行う位置に存在しない。所有者はここで、狭い集合の緑と広い集合の緑を区別できない。",
+      "evidence_ref": "統制構造 OWNER の手掛かり一覧（進捗報告・PR の diff・台帳）",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "defects-in-information-providing-systems",
+        "controller-needs-concrete-feedback-channels",
+        "リスク情報の不透明な集約禁止",
+        "include-information-supplier-defect"
+      ],
+      "why_it_seemed_adequate": "門の名前と成否は報告として十分に具体的であり、それ以上の粒度は冗長に見える。既知の穴として「報告が実施ではなく意図を書いていても人からは見分けにくい」ことは把握されていたが、実施が書かれている場合にもなお範囲が欠落しうるという形は、報告様式の設計時に想定に入っていない。"
+    },
+    {
+      "control_element_id": "GOVERNANCE_TREE",
+      "description": "同族の教訓（`--today` を渡し忘れる形、WATCH-001 第11項）は §0 に明示的な警告として書かれているが、その適用対象が docs-audit という個別の呼び出しに束ねられており、「引数で検査集合が変わる呼び出し」という族としては書かれていない。統治木は教訓を保持しているが、保持の粒度が個別呼び出しであるため、release-check には届かない。教訓の記録が、伝達され利用されるところまで到達していない。",
+      "evidence_ref": ".claude/skills/assurance-loop/SKILL.md §0 と WATCH-001 第11項",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "教訓の記録と伝達と活用",
+        "教訓を適用する手順の確立",
+        "symptom-vs-systemic-cause",
+        "learning-failure-decomposed-into-info-system-questions"
+      ],
+      "why_it_seemed_adequate": "事象は docs-audit の呼び出しで観測されたため、観測された場所に対応する注意書きを置くことは正確な記録であり、範囲を広げれば根拠のない一般化になるという判断が成り立つ。族としての一般化を促す機構（教訓を族へ写す手順）は統治木の側に置かれていない。"
+    },
+    {
+      "control_element_id": "POST_TOOL_LINTER",
+      "description": "リンタは編集された一つの文書だけを点検する設計であり、plugin/ の変更と CHANGELOG.md の変更という二文書間の相関として定義された記録の義務は、原理的に視野へ入らない。この制約を検める位置が門だけになったことで、門の呼び出しの差が制約全体の強制の有無に直結する構造が生じている。",
+      "evidence_ref": "統制構造 POST_TOOL_LINTER 制御:「編集された一つの文書だけを点検し、助言を返す」",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "each-component-enforces-its-constraints",
+        "全体健全性と部分健全性の分離評価",
+        "共通の体系的要因による多重防護の無効化"
+      ],
+      "why_it_seemed_adequate": "編集ごとの点検は速く、助言として返せる粒度であり、相関制約は差分全体を見る門で検めるという分担は合理的である。分担そのものは矛盾していないが、門の側が呼び出しによって当該制約を検めたり検めなかったりすることは、この分担の前提に入っていない。"
+    },
+    {
+      "control_element_id": "PRE_TOOL_GUARD",
+      "description": "記録の義務については、拒否の門に対応する制御動作が割り当てられていない。plugin/ 配下への編集が行われた時点で、CHANGELOG.md の追記を要する状態に入ったことを記録・追跡する動作は無く、制約の強制は門の呼び出しに一元化されている。責任の割当がこの制約について空白であることが、門の範囲差をそのまま強制の有無へ通す。",
+      "evidence_ref": "統制構造 PRE_TOOL_GUARD 制御:「違反する編集・削除を終了コード2で拒む」",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "責任の空白は構造再設計",
+        "監視責任の空白排除",
+        "各コントローラの責任記述"
+      ],
+      "why_it_seemed_adequate": "編集の瞬間には記録の義務は未違反であり（後から CHANGELOG.md を書けば充足する）、その時点で終了コード2で拒むことは正しくない。拒否の門は違反が確定する編集・削除を対象とする設計であり、時間差を持つ義務をここに置かない判断には根拠がある。"
+    },
+    {
+      "control_element_id": "HEARTBEAT",
+      "description": "鼓動は監査の古びと導入複製の版遅れを警告するが、「手順が名指す呼び出し」と「門が実際に受け取る引数の規約」の乖離という劣化については観測点を持たない。門の引数が増減しても、あるいは CI 側の呼び出しが変わっても、手順文書との差は無警告のまま経過する。統制の範囲を定める情報が実装側（docstring と出力文言）にあり、その変化を追う検出器が無い。",
+      "evidence_ref": "統制構造 HEARTBEAT 手掛かり:.claude/.cache/last-audit.json・導入複製の版",
+      "flaw_type": "統制自身の劣化を検出できない",
+      "normative_refs": [
+        "設計時想定の運用中再検査",
+        "計画外変化の検出手段",
+        "安全想定の記録と失効先行指標の定義",
+        "変更後に事故が起きる前提の変更管理"
+      ],
+      "why_it_seemed_adequate": "鼓動が扱う古びは「時間経過」と「版番号」という測りやすい量であり、これらは実際に共通原因故障（INC-005）として認識されている。呼び出し規約の乖離は時間でも版でもない種類の古びであり、既存の指標の枠に収まらないため、警告の対象として立ち上がらない。"
+    }
+  ],
+  "analysis": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "レーンは「次の行動を決定論で導く」責任を負うが、門の起動については名前の水準までを導き、検査集合を決める引数を決定論の外（手順文書の文面と、それを読む側の書き写し）に置いている。門の同一性は名前ではなく引数を含む呼び出しにあるため、レーンが導いた行動と実際に実行された検めの範囲が一致することは保証されていない。結果として、レーンが台帳と所有者へ渡す「整合」の意味が、呼び出しごとに変動する。",
+        "evidence_ref": "assurance/harness/orchestrator.py（制御:「次の行動を決定論で導く」）／.claude/skills/assurance-loop/SKILL.md §8",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "信頼性と安全性の分離",
+          "機械的遵守が前提の指示は自動化",
+          "プロセスモデルと実状態の不整合",
+          "software-does-not-fail-requirements-defect"
+        ],
+        "why_it_seemed_adequate": "門は一つのスクリプトに一つの名前が対応しており、名前で一意に指せるという語彙が手順・レーン・許可条件に共通して用いられていた。release-check.py は docstring どおりに振る舞い、引数なしでも「整合」を返すため、呼び出し側から見て範囲が欠けている兆候が返らない。決定論で導く対象を「どの門を、どの順で」に置くことは、それ自体としては一貫した設計に見える。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "CI は `--diff-base <ref>` を伴う呼び出しで記録の義務を含む集合を検め、手元は引数なしの呼び出しで狭い集合を検める。二つの実行は同じ門の名前を共有するが、検査集合の差を突き合わせる経路が存在しない。CI 側の呼び出しが変わっても、手順文書が指す呼び出しとの差が検出される仕組みは無く、両者の一致は偶然に依存する。今回は広い側が CI にあったため安全側に倒れたが、同じ構造は逆向き（手元でのみ検める項目が CI に無い）にも成立する。",
+        "evidence_ref": ".github/workflows/checks.yml と scripts/release-check.py の実測（引数なし→4項目／--diff-base origin/main→5項目）",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "設計上と実際の伝達経路の照合",
+          "宣言された設計と実動作の突合",
+          "control-action-requires-feedback",
+          "全体健全性と部分健全性の分離評価"
+        ],
+        "why_it_seemed_adequate": "CI は merge 前に赤で止める最終の門であり、手元実行は前倒しの利便として位置づけられていた。両者が同じスクリプトを走らせている以上、同じことを検めているという理解が自然に成り立つ。範囲の差はスクリプトの出力文言（末尾に「・記録の義務」が加わるか）に現れていたが、その差を読み分ける要求はどちらの側にも置かれていない。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者へ届く手掛かり（規定形式の進捗報告・PR の diff・台帳）は「全門が緑」という結果を運ぶが、どの呼び出しで得た緑かを運ばない。§7.1 の常設許可は「§8 の全門が緑」を条件に置いているため、条件の充足判定に必要な情報（呼び出しに含まれる引数）が、判定を行う位置に存在しない。所有者はここで、狭い集合の緑と広い集合の緑を区別できない。",
+        "evidence_ref": "統制構造 OWNER の手掛かり一覧（進捗報告・PR の diff・台帳）",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "defects-in-information-providing-systems",
+          "controller-needs-concrete-feedback-channels",
+          "リスク情報の不透明な集約禁止",
+          "include-information-supplier-defect"
+        ],
+        "why_it_seemed_adequate": "門の名前と成否は報告として十分に具体的であり、それ以上の粒度は冗長に見える。既知の穴として「報告が実施ではなく意図を書いていても人からは見分けにくい」ことは把握されていたが、実施が書かれている場合にもなお範囲が欠落しうるという形は、報告様式の設計時に想定に入っていない。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "同族の教訓（`--today` を渡し忘れる形、WATCH-001 第11項）は §0 に明示的な警告として書かれているが、その適用対象が docs-audit という個別の呼び出しに束ねられており、「引数で検査集合が変わる呼び出し」という族としては書かれていない。統治木は教訓を保持しているが、保持の粒度が個別呼び出しであるため、release-check には届かない。教訓の記録が、伝達され利用されるところまで到達していない。",
+        "evidence_ref": ".claude/skills/assurance-loop/SKILL.md §0 と WATCH-001 第11項",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "教訓の記録と伝達と活用",
+          "教訓を適用する手順の確立",
+          "symptom-vs-systemic-cause",
+          "learning-failure-decomposed-into-info-system-questions"
+        ],
+        "why_it_seemed_adequate": "事象は docs-audit の呼び出しで観測されたため、観測された場所に対応する注意書きを置くことは正確な記録であり、範囲を広げれば根拠のない一般化になるという判断が成り立つ。族としての一般化を促す機構（教訓を族へ写す手順）は統治木の側に置かれていない。"
+      },
+      {
+        "control_element_id": "POST_TOOL_LINTER",
+        "description": "リンタは編集された一つの文書だけを点検する設計であり、plugin/ の変更と CHANGELOG.md の変更という二文書間の相関として定義された記録の義務は、原理的に視野へ入らない。この制約を検める位置が門だけになったことで、門の呼び出しの差が制約全体の強制の有無に直結する構造が生じている。",
+        "evidence_ref": "統制構造 POST_TOOL_LINTER 制御:「編集された一つの文書だけを点検し、助言を返す」",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "each-component-enforces-its-constraints",
+          "全体健全性と部分健全性の分離評価",
+          "共通の体系的要因による多重防護の無効化"
+        ],
+        "why_it_seemed_adequate": "編集ごとの点検は速く、助言として返せる粒度であり、相関制約は差分全体を見る門で検めるという分担は合理的である。分担そのものは矛盾していないが、門の側が呼び出しによって当該制約を検めたり検めなかったりすることは、この分担の前提に入っていない。"
+      },
+      {
+        "control_element_id": "PRE_TOOL_GUARD",
+        "description": "記録の義務については、拒否の門に対応する制御動作が割り当てられていない。plugin/ 配下への編集が行われた時点で、CHANGELOG.md の追記を要する状態に入ったことを記録・追跡する動作は無く、制約の強制は門の呼び出しに一元化されている。責任の割当がこの制約について空白であることが、門の範囲差をそのまま強制の有無へ通す。",
+        "evidence_ref": "統制構造 PRE_TOOL_GUARD 制御:「違反する編集・削除を終了コード2で拒む」",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "責任の空白は構造再設計",
+          "監視責任の空白排除",
+          "各コントローラの責任記述"
+        ],
+        "why_it_seemed_adequate": "編集の瞬間には記録の義務は未違反であり（後から CHANGELOG.md を書けば充足する）、その時点で終了コード2で拒むことは正しくない。拒否の門は違反が確定する編集・削除を対象とする設計であり、時間差を持つ義務をここに置かない判断には根拠がある。"
+      },
+      {
+        "control_element_id": "HEARTBEAT",
+        "description": "鼓動は監査の古びと導入複製の版遅れを警告するが、「手順が名指す呼び出し」と「門が実際に受け取る引数の規約」の乖離という劣化については観測点を持たない。門の引数が増減しても、あるいは CI 側の呼び出しが変わっても、手順文書との差は無警告のまま経過する。統制の範囲を定める情報が実装側（docstring と出力文言）にあり、その変化を追う検出器が無い。",
+        "evidence_ref": "統制構造 HEARTBEAT 手掛かり:.claude/.cache/last-audit.json・導入複製の版",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "設計時想定の運用中再検査",
+          "計画外変化の検出手段",
+          "安全想定の記録と失効先行指標の定義",
+          "変更後に事故が起きる前提の変更管理"
+        ],
+        "why_it_seemed_adequate": "鼓動が扱う古びは「時間経過」と「版番号」という測りやすい量であり、これらは実際に共通原因故障（INC-005）として認識されている。呼び出し規約の乖離は時間でも版でもない種類の古びであり、既存の指標の枠に収まらないため、警告の対象として立ち上がらない。"
+      }
+    ],
+    "hazard": "同一の名前で指される門が、呼び出しに含まれる引数によって異なる検査集合を実行し、その集合差がどの制御ループにも観測されないまま、狭い集合の緑が広い集合の緑として merge 判断へ供給される状態。",
+    "incident_id": "INC-049-gate-coverage-depends-on-an-unspecified-argument",
+    "leading_indicators": [
+      {
+        "indicator": "手順が名指す門の呼び出しと、CI が実行する呼び出しの逐語一致",
+        "observable": "§8 に書かれた各門の実行行（引数込み）と、.github/workflows/checks.yml の該当ステップのコマンド行の文字列比較",
+        "threshold": "引数まで含めて一致しない門が1件でも存在すれば異常。手順側に実行行が書かれていない門も同じく異常として数える",
+        "version_independent": true,
+        "where": "保証レーンの決定論試験（assurance/harness）に追加する照合試験。リポジトリ正本のみを読む",
+        "why_version_independent": "照合対象がリポジトリ正本の二つのファイルだけであり、利用者環境の導入複製の版に依存しない"
+      },
+      {
+        "indicator": "引数の有無で検査集合が変わる門の残存数",
+        "observable": "§8 の各門を、引数なしと手順規定の引数の両方で走らせ、出力末尾が列挙する検査項目の集合差",
+        "threshold": "集合差が空でない門のうち、手順に呼び出し行が明記されていないものが1件でもあれば異常。集合差が空でない門が新規に増えた場合も異常",
+        "version_independent": true,
+        "where": "CI 上の照合ジョブ（各門を二通りで実行し集合差を出力）",
+        "why_version_independent": "門のスクリプトと手順文書はいずれもリポジトリ正本にあり、導入複製の更新状況と独立に測れる"
+      },
+      {
+        "indicator": "「全門が緑」を主張する報告のうち、呼び出し行を逐語で含む割合",
+        "observable": "assurance/ledger/ の進捗報告本文に、実行した門のコマンド行（引数込み）が含まれているか",
+        "threshold": "直近10件の報告で、緑を主張しながら呼び出し行を含まないものが1件でもあれば異常",
+        "version_independent": true,
+        "where": "台帳の様式検査（レーンの台帳健全性チェックに追加）",
+        "why_version_independent": "台帳と報告様式はリポジトリ側にあり、複製の版に依存しない"
+      },
+      {
+        "indicator": "手元緑→CI 赤の乖離件数（ニアミス計数）",
+        "observable": "PR ごとに、手元実行の記録（台帳の報告）が緑であったにもかかわらず CI が赤で止めた件数と、その落とした検査項目名",
+        "threshold": "直近20 PR で1件でも発生すれば、範囲差が未解消として扱う。項目名が新規に増えた場合は逆向き（CI に無い検め）の調査を起動する",
+        "version_independent": true,
+        "where": "CI ジョブ履歴と台帳の突合",
+        "why_version_independent": "CI 履歴と台帳のみを参照し、導入複製の版を参照しない"
+      },
+      {
+        "indicator": "導入複製側の手順が指す呼び出しと正本の呼び出しの世代差",
+        "observable": "gov-heartbeat.py が読む導入複製の版と marketplace 側の版、および両版の §8 に書かれた実行行の差分",
+        "threshold": "複製が1世代以上遅れ、かつ §8 の実行行が世代間で変化していれば異常",
+        "version_independent": false,
+        "where": "plugin/scripts/gov-heartbeat.py の警告出力（導入複製上）",
+        "why_version_independent": "この検出器は導入複製の側で動くため、複製の版が遅れると検出器自身も古い実行行を正しいものとして扱う。INC-005・HEARTBEAT の既知の穴（古びの検出器が古びる）と同じ共通原因故障の上に載る指標である"
+      }
+    ],
+    "loss": "記録の義務（plugin/ に触れる差分は CHANGELOG.md に触れること）を満たさない変更が、§7.1 の常設許可のもとで「§8 の全門が緑」を根拠に merge 可と扱われうる状態が生じた。今回は範囲の広い側の呼び出しを持つ CI が PR #338 を赤で止めたため、実損は差し戻しに留まった。損失として扱うのは、保証レーンが所有者へ渡す「全門が緑」という保証が、どの範囲を検めた緑かの裏づけを伴わないまま流通し、merge 許可の前提として消費されたことである。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "全門について CI 側の検査集合が手元側を包含する（CI ⊇ 手元）ことが確認される。",
+        "hypothesis": "手元でのみ検める項目を持つ門が存在し、その項目は CI で検められないため、赤になるべき変更が CI をすり抜ける（本事象の逆向き）。",
+        "oracle": "§8 の全門を、手順が指す呼び出しと CI が用いる呼び出しの両方で実行し、検査項目の集合を比較する。CI 側の集合が手元側の集合を包含しない門があれば成立。",
+        "severity": "P0"
+      },
+      {
+        "falsification_signal": "集合差が空でない門が release-check と docs-audit のみである。",
+        "hypothesis": "§8 が名指す門のうち、引数で検査集合が変わるものが release-check と docs-audit のほかにも存在する。",
+        "oracle": "各門を引数なしと規定引数で実行し、出力が列挙する検査項目の集合差を取る。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "版差があっても実行行と検査集合が同一である。",
+        "hypothesis": "導入複製が遅れている環境では §8 の実行行も遅れ、複製側の手元検証が古い検査集合で緑を返す。手元と CI の乖離は版差の分だけ拡大する。",
+        "oracle": "1世代前・2世代前の複製の §8 に書かれた実行行で門を走らせ、正本 CI の検査集合と比較する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "緑を主張する報告のすべてが逐語の呼び出し行を含む。",
+        "hypothesis": "『全門が緑』を主張する過去の進捗報告の多くが呼び出し行を含まず、所有者は過去に遡っても範囲を判別できない。",
+        "oracle": "assurance/ledger/ の全報告を走査し、緑の主張に対する呼び出し行の記載率を測る。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "相関制約が記録の義務のみである。",
+        "hypothesis": "記録の義務のほかにも、二文書間の相関として定義され、門の特定の呼び出しでしか検められない制約が存在する。",
+        "oracle": "各門の docstring と実装から検査の依存入力（差分・基準 ref・日付など）を抽出し、単一文書の点検では検められない制約を列挙する。",
+        "severity": "P2"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "§8 の各門を『名前』ではなく逐語の実行行（引数込み）で記述し、その行と CI ワークフローの該当ステップのコマンド行が一致することを決定論試験で照合する。不一致を赤とする。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "保証レーンに門を起動する単一の入口を設け、呼び出し（引数を含む）をレーンが決定論で組み立てる。人が手順の文面から引数を書き写す経路を廃し、手順は門の識別子だけを指すようにする。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "release-check.py が検めなかった範囲を実行のたびに明示する（例:『記録の義務: 未検査』）。範囲が部分である実行は、成否とは別に『部分』であることを終了時の要約と台帳に残す。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "進捗報告の規定形式に、実行した門のコマンド行（引数込み）の逐語記載を必須項目として加える。所有者の手掛かりに範囲が含まれるようにする。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "先行指標1・2を決定論試験へ、指標3を台帳の様式検査へ、指標4を CI 履歴と台帳の突合として実装する。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "WATCH-001 第11項の教訓を『引数で検査集合が変わる呼び出しの族』として書き直し、docs-audit と release-check の双方を含む形で §0 に置く。以後、教訓を個別呼び出しに紐づけず族へ紐づける記載規約を明記する。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "§7.1 の常設許可の条件を『§8 の全門が緑』から『§8 が定める呼び出しで全門が緑』へ改める。許可の範囲が変わるため所有者の判断を要する。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "逆向き（手元でのみ検める項目を持つ門）の実在を調査する。存在する場合は CI をすり抜ける経路として別事象を起票する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "記録の義務のような二文書間の相関制約について、強制を門の一点に集中させたままにするか、編集時点で追跡の印を置く機構（負債の印に相当）を設けるかを決める。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      }
+    ],
+    "systemic_factors": [
+      "教訓が『族』ではなく『個別の呼び出し』に紐づけて記録される（WATCH-001 第11項が docs-audit にのみ適用され、release-check へ写されていない）。記録は残るが伝達と利用まで到達しない。",
+      "門の同一性を『名前』で扱う語彙が、手順・保証レーン・所有者の許可条件に共通して行き渡っている。独立に見える三層が同一の前提を共有しているため、一つの前提が崩れると三層が同時に無効化される。",
+      "検める範囲の宣言が実装側（docstring と実行時の出力文言）にあり、呼び出し側（手順文書）に無い。範囲の権威が実装に埋まっているため、手順は範囲について何も主張せず、何も検証されない。",
+      "保証の結果が『緑／赤』という単一の真偽値へ圧縮され、範囲がその中に埋没する。圧縮された時点で、上位の判断（merge 許可）は範囲を復元できない。",
+      "手元と CI の二重実行が、独立した二つの検めとしてではなく同名の同一物として扱われており、両者を突き合わせる責任がどの要素にも割り当てられていない。",
+      "制約（記録の義務）が二文書間の相関として定義されているため、単一文書を見る層（リンタ・ガード）では原理的に検められず、強制が門の一点に集中している。"
+    ],
+    "unknowns": [
+      "【実在の未確認】本分析の作業ディレクトリは空の一時領域（/tmp/assurance-cast-tvin3uvq）であり、scripts/release-check.py・.github/workflows/checks.yml・.claude/skills/assurance-loop/SKILL.md の実在と記載内容を確認できていない。加えて、事象が欠陥の所在として名指す『運転手順 §8／§7.1 の常設許可』に対応する統制要素は、与えられた統制構造の一覧に存在しない（最も近いのは ASSURANCE_LANE と GOVERNANCE_TREE だが、いずれも手順文書 §8 を実体として名指していない）。上の control_flaws は、事象の記録が述べる機構が実在するという仮定の上に組まれている。この理由により confidence は low とする。",
+      "§7.1 の常設許可の正確な文言。『§8 の全門が緑』の定義に、どう呼ぶかが含まれているか否か。",
+      "release-check の他の検査（版の整合・公開ビューの刻印・配布物の衛生・設定の見張り）にも、引数依存の範囲差があるか。",
+      "§8 が名指す門のうち、引数で検査集合が変わるものが release-check と docs-audit のほかに何件あるか。",
+      "逆向き（手元でのみ検め、CI では検めない項目を持つ門）が実在するか。実在するなら CI をすり抜ける経路が現に開いている。",
+      "docs-audit の findings が §8 の呼び出し記述の欠落を warn として既に挙げていたか。挙げていた場合、それが WARNING_BACKLOG に滞留していた期間。",
+      "CI 側の `--diff-base origin/main` がいつ・どの判断で入ったか。変更時に手順側との整合が検討された記録があるか。",
+      "記録の義務（plugin/ → CHANGELOG.md）がどの文書で決定され、その強制の責任が構造上どの要素に割り当てられているか。",
+      "手元実行の結果が台帳へどの粒度で書かれているか（コマンド行が残っているか、結果の文言だけか）。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は「門が緑であること」を検め、「どの範囲を検めた緑か」を検めない。門の同一性を名前の水準で扱う語彙が、手順・レーン・所有者の許可条件に共通して用いられているため、手元と CI が同名の別々の検査集合を走らせても、どの層でも不一致として立ち上がらない（独立に見える三層が同じ前提を共有しているため、同時に無効化される）。決定論試験の対象は台帳とレーンの振る舞いであり、手順文書の呼び出し記述と門の実装が持つ検査集合の対応は対象外である。docs-audit は文書間の整合を見るが、文書が指す実行の同一性は見ない。範囲の差はスクリプトの出力文言そのものに現れていたが、出力を読み分ける要求がどの手順にも書かれていないため、観測可能であることと観測されることの間に経路が無い。さらに、同族の教訓が docs-audit という個別の呼び出しに紐づけて記録されたため、族としての一般化が保証の対象にならなかった。今回 CI が止めたのは、範囲の広い呼び出しが偶然 CI 側にあったからであり、構造上は逆向きも同じ条件で成立する。"
+  },
+  "control_structure_ids": [
+    "OWNER",
+    "CI_RELEASE_CHECK",
+    "SESSION_START_CONTRACT",
+    "HEARTBEAT",
+    "PRE_TOOL_GUARD",
+    "POST_TOOL_LINTER",
+    "SESSION_END_AUDIT",
+    "WARNING_BACKLOG",
+    "CAPTURE_NUDGE",
+    "PLUGIN_DISTRIBUTION",
+    "ASSURANCE_LANE",
+    "GOVERNANCE_TREE"
+  ],
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "duration_ms": 292031,
+  "errors": [],
+  "execution_kind": "real-sdk",
+  "flaws_with_citation_defect": [],
+  "generated_at": "2026-08-16T06:00:28Z",
+  "git_dirty": false,
+  "git_sha": "f7693ccb0cb448218549af884c03093a5bfbe410",
+  "incident_evidence": {
+    "kind": "measurement",
+    "refs": [
+      "scripts/release-check.py",
+      ".github/workflows/checks.yml",
+      ".claude/skills/assurance-loop/SKILL.md"
+    ],
+    "resolved": [
+      "scripts/release-check.py",
+      ".github/workflows/checks.yml",
+      ".claude/skills/assurance-loop/SKILL.md"
+    ],
+    "unresolved": [],
+    "verifiable": true
+  },
+  "incident_id": "INC-049-gate-coverage-depends-on-an-unspecified-argument",
+  "incident_sha256": "775a6ebe931c1b2b0a84a5b7f92974bd55005023f215da97c7477a738a5c64d2",
+  "init": {
+    "claude_code_version": "2.1.221",
+    "model": "claude-opus-5",
+    "session_id": "fec7a961-7490-4106-a053-c4ac4e47707d",
+    "tools_count": 27
+  },
+  "kind": "cast-analysis",
+  "leading_indicators_defined": true,
+  "options": {
+    "allowed_tools": [],
+    "cwd": "/tmp/assurance-cast-tvin3uvq",
+    "effort": "high",
+    "max_budget_usd": 4.0,
+    "max_turns": 8,
+    "model": "claude-opus-5",
+    "setting_sources": [],
+    "timeout_s": 900
+  },
+  "oracle": "structured_output がレーン側再検証にも適合",
+  "principles_offered": 337,
+  "prompt_sha256": "2b21fe1aea73f7d86b44103de5053fe69fdf1debadcbdbf63cb9bd6d0cd74565",
+  "rejected_flaws": [],
+  "result_meta": {
+    "duration_api_ms": 284294,
+    "is_error": false,
+    "num_turns": 5,
+    "session_id": "fec7a961-7490-4106-a053-c4ac4e47707d",
+    "subtype": "success",
+    "total_cost_usd": 1.223112,
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 66030,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 66030,
+      "cache_read_input_tokens": 171134,
+      "inference_geo": "not_available",
+      "input_tokens": 8,
+      "iterations": "list",
+      "output_tokens": 17591,
+      "server_tool_use": {
+        "web_fetch_requests": 0,
+        "web_search_requests": 0
+      },
+      "service_tier": "standard",
+      "speed": "standard"
+    }
+  },
+  "schema_sha256": "0d1643d5e16353723405302c1f6ffcf753915e2a4f27a3530e8ef9a9ee45cb46",
+  "sdk_version": "0.2.129",
+  "settled": true,
+  "status": "PASS",
+  "structured_output": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "レーンは「次の行動を決定論で導く」責任を負うが、門の起動については名前の水準までを導き、検査集合を決める引数を決定論の外（手順文書の文面と、それを読む側の書き写し）に置いている。門の同一性は名前ではなく引数を含む呼び出しにあるため、レーンが導いた行動と実際に実行された検めの範囲が一致することは保証されていない。結果として、レーンが台帳と所有者へ渡す「整合」の意味が、呼び出しごとに変動する。",
+        "evidence_ref": "assurance/harness/orchestrator.py（制御:「次の行動を決定論で導く」）／.claude/skills/assurance-loop/SKILL.md §8",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "信頼性と安全性の分離",
+          "機械的遵守が前提の指示は自動化",
+          "プロセスモデルと実状態の不整合",
+          "software-does-not-fail-requirements-defect"
+        ],
+        "why_it_seemed_adequate": "門は一つのスクリプトに一つの名前が対応しており、名前で一意に指せるという語彙が手順・レーン・許可条件に共通して用いられていた。release-check.py は docstring どおりに振る舞い、引数なしでも「整合」を返すため、呼び出し側から見て範囲が欠けている兆候が返らない。決定論で導く対象を「どの門を、どの順で」に置くことは、それ自体としては一貫した設計に見える。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "CI は `--diff-base <ref>` を伴う呼び出しで記録の義務を含む集合を検め、手元は引数なしの呼び出しで狭い集合を検める。二つの実行は同じ門の名前を共有するが、検査集合の差を突き合わせる経路が存在しない。CI 側の呼び出しが変わっても、手順文書が指す呼び出しとの差が検出される仕組みは無く、両者の一致は偶然に依存する。今回は広い側が CI にあったため安全側に倒れたが、同じ構造は逆向き（手元でのみ検める項目が CI に無い）にも成立する。",
+        "evidence_ref": ".github/workflows/checks.yml と scripts/release-check.py の実測（引数なし→4項目／--diff-base origin/main→5項目）",
+        "flaw_type": "統制どうしの調整の欠如",
+        "normative_refs": [
+          "設計上と実際の伝達経路の照合",
+          "宣言された設計と実動作の突合",
+          "control-action-requires-feedback",
+          "全体健全性と部分健全性の分離評価"
+        ],
+        "why_it_seemed_adequate": "CI は merge 前に赤で止める最終の門であり、手元実行は前倒しの利便として位置づけられていた。両者が同じスクリプトを走らせている以上、同じことを検めているという理解が自然に成り立つ。範囲の差はスクリプトの出力文言（末尾に「・記録の義務」が加わるか）に現れていたが、その差を読み分ける要求はどちらの側にも置かれていない。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者へ届く手掛かり（規定形式の進捗報告・PR の diff・台帳）は「全門が緑」という結果を運ぶが、どの呼び出しで得た緑かを運ばない。§7.1 の常設許可は「§8 の全門が緑」を条件に置いているため、条件の充足判定に必要な情報（呼び出しに含まれる引数）が、判定を行う位置に存在しない。所有者はここで、狭い集合の緑と広い集合の緑を区別できない。",
+        "evidence_ref": "統制構造 OWNER の手掛かり一覧（進捗報告・PR の diff・台帳）",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "defects-in-information-providing-systems",
+          "controller-needs-concrete-feedback-channels",
+          "リスク情報の不透明な集約禁止",
+          "include-information-supplier-defect"
+        ],
+        "why_it_seemed_adequate": "門の名前と成否は報告として十分に具体的であり、それ以上の粒度は冗長に見える。既知の穴として「報告が実施ではなく意図を書いていても人からは見分けにくい」ことは把握されていたが、実施が書かれている場合にもなお範囲が欠落しうるという形は、報告様式の設計時に想定に入っていない。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "同族の教訓（`--today` を渡し忘れる形、WATCH-001 第11項）は §0 に明示的な警告として書かれているが、その適用対象が docs-audit という個別の呼び出しに束ねられており、「引数で検査集合が変わる呼び出し」という族としては書かれていない。統治木は教訓を保持しているが、保持の粒度が個別呼び出しであるため、release-check には届かない。教訓の記録が、伝達され利用されるところまで到達していない。",
+        "evidence_ref": ".claude/skills/assurance-loop/SKILL.md §0 と WATCH-001 第11項",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "教訓の記録と伝達と活用",
+          "教訓を適用する手順の確立",
+          "symptom-vs-systemic-cause",
+          "learning-failure-decomposed-into-info-system-questions"
+        ],
+        "why_it_seemed_adequate": "事象は docs-audit の呼び出しで観測されたため、観測された場所に対応する注意書きを置くことは正確な記録であり、範囲を広げれば根拠のない一般化になるという判断が成り立つ。族としての一般化を促す機構（教訓を族へ写す手順）は統治木の側に置かれていない。"
+      },
+      {
+        "control_element_id": "POST_TOOL_LINTER",
+        "description": "リンタは編集された一つの文書だけを点検する設計であり、plugin/ の変更と CHANGELOG.md の変更という二文書間の相関として定義された記録の義務は、原理的に視野へ入らない。この制約を検める位置が門だけになったことで、門の呼び出しの差が制約全体の強制の有無に直結する構造が生じている。",
+        "evidence_ref": "統制構造 POST_TOOL_LINTER 制御:「編集された一つの文書だけを点検し、助言を返す」",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "each-component-enforces-its-constraints",
+          "全体健全性と部分健全性の分離評価",
+          "共通の体系的要因による多重防護の無効化"
+        ],
+        "why_it_seemed_adequate": "編集ごとの点検は速く、助言として返せる粒度であり、相関制約は差分全体を見る門で検めるという分担は合理的である。分担そのものは矛盾していないが、門の側が呼び出しによって当該制約を検めたり検めなかったりすることは、この分担の前提に入っていない。"
+      },
+      {
+        "control_element_id": "PRE_TOOL_GUARD",
+        "description": "記録の義務については、拒否の門に対応する制御動作が割り当てられていない。plugin/ 配下への編集が行われた時点で、CHANGELOG.md の追記を要する状態に入ったことを記録・追跡する動作は無く、制約の強制は門の呼び出しに一元化されている。責任の割当がこの制約について空白であることが、門の範囲差をそのまま強制の有無へ通す。",
+        "evidence_ref": "統制構造 PRE_TOOL_GUARD 制御:「違反する編集・削除を終了コード2で拒む」",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "責任の空白は構造再設計",
+          "監視責任の空白排除",
+          "各コントローラの責任記述"
+        ],
+        "why_it_seemed_adequate": "編集の瞬間には記録の義務は未違反であり（後から CHANGELOG.md を書けば充足する）、その時点で終了コード2で拒むことは正しくない。拒否の門は違反が確定する編集・削除を対象とする設計であり、時間差を持つ義務をここに置かない判断には根拠がある。"
+      },
+      {
+        "control_element_id": "HEARTBEAT",
+        "description": "鼓動は監査の古びと導入複製の版遅れを警告するが、「手順が名指す呼び出し」と「門が実際に受け取る引数の規約」の乖離という劣化については観測点を持たない。門の引数が増減しても、あるいは CI 側の呼び出しが変わっても、手順文書との差は無警告のまま経過する。統制の範囲を定める情報が実装側（docstring と出力文言）にあり、その変化を追う検出器が無い。",
+        "evidence_ref": "統制構造 HEARTBEAT 手掛かり:.claude/.cache/last-audit.json・導入複製の版",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "設計時想定の運用中再検査",
+          "計画外変化の検出手段",
+          "安全想定の記録と失効先行指標の定義",
+          "変更後に事故が起きる前提の変更管理"
+        ],
+        "why_it_seemed_adequate": "鼓動が扱う古びは「時間経過」と「版番号」という測りやすい量であり、これらは実際に共通原因故障（INC-005）として認識されている。呼び出し規約の乖離は時間でも版でもない種類の古びであり、既存の指標の枠に収まらないため、警告の対象として立ち上がらない。"
+      }
+    ],
+    "hazard": "同一の名前で指される門が、呼び出しに含まれる引数によって異なる検査集合を実行し、その集合差がどの制御ループにも観測されないまま、狭い集合の緑が広い集合の緑として merge 判断へ供給される状態。",
+    "incident_id": "INC-049-gate-coverage-depends-on-an-unspecified-argument",
+    "leading_indicators": [
+      {
+        "indicator": "手順が名指す門の呼び出しと、CI が実行する呼び出しの逐語一致",
+        "observable": "§8 に書かれた各門の実行行（引数込み）と、.github/workflows/checks.yml の該当ステップのコマンド行の文字列比較",
+        "threshold": "引数まで含めて一致しない門が1件でも存在すれば異常。手順側に実行行が書かれていない門も同じく異常として数える",
+        "version_independent": true,
+        "where": "保証レーンの決定論試験（assurance/harness）に追加する照合試験。リポジトリ正本のみを読む",
+        "why_version_independent": "照合対象がリポジトリ正本の二つのファイルだけであり、利用者環境の導入複製の版に依存しない"
+      },
+      {
+        "indicator": "引数の有無で検査集合が変わる門の残存数",
+        "observable": "§8 の各門を、引数なしと手順規定の引数の両方で走らせ、出力末尾が列挙する検査項目の集合差",
+        "threshold": "集合差が空でない門のうち、手順に呼び出し行が明記されていないものが1件でもあれば異常。集合差が空でない門が新規に増えた場合も異常",
+        "version_independent": true,
+        "where": "CI 上の照合ジョブ（各門を二通りで実行し集合差を出力）",
+        "why_version_independent": "門のスクリプトと手順文書はいずれもリポジトリ正本にあり、導入複製の更新状況と独立に測れる"
+      },
+      {
+        "indicator": "「全門が緑」を主張する報告のうち、呼び出し行を逐語で含む割合",
+        "observable": "assurance/ledger/ の進捗報告本文に、実行した門のコマンド行（引数込み）が含まれているか",
+        "threshold": "直近10件の報告で、緑を主張しながら呼び出し行を含まないものが1件でもあれば異常",
+        "version_independent": true,
+        "where": "台帳の様式検査（レーンの台帳健全性チェックに追加）",
+        "why_version_independent": "台帳と報告様式はリポジトリ側にあり、複製の版に依存しない"
+      },
+      {
+        "indicator": "手元緑→CI 赤の乖離件数（ニアミス計数）",
+        "observable": "PR ごとに、手元実行の記録（台帳の報告）が緑であったにもかかわらず CI が赤で止めた件数と、その落とした検査項目名",
+        "threshold": "直近20 PR で1件でも発生すれば、範囲差が未解消として扱う。項目名が新規に増えた場合は逆向き（CI に無い検め）の調査を起動する",
+        "version_independent": true,
+        "where": "CI ジョブ履歴と台帳の突合",
+        "why_version_independent": "CI 履歴と台帳のみを参照し、導入複製の版を参照しない"
+      },
+      {
+        "indicator": "導入複製側の手順が指す呼び出しと正本の呼び出しの世代差",
+        "observable": "gov-heartbeat.py が読む導入複製の版と marketplace 側の版、および両版の §8 に書かれた実行行の差分",
+        "threshold": "複製が1世代以上遅れ、かつ §8 の実行行が世代間で変化していれば異常",
+        "version_independent": false,
+        "where": "plugin/scripts/gov-heartbeat.py の警告出力（導入複製上）",
+        "why_version_independent": "この検出器は導入複製の側で動くため、複製の版が遅れると検出器自身も古い実行行を正しいものとして扱う。INC-005・HEARTBEAT の既知の穴（古びの検出器が古びる）と同じ共通原因故障の上に載る指標である"
+      }
+    ],
+    "loss": "記録の義務（plugin/ に触れる差分は CHANGELOG.md に触れること）を満たさない変更が、§7.1 の常設許可のもとで「§8 の全門が緑」を根拠に merge 可と扱われうる状態が生じた。今回は範囲の広い側の呼び出しを持つ CI が PR #338 を赤で止めたため、実損は差し戻しに留まった。損失として扱うのは、保証レーンが所有者へ渡す「全門が緑」という保証が、どの範囲を検めた緑かの裏づけを伴わないまま流通し、merge 許可の前提として消費されたことである。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "全門について CI 側の検査集合が手元側を包含する（CI ⊇ 手元）ことが確認される。",
+        "hypothesis": "手元でのみ検める項目を持つ門が存在し、その項目は CI で検められないため、赤になるべき変更が CI をすり抜ける（本事象の逆向き）。",
+        "oracle": "§8 の全門を、手順が指す呼び出しと CI が用いる呼び出しの両方で実行し、検査項目の集合を比較する。CI 側の集合が手元側の集合を包含しない門があれば成立。",
+        "severity": "P0"
+      },
+      {
+        "falsification_signal": "集合差が空でない門が release-check と docs-audit のみである。",
+        "hypothesis": "§8 が名指す門のうち、引数で検査集合が変わるものが release-check と docs-audit のほかにも存在する。",
+        "oracle": "各門を引数なしと規定引数で実行し、出力が列挙する検査項目の集合差を取る。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "版差があっても実行行と検査集合が同一である。",
+        "hypothesis": "導入複製が遅れている環境では §8 の実行行も遅れ、複製側の手元検証が古い検査集合で緑を返す。手元と CI の乖離は版差の分だけ拡大する。",
+        "oracle": "1世代前・2世代前の複製の §8 に書かれた実行行で門を走らせ、正本 CI の検査集合と比較する。",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "緑を主張する報告のすべてが逐語の呼び出し行を含む。",
+        "hypothesis": "『全門が緑』を主張する過去の進捗報告の多くが呼び出し行を含まず、所有者は過去に遡っても範囲を判別できない。",
+        "oracle": "assurance/ledger/ の全報告を走査し、緑の主張に対する呼び出し行の記載率を測る。",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "相関制約が記録の義務のみである。",
+        "hypothesis": "記録の義務のほかにも、二文書間の相関として定義され、門の特定の呼び出しでしか検められない制約が存在する。",
+        "oracle": "各門の docstring と実装から検査の依存入力（差分・基準 ref・日付など）を抽出し、単一文書の点検では検められない制約を列挙する。",
+        "severity": "P2"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "§8 の各門を『名前』ではなく逐語の実行行（引数込み）で記述し、その行と CI ワークフローの該当ステップのコマンド行が一致することを決定論試験で照合する。不一致を赤とする。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "保証レーンに門を起動する単一の入口を設け、呼び出し（引数を含む）をレーンが決定論で組み立てる。人が手順の文面から引数を書き写す経路を廃し、手順は門の識別子だけを指すようにする。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "release-check.py が検めなかった範囲を実行のたびに明示する（例:『記録の義務: 未検査』）。範囲が部分である実行は、成否とは別に『部分』であることを終了時の要約と台帳に残す。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "進捗報告の規定形式に、実行した門のコマンド行（引数込み）の逐語記載を必須項目として加える。所有者の手掛かりに範囲が含まれるようにする。",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "先行指標1・2を決定論試験へ、指標3を台帳の様式検査へ、指標4を CI 履歴と台帳の突合として実装する。",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "WATCH-001 第11項の教訓を『引数で検査集合が変わる呼び出しの族』として書き直し、docs-audit と release-check の双方を含む形で §0 に置く。以後、教訓を個別呼び出しに紐づけず族へ紐づける記載規約を明記する。",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "§7.1 の常設許可の条件を『§8 の全門が緑』から『§8 が定める呼び出しで全門が緑』へ改める。許可の範囲が変わるため所有者の判断を要する。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "逆向き（手元でのみ検める項目を持つ門）の実在を調査する。存在する場合は CI をすり抜ける経路として別事象を起票する。",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "記録の義務のような二文書間の相関制約について、強制を門の一点に集中させたままにするか、編集時点で追跡の印を置く機構（負債の印に相当）を設けるかを決める。",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      }
+    ],
+    "systemic_factors": [
+      "教訓が『族』ではなく『個別の呼び出し』に紐づけて記録される（WATCH-001 第11項が docs-audit にのみ適用され、release-check へ写されていない）。記録は残るが伝達と利用まで到達しない。",
+      "門の同一性を『名前』で扱う語彙が、手順・保証レーン・所有者の許可条件に共通して行き渡っている。独立に見える三層が同一の前提を共有しているため、一つの前提が崩れると三層が同時に無効化される。",
+      "検める範囲の宣言が実装側（docstring と実行時の出力文言）にあり、呼び出し側（手順文書）に無い。範囲の権威が実装に埋まっているため、手順は範囲について何も主張せず、何も検証されない。",
+      "保証の結果が『緑／赤』という単一の真偽値へ圧縮され、範囲がその中に埋没する。圧縮された時点で、上位の判断（merge 許可）は範囲を復元できない。",
+      "手元と CI の二重実行が、独立した二つの検めとしてではなく同名の同一物として扱われており、両者を突き合わせる責任がどの要素にも割り当てられていない。",
+      "制約（記録の義務）が二文書間の相関として定義されているため、単一文書を見る層（リンタ・ガード）では原理的に検められず、強制が門の一点に集中している。"
+    ],
+    "unknowns": [
+      "【実在の未確認】本分析の作業ディレクトリは空の一時領域（/tmp/assurance-cast-tvin3uvq）であり、scripts/release-check.py・.github/workflows/checks.yml・.claude/skills/assurance-loop/SKILL.md の実在と記載内容を確認できていない。加えて、事象が欠陥の所在として名指す『運転手順 §8／§7.1 の常設許可』に対応する統制要素は、与えられた統制構造の一覧に存在しない（最も近いのは ASSURANCE_LANE と GOVERNANCE_TREE だが、いずれも手順文書 §8 を実体として名指していない）。上の control_flaws は、事象の記録が述べる機構が実在するという仮定の上に組まれている。この理由により confidence は low とする。",
+      "§7.1 の常設許可の正確な文言。『§8 の全門が緑』の定義に、どう呼ぶかが含まれているか否か。",
+      "release-check の他の検査（版の整合・公開ビューの刻印・配布物の衛生・設定の見張り）にも、引数依存の範囲差があるか。",
+      "§8 が名指す門のうち、引数で検査集合が変わるものが release-check と docs-audit のほかに何件あるか。",
+      "逆向き（手元でのみ検め、CI では検めない項目を持つ門）が実在するか。実在するなら CI をすり抜ける経路が現に開いている。",
+      "docs-audit の findings が §8 の呼び出し記述の欠落を warn として既に挙げていたか。挙げていた場合、それが WARNING_BACKLOG に滞留していた期間。",
+      "CI 側の `--diff-base origin/main` がいつ・どの判断で入ったか。変更時に手順側との整合が検討された記録があるか。",
+      "記録の義務（plugin/ → CHANGELOG.md）がどの文書で決定され、その強制の責任が構造上どの要素に割り当てられているか。",
+      "手元実行の結果が台帳へどの粒度で書かれているか（コマンド行が残っているか、結果の文言だけか）。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は「門が緑であること」を検め、「どの範囲を検めた緑か」を検めない。門の同一性を名前の水準で扱う語彙が、手順・レーン・所有者の許可条件に共通して用いられているため、手元と CI が同名の別々の検査集合を走らせても、どの層でも不一致として立ち上がらない（独立に見える三層が同じ前提を共有しているため、同時に無効化される）。決定論試験の対象は台帳とレーンの振る舞いであり、手順文書の呼び出し記述と門の実装が持つ検査集合の対応は対象外である。docs-audit は文書間の整合を見るが、文書が指す実行の同一性は見ない。範囲の差はスクリプトの出力文言そのものに現れていたが、出力を読み分ける要求がどの手順にも書かれていないため、観測可能であることと観測されることの間に経路が無い。さらに、同族の教訓が docs-audit という個別の呼び出しに紐づけて記録されたため、族としての一般化が保証の対象にならなかった。今回 CI が止めたのは、範囲の広い呼び出しが偶然 CI 側にあったからであり、構造上は逆向きも同じ条件で成立する。"
+  }
+}

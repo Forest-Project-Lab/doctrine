@@ -1008,7 +1008,10 @@
       "impact": "**手元の緑が CI の緑を意味しない。**§7.1 の常設許可は『§8 の全門が緑』を merge の条件に置いているので、この食い違いは許可の前提を崩す。実害は今回は CI が拾って止まったこと（安全側）だが、逆向き —— 手元でだけ検める門があれば CI をすり抜ける —— も同じ構造で起こりうる。**`--today` を渡し忘れる形（WATCH-001 第11項、§0 が明示的に警告している）とまったく同じ族**であり、手順は docs-audit についてはこの教訓を書いたが、release-check については書いていない。教訓が一つの呼び出しにしか適用されていない。",
       "fixed": false,
       "control_flaw_hint": "手順が門を『名前』で指し、『どう呼ぶか』を指していない。門の同一性は名前ではなく引数を含む呼び出しにある。",
-      "evidence_kind": "measurement"
+      "evidence_kind": "measurement",
+      "cast_analysis": "done",
+      "cast_analysis_ref": "assurance/ledger/cast/INC-049-gate-coverage-depends-on-an-unspecified-argument.json",
+      "cast_analyzed_at": "2026-08-16T06:00:28Z"
     },
     {
       "id": "INC-050-triage-notes-are-read-as-current-state",
@@ -1024,7 +1027,10 @@
       "impact": "推奨の処遇は次の反復の**着手判断の入力**である。所見が古びていると、(a) 既に在るものを二重に足す、(b) 既に消えた問題を直そうとする、(c) 実際には悪化しているのに『調査済み』として据え置く —— のいずれも起こりうる。今回は (a) の手前で止まったが、止めたのは機構ではなく**着手前に実測し直すという私の習慣**であり、機構としては何も守っていない。`investigated: true` の 23 件はいつ調べたかすら持たないので、古びを問うこと自体ができない。",
       "fixed": false,
       "control_flaw_hint": "台帳は所見に『いつ見たか』を持たせる欄（investigated）を用意しているが、型を強制していないため中身が bool へ退化しうる。また、所見が観測であることと現状であることを書式が区別していない。",
-      "evidence_kind": "measurement"
+      "evidence_kind": "measurement",
+      "cast_analysis": "done",
+      "cast_analysis_ref": "assurance/ledger/cast/INC-050-triage-notes-are-read-as-current-state.json",
+      "cast_analyzed_at": "2026-08-16T06:05:04Z"
     }
   ]
 }
