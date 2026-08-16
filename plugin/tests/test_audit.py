@@ -2130,3 +2130,57 @@ class ExhaustiveTraceTest(AuditBase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# --- 要約はどのセッションが書いたかを載せる (INC-001 推奨#0) ----------------
+
+class SummaryCarriesSessionTest(AuditBase):
+    """要約に『どのセッションが書いたか』が載る（INC-001 推奨#0）。
+
+    推奨は実行記録の四項目（版・checks_run・セッション識別子・生成時刻）を
+    求めている。版は generator が、checks_run と生成時刻は既に載っており、
+    **セッション識別子だけが無かった**。
+
+    取れないときは載せない —— 時刻などで埋めると、別のセッションが書いた要約と
+    見分けが付かなくなる。載っていないことは「取れなかった」であって「走らな
+    かった」ではない（走ったかどうかは generator と checks_run が示す）。
+    """
+
+    def _tree(self):
+        return self.build([(_fm("SPEC-1", "SPEC", "billing"), "本文")])
+
+    def test_session_is_carried_when_the_host_gives_one(self):
+        os.environ["CLAUDE_SESSION_ID"] = "sess-abc123"
+        self.addCleanup(os.environ.pop, "CLAUDE_SESSION_ID", None)
+        data, _ = self.audit_json(self._tree())
+        self.assertEqual(data.get("session"), "sess-abc123")
+
+    def test_session_is_absent_when_the_host_gives_none(self):
+        for key in ("CLAUDE_SESSION_ID", "CLAUDE_CODE_SESSION_ID"):
+            os.environ.pop(key, None)
+        data, _ = self.audit_json(self._tree())
+        self.assertNotIn("session", data,
+                         "取れないときに埋めてはならない（別のセッションと"
+                         "見分けが付かなくなる）")
+
+    def test_the_execution_record_keeps_its_other_three_fields(self):
+        """版・checks_run・生成時刻は既に在る。足したことで落ちていない。"""
+        data, _ = self.audit_json(self._tree())
+        self.assertIn("generator", data)
+        self.assertIn("version", data["generator"])
+        self.assertIn("checks_run", data)
+        self.assertIn("generated_at", data)
+
+    def test_the_resolver_is_shared_not_redefined(self):
+        """セッション識別子の解き方を各所で二重定義しない（DECIDED-001 事実1）。"""
+        import glob
+        offenders = []
+        for f in sorted(glob.glob(os.path.join(_util.SCRIPTS, "*.py"))):
+            if os.path.basename(f) == "_auditcache.py":
+                continue
+            with open(f, encoding="utf-8") as fh:
+                text = fh.read()
+            if "CLAUDE_SESSION_ID" in text:
+                offenders.append(os.path.basename(f))
+        self.assertEqual(offenders, [],
+                         "セッション識別子を自前で解いている: %r" % (offenders,))

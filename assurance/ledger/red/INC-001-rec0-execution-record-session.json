@@ -1,0 +1,36 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "reproduce-red",
+  "incident_id": "INC-001-sessionend-audit-gap",
+  "recommendation": "#0 —— last-audit.json に実行記録（版・checks_run・セッション識別子・生成時刻）を必須項目として持たせ、鼓動の判定を『mtime が新しいか』から『対応する実行記録が存在するか』へ変更する。",
+  "scope_of_this_iteration": "四項目のうち**セッション識別子だけ**を足す（他の三つは既に在る）。鼓動の判定の変更は本反復の射程外 —— 判定を変えると鼓動が『いつ黙るか』が変わり、配布物の挙動の変更に当たる（所有者判断の疑いがある。§7）。分けた理由は ADR-167 と同じ形で、決定と実装を分けたほうが独立検証が通る。",
+  "generated_at": "2026-08-16T03:41:00Z",
+  "git_sha": "d7d4043",
+  "phase": "before-fix",
+  "command": "python3 -m unittest discover -s plugin/tests -p test_audit.py -k SummaryCarriesSession",
+  "returncode": 1,
+  "expect": "修正前に FAIL すること（最初から緑は再現と認めない）",
+  "measured_against_shipped_file": {
+    "note": "出す試験ファイルそのものを、修正前の樹（HEAD = d7d4043）へ複写して走らせた。worktree を切って測っている。赤の記録と出す試験は同じ 4 件である（INC-041 で独立検証に指された食い違いを繰り返さない）。",
+    "tree": "HEAD (d7d4043) + plugin/tests/test_audit.py のみ複写",
+    "ran": 4,
+    "failures": 2,
+    "errors": 0,
+    "passed": 2
+  },
+  "observed_failures": [
+    "FAIL: test_session_is_carried_when_the_host_gives_one — 要約に session キーが無い",
+    "FAIL: test_the_resolver_is_shared_not_redefined — docs-audit.py が CLAUDE_SESSION_ID を自前で解いていた（offenders=['docs-audit.py']）"
+  ],
+  "green_before_and_after": [
+    "test_session_is_absent_when_the_host_gives_none — 取れないときに時刻などで埋めない側。修正前は『そもそも載らない』ので緑であり、赤→緑の観測ではない。是正で過剰に埋めないことの歯止めとして置く。",
+    "test_the_execution_record_keeps_its_other_three_fields — 版（generator.version）・checks_run・generated_at は修正前から在る。足したことで落ちていないことの確認であり、機構が効いた証拠ではない。"
+  ],
+  "measured": {
+    "triage_note_was_stale": "台帳の 2026-08-08 の見立ては『実行記録が無い』だったが、実測では版（generator: {name, version}）・checks_run・generated_at は既に在り、**欠けていたのはセッション識別子だけ**だった。推奨の文面をそのまま実装していたら、既に在る三つを二重に足すところだった。",
+    "heartbeat_judgement_before": "plugin/scripts/gov-heartbeat.py:185 が summary.get(\"today\") で判ずる（実行記録の存在では判じていない）",
+    "heartbeat_judgement_after": "変更なし（本反復の射程外。上の scope_of_this_iteration）",
+    "duplicate_resolver_site": "plugin/scripts/docs-audit.py の detach 経路が CLAUDE_SESSION_ID / CLAUDE_CODE_SESSION_ID を自前の for ループで解いていた。_auditcache.session_token() へ寄せて一度だけの定義にした（DECIDED-001 事実1 と同じ原理）。"
+  },
+  "residual": "session が載っていないことは『取れなかった』であって『走らなかった』ではない。走ったかどうかは generator と checks_run が示す。読み手がこの区別を誤る余地は残る —— 鼓動の判定を実行記録の存在へ移す段（推奨#0 の後半）で扱う。"
+}
