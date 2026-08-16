@@ -3326,6 +3326,58 @@
       "owner_decision_kind": "互換性を壊す変更",
       "evaluator_owner_required": true,
       "investigated": "2026-08-16 本反復（APPLY_FINDINGS。全 48 分析の散文を走査）"
+    },
+    {
+      "incident_id": "INC-044-evaluator-output-backdated-to-day-start-is-unsafe",
+      "index": 0,
+      "state": "pending",
+      "note": "**実装は済んでいるが merge できていない。**PR #317（adr-167-implementation）に在り、ADR-167 の決定に沿って左辺を上界へ、右辺を始まりへ丸める。独立検証は red_was_red PASS・green_is_green PASS・single_change PASS（総合 UNKNOWN）。**赤の原因は本件ではなく INC-045**（評価器の散文が印の語を引用し自己走査を赤にする）で、INC-045#1 の所有者判断が済むまで解けない。推奨が求める『丸め方向を呼び出し側ではなく型（辺）に結びつける』は**部分的**である —— 実装は evaluator_outputs_latest（表示用）と evaluator_outputs_upper_bound（比較用）の二関数に分けており、辺そのものを型にはしていない。辺が増えたときの拡張性は未達である。",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。実測と PR #317 の状態）"
+    },
+    {
+      "incident_id": "INC-044-evaluator-output-backdated-to-day-start-is-unsafe",
+      "index": 1,
+      "state": "landed",
+      "note": "REPRODUCE_RED を実装より先に作った。4 件のうち 2 件が修正前に FAIL（左辺が日付だけの成果物を同じ日の先行する攻撃が覆う／両辺とも日付だけの対を攻撃済みと読む）。歯止め 2 件（翌日の攻撃は覆う／右辺は INC-023 のまま）は修正前から緑。証拠は PR #317 の ledger/red/ に在る。",
+      "evidence_ref": "assurance/ledger/incidents.json",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。実測と PR #317 の状態）"
+    },
+    {
+      "incident_id": "INC-044-evaluator-output-backdated-to-day-start-is-unsafe",
+      "index": 6,
+      "state": "landed",
+      "note": "左辺に入る書き口を全数調べ、同一秒の比較も確認した。**二つとも結果が出た。**(a) 左辺へ真夜中の刻印を入れる書き口は **independent_recheck だけ**（recheck-*.json の 4/4 件）。cast 48・verify 3・formalize 2 はすべて実時点で、日付のみ（長さ 10）の刻印は台帳に 0 件。ただし formalize は generated_at が無ければ date へ落ちる経路を持つので、**将来の日付のみの入口は formalize にも在る**（現在は使われていない）。scenarios は左辺に入らない（evaluator_outputs_latest が読まない）。(b) 同一秒の比較は `latest_attack < latest_output` で、**刻印が同値なら『攻撃済み』へ倒れる**。順序を決められない対を覆ったと見なす向きであり、**安全側ではない**。ADR-167 は日付だけの刻印の丸めを決めたが、**同値の扱いは決めていない**。PR #317 の実装も演算子は同じなので、この穴は残る。",
+      "evidence_ref": "assurance/harness/orchestrator.py",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。実測と PR #317 の状態）"
+    },
+    {
+      "incident_id": "INC-044-evaluator-output-backdated-to-day-start-is-unsafe",
+      "index": 7,
+      "state": "landed",
+      "note": "事象記録が名指す機構の実在を確認した。independent_recheck.py は実在し（:160 で --today が必須、:263 で無条件に真夜中を刻む）、orchestrator の鮮度判定も実在する（:2045 の比較）。台帳 4 件（recheck-cast-2026-08-09・recheck-jerg-2026-08-07・recheck-jerg-2026-08-09・recheck-stpa-2026-08-07）も実データとして在り、4 件とも T00:00:00Z である。**本分析の結論を暫定として扱う必要は無い。**",
+      "evidence_ref": "assurance/harness/independent_recheck.py",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。実測と PR #317 の状態）"
+    },
+    {
+      "incident_id": "INC-044-evaluator-output-backdated-to-day-start-is-unsafe",
+      "index": 2,
+      "state": "pending",
+      "note": "independent_recheck が実時点を刻めるようにし、--today を日付の入力に限定する。**未実施。**ADR-167 の決定#2 が方向を定めているが、実装は入れていない（修正は一度に一つ。§2）。**#6 の測定で、これが左辺の唯一の真夜中の入口だと確定した** —— 直せば左辺の日付精度の問題は（formalize の将来の経路を除いて）無くなる。",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。実測と PR #317 の状態）"
+    },
+    {
+      "incident_id": "INC-044-evaluator-output-backdated-to-day-start-is-unsafe",
+      "index": 3,
+      "state": "pending",
+      "note": "丸めで救えない場合に PASS でなく UNKNOWN を返す経路。**未実施。**現状の鮮度判定は二値（挙げる／挙げない）で、UNKNOWN を返す道が無い。**#6 で見つけた同値の扱いはまさにこの経路が要る場面である** —— 刻印が同値なら前後を決められないので、覆ったとも覆っていないとも言えない。",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。実測と PR #317 の状態）"
+    },
+    {
+      "incident_id": "INC-044-evaluator-output-backdated-to-day-start-is-unsafe",
+      "index": 5,
+      "state": "pending",
+      "note": "各辺と安全側の丸め方向・理由・対応する赤試験を統治木へ記録し、ADR-120 との対応を明示する。**半分は在る** —— ADR-167 が辺ごとの丸めを決め、理由（順序が判らないなら攻撃が覆っていないほうへ倒す）も書いた。**赤試験との対応（トレース）と、同値の扱いは書いていない。**",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。実測と PR #317 の状態）"
     }
   ]
 }
