@@ -1,0 +1,51 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "reproduce-red",
+  "incident_id": "INC-051-unbounded-queue-starves-the-freshness-driven-action",
+  "recommendation": "#1 —— 各行動種別に、駆動源（在庫／鮮度）と待ち行列の有界性を宣言として持たせ、鮮度駆動の行動が有界性を宣言していない在庫駆動の行動より下位に置かれた場合に静的検査が赤で止める。",
+  "generated_at": "2026-08-16T08:05:00Z",
+  "git_sha": "40d4e60",
+  "phase": "before-fix",
+  "command": "python3 -m unittest discover -s assurance/tests -p test_priority_declares_its_drive.py",
+  "returncode": 1,
+  "expect": "修正前に FAIL すること（最初から緑は再現と認めない）",
+  "measured_against_shipped_file": {
+    "note": "出す試験ファイルの**初版**を、修正前の樹（HEAD = 40d4e60）へ複写して走らせた。5 件すべて ERROR（ACTION_DRIVE も starvation_shaped_pairs も存在しない）。",
+    "tree": "HEAD (40d4e60) + assurance/tests/test_priority_declares_its_drive.py（初版・5 件）のみ複写",
+    "ran": 5,
+    "failures": 0,
+    "errors": 5,
+    "passed": 0
+  },
+  "shipped_file_differs_from_the_red_measurement": {
+    "note": "**出す試験は 7 件で、赤を測った初版は 5 件である。**この食い違いを隠さない。差の理由は下の『実装の途中で分かったこと』にある —— 機構を入れたら、事象そのものが**まだ解消していない**ことが分かり、所有者裁定待ちの免除とその根拠を検める試験を 2 件足した。足したのは検査を弱める方向ではなく、免除に期限を持たせる方向である。",
+    "red_version_tests": [
+      "test_every_prioritised_action_declares_its_drive",
+      "test_no_declaration_without_a_place_in_the_table",
+      "test_the_declared_vocabulary_is_closed",
+      "test_no_freshness_driven_action_sits_under_an_unbounded_queue（出す版では test_no_new_starvation_shaped_pair_appears へ改名）",
+      "test_the_check_would_catch_the_incident_as_it_stood"
+    ],
+    "added_after_the_red": [
+      "test_the_owner_pending_exemption_still_has_its_basis",
+      "test_no_exemption_without_a_pair_that_needs_it"
+    ]
+  },
+  "found_while_implementing": {
+    "claim": "宣言を入れて `starvation_shaped_pairs()` を走らせたら、**現在の表がそのまま飢餓の形を返した** —— (APPLY_FINDINGS, ATTACK_EVALUATOR)。つまり INC-051 は名指しただけで、まだ直っていない。",
+    "why_not_fixed_here": "直すには優先順の表を書き換えるしかなく、ADR-131 が表を凍結し、分析の推奨#0 が owner_decision_required=true を立てている（§7 の所有者判断）。**赤を避けるために門を緩めない**ので、代わりに『見えていて裁定待ちである』ことを STARVATION_SHAPED_OWNER_PENDING に記録した。",
+    "why_this_is_not_loosening": "免除は検査の目を塞がない —— 対は依然 starvation_shaped_pairs() が返し、**新しい対が生えれば赤**になる。加えて免除の根拠（INC-051#0 が台帳に `owner` として在ること）を機械で確かめており、裁定が下りて処遇が動けば免除は根拠を失って赤になる。免除が自分の期限を持つ形にしてある。",
+    "precedent": "同じ形は #340 の LOCAL_ONLY_EXEMPTIONS（免除の根拠を機械で確かめる）で先に置いた。ADR-139 の VERIFY_GRANDFATHERED も同族だが、あちらは列を増やさないことを規約で守っており、機械の根拠は持たない。"
+  },
+  "measurement_of_the_wider_starvation": {
+    "note": "分析の推奨#7『先頭 2 件しか観測していない』に応じて、台帳の各種別の最新刻印から遡って数えた（2026-08-16 基準）。",
+    "DISCOVER": "8 日（scenarios/2026-08-08.json。未批判の候補 75 件）",
+    "FORMALIZE": "7 日（formalize/ の 2026-08-09T06:35:27Z）",
+    "REPRODUCE_RED（承認済み計画）": "7 日（red/SCN-D01… の 2026-08-09T23:55Z）。**承認済み 30 件のうち赤の証拠が在るのは 1 件だけ**",
+    "ATTACK_EVALUATOR": "0 日（本反復で走らせた）",
+    "CAST_ANALYSIS": "0 日",
+    "REPRODUCE_RED（事象の推奨）": "0 日",
+    "trap_avoided": "red/ の最新は 0 日だが、それは**事象の推奨に対する赤**であって『承認済み計画の再現』ではない。行動名 REPRODUCE_RED が二つの別物を指しており、前者は毎反復踏まれ後者は 7 日踏まれていない。危うく『REPRODUCE_RED は飢えていない』と報告するところだった。"
+  },
+  "residual": "宣言は人が書く。`APPLY_FINDINGS` を誰かが bounded: true と書き換えれば、検査は黙る。宣言の真偽（待ち行列が実際に空になるか）は検めていない —— 台帳の実測から導く道は在るが、本反復では入れていない。"
+}

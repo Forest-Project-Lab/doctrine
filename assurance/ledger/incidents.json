@@ -1048,7 +1048,10 @@
       "impact": "**ADR-120 が与えたのは『名指しされること』であって『到達されること』ではなかった。**運転手順 §2 は『ATTACK_EVALUATOR が5反復飛ばされた形』を戻してはならない退行として記録しているが、それを防ぐ機構は「名指しに現れる」までしか作られていない。名指しに現れても、上に空にならない行列が在れば着手されない。評価器の健全性は**評価器を攻撃することでしか測れない**（AI の一致は客観的証拠でない。§4）ので、これが止まると保証の根が黙って腐る。今回は私が §1 の但し書き（飛ばしたくなったら正本を疑え）に従って手で走らせたが、**それは機構ではなく習慣である**（INC-050 の統制欠陥[8]と同じ形で、統制構造の外にある依存）。",
       "fixed": false,
       "control_flaw_hint": "優先順が固定の全順序であり、待ち行列の性質（有界か無界か）と、行動の駆動源（在庫か鮮度か）を区別していない。鮮度で駆動される行動は、在庫で駆動される行動の下に置くと飢える。",
-      "evidence_kind": "measurement"
+      "evidence_kind": "measurement",
+      "cast_analysis": "done",
+      "cast_analysis_ref": "assurance/ledger/cast/INC-051-unbounded-queue-starves-the-freshness-driven-action.json",
+      "cast_analyzed_at": "2026-08-16T06:50:11Z"
     }
   ]
 }
