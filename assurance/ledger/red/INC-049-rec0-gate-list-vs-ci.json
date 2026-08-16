@@ -1,0 +1,41 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "reproduce-red",
+  "incident_id": "INC-049-gate-coverage-depends-on-an-unspecified-argument",
+  "recommendation": "#0 —— §8 の各門を逐語の実行行（引数込み）で記述し、その行と CI ワークフローの該当ステップのコマンド行が一致することを決定論試験で照合する。不一致を赤とする。",
+  "generated_at": "2026-08-16T06:35:00Z",
+  "git_sha": "f7693cc",
+  "phase": "before-fix",
+  "command": "python3 -m unittest discover -s assurance/tests -p test_gate_list_matches_ci.py",
+  "returncode": 1,
+  "expect": "修正前に FAIL すること（最初から緑は再現と認めない）",
+  "measured_against_shipped_file": {
+    "note": "出す試験ファイルそのものを、修正前の樹（HEAD = f7693cc）へ複写して走らせた。worktree を切って測っている。赤の記録と出す試験は同じ 4 件である。",
+    "tree": "HEAD (f7693cc) + assurance/tests/test_gate_list_matches_ci.py のみ複写",
+    "ran": 4,
+    "failures": 1,
+    "errors": 0,
+    "passed": 3
+  },
+  "observed_failures": [
+    "FAIL: test_every_ci_gate_appears_in_the_procedure —— CI の 2 門が手順 §6 の一覧に無い: 'Term-check root docs' → plugin/scripts/term-check.py ／ 'Ledger diff summary (huge ledger PRs)' → scripts/ledger-diff-summary.py"
+  ],
+  "green_before_and_after": [
+    "test_every_procedure_gate_runs_in_ci_or_is_exempt_with_a_checked_reason —— 逆向き（手元だけの門）は現に無い。免除 1 件（orchestrator.py）は根拠つき。過剰是正の歯止めであり赤→緑の観測ではない。",
+    "test_the_orchestrator_exemption_is_actually_true —— 免除の根拠が機械で確かめられること。",
+    "test_argument_sensitive_calls_carry_their_argument_in_the_procedure —— 前反復（#339）で既に直した側。回帰の歯止め。"
+  ],
+  "falsified_hypothesis_of_the_implementer": {
+    "claim": "私は着手前に「CI が orchestrator.py validate を走らせていない＝逆向きの経路が現に開いている」と観測し、INC-051 として起票しようとした（評価者の推奨#7 と unknown#5 がまさにこれを問うていた）。",
+    "refutation": "assurance/tests/test_orchestrator.py:16 が実台帳に対して orchestrator.validate() == [] を主張しており、レーン試験は CI で走る。**間接に覆われている。**起票は取り止めた。",
+    "how_it_was_caught": "起票の前に反証を試したため。ワークフローの grep だけで判じていたら誤った事象を積んでいた。",
+    "residual": "『逆向きの門は見つからなかった』は『存在しない』ではない。ここで検めているのは §6 の一覧に載った 9 件だけであり、一覧に載っていない手元の検めは射程外である（思いつかない≠網羅）。"
+  },
+  "measurement_defect_in_this_very_test": {
+    "note": "最初の実装は step 本文をまるごと読んでおり、**次の step に付いたコメント**まで混ざっていた。次の step のコメントが release-check.py に触れていたため『この step のスクリプトが全部欠けている』という条件が成り立たず、**term-check の欠落が隠れた**。read するのは `run:` の中身だけに直した（_run_block）。加えて『全部欠けているときだけ報せる』という寛容な判定を『欠けている分を報せる』へ改めた。",
+    "first_measurement_reported": 1,
+    "after_fixing_the_extractor": 2,
+    "lesson": "照合の道具そのものが測定の欠陥を持ちうる。CI の 11 step すべてを列挙して目視で突き合わせたことで気付いた。"
+  },
+  "deviation_from_the_recommendation": "推奨#0 は**逐語の文字列比較**を求めている。実装は逐語一致ではなく (1) スクリプトの対応 (2) 免除の機械的検証 (3) 引数感受性の既知の 2 件 —— の三つを検める。理由は、二つの呼び出しが目的から異なるため（CI は `--fail-on error` で落としたい、手元は `--json` で数を読みたい）逐語では一致しえず、強いればどちらかを飾りの写しにするしかないこと。**推奨は満たしきっていない。**処遇は landed にせず pending のまま残す。"
+}
