@@ -3256,6 +3256,76 @@
       "evaluator_owner_required": true,
       "owner_override_reason": "diff から量を算出して人へ回す検査であり、六類型のどれにも当たらない（ADR-127）。",
       "investigated": "2026-08-16 本反復（APPLY_FINDINGS。前提の実在確認）"
+    },
+    {
+      "incident_id": "INC-043-fixed-date-option-backdates-production-evidence",
+      "index": 0,
+      "state": "landed",
+      "note": "『事象が名指す機構の実在を、統制欠陥を書く前に確認する』工程を、**一度だけ全数で走らせた**。(a) 統制要素: 48 分析すべてが実在する要素だけを引く（機械が実行時に照合しているので当然）。(b) 散文が名指すリポジトリ内の場所: 12 件のうち **3 件が解決しない**。内訳は INC-029 の `plugin/tests/x.py`・INC-038 の `plugin/tests/test_x.py`（どちらも規準の例示の占位で、主張ではない）と、**INC-041 の `doctrine_docs/packaging/decisions/ADR-134-scoped-staleness.md`**（実在しない。事象記録の側は ADR-166 の門を立てたときに直したが、**分析の成果物には残る** —— §4 により実装者は評価者の判定を書き換えない）。**走査の限界を明記する**: 拾えるのは『ファイルが在る』形の主張だけで、**規範の主張は拾えない** —— INC-042 の『保証レーンは一反復＝一 PR で回している』は実在しない前提だったが、この走査には掛からない。推奨が求める『分析手順に組み込む』（工程化）は未実施で、本反復は一回きりの走査である。",
+      "evidence_ref": "assurance/harness/control_structure.py",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。全 48 分析の散文を走査）"
+    },
+    {
+      "incident_id": "INC-043-fixed-date-option-backdates-production-evidence",
+      "index": 3,
+      "state": "pending",
+      "note": "REPRODUCE_RED（固定日付で書いた証拠が鮮度判定を満たさないことを FAIL として固定）。未実施。**INC-044 の是正で鮮度の丸めは辺ごとに分かれたが、それは別の穴である** —— こちらは『刻印が固定由来か実時計由来か』を判じる話で、ADR-167 は扱っていない。",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。全 48 分析の散文を走査）"
+    },
+    {
+      "incident_id": "INC-043-fixed-date-option-backdates-production-evidence",
+      "index": 4,
+      "state": "pending",
+      "note": "generated_at が 00:00:00Z の成果物、および git_sha の commit 時刻より古い成果物を検出する門。未実施。**本セッションで実際に 00:00:00Z の刻印を作ってしまった**（攻撃の一度目）ので、検出の値打ちは実証されている。INC-048#4（読取り 0 の識別子を名指す）と同じく『台帳の値の性質を検める』族である。",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。全 48 分析の散文を走査）"
+    },
+    {
+      "incident_id": "INC-043-fixed-date-option-backdates-production-evidence",
+      "index": 6,
+      "state": "pending",
+      "note": "ADR-120 に鮮度規則の前提（証拠の刻印は実時計に由来し実行者が選べない）を明記し、失効の先行指標を併記する。運転手順 §0 の `--today` の適用範囲を口の名前で限定する部分も未実施。**後者は本セッションの誤用の直接の再発防止である。**",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。全 48 分析の散文を走査）"
+    },
+    {
+      "incident_id": "INC-043-fixed-date-option-backdates-production-evidence",
+      "index": 7,
+      "state": "pending",
+      "note": "status の表示で『成果物が無い』と『成果物は在るが鮮度判定を通らない』を区別する。未実施。**INC-035#1（門の出口を三値に）・INC-036#3（何を検めた緑かの範囲）と同じ設計に乗る。**",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。全 48 分析の散文を走査）"
+    },
+    {
+      "incident_id": "INC-043-fixed-date-option-backdates-production-evidence",
+      "index": 9,
+      "state": "pending",
+      "note": "未来日付を渡した場合に未実施の攻撃が『済み』と読まれるかの実証。未実施。隔離環境での実証が要る（本番の台帳へ未来日付の証拠を積むわけにはいかない）。**INC-034 の未来日掃引と同じ手法が使える**（あちらは監査、こちらは攻撃証拠）。",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。全 48 分析の散文を走査）"
+    },
+    {
+      "incident_id": "INC-043-fixed-date-option-backdates-production-evidence",
+      "index": 1,
+      "state": "owner",
+      "note": "証拠を生む走らせ手で固定日付を拒む／刻印を実時計で上書きする。`--today` を試験専用の口として型・名前の両方で分離する。**配布物ではないが、レーンの走らせ手の口を塞ぐ変更**であり、既存の呼び出し（試験・再現手順）が動かなくなりうる。類型は『互換性を壊す変更』。",
+      "owner_decision_kind": "互換性を壊す変更",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。全 48 分析の散文を走査）"
+    },
+    {
+      "incident_id": "INC-043-fixed-date-option-backdates-production-evidence",
+      "index": 2,
+      "state": "owner",
+      "note": "証拠に『刻印が実時計由来か固定由来か』の別を持たせ、固定由来は鮮度判定に使わず UNKNOWN へ倒す。**台帳スキーマの変更**であり、既存の記録（刻印の別を持たない）の扱いが問題になる。INC-037#3（刻印の意味の仕様化と由来推定の別キー）と同じ主題である。",
+      "owner_decision_kind": "互換性を壊す変更",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。全 48 分析の散文を走査）"
+    },
+    {
+      "incident_id": "INC-043-fixed-date-option-backdates-production-evidence",
+      "index": 8,
+      "state": "owner",
+      "note": "fix_note の (a)(b)(c) のどれを採るか、および WARNING_BACKLOG の滞留を異常とする条件と閉じる責任の割当。**後者は INC-042#1 で束ねた 12 件の一部である**（前反復で一覧化した）。前者（どの方向を採るか）は #1・#2 の所有者判断と同じ束に入る。",
+      "owner_decision_kind": "互換性を壊す変更",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。全 48 分析の散文を走査）"
     }
   ]
 }
