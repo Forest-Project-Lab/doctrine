@@ -3028,6 +3028,68 @@
       "owner_decision_kind": "配布境界や保証範囲の変更",
       "evaluator_owner_required": true,
       "investigated": "2026-08-15 本反復（APPLY_FINDINGS。実在確認と実測）"
+    },
+    {
+      "incident_id": "INC-037-deterministic-sweep-overwrites-the-rubric-stamp",
+      "index": 6,
+      "state": "landed",
+      "note": "rubric_sha256 への書込み経路を全走査した。**3 経路**在る: map_coverage.py:255（判定時に刻む。これが正しい経路）／independent_recheck.py:272（独立再監査が自分の記録へ刻む。網羅の項には触れない）／recheck_evidence.py:61（掃引。**setdefault なので既存を上書きしない**。INC-037 の是正）。recheck_evidence.py:169 は表示のみで代入ではない。**掃引以外の書込み経路は independent_recheck だけで、そちらは網羅の項を触らない。**許可制の対象に含めるべき経路は現時点で増えない。",
+      "evidence_ref": "assurance/harness/recheck_evidence.py",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。全走査と実測）"
+    },
+    {
+      "incident_id": "INC-037-deterministic-sweep-overwrites-the-rubric-stamp",
+      "index": 7,
+      "state": "landed",
+      "note": "本分析が依拠した機構の実在を確認した。recheck_evidence.py・map_coverage.py はいずれも実在。ADR-133 決定3（規準の指紋を本文から導き、判定に刻む）も実在し、決定4 が recheck_evidence.py を名指している。**control_flaws を撤回する必要は無い。**",
+      "evidence_ref": "assurance/harness/map_coverage.py",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。全走査と実測）"
+    },
+    {
+      "incident_id": "INC-037-deterministic-sweep-overwrites-the-rubric-stamp",
+      "index": 5,
+      "state": "pending",
+      "note": "ADR-139 の独立検証と、setdefault が旧記録へ誤った由来を刻まないかの検証。**後半は実測した** —— 台帳に刻印なしの項は 0 件なので、setdefault は現時点で一度も発火しない。つまり誤った由来を刻む余地は今は無い（将来 刻印なしの項が生まれれば別）。独立検証そのものは未実施（ledger/verify に INC-037 の記録は無い）。",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。全走査と実測）"
+    },
+    {
+      "incident_id": "INC-037-deterministic-sweep-overwrites-the-rubric-stamp",
+      "index": 0,
+      "state": "pending",
+      "note": "台帳への書込みの許可制（allowlist）。未実施。#6 の走査で対象は確定した（掃引が触ってよいのは証拠ポインタと索引の刻印だけ）。**setdefault による個別是正は効いているが、権限の構造化には至っていない** ——新しい書込み経路が足されたときに止める仕組みは無い。",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。全走査と実測）"
+    },
+    {
+      "incident_id": "INC-037-deterministic-sweep-overwrites-the-rubric-stamp",
+      "index": 1,
+      "state": "pending",
+      "note": "現行規準の指紋と台帳の刻印集合を突合するジョブ。未実施。**本反復で一度手で突合したところ、606 件中 341 件が現行と異なる指紋を持っていた**（cast 174・jerg 87・stpa 80）。正本はこれを一切見ていない —— **INC-048 として別に積んだ。**",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。全走査と実測）"
+    },
+    {
+      "incident_id": "INC-037-deterministic-sweep-overwrites-the-rubric-stamp",
+      "index": 2,
+      "state": "pending",
+      "note": "『証拠の引き直し』と『意味の再判定』の責任分界の文書化。未実施。分界は現に recheck_evidence.py の docstring にだけ在り（『規準が動いたときの引き直しは MAP_COVERAGE の仕事』）、文書側には無い。**INC-033 推奨#4（試験だけが持つ規則）と同じ族**で、こちらは『コードのコメントだけが持つ規則』である。",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。全走査と実測）"
+    },
+    {
+      "incident_id": "INC-037-deterministic-sweep-overwrites-the-rubric-stamp",
+      "index": 3,
+      "state": "owner",
+      "note": "台帳の刻印の意味を仕様として明記し、後から補完した記録を『由来推定』として別キーで区別する。**台帳スキーマの変更**であり、既存の読み手（validate・coverage stats）の解釈が変わる。評価者自身が『互換性に触れるため可否は OWNER が決める』と書いている。",
+      "owner_decision_kind": "互換性を壊す変更",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。全走査と実測）"
+    },
+    {
+      "incident_id": "INC-037-deterministic-sweep-overwrites-the-rubric-stamp",
+      "index": 4,
+      "state": "owner",
+      "note": "ガード・リンタ・統治木の走査対象を台帳の不変条件へ拡張するか。**配布物（ガード・リンタ）の走査対象を広げる判断**であり、拡張しない場合は『台帳の不変条件を誰が強制するか』を穴として記録することになる。INC-033#6（docs-audit の走査対象）・INC-036#10（照合の責任割当）と同じ主題である。",
+      "owner_decision_kind": "配布境界や保証範囲の変更",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。全走査と実測）"
     }
   ]
 }
