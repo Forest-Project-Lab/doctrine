@@ -6113,6 +6113,108 @@
         "claim": "2 ファイルは実在。assurance/harness に新しい該当は無い。docs-audit は同じ偽陰性を持たない。"
       },
       "evidence_ref": "plugin/scripts/docs-audit.py"
+    },
+    {
+      "incident_id": "INC-055-token-estimate-bias-stated-in-both-directions",
+      "index": 0,
+      "state": "owner",
+      "note": "「同一の量に対する保証の向き」を一箇所の正本に固定し、他は参照だけにする。**どの文書を正とするかは所有者が決める**と分析自身が言っている。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$0.9595）直後に、記録済みの usage とプロンプトの再構成から比を見積り、同じ量に触れる文書を dep-graph ではなく全文検索で棚卸しした。",
+        "claim": "比は ≒1.03 文字/トークン（仮定 4.0）。同じ量に触れる現行文書 20 件のうち 14 件が ADR-075 の限界を参照していない。"
+      },
+      "owner_decision_kind": "配布境界や保証範囲の変更"
+    },
+    {
+      "incident_id": "INC-055-token-estimate-bias-stated-in-both-directions",
+      "index": 1,
+      "state": "owner",
+      "note": "保証の向きを主張する語（安全側・保守的・上回る／下回る）を含む行に測定の裏取りを必須とする検査を docs-audit へ足す。裏取りが無ければ「未測定の断定」として warn。**配布物の監査の検査を増やす**ので保証範囲に触れる。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$0.9595）直後に、記録済みの usage とプロンプトの再構成から比を見積り、同じ量に触れる文書を dep-graph ではなく全文検索で棚卸しした。",
+        "claim": "比は ≒1.03 文字/トークン（仮定 4.0）。同じ量に触れる現行文書 20 件のうち 14 件が ADR-075 の限界を参照していない。"
+      },
+      "owner_decision_kind": "配布境界や保証範囲の変更"
+    },
+    {
+      "incident_id": "INC-055-token-estimate-bias-stated-in-both-directions",
+      "index": 2,
+      "state": "landed",
+      "note": "**測った。ADR-105 が正しく、SPEC-012 は逆である。**トークナイザは無いので、**既に記録済みの `result_meta.usage` を使って追加費用なしで**測った —— INC-050 の分析（cache_read が最小の回）で、再構成したプロンプト **41310 文字（和文 77%）**に対し cache_creation **40292 トークン**。見かけ **1.03 文字/トークン**で、系のプロンプト等の上乗せを含むので**真の値はこれ以下**。仮定の 4.0 は実測の約 **3.9 倍**を一トークンに詰めると見ている。\n**帰結**: 既定 12000 の上限は、和文の統治文書に対して実際には **4 万トークン規模**を通しうる。SPEC-012 の「多めに出る、安全側の近似である」は**逆であり、読み手を危険側へ誤らせる**。\n**限界（隠さず記す）**: 再構成の `prompt_sha256` は記録値と**一致しなかった**（分析後に台帳を編集したため）。文字数の差は 1% 未満の桁と見込まれ 4 倍の結論を動かさないが、**厳密な同一物ではない**。推奨が求める「決定論試験」としての常設は未着手。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$0.9595）直後に、記録済みの usage とプロンプトの再構成から比を見積り、同じ量に触れる文書を dep-graph ではなく全文検索で棚卸しした。",
+        "claim": "比は ≒1.03 文字/トークン（仮定 4.0）。同じ量に触れる現行文書 20 件のうち 14 件が ADR-075 の限界を参照していない。"
+      },
+      "evidence_ref": "assurance/ledger/incidents.json の INC-055 の measurement_2026-08-16"
+    },
+    {
+      "incident_id": "INC-055-token-estimate-bias-stated-in-both-directions",
+      "index": 3,
+      "state": "pending",
+      "note": "三箇所に「偏りの向きは未確定」の印を置く、という推奨。**測定で向きが確定したので、この文面のままでは実施しない** —— 要るのは印ではなく訂正である。SPEC-012 の安全性の主張を訂正するには根拠 ADR が要り、次の反復の主題にする。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$0.9595）直後に、記録済みの usage とプロンプトの再構成から比を見積り、同じ量に触れる文書を dep-graph ではなく全文検索で棚卸しした。",
+        "claim": "比は ≒1.03 文字/トークン（仮定 4.0）。同じ量に触れる現行文書 20 件のうち 14 件が ADR-075 の限界を参照していない。"
+      }
+    },
+    {
+      "incident_id": "INC-055-token-estimate-bias-stated-in-both-directions",
+      "index": 4,
+      "state": "owner",
+      "note": "NONGOAL-001 の射程（意味的矛盾を機械判定しない）を維持したまま、その空白を誰が受けるかを明示的に割り当てる。**射程外宣言と受け皿の欠落を分けて扱え**という指摘は正しい。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$0.9595）直後に、記録済みの usage とプロンプトの再構成から比を見積り、同じ量に触れる文書を dep-graph ではなく全文検索で棚卸しした。",
+        "claim": "比は ≒1.03 文字/トークン（仮定 4.0）。同じ量に触れる現行文書 20 件のうち 14 件が ADR-075 の限界を参照していない。"
+      },
+      "owner_decision_kind": "配布境界や保証範囲の変更"
+    },
+    {
+      "incident_id": "INC-055-token-estimate-bias-stated-in-both-directions",
+      "index": 5,
+      "state": "pending",
+      "note": "見積りが上限の 0.9 を超えるセッションと投入本文の非 ASCII 比率を導入複製側で記録する。版依存の指標であることを併記する。未着手。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$0.9595）直後に、記録済みの usage とプロンプトの再構成から比を見積り、同じ量に触れる文書を dep-graph ではなく全文検索で棚卸しした。",
+        "claim": "比は ≒1.03 文字/トークン（仮定 4.0）。同じ量に触れる現行文書 20 件のうち 14 件が ADR-075 の限界を参照していない。"
+      }
+    },
+    {
+      "incident_id": "INC-055-token-estimate-bias-stated-in-both-directions",
+      "index": 6,
+      "state": "owner",
+      "note": "安全上の想定が反転する種類の変更を、通常の版更新と区別できる形で利用者へ通知する経路。**本件はまさにその一例**（安全側と思われていた偏りが危険側だった）。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$0.9595）直後に、記録済みの usage とプロンプトの再構成から比を見積り、同じ量に触れる文書を dep-graph ではなく全文検索で棚卸しした。",
+        "claim": "比は ≒1.03 文字/トークン（仮定 4.0）。同じ量に触れる現行文書 20 件のうち 14 件が ADR-075 の限界を参照していない。"
+      },
+      "owner_decision_kind": "配布境界や保証範囲の変更"
+    },
+    {
+      "incident_id": "INC-055-token-estimate-bias-stated-in-both-directions",
+      "index": 7,
+      "state": "landed",
+      "note": "**棚卸しを実施した。**同じ量（`ceil(len/4.0)`・4 文字/トークン・上限 12000・`injection_token_cap`）に触れる文書は **20 件**。そのうち **ADR-075 の限界を参照しているのは 6 件だけ**（decided-facts・IMPL-013・SPEC-012・SPEC-013・TEST-013・ADR-105）で、**14 件は参照していない**（REQ-000・SPEC-018・SPEC-029・ICD・ADR-009・ADR-014・ADR-037・ADR-043・ADR-096・EXT-005・IMPL-012・ADR-070・CHANGE-001・RESEARCH-001[archived]）。ADR-105 を参照しているのは **2 件のみ**（SPEC-012・ADR-105 自身）。**限界の記録は、同じ量を語る文書の大半へ届いていない。**棚卸しは全文検索であり dep-graph の逆依存ではない —— 語に触れていても「同じ量を語っている」とは限らないので、**20 件は上限であって、意味のある言及の数ではない**。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$0.9595）直後に、記録済みの usage とプロンプトの再構成から比を見積り、同じ量に触れる文書を dep-graph ではなく全文検索で棚卸しした。",
+        "claim": "比は ≒1.03 文字/トークン（仮定 4.0）。同じ量に触れる現行文書 20 件のうち 14 件が ADR-075 の限界を参照していない。"
+      },
+      "evidence_ref": "doctrine_docs/context/spec/SPEC-012-inject-contract.md / doctrine_docs/context/decisions/ADR-105-token-calibration-is-shared.md"
     }
   ]
 }
