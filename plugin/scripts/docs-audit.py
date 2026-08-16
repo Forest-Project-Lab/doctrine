@@ -1466,6 +1466,28 @@ def _atomic_write(path, text):
 # main
 # ---------------------------------------------------------------------------
 
+def _detach_token():
+    """負債の印の識別子。**実行ごとに一意**であること（INC-052）。
+
+    印は token をそのままファイル名にする（`_auditcache.write_due`）。
+    セッション識別子をそのまま使うと、同一セッションで SessionEnd が二度
+    起きたときに印が衝突し、**片方の子が完走すると走らなかった側の負債まで
+    消える**。SessionEnd は `/clear` などでセッション中にも起きうるので、
+    一セッション複数回は例外ではない。
+
+    一意な部分を**先頭**へ置く。印の名は 64 文字で切られるので、末尾へ置くと
+    長い識別子のときに一意性の側が落ちる（それが起きるのは利用者の環境だけで、
+    こちらでは見えない）。
+
+    セッションの識別は捨てない —— 名の後ろに残し、印の中身は `write_due` が
+    書く。ファイル名が担うのは実行の同一性であって、セッションの同一性ではない。
+    """
+    now = datetime.datetime.now(datetime.timezone.utc)
+    stamp = now.strftime("%Y%m%dT%H%M%S%f")
+    session = _auditcache.session_token() or "nosession"
+    return "%s-%d-%s" % (stamp, os.getpid(), session)
+
+
 def _detach_and_queue(argv, opts):
     """負債の印を置き、監査そのものを切り離した子へ渡して即座に返る。
 
@@ -1483,8 +1505,7 @@ def _detach_and_queue(argv, opts):
     # セッション識別子はホストによって鍵の名が違う。stdin の JSON は読まない
     # (対話 CLI では待ちで止まる。main の注記と同じ理由)。どれも無ければ時刻を
     # 使う —— 識別子が取れないことを負債を置かない理由にはしない。
-    token = _auditcache.session_token() or datetime.datetime.now(
-        datetime.timezone.utc).strftime("queued-%Y%m%dT%H%M%SZ")
+    token = _detach_token()
     try:
         _auditcache.write_due(token, proj=proj)
     except Exception:                                    # noqa: BLE001

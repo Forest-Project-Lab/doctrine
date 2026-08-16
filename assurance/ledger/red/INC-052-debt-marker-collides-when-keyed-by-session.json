@@ -1,0 +1,40 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "reproduce-red",
+  "incident_id": "INC-052-debt-marker-collides-when-keyed-by-session",
+  "generated_at": "2026-08-16T08:35:00Z",
+  "git_sha": "aa0ac93",
+  "phase": "before-fix",
+  "command": "python3 -m unittest discover -s plugin/tests -p test_sessionend_budget.py -k DebtMarkerIsPerRun",
+  "returncode": 1,
+  "expect": "修正前に FAIL すること（最初から緑は再現と認めない）",
+  "measured_against_shipped_file": {
+    "note": "出す試験ファイルを、修正前の樹（HEAD = aa0ac93）へ複写して走らせた。**ただし足場を一つ加えている** —— token の計算が _detach_and_queue の中に直書きされていて試験から呼べなかったので、`_detach_token()` として**挙動を一切変えずに**切り出し、その版に対して測った。切り出しだけの版と、直した版の差は関数の中身だけである。",
+    "tree": "HEAD (aa0ac93) + 出す試験ファイル + _detach_token() の切り出し（挙動不変）",
+    "ran": 5,
+    "failures": 4,
+    "errors": 0,
+    "passed": 1
+  },
+  "first_attempt_was_a_weaker_red": {
+    "note": "最初は切り出しをせずに測り、5 件すべて ERROR（`_detach_token` が存在しない）になった。**『属性が無い』の赤は挙動の赤ではない** —— 試験が機構の不在を突いているだけで、欠陥そのものを再現していない。切り出してから測り直した。",
+    "ran": 5, "errors": 5, "failures": 0
+  },
+  "observed_failures": [
+    "FAIL: test_two_session_ends_in_one_session_leave_two_marks —— 同一セッションの 2 回が同じ token を得て、印は 1 件しか残らない",
+    "FAIL: test_clearing_one_does_not_clear_the_other —— 片方の子の完走で、走らなかった側の負債まで消える",
+    "FAIL: test_without_a_session_the_token_is_still_unique_per_run —— 識別子が無いときも秒粒度なので同一秒内で衝突する（**旧来の形にも在った穴**。#338 はこれを『同じ秒』から『同じセッション』へ緩めた）",
+    "FAIL: test_the_token_survives_the_filename_sanitiser —— 印の名は 64 文字で切られる。長い識別子だと切り詰めで別の実行が同じ名になる"
+  ],
+  "green_before_and_after": [
+    "test_the_token_still_carries_the_session —— セッションの識別を捨てないこと（#338 の意図）。修正前も緑であり、赤→緑の観測ではない。直しても壊してはならない側の番人として置く。"
+  ],
+  "this_is_my_own_regression": {
+    "introduced_in": "#338『監査の要約に「どのセッションが書いたか」を載せる』（2026-08-16、私が出した）",
+    "what_i_changed": "detach 経路の token を `queued-%Y%m%dT%H%M%SZ` から `_auditcache.session_token() or <時刻>` へ変えた。要約に session を載せる主題のついでに、同じ環境変数を自前で解いていた箇所を寄せたときに巻き込んだ。",
+    "why_the_gate_said_nothing": "#338 の試験 4 件は build_summary の session キーだけを見ており、**同じ diff で触った detach の token を覆っていなかった**。負債の経路には 19 件の試験が在るが、token の作り方は誰も見ていなかった。",
+    "how_i_found_it": "INC-001 推奨#1 を着手前に実測し直す過程で負債の経路の試験を読み、自分が変えた行だけが覆われていないことに気付いた。**推測で起票せず、一時ディレクトリで衝突を実証してから積んだ。**"
+  },
+  "fix": "一意な部分（マイクロ秒までの時刻 + pid）を**先頭**へ置き、セッション識別子を後ろに残す。名は 64 文字で切られるので、一意な側を先頭に置かないと長い識別子のときに一意性が落ちる（それが起きるのは利用者の環境だけで、こちらでは見えない）。",
+  "residual": "pid は再利用されうるので、同一マイクロ秒・同一 pid の二回は理論上衝突する。実行が別プロセスであることと時刻の粒度から、実務上は起きない。厳密な一意性が要るなら印の側で連番を持つしかないが、印は最善努力（例外を投げない）の機構なので、そこまでは持たせていない。"
+}

@@ -276,3 +276,59 @@ class ManifestTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DebtMarkerIsPerRunTest(unittest.TestCase):
+    """負債の印は**実行ごと**に一意である（INC-052）。
+
+    印は token をそのままファイル名にする。#338 で token を『時刻から作る
+    一意な値』から『セッション識別子』へ変えたため、同一セッションで
+    SessionEnd が二度起きると印が衝突し、**片方の子の完走で両方の負債が
+    消えた**。SessionEnd は `/clear` などでセッション中にも起きうるので、
+    一セッション複数回は例外ではない。
+
+    セッションの識別は捨てない —— 印の**中身**が持つ。ファイル名が担うのは
+    実行の同一性であって、セッションの同一性ではない。
+    """
+
+    def setUp(self):
+        self.proj = tempfile.mkdtemp()
+        os.environ["CLAUDE_SESSION_ID"] = "sess-ABC-123"
+        self.addCleanup(os.environ.pop, "CLAUDE_SESSION_ID", None)
+
+    def _token(self):
+        return docs_audit._detach_token()
+
+    def test_two_session_ends_in_one_session_leave_two_marks(self):
+        a, b = self._token(), self._token()
+        self.assertNotEqual(a, b, "同一セッションの 2 回が同じ token を得ている")
+        _auditcache.write_due(a, proj=self.proj)
+        _auditcache.write_due(b, proj=self.proj)
+        self.assertEqual(len(_auditcache.read_due(proj=self.proj)), 2)
+
+    def test_clearing_one_does_not_clear_the_other(self):
+        a, b = self._token(), self._token()
+        _auditcache.write_due(a, proj=self.proj)
+        _auditcache.write_due(b, proj=self.proj)
+        _auditcache.clear_due(a, proj=self.proj)
+        left = _auditcache.read_due(proj=self.proj)
+        self.assertEqual(len(left), 1,
+                         "片方の子の完走で、走らなかった側の負債まで消えた")
+
+    def test_the_token_still_carries_the_session(self):
+        """セッションの識別は捨てない（#338 の意図を保つ）。"""
+        self.assertIn("sess-ABC-123", self._token())
+
+    def test_without_a_session_the_token_is_still_unique_per_run(self):
+        os.environ.pop("CLAUDE_SESSION_ID", None)
+        a, b = self._token(), self._token()
+        self.assertNotEqual(a, b)
+
+    def test_the_token_survives_the_filename_sanitiser(self):
+        """印の名は 64 文字で切られる。切られても実行ごとに別であること。"""
+        os.environ["CLAUDE_SESSION_ID"] = "s" * 80
+        a, b = self._token(), self._token()
+        _auditcache.write_due(a, proj=self.proj)
+        _auditcache.write_due(b, proj=self.proj)
+        self.assertEqual(len(_auditcache.read_due(proj=self.proj)), 2,
+                         "長い識別子で切り詰められ、別の実行が同じ名になった")
