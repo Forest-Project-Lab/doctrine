@@ -25,7 +25,8 @@
         "ASM-001-sessionend-always-fires"
       ],
       "next_step": "OPEN のまま。緩和は着地: 想定観測器（observe_assumptions.py が last-audit を stat・連続 N=2 の先行指標・ASM-001 に 2026-08-08 FAIL 記録）。根本原因（不発火 vs 旧版実行）の切り分けは UNKNOWN のまま —— 複製の同一性判定（INC-019）が前提",
-      "evidence_note": "当初の evidence_refs は `.claude/.cache/last-audit.json` を含んでいた。これは**実行時の状態**であり（DECIDED-001。配布物の中に置かず ${CLAUDE_PROJECT_DIR}/.claude/.cache に限る）、リポジトリが持つ物ではない —— 作った機械の上でだけ解決し、清浄な checkout では解決しない。ADR-166 の門を立てたところ、ローカルでは緑・CI では赤という形で現れた（2026-08-15）。観測の内容は残す: 2026-08-04 の時点で当該 cache の要約は 2026-07-28 のままであり、checks_run も旧世代だった。参照としては hook の口の名 SessionEnd を残す。"
+      "evidence_note": "当初の evidence_refs は `.claude/.cache/last-audit.json` を含んでいた。これは**実行時の状態**であり（DECIDED-001。配布物の中に置かず ${CLAUDE_PROJECT_DIR}/.claude/.cache に限る）、リポジトリが持つ物ではない —— 作った機械の上でだけ解決し、清浄な checkout では解決しない。ADR-166 の門を立てたところ、ローカルでは緑・CI では赤という形で現れた（2026-08-15）。観測の内容は残す: 2026-08-04 の時点で当該 cache の要約は 2026-07-28 のままであり、checks_run も旧世代だった。参照としては hook の口の名 SessionEnd を残す。",
+      "discrimination_2026-08-16": "INC-005（版の遅れ）との切り分けに結論が出た（推奨#6）。(1) v0.7.0 の release commit でも導入複製の実 commit（67475de）でも、SessionEnd の口は`--summary-out $CLAUDE_PROJECT_DIR/.claude/.cache/last-audit.json` で**同一**であり、観測した当の場所へ旧い複製も書いていた。「複製が古いので別の場所へ書いていた」は成り立たない。(2) 当時の口は `--detach` を持たず全件監査を**同期**で走らせていた（detach は #288・2026-08-10）。INC-039 の実測（監査 8〜9.5 秒 対 口の予算 1〜2 秒）により、要約は毎回打ち切られて一度も書かれない。**7 日間の停滞はこれだけで説明が付く。**(3) 当該期間の終端種別は再構成不能（負債の印は 2026-08-09 まで存在しない）。**結論: 本件の症状は INC-039 の機構で説明され、INC-005 を必要としない。**残る仮定: INC-039 の予算の実測は 2026-08-09 のものであり、当時の予算を直に測った記録は無い。"
     },
     {
       "id": "INC-002-termcheck-ascii-substring",

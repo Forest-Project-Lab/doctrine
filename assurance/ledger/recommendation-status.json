@@ -21,14 +21,17 @@
     {
       "incident_id": "INC-001-sessionend-audit-gap",
       "index": 1,
-      "state": "pending",
-      "note": "SessionStart の配線は inject-contract.py のみ(hooks.json:3-5)。前回監査記録の不在時に全件監査を走らせる補償実行は無く、手動実行の案内に留まる(inject-contract.py:471-483)。不実行の台帳記録も無い。",
+      "state": "owner",
+      "note": "推奨は二つの節に分かれる。\n**(1)「不実行が起きたことを記録する」は着地済み** —— INC-039 の是正で `write_due`/`read_due`/`clear_due` の負債の印が入り、SessionStart の契約注入が「⚠ 監査の負債 N 件」を告げる。試験 31 件が覆う（本反復で 19→31）。記録先は利用者の `.claude/.cache` であって保証レーンの台帳ではない —— 配布物にとっての台帳はそちらである（DECIDED-001 の実行時状態の置き場）。\n**(2)「その場で全件監査を走らせる」は INC-039 が反証している。** 全件監査は 8〜9.5 秒、Hook の完了を待つ上限は 1 秒超〜2 秒未満（INC-039 の実測）。同期実行はセッション**開始**の待ちの上で INC-039 を再演する —— しかも利用者が待っている経路なので、SessionEnd より悪い。**推奨の文面は、それより後に見つかった事象によって成り立たなくなっている。**\n成り立ちうる変種は「SessionStart で**切り離した**補償実行を起こす」だが、これは利用者の機械でセッション開始時に背景処理を起こす変更であり、配布境界に触れる。所有者判断として棚へ載せる。",
       "investigated": {
-        "observed_at": "2026-08-08",
+        "observed_at": "2026-08-16",
         "observed_by": "ASSURANCE_LANE",
-        "method": "移行時に自由型から構造化。観測日は原文に書かれていた日付を機械抽出した（推測ではない）。",
-        "claim": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
-      }
+        "method": "hooks.json・inject-contract.py・_auditcache.py の現物を読み、負債の経路の試験 31 件を数え、INC-039 の実測値（8〜9.5 秒 対 1〜2 秒）と突き合わせた。",
+        "claim": "SessionStart は inject-contract のみ。補償実行は無いが、負債の記録と警告は在る。同期実行は INC-039 を再演する。"
+      },
+      "owner_decision_kind": "配布境界や保証範囲の変更",
+      "evidence_ref": "plugin/scripts/_auditcache.py の write_due/read_due/clear_due / plugin/scripts/inject-contract.py の _render_due_warning / plugin/tests/test_sessionend_budget.py / plugin/hooks/hooks.json",
+      "correction_2026-08-16": "2026-08-08 のトリアージの所見「不実行の台帳記録も無い」は**現在では誤り**である。INC-039（2026-08-09）の是正が負債の印を入れた。所見はトリアージの時点では正しく、**その後に世界が動いた**（INC-050 が言う「観測を現状として読む」の実例）。"
     },
     {
       "incident_id": "INC-001-sessionend-audit-gap",
@@ -90,14 +93,15 @@
     {
       "incident_id": "INC-001-sessionend-audit-gap",
       "index": 6,
-      "state": "pending",
-      "note": "結論・回答不能とも未判定。INC-001 は fixed:false のまま、版の遅れ説は未反証(incidents.json の refuted_2026-08-06)。ASM-003 観測器が複製同一性を gitCommitSha で機械観測し 2026-08-08 に FAIL を追記(observe_assumptions.py:255)。切り分けは開いたまま。",
+      "state": "landed",
+      "note": "**結論が出た。三つの下位問いのうち一つが決着し、それだけで症状が説明できる。**\n\n**(1) 旧版の出力先 —— 版の遅れ説を反証した。** git 履歴を遡って測ると、v0.7.0 の release commit（343613b）でも、導入複製の実 commit（67475de。版番号は 0.10.0 で、**版番号は複製を識別しない** —— INC-019）でも、SessionEnd の口は同一である:\n  `docs-audit.py --root-from $CLAUDE_PROJECT_DIR --json --summary-out $CLAUDE_PROJECT_DIR/.claude/.cache/last-audit.json --fail-on never --respect-docs-level`\n**観測した当の場所へ、旧い複製もまた書いていた。**したがって「複製が古いので別の場所へ書いていた」という筋は成り立たない。\n\n**(2) 失敗時挙動 —— これが症状を説明する。** 当時の口は `--detach` を持たず、**全件監査を同期で走らせていた**（`--detach` が入ったのは #288、2026-08-10）。INC-039 の実測では全件監査は 8〜9.5 秒、ホストが SessionEnd の完了を待つ上限は 1 秒超〜2 秒未満。要約はチェックを走らせ切った後に書かれるので、**打ち切られれば一度も書かれない**。7 日間 cache が 2026-07-28 のまま留まった観測は、これだけで説明が付く。INC-039 は打ち切りの事実が標準エラーへ毎回出ていたことも記録しており、**口は発火していたが完走しなかった**ことの裏付けになる。\n\n**(3) 強制終了時の発火比較・当該期間の終端種別の再構成 —— 回答不能。** 終端種別を残す機構（負債の印）は 2026-08-09（#288）まで存在せず、2026-07-28〜08-04 のデータは**記録されなかった**。事後に再構成する手立ては無い。ホストの強制終了時の発火の比較も、こちらからは観測できない。**推奨は「結論または回答不能の判定が出るまで閉じない」と言う。(3) は回答不能であり、(1)(2) で結論が出たので、(3) の不能は結論を妨げない。**\n\n**切り分けの答え: INC-001 の症状は INC-039 の機構（口の予算超過）で説明され、INC-005（版の遅れ）を必要としない。** INC-005 は事実として実在するが、INC-001 の症状の原因ではない。\n\n**残る仮定**: INC-039 の予算の実測は 2026-08-09 に同じ機械で取ったものであり、それを 2026-07-28〜08-04 へ当てはめている。同一の機械・同系のホストなので妥当と見るが、**当時の予算を直に測った記録は無い**。この仮定の上に結論が立っている。",
       "investigated": {
-        "observed_at": "2026-08-08",
+        "observed_at": "2026-08-16",
         "observed_by": "ASSURANCE_LANE",
-        "method": "移行時に自由型から構造化。観測日は原文に書かれていた日付を機械抽出した（推測ではない）。",
-        "claim": "2026-08-08 一括トリアージ（17 束の扇形調査。ADR-145）"
-      }
+        "method": "git 履歴を遡り、v0.7.0 の release commit と導入複製の実 commit (67475de) の hooks.json・_auditcache.py を直接読み、--detach と write_due の導入日を特定し、INC-039 の実測値と突き合わせた。",
+        "claim": "書き先は全版で同一。当時は同期実行。負債の印は 2026-08-09 まで存在せず、当該期間の終端種別は再構成不能。"
+      },
+      "evidence_ref": "plugin/hooks/hooks.json / plugin/scripts/_auditcache.py / assurance/ledger/incidents.json / assurance/ledger/cast/INC-039-sessionend-audit-exceeds-hook-budget.json"
     },
     {
       "incident_id": "INC-001-sessionend-audit-gap",
