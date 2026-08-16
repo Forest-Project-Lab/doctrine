@@ -408,8 +408,20 @@ def mask_body(body):
 # The undefined-term heuristic
 # ---------------------------------------------------------------------------
 
+# ASCII 語の境界。`\b` は使えない —— Python の `\w` は和文を含むので、
+# 「はTDDから」のように仮名・漢字へ密着した英字語には境界が立たず、**規則が
+# 黙って外す**(INC-053)。偽陽性(INC-002)と根は同じ「日本語に語の境界が無い」で、
+# 向きが逆である。境界を「英数字が隣に無いこと」として明示的に書く ——
+# 和文・記号・空白・行端はすべて境界になる。
+# `_` は語文字のままにする。`\b` はそう振る舞っており、`MISSING_KEY` の
+# 断片 `MISSING` を語として名指さない拠り所になっていた（既存のコーパス試験が
+# 実際にこの過剰是正を捕らえた）。境界から外すのは**和文と記号**だけである。
+_ASCII_BEFORE = r"(?<![0-9A-Za-z_])"
+_ASCII_AFTER = r"(?![0-9A-Za-z_])"
+
 # Specialized-term candidate: a Latin acronym (>=2 upper) or Latin+digit token.
-_SPECIAL_TERM_RE = re.compile(r"\b([A-Z]{2,}[0-9]*|[A-Za-z]+[0-9]+)\b")
+_SPECIAL_TERM_RE = re.compile(
+    _ASCII_BEFORE + r"([A-Z]{2,}[0-9]*|[A-Za-z]+[0-9]+)" + _ASCII_AFTER)
 
 # Some ASCII punctuation GLUES runs into ONE identifier: 'INC-005',
 # 'NOT-APPLICABLE', 'SHA-256' (hyphen) and 'v0.7.0', 'ARINC653.1' (dot).
@@ -753,7 +765,8 @@ def _check_wordtrap(masked, glossary):
     low = masked.lower()
     for en, jp in glossary.wordtrap.items():
         en_low = en.lower()
-        pat = re.compile(r"\b" + re.escape(en_low) + r"\b")
+        # `\b` ではなく明示の境界（INC-053。上の _ASCII_BEFORE の註を見よ）。
+        pat = re.compile(_ASCII_BEFORE + re.escape(en_low) + _ASCII_AFTER)
         m = pat.search(low)
         if not m:
             continue

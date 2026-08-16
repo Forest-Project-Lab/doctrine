@@ -1,0 +1,50 @@
+{
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "kind": "reproduce-red",
+  "incident_id": "INC-053-word-boundary-fails-against-japanese-adjacency",
+  "recommendation": "INC-002 推奨#2 —— 既知類型を失敗様式の軸（文字体系・語境界・大小文字・全角半角・正規化）へ展開して反例集合へ変換する。",
+  "generated_at": "2026-08-16T11:40:00Z",
+  "git_sha": "27718b1",
+  "phase": "before-fix",
+  "command": "python3 -m unittest discover -s plugin/tests -p test_script_boundary_axis.py",
+  "returncode": 1,
+  "expect": "修正前に FAIL すること（最初から緑は再現と認めない）",
+  "measured_against_shipped_file": {
+    "note": "出す試験ファイルそのものを、修正前の樹（HEAD = 27718b1）へ複写して走らせた。赤の記録と出す試験は同じ 4 件である。",
+    "tree": "HEAD (27718b1) + plugin/tests/test_script_boundary_axis.py のみ複写",
+    "ran": 4, "failures": 1, "errors": 0, "passed": 3
+  },
+  "observed_failures": [
+    "FAIL: test_every_rule_holds_on_every_axis —— 『仮名・漢字に密着』の軸で 2 規則とも外す（CALQUE_WORDTRAP・UNDEFINED_TERM）"
+  ],
+  "green_before_and_after": [
+    "test_the_axis_table_is_not_a_case_list —— 軸が関数の表であること。形の歯止め。",
+    "test_the_japanese_adjacent_axis_is_present —— 軸の後退を許さない。",
+    "test_a_word_that_should_not_be_flagged_stays_unflagged —— 『substatus』を罠語として咎めないこと。**INC-002 の向きの回帰**を防ぐ側で、赤→緑の観測ではない。"
+  ],
+  "how_the_axis_found_it": {
+    "note": "推奨#2 は手順へ散文を足すことを求めているが、**足す前に軸そのもので検査器を測った**。",
+    "大小文字": "異常なし（_check_wordtrap は masked.lower() で照合している）",
+    "全角半角": "異常なし（全角英字は罠語と一致しないが、それは別の話であり本件の欠陥ではない）",
+    "語境界 × 文字体系": "**当たり**。`re.search(r'\\bstatus\\b','はstatusを')` は False、`' status '` と `'「status」'` は True。`re.match(r'\\w','は')` が True であることが原因。",
+    "lesson": "軸を一つずつ当てなければ見つからなかった。散文を足すだけでは見つからない。"
+  },
+  "my_over_correction_caught_by_an_existing_guard": {
+    "note": "最初の直しは境界を `(?<![0-9A-Za-z])` とし、**`_` を境界から外してしまった**。`\\b` は `_` を語文字として扱っており、それが `MISSING_KEY` の断片 `MISSING` を語として名指さない拠り所だった（元のコードの註が明記していた）。既存のコーパス試験 2 件が即座に赤くなり、過剰是正を捕らえた。",
+    "failures_introduced": 2,
+    "tests_that_caught_it": [
+      "test_termcheck_corpus.test_every_flagged_term_exists_as_a_standalone_word",
+      "test_termcheck_corpus.test_known_identifier_fragments_are_not_flagged"
+    ],
+    "fix": "境界を `(?<![0-9A-Za-z_])` へ改め、`_` を語文字のまま残した。境界から外すのは和文と記号だけである。"
+  },
+  "post_fix": {
+    "この文書はstatusを扱う。": "CALQUE_WORDTRAP（直った）",
+    "まずTDDから始める。": "UNDEFINED_TERM（直った）",
+    "この文書はsubstatusを扱う。": "咎めない（偽陽性を増やしていない）",
+    "MISSING_KEY が無い。": "咎めない（断片を名指さない）",
+    "本体試験": "1456 件 OK",
+    "統治木への影響": "監査 error 0/warn 0/advisory 0・linter 一括 307 文書 ERROR なし（既存の文書に新しい指摘は出ていない）"
+  },
+  "residual": "軸の表に在るのは 5 通りの置き方だけであり、**網羅ではない**。全角英字（`ｓｔａｔｕｓ`）は罠語として拾わないままだが、これは別の判断（全角英字を英語語彙と見なすか）を要するので本件では触っていない。正規化（NFC/NFD）の軸も表に入れていない。"
+}
