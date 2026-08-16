@@ -3378,6 +3378,32 @@
       "state": "pending",
       "note": "各辺と安全側の丸め方向・理由・対応する赤試験を統治木へ記録し、ADR-120 との対応を明示する。**半分は在る** —— ADR-167 が辺ごとの丸めを決め、理由（順序が判らないなら攻撃が覆っていないほうへ倒す）も書いた。**赤試験との対応（トレース）と、同値の扱いは書いていない。**",
       "investigated": "2026-08-16 本反復（APPLY_FINDINGS。実測と PR #317 の状態）"
+    },
+    {
+      "incident_id": "INC-045-generated-prose-trips-the-marker-self-scan",
+      "index": 7,
+      "state": "landed",
+      "note": "本分析が仮定した機構の実在を確認した。**すべて実在する** —— plugin/scripts/_tracescan.py・plugin/tests/test_tracescan.py（自己走査試験 test_self_scan_of_this_repository_has_no_suspects を含む）・ADR-059（marker-suspect-detection）・ADR-067（exempt-mark）・ADR-166・ADR-167。**unknowns の第一項は閉じる** —— 本分析の欠陥記述を仮のものとして扱う必要は無い。**ただし統制構造の 12 要素には対応が無い** —— 追跡の印の走査に当たる要素は存在せず、推奨が言う『統制構造の要素として明示的に追記する』は未実施である。同じ形が INC-035#0（出所の門も 12 要素のどれにも対応しない）・INC-032#4・INC-042#7 にも在り、**統制構造の要素一覧が実際の機構より粗い**という一つの主題に束ねられる。",
+      "evidence_ref": "plugin/scripts/_tracescan.py",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。実在確認）"
+    },
+    {
+      "incident_id": "INC-045-generated-prose-trips-the-marker-self-scan",
+      "index": 2,
+      "state": "owner",
+      "note": "規律の適用範囲を『ファイルの位置』から『文字列の著者』で定義し直せるか。**本事象の核心そのものである** —— リポジトリが著者でない文字列（評価器の散文）に、リポジトリの著述規律が当たっている。『生成データの宣言を著者の宣言として扱えるか』という問いは、ADR-067 が置いた exempt の意味（統治外の意思の宣言）を『誰が書いたか』の宣言へ拡張できるかを問うている。**配布物（走査器）の判定基準の定義を変える**ので、六類型の『配布境界や保証範囲の変更』に当たる。PR #317 の赤はこの判断（か #1 の後継 ADR）が済むまで解けない。",
+      "owner_decision_kind": "配布境界や保証範囲の変更",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。実在確認）"
+    },
+    {
+      "incident_id": "INC-045-generated-prose-trips-the-marker-self-scan",
+      "index": 5,
+      "state": "owner",
+      "note": "『記録が自らの対象の内側に入る機構』の族を一覧化し、各項に閉じる責任者と滞留を異常とする条件を割り当てる（INC-028 推奨#6 の族）。**本セッションで族の実例を三つ確かめた** —— (1) 評価器の散文が自己走査を赤にする（本件）、(2) 検証記録の diff_sha256 が自分を含む diff と一致しない（INC-028）、(3) 事故分析の incident_sha256 が書かれるだけで照合されない（INC-041 の残余）。後半（滞留を異常とする条件と閉じる責任）は **INC-042#1 で束ねた 12 件の一部**である。一覧化そのものは INC-028#6 と同じ調査で、そちらは pending のままである。",
+      "owner_decision_kind": "配布境界や保証範囲の変更",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。実在確認）"
     }
   ]
 }
