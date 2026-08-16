@@ -3095,7 +3095,7 @@
       "incident_id": "INC-048-rubric-stamp-is-written-but-never-read",
       "index": 6,
       "state": "landed",
-      "note": "規準の変更履歴を辿り、341 件を版へ分けた。規準の本文は 3 回動いており（08-05 初版・08-07 ADR-133・08-10 INC-038 の是正）、**341 件はすべて 08-07 版**である（初版の刻印は 0 件）。**つまり不一致は『意味の変化を伴う改訂』側である** —— 08-10 の改訂は INC-038 が記録した欠陥の是正だからである。stpa の不一致率が高い理由（80/110 = 73%）は、stpa の再判定が cast・jerg より少ないためで、規準の側の事情ではない。",
+      "note": "規準の変更履歴を辿り、341 件を版へ分けた。規準の本文は 3 回動いており（08-05 初版・08-07 ADR-133・08-10 INC-038 の是正）、**341 件はすべて 08-07 版**である（初版の刻印は 0 件）。**つまり不一致は『意味の変化を伴う改訂』側である** —— 08-10 の改訂は INC-038 が記録した欠陥の是正だからである。stpa の不一致率が高い理由（80/110 = 73%）は、stpa の再判定が cast・jerg より少ないためで、規準の側の事情ではない。 **【訂正 2026-08-16】**『不一致は意味の変化を伴う改訂側である』は誤り。INC-038 の fix_note と residual が『床の挙動は変えていない・言い直しである・引き直しは要さないと判断した』と明記している。改訂の題名だけから欠陥の是正だと推した私の誤りである。ただし**その判断は散文としてしか残っておらず、機械可読ではない** ——本事象の中心（刻印が読まれない）はむしろ補強される。",
       "evidence_ref": "assurance/ledger/incidents.json",
       "investigated": "2026-08-16 本反復（APPLY_FINDINGS）"
     },
@@ -3151,6 +3151,76 @@
       "owner_decision_kind": "互換性を壊す変更",
       "evaluator_owner_required": true,
       "investigated": "2026-08-16 本反復（APPLY_FINDINGS）"
+    },
+    {
+      "incident_id": "INC-038-rubric-offers-a-pointer-form-the-index-cannot-supply",
+      "index": 0,
+      "state": "pending",
+      "note": "案内と供給の出所を一つにする件。**当の欠陥は消えている** —— 規準が backtick で示す参照形は6 つ（SPEC-011・plugin/scripts/docs-audit.py・adr_not_landed・MISSING_KEY・SessionEnd・plugin/tests/test_audit.py）で、**全部が索引で解決する**ことを実測した。**ただし逆向きの隙間が在る** —— 索引が出す種別は 7 つで、技能（skills）だけ規準に案内が無い。技能の名は解決するし、現に**台帳の 11 件が技能を証拠に引いている**（案内が無いまま使われている）。推奨が求める『索引が出すキーの語彙から機械的に生成する』は未実施で、案内は今も人手の一覧である。",
+      "evidence_ref": "assurance/harness/prompts.py",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。実物確認）"
+    },
+    {
+      "incident_id": "INC-038-rubric-offers-a-pointer-form-the-index-cannot-supply",
+      "index": 4,
+      "state": "owner",
+      "note": "規準の刻印が動いたときの再判定要否の裁定基準（『言い直し』と『挙動変更』を誰がどの証拠で区別するか）。**INC-048 推奨#2 とまったく同じ問いが、二つの事象から独立に立っている。**評価者は『今回の不要判断を前例とするか否かも含めて決める』としており、その不要判断は INC-038 の residual に散文として残っている（『床の挙動を変えない言い直しなので引き直しは要さないと判断した』）。**判断は在るが機械可読ではない**というのが現状である。",
+      "owner_decision_kind": "配布境界や保証範囲の変更",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。実物確認）"
+    },
+    {
+      "incident_id": "INC-038-rubric-offers-a-pointer-form-the-index-cannot-supply",
+      "index": 1,
+      "state": "pending",
+      "note": "五値の定義文を床の受理述語から生成するか、差集合が空であることを試験で凍結する。未実施。INC-038 の是正は定義文を『機械が守っており』へ改め、監査の検査・リンタの検査コード・Hook・スクリプトも機械の強制であると明記したが、**定義文と床の対応を機械が検める段は無い**。",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。実物確認）"
+    },
+    {
+      "incident_id": "INC-038-rubric-offers-a-pointer-form-the-index-cannot-supply",
+      "index": 2,
+      "state": "pending",
+      "note": "先行指標 1〜4（不使用の参照形・語彙差・定義文の言及漏れ・参照が解決しない降格の割合）を決定論試験と再判定の常時出力へ組み込む。未実施。**本反復で #0 の一部を手で測った**（6 形すべて解決・技能だけ案内無し）が、常時出力ではない。同型の推奨が INC-029#4・INC-035#3・INC-036#6 にも在り、いずれも未実施である。",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。実物確認）"
+    },
+    {
+      "incident_id": "INC-038-rubric-offers-a-pointer-form-the-index-cannot-supply",
+      "index": 3,
+      "state": "pending",
+      "note": "索引が個々の試験名を渡さない理由（入力量の制約）と、それが要求できる参照粒度に課す上限を、規準と索引の双方へ相互参照付きで記す。**半分は在る** —— 規準の側には理由が書かれている（fix_note に『1317 件を載せると入力が三倍近くになる』）。索引の側には無い。",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。実物確認）"
+    },
+    {
+      "incident_id": "INC-038-rubric-offers-a-pointer-form-the-index-cannot-supply",
+      "index": 5,
+      "state": "pending",
+      "note": "報告と台帳に数値を載せる際、その数値がどの語の定義に依存するかを併記する規定形式。未実施。**本セッションで同型の問題を私自身が繰り返している** —— 手で書いた数字が定義や鍵名の取り違えでずれた件が五度あり、うち一度（所有者棚 20 対 23）は定義の食い違いだった。",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。実物確認）"
+    },
+    {
+      "incident_id": "INC-038-rubric-offers-a-pointer-form-the-index-cannot-supply",
+      "index": 7,
+      "state": "pending",
+      "note": "五値の残り四つの値と、規準以外の指示文（注入される契約・助言）についても名と機構・案内と供給の突合を一度実施する。未実施。**#0 の測定はその一部（参照形の語彙）に限られている。**",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。実物確認）"
+    },
+    {
+      "incident_id": "INC-038-rubric-offers-a-pointer-form-the-index-cannot-supply",
+      "index": 6,
+      "state": "owner",
+      "note": "ADR-139 の独立検証が未実施なので fixed:false のまま追跡し、**閉じる条件を先に定める**。評価者は所有者判断を印している。閉じる条件の定義は保証の範囲を定める判断であり、INC-035#7・INC-031#5 と同じ主題（誰が・何をもって検証済みとするか）である。",
+      "owner_decision_kind": "配布境界や保証範囲の変更",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。実物確認）"
+    },
+    {
+      "incident_id": "INC-038-rubric-offers-a-pointer-form-the-index-cannot-supply",
+      "index": 8,
+      "state": "owner",
+      "note": "独立再監査に『規準文を意味の出所としない経路（床の実装のみを読む判定）』を一度混ぜ、同一文書による共通原因の大きさを測る。**評価の買い方を変える提案**であり、外部費用と評価の設計に触れる。§4 が残余として置いている『同系 model の共通原因故障』を初めて測る試みでもある。",
+      "owner_decision_kind": "外部費用や credential",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS。実物確認）"
     }
   ]
 }
