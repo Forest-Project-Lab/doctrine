@@ -435,7 +435,41 @@ def _validate_recommendation_status(rows=None):
                     "推奨 %s の『所有者判断』が類型を名指していない（%s のいずれか"
                     "を書くこと。当たらないなら所有者判断ではない）"
                     % (where, " / ".join(OWNER_DECISION_KINDS)))
+        problems.extend(_validate_observation(where, row))
     return problems
+
+
+#: 所見（investigated）が持つ欄。観測は「いつ・誰が・どう見て・何を言ったか」で
+#: 初めて後から古びを問える（INC-050 推奨#0）。
+OBSERVATION_FIELDS = ("observed_at", "observed_by", "method", "claim")
+
+
+def _validate_observation(where, row):
+    """処遇の所見は『観測』の形で書く（INC-050 推奨#0）。
+
+    自由型（文字列・真偽値）の所見は、いつ見たかを機械が読めない。
+    `investigated: true` に至っては「調べた」と主張しながら中身を持たない ——
+    古びを問うことすらできず、後の反復がそれを**現状**として読む。
+
+    **欄が無いこと自体は咎めない。**所見を持たない処遇は「観測していない」
+    のであって、偽の観測ではない。咎めるのは観測を騙る非構造である。
+
+    **欠測は欠測として残す。**観測日が無いなら method がその理由を言うこと。
+    真偽値だった所見を日付へ推測変換すれば、古びの計算が嘘の値を返す。
+    """
+    if "investigated" not in row:
+        return []
+    obs = row["investigated"]
+    if not isinstance(obs, dict):
+        return ["推奨 %s の所見が自由型（%s）である。観測は %s を持つ構造で書く"
+                % (where, type(obs).__name__, "・".join(OBSERVATION_FIELDS))]
+    missing = [k for k in OBSERVATION_FIELDS if k not in obs]
+    if missing:
+        return ["推奨 %s の所見に欄が無い: %s" % (where, "・".join(missing))]
+    if obs.get("observed_at") is None and not (obs.get("method") or "").strip():
+        return ["推奨 %s の所見に観測日が無く、無い理由も無い（沈黙は理由ではない）"
+                % where]
+    return []
 
 
 def _validate_assumptions(path=None, incident_ids=None):
