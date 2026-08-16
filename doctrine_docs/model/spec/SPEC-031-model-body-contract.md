@@ -6,7 +6,7 @@ domain: model
 status: current
 owner: doctrine-maintainers
 created: 2026-08-14
-updated: 2026-08-14
+updated: 2026-08-16
 sources: [plugin/scripts/_model.py, "https://github.com/Forest-Project-Lab/doctrine/issues/294"]
 depends_on: [SPEC-001]
 llm_context: task
@@ -34,7 +34,7 @@ llm_context: task
   `schema`・`target`・`system`・`elements`・`flows`・`contracts`・`scenarios`・`anchors`。
   `target` は「系の概要」の塊から最上位へ持ち上げる。並びは文書の中の出現順、鍵は整列、
   末尾に改行を一つ置く。
-- `load_schema(path)`: 同梱した器の一枚（`plugin/schemas/system-map-gold-model-0.1.json`）を
+- `load_schema(path)`: 同梱した器の一枚（`plugin/schemas/system-map-gold-model-0.2.json`）を
   読み、`(schema, 理由)` を返す。読めなければ `schema` は None である。
 - **器から導く表**: `MODEL_SCHEMA`（器の版）・`TOP_KEYS`・`ENTITY_LISTS`・`REQUIRED_FIELDS`
   （実体ごとと系）・`STEP_FIELDS`（シナリオの段）・`PROVENANCE_FIELDS`（出所）・`ENUMS`
@@ -60,8 +60,8 @@ llm_context: task
 - 描く向きは .md から JSON への一方通行とする。JSON を読んで .md を組む口は持たない
   （ADR-161 決定3）。
 - **器の形の正本は doctrine-lens の `schema.json` であり、doctrine は固定した一枚を同梱して
-  そこから導く**（ADR-165・EXT-007）。器の版（`MODEL_SCHEMA`）も一枚から読む。版の進め方は
-  ADR-165 決定4 が持つ。
+  そこから導く**（ADR-165・EXT-007）。器の版（`MODEL_SCHEMA`）も一枚から読む。版の進め方の
+  規約の正本は器の一枚の `$comment` が持つ（ADR-168 決定2）。
 - **器の一枚を読めないときは黙って通さない** —— `MODEL_SCHEMA_UNREADABLE`（ERROR）一件だけを
   返し、他の検査を行わない（器を持たないまま緑を出さない）。
 
@@ -90,7 +90,7 @@ llm_context: task
 この節がある文書だけが、コードとの追跡の対象になる（ADR-056 の opt-in）。更新は
 `trace-index.py --id SPEC-031` が返す行を写す。
 
-- sha256:1503addc972e6513150e479fe4e2ae8002dd8ab402921595b1e5e57aa32d9058
+- sha256:7148e9f0e7281dd115b55d708d50f9bbb898c92b167e26aad804431829a4163b
 
 ## 受入基準
 

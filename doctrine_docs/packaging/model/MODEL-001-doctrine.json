@@ -308,7 +308,7 @@
       "trigger": "Edit・Write・MultiEdit のいずれかが走ったとき"
     }
   ],
-  "schema": "system-map/gold-model/0.1",
+  "schema": "system-map/gold-model/0.2",
   "system": {
     "boundary": "境界の内側は配布物(plugin/)と統治木(doctrine_docs/)。利用者・実行環境(Claude Code)・外部の表示製品は境界の外に居る。",
     "provenance": [

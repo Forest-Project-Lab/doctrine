@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "system-map/gold-model/0.1",
-  "title": "system-map 候補モデル(Phase 0 検証用スキーマ 0.1)",
-  "$comment": "正本は issue 204 の合意台帳 v3.2。エンティティは事前分析 §6.2 の字義に従い、authority(v3.2-10)・負の出所(v3.2-5 補強1)・七状態(v3.2-9)を実装する。これは候補モデルのスキーマであり、doctrine の正式スキーマではない(v3.2-2′ 条件2)。",
+  "$id": "system-map/gold-model/0.2",
+  "title": "system-map 候補モデル(検証用スキーマ 0.2)",
+  "$comment": "正本は issue 204 の合意台帳 v3.2。エンティティは事前分析 §6.2 の字義に従い、authority(v3.2-10)・負の出所(v3.2-5 補強1)・七状態(v3.2-9)を実装する。これは候補モデルのスキーマであり、doctrine の正式スキーマではない(v3.2-2′ 条件2)。 **版の進め方(doctrine#294 の合意 + 2026-08-14 の補い)**: (1) 欄の追加など、いままで通っていた物が通り続ける変更は版を上げない。(2) **受け入れる集合が狭まる変更は版の名を上げる** —— 必須欄の追加・語彙の縮小に加え、**制約の追加(排他・minLength など)も含む**。(3) 上げたときは doctrine#294 へ告知し、上流が追随する(逆はしない。正本は一つ)。 0.1 → 0.2 の理由: 0.1 の名のまま二つの中身が存在していた —— tag `system-map/phase-1-continue`(`d920130f`)の 0.1 に対し、現行は `SystemElement` の realization/realized_by の排他と、証跡などの minLength:1 を足しており、受け入れる集合が狭い。上流はその tag の一枚を配布物へ同梱して必須欄と語彙を導いている(ADR-165)ので、同じ名で違う物が二箇所に在る状態だった。",
   "type": "object",
   "required": [
     "schema",
@@ -16,7 +16,7 @@
   ],
   "properties": {
     "schema": {
-      "const": "system-map/gold-model/0.1"
+      "const": "system-map/gold-model/0.2"
     },
     "target": {
       "type": "string",
@@ -235,7 +235,22 @@
             }
           }
         }
-      }
+      },
+      "allOf": [
+        {
+          "$comment": "realization と realized_by は排他である。両方あると、実現が非該当だと言いながら実現先も指すことになり、どちらを信じるかが決まらない。properties を併記するのは ajv の strictRequired（required に挙げた名がその部分スキーマで定義されているか）を満たすためである。",
+          "not": {
+            "required": [
+              "realization",
+              "realized_by"
+            ],
+            "properties": {
+              "realization": true,
+              "realized_by": true
+            }
+          }
+        }
+      ]
     },
     "Flow": {
       "type": "object",
@@ -391,23 +406,28 @@
       "properties": {
         "ref": {
           "type": "string",
-          "description": "証拠への到達可能な参照(URL・パス・anchor id)"
+          "description": "証拠への到達可能な参照(URL・パス・anchor id)",
+          "minLength": 1
         },
         "fingerprint": {
           "type": "string"
         },
         "environment": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "version": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "exit_status": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "observed_at": {
           "type": "string",
-          "format": "date"
+          "format": "date",
+          "minLength": 1
         }
       }
     },

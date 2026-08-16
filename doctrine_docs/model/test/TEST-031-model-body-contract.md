@@ -6,7 +6,7 @@ domain: model
 status: current
 owner: doctrine-maintainers
 created: 2026-08-14
-updated: 2026-08-14
+updated: 2026-08-16
 sources: [plugin/tests/test_model.py]
 depends_on: [SPEC-031]
 llm_context: task

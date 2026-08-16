@@ -257,7 +257,7 @@ def _ms(prefix, path, locator, verdict="present"):
 
 def _multi_model(src_a, src_b, anchors=None):
     return {
-        "schema": "system-map/gold-model/0.1",
+        "schema": "system-map/gold-model/0.2",
         "target": "fixture",
         "system": {"purpose": "p", "boundary": "b",
                    "provenance": [src_a], "review_status": "proposed"},

@@ -5,7 +5,7 @@ type: OVERVIEW
 domain: _system
 status: current
 owner: render-projection
-updated: 2026-08-15
+updated: 2026-08-16
 llm_context: always
 sources: []
 ---
@@ -203,7 +203,10 @@ sources: []
 | ADR-163 | ADR | model | 意味モデルの型 MODEL の設計（名前・置き場所・必須節・本文の形・担保の口） |
 | ADR-164 | ADR | model | MODEL の描画先・引退の扱い・塊の中の散文の門を定める（ADR-163 の追補） |
 | ADR-165 | ADR | model | 器の形を写さず、固定した一枚から導く（写しをやめる） |
+| ADR-168 | ADR | model | 器 0.2 へ追随し、M 層の不変条件は requirements 口を参照する |
+| CHANGE-012 | CHANGE | model | 器 0.2 への追随と requirements 口への参照切り替え（#294 第3信・第4信） |
 | IMPACT-011 | IMPACT | model | 意味モデルの型 MODEL の新設の影響（CHANGE-011） |
+| IMPACT-012 | IMPACT | model | 器 0.2 への追随と requirements 口への参照切り替えの影響（CHANGE-012） |
 | IMPL-001 | IMPL | model | `_registry.py` の実装メモ |
 | IMPL-002 | IMPL | model | `_frontmatter.py` の実装メモ |
 | TEST-001 | TEST | model | 登録簿契約のテスト計画 |
@@ -211,6 +214,7 @@ sources: []
 | TEST-031 | TEST | model | 意味モデルの本文の形と担保のテスト計画 |
 | EXT-003 | EXT | model | 上位設計書（spec/doctrine.ja.md, DOCTRINE-001）への依存 |
 | EXT-007 | EXT | model | 意味モデルの器（`gold-model/schema.json`）の固定した写しへの依存 |
+| EXT-008 | EXT | model | M 層の不変条件の機械可読の一覧（requirements 口）への依存 |
 | ICD-008 | ICD | packaging | packaging のインターフェース（配布物の形・Hook配線・段差） |
 | REQ-013 | REQ | packaging | 保証限界の明示（各成果物が予防・検出・委ねるを書く） |
 | REQ-014 | REQ | packaging | 統治の生存性（統治自身の死活が可視で、沈黙する故障を禁じる） |

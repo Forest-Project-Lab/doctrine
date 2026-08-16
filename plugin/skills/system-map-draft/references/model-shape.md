@@ -1,6 +1,6 @@
 # モデルの形（各欄の起草の手引き）
 
-器（描く先の JSON）の版の正本は lens 側の `gold-model/schema.json`（`system-map/gold-model/0.1`）であり、この手引きはその写しではない。起草のとき迷いやすい欄の判断だけを書く。**doctrine 側で機械が検める形の正本は SPEC-031（共有コア `_model`）である。**
+器（描く先の JSON）の版の正本は lens 側の `gold-model/schema.json`（`system-map/gold-model/0.2`）であり、この手引きはその写しではない。起草のとき迷いやすい欄の判断だけを書く。**doctrine 側で機械が検める形の正本は SPEC-031（共有コア `_model`）である。**
 
 ## .md の並べ方（ADR-163 決定3）
 

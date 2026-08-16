@@ -312,7 +312,7 @@ class SchemaDerivationTest(unittest.TestCase):
 
     def _schema(self):
         return json.loads(_util.read(os.path.join(
-            _util.PLUGIN_ROOT, "schemas", "system-map-gold-model-0.1.json")))
+            _util.PLUGIN_ROOT, "schemas", "system-map-gold-model-0.2.json")))
 
     def test_required_fields_match_the_container(self):
         s = self._schema()

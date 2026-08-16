@@ -26,7 +26,7 @@ CHECK = os.path.join(_util.SCRIPTS, "map-draft-check.py")
 
 def _model(**over):
     m = {
-        "schema": "system-map/gold-model/0.1",
+        "schema": "system-map/gold-model/0.2",
         "target": "fixture",
         "system": {"purpose": "p", "boundary": "b", "review_status": "proposed",
                    "provenance": [{"source": "doctrine: real.md",
