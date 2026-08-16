@@ -5988,6 +5988,131 @@
         "claim": "噴き出しは 78→81（+3）で起きない。\\b/\\w への同じ依存は他所に 3 箇所在る。"
       },
       "evidence_ref": "assurance/ledger/incidents.json の INC-054"
+    },
+    {
+      "incident_id": "INC-054-word-boundary-dependency-replicated-elsewhere",
+      "index": 0,
+      "state": "pending",
+      "note": "語境界の照合を共有の一関数へ集約し、規則が自前で `\\b`/`\\w`/`[^\\w]` を書くことを静的検査で禁じる。**集約と静的検査は同時に入れる**（集約だけでは族が再増殖する、と分析が指す）。INC-053 推奨#1 と同一。**本反復では未着手** —— 3 箇所の是正そのものを含むので、次の反復の主題にする。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$0.8976）直後に、推奨#7・#8・#9 を実際に走査・実行して答えを出した。",
+        "claim": "2 ファイルは実在。assurance/harness に新しい該当は無い。docs-audit は同じ偽陰性を持たない。"
+      }
+    },
+    {
+      "incident_id": "INC-054-word-boundary-dependency-replicated-elsewhere",
+      "index": 1,
+      "state": "pending",
+      "note": "和文密着の既知陽性コーパスを配布物に同梱し、規則ごとの検出率を CI で測る。検出率 100% 未満とコーパス件数の減少を赤とする。`test_script_boundary_axis.py` の AXES が軸の側を持つが、**コーパス（既知陽性の実例集）は持たない**。未着手。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$0.8976）直後に、推奨#7・#8・#9 を実際に走査・実行して答えを出した。",
+        "claim": "2 ファイルは実在。assurance/harness に新しい該当は無い。docs-audit は同じ偽陰性を持たない。"
+      }
+    },
+    {
+      "incident_id": "INC-054-word-boundary-dependency-replicated-elsewhere",
+      "index": 2,
+      "state": "pending",
+      "note": "推奨に実施状態を持たせ、未実施のまま一定反復を超えたものを next_actions へ載せる。分析の完了と是正の完了を別の状態として分ける。**INC-051（飢餓）と同じ根**で、そちらの推奨#0（飢餓齢）が所有者判断待ち。未着手。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$0.8976）直後に、推奨#7・#8・#9 を実際に走査・実行して答えを出した。",
+        "claim": "2 ファイルは実在。assurance/harness に新しい該当は無い。docs-audit は同じ偽陰性を持たない。"
+      }
+    },
+    {
+      "incident_id": "INC-054-word-boundary-dependency-replicated-elsewhere",
+      "index": 3,
+      "state": "pending",
+      "note": "last-audit.json に規則 id 別の内訳を加え、規則ごとの無所見連続期間を観測可能にする。0 件が正常な規則はその旨を想定として明記して除外する。未着手。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$0.8976）直後に、推奨#7・#8・#9 を実際に走査・実行して答えを出した。",
+        "claim": "2 ファイルは実在。assurance/harness に新しい該当は無い。docs-audit は同じ偽陰性を持たない。"
+      }
+    },
+    {
+      "incident_id": "INC-054-word-boundary-dependency-replicated-elsewhere",
+      "index": 4,
+      "state": "pending",
+      "note": "各検査規則の想定入力（区切り文字・文字種・周囲に置かれ得るもの）を記録し、失効の先行指標を規則ごとに定義する。未着手。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$0.8976）直後に、推奨#7・#8・#9 を実際に走査・実行して答えを出した。",
+        "claim": "2 ファイルは実在。assurance/harness に新しい該当は無い。docs-audit は同じ偽陰性を持たない。"
+      }
+    },
+    {
+      "incident_id": "INC-054-word-boundary-dependency-replicated-elsewhere",
+      "index": 5,
+      "state": "owner",
+      "note": "検査器自身の感度を検査する責務をどの統制要素へ割り当てるか（CI の門・監査の一部・独立の層）。**現在この責務はどの要素の記述にも無い。**分析が owner_decision_required=true を立てている。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$0.8976）直後に、推奨#7・#8・#9 を実際に走査・実行して答えを出した。",
+        "claim": "2 ファイルは実在。assurance/harness に新しい該当は無い。docs-audit は同じ偽陰性を持たない。"
+      },
+      "owner_decision_kind": "配布境界や保証範囲の変更"
+    },
+    {
+      "incident_id": "INC-054-word-boundary-dependency-replicated-elsewhere",
+      "index": 6,
+      "state": "owner",
+      "note": "検査系の感度に関わる是正を配布したとき利用者へ明示的に通知するか。版差の観測不能（INC-005）が残るため通知の設計は所有者判断、と分析が指す。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$0.8976）直後に、推奨#7・#8・#9 を実際に走査・実行して答えを出した。",
+        "claim": "2 ファイルは実在。assurance/harness に新しい該当は無い。docs-audit は同じ偽陰性を持たない。"
+      },
+      "owner_decision_kind": "配布境界や保証範囲の変更"
+    },
+    {
+      "incident_id": "INC-054-word-boundary-dependency-replicated-elsewhere",
+      "index": 7,
+      "state": "landed",
+      "note": "**確認した。両方とも実在する**（`map-draft-check.py` 42666 バイト・`_tracescan.py` 25689 バイト）。したがって本分析の当該部分と INC-054 の記録の再評価は要らない。所属する統制要素の明記は推奨#5 の側（責務の割当）に属するので、そちらで扱う。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$0.8976）直後に、推奨#7・#8・#9 を実際に走査・実行して答えを出した。",
+        "claim": "2 ファイルは実在。assurance/harness に新しい該当は無い。docs-audit は同じ偽陰性を持たない。"
+      },
+      "evidence_ref": "plugin/scripts/map-draft-check.py / plugin/scripts/_tracescan.py"
+    },
+    {
+      "incident_id": "INC-054-word-boundary-dependency-replicated-elsewhere",
+      "index": 8,
+      "state": "landed",
+      "note": "**棚卸しを assurance/harness へ広げた。新しい該当は無い。**`\\b` 1 箇所（`system_index.py:243` の `\\bdef <name>\\b`。**Python の原文を照合する**ので和文が隣に来ない）。`\\w` 0 箇所。`.split()` 2 箇所（`orchestrator.py:336` の tag 名・`prompts.py:121` の空白畳み込み。どちらも和文の語分割ではない）。`\\s` 1 箇所（`system_index.py:100`。Python の原文を照合）。**「見つからなかった」は「存在しない」ではない** —— 走査したのは `\\b`・`\\w`・`.split()`・`\\s` の 4 つの綴りだけであり、大小文字の畳み込み・ソート順・文字数の上限といった他の英語圏既定は、本反復では**別の一件（INC-055）**として扱った。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$0.8976）直後に、推奨#7・#8・#9 を実際に走査・実行して答えを出した。",
+        "claim": "2 ファイルは実在。assurance/harness に新しい該当は無い。docs-audit は同じ偽陰性を持たない。"
+      },
+      "evidence_ref": "assurance/harness/system_index.py / assurance/harness/orchestrator.py / assurance/harness/prompts.py"
+    },
+    {
+      "incident_id": "INC-054-word-boundary-dependency-replicated-elsewhere",
+      "index": 9,
+      "state": "landed",
+      "note": "**確認した。docs-audit は同じ偽陰性を持たない。**該当は 4 箇所で、`\\b` は 0 箇所。`_SOURCE_PATH_RE = r\"^[\\w./-]+\\.[A-Za-z0-9]{1,6}$\"` の `\\w` は**寛容な向き**（和文のファイル名も通す）であって、和文密着で取り落とす向きではない。他の 3 箇所（`_EXT_TARGET_RE`・`_EXT_CHECK_RE`・`_EXT_HASH_RE`）は `\\s` と文字クラスのみ。したがって「監査の findings 自体が同じ偽陰性を持ち、指標の一部が成立しない」という分析の懸念は**当たらない**。",
+      "investigated": {
+        "observed_at": "2026-08-16",
+        "observed_by": "ASSURANCE_LANE",
+        "method": "CAST 分析（real-sdk・opus-5・high・$0.8976）直後に、推奨#7・#8・#9 を実際に走査・実行して答えを出した。",
+        "claim": "2 ファイルは実在。assurance/harness に新しい該当は無い。docs-audit は同じ偽陰性を持たない。"
+      },
+      "evidence_ref": "plugin/scripts/docs-audit.py"
     }
   ]
 }
