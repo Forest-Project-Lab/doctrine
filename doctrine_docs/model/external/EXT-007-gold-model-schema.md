@@ -6,7 +6,7 @@ domain: model
 status: current
 owner: doctrine-maintainers
 created: 2026-08-14
-updated: 2026-08-14
+updated: 2026-08-16
 sources: ["https://github.com/Forest-Project-Lab/doctrine/issues/294"]
 review_by: 2026-11-14
 llm_context: task
@@ -22,20 +22,21 @@ doctrine はその固定した一枚を配布物へ同梱して、必須欄・�
 
 ## 何に依存しているか
 
-`plugin/schemas/system-map-gold-model-0.1.json` は、doctrine-lens リポジトリの
-`research/system-map/gold-model/schema.json` を、tag `system-map/phase-1-continue`
-（commit `d920130f5113541ae4603d16e242064fc66ff588`。EXT-006 と同じ固定点）から採った写しで
-ある。`_model.py`（SPEC-031）はこの一枚を読み、**手で並べた表を持たない。**
+`plugin/schemas/system-map-gold-model-0.2.json` は、doctrine-lens リポジトリの
+`research/system-map/gold-model/schema.json` を、tag `system-map/gold-model-0.2`
+（commit `991b8a6e3e6870d9651279956a8f7a60292e47af`）から採った写しである。`_model.py`
+（SPEC-031）はこの一枚を読み、**手で並べた表を持たない。**
 
-上流が版を上げるときの規約は #294 で合意した——欄の追加（既存の投影が通り続ける物）は版を
-上げない。必須欄の追加・削除、語彙の縮小は `0.1` から名を上げ、doctrine-lens が #294 へ告知し、
-doctrine が追随する（逆はしない。正本は一つ）。
+上流が版を上げるときの規約の正本は、この一枚の `$comment` が持つ（ADR-168 決定2）。要点——
+受け入れる集合が狭まる変更（必須欄の追加・語彙の縮小・制約の追加）は版の名を上げ、
+doctrine-lens が #294 へ告知し、doctrine が追随する（逆はしない。正本は一つ）。0.1 から 0.2
+への上げは 2026-08-14 に告知され、2026-08-16 に追随した（ADR-168）。
 
 ## 期待
 
-- 対象: `plugin/schemas/system-map-gold-model-0.1.json`
+- 対象: `plugin/schemas/system-map-gold-model-0.2.json`
 - 検査: hash（内容の指紋）
-- 指紋: sha256:d927a69a549270b76b93826885bbd9342e581f0321d74cc10747d49344f02105
+- 指紋: sha256:92fa79c38b4db5e53ed1c02c73bdab948ccb41d6f7188531ee32972b5cb5a30c
 - 期待する状態: 在ること。加えて、上流の同じ固定点の一枚と同じ内容であること。写しを手で
   書き換えないこと（上流が版を上げたときだけ、告知を受けて採り直す）。
 

@@ -6,7 +6,7 @@ domain: authoring
 status: current
 owner: doctrine-maintainers
 created: 2026-08-07
-updated: 2026-08-14
+updated: 2026-08-16
 sources: [plugin/scripts/map-draft-check.py]
 depends_on: [SPEC-016]
 llm_context: task
@@ -14,7 +14,7 @@ llm_context: task
 
 # map-draft-check（意味モデル下書きの出所検証）
 
-`system-map-draft` 技能（ADR-136）が起草する意味モデルの下書き（lens 側の検証用スキーマ `system-map/gold-model/0.1`）を、確定（`confirmed` への昇格）の前に機械で検める門である。固有の務めは出所の実在（捏造出所ゼロ）。起草の意味の正しさは検めない（昇格は人の仕事のまま）。
+`system-map-draft` 技能（ADR-136）が起草する意味モデルの下書き（lens 側の検証用スキーマ `system-map/gold-model/0.2`。版は同梱した器の一枚から読む）を、確定（`confirmed` への昇格）の前に機械で検める門である。固有の務めは出所の実在（捏造出所ゼロ）。起草の意味の正しさは検めない（昇格は人の仕事のまま）。
 
 ## 素通りさせない形（INC-035）
 

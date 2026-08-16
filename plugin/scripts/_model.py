@@ -2,7 +2,7 @@
 """意味モデル(MODEL 型)の本文の解析と語彙の正本(ADR-163)。
 
 保証限界:
-- 予防: 器(lens 側 `system-map/gold-model/0.1`)が要する構造の規則を、ここに一度だけ
+- 予防: 器(lens 側 `system-map/gold-model/0.2`)が要する構造の規則を、ここに一度だけ
   定義する。リンタ(docs-linter)と描き手(render-projection)と門(map-draft-check)は、
   この部品を呼び、規則を二重定義しない(DECIDED-001 事実1)。
 - 検出: 本文の塊が JSON として読めるか、実体ごとの必須欄が在るか、限られた語の値が
@@ -33,7 +33,7 @@ import _registry
 # 必須欄は散文の手引きから採っていたため、器と食い違った(実測: 描いた投影が相手の
 # 門 M-18 で落ちた。Scenario の必須欄が器の九つに対しこちらは五つだった)。
 SCHEMA_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                           "schemas", "system-map-gold-model-0.1.json")
+                           "schemas", "system-map-gold-model-0.2.json")
 
 
 def load_schema(path=None):

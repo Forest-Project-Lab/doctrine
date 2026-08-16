@@ -29,7 +29,7 @@ def _source(**over):
 
 def _model(**over):
     base = {
-        "schema": "system-map/gold-model/0.1",
+        "schema": "system-map/gold-model/0.2",
         "target": "fixture",
         "system": {"purpose": "p", "boundary": "b",
                    "provenance": [_source()], "review_status": "proposed"},

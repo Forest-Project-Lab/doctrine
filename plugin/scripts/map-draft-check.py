@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """意味モデル下書きの出所検証(SPEC-029 / ADR-136)。system-map-draft 技能の機械の門。
 
-対象は lens 側の検証用スキーマ system-map/gold-model/0.1 に従う JSON。起草した
+対象は lens 側の検証用スキーマ system-map/gold-model/0.2 に従う JSON。起草した
 下書きが確定(confirmed)へ昇格する前に、機械で確かめられることだけを確かめる:
 出所(provenance)が実在するか、下書きが自分を確定と名乗っていないか、依存グラフの
 辺を Flow に写していないか。

@@ -69,7 +69,7 @@ per-turn（毎ターン）のHookは単一文書だけを点検する。全件�
 | `_depgraph.py` | 共有 | 依存グラフの中核（`dep-graph.py`・監査が読み込む） |
 | `_termcheck.py` | 共有 | 用語チェックの中核（辞書の解析・照合。`term-check.py`・リンタが読み込む） |
 | `_intake.py` | 共有 | 分類の記録（`.md-intake`）の読み取りと刻印の解析（監査・リンタ・整合点検・リリースの門が共有） |
-| `_model.py` | 共有 | 意味モデル（`MODEL` 型）の本文の解析と担保。器の形は同梱した `schemas/system-map-gold-model-0.1.json` から導く（リンタ・描き手・出所の門が共有） |
+| `_model.py` | 共有 | 意味モデル（`MODEL` 型）の本文の解析と担保。器の形は同梱した `schemas/system-map-gold-model-0.2.json` から導く（リンタ・描き手・出所の門が共有） |
 | `_config.py` | 共有 | 統治の設定（`_system/.context-config.json`）の読み取り（監査・リンタ・注入・鼓動・追跡が共有） |
 | `_tokens.py` | 共有 | トークンの見積りと較正の解釈（注入・収集・鼓動が共有） |
 | `_hookio.py` | 共有 | フック境界の入出力（読み取り・判定の書き出し。すべてのフックが共有） |
@@ -137,4 +137,4 @@ per-turn（毎ターン）のHookは単一文書だけを点検する。全件�
 
 「100%の予防」は構造上できない。本プラグインの効果は、適切に運用された場合に、特定の失敗類型を検出・早期発見できることに限る。
 
-<!-- doctrine:view src=doctrine as-of=0.13.0 date=2026-08-14 refs=ICD-005,SPEC-016,SPEC-019,SPEC-020 -->
+<!-- doctrine:view src=doctrine as-of=0.13.0 date=2026-08-16 refs=ICD-005,SPEC-016,SPEC-019,SPEC-020 -->
