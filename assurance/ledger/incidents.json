@@ -1031,6 +1031,24 @@
       "cast_analysis": "done",
       "cast_analysis_ref": "assurance/ledger/cast/INC-050-triage-notes-are-read-as-current-state.json",
       "cast_analyzed_at": "2026-08-16T06:05:04Z"
+    },
+    {
+      "id": "INC-051-unbounded-queue-starves-the-freshness-driven-action",
+      "date": "2026-08-16",
+      "summary": "優先順の表で APPLY_FINDINGS(50) が ATTACK_EVALUATOR(60) より上に在り、**APPLY_FINDINGS の待ち行列は空にならない**（本日時点で調査済み未着手 271 件）。一方 ATTACK_EVALUATOR は鮮度で起きる —— 評価器の成果物が故障注入の証拠より新しければ挙がる。反復ごとに評価セッションを走らせる限り成果物は必ず新しくなるので、**ATTACK_EVALUATOR は毎反復挙がり、毎反復 2 番目に置かれ、先頭を飛ばさない限り決して着手されない。**構造的な飢餓である。",
+      "detected_by": "2026-08-16 の反復。先頭が INC-001 推奨#1（配布物の Hook 起動点の変更）で、2 番目に ATTACK_EVALUATOR（証拠 01:11:21Z < 成果物 06:05:04Z）が挙がっていた。運転手順 §1 は『先頭を飛ばしたくなったら正本の優先順が誤っている疑い』と言う。疑って測ったところ、飢餓が構造であることが分かった。",
+      "evidence_refs": [
+        "assurance/harness/orchestrator.py",
+        "assurance/ledger/mutations-2026-08-16.json",
+        "assurance/ledger/recommendation-status.json",
+        "ADR-120",
+        "ADR-131"
+      ],
+      "evidence_note": "ACTION_PRIORITY の実測: INGEST_NORMS 10 / CAST_ANALYSIS 20 / REVIEW_ASSUMPTION 30 / MAP_COVERAGE 40 / APPLY_FINDINGS 50 / ATTACK_EVALUATOR 60 / REPRODUCE_RED 65 / FORMALIZE 70 / DISCOVER 80。故障注入の証拠は mutations-2026-08-16.json の 01:11:21Z が最後で、以後 6 時間で 4 本の PR（#338〜#341）が merge され、その間に評価セッションが 3 本走っている。**未調査の推奨が 0 件になった時点（#337・2026-08-16T12:14 JST 頃）から、APPLY_FINDINGS は pending 265〜271 件を抱えて常に先頭に立つようになった。**それ以前は未調査が減る過程で APPLY_FINDINGS が空になる瞬間があり、そこで ATTACK_EVALUATOR が 4 回走れていた。",
+      "impact": "**ADR-120 が与えたのは『名指しされること』であって『到達されること』ではなかった。**運転手順 §2 は『ATTACK_EVALUATOR が5反復飛ばされた形』を戻してはならない退行として記録しているが、それを防ぐ機構は「名指しに現れる」までしか作られていない。名指しに現れても、上に空にならない行列が在れば着手されない。評価器の健全性は**評価器を攻撃することでしか測れない**（AI の一致は客観的証拠でない。§4）ので、これが止まると保証の根が黙って腐る。今回は私が §1 の但し書き（飛ばしたくなったら正本を疑え）に従って手で走らせたが、**それは機構ではなく習慣である**（INC-050 の統制欠陥[8]と同じ形で、統制構造の外にある依存）。",
+      "fixed": false,
+      "control_flaw_hint": "優先順が固定の全順序であり、待ち行列の性質（有界か無界か）と、行動の駆動源（在庫か鮮度か）を区別していない。鮮度で駆動される行動は、在庫で駆動される行動の下に置くと飢える。",
+      "evidence_kind": "measurement"
     }
   ]
 }
