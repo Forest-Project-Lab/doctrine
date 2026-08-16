@@ -3090,6 +3090,67 @@
       "owner_decision_kind": "配布境界や保証範囲の変更",
       "evaluator_owner_required": true,
       "investigated": "2026-08-16 本反復（APPLY_FINDINGS。全走査と実測）"
+    },
+    {
+      "incident_id": "INC-048-rubric-stamp-is-written-but-never-read",
+      "index": 6,
+      "state": "landed",
+      "note": "規準の変更履歴を辿り、341 件を版へ分けた。規準の本文は 3 回動いており（08-05 初版・08-07 ADR-133・08-10 INC-038 の是正）、**341 件はすべて 08-07 版**である（初版の刻印は 0 件）。**つまり不一致は『意味の変化を伴う改訂』側である** —— 08-10 の改訂は INC-038 が記録した欠陥の是正だからである。stpa の不一致率が高い理由（80/110 = 73%）は、stpa の再判定が cast・jerg より少ないためで、規準の側の事情ではない。",
+      "evidence_ref": "assurance/ledger/incidents.json",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS）"
+    },
+    {
+      "incident_id": "INC-048-rubric-stamp-is-written-but-never-read",
+      "index": 0,
+      "state": "pending",
+      "note": "REPRODUCE_RED（不一致が在るのに正本が何も言わないことを FAIL として固定）。未実施。**本反復の測定がその赤の中身を用意した** —— 341 件・すべて 08-07 版という具体が在る。",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS）"
+    },
+    {
+      "incident_id": "INC-048-rubric-stamp-is-written-but-never-read",
+      "index": 1,
+      "state": "pending",
+      "note": "coverage_status か next_actions に不一致件数を出す段を足す。未実施。評価者は『まずは件数の可視化に限り、赤にするか警告に留めるかは切り分けて扱う』と順序を指定しており、これは INC-040 の税を再生産しないための順序でもある。",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS）"
+    },
+    {
+      "incident_id": "INC-048-rubric-stamp-is-written-but-never-read",
+      "index": 4,
+      "state": "pending",
+      "note": "台帳へ書かれる識別子の書込み参照数と読取り参照数の対を静的に数え、読取り 0 を名指す検査。未実施。**本件が偶然（INC-037 推奨#6 の副産物）見つかった経路を常設へ昇格させる提案**であり、INC-047#2（二通りで数えるを常設の統制へ）と同じ向きである。",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS）"
+    },
+    {
+      "incident_id": "INC-048-rubric-stamp-is-written-but-never-read",
+      "index": 5,
+      "state": "pending",
+      "note": "INC-012・INC-015・INC-033・INC-048 を『正本に読み手が無い』という単一の体系的要因の族として記録し、個別の症状ごとの修正では閉じないことを規約にする。未実施。**分析の why_missed がこの族を明示的に名指した** —— 四件とも個別の症状として直され、一般の検査へ一度も昇格していない。",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS）"
+    },
+    {
+      "incident_id": "INC-048-rubric-stamp-is-written-but-never-read",
+      "index": 7,
+      "state": "pending",
+      "note": "分析が済んだ事象の推奨のうち未実装のものを列挙し、正本がその滞留を名指すかを確かめる。**部分的には判っている** —— 正本は APPLY_FINDINGS として未処遇の推奨を名指すが、**処遇済み（pending と書いた）ものの滞留は名指さない**。事象を閉じる条件（分析の完了）と推奨を閉じる条件（実装と有効性の確認）は分かれているが、後者を追う経路が無い。全数の列挙は未実施。",
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS）"
+    },
+    {
+      "incident_id": "INC-048-rubric-stamp-is-written-but-never-read",
+      "index": 2,
+      "state": "owner",
+      "note": "『指紋が動いた』と『意味が変わった』を分ける段の設計。**本反復の測定が最初の材料を与えた** —— 3 回の改訂のうち少なくとも 1 回（08-10）は意味の変化を伴う。評価者は『宣言の形骸化（常に影響しないが選ばれる）への対策も同時に決める必要がある』と付言している。運用の規約に触れるので所有者判断。",
+      "owner_decision_kind": "配布境界や保証範囲の変更",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS）"
+    },
+    {
+      "incident_id": "INC-048-rubric-stamp-is-written-but-never-read",
+      "index": 3,
+      "state": "owner",
+      "note": "食い違い件数を門（赤）で止めるか、警告の滞留として誰かに閉じさせるか。**評価者自身が『WATCH-001／INC-039 推奨#4 で保留されている同じ穴に落ちる』と指摘している** ——UNKNOWN/warn の滞留を異常とする条件と閉じる責任の空白（これで六度目の作用）。併せて決めるべきである。",
+      "owner_decision_kind": "互換性を壊す変更",
+      "evaluator_owner_required": true,
+      "investigated": "2026-08-16 本反復（APPLY_FINDINGS）"
     }
   ]
 }
