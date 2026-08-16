@@ -1052,6 +1052,23 @@
       "cast_analysis": "done",
       "cast_analysis_ref": "assurance/ledger/cast/INC-051-unbounded-queue-starves-the-freshness-driven-action.json",
       "cast_analyzed_at": "2026-08-16T06:50:11Z"
+    },
+    {
+      "id": "INC-052-debt-marker-collides-when-keyed-by-session",
+      "date": "2026-08-16",
+      "summary": "監査の負債の印は token をそのままファイル名にする（`_auditcache.write_due`）。**私が #338 でその token を『時刻から作る一意な値』から『セッション識別子』へ変えたため、同一セッションで SessionEnd が二度起きると印が衝突する。**実測: 同じセッションで 2 回 write_due すると印は 1 件しか残らず、片方の子が完走して clear_due を呼ぶと**両方の負債が消える**。走らなかった監査が黙って数から落ちる。",
+      "detected_by": "2026-08-16 の反復。INC-001 推奨#1（SessionStart の補償実行）を実測で確かめる過程で、負債の経路の試験 19 件を読み、**#338 で自分が変えた token の経路だけが覆われていない**ことに気付いた。推測で起票せず、一時ディレクトリで衝突を実証してから積んだ。",
+      "evidence_refs": [
+        "plugin/scripts/_auditcache.py",
+        "plugin/scripts/docs-audit.py",
+        "plugin/tests/test_sessionend_budget.py",
+        "assurance/ledger/incidents.json"
+      ],
+      "evidence_note": "実証（一時ディレクトリ）: CLAUDE_SESSION_ID='sess-ABC-123' を置いて session_token() を 2 回呼ぶと同じ値が返る → write_due が同じ 'sess-ABC-123.json' へ 2 回書く → read_due は 1 件 → clear_due 1 回で 0 件。旧来の token は 'queued-%Y%m%dT%H%M%SZ' で、衝突には**同一秒内の 2 回**が必要だった。#338 の変更で、衝突の条件が『同じ秒』から『同じセッション』へ緩んだ。",
+      "impact": "INC-039 の是正（走らなかった監査を負債として残す）の**数え落とし**を作った。SessionEnd は `/clear` などでセッション中にも起きうるので、一セッション複数回は例外的な事象ではない。負債が過少に数えられると、SessionStart の警告が『監査の負債 N 件』を実際より小さく告げ、R11（統治の生存）の信号が弱まる。**INC-039 が塞いだ穴を、その後の変更が部分的に開け直した形**である。加えて、この経路には試験が無かったので機構は何も言わなかった —— #338 は『要約に session を載せる』ことだけを試験しており、同じ diff で触った detach の token は覆っていない。",
+      "fixed": false,
+      "control_flaw_hint": "一つの値が二つの役目（負債の実行ごとの識別子と、セッションの識別子）を兼ねさせられた。実行ごとに一意であることを要する場所へ、セッションごとに一意な値を入れた。加えて、変更した経路に対応する試験の有無を検める段が無い。",
+      "evidence_kind": "measurement"
     }
   ]
 }
