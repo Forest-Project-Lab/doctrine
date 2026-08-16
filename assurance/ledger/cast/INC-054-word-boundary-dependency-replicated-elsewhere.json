@@ -1,0 +1,838 @@
+{
+  "accepted_flaws": [
+    {
+      "control_element_id": "POST_TOOL_LINTER",
+      "description": "POST_TOOL_LINTER の実体である docs-linter.py の `_REQ_ID_RE = re.compile(r\"\\bREQ-\\d+\\b\")` は、Python の `\\w` が和文を含むため「この要求はREQ-001を満たす。」では一致しない（空白や鉤括弧が在れば一致する）。この統制が上へ返す唯一の手掛かりは additionalContext（助言）であり、規則が拾わなかった場合は助言が出ない。出力の形は「規則を適用した結果、指摘が無かった」ときと同一であり、受け手のモデルにも人にも区別できない。",
+      "evidence_ref": "plugin/scripts/docs-linter.py（実測: findall('この要求はREQ-001を満たす。') → []）",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "defects-in-information-providing-systems",
+        "安全立証でなく非安全状態の探索",
+        "自動化は設計者の想定に遡る",
+        "software-does-not-fail-requirements-defect"
+      ],
+      "why_it_seemed_adequate": "`\\b` は語境界の標準的な表現であり、ID 記法（REQ-nnn）は英字と数字だけで構成されるため、境界指定は取り違いを防ぐ保守的な選択に見えた。規則の単体確認は英字の文脈で書かれた入力に対して期待どおり通っており、和文密着という入力形は規則の想定入力の外にあった。統制自身の設計意図（一文書だけを点検し助言を返す）とも矛盾していない。"
+    },
+    {
+      "control_element_id": "CI_RELEASE_CHECK",
+      "description": "INC-053 の CAST 分析の推奨#1『語境界の照合を共有の一関数に集約し、規則が自前で書くことを静的検査で禁じる』に相当する門は、merge 前に赤で止める統制の中に無い。したがって、規則ごとに `\\b` / `\\w` / `[^\\w]*` を自前で書く形は、新規に追加されても既存のまま残っても、ジョブの成否という手掛かりに現れない。門が検査しているのは「試験が通ること」であり、「検査系が和文密着の既知陽性を拾えること」ではない。",
+      "evidence_ref": ".github/workflows（control_flaw_hint: 推奨#1 未実装）",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "accidents-from-inadequate-constraint-enforcement",
+        "監査の検出力評価",
+        "監査のすり抜け時に監査手順を是正",
+        "verify-all-hazard-preventing-systems"
+      ],
+      "why_it_seemed_adequate": "試験は緑であり、docs-audit の JSON も finding を返していた。門の設計は成果物の正しさを確かめるものとして構成されており、検査系自身の感度を検査する層は当初の要求に含まれていない。偽陰性は赤を生まないため、門の側から見れば異常の兆候が一つも上がらない状態が正常運転と同じに見えた。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "保証レーンは事象を台帳へ積み分析が済むまで閉じない制御を持つが、分析から出た推奨事項の実施を追跡し、未実施のまま滞留していることを次の行動へ変換する制御は列挙されていない。INC-053 の推奨#1（共有関数への集約と静的検査）と推奨#7（族としての棚卸し）は台帳の文章として置かれたが、実施状態を持つ対象にはならず、2026-08-16 の反復で人手が推奨#7 を実施するまで、同型の依存が他所に在ることは構造のどの手掛かりにも現れなかった。",
+      "evidence_ref": "assurance/ledger/cast/INC-053-word-boundary-fails-against-japanese-adjacency.json",
+      "flaw_type": "制御動作が無い",
+      "normative_refs": [
+        "指摘欠点の是正完了追跡",
+        "audit-findings-must-be-closed",
+        "是正措置の責任割当と追跡",
+        "推奨事項の責任割当実施検査フィードバック",
+        "教訓を適用する手順の確立"
+      ],
+      "why_it_seemed_adequate": "台帳は「分析が済むまで閉じない」ことを保証しており、分析が済んだ事象は完了した対象として扱えた。推奨は次の反復で読まれる前提であり、決定論の駆動（next_actions が空にならない）も止まっていない。分析の完了と是正の完了を区別する必要は、両者が同時に閉じる事象では顕在化しない。"
+    },
+    {
+      "control_element_id": "ASSURANCE_LANE",
+      "description": "INC-053 の是正は用語チェッカーの 2 規則という症状の所在に対して行われ、同じ依存（Python の `\\w` が和文を含むこと）を共有する族の全体は是正の対象範囲に入らなかった。族としての棚卸しは分析の推奨として書かれていたが、是正の範囲を症状の所在から族の全体へ広げる制御は構造に無く、範囲の決定は各是正の実施時点に委ねられていた。結果として、同一の体系的要因が三つの独立に見える検査系を同時に無効化している状態が一反復ぶん残存した。",
+      "evidence_ref": "事象の記録 impact 節（INC-053 の是正は当該箇所だけを直している）",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "symptom-vs-systemic-cause",
+        "omitted-cause-recurrence",
+        "共通の体系的要因による多重防護の無効化",
+        "兆候止まりを禁じ共通体系要因の特定を要求"
+      ],
+      "why_it_seemed_adequate": "事象の記録が名指ししたのは用語チェッカーの 2 規則であり、それを直せば当該事象は再現しない。是正の完了判定として「報告された症状が消えること」は自然な基準であり、族の存在は棚卸しを実施するまで観測されない（棚卸し前は他所の該当箇所が手掛かりに現れない）。"
+    },
+    {
+      "control_element_id": "SESSION_END_AUDIT",
+      "description": "全件監査が書き出す .claude/.cache/last-audit.json の totals と top_findings は、検出された事項の量を表すが、検出器が拾い損ねた量を表す欄を持たない。偽陰性は totals を減らす方向にしか働かないため、要約は検査系の感度が落ちるほど健全に見える。この要約は次セッションの契約注入と鼓動が読む唯一の統治状態の手掛かりであり、下流の全ての判断がこの単調性の欠陥を継承する。",
+      "evidence_ref": ".claude/.cache/last-audit.json（統制構造の手掛かり記述）",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "情報システム保有と有用性の乖離",
+        "要約統計偏重による傾向情報の喪失",
+        "プロセスモデルと実状態の不整合",
+        "全体健全性と部分健全性の分離評価"
+      ],
+      "why_it_seemed_adequate": "監査の設計目的は統治木を全件走査して指摘を集めることであり、要約は指摘の所在を運ぶ器として過不足がない。件数の減少は是正が進んだ徴候として読むのが自然であり、件数が減る二つの理由（直った／拾えなくなった）を分ける入力は、そもそも監査の中に存在しない。"
+    },
+    {
+      "control_element_id": "WARNING_BACKLOG",
+      "description": "警告の滞留は last-audit.json の totals と top_findings で観測されるが、偽陰性は警告を生まないため滞留を減らす。滞留の減少を改善と読む運用では、検査系の感度低下が改善の指標として現れる。滞留を異常とする条件と閉じる責任の割当が未定であること（既知の穴）と合わさり、滞留量は対象リスクと因果的に結びつかない代理指標として機能している。",
+      "evidence_ref": "doctrine_docs/packaging/procedures/PROC-001-development-norms.md",
+      "flaw_type": "統制自身の劣化を検出できない",
+      "normative_refs": [
+        "先行指標の妥当性・代理指標の禁止",
+        "リスク先行指標による監査",
+        "計画外変化の検出手段"
+      ],
+      "why_it_seemed_adequate": "滞留量は監査の出力から直接得られる数少ない定量であり、閉じる責任の割当が未定である以上、まず量を見ることは合理的な第一歩に見えた。滞留が減ることを悪い徴候として読む枠組みは、偽陰性の存在が判明するまで動機を持たない。"
+    },
+    {
+      "control_element_id": "HEARTBEAT",
+      "description": "鼓動が警告できるのは監査の古びと版の遅れであり、検査系が黙っていること自体は古びとして現れない。さらに鼓動は導入複製の側で動くため（INC-005 の共通原因）、正本で規則を直しても、その是正が利用者環境で有効になったかを鼓動の手掛かりから確かめられない。偽陰性の是正は、是正されたかどうかを観測する経路と同じ版差の中に閉じ込められている。",
+      "evidence_ref": "plugin/scripts/gov-heartbeat.py（既知の穴: 古びの検出器が古びる）",
+      "flaw_type": "統制自身の劣化を検出できない",
+      "normative_refs": [
+        "監視責任の空白排除",
+        "重複責任による監視の抜け",
+        "設計時想定の運用中再検査",
+        "control-action-requires-feedback"
+      ],
+      "why_it_seemed_adequate": "鼓動の責務は古びと版遅れの警告として明確に区切られており、検査系の内容の正しさは別の統制（門・監査）の担当と理解できる。責務の区切りは重複を避ける設計として妥当であり、両者の間に落ちる領域（検査系の感度）は、どちらの責務記述にも書かれていないため空白として可視化されない。"
+    },
+    {
+      "control_element_id": "PLUGIN_DISTRIBUTION",
+      "description": "正本側で規則を是正しても、利用者環境の複製が何世代遅れているかをリポジトリ側から観測できない。したがって「偽陰性を持つ版の検査系が、いまどれだけの環境で緑を返し続けているか」を表す手掛かりが構造内に存在しない。安全性に影響する変更（検査系の感度回復）を利用者へ明示的に通知する経路も、更新の応答という利用者側の操作結果に依存している。",
+      "evidence_ref": ".claude-plugin/marketplace.json（既知の穴: INC-005）",
+      "flaw_type": "手掛かりが無い",
+      "normative_refs": [
+        "供給要素の変更を利用者へ通知",
+        "重要変更の明示的通知",
+        "supplier-must-communicate-analysis-assumptions"
+      ],
+      "why_it_seemed_adequate": "配布は marketplace 経由の pull 型として設計されており、利用者の操作を前提にすることは配布境界の尊重として妥当である。版差の観測はリポジトリ側の権限を超える要求に見え、既知の穴として受容されていた。感度の回復が「互換性を壊さない小さな修正」に見えるほど、通知の必要性は低く見積もられる。"
+    },
+    {
+      "control_element_id": "OWNER",
+      "description": "所有者が持つ手掛かりは進捗報告・PR の diff・台帳であり、いずれも「検査系が何を報告したか」を運ぶが「何を報告し損ねたか」は運ばない。族としての残存は、推奨#7 を実施した反復（2026-08-16）に至って初めて所有者の視界に入った。是正の範囲を症状に留めるか族へ広げるかという判断は所有者の権限に属するが、その判断に必要な情報（族の規模）が判断時点に存在していない。",
+      "evidence_ref": "統制構造 OWNER の手掛かり記述",
+      "flaw_type": "手掛かりが遅い",
+      "normative_refs": [
+        "controller-needs-concrete-feedback-channels",
+        "feedback-enables-improvement-of-controls",
+        "include-information-supplier-defect"
+      ],
+      "why_it_seemed_adequate": "INC-053 の分析は台帳に積まれ、是正の diff も PR として提示されており、規定の手掛かりは全て流れていた。報告が実施ではなく意図を書いていても見分けにくいという既知の穴を考慮しても、この事例では実施自体は行われている。不足していたのは実施の有無ではなく範囲の情報であり、それを要求する形式が手掛かりの規定に無かった。"
+    },
+    {
+      "control_element_id": "GOVERNANCE_TREE",
+      "description": "統治木の手掛かりは docs-audit の findings と dep-graph の逆依存であり、両者とも文書中の参照を機械抽出した結果に依存する。和文密着で書かれた REQ 参照が抽出から落ちる場合、逆依存の図は実際より疎に見え、ある文書を変更したときの影響範囲が過小に見積もられる。落ちた参照は図の上に欠落として現れず、単に線が無い状態として現れる。",
+      "evidence_ref": "doctrine_docs/_system/decided-facts.md（手掛かり: dep-graph の逆依存）",
+      "flaw_type": "手掛かりが誤っている",
+      "normative_refs": [
+        "プロセスモデルと実状態の不整合",
+        "破られた想定の再検討",
+        "安全想定の記録と失効先行指標の定義"
+      ],
+      "why_it_seemed_adequate": "逆依存の図は機械抽出であるがゆえに人の記憶より信頼できる手掛かりとして扱われてきた。抽出漏れは、抽出器が対象記法を網羅している限り起きないはずのものであり、記法（REQ-nnn）は網羅されている。破綻しているのは記法ではなく、記法の周囲に何が置かれ得るかという想定である。"
+    },
+    {
+      "control_element_id": "PRE_TOOL_GUARD",
+      "description": "拒否の門が対象とするのは違反する編集・削除であり、配布物スクリプトが英語圏の正規表現既定に自前で依存する形は、拒否の対象として定義されていない。INC-053 の推奨#1 が求める『規則が自前で語境界を書くことを禁じる』統制は、拒否の門か CI の静的検査のいずれかに置く必要があるが、どちらの対象範囲にも現時点で含まれていない。",
+      "evidence_ref": "plugin/scripts/policy-guard.py",
+      "flaw_type": "統制の対象範囲が想定と食い違う",
+      "normative_refs": [
+        "each-component-enforces-its-constraints",
+        "change-system-to-change-behavior",
+        "機械的遵守が前提の指示は自動化"
+      ],
+      "why_it_seemed_adequate": "門の対象範囲は統治文書の保全という明確な境界で切られており、境界の維持はガードの単純さと監査可能性に寄与する。コードの書き方に関する規約は従来レビューと試験の担当領域であり、門の責務を広げる必要は、偽陰性が族として複製されることが判明するまで生じない。"
+    }
+  ],
+  "analysis": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "POST_TOOL_LINTER",
+        "description": "POST_TOOL_LINTER の実体である docs-linter.py の `_REQ_ID_RE = re.compile(r\"\\bREQ-\\d+\\b\")` は、Python の `\\w` が和文を含むため「この要求はREQ-001を満たす。」では一致しない（空白や鉤括弧が在れば一致する）。この統制が上へ返す唯一の手掛かりは additionalContext（助言）であり、規則が拾わなかった場合は助言が出ない。出力の形は「規則を適用した結果、指摘が無かった」ときと同一であり、受け手のモデルにも人にも区別できない。",
+        "evidence_ref": "plugin/scripts/docs-linter.py（実測: findall('この要求はREQ-001を満たす。') → []）",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "defects-in-information-providing-systems",
+          "安全立証でなく非安全状態の探索",
+          "自動化は設計者の想定に遡る",
+          "software-does-not-fail-requirements-defect"
+        ],
+        "why_it_seemed_adequate": "`\\b` は語境界の標準的な表現であり、ID 記法（REQ-nnn）は英字と数字だけで構成されるため、境界指定は取り違いを防ぐ保守的な選択に見えた。規則の単体確認は英字の文脈で書かれた入力に対して期待どおり通っており、和文密着という入力形は規則の想定入力の外にあった。統制自身の設計意図（一文書だけを点検し助言を返す）とも矛盾していない。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "INC-053 の CAST 分析の推奨#1『語境界の照合を共有の一関数に集約し、規則が自前で書くことを静的検査で禁じる』に相当する門は、merge 前に赤で止める統制の中に無い。したがって、規則ごとに `\\b` / `\\w` / `[^\\w]*` を自前で書く形は、新規に追加されても既存のまま残っても、ジョブの成否という手掛かりに現れない。門が検査しているのは「試験が通ること」であり、「検査系が和文密着の既知陽性を拾えること」ではない。",
+        "evidence_ref": ".github/workflows（control_flaw_hint: 推奨#1 未実装）",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "accidents-from-inadequate-constraint-enforcement",
+          "監査の検出力評価",
+          "監査のすり抜け時に監査手順を是正",
+          "verify-all-hazard-preventing-systems"
+        ],
+        "why_it_seemed_adequate": "試験は緑であり、docs-audit の JSON も finding を返していた。門の設計は成果物の正しさを確かめるものとして構成されており、検査系自身の感度を検査する層は当初の要求に含まれていない。偽陰性は赤を生まないため、門の側から見れば異常の兆候が一つも上がらない状態が正常運転と同じに見えた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "保証レーンは事象を台帳へ積み分析が済むまで閉じない制御を持つが、分析から出た推奨事項の実施を追跡し、未実施のまま滞留していることを次の行動へ変換する制御は列挙されていない。INC-053 の推奨#1（共有関数への集約と静的検査）と推奨#7（族としての棚卸し）は台帳の文章として置かれたが、実施状態を持つ対象にはならず、2026-08-16 の反復で人手が推奨#7 を実施するまで、同型の依存が他所に在ることは構造のどの手掛かりにも現れなかった。",
+        "evidence_ref": "assurance/ledger/cast/INC-053-word-boundary-fails-against-japanese-adjacency.json",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "指摘欠点の是正完了追跡",
+          "audit-findings-must-be-closed",
+          "是正措置の責任割当と追跡",
+          "推奨事項の責任割当実施検査フィードバック",
+          "教訓を適用する手順の確立"
+        ],
+        "why_it_seemed_adequate": "台帳は「分析が済むまで閉じない」ことを保証しており、分析が済んだ事象は完了した対象として扱えた。推奨は次の反復で読まれる前提であり、決定論の駆動（next_actions が空にならない）も止まっていない。分析の完了と是正の完了を区別する必要は、両者が同時に閉じる事象では顕在化しない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "INC-053 の是正は用語チェッカーの 2 規則という症状の所在に対して行われ、同じ依存（Python の `\\w` が和文を含むこと）を共有する族の全体は是正の対象範囲に入らなかった。族としての棚卸しは分析の推奨として書かれていたが、是正の範囲を症状の所在から族の全体へ広げる制御は構造に無く、範囲の決定は各是正の実施時点に委ねられていた。結果として、同一の体系的要因が三つの独立に見える検査系を同時に無効化している状態が一反復ぶん残存した。",
+        "evidence_ref": "事象の記録 impact 節（INC-053 の是正は当該箇所だけを直している）",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "symptom-vs-systemic-cause",
+          "omitted-cause-recurrence",
+          "共通の体系的要因による多重防護の無効化",
+          "兆候止まりを禁じ共通体系要因の特定を要求"
+        ],
+        "why_it_seemed_adequate": "事象の記録が名指ししたのは用語チェッカーの 2 規則であり、それを直せば当該事象は再現しない。是正の完了判定として「報告された症状が消えること」は自然な基準であり、族の存在は棚卸しを実施するまで観測されない（棚卸し前は他所の該当箇所が手掛かりに現れない）。"
+      },
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "全件監査が書き出す .claude/.cache/last-audit.json の totals と top_findings は、検出された事項の量を表すが、検出器が拾い損ねた量を表す欄を持たない。偽陰性は totals を減らす方向にしか働かないため、要約は検査系の感度が落ちるほど健全に見える。この要約は次セッションの契約注入と鼓動が読む唯一の統治状態の手掛かりであり、下流の全ての判断がこの単調性の欠陥を継承する。",
+        "evidence_ref": ".claude/.cache/last-audit.json（統制構造の手掛かり記述）",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "情報システム保有と有用性の乖離",
+          "要約統計偏重による傾向情報の喪失",
+          "プロセスモデルと実状態の不整合",
+          "全体健全性と部分健全性の分離評価"
+        ],
+        "why_it_seemed_adequate": "監査の設計目的は統治木を全件走査して指摘を集めることであり、要約は指摘の所在を運ぶ器として過不足がない。件数の減少は是正が進んだ徴候として読むのが自然であり、件数が減る二つの理由（直った／拾えなくなった）を分ける入力は、そもそも監査の中に存在しない。"
+      },
+      {
+        "control_element_id": "WARNING_BACKLOG",
+        "description": "警告の滞留は last-audit.json の totals と top_findings で観測されるが、偽陰性は警告を生まないため滞留を減らす。滞留の減少を改善と読む運用では、検査系の感度低下が改善の指標として現れる。滞留を異常とする条件と閉じる責任の割当が未定であること（既知の穴）と合わさり、滞留量は対象リスクと因果的に結びつかない代理指標として機能している。",
+        "evidence_ref": "doctrine_docs/packaging/procedures/PROC-001-development-norms.md",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "先行指標の妥当性・代理指標の禁止",
+          "リスク先行指標による監査",
+          "計画外変化の検出手段"
+        ],
+        "why_it_seemed_adequate": "滞留量は監査の出力から直接得られる数少ない定量であり、閉じる責任の割当が未定である以上、まず量を見ることは合理的な第一歩に見えた。滞留が減ることを悪い徴候として読む枠組みは、偽陰性の存在が判明するまで動機を持たない。"
+      },
+      {
+        "control_element_id": "HEARTBEAT",
+        "description": "鼓動が警告できるのは監査の古びと版の遅れであり、検査系が黙っていること自体は古びとして現れない。さらに鼓動は導入複製の側で動くため（INC-005 の共通原因）、正本で規則を直しても、その是正が利用者環境で有効になったかを鼓動の手掛かりから確かめられない。偽陰性の是正は、是正されたかどうかを観測する経路と同じ版差の中に閉じ込められている。",
+        "evidence_ref": "plugin/scripts/gov-heartbeat.py（既知の穴: 古びの検出器が古びる）",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "監視責任の空白排除",
+          "重複責任による監視の抜け",
+          "設計時想定の運用中再検査",
+          "control-action-requires-feedback"
+        ],
+        "why_it_seemed_adequate": "鼓動の責務は古びと版遅れの警告として明確に区切られており、検査系の内容の正しさは別の統制（門・監査）の担当と理解できる。責務の区切りは重複を避ける設計として妥当であり、両者の間に落ちる領域（検査系の感度）は、どちらの責務記述にも書かれていないため空白として可視化されない。"
+      },
+      {
+        "control_element_id": "PLUGIN_DISTRIBUTION",
+        "description": "正本側で規則を是正しても、利用者環境の複製が何世代遅れているかをリポジトリ側から観測できない。したがって「偽陰性を持つ版の検査系が、いまどれだけの環境で緑を返し続けているか」を表す手掛かりが構造内に存在しない。安全性に影響する変更（検査系の感度回復）を利用者へ明示的に通知する経路も、更新の応答という利用者側の操作結果に依存している。",
+        "evidence_ref": ".claude-plugin/marketplace.json（既知の穴: INC-005）",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "供給要素の変更を利用者へ通知",
+          "重要変更の明示的通知",
+          "supplier-must-communicate-analysis-assumptions"
+        ],
+        "why_it_seemed_adequate": "配布は marketplace 経由の pull 型として設計されており、利用者の操作を前提にすることは配布境界の尊重として妥当である。版差の観測はリポジトリ側の権限を超える要求に見え、既知の穴として受容されていた。感度の回復が「互換性を壊さない小さな修正」に見えるほど、通知の必要性は低く見積もられる。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者が持つ手掛かりは進捗報告・PR の diff・台帳であり、いずれも「検査系が何を報告したか」を運ぶが「何を報告し損ねたか」は運ばない。族としての残存は、推奨#7 を実施した反復（2026-08-16）に至って初めて所有者の視界に入った。是正の範囲を症状に留めるか族へ広げるかという判断は所有者の権限に属するが、その判断に必要な情報（族の規模）が判断時点に存在していない。",
+        "evidence_ref": "統制構造 OWNER の手掛かり記述",
+        "flaw_type": "手掛かりが遅い",
+        "normative_refs": [
+          "controller-needs-concrete-feedback-channels",
+          "feedback-enables-improvement-of-controls",
+          "include-information-supplier-defect"
+        ],
+        "why_it_seemed_adequate": "INC-053 の分析は台帳に積まれ、是正の diff も PR として提示されており、規定の手掛かりは全て流れていた。報告が実施ではなく意図を書いていても見分けにくいという既知の穴を考慮しても、この事例では実施自体は行われている。不足していたのは実施の有無ではなく範囲の情報であり、それを要求する形式が手掛かりの規定に無かった。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "統治木の手掛かりは docs-audit の findings と dep-graph の逆依存であり、両者とも文書中の参照を機械抽出した結果に依存する。和文密着で書かれた REQ 参照が抽出から落ちる場合、逆依存の図は実際より疎に見え、ある文書を変更したときの影響範囲が過小に見積もられる。落ちた参照は図の上に欠落として現れず、単に線が無い状態として現れる。",
+        "evidence_ref": "doctrine_docs/_system/decided-facts.md（手掛かり: dep-graph の逆依存）",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "プロセスモデルと実状態の不整合",
+          "破られた想定の再検討",
+          "安全想定の記録と失効先行指標の定義"
+        ],
+        "why_it_seemed_adequate": "逆依存の図は機械抽出であるがゆえに人の記憶より信頼できる手掛かりとして扱われてきた。抽出漏れは、抽出器が対象記法を網羅している限り起きないはずのものであり、記法（REQ-nnn）は網羅されている。破綻しているのは記法ではなく、記法の周囲に何が置かれ得るかという想定である。"
+      },
+      {
+        "control_element_id": "PRE_TOOL_GUARD",
+        "description": "拒否の門が対象とするのは違反する編集・削除であり、配布物スクリプトが英語圏の正規表現既定に自前で依存する形は、拒否の対象として定義されていない。INC-053 の推奨#1 が求める『規則が自前で語境界を書くことを禁じる』統制は、拒否の門か CI の静的検査のいずれかに置く必要があるが、どちらの対象範囲にも現時点で含まれていない。",
+        "evidence_ref": "plugin/scripts/policy-guard.py",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "each-component-enforces-its-constraints",
+          "change-system-to-change-behavior",
+          "機械的遵守が前提の指示は自動化"
+        ],
+        "why_it_seemed_adequate": "門の対象範囲は統治文書の保全という明確な境界で切られており、境界の維持はガードの単純さと監査可能性に寄与する。コードの書き方に関する規約は従来レビューと試験の担当領域であり、門の責務を広げる必要は、偽陰性が族として複製されることが判明するまで生じない。"
+      }
+    ],
+    "hazard": "配布物の検査系が、和文密着の入力に対して偽陰性のまま「指摘なし」を返し、その沈黙が「制約充足」と区別できないまま merge と配布の可否判断に入る状態。すなわち、検査系の感度そのものを観測する経路が統制構造内に無いまま、検査系の出力だけが健全性の手掛かりとして流通している状態。",
+    "incident_id": "INC-054-word-boundary-dependency-replicated-elsewhere",
+    "leading_indicators": [
+      {
+        "indicator": "和文密着の既知陽性コーパスに対する検出率",
+        "observable": "配布物の各正規表現規則へ、和文が直前直後に密着した既知陽性入力（「この要求はREQ-001を満たす。」「はL12を」「印+id+和文註釈」等）を投入したときの一致件数",
+        "threshold": "既知陽性コーパスの検出率が 100% 未満で赤。コーパス件数が前回より減っている場合も赤（コーパスの静かな縮小を含めて検出する）",
+        "version_independent": true,
+        "where": "CI（.github/workflows）の release-check に置く回帰試験。判定はリポジトリ正本に対して行う",
+        "why_version_independent": "リポジトリ正本に対して CI が実行するため、利用者環境の導入複製の版に依存しない。ただし利用者環境に古い版が残っている事実は本指標では観測できない"
+      },
+      {
+        "indicator": "共有関数を経由しない語境界表現の出現数",
+        "observable": "配布物スクリプト内の `\\b` / `\\w` / `\\W` / `[^\\w]` の出現のうち、語境界照合の共有関数を経由しないものの箇所数",
+        "threshold": "1 箇所でも存在すれば警告、新規追加が発生したら赤。0 でない期間の長さも記録する",
+        "version_independent": true,
+        "where": "plugin/scripts 配下の全走査（静的検査として CI に置く）",
+        "why_version_independent": "ソースコードの静的性質であり、実行時の版や導入複製の状態に依存しない"
+      },
+      {
+        "indicator": "規則ごとの無所見連続期間",
+        "observable": "last-audit.json の findings を規則 id 別に集計したときの、ある規則が一件も所見を出していない連続セッション数",
+        "threshold": "ある規則が 10 セッション連続で 0 件のとき、感度の疑いとして棚卸し対象に載せる（0 件が正常な規則は、その旨を想定として明記して除外する）",
+        "version_independent": false,
+        "where": ".claude/.cache/last-audit.json（規則 id 別の内訳欄を新設する必要がある）",
+        "why_version_independent": "監査を実行するのは利用者環境の導入複製であり、複製の版が遅れれば内訳欄そのものが存在しない古い形式の要約が出力される。INC-005 の共通原因（検出器が複製側で動く）をそのまま継承する"
+      },
+      {
+        "indicator": "未実施の推奨事項の最古齢",
+        "observable": "assurance/ledger 配下の CAST 分析が出した推奨事項のうち、実施状態が「未実施」または状態欄そのものが無いものの、記録日からの経過反復数の最大値",
+        "threshold": "状態欄が無い推奨が 1 件でも存在すれば異常。実施状態が未実施のまま 3 反復を超えた推奨が存在すれば所有者へ提示する",
+        "version_independent": true,
+        "where": "assurance/ledger/（保証レーンの決定論試験の一項として判定する）",
+        "why_version_independent": "台帳はリポジトリ正本に置かれ、保証レーンが同一環境で読むため、導入複製の版に依存しない"
+      },
+      {
+        "indicator": "正本と導入複製の版差",
+        "observable": "導入複製が報告する版と、marketplace が配る最新版との世代差",
+        "threshold": "1 世代以上の遅れが 2 セッション以上継続した時点で、検査系の感度に関わる是正が未到達である可能性として提示する",
+        "version_independent": false,
+        "where": "鼓動（gov-heartbeat.py）の警告出力および claude plugin update の応答",
+        "why_version_independent": "版差を報告する主体が遅れている側の複製そのものであり、複製が十分に古ければ版差の報告形式ごと古い。古びの検出器が古びる故障（INC-005）を本指標は解消しない"
+      },
+      {
+        "indicator": "検査系の想定入力の明文化率",
+        "observable": "配布物の各検査規則について、想定する入力の形（区切り文字・文字種・周囲に置かれ得るもの）が文書として記録され、失効を示す先行指標が定義されている規則の割合",
+        "threshold": "100% 未満のとき、未記録の規則を棚卸し対象として列挙する",
+        "version_independent": true,
+        "where": "doctrine_docs 配下の想定記録と、規則ごとの対応表",
+        "why_version_independent": "文書と規則の対応関係の検査であり、実行環境の版に依存しない"
+      }
+    ],
+    "loss": "統治木の追跡可能性が、実際より高い水準で報告された状態が続いたこと。和文密着で書かれた REQ 参照・位置指定・追跡の印が検査系から数え落とされ、「拾えなかったもの」が「無かったもの」と同じ形（無言・緑）で上位へ届く。所有者・契約注入・鼓動が読む要約は、この差分を含まないまま健全性の根拠として使われる。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "全ての分割・照合箇所で、和文密着版と空白挿入版の結果が一致する",
+        "hypothesis": "`\\b` 以外の空白前提（str.split()、`\\s+` 区切り、行頭・行末アンカーと `[^\\w]*` の組合せ）による同型の依存が、配布物の別の箇所にも存在する",
+        "oracle": "各分割・照合箇所へ、和文が密着した既知陽性入力を投入し、空白を挿入した同内容の入力との結果を比較する。両者が一致しない箇所を該当とする",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "抽出範囲が全ての箇所で期待どおりに閉じている",
+        "hypothesis": "逆向きの故障として、`\\w+` 等による ID・語の抽出が和文を巻き込み、意図しない範囲まで一致する偽陽性が存在する（`\\w` が和文を含むことの反対側の帰結）",
+        "oracle": "和文が密着した入力に対する抽出結果の範囲を、期待する範囲と文字単位で比較する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "静的検査が無い状態でも出現数が 0 のまま推移する",
+        "hypothesis": "共有関数への集約を行っても、静的検査が同時に入らなければ、新しい規則が再び自前で語境界を書き、族が再増殖する",
+        "oracle": "集約後の一定期間、共有関数を経由しない語境界表現の出現数を計測し、0 から増加するかを見る",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "正規表現以外の検査が全て既知陽性を拾う",
+        "hypothesis": "同じ「沈黙する偽陰性」の形が、正規表現以外の検査（文字数・見出し階層・リンク解決など）にも存在し、和文特有の入力（全角記号、鉤括弧、句読点）で成立しない",
+        "oracle": "和文特有の記号を含む既知陽性コーパスを各検査へ投入し、検出率を測る",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "再実行の件数と当時の件数が一致する",
+        "hypothesis": "監査の要約（totals）が単調に減少している期間は、是正の進捗ではなく検出器の感度低下を含んでいる",
+        "oracle": "過去の last-audit.json の系列に対し、当時の規則で和文密着コーパスを再実行し、当時拾えていたはずの件数と実際の件数を比較する",
+        "severity": "P2"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "語境界の照合を共有の一関数へ集約し、規則が自前で `\\b` / `\\w` / `[^\\w]` を書くことを静的検査で禁じる（INC-053 推奨#1 の実装）。集約と静的検査は同時に入れる。集約だけでは族が再増殖する",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "和文密着の既知陽性コーパス（REQ 参照・位置指定・印+和文註釈を含む）を配布物に同梱し、各検査規則の検出率を CI の回帰試験として測る。検出率 100% 未満、およびコーパス件数の減少を赤とする",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "台帳の推奨事項に実施状態を持たせ、未実施のまま一定反復を超えた推奨を保証レーンの next_actions に載せる。分析の完了と是正の完了を別の状態として分ける",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "last-audit.json に規則 id 別の内訳を加え、規則ごとの無所見連続期間を観測可能にする。0 件が正常な規則は、その旨を想定として明記して除外する",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "各検査規則の想定入力（区切り文字・文字種・周囲に置かれ得るもの）を文書として記録し、想定が失効したことを示す先行指標を規則ごとに定義する",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "検査器自身の感度を検査する責務を、どの統制要素に割り当てるかを決める（CI の門に置くか、監査の一部にするか、独立の層を設けるか）。現在この責務はどの要素の記述にも無い",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "検査系の感度に関わる是正を配布したとき、利用者へ明示的に通知するか（更新の pull 型を維持したまま何を通知するか）を決める。版差の観測不能（INC-005）は残るため、通知の設計は所有者の判断に属する",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "map-draft-check.py と _tracescan.py の実在と所属する統制要素を確認する。実在しない場合、本分析の当該部分（および INC-054 の記録そのもの）を再評価する",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "配布物以外（assurance/harness 配下を含む）へ棚卸しの範囲を広げ、`\\b` 以外の空白前提（split、アンカー、`\\s`）も対象に含める",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "docs-audit.py が同種の正規表現既定に依存しているかを確認する。依存していれば、監査の findings 自体が同じ偽陰性を持ち、上記の指標の一部が成立しない",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "英語圏の正規表現既定（`\\b` / `\\w` が空白区切りの英字入力を前提とする）が、規則ごとに独立して書かれ、共有点を持たないまま複製されている。共有点が無いため、一箇所の是正が族へ波及しない。",
+      "偽陰性が沈黙として現れる。検査系の全ての手掛かり（助言・ジョブの成否・findings 件数・滞留量）が単調に「少ないほど良い」向きで解釈されており、感度低下と是正進捗が同じ観測を生む。",
+      "是正の完了判定が「報告された症状の消失」に置かれ、分析の完了と是正の完了を分ける状態が台帳に存在しない。推奨事項は文章として保存されるが、実施を追跡する制御に接続されていない。",
+      "検査系自身の感度を検査する層（既知陽性コーパスによる回帰）が、開発側の統制のどこにも割り当てられていない。門は成果物を検査し、監査は統治木を検査するが、検査器を検査する責務は空白である。",
+      "検出器と是正の到達が同じ版差の中に閉じ込められている。正本の是正が利用者環境に届いたかを、リポジトリ側から観測する経路が無い（INC-005 の共通原因）。",
+      "入力言語（和文）に関する想定が、どの規則にも明示的な想定として記録されていない。記録が無いため、想定が破られたことを示す先行指標も定義できない。",
+      "評価者が同系 model であるため、同じ英語圏既定の盲点を共有し得る（保証レーンの既知の残余リスク）。三箇所とも同種の見落とし方をしている事実は、この共通原因と整合する。"
+    ],
+    "unknowns": [
+      "【実在の未確認】事象が名指しする `plugin/scripts/map-draft-check.py` と `plugin/scripts/_tracescan.py` に対応する統制要素は、与えられた統制構造のどこにも見当たらない（`docs-linter.py` のみが POST_TOOL_LINTER の実体として実在する）。加えて本分析の実行環境では作業ディレクトリが空であり、いずれのファイルの実在も確認できなかった。したがって上記 (2)(3) に関わる記述は事象の記録の主張に依拠した推定であり、実在の確認を経ていない。この二つの機構が実在するか、実在するならどの統制要素に属するかを、分析の続行前に確かめる必要がある。",
+      "docs-audit.py（SESSION_END_AUDIT の実体）が同種の正規表現既定に依存しているかは未確認である。依存していれば、監査の findings 自体が同じ偽陰性を持つ。",
+      "和文密着で書かれた REQ 参照・位置指定・追跡の印が、統治木の中に実際に何件存在するか（落ちている母数）は未計測である。影響の大きさは現時点で判定できない。",
+      "追跡の悉皆モードの数え落としが、過去の監査要約と、それを読んだ契約注入・鼓動の判断に実際に影響したかは追跡できていない。",
+      "INC-053 の推奨#1（共有関数への集約と静的検査）が未実装である理由（所有者判断の待ち、設計上の未決、単なる未着手のいずれか）は記録から判定できない。",
+      "配布物以外（assurance/harness 配下など）に同族の依存が存在するかは走査されていない。推奨#7 の棚卸し範囲は「配布物の全スクリプト」であった。",
+      "導入複製が現在どの世代にあるか、すなわち INC-053 の是正が利用者環境に到達済みかは観測できない。",
+      "`\\b` 以外の空白前提（str.split()、行頭行末アンカー、`\\s` 区切り）による同型の依存が配布物に存在するかは未確認である。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は「検査系が何を報告したか」を入力に持ち、「何を報告し損ねたか」を入力に持たない。偽陰性は成功と同一の観測形（無言・緑・件数の減少）で現れるため、門・監査・鼓動・滞留のいずれの手掛かりにも異常として立ち上がらない。加えて、規則の確認に用いられてきた入力が英字の文脈で書かれており、和文密着の既知陽性を投入して検出率を測る回帰の型が存在しない。INC-053 で同型が一度顕在化した後も、是正の完了判定は「報告された症状が消えること」であり、族の棚卸しは推奨という文章として台帳に置かれた。推奨の実施を追跡して次の行動へ変換する制御が構造に無いため、族の残存は次の反復で人手が推奨#7 を実施するまで、どの手掛かりにも現れなかった。すなわち見逃しは検査の厳しさの不足ではなく、検査系自身の感度を観測する経路と、分析の完了と是正の完了を分ける経路の二つが構造に無いことに由来する。"
+  },
+  "control_structure_ids": [
+    "OWNER",
+    "CI_RELEASE_CHECK",
+    "SESSION_START_CONTRACT",
+    "HEARTBEAT",
+    "PRE_TOOL_GUARD",
+    "POST_TOOL_LINTER",
+    "SESSION_END_AUDIT",
+    "WARNING_BACKLOG",
+    "CAPTURE_NUDGE",
+    "PLUGIN_DISTRIBUTION",
+    "ASSURANCE_LANE",
+    "GOVERNANCE_TREE"
+  ],
+  "doctrine:exempt": "保証レーンの証拠台帳。仕様との対応なし(ADR-114)",
+  "duration_ms": 279143,
+  "errors": [],
+  "execution_kind": "real-sdk",
+  "flaws_with_citation_defect": [],
+  "generated_at": "2026-08-16T10:41:32Z",
+  "git_dirty": true,
+  "git_sha": "543954bd98e00f38b33a442d75d62b25286259d7",
+  "incident_evidence": {
+    "kind": "measurement",
+    "refs": [
+      "plugin/scripts/docs-linter.py",
+      "plugin/scripts/map-draft-check.py",
+      "plugin/scripts/_tracescan.py",
+      "assurance/ledger/cast/INC-053-word-boundary-fails-against-japanese-adjacency.json"
+    ],
+    "resolved": [
+      "plugin/scripts/docs-linter.py",
+      "plugin/scripts/map-draft-check.py",
+      "plugin/scripts/_tracescan.py",
+      "assurance/ledger/cast/INC-053-word-boundary-fails-against-japanese-adjacency.json"
+    ],
+    "unresolved": [],
+    "verifiable": true
+  },
+  "incident_id": "INC-054-word-boundary-dependency-replicated-elsewhere",
+  "incident_sha256": "dfa360b55017a7262e1bc3987ca618b7911ec463c199d2592d5e97afa44693c5",
+  "init": {
+    "claude_code_version": "2.1.221",
+    "model": "claude-opus-5",
+    "session_id": "20d7f2a3-ed4f-499c-961f-f9f083cc613f",
+    "tools_count": 27
+  },
+  "kind": "cast-analysis",
+  "leading_indicators_defined": true,
+  "options": {
+    "allowed_tools": [],
+    "cwd": "/tmp/assurance-cast-9v7wedjx",
+    "effort": "high",
+    "max_budget_usd": 4.0,
+    "max_turns": 8,
+    "model": "claude-opus-5",
+    "setting_sources": [],
+    "timeout_s": 900
+  },
+  "oracle": "structured_output がレーン側再検証にも適合",
+  "principles_offered": 337,
+  "prompt_sha256": "c687b7d47520e4f595ffe7fc43c5213d1eae4eb55215d610be7b0ca885b67684",
+  "rejected_flaws": [],
+  "result_meta": {
+    "duration_api_ms": 271583,
+    "is_error": false,
+    "num_turns": 4,
+    "session_id": "20d7f2a3-ed4f-499c-961f-f9f083cc613f",
+    "subtype": "success",
+    "total_cost_usd": 0.897592,
+    "usage": {
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 41324,
+        "ephemeral_5m_input_tokens": 0
+      },
+      "cache_creation_input_tokens": 41324,
+      "cache_read_input_tokens": 73080,
+      "inference_geo": "not_available",
+      "input_tokens": 4,
+      "iterations": "list",
+      "output_tokens": 16405,
+      "server_tool_use": {
+        "web_fetch_requests": 0,
+        "web_search_requests": 0
+      },
+      "service_tier": "standard",
+      "speed": "standard"
+    }
+  },
+  "schema_sha256": "0d1643d5e16353723405302c1f6ffcf753915e2a4f27a3530e8ef9a9ee45cb46",
+  "sdk_version": "0.2.129",
+  "settled": true,
+  "status": "PASS",
+  "structured_output": {
+    "confidence": "low",
+    "control_flaws": [
+      {
+        "control_element_id": "POST_TOOL_LINTER",
+        "description": "POST_TOOL_LINTER の実体である docs-linter.py の `_REQ_ID_RE = re.compile(r\"\\bREQ-\\d+\\b\")` は、Python の `\\w` が和文を含むため「この要求はREQ-001を満たす。」では一致しない（空白や鉤括弧が在れば一致する）。この統制が上へ返す唯一の手掛かりは additionalContext（助言）であり、規則が拾わなかった場合は助言が出ない。出力の形は「規則を適用した結果、指摘が無かった」ときと同一であり、受け手のモデルにも人にも区別できない。",
+        "evidence_ref": "plugin/scripts/docs-linter.py（実測: findall('この要求はREQ-001を満たす。') → []）",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "defects-in-information-providing-systems",
+          "安全立証でなく非安全状態の探索",
+          "自動化は設計者の想定に遡る",
+          "software-does-not-fail-requirements-defect"
+        ],
+        "why_it_seemed_adequate": "`\\b` は語境界の標準的な表現であり、ID 記法（REQ-nnn）は英字と数字だけで構成されるため、境界指定は取り違いを防ぐ保守的な選択に見えた。規則の単体確認は英字の文脈で書かれた入力に対して期待どおり通っており、和文密着という入力形は規則の想定入力の外にあった。統制自身の設計意図（一文書だけを点検し助言を返す）とも矛盾していない。"
+      },
+      {
+        "control_element_id": "CI_RELEASE_CHECK",
+        "description": "INC-053 の CAST 分析の推奨#1『語境界の照合を共有の一関数に集約し、規則が自前で書くことを静的検査で禁じる』に相当する門は、merge 前に赤で止める統制の中に無い。したがって、規則ごとに `\\b` / `\\w` / `[^\\w]*` を自前で書く形は、新規に追加されても既存のまま残っても、ジョブの成否という手掛かりに現れない。門が検査しているのは「試験が通ること」であり、「検査系が和文密着の既知陽性を拾えること」ではない。",
+        "evidence_ref": ".github/workflows（control_flaw_hint: 推奨#1 未実装）",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "accidents-from-inadequate-constraint-enforcement",
+          "監査の検出力評価",
+          "監査のすり抜け時に監査手順を是正",
+          "verify-all-hazard-preventing-systems"
+        ],
+        "why_it_seemed_adequate": "試験は緑であり、docs-audit の JSON も finding を返していた。門の設計は成果物の正しさを確かめるものとして構成されており、検査系自身の感度を検査する層は当初の要求に含まれていない。偽陰性は赤を生まないため、門の側から見れば異常の兆候が一つも上がらない状態が正常運転と同じに見えた。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "保証レーンは事象を台帳へ積み分析が済むまで閉じない制御を持つが、分析から出た推奨事項の実施を追跡し、未実施のまま滞留していることを次の行動へ変換する制御は列挙されていない。INC-053 の推奨#1（共有関数への集約と静的検査）と推奨#7（族としての棚卸し）は台帳の文章として置かれたが、実施状態を持つ対象にはならず、2026-08-16 の反復で人手が推奨#7 を実施するまで、同型の依存が他所に在ることは構造のどの手掛かりにも現れなかった。",
+        "evidence_ref": "assurance/ledger/cast/INC-053-word-boundary-fails-against-japanese-adjacency.json",
+        "flaw_type": "制御動作が無い",
+        "normative_refs": [
+          "指摘欠点の是正完了追跡",
+          "audit-findings-must-be-closed",
+          "是正措置の責任割当と追跡",
+          "推奨事項の責任割当実施検査フィードバック",
+          "教訓を適用する手順の確立"
+        ],
+        "why_it_seemed_adequate": "台帳は「分析が済むまで閉じない」ことを保証しており、分析が済んだ事象は完了した対象として扱えた。推奨は次の反復で読まれる前提であり、決定論の駆動（next_actions が空にならない）も止まっていない。分析の完了と是正の完了を区別する必要は、両者が同時に閉じる事象では顕在化しない。"
+      },
+      {
+        "control_element_id": "ASSURANCE_LANE",
+        "description": "INC-053 の是正は用語チェッカーの 2 規則という症状の所在に対して行われ、同じ依存（Python の `\\w` が和文を含むこと）を共有する族の全体は是正の対象範囲に入らなかった。族としての棚卸しは分析の推奨として書かれていたが、是正の範囲を症状の所在から族の全体へ広げる制御は構造に無く、範囲の決定は各是正の実施時点に委ねられていた。結果として、同一の体系的要因が三つの独立に見える検査系を同時に無効化している状態が一反復ぶん残存した。",
+        "evidence_ref": "事象の記録 impact 節（INC-053 の是正は当該箇所だけを直している）",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "symptom-vs-systemic-cause",
+          "omitted-cause-recurrence",
+          "共通の体系的要因による多重防護の無効化",
+          "兆候止まりを禁じ共通体系要因の特定を要求"
+        ],
+        "why_it_seemed_adequate": "事象の記録が名指ししたのは用語チェッカーの 2 規則であり、それを直せば当該事象は再現しない。是正の完了判定として「報告された症状が消えること」は自然な基準であり、族の存在は棚卸しを実施するまで観測されない（棚卸し前は他所の該当箇所が手掛かりに現れない）。"
+      },
+      {
+        "control_element_id": "SESSION_END_AUDIT",
+        "description": "全件監査が書き出す .claude/.cache/last-audit.json の totals と top_findings は、検出された事項の量を表すが、検出器が拾い損ねた量を表す欄を持たない。偽陰性は totals を減らす方向にしか働かないため、要約は検査系の感度が落ちるほど健全に見える。この要約は次セッションの契約注入と鼓動が読む唯一の統治状態の手掛かりであり、下流の全ての判断がこの単調性の欠陥を継承する。",
+        "evidence_ref": ".claude/.cache/last-audit.json（統制構造の手掛かり記述）",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "情報システム保有と有用性の乖離",
+          "要約統計偏重による傾向情報の喪失",
+          "プロセスモデルと実状態の不整合",
+          "全体健全性と部分健全性の分離評価"
+        ],
+        "why_it_seemed_adequate": "監査の設計目的は統治木を全件走査して指摘を集めることであり、要約は指摘の所在を運ぶ器として過不足がない。件数の減少は是正が進んだ徴候として読むのが自然であり、件数が減る二つの理由（直った／拾えなくなった）を分ける入力は、そもそも監査の中に存在しない。"
+      },
+      {
+        "control_element_id": "WARNING_BACKLOG",
+        "description": "警告の滞留は last-audit.json の totals と top_findings で観測されるが、偽陰性は警告を生まないため滞留を減らす。滞留の減少を改善と読む運用では、検査系の感度低下が改善の指標として現れる。滞留を異常とする条件と閉じる責任の割当が未定であること（既知の穴）と合わさり、滞留量は対象リスクと因果的に結びつかない代理指標として機能している。",
+        "evidence_ref": "doctrine_docs/packaging/procedures/PROC-001-development-norms.md",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "先行指標の妥当性・代理指標の禁止",
+          "リスク先行指標による監査",
+          "計画外変化の検出手段"
+        ],
+        "why_it_seemed_adequate": "滞留量は監査の出力から直接得られる数少ない定量であり、閉じる責任の割当が未定である以上、まず量を見ることは合理的な第一歩に見えた。滞留が減ることを悪い徴候として読む枠組みは、偽陰性の存在が判明するまで動機を持たない。"
+      },
+      {
+        "control_element_id": "HEARTBEAT",
+        "description": "鼓動が警告できるのは監査の古びと版の遅れであり、検査系が黙っていること自体は古びとして現れない。さらに鼓動は導入複製の側で動くため（INC-005 の共通原因）、正本で規則を直しても、その是正が利用者環境で有効になったかを鼓動の手掛かりから確かめられない。偽陰性の是正は、是正されたかどうかを観測する経路と同じ版差の中に閉じ込められている。",
+        "evidence_ref": "plugin/scripts/gov-heartbeat.py（既知の穴: 古びの検出器が古びる）",
+        "flaw_type": "統制自身の劣化を検出できない",
+        "normative_refs": [
+          "監視責任の空白排除",
+          "重複責任による監視の抜け",
+          "設計時想定の運用中再検査",
+          "control-action-requires-feedback"
+        ],
+        "why_it_seemed_adequate": "鼓動の責務は古びと版遅れの警告として明確に区切られており、検査系の内容の正しさは別の統制（門・監査）の担当と理解できる。責務の区切りは重複を避ける設計として妥当であり、両者の間に落ちる領域（検査系の感度）は、どちらの責務記述にも書かれていないため空白として可視化されない。"
+      },
+      {
+        "control_element_id": "PLUGIN_DISTRIBUTION",
+        "description": "正本側で規則を是正しても、利用者環境の複製が何世代遅れているかをリポジトリ側から観測できない。したがって「偽陰性を持つ版の検査系が、いまどれだけの環境で緑を返し続けているか」を表す手掛かりが構造内に存在しない。安全性に影響する変更（検査系の感度回復）を利用者へ明示的に通知する経路も、更新の応答という利用者側の操作結果に依存している。",
+        "evidence_ref": ".claude-plugin/marketplace.json（既知の穴: INC-005）",
+        "flaw_type": "手掛かりが無い",
+        "normative_refs": [
+          "供給要素の変更を利用者へ通知",
+          "重要変更の明示的通知",
+          "supplier-must-communicate-analysis-assumptions"
+        ],
+        "why_it_seemed_adequate": "配布は marketplace 経由の pull 型として設計されており、利用者の操作を前提にすることは配布境界の尊重として妥当である。版差の観測はリポジトリ側の権限を超える要求に見え、既知の穴として受容されていた。感度の回復が「互換性を壊さない小さな修正」に見えるほど、通知の必要性は低く見積もられる。"
+      },
+      {
+        "control_element_id": "OWNER",
+        "description": "所有者が持つ手掛かりは進捗報告・PR の diff・台帳であり、いずれも「検査系が何を報告したか」を運ぶが「何を報告し損ねたか」は運ばない。族としての残存は、推奨#7 を実施した反復（2026-08-16）に至って初めて所有者の視界に入った。是正の範囲を症状に留めるか族へ広げるかという判断は所有者の権限に属するが、その判断に必要な情報（族の規模）が判断時点に存在していない。",
+        "evidence_ref": "統制構造 OWNER の手掛かり記述",
+        "flaw_type": "手掛かりが遅い",
+        "normative_refs": [
+          "controller-needs-concrete-feedback-channels",
+          "feedback-enables-improvement-of-controls",
+          "include-information-supplier-defect"
+        ],
+        "why_it_seemed_adequate": "INC-053 の分析は台帳に積まれ、是正の diff も PR として提示されており、規定の手掛かりは全て流れていた。報告が実施ではなく意図を書いていても見分けにくいという既知の穴を考慮しても、この事例では実施自体は行われている。不足していたのは実施の有無ではなく範囲の情報であり、それを要求する形式が手掛かりの規定に無かった。"
+      },
+      {
+        "control_element_id": "GOVERNANCE_TREE",
+        "description": "統治木の手掛かりは docs-audit の findings と dep-graph の逆依存であり、両者とも文書中の参照を機械抽出した結果に依存する。和文密着で書かれた REQ 参照が抽出から落ちる場合、逆依存の図は実際より疎に見え、ある文書を変更したときの影響範囲が過小に見積もられる。落ちた参照は図の上に欠落として現れず、単に線が無い状態として現れる。",
+        "evidence_ref": "doctrine_docs/_system/decided-facts.md（手掛かり: dep-graph の逆依存）",
+        "flaw_type": "手掛かりが誤っている",
+        "normative_refs": [
+          "プロセスモデルと実状態の不整合",
+          "破られた想定の再検討",
+          "安全想定の記録と失効先行指標の定義"
+        ],
+        "why_it_seemed_adequate": "逆依存の図は機械抽出であるがゆえに人の記憶より信頼できる手掛かりとして扱われてきた。抽出漏れは、抽出器が対象記法を網羅している限り起きないはずのものであり、記法（REQ-nnn）は網羅されている。破綻しているのは記法ではなく、記法の周囲に何が置かれ得るかという想定である。"
+      },
+      {
+        "control_element_id": "PRE_TOOL_GUARD",
+        "description": "拒否の門が対象とするのは違反する編集・削除であり、配布物スクリプトが英語圏の正規表現既定に自前で依存する形は、拒否の対象として定義されていない。INC-053 の推奨#1 が求める『規則が自前で語境界を書くことを禁じる』統制は、拒否の門か CI の静的検査のいずれかに置く必要があるが、どちらの対象範囲にも現時点で含まれていない。",
+        "evidence_ref": "plugin/scripts/policy-guard.py",
+        "flaw_type": "統制の対象範囲が想定と食い違う",
+        "normative_refs": [
+          "each-component-enforces-its-constraints",
+          "change-system-to-change-behavior",
+          "機械的遵守が前提の指示は自動化"
+        ],
+        "why_it_seemed_adequate": "門の対象範囲は統治文書の保全という明確な境界で切られており、境界の維持はガードの単純さと監査可能性に寄与する。コードの書き方に関する規約は従来レビューと試験の担当領域であり、門の責務を広げる必要は、偽陰性が族として複製されることが判明するまで生じない。"
+      }
+    ],
+    "hazard": "配布物の検査系が、和文密着の入力に対して偽陰性のまま「指摘なし」を返し、その沈黙が「制約充足」と区別できないまま merge と配布の可否判断に入る状態。すなわち、検査系の感度そのものを観測する経路が統制構造内に無いまま、検査系の出力だけが健全性の手掛かりとして流通している状態。",
+    "incident_id": "INC-054-word-boundary-dependency-replicated-elsewhere",
+    "leading_indicators": [
+      {
+        "indicator": "和文密着の既知陽性コーパスに対する検出率",
+        "observable": "配布物の各正規表現規則へ、和文が直前直後に密着した既知陽性入力（「この要求はREQ-001を満たす。」「はL12を」「印+id+和文註釈」等）を投入したときの一致件数",
+        "threshold": "既知陽性コーパスの検出率が 100% 未満で赤。コーパス件数が前回より減っている場合も赤（コーパスの静かな縮小を含めて検出する）",
+        "version_independent": true,
+        "where": "CI（.github/workflows）の release-check に置く回帰試験。判定はリポジトリ正本に対して行う",
+        "why_version_independent": "リポジトリ正本に対して CI が実行するため、利用者環境の導入複製の版に依存しない。ただし利用者環境に古い版が残っている事実は本指標では観測できない"
+      },
+      {
+        "indicator": "共有関数を経由しない語境界表現の出現数",
+        "observable": "配布物スクリプト内の `\\b` / `\\w` / `\\W` / `[^\\w]` の出現のうち、語境界照合の共有関数を経由しないものの箇所数",
+        "threshold": "1 箇所でも存在すれば警告、新規追加が発生したら赤。0 でない期間の長さも記録する",
+        "version_independent": true,
+        "where": "plugin/scripts 配下の全走査（静的検査として CI に置く）",
+        "why_version_independent": "ソースコードの静的性質であり、実行時の版や導入複製の状態に依存しない"
+      },
+      {
+        "indicator": "規則ごとの無所見連続期間",
+        "observable": "last-audit.json の findings を規則 id 別に集計したときの、ある規則が一件も所見を出していない連続セッション数",
+        "threshold": "ある規則が 10 セッション連続で 0 件のとき、感度の疑いとして棚卸し対象に載せる（0 件が正常な規則は、その旨を想定として明記して除外する）",
+        "version_independent": false,
+        "where": ".claude/.cache/last-audit.json（規則 id 別の内訳欄を新設する必要がある）",
+        "why_version_independent": "監査を実行するのは利用者環境の導入複製であり、複製の版が遅れれば内訳欄そのものが存在しない古い形式の要約が出力される。INC-005 の共通原因（検出器が複製側で動く）をそのまま継承する"
+      },
+      {
+        "indicator": "未実施の推奨事項の最古齢",
+        "observable": "assurance/ledger 配下の CAST 分析が出した推奨事項のうち、実施状態が「未実施」または状態欄そのものが無いものの、記録日からの経過反復数の最大値",
+        "threshold": "状態欄が無い推奨が 1 件でも存在すれば異常。実施状態が未実施のまま 3 反復を超えた推奨が存在すれば所有者へ提示する",
+        "version_independent": true,
+        "where": "assurance/ledger/（保証レーンの決定論試験の一項として判定する）",
+        "why_version_independent": "台帳はリポジトリ正本に置かれ、保証レーンが同一環境で読むため、導入複製の版に依存しない"
+      },
+      {
+        "indicator": "正本と導入複製の版差",
+        "observable": "導入複製が報告する版と、marketplace が配る最新版との世代差",
+        "threshold": "1 世代以上の遅れが 2 セッション以上継続した時点で、検査系の感度に関わる是正が未到達である可能性として提示する",
+        "version_independent": false,
+        "where": "鼓動（gov-heartbeat.py）の警告出力および claude plugin update の応答",
+        "why_version_independent": "版差を報告する主体が遅れている側の複製そのものであり、複製が十分に古ければ版差の報告形式ごと古い。古びの検出器が古びる故障（INC-005）を本指標は解消しない"
+      },
+      {
+        "indicator": "検査系の想定入力の明文化率",
+        "observable": "配布物の各検査規則について、想定する入力の形（区切り文字・文字種・周囲に置かれ得るもの）が文書として記録され、失効を示す先行指標が定義されている規則の割合",
+        "threshold": "100% 未満のとき、未記録の規則を棚卸し対象として列挙する",
+        "version_independent": true,
+        "where": "doctrine_docs 配下の想定記録と、規則ごとの対応表",
+        "why_version_independent": "文書と規則の対応関係の検査であり、実行環境の版に依存しない"
+      }
+    ],
+    "loss": "統治木の追跡可能性が、実際より高い水準で報告された状態が続いたこと。和文密着で書かれた REQ 参照・位置指定・追跡の印が検査系から数え落とされ、「拾えなかったもの」が「無かったもの」と同じ形（無言・緑）で上位へ届く。所有者・契約注入・鼓動が読む要約は、この差分を含まないまま健全性の根拠として使われる。",
+    "new_scenario_candidates": [
+      {
+        "falsification_signal": "全ての分割・照合箇所で、和文密着版と空白挿入版の結果が一致する",
+        "hypothesis": "`\\b` 以外の空白前提（str.split()、`\\s+` 区切り、行頭・行末アンカーと `[^\\w]*` の組合せ）による同型の依存が、配布物の別の箇所にも存在する",
+        "oracle": "各分割・照合箇所へ、和文が密着した既知陽性入力を投入し、空白を挿入した同内容の入力との結果を比較する。両者が一致しない箇所を該当とする",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "抽出範囲が全ての箇所で期待どおりに閉じている",
+        "hypothesis": "逆向きの故障として、`\\w+` 等による ID・語の抽出が和文を巻き込み、意図しない範囲まで一致する偽陽性が存在する（`\\w` が和文を含むことの反対側の帰結）",
+        "oracle": "和文が密着した入力に対する抽出結果の範囲を、期待する範囲と文字単位で比較する",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "静的検査が無い状態でも出現数が 0 のまま推移する",
+        "hypothesis": "共有関数への集約を行っても、静的検査が同時に入らなければ、新しい規則が再び自前で語境界を書き、族が再増殖する",
+        "oracle": "集約後の一定期間、共有関数を経由しない語境界表現の出現数を計測し、0 から増加するかを見る",
+        "severity": "P1"
+      },
+      {
+        "falsification_signal": "正規表現以外の検査が全て既知陽性を拾う",
+        "hypothesis": "同じ「沈黙する偽陰性」の形が、正規表現以外の検査（文字数・見出し階層・リンク解決など）にも存在し、和文特有の入力（全角記号、鉤括弧、句読点）で成立しない",
+        "oracle": "和文特有の記号を含む既知陽性コーパスを各検査へ投入し、検出率を測る",
+        "severity": "P2"
+      },
+      {
+        "falsification_signal": "再実行の件数と当時の件数が一致する",
+        "hypothesis": "監査の要約（totals）が単調に減少している期間は、是正の進捗ではなく検出器の感度低下を含んでいる",
+        "oracle": "過去の last-audit.json の系列に対し、当時の規則で和文密着コーパスを再実行し、当時拾えていたはずの件数と実際の件数を比較する",
+        "severity": "P2"
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "語境界の照合を共有の一関数へ集約し、規則が自前で `\\b` / `\\w` / `[^\\w]` を書くことを静的検査で禁じる（INC-053 推奨#1 の実装）。集約と静的検査は同時に入れる。集約だけでは族が再増殖する",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "和文密着の既知陽性コーパス（REQ 参照・位置指定・印+和文註釈を含む）を配布物に同梱し、各検査規則の検出率を CI の回帰試験として測る。検出率 100% 未満、およびコーパス件数の減少を赤とする",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "台帳の推奨事項に実施状態を持たせ、未実施のまま一定反復を超えた推奨を保証レーンの next_actions に載せる。分析の完了と是正の完了を別の状態として分ける",
+        "kind": "機構の変更",
+        "owner_decision_required": false
+      },
+      {
+        "action": "last-audit.json に規則 id 別の内訳を加え、規則ごとの無所見連続期間を観測可能にする。0 件が正常な規則は、その旨を想定として明記して除外する",
+        "kind": "監視の追加",
+        "owner_decision_required": false
+      },
+      {
+        "action": "各検査規則の想定入力（区切り文字・文字種・周囲に置かれ得るもの）を文書として記録し、想定が失効したことを示す先行指標を規則ごとに定義する",
+        "kind": "文書化",
+        "owner_decision_required": false
+      },
+      {
+        "action": "検査器自身の感度を検査する責務を、どの統制要素に割り当てるかを決める（CI の門に置くか、監査の一部にするか、独立の層を設けるか）。現在この責務はどの要素の記述にも無い",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "検査系の感度に関わる是正を配布したとき、利用者へ明示的に通知するか（更新の pull 型を維持したまま何を通知するか）を決める。版差の観測不能（INC-005）は残るため、通知の設計は所有者の判断に属する",
+        "kind": "所有者判断",
+        "owner_decision_required": true
+      },
+      {
+        "action": "map-draft-check.py と _tracescan.py の実在と所属する統制要素を確認する。実在しない場合、本分析の当該部分（および INC-054 の記録そのもの）を再評価する",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "配布物以外（assurance/harness 配下を含む）へ棚卸しの範囲を広げ、`\\b` 以外の空白前提（split、アンカー、`\\s`）も対象に含める",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      },
+      {
+        "action": "docs-audit.py が同種の正規表現既定に依存しているかを確認する。依存していれば、監査の findings 自体が同じ偽陰性を持ち、上記の指標の一部が成立しない",
+        "kind": "調査の継続",
+        "owner_decision_required": false
+      }
+    ],
+    "systemic_factors": [
+      "英語圏の正規表現既定（`\\b` / `\\w` が空白区切りの英字入力を前提とする）が、規則ごとに独立して書かれ、共有点を持たないまま複製されている。共有点が無いため、一箇所の是正が族へ波及しない。",
+      "偽陰性が沈黙として現れる。検査系の全ての手掛かり（助言・ジョブの成否・findings 件数・滞留量）が単調に「少ないほど良い」向きで解釈されており、感度低下と是正進捗が同じ観測を生む。",
+      "是正の完了判定が「報告された症状の消失」に置かれ、分析の完了と是正の完了を分ける状態が台帳に存在しない。推奨事項は文章として保存されるが、実施を追跡する制御に接続されていない。",
+      "検査系自身の感度を検査する層（既知陽性コーパスによる回帰）が、開発側の統制のどこにも割り当てられていない。門は成果物を検査し、監査は統治木を検査するが、検査器を検査する責務は空白である。",
+      "検出器と是正の到達が同じ版差の中に閉じ込められている。正本の是正が利用者環境に届いたかを、リポジトリ側から観測する経路が無い（INC-005 の共通原因）。",
+      "入力言語（和文）に関する想定が、どの規則にも明示的な想定として記録されていない。記録が無いため、想定が破られたことを示す先行指標も定義できない。",
+      "評価者が同系 model であるため、同じ英語圏既定の盲点を共有し得る（保証レーンの既知の残余リスク）。三箇所とも同種の見落とし方をしている事実は、この共通原因と整合する。"
+    ],
+    "unknowns": [
+      "【実在の未確認】事象が名指しする `plugin/scripts/map-draft-check.py` と `plugin/scripts/_tracescan.py` に対応する統制要素は、与えられた統制構造のどこにも見当たらない（`docs-linter.py` のみが POST_TOOL_LINTER の実体として実在する）。加えて本分析の実行環境では作業ディレクトリが空であり、いずれのファイルの実在も確認できなかった。したがって上記 (2)(3) に関わる記述は事象の記録の主張に依拠した推定であり、実在の確認を経ていない。この二つの機構が実在するか、実在するならどの統制要素に属するかを、分析の続行前に確かめる必要がある。",
+      "docs-audit.py（SESSION_END_AUDIT の実体）が同種の正規表現既定に依存しているかは未確認である。依存していれば、監査の findings 自体が同じ偽陰性を持つ。",
+      "和文密着で書かれた REQ 参照・位置指定・追跡の印が、統治木の中に実際に何件存在するか（落ちている母数）は未計測である。影響の大きさは現時点で判定できない。",
+      "追跡の悉皆モードの数え落としが、過去の監査要約と、それを読んだ契約注入・鼓動の判断に実際に影響したかは追跡できていない。",
+      "INC-053 の推奨#1（共有関数への集約と静的検査）が未実装である理由（所有者判断の待ち、設計上の未決、単なる未着手のいずれか）は記録から判定できない。",
+      "配布物以外（assurance/harness 配下など）に同族の依存が存在するかは走査されていない。推奨#7 の棚卸し範囲は「配布物の全スクリプト」であった。",
+      "導入複製が現在どの世代にあるか、すなわち INC-053 の是正が利用者環境に到達済みかは観測できない。",
+      "`\\b` 以外の空白前提（str.split()、行頭行末アンカー、`\\s` 区切り）による同型の依存が配布物に存在するかは未確認である。"
+    ],
+    "why_existing_assurance_missed": "既存の保証は「検査系が何を報告したか」を入力に持ち、「何を報告し損ねたか」を入力に持たない。偽陰性は成功と同一の観測形（無言・緑・件数の減少）で現れるため、門・監査・鼓動・滞留のいずれの手掛かりにも異常として立ち上がらない。加えて、規則の確認に用いられてきた入力が英字の文脈で書かれており、和文密着の既知陽性を投入して検出率を測る回帰の型が存在しない。INC-053 で同型が一度顕在化した後も、是正の完了判定は「報告された症状が消えること」であり、族の棚卸しは推奨という文章として台帳に置かれた。推奨の実施を追跡して次の行動へ変換する制御が構造に無いため、族の残存は次の反復で人手が推奨#7 を実施するまで、どの手掛かりにも現れなかった。すなわち見逃しは検査の厳しさの不足ではなく、検査系自身の感度を観測する経路と、分析の完了と是正の完了を分ける経路の二つが構造に無いことに由来する。"
+  }
+}
