@@ -60,7 +60,13 @@ def _contract(prov, status="unknown"):
             "provenance": prov, "review_status": "proposed"}
 
 
-class MapDraftCheckTest(unittest.TestCase):
+class _MapDraftFixture(unittest.TestCase):
+    """共有のヘルパだけを持つ基底(試験は持たない)。
+
+    継承で試験を増やすと、loader の収集数と索引(assurance の system_index)の
+    件数が食い違う —— 試験メソッドの継承はしない。
+    """
+
     def _repo(self):
         """git の無い素の木(no-git の道)。出所の実ファイルを一つ持つ。"""
         root = _util.make_repo({
@@ -84,6 +90,9 @@ class MapDraftCheckTest(unittest.TestCase):
                 "--today", TODAY] + (extra or [])
         with contextlib.redirect_stderr(io.StringIO()):
             return _util.invoke("map-draft-check", argv=argv)
+
+
+class MapDraftCheckTest(_MapDraftFixture):
 
     # -- 正例 -------------------------------------------------------------
 
@@ -340,11 +349,10 @@ class MapDraftCheckTest(unittest.TestCase):
         self.assertIn("D7_SHAPE", out)
 
 
-class PerSourceVerdictTest(MapDraftCheckTest):
+class PerSourceVerdictTest(_MapDraftFixture):
     """出所ごとの機械の判定(ADR-171)。map-draft-check/1 の sources の欄。
 
-    親のヘルパ(_repo・_write_json・_run)を使う。親の試験も再実行されるが、
-    決定的で速いので許す(重複の害より、fixture の写しの害が大きい)。
+    共有の基底(_repo・_write_json・_run)を使う。試験メソッドは継承しない。
     """
 
     def _payload(self, model, repo=None):
