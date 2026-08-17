@@ -600,7 +600,10 @@ def _check_model(meta, body, findings):
         return
     status = meta.get("status") or _registry.default_status("MODEL")
     body = body or ""
-    for finding in _model.check_document(body, status):
+    repos = meta.get("repos")
+    if repos is not None:
+        repos = _frontmatter.as_list(repos)
+    for finding in _model.check_document(body, status, repos):
         where = finding.where
         if finding.line:
             where = "%s(行 %d)" % (where, finding.line)

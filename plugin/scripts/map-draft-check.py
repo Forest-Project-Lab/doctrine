@@ -56,6 +56,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import _frontmatter          # noqa: E402  日付の解釈の正本(ADR-099・ADR-101)
 import _model                # noqa: E402  器の語彙と形の正本(ADR-163)
+import _revinfo              # noqa: E402  測った木の版と作り手(ADR-155)
 
 # doctrine:begin SPEC-029
 SCHEMA = "map-draft-check/1"
@@ -76,7 +77,8 @@ ENUM_VERIFICATION_STATUS = _model.ENUM_VERIFICATION_STATUS
 TOP_KEYS = _model.TOP_KEYS
 ENTITY_LISTS = _model.ENTITY_LISTS
 
-SOURCE_RE = re.compile(r"^([\w.-]+):\s*(.+?)(?:@([0-9a-f]{7,40}))?$")
+# 接頭付きの出所の解析の正本は共有コア `_model` が持つ(ADR-170)。写しを持たない。
+SOURCE_RE = _model.SOURCE_RE
 PATHISH_RE = re.compile(r"^[\w./\-]+$")
 # 行番号の綴りの揺れを覆う。`L12`・`l12`・`12行`・`12 行`・`line 12`。
 # 一つの綴りだけを見ていたので、小文字や空白で検査を外せた(INC-035)。
@@ -382,15 +384,21 @@ def check_d2(model, opts, git, findings, unver):
     return n
 
 
+def _mark(opts, sw):
+    """この出所で検めが一つ成った印(ADR-171)。verified/mixed の判定に使う。"""
+    opts["_marks"][sw] = opts["_marks"].get(sw, 0) + 1
+
+
 def _check_one_source(sw, src, opts, git, findings, unver):
     source = src.get("source")
     if not isinstance(source, str) or not source.strip():
+        opts["_malformed"].add(sw)
         _f(findings, "D2_SOURCE_UNRESOLVED", sw, "source が空か文字列でない")
         return
     source = source.strip()
     if source.startswith("http://") or source.startswith("https://"):
         _check_url_source(sw, source, list(opts["_gits"].values()),
-                          findings, unver)
+                          findings, unver, opts)
         return
     m = SOURCE_RE.match(source)
     path = m.group(2).strip() if m else ""
@@ -426,9 +434,10 @@ def _check_one_source(sw, src, opts, git, findings, unver):
         _f(findings, "D2_SOURCE_UNRESOLVED", sw,
            "出所のファイルが --repo の作業木に無い: %s" % path)
         return
-    _check_locator(sw, src, abspath, findings, unver)
+    _mark(opts, sw)              # 出所のファイルの実在を検めた
+    _check_locator(sw, src, abspath, findings, unver, opts)
     if rev:
-        _check_rev(sw, source, path, rev, git, findings, unver)
+        _check_rev(sw, source, path, rev, git, findings, unver, opts)
 
 
 def _safe_join(repo, path):
@@ -456,7 +465,7 @@ MIN_QUOTE_CHARS = 4
 QUOTE_WINDOW_LINES = 3
 
 
-def _check_locator(sw, src, abspath, findings, unver):
+def _check_locator(sw, src, abspath, findings, unver, opts):
     """locator が実際に位置を指しているか。
 
     従来は「行番号が行数以内」と「引用がファイルのどこかに在る」だけを見て
@@ -485,6 +494,8 @@ def _check_locator(sw, src, abspath, findings, unver):
         if line < 1 or line > total:
             _f(findings, "D2_SOURCE_UNRESOLVED", sw,
                "locator の行 %d がファイルの行数(%d)を超える" % (line, total))
+        else:
+            _mark(opts, sw)      # 行番号が行数の中に在ることを検めた
 
     quotes = [m.group(1) or m.group(2) for m in LOC_QUOTE_RE.finditer(locator)]
     quotes = [q for q in quotes if q]
@@ -507,11 +518,14 @@ def _check_locator(sw, src, abspath, findings, unver):
                 _f(findings, "D2_SOURCE_UNRESOLVED", sw,
                    "verdict が silent なのに引用「%s」が本文に在る"
                    "(『無い』という主張と食い違う)" % quote)
+            else:
+                _mark(opts, sw)  # 「無い」という主張を本文で検めた
             continue
         if not present:
             _f(findings, "D2_SOURCE_UNRESOLVED", sw,
                "locator の引用「%s」が本文に見つからない" % quote)
             continue
+        _mark(opts, sw)          # 引用が本文に在ることを検めた
         if cited:
             near = False
             for line in cited:
@@ -527,7 +541,7 @@ def _check_locator(sw, src, abspath, findings, unver):
                    % (quote, "・".join("L%d" % n for n in cited)))
 
 
-def _check_rev(sw, source, path, rev, git, findings, unver):
+def _check_rev(sw, source, path, rev, git, findings, unver, opts):
     """@rev の照合。git が無い・rev が履歴に無いときは検証不能(所見にしない)。"""
     if not git.available():
         _u(unver, sw, source, "git が使えず @%s を検証できない" % rev)
@@ -540,9 +554,11 @@ def _check_rev(sw, source, path, rev, git, findings, unver):
     if not git.has_object(rev, path):
         _f(findings, "D2_SOURCE_UNRESOLVED", sw,
            "%s の時点に %s が無い(git cat-file -e)" % (rev, path))
+        return
+    _mark(opts, sw)              # rev の時点の実在を履歴で検めた
 
 
-def _check_url_source(sw, source, gits, findings, unver):
+def _check_url_source(sw, source, gits, findings, unver, opts):
     """URL は取得しない。blob URL でローカル履歴が知る SHA だけ局所で検める。
 
     gits は問い合わせ先の一覧(旧形は一つ、新形は --repo ごと。ADR-158)。
@@ -556,6 +572,8 @@ def _check_url_source(sw, source, gits, findings, unver):
                     _f(findings, "D2_SOURCE_UNRESOLVED", sw,
                        "blob URL の %s の時点に %s が無い"
                        % (m.group(1)[:12], m.group(2)))
+                else:
+                    _mark(opts, sw)   # blob URL の時点の実在を履歴で検めた
                 return
     _u(unver, sw, source, "URL は取得しない。機械検証不能として列挙する")
 
@@ -735,14 +753,89 @@ def check_d6(model, findings):
                "checked_at 付きの負の出所が無い(M-11 の早期検査)")
 
 
+# ---- 出所ごとの判定(ADR-171) -----------------------------------------------
+
+VERDICTS = ("verified", "mismatched", "mixed", "unverifiable", "malformed")
+
+
+def _source_verdicts(model, opts, findings, unver):
+    """出所ごとの機械の判定を、模型の中の出現順で返す(ADR-171)。
+
+    判定は五値。verified は検めの実績(_mark)を要し、既定値ではない ——
+    「機械検証不能」を「所見なし」と混ぜない。書き手の自己申告(claimed)と
+    機械の判定(verdict)は別の欄で返す。
+    """
+    marks = opts["_marks"]
+    malformed = opts["_malformed"]
+    f_by_where = {}
+    for f in findings:
+        f_by_where.setdefault(f["where"], []).append(f["message"])
+    u_by_where = {}
+    for u in unver:
+        u_by_where.setdefault(u["where"], []).append(u["reason"])
+    out = []
+    for where, entity in _entities(model):
+        prov = entity.get("provenance")
+        if not isinstance(prov, list):
+            continue
+        for j, src in enumerate(prov):
+            sw = "%s.provenance[%d]" % (where, j)
+            reasons = list(f_by_where.get(sw, [])) + list(u_by_where.get(sw, []))
+            if not isinstance(src, dict):
+                out.append({"where": sw, "source": None, "locator": None,
+                            "claimed": None, "verdict": "malformed",
+                            "reasons": reasons})
+                continue
+            if sw in malformed:
+                verdict = "malformed"
+            elif f_by_where.get(sw):
+                verdict = "mismatched"
+            elif u_by_where.get(sw) and marks.get(sw):
+                verdict = "mixed"
+            elif u_by_where.get(sw):
+                verdict = "unverifiable"
+            elif marks.get(sw):
+                verdict = "verified"
+            else:
+                # 何も検められていない出所を verified と言わない。
+                verdict = "unverifiable"
+            source = src.get("source")
+            locator = src.get("locator")
+            claimed = src.get("verdict")
+            out.append({
+                "where": sw,
+                "source": source if isinstance(source, str) else None,
+                "locator": locator if isinstance(locator, str) else None,
+                "claimed": claimed if isinstance(claimed, str) else None,
+                "verdict": verdict,
+                "reasons": reasons,
+            })
+    return out
+
+
+def _repo_revisions(repo_list):
+    """測った木ごとの版の鍵(ADR-171)。ローカル経路は載せない。"""
+    out = []
+    for prefix, path in sorted(repo_list, key=lambda t: t[0] or ""):
+        rev = _revinfo.revision_of(path)
+        out.append({"prefix": prefix,
+                    "source_revision": rev["source_revision"],
+                    "source_dirty": rev["source_dirty"]})
+    return out
+
+
 # ---- 報告と入口 -------------------------------------------------------------
 
-def _totals(findings, unver, n_sources):
+def _totals(findings, unver, n_sources, sources=None):
     by_code = {}
     for f in findings:
         by_code[f["code"]] = by_code.get(f["code"], 0) + 1
+    by_verdict = {name: 0 for name in VERDICTS}
+    for s in (sources or []):
+        by_verdict[s["verdict"]] += 1
     return {"findings": len(findings), "unverifiable": len(unver),
-            "sources": n_sources, "by_code": by_code}
+            "sources": n_sources, "by_code": by_code,
+            "by_verdict": by_verdict}
 
 
 def _render_text(model_path, findings, unver, totals):
@@ -880,6 +973,8 @@ def main(argv=None):
     # 接頭ごとの git(ADR-158)。旧形は None 鍵の一つだけ。
     opts["_gits"] = {prefix: _Git(path) for prefix, path in repo_list}
     opts["_trace_cache"] = {}
+    opts["_marks"] = {}
+    opts["_malformed"] = set()
     findings, unver = [], []
     try:
         with open(opts["model"], "r", encoding="utf-8") as fh:
@@ -913,10 +1008,15 @@ def main(argv=None):
         check_d4(model, opts, git, findings, unver)
         check_d5(model, findings)
         check_d6(model, findings)
-    totals = _totals(findings, unver, n_sources)
+    sources = (_source_verdicts(model, opts, findings, unver)
+               if model is not None else [])
+    totals = _totals(findings, unver, n_sources, sources)
     if opts["json"]:
         payload = {"schema": SCHEMA, "model": os.path.basename(opts["model"]),
                    "findings": findings, "unverifiable": unver,
+                   "sources": sources,
+                   "repos": _repo_revisions(repo_list),
+                   "generator": _revinfo.generator_info("map-draft-check.py"),
                    "totals": totals}
         sys.stdout.write(json.dumps(payload, ensure_ascii=False,
                                     sort_keys=True, indent=2) + "\n")

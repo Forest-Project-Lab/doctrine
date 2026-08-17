@@ -6,7 +6,7 @@ domain: context
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-08-14
+updated: 2026-08-16
 sources: [plugin/scripts/render-projection.py]
 depends_on: [SPEC-014]
 llm_context: task
@@ -31,4 +31,4 @@ SPEC-014 を実装する、投影描画スクリプトの実装メモである `
 
 ## 対象部品
 
-`plugin/scripts/render-projection.py`（`render_overview`・`render_icd_index`・`render_ctxmap_skeleton`・`_splice_ctxmap`・`_do_check`）。共有の `_depgraph`・`_frontmatter`・`_registry` を import する。
+`plugin/scripts/render-projection.py`（`render_overview`・`render_icd_index`・`render_ctxmap_skeleton`・`_splice_ctxmap`・`_do_check`・`_do_model_list`）。共有の `_depgraph`・`_frontmatter`・`_model`・`_registry`・`_revinfo` を import する。`model --list`（ADR-169）の版の三鍵は `_revinfo` から採り、再実装しない。

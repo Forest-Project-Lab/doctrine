@@ -37,13 +37,18 @@ SPEC-031 の契約を検証する。実装テストは `plugin/tests/test_model.
 - 硬化（ADR-164）: 配列でない `realized_by`・`null` の必須欄・空でない文字列でない id・
   塊を持たない見出し（囲みの綴りの取り違えを含む）が、それぞれ固有の名の所見になり、
   **例外を漏らさない**こと。引退した位置づけでは確定の同値を検めないこと。
-  `MODEL_CONFIRMED_NOT_CURRENT` が WARN で、その文面が機械へ確定を指示しないこと。
+  `MODEL_CONFIRMED_NOT_CURRENT` が `WARN` で、その文面が機械へ確定を指示しないこと。
   節名が登録簿から導かれていること。`prose_values` が散文の欄だけを返すこと
   （`HardeningTest`）。
 
 - 器からの導出（ADR-165）: 必須欄・段の必須欄・出所の必須欄・語彙が、同梱した器の一枚と
   一致すること。器の一枚を読めないときに `MODEL_SCHEMA_UNREADABLE` だけを返すこと
   （`SchemaDerivationTest`）。
+
+- 複数の木の宣言（ADR-170）: `repos` の形の崩れ（`接頭=指し先` でない項・同じ接頭の
+  二度宣言）が `MODEL_BAD_REPOS` に、宣言に無い接頭（provenance の `source`・アンカーの
+  `target`）が `MODEL_UNDECLARED_REPO` になること。宣言の無い模型では何も出ないこと
+  （`ReposDeclarationTest`）。
 
 ## 退行観点
 

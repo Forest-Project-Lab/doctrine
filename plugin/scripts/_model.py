@@ -146,6 +146,12 @@ _H3_RE = re.compile(r"^###\s+(.*?)\s*$")
 _FENCE_OPEN_RE = re.compile(r"^\s*```json\s*$")
 _FENCE_ANY_RE = re.compile(r"^\s*```")
 
+# リポジトリ接頭付きの出所(`接頭: 経路[@rev]`)の解析の正本(ADR-170)。
+# 出所の門(map-draft-check)はここを引き、写しを持たない。
+SOURCE_RE = re.compile(r"^([\w.-]+):\s*(.+?)(?:@([0-9a-f]{7,40}))?$")
+# `repos` 宣言の一項(`接頭=指し先`)。指し先は `self` か EXT 文書の id。
+_REPO_ENTRY_RE = re.compile(r"^([\w.-]+)=(self|EXT-\d+)$")
+
 
 class Finding(object):
     """一件の所見。severity は 'ERROR' か 'WARN'(リンタの段に合わせる)。"""
@@ -479,8 +485,83 @@ def check_confirmation(model, status, findings):
            model.get("_system_line", 0), severity="WARN")
 
 
-def check_document(body, status):
-    """本文と `status` を検め、所見の列を返す。リンタの口はこれ一つ。"""
+def used_prefixes(model):
+    """本文が使うリポジトリ接頭を (接頭, where, 行) の列で返す(ADR-170)。
+
+    採るのは provenance の `source` とアンカーの `target`。URL は接頭を持たない。
+    """
+    out = []
+
+    def _take(where, value, line):
+        if not isinstance(value, str):
+            return
+        value = value.strip()
+        if value.startswith(("http://", "https://")):
+            return
+        m = SOURCE_RE.match(value)
+        if m:
+            out.append((m.group(1), where, line))
+
+    def _prov(where, entity, line):
+        prov = entity.get("provenance")
+        if not isinstance(prov, list):
+            return
+        for idx, src in enumerate(prov):
+            if isinstance(src, dict):
+                _take("%s.provenance[%d]" % (where, idx), src.get("source"),
+                      line)
+
+    system = model.get("system")
+    if isinstance(system, dict):
+        _prov("system", system, model.get("_system_line", 0))
+    for label in ENTITY_LISTS:
+        for item in model.get(label, []):
+            where = "%s[%s]" % (label, item.get("id"))
+            line = item.get("_line", 0)
+            _prov(where, item, line)
+            if label == "anchors":
+                _take(where, item.get("target"), line)
+    return out
+
+
+def check_repos(repos, model, findings):
+    """フロントマターの `repos` 宣言を検める(ADR-170)。
+
+    宣言が無い(None)ときは何も検めない(後方互換)。形の崩れ・同じ接頭の二度宣言は
+    MODEL_BAD_REPOS。宣言が在るとき、本文が使う接頭が宣言の集合に無ければ
+    MODEL_UNDECLARED_REPO。指し先(EXT)の実在は文書の中では閉じないので見ない。
+    """
+    if repos is None:
+        return
+    if not isinstance(repos, list):
+        _f(findings, "MODEL_BAD_REPOS", "(repos)",
+           "repos は文字列(接頭=指し先)の一覧である(%r)" % (repos,))
+        return
+    declared = {}
+    for item in repos:
+        if not isinstance(item, str) or not _REPO_ENTRY_RE.match(item):
+            _f(findings, "MODEL_BAD_REPOS", "(repos)",
+               "repos の項が『接頭=指し先』の形でない(%r)。指し先は self か "
+               "EXT 文書の id とする" % (item,))
+            continue
+        prefix, dest = item.split("=", 1)
+        if prefix in declared:
+            _f(findings, "MODEL_BAD_REPOS", "(repos)",
+               "接頭 %s が二度宣言されている" % prefix)
+            continue
+        declared[prefix] = dest
+    for prefix, where, line in used_prefixes(model):
+        if prefix not in declared:
+            _f(findings, "MODEL_UNDECLARED_REPO", where,
+               "接頭 %s が repos の宣言に無い(宣言するか、出所の接頭を直す)"
+               % prefix, line)
+
+
+def check_document(body, status, repos=None):
+    """本文と `status` を検め、所見の列を返す。リンタの口はこれ一つ。
+
+    `repos` はフロントマターの宣言(ADR-170)。渡されないときは検めない。
+    """
     if SCHEMA_ERROR:
         # 器を読めないまま黙って通さない(沈黙する検証器を作らない)。
         return [Finding("MODEL_SCHEMA_UNREADABLE", "ERROR", "(器)",
@@ -488,6 +569,7 @@ def check_document(body, status):
     model, findings = parse_model(body)
     check_structure(model, findings)
     check_confirmation(model, status, findings)
+    check_repos(repos, model, findings)
     return findings
 
 

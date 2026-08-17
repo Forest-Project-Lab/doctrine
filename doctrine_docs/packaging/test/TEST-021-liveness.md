@@ -6,7 +6,7 @@ domain: packaging
 status: current
 owner: doctrine-maintainers
 created: 2026-07-26
-updated: 2026-08-14
+updated: 2026-08-16
 sources: [plugin/tests/test_liveness_capture.py]
 depends_on: [SPEC-021]
 llm_context: task

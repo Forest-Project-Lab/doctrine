@@ -6,8 +6,9 @@ domain: packaging
 status: proposed
 owner: doctrine-maintainers
 created: 2026-08-14
-updated: 2026-08-14
+updated: 2026-08-16
 sources: [doctrine_docs/model/decisions/ADR-163-model-type-design.md]
+repos: ["doctrine=self"]
 llm_context: task
 ---
 

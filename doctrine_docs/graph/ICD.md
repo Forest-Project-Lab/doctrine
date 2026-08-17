@@ -6,7 +6,7 @@ domain: graph
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-08-13
+updated: 2026-08-16
 sources: [plugin/scripts/_depgraph.py, plugin/scripts/trace-index.py, plugin/scripts/dep-graph.py]
 canonical_for: [dependency-graph-api, trace-index-api]
 llm_context: task
@@ -59,6 +59,7 @@ llm_context: task
 - `source_dirty`: 測った木に未コミットの変更が在れば true、無ければ false、git で解決できなければ null。
 - `generator`: `{name, version}`。`name` はスクリプト名、`version` は plugin.json の版（知れなければ null）。
 - 複数の返す値の `source_revision` が同値であることを「同じ木を測った」ことの照合に使う。`root` は照合の鍵ではない（口ごとに意味が違ってよい。ADR-155・ADR-156）。
+- 鮮度の判定規則（ADR-172 決定3）: 記録時といまの `source_revision` が共に完全 SHA で等しく、かつ、いまの `source_dirty` が false なら「同一」。共に完全 SHA で異なれば「相違」。どちらかが null、または、いまの `source_dirty` が true か null なら「不明」。三値であり、不明を肯定（同一）に丸めない。読み手はこの規則を再定義しない。
 
 ### 追跡索引の問い合わせ（trace-index-api。ADR-112）
 
