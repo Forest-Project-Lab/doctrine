@@ -513,5 +513,137 @@ class LinterWiringTest(unittest.TestCase):
         self.assertIn("MISSING_SECTION", out)
 
 
+class ReposDeclarationTest(unittest.TestCase):
+    """フロントマターの `repos` 宣言の検査(ADR-170 / SPEC-031)。"""
+
+    def _codes(self, repos, text=None):
+        model, findings = _model.parse_model(text or body())
+        _model.check_repos(repos, model, findings)
+        return [f.code for f in findings]
+
+    def test_no_declaration_checks_nothing(self):
+        self.assertEqual(self._codes(None), [])
+
+    def test_valid_declaration_is_clean(self):
+        self.assertEqual(self._codes(["demo=self"]), [])
+
+    def test_malformed_entries_are_bad_repos(self):
+        self.assertIn("MODEL_BAD_REPOS", self._codes(["demo"]))
+        self.assertIn("MODEL_BAD_REPOS", self._codes(["demo=elsewhere"]))
+        self.assertIn("MODEL_BAD_REPOS", self._codes([42]))
+        self.assertIn("MODEL_BAD_REPOS", self._codes("demo=self"))
+
+    def test_duplicate_prefix_is_bad_repos(self):
+        self.assertIn("MODEL_BAD_REPOS",
+                      self._codes(["demo=self", "demo=EXT-001"]))
+
+    def test_undeclared_source_prefix_is_reported(self):
+        codes = self._codes(["lens=EXT-009"])
+        self.assertIn("MODEL_UNDECLARED_REPO", codes)
+
+    def test_anchor_target_prefix_is_covered(self):
+        text = body(anchors=(dict(ANCHOR, target="lens2: src/x.py"),))
+        codes = self._codes(["demo=self"], text)
+        self.assertIn("MODEL_UNDECLARED_REPO", codes)
+
+    def test_check_document_accepts_the_declaration(self):
+        findings = _model.check_document(body(), "proposed", ["demo=self"])
+        self.assertEqual([f.code for f in findings], [])
+        findings = _model.check_document(body(), "proposed", ["lens=EXT-009"])
+        self.assertIn("MODEL_UNDECLARED_REPO", [f.code for f in findings])
+
+
+class ModelIndexListTest(unittest.TestCase):
+    """model --list の読み口 model-index/1(ADR-169 / SPEC-014)。"""
+
+    def _repo(self, docs):
+        files = {
+            "doctrine_docs/_system/glossary.md":
+                "---\nid: GLOSSARY-001\ntitle: 用語\ntype: GLOSSARY\n"
+                "domain: _system\nstatus: current\nowner: x\n"
+                "updated: 2026-08-14\nsources: []\n---\n\n# 用語\n",
+        }
+        files.update(docs)
+        root = _util.make_repo(files)
+        self.addCleanup(shutil.rmtree, root, ignore_errors=True)
+        return root
+
+    def _doc(self, text, model_id="MODEL-001", repos_line=""):
+        return ("---\nid: %s\ntitle: デモの意味モデル\ntype: MODEL\n"
+                "domain: demo\nstatus: proposed\nowner: demo-maintainers\n"
+                "created: 2026-08-14\nupdated: 2026-08-14\nsources: []\n"
+                "%sllm_context: task\n---\n\n" % (model_id, repos_line)) + text
+
+    def _list(self, root):
+        docs = os.path.join(root, "doctrine_docs")
+        out, rc = _util.invoke("render-projection.py",
+                               ["model", "--docs-root", docs, "--list"])
+        return out, rc
+
+    def test_declared_shape_and_envelope(self):
+        root = self._repo({
+            "doctrine_docs/demo/model/MODEL-001-demo.md": self._doc(body()),
+        })
+        out, rc = self._list(root)
+        self.assertEqual(rc, 0, out)
+        payload = json.loads(out)
+        self.assertEqual(payload["schema"], "model-index/1")
+        self.assertEqual(payload["root"], "doctrine_docs")
+        for key in ("source_revision", "source_dirty", "generator"):
+            self.assertIn(key, payload)
+        entry = payload["models"][0]
+        self.assertEqual(entry["id"], "MODEL-001")
+        self.assertEqual(entry["target"], "demo")
+        self.assertEqual(entry["status"], "proposed")
+        self.assertEqual(entry["path"], "demo/model/MODEL-001-demo.md")
+        self.assertEqual(entry["projection_path"],
+                         "demo/model/MODEL-001-demo.json")
+        self.assertIsNone(entry["repos"], "無宣言は null(空と混ぜない)")
+        self.assertEqual(entry["findings"], 0)
+
+    def test_declaration_is_mirrored(self):
+        root = self._repo({
+            "doctrine_docs/demo/model/MODEL-001-demo.md":
+                self._doc(body(), repos_line='repos: ["demo=self"]\n'),
+        })
+        out, rc = self._list(root)
+        self.assertEqual(rc, 0, out)
+        entry = json.loads(out)["models"][0]
+        self.assertEqual(entry["repos"], ["demo=self"])
+
+    def test_broken_model_is_listed_with_findings(self):
+        root = self._repo({
+            "doctrine_docs/demo/model/MODEL-001-demo.md":
+                self._doc(body(flows=(dict(FLOW, to="e-missing"),))),
+        })
+        out, rc = self._list(root)
+        self.assertEqual(rc, 0, "列挙の成否と模型の良し悪しを混ぜない")
+        entry = json.loads(out)["models"][0]
+        self.assertGreater(entry["findings"], 0)
+        self.assertEqual(entry["target"], "demo",
+                         "解ける範囲の値は返す(所見と列挙を混ぜない)")
+
+    def test_sorted_by_id(self):
+        root = self._repo({
+            "doctrine_docs/demo/model/MODEL-002-demo.md":
+                self._doc(body(), model_id="MODEL-002"),
+            "doctrine_docs/demo/model/MODEL-001-demo.md": self._doc(body()),
+        })
+        out, rc = self._list(root)
+        self.assertEqual(rc, 0, out)
+        ids = [m["id"] for m in json.loads(out)["models"]]
+        self.assertEqual(ids, ["MODEL-001", "MODEL-002"])
+
+    def test_list_rejects_other_modes_and_flags(self):
+        root = self._repo({})
+        docs = os.path.join(root, "doctrine_docs")
+        for argv in (["overview", "--docs-root", docs, "--list"],
+                     ["model", "--docs-root", docs, "--list", "--check"],
+                     ["model", "--docs-root", docs, "--list", "--id", "X"],
+                     ["model", "--docs-root", docs, "--list", "--out", "-"]):
+            _out, rc = _util.invoke("render-projection.py", argv)
+            self.assertEqual(rc, 2, argv)
+
+
 if __name__ == "__main__":
     unittest.main()

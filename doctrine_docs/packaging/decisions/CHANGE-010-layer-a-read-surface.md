@@ -6,7 +6,7 @@ domain: packaging
 status: current
 owner: doctrine-maintainers
 created: 2026-08-13
-updated: 2026-08-14
+updated: 2026-08-16
 sources: ["https://github.com/Forest-Project-Lab/doctrine/issues/294", "https://github.com/Forest-Project-Lab/doctrine/issues/212"]
 depends_on: [ICD-008, ICD-002, ICD-005, ICD-007]
 llm_context: task

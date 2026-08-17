@@ -60,7 +60,13 @@ def _contract(prov, status="unknown"):
             "provenance": prov, "review_status": "proposed"}
 
 
-class MapDraftCheckTest(unittest.TestCase):
+class _MapDraftFixture(unittest.TestCase):
+    """共有のヘルパだけを持つ基底(試験は持たない)。
+
+    継承で試験を増やすと、loader の収集数と索引(assurance の system_index)の
+    件数が食い違う —— 試験メソッドの継承はしない。
+    """
+
     def _repo(self):
         """git の無い素の木(no-git の道)。出所の実ファイルを一つ持つ。"""
         root = _util.make_repo({
@@ -84,6 +90,9 @@ class MapDraftCheckTest(unittest.TestCase):
                 "--today", TODAY] + (extra or [])
         with contextlib.redirect_stderr(io.StringIO()):
             return _util.invoke("map-draft-check", argv=argv)
+
+
+class MapDraftCheckTest(_MapDraftFixture):
 
     # -- 正例 -------------------------------------------------------------
 
@@ -338,6 +347,99 @@ class MapDraftCheckTest(unittest.TestCase):
                 argv=["--model", path, "--repo", self._repo()])
         self.assertEqual(code, 1)
         self.assertIn("D7_SHAPE", out)
+
+
+class PerSourceVerdictTest(_MapDraftFixture):
+    """出所ごとの機械の判定(ADR-171)。map-draft-check/1 の sources の欄。
+
+    共有の基底(_repo・_write_json・_run)を使う。試験メソッドは継承しない。
+    """
+
+    def _payload(self, model, repo=None):
+        out, _code = self._run(model, extra=["--json"], repo=repo)
+        return json.loads(out)
+
+    def _by_where(self, payload, where):
+        for s in payload["sources"]:
+            if s["where"] == where:
+                return s
+        raise AssertionError("出所が sources に無い: %s" % where)
+
+    def test_matched_quote_is_verified(self):
+        m = _model()
+        m["system"]["provenance"] = [_source(locator="「これはしない」")]
+        s = self._by_where(self._payload(m), "system.provenance[0]")
+        self.assertEqual(s["verdict"], "verified")
+        self.assertEqual(s["claimed"], "present")
+        self.assertEqual(s["reasons"], [])
+
+    def test_anchorless_locator_is_mixed(self):
+        """ファイルの実在は検めたが、位置は機械検証の道が無い。"""
+        s = self._by_where(self._payload(_model()), "system.provenance[0]")
+        self.assertEqual(s["verdict"], "mixed")
+
+    def test_missing_quote_is_mismatched(self):
+        m = _model()
+        m["system"]["provenance"] = [_source(locator="「存在しない引用」")]
+        s = self._by_where(self._payload(m), "system.provenance[0]")
+        self.assertEqual(s["verdict"], "mismatched")
+        self.assertTrue(s["reasons"])
+
+    def test_url_source_is_unverifiable(self):
+        m = _model()
+        m["system"]["provenance"] = [
+            _source(source="https://example.com/spec")]
+        s = self._by_where(self._payload(m), "system.provenance[0]")
+        self.assertEqual(s["verdict"], "unverifiable")
+
+    def test_unverifiable_rev_with_matched_quote_is_mixed(self):
+        m = _model()
+        m["system"]["provenance"] = [_source(
+            source="doctrine: doctrine_docs/_system/non-goals.md@" + "a" * 40,
+            locator="「これはしない」")]
+        s = self._by_where(self._payload(m), "system.provenance[0]")
+        self.assertEqual(s["verdict"], "mixed",
+                         "引用は検めたが @rev は git の無い木で検証不能")
+
+    def test_empty_source_is_malformed(self):
+        m = _model()
+        m["system"]["provenance"] = [_source(source="")]
+        s = self._by_where(self._payload(m), "system.provenance[0]")
+        self.assertEqual(s["verdict"], "malformed")
+
+    def test_by_verdict_totals_match_sources(self):
+        payload = self._payload(_model())
+        by_verdict = payload["totals"]["by_verdict"]
+        self.assertEqual(sorted(by_verdict),
+                         ["malformed", "mismatched", "mixed",
+                          "unverifiable", "verified"])
+        self.assertEqual(sum(by_verdict.values()), len(payload["sources"]))
+        self.assertEqual(len(payload["sources"]),
+                         payload["totals"]["sources"])
+
+    def test_repos_carries_revision_keys_not_paths(self):
+        payload = self._payload(_model())
+        self.assertEqual(len(payload["repos"]), 1)
+        entry = payload["repos"][0]
+        self.assertEqual(sorted(entry),
+                         ["prefix", "source_dirty", "source_revision"])
+        self.assertIsNone(entry["prefix"], "旧形の単一 --repo は接頭を持たない")
+        self.assertIsNone(entry["source_revision"], "git の無い木は null")
+
+    def test_new_form_repo_has_prefix(self):
+        repo = self._repo()
+        path = self._write_json(_model())
+        with contextlib.redirect_stderr(io.StringIO()):
+            out, _code = _util.invoke(
+                "map-draft-check",
+                argv=["--model", path, "--repo", "doctrine=%s" % repo,
+                      "--today", TODAY, "--json"])
+        payload = json.loads(out)
+        self.assertEqual(payload["repos"][0]["prefix"], "doctrine")
+
+    def test_generator_names_the_tool(self):
+        payload = self._payload(_model())
+        self.assertEqual(payload["generator"]["name"], "map-draft-check.py")
 
 
 if __name__ == "__main__":

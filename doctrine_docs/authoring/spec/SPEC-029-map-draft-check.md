@@ -37,7 +37,9 @@ llm_context: task
 
 - 引数: `--model PATH`（検査対象の JSON）、`--repo <接頭>=<経路>`（**反復可**。接頭ごとに出所をそのリポジトリの根で解決する。ADR-158）、旧形 `--repo PATH` 一つ＋任意の `--repo-prefix NAME`（後方互換。この接頭の出所だけを `--repo` で解決する）、`--docs-root PATH`（任意。無指定なら最初の `--repo` 直下の `doctrine_docs` を使う）、`--today YYYY-MM-DD`（任意。日付の上限。無指定なら形だけ検める）、`--trace-json <接頭>=<経路>` または旧形 `--trace-json PATH`（任意。`trace-index/1` の JSON を接頭ごとに注入する。無い接頭は対応するリポジトリで `trace-index.py` を子プロセス実行して読む）、`--json`。
 - 引数の誤りは黙って飲み込まない: 旧形と新形の混在、同じ接頭の二度渡し、`=` 無し `--repo` の二度渡し、どの `--repo` にも `=` が無いのに `--trace-json` に接頭があるときは、使い方の誤り（終了コード 2）に倒す（黙る後勝ちの廃止。ADR-158）。どの接頭にも合わない出所は従来どおり機械検証不能の一覧へ回す。
-- 返す値: 人が読む日本語の報告。`--json` は `{"schema": "map-draft-check/1", "model": 名前, "findings": [...], "unverifiable": [...], "totals": {...}}` を返す。所見（findings）と機械検証不能（unverifiable）は別の一覧であり、混ぜない。
+- 返す値: 人が読む日本語の報告。`--json` は `{"schema": "map-draft-check/1", "model": 名前, "findings": [...], "unverifiable": [...], "sources": [...], "repos": [...], "generator": {...}, "totals": {...}}` を返す。所見（findings）と機械検証不能（unverifiable）は別の一覧であり、混ぜない。
+- `sources`（ADR-171）: provenance の各出所につき一項 `{where, source, locator, claimed, verdict, reasons}` を、模型の中の出現順で返す。`claimed` は書き手の自己申告（Source の `verdict` の値。無ければ null）、`verdict` は機械の判定で五値 —— `verified`（検めた全てが一致。検めの実績が最低一つ）・`mismatched`（この出所に所見が在る）・`mixed`（一部は一致し、一部は機械検証の道が無い）・`unverifiable`（機械検証の道が一つも無い）・`malformed`（`source` が空・文字列でない）。`verified` は既定値ではなく、検めの実績を要する（「機械検証不能」を「所見なし」と混ぜない）。`reasons` は該当する所見・検証不能の文言の写し（無ければ空の一覧）。アンカーは対象外（判定は findings・unverifiable に載る）。
+- `repos`（ADR-171）: 測った木の版。各項 `{prefix, source_revision, source_dirty}`（旧形の単一 `--repo` は `prefix` を null にする。並びは接頭の昇順）。ローカル経路は載せない。`generator` と版の鍵の意味は ICD-002「測った木の版と作り手」と同じ。`totals` には `by_verdict`（五値ごとの件数）が加わる。
 - 終了コード: 0 所見なし / 1 所見あり / 2 使い方の誤り / 3 対象（モデル・リポジトリの根・`--trace-json` の実体）が無い。ICD-002 の 0/2/3 の規約に、所見あり=1（`docs-linter --batch` と同じ）を加えた形である。
 
 ## 制約
@@ -60,7 +62,7 @@ llm_context: task
 | `D6_UNKNOWN_WITHOUT_NEGATIVE` | `verification_status: unknown` の Contract は、`verdict: silent` かつ `checked_at` 付きの負の出所を最低 1 件持つ |
 | `D7_SHAPE` | 最上位の必須キー（`schema`・`target`・`system`・`elements`・`flows`・`contracts`・`scenarios`・`anchors`）、語彙（列挙）の当否、`elements` の `id`/`name`/`kind` と `flows` の `from`/`to` |
 
-- 語彙（列挙）の正本は lens 側 gold-model の `schema.json`（0.1）であり、実装はそれを写して名指しする。
+- 語彙（列挙）と形の正本は lens 側 gold-model の `schema.json` であり、共有コア `_model` が同梱した一枚（0.2）から導く。写しは持たない（ADR-165）。
 - M 層（lens 側 INVARIANTS.md）との分担: ここで早期に検めるのは M-07 の一部（`D1`）・M-08（`D5`）・M-11（`D6`）だけである。M-02/03/04/05/06/09/12/15/16 は lens 側 validator の受け持ちであり、この門は validator の置き換えではない。
 - 入口スクリプトは入口スクリプトを取り込まない。追跡索引は `--trace-json` で注入するか、`trace-index.py` を子プロセスで実行して読む（`.claude/.cache` は読まない。ADR-136）。
 
@@ -76,7 +78,7 @@ llm_context: task
 
 対象は検査の本体。更新は `trace-index.py --id SPEC-029` が返す行を写す（ADR-061）。
 
-- sha256:e5cba87a198c532b6048be56f6f607e65b10d85b9179f53d4941ce4e09c16265
+- sha256:37d7b2d6a076bd82062948973ed51d7a28bb1f18484dab734dc7043dd3e559dd
 
 ## 受入基準
 
@@ -92,6 +94,8 @@ llm_context: task
 - `--repo <接頭>=<経路>` を二つ渡した二リポジトリの模型で、両方の接頭の出所が解決され、片側だけ渡した走行では合わない接頭が機械検証不能に載ること（ADR-158）。
 - 旧形と新形の混在・同じ接頭の二度渡し・`=` 無し `--repo` の二度渡しが、使い方の誤り（終了コード 2）で拒まれること。
 - 終了コードが 0/1/2/3 になること。`--json` が宣言の形を返すこと。
+- `sources` が全出所を覆い、判定が五値のいずれかであること（ADR-171）。検めて通った出所が `verified`、所見の在る出所が `mismatched`、引用は一致するが `@rev` を照合できない出所が `mixed`、URL・束ねられていない接頭・錨の無い locator が `unverifiable`、空の `source` が `malformed` になること。`claimed` と機械の `verdict` が別の欄で返ること。
+- `repos` が測った木ごとに版の鍵を返し、ローカル経路を含まないこと。`totals.by_verdict` の合計が `sources` の件数と一致すること。
 - 観点ごとの対応は TEST-029 に示す。
 
 <!-- 入れない: 廃止、検討、実装コードの写し -->

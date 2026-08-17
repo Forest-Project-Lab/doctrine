@@ -43,6 +43,12 @@ llm_context: task
   あり、器には無い。
 - `prose_values(model)`: 塊の中の散文の値を `(where, 行, 文字列)` の列で返す。用語の門を
   塊の中へ届かせるための口であり、対象は `PROSE_FIELDS` の欄に限る（ADR-164 決定3）。
+- `check_repos(repos, model, findings)`: フロントマターの `repos` 宣言（ADR-170）を検める。
+  形は文字列の一覧で、各項は `接頭=指し先`（指し先は `self` か EXT 文書の id）。形の崩れ・
+  同じ接頭の二度宣言は `MODEL_BAD_REPOS`。宣言が在るとき、provenance の `source` と
+  アンカーの `target` が使う接頭が宣言の集合に無ければ `MODEL_UNDECLARED_REPO`。宣言が
+  無ければ（鍵の不在）何も検めない（後方互換）。接頭の解析の正規表現 `SOURCE_RE` は
+  この部品が正本として持ち、出所の門（SPEC-029）はここを引く（写しを持たない）。
 
 ## 制約
 
@@ -62,7 +68,7 @@ llm_context: task
 - **器の形の正本は doctrine-lens の `schema.json` であり、doctrine は固定した一枚を同梱して
   そこから導く**（ADR-165・EXT-007）。器の版（`MODEL_SCHEMA`）も一枚から読む。版の進め方の
   規約の正本は器の一枚の `$comment` が持つ（ADR-168 決定2）。
-- **器の一枚を読めないときは黙って通さない** —— `MODEL_SCHEMA_UNREADABLE`（ERROR）一件だけを
+- **器の一枚を読めないときは黙って通さない** —— `MODEL_SCHEMA_UNREADABLE`（`ERROR`）一件だけを
   返し、他の検査を行わない（器を持たないまま緑を出さない）。
 
 ## エラー時挙動
@@ -76,8 +82,8 @@ llm_context: task
   `MODEL_BAD_REALIZED_BY`・`MODEL_DUPLICATE_ID`・`MODEL_HEADING_ID_MISMATCH`・
   `MODEL_HEADING_WITHOUT_BLOCK`・`MODEL_DANGLING_REF`・`MODEL_SELF_LOOP_WITHOUT_REASON`・
   `MODEL_BAD_STEPS`・`MODEL_UNCONFIRMED_IN_CURRENT`・`MODEL_CONFIRMED_NOT_CURRENT`・
-  `MODEL_SCHEMA_UNREADABLE`。
-  段は `MODEL_CONFIRMED_NOT_CURRENT` だけが WARN で、ほかは ERROR とする（ADR-164 決定4）。
+  `MODEL_SCHEMA_UNREADABLE`・`MODEL_BAD_REPOS`・`MODEL_UNDECLARED_REPO`。
+  段は `MODEL_CONFIRMED_NOT_CURRENT` だけが `WARN` で、ほかは `ERROR` とする（ADR-164 決定4）。
 - **アンカーは値を担わない**（指し先の記述である）ので、`review_status` と `provenance` を
   求めない。
 - **必須欄は「鍵が在り、値が `null` でない」ことを求める**（ADR-164 決定5）。鍵だけ在って
@@ -90,7 +96,7 @@ llm_context: task
 この節がある文書だけが、コードとの追跡の対象になる（ADR-056 の opt-in）。更新は
 `trace-index.py --id SPEC-031` が返す行を写す。
 
-- sha256:7148e9f0e7281dd115b55d708d50f9bbb898c92b167e26aad804431829a4163b
+- sha256:4c52e2bf8ebd6eef23d9f4b8daf3d20369f5062f569559c909456b2d85e66319
 
 ## 受入基準
 
@@ -98,8 +104,8 @@ llm_context: task
 - 読めない塊は所見になり、他の塊の点検は続く（例外にしない）。
 - 必須欄の欠落・語彙の外れ・id の重複・見出しと id の食い違い・文書の中に無い参照・
   理由の無い自己ループが、それぞれ固有の名の所見になる。
-- `status` が `current` なのに `confirmed` でない値が在れば ERROR になる。全ての値が
-  `confirmed` なのに `current` でなければ WARN になり、その文面は**機械へ確定を指示しない**
+- `status` が `current` なのに `confirmed` でない値が在れば `ERROR` になる。全ての値が
+  `confirmed` なのに `current` でなければ `WARN` になり、その文面は**機械へ確定を指示しない**
   （ADR-163 決定6 の同値と、ADR-164 決定4）。引退した位置づけでは、どちらも検めない。
 - 描いた JSON は、最上位が八つの欄を持ち、`target` が最上位に在り、解析の覚え書きを含まず、
   同じ入力から同じ文字列になる。文書の中の出現順が保たれる。
@@ -110,6 +116,8 @@ llm_context: task
 - 配列でない `realized_by`・`null` の必須欄・空でない文字列でない id・塊を持たない見出しが、
   それぞれ固有の名の所見になり、**例外を漏らさない**。
 - 塊の中の散文（`PROSE_FIELDS`）に用語の門が掛かる。
+- `repos` 宣言の形の崩れ・二度宣言・宣言に無い接頭が、それぞれ固有の名の所見になり、
+  宣言の無い模型では何も出ない（ADR-170）。
 - 対応するテストは TEST-031 が確認する。
 
 <!-- 入れない: 廃止、検討、実装コードの写し -->

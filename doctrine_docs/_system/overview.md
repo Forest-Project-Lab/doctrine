@@ -18,7 +18,7 @@ sources: []
 |---|---|---|---|
 | GLOSSARY-001 | GLOSSARY | _system | 用語辞書の正本 |
 | DECIDED-001 | DECIDED | _system | 横断の確定方針（13事実） |
-| NONGOAL-001 | NONGOAL | _system | 横断のやらないこと（18項） |
+| NONGOAL-001 | NONGOAL | _system | 横断のやらないこと（19項） |
 | WATCH-001 | WATCH | _system | 横断の退行監視（13項） |
 | REQ-000 | REQ | _system | この体系が解くこと（製品の粒度） |
 | ICD-005 | ICD | audit | audit のインターフェース（全件監査の境界） |
@@ -64,6 +64,7 @@ sources: []
 | ADR-158 | ADR | authoring | map-draft-check は複数リポジトリの出所を受ける — 黙る後勝ちを廃し、口を外部条項として宣言する |
 | ADR-159 | ADR | authoring | 必須節の名を CLI から問えるようにする — scaffold に list-sections の口を足す |
 | ADR-160 | ADR | authoring | 誤読の門を、全読者共通の床と、対象ごとに宣言する読者層に分ける（提案。手順書の正本は lens 側） |
+| ADR-171 | ADR | authoring | 出所の門は、出所ごとの機械の判定を五値で読み口に載せる |
 | CHANGE-008 | CHANGE | authoring | 配布技能に system-map-draft を加える（issue |
 | IMPACT-008 | IMPACT | authoring | 配布技能 system-map-draft の追加 — 影響の列挙 |
 | IMPL-015 | IMPL | authoring | scaffold/term-extract の実装注記 |
@@ -91,6 +92,7 @@ sources: []
 | ADR-096 | ADR | context | 統治の設定を指紋で見張る。変えるには打ち直しが要る |
 | ADR-104 | ADR | context | 統治の設定の読み取りを共有コアに一度だけ置く |
 | ADR-105 | ADR | context | トークンの見積りを共有コアに一度だけ置き、較正を二つの上限の両方に効かせる |
+| ADR-169 | ADR | context | 木の中の MODEL を列挙する読み口 model-index/1 を宣言する |
 | IMPL-012 | IMPL | context | `inject-contract.py` の実装メモ |
 | IMPL-013 | IMPL | context | `collect-context.py` の実装メモ |
 | IMPL-014 | IMPL | context | `render-projection.py` の実装メモ |
@@ -204,9 +206,13 @@ sources: []
 | ADR-164 | ADR | model | MODEL の描画先・引退の扱い・塊の中の散文の門を定める（ADR-163 の追補） |
 | ADR-165 | ADR | model | 器の形を写さず、固定した一枚から導く（写しをやめる） |
 | ADR-168 | ADR | model | 器 0.2 へ追随し、M 層の不変条件は requirements 口を参照する |
+| ADR-170 | ADR | model | 複数の木にまたがる模型は、跨ぐ接頭を正本に宣言し、経路は実行時に束ねる |
+| ADR-172 | ADR | model | 境界の語彙は、意味の規範を機械可読の正本へ、表示の語を view の領分へ分ける |
 | CHANGE-012 | CHANGE | model | 器 0.2 への追随と requirements 口への参照切り替え（#294 第3信・第4信） |
+| CHANGE-013 | CHANGE | model | 第5信の欠けへの応え — MODEL の列挙・複数の木・出所ごとの判定・語彙の在り処 |
 | IMPACT-011 | IMPACT | model | 意味モデルの型 MODEL の新設の影響（CHANGE-011） |
 | IMPACT-012 | IMPACT | model | 器 0.2 への追随と requirements 口への参照切り替えの影響（CHANGE-012） |
+| IMPACT-013 | IMPACT | model | 第5信の欠けへの応えの影響（CHANGE-013） |
 | IMPL-001 | IMPL | model | `_registry.py` の実装メモ |
 | IMPL-002 | IMPL | model | `_frontmatter.py` の実装メモ |
 | TEST-001 | TEST | model | 登録簿契約のテスト計画 |

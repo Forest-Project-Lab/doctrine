@@ -4,6 +4,30 @@
 
 ## [未リリース]
 
+### 足した（#294 第5信の欠けへの応え — 列挙・複数の木・出所ごとの判定）
+
+- **MODEL の列挙の読み口 `model-index/1`**（ADR-169）。`render-projection.py model --list` が
+  木の中の MODEL を id 昇順で返す（各件 id・title・target・`status`・updated・正本と投影の
+  パス・`repos` の宣言・構造の所見の件数。版の三鍵と `generator` つき）。宣言は ICD-006 の
+  外部条項。解けない模型も `target: null` と件数で載る —— 列挙の成否と模型の良し悪しを
+  混ぜない。
+- **複数の木にまたがる模型の宣言**（ADR-170）。正本 .md のフロントマターの任意キー
+  `repos: ["接頭=self|EXT-<n>"]` で、模型が跨ぐリポジトリを宣言できる。リンタが形
+  （`MODEL_BAD_REPOS`）と接頭の被覆（`MODEL_UNDECLARED_REPO`）を文書の中だけで検める。
+  ローカル経路は宣言しない（実行時の `--repo 接頭=経路` のまま）。接頭の解析の正本
+  `SOURCE_RE` は共有コア `_model` へ移し、出所の門は写しを持たない。
+- **出所ごとの機械の判定**（ADR-171）。`map-draft-check/1` に `sources`（各出所の五値の
+  verdict: `verified`・`mismatched`・`mixed`・`unverifiable`・`malformed` と、書き手の
+  自己申告 `claimed`・`reasons`）、測った木の版 `repos`（接頭ごと。ローカル経路は載せない）、
+  `generator`、`totals.by_verdict` を足した。欄の追加であり、既存の読み手は壊れない。
+
+### 決めた（#294 第5信 — 表示語彙の在り処と小2点）
+
+- **表示語彙は view の領分**（ADR-172。NONGOAL-001 第19項）。列挙の値の人が読む名・画面の
+  割り付けの正本を doctrine は持たない。実測対象アンカーの述語の機械可読の正本は lens 側
+  requirements 口の `policy`、鮮度の三値（同一・相違・不明）の判定規則は ICD-002 の版の鍵の
+  宣言に一度だけ定めた。不明を肯定に丸めない。
+
 ## [0.13.1] — 2026-08-16
 
 ### 変えた（器 0.2 への追随 — #294 第3信・第4信の受け）

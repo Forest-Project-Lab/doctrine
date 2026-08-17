@@ -31,6 +31,7 @@ import _depgraph
 import _frontmatter
 import _model
 import _registry
+import _revinfo
 
 # 投影の冒頭に必ず置く一行(§3.9 / 付録B / テンプレート規則)。
 HEADER_LINE = "描画される。手で編集しない。"
@@ -56,11 +57,15 @@ MODES = ("overview", "icd-index", "context-map-skeleton", "model", "all")
 def _parse_args(argv):
     """argv を (opts, error_message) に解く。error は usage 終了(2)に回す。"""
     opts = {"mode": None, "docs_root": None, "out": None, "check": False,
-            "doc_id": None}
+            "doc_id": None, "list": False}
     i = 0
     n = len(argv)
     while i < n:
         a = argv[i]
+        if a == "--list":
+            opts["list"] = True
+            i += 1
+            continue
         if a == "--docs-root":
             if i + 1 >= n:
                 return None, "--docs-root にはパスが必要"
@@ -104,6 +109,13 @@ def _parse_args(argv):
     if opts["out"] is not None and opts["mode"] == "model" \
             and opts["doc_id"] is None:
         return None, "model モードで --out を使うときは --id で一件を指す"
+    if opts["list"]:
+        # 一覧の読み口(model-index/1。ADR-169)は model モード専用で、他の口と
+        # 混ぜない(混ぜると「何を返したか」が引数の組み合わせに依存する)。
+        if opts["mode"] != "model":
+            return None, "--list は model モードでだけ使える"
+        if opts["out"] is not None or opts["check"] or opts["doc_id"] is not None:
+            return None, "--list は --out・--check・--id と併用しない"
     return opts, None
 
 
@@ -111,7 +123,7 @@ def _usage(msg):
     sys.stdout.write("usage error: %s\n" % msg)
     sys.stdout.write(
         "render-projection.py (overview|icd-index|context-map-skeleton|model|all) "
-        "[--docs-root R] [--id ID] [--out PATH|-] [--check]\n"
+        "[--docs-root R] [--id ID] [--out PATH|-] [--check] [--list]\n"
     )
     return 2
 
@@ -483,7 +495,7 @@ def _render_one(mode, docs_root, docs):
 # 意味モデル(MODEL)の投影 —— .md 正本から JSON を一方通行で描く(ADR-161・ADR-163)
 # ---------------------------------------------------------------------------
 def _collect_models(docs_root, doc_id=None):
-    """MODEL 型の文書を (id, 絶対パス, 本文, status) の列で返す。決定論(パス整列)。
+    """MODEL 型の文書を (id, 絶対パス, 本文, status, fm) の列で返す。決定論(パス整列)。
 
     ここだけは本文を読む —— 値の正本が本文の JSON の塊だからである(ADR-163 決定3)。
     ほかの投影は従来どおりフロントマターしか読まない。
@@ -510,7 +522,7 @@ def _collect_models(docs_root, doc_id=None):
             continue
         status = (_frontmatter.coerce_str(fm.get("status"))
                   or _registry.default_status("MODEL") or "")
-        out.append((ident, path, body, status))
+        out.append((ident, path, body, status, fm))
     return out
 
 
@@ -519,11 +531,12 @@ def _model_json_path(md_path):
     return os.path.splitext(md_path)[0] + ".json"
 
 
-def _render_model(body, status):
+def _render_model(body, status, repos=None):
     """(内容, 所見) を返す。所見が在れば内容は None(壊れた模型は描かない)。"""
     model, findings = _model.parse_model(body or "")
     _model.check_structure(model, findings)
     _model.check_confirmation(model, status, findings)
+    _model.check_repos(repos, model, findings)
     hard = [f for f in findings if f.severity == "ERROR"]
     if hard:
         return None, hard
@@ -579,12 +592,15 @@ def _do_model(docs_root, doc_id, out_path, check):
     if doc_id is not None and len(models) > 1:
         # 一件を指したはずが二件在る。後勝ちで黙って上書きしない。
         sys.stderr.write("id が重複している: %s (%s)\n"
-                         % (doc_id, ", ".join(p for _i, p, _b, _s in models)))
+                         % (doc_id, ", ".join(p for _i, p, _b, _s, _f in models)))
         return 1
     rc = 0
     drawn = set()
-    for ident, path, body, status in models:
-        content, findings = _render_model(body, status)
+    for ident, path, body, status, fm in models:
+        repos = fm.get("repos")
+        if repos is not None:
+            repos = [str(x) for x in _frontmatter.as_list(repos)]
+        content, findings = _render_model(body, status, repos)
         if content is None:
             _report_model_findings(path, findings)
             rc = 1
@@ -617,6 +633,60 @@ def _do_model(docs_root, doc_id, out_path, check):
             sys.stdout.write("正本の無い投影: %s\n" % stale)
             rc = 1
     return rc
+
+
+# doctrine:begin SPEC-014
+def _do_model_list(docs_root):
+    """model --list の実体。model-index/1 を stdout へ返す(ADR-169)。
+
+    解けない模型も一覧に載せ、target は null・findings に誤り級の所見の件数を書く
+    (列挙の成否と模型の良し悪しを混ぜない)。並びは id 昇順の決定論。
+    """
+    import json as _json
+    entries = []
+    for ident, path, body, status, fm in _collect_models(docs_root):
+        if not ident:
+            # id を持たない文書は投影に出せない(他の投影と同じ規律)。
+            sys.stderr.write("id の無い MODEL を飛ばす: %s\n" % path)
+            continue
+        repos = fm.get("repos")
+        if repos is not None:
+            repos = [str(x) for x in _frontmatter.as_list(repos)]
+        findings = _model.check_document(body or "", status, repos)
+        errors = sum(1 for f in findings if f.severity == "ERROR")
+        target = None
+        if not _model.SCHEMA_ERROR:
+            model, _errs = _model.parse_model(body or "")
+            system = model.get("system")
+            if isinstance(system, dict):
+                value = system.get("target")
+                target = value if isinstance(value, str) else None
+        rel = os.path.relpath(path, docs_root).replace(os.sep, "/")
+        entries.append({
+            "id": ident,
+            "title": _frontmatter.coerce_str(fm.get("title")) or None,
+            "target": target,
+            "status": status,
+            "updated": _frontmatter.coerce_str(fm.get("updated")) or None,
+            "path": rel,
+            "projection_path": os.path.splitext(rel)[0] + ".json",
+            "repos": repos,
+            "findings": errors,
+        })
+    entries.sort(key=lambda e: e["id"])
+    rev = _revinfo.revision_of(docs_root)
+    payload = {
+        "schema": "model-index/1",
+        "root": os.path.basename(os.path.abspath(docs_root)),
+        "source_revision": rev["source_revision"],
+        "source_dirty": rev["source_dirty"],
+        "generator": _revinfo.generator_info("render-projection.py"),
+        "models": entries,
+    }
+    sys.stdout.write(_json.dumps(payload, ensure_ascii=False, sort_keys=True,
+                                 indent=2) + "\n")
+    return 0
+# doctrine:end SPEC-014
 
 
 def _canonical_path(mode, docs_root):
@@ -718,6 +788,8 @@ def main(argv=None):
     mode = opts["mode"]
 
     if mode == "model":
+        if opts["list"]:
+            return _do_model_list(docs_root)
         return _do_model(docs_root, opts["doc_id"], opts["out"], opts["check"])
 
     if opts["check"]:

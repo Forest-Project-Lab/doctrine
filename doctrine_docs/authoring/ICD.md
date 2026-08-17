@@ -6,7 +6,7 @@ domain: authoring
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-08-14
+updated: 2026-08-16
 sources: [spec/doctrine.ja.md §4.1, plugin/scripts/map-draft-check.py, plugin/scripts/scaffold.py]
 llm_context: task
 canonical_for: [scaffolding, term-extraction, skills, templates]
@@ -44,7 +44,7 @@ authoring ドメインは、型付き文書を正しい置き場所と様式で�
 
 ### 外部条項（体系の外の消費者が依存してよい口。確定事実13）
 
-- 出所検証の門: `map-draft-check.py --json` の返す値（`map-draft-check/1`）だけに依存してよい（ADR-158）。形と検査の正本は SPEC-029。引数は `--repo <接頭>=<経路>` の反復を受け、同じ接頭の二度渡しと旧形・新形の混在は使い方の誤り（終了コード 2）に倒す。
+- 出所検証の門: `map-draft-check.py --json` の返す値（`map-draft-check/1`）だけに依存してよい（ADR-158）。形と検査の正本は SPEC-029。引数は `--repo <接頭>=<経路>` の反復を受け、同じ接頭の二度渡しと旧形・新形の混在は使い方の誤り（終了コード 2）に倒す。返す値は所見（findings）・機械検証不能（unverifiable）に加えて、出所ごとの機械の判定 `sources`（五値の verdict。書き手の自己申告 `claimed` と混ぜない）、測った木の版 `repos`（各項 `{prefix, source_revision, source_dirty}`。ローカル経路は載せない）、`generator` を持つ（ADR-171。いずれも欄の追加であり、既存の読み手は無視できる）。
 - 必須節の名の問い合わせ: `scaffold.py --list-sections [--type <型>] --json` の返す値（`scaffold-sections/1`。`{"schema", "sections": {<型>: [<節名>…]}, "generator"}`）だけに依存してよい（ADR-159）。正本は登録簿（ICD-001）のまま動かさず、この口は写しではなく参照である。未知の型は使い方の誤り（終了コード 2）。
 - 進化の規約は確定事実13（ADR-152）に従う —— 鍵の追加は互換、読み手は未知の最上位の鍵を読み捨て、互換を壊す変更はスキーマ名の版を上げる。機械向けの JSON は stdout へ、診断は標準エラーへ。
 

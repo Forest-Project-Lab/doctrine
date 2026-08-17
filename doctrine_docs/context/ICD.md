@@ -6,7 +6,7 @@ domain: context
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-08-14
+updated: 2026-08-16
 sources: [spec/doctrine.ja.md §3.9]
 canonical_for: [context-injection, context-pack, projection-render]
 llm_context: task
@@ -36,6 +36,11 @@ llm_context: task
 - 二つの別々の上限（C10とは凍結した契約の整合を見る判断項目をいい、これはその一つ）: 注入の `injection_token_cap`（既定 12000）と、パックの `task_pack_token_cap`（任意）。どちらも `_system/.context-config.json` の別キーに置く。**この設定の一枚は `EXT-005` が指紋で見張る**（ADR-096）—— 一枚が上限・追跡の悉皆の様式・走査の適用除外を握っており、静かに書き換わると上限が動き、残高の警告が消え、任意の道が走査から外れる。指紋が動けば監査が warn を出し、打ち直しは人手で行う（打ち直しは差分に現れる）。指紋は中身の当否を保証せず、**変化に人の目が一度入ること**だけを保証する。セッション途中の差し替えは見ない（非目標 第16項。別の問いである）。トークンとは、モデルが文を区切って数える単位をいう。見積もりは文字数からの近似で、多めに見積もる側に倒す。
 - 監査要約の受け渡し: 注入は `${CLAUDE_PROJECT_DIR}/.claude/.cache/last-audit.json`（スキーマ `docs-audit/1`。プラグイン側 cache も後方互換の候補として読む）を読む。読み取りの規則（候補順・`schema` 照合・`root` 照合・世代の照合）は共有コア `_auditcache` が一度だけ定め、注入と鼓動（SPEC-021）が同じ関数を呼ぶ（ADR-053）。統治木を消して同じ場所に作り直したときは、前の世代の要約を世代の照合で捨てる。これは audit（ICD-005）が書いた成果物である。要約は実行可能にする。促しの一行は優先順で一つだけ加える（上限超過の有無に依らない）: 未登録/影文書・体系外 .md（stray_document）・孤児・error は `docs-curate` を、review_by_overrun・adr_not_landed・canonical_conflict・near_duplicate は doc-review を、stale_current は `docs-curate` を名指しする（SPEC-012）。要約が無い・古いときは統治の死活の警告を出す（`[R11]`、SPEC-021 と対）。未選別のセッションメモがあれば選別の義務を保護節で出す（`[R12]`、SPEC-022 と対）。
 - パック様式: `context-pack/1`。`docs`・`uncovered`・`uncovered_reasons`・`boundary_violations`・`trimmed` を含む。
+
+### 外部条項（体系の外の消費者が依存してよい口。確定事実13）
+
+- MODEL の列挙: `render-projection.py model --list` の返す値（`model-index/1`）だけに依存してよい（ADR-169）。形は `{"schema": "model-index/1", "root": <名前だけ>, "source_revision", "source_dirty", "generator", "models": [...]}`。版の三鍵の意味は graph の宣言（ICD-002「測った木の版と作り手」）と同じで、本ドメインで再定義しない。`models` の各項は `{id, title, target, status, updated, path, projection_path, repos, findings}`（並びは id 昇順。`path`・`projection_path` は統治木の根からの相対で区切りは `/`。解けない模型は `target: null` と所見の件数で載る。`repos` は正本のフロントマターの宣言（ADR-170）の写しで、無宣言なら null）。詳細な正本は SPEC-014。
+- 進化の規約は確定事実13（ADR-152）に従う —— 鍵の追加は互換、読み手は未知の最上位の鍵を読み捨て、互換を壊す変更はスキーマ名の版を上げる。機械向けの JSON は stdout へ、診断は標準エラーへ。
 
 ## 依存してよい入口
 

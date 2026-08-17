@@ -6,7 +6,7 @@ domain: audit
 status: current
 owner: doctrine-maintainers
 created: 2026-06-30
-updated: 2026-08-14
+updated: 2026-08-16
 sources: [spec/doctrine.ja.md#4.2]
 depends_on: [REQ-008, ICD-008, ICD-001, ICD-002]
 llm_context: task
